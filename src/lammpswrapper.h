@@ -72,6 +72,7 @@ public:
     bool config_has_curl_support() const;
     bool has_gpu_device() const;
 
+    bool load_lib(const QString &fname) { return load_lib(fname.toStdString().c_str()); }
     bool load_lib(const char *lammpslib);
     bool has_plugin() const;
 

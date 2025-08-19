@@ -111,31 +111,18 @@ LammpsGui::LammpsGui(QWidget *parent, const QString &filename) :
     QSettings settings;
 
 #if defined(LAMMPS_GUI_USE_PLUGIN)
-    plugin_path =
-        QFileInfo(settings.value("plugin_path", "liblammps.so").toString()).canonicalFilePath();
-    if (!lammps.load_lib(plugin_path.toStdString().c_str())) {
-        // fall back to defaults
-        for (const char *libfile :
-             {"./liblammps.so", "liblammps.dylib", "./liblammps.dylib", "liblammps.dll"}) {
-            if (lammps.load_lib(libfile)) {
-                plugin_path = QFileInfo(libfile).canonicalFilePath();
-                settings.setValue("plugin_path", plugin_path);
-                break;
-            } else {
-                plugin_path.clear();
-            }
-        }
+    plugin_path = settings.value("plugin_path", "").toString();
+    if (!plugin_path.isEmpty()) {
+        // make canonical and try loading
+        plugin_path = QFileInfo(plugin_path).canonicalFilePath();
+        if (!lammps.load_lib(plugin_path)) plugin_path.clear();
     }
 
     if (plugin_path.isEmpty()) {
-        // none of the plugin paths could load, remove key
+        // no plugin configured or could not load successfully: remove any setting, if present
         settings.remove("plugin_path");
-        QMessageBox::critical(
-            this, "Error",
-            QString("Cannot open LAMMPS shared library file: %1.\n\n")
-                    .arg(settings.value("plugin_path", "liblammps.so").toString()) +
-                "Use -p command line flag to specify a path to the library.");
-        exit(1);
+
+        // start plugin configuration wizard.
     }
 #endif
 
