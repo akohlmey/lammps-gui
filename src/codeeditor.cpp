@@ -708,7 +708,12 @@ void CodeEditor::contextMenuEvent(QContextMenuEvent *event)
         }
     }
 
-    auto *action = menu->addAction(QString("LAMMPS Manual"));
+    auto *action = menu->addAction(QString("LAMMPS Commands Overview"));
+    action->setIcon(QIcon(":/icons/help-browser.png"));
+    action->setData(QString("/Commands_all.html"));
+    connect(action, &QAction::triggered, this, &CodeEditor::open_help);
+
+    action = menu->addAction(QString("LAMMPS Manual"));
     action->setIcon(QIcon(":/icons/help-browser.png"));
     action->setData(QString());
     connect(action, &QAction::triggered, this, &CodeEditor::open_help);

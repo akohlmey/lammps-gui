@@ -60,6 +60,7 @@
         Remove workarounds for compatibility with Qt 5.12 on Ubuntu 20.04LTS.
         Qt 5.15LTS is now the minimum required version and thus Ubuntu 22.04LTS.
         Fix bugs when using filenames or paths with blanks.
+        Add action to editor context menu to open the Commands_all.html manual page
         Support new "dump image autobond" feature in image viewer.
         Support new "dump image region" feature in image viewer.
         Change color selections for dump image to text fields with completion and validation.
