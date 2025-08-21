@@ -55,6 +55,13 @@
   </provides>
 
   <releases>
+    <release version="1.8.0" timestamp="1755766131">
+      <description>
+        Reorganize LAMMPS-GUI to have its own git repository
+        Default to loading shared LAMMPS library dynamically
+        Implement Wizard to select shared LAMMPS library, if not set
+      </description>
+    </release>
     <release version="1.7.1" timestamp="1754346906">
       <description>
         Remove workarounds for compatibility with Qt 5.12 on Ubuntu 20.04LTS.

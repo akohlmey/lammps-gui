@@ -119,6 +119,7 @@ LammpsGui::LammpsGui(QWidget *parent, const QString &filename) :
     }
 
     if (plugin_path.isEmpty()) {
+
         // no plugin configured or could not load successfully: remove any setting, if present
         settings.remove("plugin_path");
 

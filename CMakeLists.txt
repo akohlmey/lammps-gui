@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.20)
 
-project(lammps-gui VERSION 1.7.1 LANGUAGES CXX)
+project(lammps-gui VERSION 1.8.0 LANGUAGES CXX)
 
 set(CMAKE_AUTOUIC ON)
 set(CMAKE_AUTOMOC ON)
