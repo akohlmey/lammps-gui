@@ -188,6 +188,18 @@ LammpsGui::LammpsGui(QWidget *parent, const QString &filename) :
             choices.append(fn.canonicalFilePath());
         choices.removeDuplicates();
 
+        const char *lmpversion;
+        for (const auto &libpath : choices) {
+            if (lammps.load_lib(libpath.toStdString().c_str())) {
+                lmpversion = (const char *)lammps.extract_global("lammps_version");
+                bool valid = false;
+                if (lmpversion && (date_compare(lmpversion, "22 July 2025") >= 0)) valid = true;
+
+                fprintf(stderr, "path: %s  version: %s  valid: %d\n", libpath.toStdString().c_str(),
+                        lmpversion, valid);
+            }
+        }
+
         layout = new QVBoxLayout;
         layout->addWidget(label);
 
