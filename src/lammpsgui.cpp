@@ -128,16 +128,18 @@ LammpsGui::LammpsGui(QWidget *parent, const QString &filename) :
         wizard.setFont(font());
 
         auto *page = new QWizardPage;
-        page->setTitle("Configure LAMMPS-GUI");
+        page->setTitle("<center>Configure LAMMPS Library Path</center>");
         page->setPixmap(QWizard::WatermarkPixmap,
                         QPixmap(":/icons/lammps-plugin.png")
                             .scaled(300, 278, Qt::KeepAspectRatio, Qt::SmoothTransformation));
 
         auto *label =
-            new QLabel("<p>This version of LAMMPS-GUI was configured to load a LAMMPS shared "
-                       "library file at runtime so it can execute LAMMPS.  This dialog will help "
-                       "you to select a suitable file. This step is <i>required</i> only once.</p>"
-                       "<p>The path to the library file can later be changed in the Preferences "
+            new QLabel("<p align=\"justify\">This version of LAMMPS-GUI was configured to load a "
+                       "LAMMPS shared library file at runtime so it can execute LAMMPS.  This "
+                       "dialog will help you to select a suitable file. This step is "
+                       "<i>required</i> only once.  LAMMPS-GUI will store your choice in the "
+                       "preferences settings.</p><p align=\"justify\">If needed, the path to the "
+                       "shared library file can later be changed either in the Preferences dialog "
                        "or with the '-p' command line flag.</p><hr width=\"33%\"\\>\n"
                        "<p align=\"center\">Click on the \"Next\" button to select a file.</p>");
         label->setWordWrap(true);
@@ -152,8 +154,44 @@ LammpsGui::LammpsGui(QWidget *parent, const QString &filename) :
         page->setPixmap(QWizard::WatermarkPixmap,
                         QPixmap(":/icons/lammps-plugin.png")
                             .scaled(300, 278, Qt::KeepAspectRatio, Qt::SmoothTransformation));
+
+        label = new QLabel("<p>Select a suitable file</p>");
+        label->setWordWrap(true);
+
+        // construct list of possible standard choices for the shared library file:
+        // we prefer the current directory, then the dynamic library path, then system folders
+
+        QStringList dirlist{"."};
+#ifdef Q_OS_MACOS
+        QStringList filter("liblammps*.dylib");
+        dirlist.append(
+            QString::fromLocal8Bit(qgetenv("DYLD_LIBRARY_PATH")).split(":", Qt::SkipEmptyParts));
+#elif Q_OS_WIN32
+        QStringList filter("liblammps*.dll");
+        dirlist.append(QString::fromLocal8Bit(qgetenv("PATH")).split(";", Qt::SkipEmptyParts));
+#else
+        QStringList filter("liblammps*.so*");
+        dirlist.append(
+            QString::fromLocal8Bit(qgetenv("LD_LIBRARY_PATH")).split(":", Qt::SkipEmptyParts));
+#endif
+        dirlist.append({"/usr/lib", "/usr/lib64", "/usr/local/lib", "/usr/local/lib64"});
+
+        // construct list of matching files
+        QFileInfoList entries;
+        for (const auto &dir : dirlist)
+            entries.append(QDir(dir).entryInfoList(filter));
+
+        // convert list to list of canonical file names
+        QStringList choices;
+        for (const auto &fn : entries)
+            choices.append(fn.canonicalFilePath());
+        choices.removeDuplicates();
+
         layout = new QVBoxLayout;
+        layout->addWidget(label);
+
         page->setLayout(layout);
+
         wizard.addPage(page);
 
         page = new QWizardPage;
