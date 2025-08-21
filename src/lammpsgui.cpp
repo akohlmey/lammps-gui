@@ -122,7 +122,54 @@ LammpsGui::LammpsGui(QWidget *parent, const QString &filename) :
         // no plugin configured or could not load successfully: remove any setting, if present
         settings.remove("plugin_path");
 
-        // start plugin configuration wizard.
+        // start plugin configuration wizard
+        QWizard wizard;
+        wizard.setWindowIcon(QIcon(":/icons/lammps-icon-128x128.png"));
+        wizard.setFont(font());
+
+        auto *page = new QWizardPage;
+        page->setTitle("Configure LAMMPS-GUI");
+        page->setPixmap(QWizard::WatermarkPixmap,
+                        QPixmap(":/icons/lammps-plugin.png")
+                            .scaled(300, 278, Qt::KeepAspectRatio, Qt::SmoothTransformation));
+
+        auto *label =
+            new QLabel("<p>This version of LAMMPS-GUI was configured to load a LAMMPS shared "
+                       "library file at runtime so it can execute LAMMPS.  This dialog will help "
+                       "you to select a suitable file. This step is <i>required</i> only once.</p>"
+                       "<p>The path to the library file can later be changed in the Preferences "
+                       "or with the '-p' command line flag.</p><hr width=\"33%\"\\>\n"
+                       "<p align=\"center\">Click on the \"Next\" button to select a file.</p>");
+        label->setWordWrap(true);
+
+        auto *layout = new QVBoxLayout;
+        layout->addWidget(label);
+        page->setLayout(layout);
+        wizard.addPage(page);
+
+        page = new QWizardPage;
+        page->setTitle("Select LAMMPS shared library");
+        page->setPixmap(QWizard::WatermarkPixmap,
+                        QPixmap(":/icons/lammps-plugin.png")
+                            .scaled(300, 278, Qt::KeepAspectRatio, Qt::SmoothTransformation));
+        layout = new QVBoxLayout;
+        page->setLayout(layout);
+        wizard.addPage(page);
+
+        page = new QWizardPage;
+        page->setTitle("Confirm LAMMPS library choice");
+        page->setPixmap(QWizard::WatermarkPixmap,
+                        QPixmap(":/icons/lammps-plugin.png")
+                            .scaled(300, 278, Qt::KeepAspectRatio, Qt::SmoothTransformation));
+        layout = new QVBoxLayout;
+        page->setLayout(layout);
+        wizard.addPage(page);
+        wizard.setWindowTitle("Configure LAMMPS shared library");
+        wizard.setWizardStyle(QWizard::ModernStyle);
+        wizard.exec();
+
+        // cannot continue without a path to the LAMMPS library
+        if (plugin_path.isEmpty()) exit(1);
     }
 #endif
 
