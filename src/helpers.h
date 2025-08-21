@@ -23,6 +23,9 @@ extern char *mystrdup(const std::string &text);
 extern char *mystrdup(const char *text);
 extern char *mystrdup(const QString &text);
 
+// compare date strings
+extern int date_compare(const QString &one, const QString &two);
+
 // split string into words while respecting quotes
 extern std::vector<std::string> split_line(const std::string &text);
 

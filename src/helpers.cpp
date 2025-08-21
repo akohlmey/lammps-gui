@@ -24,6 +24,11 @@
 #include <QStringList>
 #include <QWidget>
 
+namespace {
+const QStringList months({"Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct",
+                          "Nov", "Dec"});
+}
+
 // duplicate string, STL version
 char *mystrdup(const std::string &text)
 {
@@ -42,6 +47,41 @@ char *mystrdup(const char *text)
 char *mystrdup(const QString &text)
 {
     return mystrdup(text.toStdString());
+}
+
+// compare two date strings return -1 if first is older than second, 0 if same, or 1 if
+// otherwise
+
+int date_compare(const QString &one, const QString &two)
+{
+    if (one == two) return 0;
+
+    // split string into words and check each of them
+    auto onelist = one.split(" ", Qt::SkipEmptyParts);
+    auto twolist = two.split(" ", Qt::SkipEmptyParts);
+    if (onelist.size() != 3) return -1;
+    if (twolist.size() != 3) return 1;
+
+    if (onelist[2].toInt() < twolist[2].toInt()) {
+        return -1;
+    } else if (onelist[2].toInt() > twolist[2].toInt()) {
+        return 1;
+    }
+
+    onelist[1].truncate(3);
+    twolist[1].truncate(3);
+    if (months.indexOf(onelist[1]) < months.indexOf(twolist[1])) {
+        return -1;
+    } else if (months.indexOf(onelist[1]) > months.indexOf(twolist[1])) {
+        return 1;
+    }
+
+    if (onelist[0].toInt() < twolist[0].toInt()) {
+        return -1;
+    } else if (onelist[0].toInt() > twolist[0].toInt()) {
+        return 1;
+    }
+    return 0;
 }
 
 // Convert string into words on whitespace while handling single and double
