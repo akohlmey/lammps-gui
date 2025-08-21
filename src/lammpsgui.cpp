@@ -45,6 +45,7 @@
 #include <QProcess>
 #include <QProgressBar>
 #include <QPushButton>
+#include <QRadioButton>
 #include <QSettings>
 #include <QShortcut>
 #include <QStandardPaths>
@@ -65,6 +66,16 @@
 
 #if defined(_OPENMP)
 #include <omp.h>
+#endif
+
+#if defined(_WIN32)
+#ifndef WIN32_LEAN_AND_MEAN
+#define WIN32_LEAN_AND_MEAN
+#endif
+#include <process.h>
+#define execl(exe, arg0, arg1) _execl(exe, arg0, arg1)
+#else
+#include <unistd.h>
 #endif
 
 namespace {
@@ -124,9 +135,9 @@ LammpsGui::LammpsGui(QWidget *parent, const QString &filename) :
         settings.remove("plugin_path");
 
         // start plugin configuration wizard
-        QWizard wizard;
-        wizard.setWindowIcon(QIcon(":/icons/lammps-icon-128x128.png"));
-        wizard.setFont(font());
+        auto *pluginwizard = new QWizard;
+        pluginwizard->setWindowIcon(QIcon(":/icons/lammps-icon-128x128.png"));
+        pluginwizard->setFont(font());
 
         auto *page = new QWizardPage;
         page->setTitle("<center>Configure LAMMPS Library Path</center>");
@@ -148,7 +159,7 @@ LammpsGui::LammpsGui(QWidget *parent, const QString &filename) :
         auto *layout = new QVBoxLayout;
         layout->addWidget(label);
         page->setLayout(layout);
-        wizard.addPage(page);
+        pluginwizard->addPage(page);
 
         page = new QWizardPage;
         page->setTitle("Select LAMMPS shared library");
@@ -188,24 +199,45 @@ LammpsGui::LammpsGui(QWidget *parent, const QString &filename) :
             choices.append(fn.canonicalFilePath());
         choices.removeDuplicates();
 
-        const char *lmpversion;
-        for (const auto &libpath : choices) {
-            if (lammps.load_lib(libpath.toStdString().c_str())) {
-                lmpversion = (const char *)lammps.extract_global("lammps_version");
-                bool valid = false;
-                if (lmpversion && (date_compare(lmpversion, "22 July 2025") >= 0)) valid = true;
+        int irow   = 0;
+        auto *grid = new QGridLayout;
+        grid->addWidget(label, irow, 0, 1, 3);
+        ++irow;
 
-                fprintf(stderr, "path: %s  version: %s  valid: %d\n", libpath.toStdString().c_str(),
-                        lmpversion, valid);
+        QString lmpversion;
+        bool set_default = true;
+        for (const auto &libpath : choices) {
+            if (lammps.load_lib(libpath)) {
+                auto *ptr = (const char *)lammps.extract_global("lammps_version");
+                if (ptr) lmpversion = ptr;
+
+                bool valid = false;
+                if (!lmpversion.isEmpty() && (date_compare(lmpversion, "22 July 2025") >= 0))
+                    valid = true;
+                if (lmpversion.isEmpty()) lmpversion = "(unknown)";
+
+                auto *button = new QRadioButton(QString("&%1. %2").arg(irow).arg(libpath));
+                button->setEnabled(valid);
+                if (valid && set_default) {
+                    button->setChecked(true);
+                    set_default = false;
+                }
+                grid->addWidget(button, irow, 0, 1, 2);
+                auto *vers = new QLabel(QString("Version %1").arg(lmpversion));
+                grid->addWidget(vers, irow, 2, 1, 1);
+                ++irow;
             }
         }
 
-        layout = new QVBoxLayout;
-        layout->addWidget(label);
+        auto *button = new QRadioButton(QString("&%1.").arg(irow));
+        auto *line = new QLineEdit(settings.value("plugin_path", "liblammpsplugin.so").toString());
+        auto *browse = new QPushButton("Browse...");
+        grid->addWidget(button, irow, 0, 1, 1);
+        grid->addWidget(line, irow, 1, 1, 1);
+        grid->addWidget(browse, irow, 2, 1, 1);
 
-        page->setLayout(layout);
-
-        wizard.addPage(page);
+        page->setLayout(grid);
+        pluginwizard->addPage(page);
 
         page = new QWizardPage;
         page->setTitle("Confirm LAMMPS library choice");
@@ -213,15 +245,22 @@ LammpsGui::LammpsGui(QWidget *parent, const QString &filename) :
                         QPixmap(":/icons/lammps-plugin.png")
                             .scaled(300, 278, Qt::KeepAspectRatio, Qt::SmoothTransformation));
         layout = new QVBoxLayout;
+        label  = new QLabel("<p>Confirm using this file</p>");
+        label->setWordWrap(true);
+        layout->addWidget(label);
         page->setLayout(layout);
-        wizard.addPage(page);
-        wizard.setWindowTitle("Configure LAMMPS shared library");
-        wizard.setWizardStyle(QWizard::ModernStyle);
-        wizard.exec();
+        pluginwizard->addPage(page);
 
-        // cannot continue without a path to the LAMMPS library
-        if (plugin_path.isEmpty()) exit(1);
+        pluginwizard->setWindowTitle("Configure LAMMPS shared library");
+        pluginwizard->setWizardStyle(QWizard::ModernStyle);
+        pluginwizard->exec();
     }
+
+    const char *path = mystrdup(QCoreApplication::applicationFilePath());
+    const char *arg0 = mystrdup(QCoreApplication::arguments().at(0));
+    execl(path, arg0, (char *)nullptr);
+    // cannot continue without a path to the LAMMPS library
+    if (plugin_path.isEmpty()) exit(1);
 #endif
 
     // default accelerator package is OPENMP, but we switch the configured accelerator to
