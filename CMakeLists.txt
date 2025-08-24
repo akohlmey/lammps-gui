@@ -259,7 +259,7 @@ if(APPLE)
     WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
   )
   add_custom_target(dmg
-    COMMAND packaging/build_macos_dmg.sh ${PROJECT_VERSION}
+    COMMAND ${CMAKE_SOURCE_DIR}/packaging/build_macos_dmg.sh ${PROJECT_VERSION}
     DEPENDS complete-bundle
     COMMENT "Create Drag-n-Drop installer disk image from app bundle"
     BYPRODUCT LAMMPS-macOS-multiarch-${PROJECT_VERSION}.dmg
