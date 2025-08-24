@@ -10,11 +10,7 @@ set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 # prefer compiling plugin version by default
-if(APPLE)
-  option(LAMMPS_GUI_USE_PLUGIN "Load LAMMPS library dynamically at runtime" OFF)
-else()
-  option(LAMMPS_GUI_USE_PLUGIN "Load LAMMPS library dynamically at runtime" ON)
-endif()
+option(LAMMPS_GUI_USE_PLUGIN "Load LAMMPS library dynamically at runtime" ON)
 
 # prefer Qt6 by default
 option(LAMMPS_GUI_USE_QT5 "Prefer using Qt5 over Qt6" OFF)
@@ -103,9 +99,6 @@ endif()
 
 set(LAMMPS_PLUGINLIB_DIR ${CMAKE_SOURCE_DIR}/plugin)
 if(LAMMPS_GUI_USE_PLUGIN)
-  if(APPLE)
-    message(FATAL_ERROR "Dynamic loading of the LAMMPS library currently not supported on this platform")
-  endif()
   enable_language(C)
   set(PLUGIN_LOADER_SRC ${LAMMPS_PLUGINLIB_DIR}/liblammpsplugin.c)
 endif()
@@ -175,9 +168,9 @@ else()
 endif()
 
 if(APPLE)
-  set(MACOSX_ICON_FILE ${LAMMPS_DIR}/cmake/packaging/lammps.icns)
-  set(MACOSX_README_FILE ${LAMMPS_DIR}/cmake/packaging/README.macos)
-  set(MACOSX_BACKGROUND_FILE ${LAMMPS_DIR}/cmake/packaging/LAMMPS_DMG_Background.png)
+  set(MACOSX_ICON_FILE ${CMAKE_SOURCE_DIR}/packaging/lammps.icns)
+  set(MACOSX_README_FILE ${CMAKE_SOURCE_DIR}/packaging/README.macos)
+  set(MACOSX_BACKGROUND_FILE ${CMAKE_SOURCE_DIR}/packaging/LAMMPS_DMG_Background.png)
 endif()
 
 if(QT_VERSION_MAJOR EQUAL 6)
@@ -240,7 +233,7 @@ endif()
 # when compiling on macOS, create an "app bundle"
 if(APPLE)
   set_target_properties(lammps-gui PROPERTIES
-    MACOSX_BUNDLE_INFO_PLIST ${LAMMPS_DIR}/cmake/packaging/MacOSXBundleInfo.plist.in
+    MACOSX_BUNDLE_INFO_PLIST ${CMAKE_SOURCE_DIR}/packaging/MacOSXBundleInfo.plist.in
     MACOSX_BUNDLE_BUNDLE_VERSION ${PROJECT_VERSION}
     MACOSX_BUNDLE_SHORT_VERSION_STRING ${PROJECT_VERSION_MAJOR}.${PROJECT_VERSION_MINOR}
     MACOSX_BUNDLE_ICON_FILE lammps.icns
@@ -256,9 +249,9 @@ if(APPLE)
     ${CMAKE_COMMAND} -E make_directory ${APP_CONTENTS}/bin
     COMMAND ${CMAKE_COMMAND} -E create_symlink ../MacOS/lammps-gui ${APP_CONTENTS}/bin/lammps-gui
     COMMAND ${CMAKE_COMMAND} -E make_directory ${APP_CONTENTS}/Resources
-    COMMAND ${CMAKE_COMMAND} -E copy_if_different packaging/README.macos ${APP_CONTENTS}/Resources/README.txt
-    COMMAND ${CMAKE_COMMAND} -E copy_if_different packaging/lammps.icns ${APP_CONTENTS}/Resources
-    COMMAND ${CMAKE_COMMAND} -E copy_if_different packaging/LAMMPS_DMG_Background.png ${APP_CONTENTS}/Resources
+    COMMAND ${CMAKE_COMMAND} -E copy_if_different ${CMAKE_SOURCE_DIR}/packaging/README.macos ${APP_CONTENTS}/Resources/README.txt
+    COMMAND ${CMAKE_COMMAND} -E copy_if_different ${CMAKE_SOURCE_DIR}/packaging/lammps.icns ${APP_CONTENTS}/Resources
+    COMMAND ${CMAKE_COMMAND} -E copy_if_different ${CMAKE_SOURCE_DIR}/packaging/LAMMPS_DMG_Background.png ${APP_CONTENTS}/Resources
     COMMAND ${CMAKE_COMMAND} -E make_directory ${APP_CONTENTS}/share/lammps
     COMMAND ${CMAKE_COMMAND} -E make_directory ${APP_CONTENTS}/share/lammps/man/man1
     DEPENDS lammps-gui
@@ -295,7 +288,7 @@ elseif((CMAKE_SYSTEM_NAME STREQUAL "Windows") AND CMAKE_CROSSCOMPILING)
   endif()
   install(FILES $<TARGET_RUNTIME_DLLS:lmp> TYPE BIN)
   add_custom_target(zip
-    COMMAND sh -vx ${LAMMPS_DIR}/cmake/packaging/build_windows_cross_zip.sh ${CMAKE_INSTALL_PREFIX} ${PROJECT_VERSION}
+    COMMAND sh -vx ${CMAKE_SOURCE_DIR}/packaging/build_windows_cross_zip.sh ${CMAKE_INSTALL_PREFIX} ${PROJECT_VERSION}
     DEPENDS lammps-gui
     COMMENT "Create zip file with windows binaries"
     BYPRODUCT LAMMPS-GUI-Win10-amd64-${PROJECT_VERSION}.zip
@@ -332,10 +325,10 @@ elseif((CMAKE_SYSTEM_NAME STREQUAL "Linux") AND NOT LAMMPS_GUI_USE_PLUGIN)
   )
 
   add_custom_target(tgz
-    COMMAND ${LAMMPS_DIR}/cmake/packaging/build_linux_tgz.sh ${LAMMPS_RELEASE}
+    COMMAND ${CMAKE_SOURCE_DIR}/packaging/build_linux_tgz.sh ${PROJECT_VERSION}
     DEPENDS lmp lammps-gui ${WHAM_EXE}
     COMMENT "Create compressed tar file of LAMMPS-GUI with dependent libraries and wrapper"
-    BYPRODUCT LAMMPS-Linux-amd64-${LAMMPS_RELEASE}.tar.gz
+    BYPRODUCT LAMMPS-Linux-amd64-${PROJECT_VERSION}.tar.gz
     WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
   )
 endif()
