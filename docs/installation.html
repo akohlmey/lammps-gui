@@ -1,0 +1,1237 @@
+<!DOCTYPE html>
+
+<html lang="en" data-content_root="./">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>2. Installation &#8212; LAMMPS-GUI Documentation</title>
+    <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=d75fae25" />
+    <link rel="stylesheet" type="text/css" href="_static/sphinxdoc.css?v=34905f61" />
+    <link rel="stylesheet" type="text/css" href="_static/sphinx-design.min.css?v=95c83b7e" />
+    <script src="_static/jquery.js?v=5d32c60e"></script>
+    <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+    <script src="_static/documentation_options.js?v=5929fcd5"></script>
+    <script src="_static/doctools.js?v=9bcbadda"></script>
+    <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="_static/design-tabs.js?v=f930bc37"></script>
+    <link rel="canonical" href="https://lammps-gui.github.io/installation.html" />
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="prev" title="1. Overview" href="overview.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="Related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="overview.html" title="1. Overview"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="index.html">LAMMPS-GUI Documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href=""><span class="section-number">2. </span>Installation</a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <section id="installation">
+<h1><span class="section-number">2. </span>Installation<a class="headerlink" href="#installation" title="Link to this heading">¶</a></h1>
+<section id="pre-compiled-executables">
+<h2><span class="section-number">2.1. </span>Pre-compiled executables<a class="headerlink" href="#pre-compiled-executables" title="Link to this heading">¶</a></h2>
+<p>Pre-compiled LAMMPS executable packages that include the GUI are
+currently available from <a class="reference external" href="https://download.lammps.org/static/">https://download.lammps.org/static/</a> or
+<a class="reference external" href="https://github.com/lammps/lammps/releases">https://github.com/lammps/lammps/releases</a>.  For Windows, you need to
+download and then run the application installer.  For macOS you download
+and mount the disk image and then drag the application bundle to the
+Applications folder.  For Linux (x86_64) you currently have two
+options: 1) you can download the tar.gz archive, unpack it and run the
+GUI directly in place.  The <code class="docutils literal notranslate"><span class="pre">LAMMPS_GUI</span></code> folder may also be moved
+around and added to the <code class="docutils literal notranslate"><span class="pre">PATH</span></code> environment variable so the executables
+will be found automatically.  2) you can download the <a class="reference external" href="https://www.flatpak.org/">Flatpak file</a> and then install it locally with the
+<em>flatpak</em> command: <code class="docutils literal notranslate"><span class="pre">flatpak</span> <span class="pre">install</span> <span class="pre">--user</span>
+<span class="pre">LAMMPS-Linux-x86_64-GUI-&lt;version&gt;.flatpak</span></code> and run it with <code class="docutils literal notranslate"><span class="pre">flatpak</span>
+<span class="pre">run</span> <span class="pre">org.lammps.lammps-gui</span></code>.  The flatpak bundle also includes the
+command-line version of LAMMPS and some LAMMPS tools like msi2lmp.  The
+can be launched by using the <code class="docutils literal notranslate"><span class="pre">--command</span></code> flag. For example to run
+LAMMPS directly on the <code class="docutils literal notranslate"><span class="pre">in.lj</span></code> benchmark input you would type in the
+<code class="docutils literal notranslate"><span class="pre">bench</span></code> folder: <code class="docutils literal notranslate"><span class="pre">flatpak</span> <span class="pre">run</span> <span class="pre">--command=lmp</span> <span class="pre">-in</span> <span class="pre">in.lj</span></code> The flatpak
+version should also appear in the applications menu of standard desktop
+environments.  The LAMMPS-GUI executable is called <code class="docutils literal notranslate"><span class="pre">lammps-gui</span></code> and
+either takes no arguments or attempts to load the first argument as
+LAMMPS input file.</p>
+</section>
+<section id="compilation">
+<span id="lammps-gui-compilation"></span><h2><span class="section-number">2.2. </span>Compilation<a class="headerlink" href="#compilation" title="Link to this heading">¶</a></h2>
+<p>The source for the LAMMPS-GUI is included with the LAMMPS source code
+distribution in the folder <code class="docutils literal notranslate"><span class="pre">tools/lammps-gui</span></code> and thus it can be can
+be built as part of a regular LAMMPS compilation.  <span class="xref std std-doc">Using CMake</span> is required.  To enable its compilation, the CMake
+variable <code class="docutils literal notranslate"><span class="pre">-D</span> <span class="pre">BUILD_LAMMPS_GUI=on</span></code> must be set when creating the CMake
+configuration.  All other settings (compiler, flags, compile type) for
+LAMMPS-GUI are then inherited from the regular LAMMPS build.  If the Qt
+library is packaged for Linux distributions, then its location is
+typically auto-detected since the required CMake configuration files are
+stored in a location where CMake can find them without additional help.
+Otherwise, the location of the Qt library installation must be indicated
+by setting <code class="docutils literal notranslate"><span class="pre">-D</span> <span class="pre">Qt5_DIR=/path/to/qt5/lib/cmake/Qt5</span></code>, which is a path to
+a folder inside the Qt installation that contains the file
+<code class="docutils literal notranslate"><span class="pre">Qt5Config.cmake</span></code>. Similarly, for Qt6 the location of the Qt library
+installation can be indicated by setting <code class="docutils literal notranslate"><span class="pre">-D</span>
+<span class="pre">Qt6_DIR=/path/to/qt6/lib/cmake/Qt6</span></code>, if necessary.  When both, Qt5 and
+Qt6 are available, Qt6 will be preferred unless <code class="docutils literal notranslate"><span class="pre">-D</span>
+<span class="pre">LAMMPS_GUI_USE_QT5=yes</span></code> is set.</p>
+<p>It is possible to build the LAMMPS-GUI as a standalone compilation
+(e.g. when LAMMPS has been compiled with traditional make).  Then the
+CMake configuration needs to be told where to find the LAMMPS headers
+and the LAMMPS library, via <code class="docutils literal notranslate"><span class="pre">-D</span> <span class="pre">LAMMPS_SOURCE_DIR=/path/to/lammps/src</span></code>.
+CMake will try to guess a build folder with the LAMMPS library from that
+path, but it can also be set with <code class="docutils literal notranslate"><span class="pre">-D</span> <span class="pre">LAMMPS_LIB_DIR=/path/to/lammps/lib</span></code>.</p>
+<section id="plugin-version">
+<h3><span class="section-number">2.2.1. </span>Plugin version<a class="headerlink" href="#plugin-version" title="Link to this heading">¶</a></h3>
+<p>Rather than linking to the LAMMPS library during compilation, it is also
+possible to compile the GUI with a plugin loader that will load the
+LAMMPS library dynamically at runtime during the start of the GUI from a
+shared library; e.g. <code class="docutils literal notranslate"><span class="pre">liblammps.so</span></code> or <code class="docutils literal notranslate"><span class="pre">liblammps.dylib</span></code> or
+<code class="docutils literal notranslate"><span class="pre">liblammps.dll</span></code> (depending on the operating system).  This has the
+advantage that the LAMMPS library can be built from updated or modified
+LAMMPS source without having to recompile the GUI.  The ABI of the
+LAMMPS C-library interface is very stable and generally backward
+compatible.  This feature is enabled by setting <code class="docutils literal notranslate"><span class="pre">-D</span>
+<span class="pre">LAMMPS_GUI_USE_PLUGIN=on</span></code> and then <code class="docutils literal notranslate"><span class="pre">-D</span>
+<span class="pre">LAMMPS_PLUGINLIB_DIR=/path/to/lammps/plugin/loader</span></code>. Typically, this
+would be the <code class="docutils literal notranslate"><span class="pre">examples/COUPLE/plugin</span></code> folder of the LAMMPS
+distribution.</p>
+<p>When compiling LAMMPS-GUI with plugin support, there is an additional
+command-line flag (<code class="docutils literal notranslate"><span class="pre">-p</span> <span class="pre">&lt;path&gt;</span></code> or <code class="docutils literal notranslate"><span class="pre">--pluginpath</span> <span class="pre">&lt;path&gt;</span></code>) which
+allows to override the path to LAMMPS shared library used by the GUI.
+This is usually auto-detected on the first run and can be changed in the
+LAMMPS-GUI <em>Preferences</em> dialog.  The command-line flag allows to reset
+this path to a valid value in case the original setting has become
+invalid.  An empty path (“”) as argument restores the default setting.</p>
+<div class="versionchanged">
+<p><span class="versionmodified changed">Changed in version TBD.</span></p>
+</div>
+<p>When loading a LAMMPS library, it must be at least version 27 August
+2025 for LAMMPS-GUI version 1.7.1, since it uses features only available
+since that LAMMPS version.  Older LAMMPS versions will be rejected.</p>
+</section>
+</section>
+<section id="platform-notes">
+<h2><span class="section-number">2.3. </span>Platform notes<a class="headerlink" href="#platform-notes" title="Link to this heading">¶</a></h2>
+<section id="macos">
+<h3><span class="section-number">2.3.1. </span>macOS<a class="headerlink" href="#macos" title="Link to this heading">¶</a></h3>
+<p>When building on macOS, the build procedure will try to manufacture a
+drag-n-drop installer, <code class="docutils literal notranslate"><span class="pre">LAMMPS-macOS-multiarch.dmg</span></code>, when using the
+‘dmg’ target (i.e. <code class="docutils literal notranslate"><span class="pre">cmake</span> <span class="pre">--build</span> <span class="pre">&lt;build</span> <span class="pre">dir&gt;</span> <span class="pre">--target</span> <span class="pre">dmg</span></code> or <code class="docutils literal notranslate"><span class="pre">make</span> <span class="pre">dmg</span></code>.</p>
+<p>To build multi-arch executables that will run on both, arm64 and x86_64
+architectures natively, it is necessary to set the CMake variable <code class="docutils literal notranslate"><span class="pre">-D</span>
+<span class="pre">CMAKE_OSX_ARCHITECTURES=arm64;x86_64</span></code>.  To achieve wide compatibility
+with different macOS versions, you can also set <code class="docutils literal notranslate"><span class="pre">-D</span>
+<span class="pre">CMAKE_OSX_DEPLOYMENT_TARGET=11.0</span></code> which will set compatibility to macOS
+11 (Big Sur) and later, even if you are compiling on a more recent macOS
+version.</p>
+</section>
+<section id="windows">
+<h3><span class="section-number">2.3.2. </span>Windows<a class="headerlink" href="#windows" title="Link to this heading">¶</a></h3>
+<p>On Windows either native compilation from within Visual Studio 2022 with
+Visual C++ is supported and tested, or compilation with the MinGW / GCC
+cross-compiler environment on Fedora Linux.</p>
+<p><strong>Visual Studio</strong></p>
+<p>Using CMake and Ninja as build system are required.  Qt needs to be
+installed, tested was a binary package downloaded from
+<a class="reference external" href="https://www.qt.io">https://www.qt.io</a>, which installs into the <code class="docutils literal notranslate"><span class="pre">C:\\Qt</span></code> folder by default.
+There is a custom <cite>x64-GUI-MSVC</cite> build configuration provided in the
+<code class="docutils literal notranslate"><span class="pre">CMakeSettings.json</span></code> file that Visual Studio uses to store different
+compilation settings for project.  Choosing this configuration will
+activate building the <cite>lammps-gui.exe</cite> executable in addition to LAMMPS
+through importing package selection from the <code class="docutils literal notranslate"><span class="pre">windows.cmake</span></code> preset
+file and enabling building the LAMMPS-GUI and disabling building with MPI.
+When requesting an installation from the <cite>Build</cite> menu in Visual Studio,
+it will create a compressed <code class="docutils literal notranslate"><span class="pre">LAMMPS-Win10-amd64.zip</span></code> zip file with the
+executables and required dependent .dll files.  This zip file can be
+uncompressed and <code class="docutils literal notranslate"><span class="pre">lammps-gui.exe</span></code> run directly from there.  The
+uncompressed folder can be added to the <code class="docutils literal notranslate"><span class="pre">PATH</span></code> environment and LAMMPS
+and LAMMPS-GUI can be launched from anywhere from the command-line.</p>
+<p><strong>MinGW64 Cross-compiler</strong></p>
+<p>The standard CMake build procedure can be applied and the
+<code class="docutils literal notranslate"><span class="pre">mingw-cross.cmake</span></code> preset used. By using <code class="docutils literal notranslate"><span class="pre">mingw64-cmake</span></code> the CMake
+command will automatically include a suitable CMake toolchain file (the
+regular cmake command can be used after that to modify the configuration
+settings, if needed).  After building the libraries and executables,
+you can build the target ‘zip’ (i.e. <code class="docutils literal notranslate"><span class="pre">cmake</span> <span class="pre">--build</span> <span class="pre">&lt;build</span> <span class="pre">dir&gt;</span> <span class="pre">--target</span> <span class="pre">zip</span></code>
+or <code class="docutils literal notranslate"><span class="pre">make</span> <span class="pre">zip</span></code> to stage all installed files into a LAMMPS_GUI folder
+and then run a script to copy all required dependencies, some other files,
+and create a zip file from it.</p>
+</section>
+<section id="linux">
+<h3><span class="section-number">2.3.3. </span>Linux<a class="headerlink" href="#linux" title="Link to this heading">¶</a></h3>
+<p>Version 5.12 or later of the Qt library is required. Those are provided
+by, e.g., Ubuntu 20.04LTS.  Thus older Linux distributions are not
+likely to be supported, while more recent ones will work, even for
+pre-compiled executables (see above).  After compiling with
+<code class="docutils literal notranslate"><span class="pre">cmake</span> <span class="pre">--build</span> <span class="pre">&lt;build</span> <span class="pre">folder&gt;</span></code>, use <code class="docutils literal notranslate"><span class="pre">cmake</span> <span class="pre">--build</span> <span class="pre">&lt;build</span>
+<span class="pre">folder&gt;</span> <span class="pre">--target</span> <span class="pre">tgz</span></code> or <code class="docutils literal notranslate"><span class="pre">make</span> <span class="pre">tgz</span></code> to build a
+<code class="docutils literal notranslate"><span class="pre">LAMMPS-Linux-amd64.tar.gz</span></code> file with the executables and their
+support libraries.</p>
+<p>It is also possible to build a <a class="reference external" href="https://docs.flatpak.org/en/latest/single-file-bundles.html">flatpak bundle</a> which is
+a way to distribute applications in a way that is compatible with most
+Linux distributions.  Use the “flatpak” target to trigger a compile
+(<code class="docutils literal notranslate"><span class="pre">cmake</span> <span class="pre">--build</span> <span class="pre">&lt;build</span> <span class="pre">folder&gt;</span> <span class="pre">--target</span> <span class="pre">flatpak</span></code> or <code class="docutils literal notranslate"><span class="pre">make</span> <span class="pre">flatpak</span></code>).
+Please note that this will not build from the local sources but from the
+repository and branch listed in the <code class="docutils literal notranslate"><span class="pre">org.lammps.lammps-gui.yml</span></code>
+LAMMPS-GUI source folder.</p>
+<hr class="docutils" />
+<p>LAMMPS-GUI aims to provide the traditional experience of running LAMMPS
+using a text editor, a command-line window, and launching the LAMMPS
+text-mode executable printing output to the screen, but just integrated
+into a single application:</p>
+<ul class="simple">
+<li><p>Write and edit LAMMPS input files using the built-in text editor.</p></li>
+<li><p>Run LAMMPS on those input file with command-line flags to enable a
+specific accelerator package (or none).</p></li>
+<li><p>Extract data from the created files (like trajectory files, log files
+with thermodynamic data, or images) and visualize it using external
+software.</p></li>
+</ul>
+<p>That traditional procedure is effective for people proficient in using the
+command-line, as it allows them to use the tools for the individual steps
+that they are most comfortable with.  In fact, it is often <em>required</em> to
+adopt this workflow when running LAMMPS simulations on high-performance
+computing facilities.</p>
+<p>The main benefit of using LAMMPS-GUI is that many basic tasks can be
+done directly from the GUI <strong>without</strong> switching to a text console
+window or using external programs, let alone writing scripts to extract
+data from the generated output.  It also integrates well with graphical
+desktop environments where the <cite>.lmp</cite> filename extension can be
+registered with LAMMPS-GUI as the executable to launch when double
+clicking on such files using a file manager.  LAMMPS-GUI also has
+support for ‘drag and drop’ for opening inputs: an input file can
+be selected and then moved and dropped on the LAMMPS-GUI executable;
+LAMMPS-GUI will launch and read the file into its buffer.  Input files
+also can be dropped into the editor window of the running LAMMPS-GUI
+application, which will close the current file and open the new file.
+In many cases LAMMPS-GUI will be integrated into the graphical desktop
+environment and can be launched just like any other applications from
+the graphical interface.</p>
+<p>LAMMPS-GUI thus makes it easier for beginners to get started running
+LAMMPS and is well-suited for LAMMPS tutorials, since you only need to
+work with a single, ready-to-use program for most of the tasks.  Plus it
+is available for download as pre-compiled package for popular operating
+systems (Linux, macOS, Windows).  This saves time and allows users to
+focus on learning LAMMPS itself, without the need to learn how to
+compile LAMMPS, learn how to use the command line, or learn how to use a
+separate text editor.</p>
+<p>The tutorials at <a class="reference external" href="https://lammpstutorials.github.io/">https://lammpstutorials.github.io/</a> are specifically
+updated for use with LAMMPS-GUI and their tutorial materials can be
+downloaded and edited directly from within the GUI while automatically
+loading the matching tutorial instructions into a webbrowser.</p>
+<p>Yet the basic control flow remains similar to running LAMMPS from the
+command line, so the barrier for replacing parts of the functionality of
+LAMMPS-GUI with external tools is low.  That said, LAMMPS-GUI offer some
+unique features that are not easily found elsewhere:</p>
+<ul class="simple">
+<li><p>auto-adapting to features available in the integrated LAMMPS library</p></li>
+<li><p>auto-completion for available LAMMPS commands and options only</p></li>
+<li><p>context-sensitive online help for known LAMMPS commands</p></li>
+<li><p>start and stop of simulations via mouse or keyboard</p></li>
+<li><p>monitoring of simulation progress and CPU use</p></li>
+<li><p>interactive visualization using the LAMMPS <span class="xref std std-doc">dump image feature</span>
+command with the option to copy-paste the resulting settings</p></li>
+<li><p>automatic slide show generation from dump image output at runtime</p></li>
+<li><p>automatic plotting of thermodynamic data at runtime</p></li>
+<li><p>inspection of binary restart files</p></li>
+<li><p>integration will a set of LAMMPS tutorials</p></li>
+</ul>
+<div class="hint admonition">
+<p class="admonition-title">Download LAMMPS-GUI for your platform</p>
+<p>Pre-compiled, ready-to-use LAMMPS-GUI executables for Linux x86_64
+(Ubuntu 20.04LTS or later and compatible), macOS (version 11 aka Big
+Sur or later), and Windows (version 10 or later) <span class="xref std std-ref">are available</span> for download.  Non-MPI LAMMPS executables (as
+<code class="docutils literal notranslate"><span class="pre">lmp</span></code>) for running LAMMPS from the command-line and <span class="xref std std-doc">some
+LAMMPS tools</span> compiled executables are also included.  Also,
+the pre-compiled LAMMPS-GUI packages include the WHAM executables
+from <a class="reference external" href="http://membrane.urmc.rochester.edu/content/wham/">http://membrane.urmc.rochester.edu/content/wham/</a> for use with
+LAMMPS tutorials documented in this paper (<a class="reference internal" href="#gravelle1"><span class="std std-ref">Gravelle1</span></a>).</p>
+<p>The source code for LAMMPS-GUI is included in the LAMMPS source code
+distribution and can be found in the <code class="docutils literal notranslate"><span class="pre">tools/lammps-gui</span></code> folder.  It
+can be compiled alongside LAMMPS when <span class="xref std std-doc">compiling with CMake</span>.</p>
+</div>
+<hr class="docutils" />
+<p>The following text provides a documentation of the features and
+functionality of LAMMPS-GUI.  Suggestions for new features and
+reports of bugs are always welcome.  You can use the <span class="xref std std-doc">the same
+channels as for LAMMPS itself</span> for that purpose.</p>
+<hr class="docutils" />
+<section id="installing-pre-compiled-lammps-gui-packages">
+<h4>Installing Pre-compiled LAMMPS-GUI Packages<a class="headerlink" href="#installing-pre-compiled-lammps-gui-packages" title="Link to this heading">¶</a></h4>
+<p>LAMMPS-GUI is available for download as pre-compiled binary packages for
+Linux x86_64 (Ubuntu 22.04LTS or later and compatible), macOS (version
+11 aka Big Sur or later), and Windows (version 10 or later) from the
+<a class="reference external" href="https://github.com/lammps/lammps/releases/">LAMMPS release pages on GitHub</a>.
+A backup download location is at <a class="reference external" href="https://download.lammps.org/static/">https://download.lammps.org/static/</a>
+Alternately, LAMMPS-GUI can be compiled from source when building LAMMPS.</p>
+<div class="note admonition">
+<p class="admonition-title">GPU support and MPI parallelization</p>
+<p>The pre-compiled packages include support for GPUs through the GPU
+package with OpenCL (in mixed precision).  However, this requires
+that you have a compatible driver and the OpenCL runtime installed.
+This is not always available and when using the flatpak package, the
+flatpak sandbox prevents accessing the GPU.  GPU support through
+KOKKOS is currently not available for technical reasons, but serial
+and OpenMP multi-threading is available.</p>
+<p>The design decisions for LAMMPS-GUI and how it launches LAMMPS
+conflict with parallel runs using MPI.  You have to <span class="xref std std-doc">use a
+regular LAMMPS executable</span> compiled with MPI support for
+that.  For the use cases that LAMMPS-GUI has been conceived for this
+is not a significant limitation.</p>
+</div>
+</section>
+</section>
+</section>
+<section id="windows-10-and-later">
+<h2><span class="section-number">2.4. </span>Windows 10 and later<a class="headerlink" href="#windows-10-and-later" title="Link to this heading">¶</a></h2>
+<p>After downloading the <code class="docutils literal notranslate"><span class="pre">LAMMPS-Win10-64bit-GUI-&lt;version&gt;.exe</span></code> installer
+package, you need to execute it, and start the installation process.
+Since those packages are currently unsigned, you have to enable “Developer Mode”
+in the Windows System Settings to run the installer.</p>
+</section>
+<section id="macos-11-and-later">
+<h2><span class="section-number">2.5. </span>MacOS 11 and later<a class="headerlink" href="#macos-11-and-later" title="Link to this heading">¶</a></h2>
+<p>After downloading the <code class="docutils literal notranslate"><span class="pre">LAMMPS-macOS-multiarch-GUI-&lt;version&gt;.dmg</span></code>
+application bundle disk image, you need to double-click it and then, in
+the window that opens, drag the app bundle as indicated into the
+“Applications” folder.  Afterwards, the disk image can be unmounted.
+Then follow the instructions in the “README.txt” file to get access to
+the other included command-line executables.</p>
+</section>
+<section id="linux-on-x86-64">
+<h2><span class="section-number">2.6. </span>Linux on x86_64<a class="headerlink" href="#linux-on-x86-64" title="Link to this heading">¶</a></h2>
+<p>For Linux with x86_64 CPU there are currently two variants. The first
+is compiled on Ubuntu 20.04LTS, is using some wrapper scripts, and
+should be compatible with more recent Linux distributions.  After
+downloading and unpacking the
+<code class="docutils literal notranslate"><span class="pre">LAMMPS-Linux-x86_64-GUI-&lt;version&gt;.tar.gz</span></code> package.  You can switch
+into the “LAMMPS_GUI” folder and execute “./lammps-gui” directly.</p>
+<p>The second variant uses <a class="reference external" href="https://www.flatpak.org">flatpak</a> and
+requires the flatpak management and runtime software to be installed.
+After downloading the <code class="docutils literal notranslate"><span class="pre">LAMMPS-GUI-Linux-x86_64-GUI-&lt;version&gt;.flatpak</span></code>
+flatpak bundle, you can install it with <code class="docutils literal notranslate"><span class="pre">flatpak</span> <span class="pre">install</span> <span class="pre">--user</span>
+<span class="pre">LAMMPS-GUI-Linux-x86_64-GUI-&lt;version&gt;.flatpak</span></code>.  After installation,
+LAMMPS-GUI should be integrated into your desktop environment under
+“Applications &gt; Science” but also can be launched from the console with
+<code class="docutils literal notranslate"><span class="pre">flatpak</span> <span class="pre">run</span> <span class="pre">org.lammps.lammps-gui</span></code>.  The flatpak bundle also includes
+the console LAMMPS executable <code class="docutils literal notranslate"><span class="pre">lmp</span></code> which can be launched to run
+simulations with, for example with:</p>
+<div class="highlight-sh notranslate"><div class="highlight"><pre><span></span>flatpak<span class="w"> </span>run<span class="w"> </span>--command<span class="o">=</span>lmp<span class="w"> </span>org.lammps.lammps-gui<span class="w"> </span>-in<span class="w"> </span><span class="k">in</span>.melt
+</pre></div>
+</div>
+<p>Other bundled command-line executables are run the same way and can be
+listed with:</p>
+<div class="highlight-sh notranslate"><div class="highlight"><pre><span></span>ls<span class="w"> </span><span class="k">$(</span>flatpak<span class="w"> </span>info<span class="w"> </span>--show-location<span class="w"> </span>org.lammps.lammps-gui<span class="w"> </span><span class="k">)</span>/files/bin
+</pre></div>
+</div>
+</section>
+<section id="compiling-from-source">
+<h2><span class="section-number">2.7. </span>Compiling from Source<a class="headerlink" href="#compiling-from-source" title="Link to this heading">¶</a></h2>
+<p>There also are instructions for <a class="reference internal" href="#lammps-gui-compilation"><span class="std std-ref">compiling LAMMPS-GUI from source
+code</span></a> available elsewhere in the manual.
+Compilation from source <em>requires</em> using CMake.</p>
+<hr class="docutils" />
+<p>When LAMMPS-GUI starts, it shows the main window, labeled <em>Editor</em>, with
+either an empty buffer or the contents of the file used as argument. In
+the latter case it may look like the following:</p>
+<p><a class="reference internal" href="_images/lammps-gui-main.png"><img alt="gui-main1" src="_images/lammps-gui-main.png" style="width: 48%;" /></a>  <a class="reference internal" href="_images/lammps-gui-dark.png"><img alt="gui-main2" src="_images/lammps-gui-dark.png" style="width: 48%;" /></a></p>
+<p>There is the typical menu bar at the top, then the main editor buffer,
+and a status bar at the bottom.  The input file contents are shown
+with line numbers on the left and the input is colored according to
+the LAMMPS input file syntax.  The status bar shows the status of
+LAMMPS execution on the left (e.g. “Ready.” when idle) and the current
+working directory on the right.  The name of the current file in the
+buffer is shown in the window title; the word <cite>*modified*</cite> is added if
+the buffer edits have not yet saved to a file.  The geometry of the main
+window is stored when exiting and restored when starting again.</p>
+</section>
+<section id="opening-files">
+<h2><span class="section-number">2.8. </span>Opening Files<a class="headerlink" href="#opening-files" title="Link to this heading">¶</a></h2>
+<p>The LAMMPS-GUI application can be launched without command-line arguments
+and then starts with an empty buffer in the <em>Editor</em> window.  If arguments
+are given LAMMPS will use first command-line argument as the file name for
+the <em>Editor</em> buffer and reads its contents into the buffer, if the file
+exists.  All further arguments are ignored.  Files can also be opened via
+the <em>File</em> menu, the <cite>Ctrl-O</cite> (<cite>Command-O</cite> on macOS) keyboard shortcut
+or by drag-and-drop of a file from a graphical file manager into the editor
+window.  If a file extension (e.g. <code class="docutils literal notranslate"><span class="pre">.lmp</span></code>) has been registered with the
+graphical environment to launch LAMMPS-GUI, an existing input file can
+be launched with LAMMPS-GUI through double clicking.</p>
+<p>Only one file can be edited at a time, so opening a new file with a
+filled buffer closes that buffer.  If the buffer has unsaved
+modifications, you are asked to either cancel the operation, discard the
+changes, or save them.  A buffer with modifications can be saved any
+time from the “File” menu, by the keyboard shortcut <cite>Ctrl-S</cite>
+(<cite>Command-S</cite> on macOS), or by clicking on the “Save” button at the very
+left in the status bar.</p>
+</section>
+<section id="running-lammps">
+<h2><span class="section-number">2.9. </span>Running LAMMPS<a class="headerlink" href="#running-lammps" title="Link to this heading">¶</a></h2>
+<p>From within the LAMMPS-GUI main window LAMMPS can be started either from
+the <em>Run</em> menu using the <em>Run LAMMPS from Editor Buffer</em> entry, by
+the keyboard shortcut <cite>Ctrl-Enter</cite> (<cite>Command-Enter</cite> on macOS), or by
+clicking on the green “Run” button in the status bar.  All of these
+operations causes LAMMPS to process the entire input script in the
+editor buffer, which may contain multiple <span class="xref std std-doc">run</span> or
+<span class="xref std std-doc">minimize</span> commands.</p>
+<p>LAMMPS runs in a separate thread, so the GUI stays responsive and is
+able to interact with the running calculation and access data it
+produces.  It is important to note that running LAMMPS this way is using
+the contents of the input buffer for the run (via the
+<code class="xref cpp cpp-func docutils literal notranslate"><span class="pre">lammps_commands_string()</span></code> function of the LAMMPS C-library
+interface), and <strong>not</strong> the original file it was read from.  Thus, if
+there are unsaved changes in the buffer, they <em>will</em> be used.  As an
+alternative, it is also possible to run LAMMPS by reading the contents
+of a file from the <em>Run LAMMPS from File</em> menu entry or with
+<cite>Ctrl-Shift-Enter</cite>.  This option may be required in some rare cases
+where the input uses some functionality that is not compatible with
+running LAMMPS from a string buffer.  For consistency, any unsaved
+changes in the buffer must be either saved to the file or undone before
+LAMMPS can be run from a file.</p>
+<p>The line number of the currently executed command is highlighted in
+green in the line number display for the <em>Editor</em> Window.</p>
+<a class="reference internal image-reference" href="_images/lammps-gui-running.png"><img alt="_images/lammps-gui-running.png" class="align-center" src="_images/lammps-gui-running.png" style="width: 771.0px; height: 125.25px;" />
+</a>
+<p>While LAMMPS is running, the contents of the status bar change.  The
+text fields that normally show “Ready.” and the current working
+directory, change into an area showing the CPU utilization in percent.
+Nest to it is a text indicating that LAMMPS is running, which also
+indicates the number of active threads (in case thread-parallel
+acceleration was selected in the <em>Preferences</em> dialog).  On the right
+side, a progress bar is shown that displays the estimated progress for
+the current <span class="xref std std-doc">run</span> or <span class="xref std std-doc">minimize</span> command.</p>
+<div class="note admonition">
+<p class="admonition-title">CPU Utilization</p>
+<p>The CPU Utilization should ideally be close to 100% times the number
+of threads like in the screenshot image above.  Since the GUI is
+running as a separate thread, the CPU utilization can be higher, for
+example when the GUI needs to work hard to keep up with the
+simulation.  This can be caused by having frequent thermo output or
+running a simulation of a small system.  In the <em>Preferences</em> dialog,
+the polling interval for updating the the <em>Output</em> and <em>Charts</em>
+windows can be set. The intervals may need to be lowered to not miss
+data between <em>Charts</em> data updates or to avoid stalling when the
+thermo output is not transferred to the <em>Output</em> window fast enough.
+It is also possible to reduce the amount of data by increasing the
+<span class="xref std std-doc">thermo interval</span>.  LAMMPS-GUI detects, if the
+associated I/O buffer is by a significant percentage and will print a
+warning after the run with suggested adjustments.  The utilization
+can also be lower, e.g.  when the simulation is slowed down by the
+GUI or other processes also running on the host computer and
+competing with LAMMPS-GUI for GPU resources.</p>
+<a class="reference internal image-reference" href="_images/lammps-gui-buffer-warn.png"><img alt="_images/lammps-gui-buffer-warn.png" class="align-center" src="_images/lammps-gui-buffer-warn.png" style="width: 384.0px; height: 201.0px;" />
+</a>
+</div>
+<p>If an error occurs (in the example below the command <span class="xref std std-doc">label</span> was incorrectly capitalized as “Label”), an error message
+dialog is shown and the line of the input which triggered the error is
+highlighted in red.  The state of LAMMPS in the status bar is set to
+“Failed.”  instead of “Ready.”</p>
+<a class="reference internal image-reference" href="_images/lammps-gui-run-error.png"><img alt="_images/lammps-gui-run-error.png" class="align-center" src="_images/lammps-gui-run-error.png" style="width: 649.5px; height: 214.5px;" />
+</a>
+<p>Up to three additional windows may open during a run:</p>
+<ul class="simple">
+<li><p>an <em>Output</em> window with the captured screen output from LAMMPS</p></li>
+<li><p>a <em>Charts</em> window with a line graph created from thermodynamic output of the run</p></li>
+<li><p>a <em>Slide Show</em> window with images created by a <span class="xref std std-doc">dump image command</span>
+in the input</p></li>
+</ul>
+<p>More information on those windows and how to adjust their behavior and
+contents is given below.</p>
+<p>An active LAMMPS run can be stopped cleanly by using either the <em>Stop
+LAMMPS</em> entry in the <em>Run</em> menu, the keyboard shortcut <cite>Ctrl-/</cite>
+(<cite>Command-/</cite> on macOS), or by clicking on the red button in the status
+bar.  This will cause the running LAMMPS process to complete the current
+timestep (or iteration for energy minimization) and then complete the
+processing of the buffer while skipping all run or minimize commands.
+This is equivalent to the input script command <span class="xref std std-doc">timer timeout 0</span> and is implemented by calling the
+<code class="xref cpp cpp-func docutils literal notranslate"><span class="pre">lammps_force_timeout()</span></code> function of the LAMMPS C-library
+interface.  Please see the corresponding documentation pages to
+understand the implications of this operation.</p>
+<p>By default, when starting a run, an <em>Output</em> window opens that displays
+the screen output of the running LAMMPS calculation, as shown below.
+This text would normally be seen in the command-line window.</p>
+<a class="reference internal image-reference" href="_images/lammps-gui-log.png"><img alt="_images/lammps-gui-log.png" class="align-center" src="_images/lammps-gui-log.png" style="width: 404.0px; height: 169.0px;" />
+</a>
+<p>LAMMPS-GUI captures the screen output from LAMMPS as it is generated and
+updates the <em>Output</em> window regularly during a run.  If there are any
+warnings or errors in the LAMMPS output, they are highlighted by using
+bold text colored in red.  There is a small panel at the bottom center
+of the <em>Output</em> window showing how many warnings and errors were
+detected and how many lines the entire output has.  By clicking on the
+button on the right with the warning symbol or by using the keyboard
+shortcut <cite>Ctrl-N</cite> (<cite>Command-N</cite> on macOS), you can jump to the next
+line with a warning or error.  If there is a URL pointing to additional
+explanations in the online manual, that URL will be highlighted and
+double-clicking on it shall open the corresponding manual page in
+the web browser.  The option is also available from the context menu.</p>
+<p>By default, the <em>Output</em> window is replaced each time a run is started.
+The runs are counted and the run number for the current run is displayed
+in the window title.  It is possible to change the behavior of
+LAMMPS-GUI in the preferences dialog to create a <em>new</em> <em>Output</em> window
+for every run or to not show the current <em>Output</em> window.  It is also
+possible to show or hide the <em>current</em> <em>Output</em> window from the <em>View</em>
+menu.</p>
+<p>The text in the <em>Output</em> window is read-only and cannot be modified, but
+keyboard shortcuts to select and copy all or parts of the text can be
+used to transfer text to another program. Also, the keyboard shortcut
+<cite>Ctrl-S</cite> (<cite>Command-S</cite> on macOS) is available to save the <em>Output</em> buffer to a
+file.  The “Select All” and “Copy” functions, as well as a “Save Log to
+File” option are also available from a context menu by clicking with the
+right mouse button into the <em>Output</em> window text area.</p>
+<a class="reference internal image-reference" href="_images/lammps-gui-yaml.png"><img alt="_images/lammps-gui-yaml.png" class="align-center" src="_images/lammps-gui-yaml.png" style="width: 673.5px; height: 220.5px;" />
+</a>
+<p>Should the <em>Output</em> window contain embedded YAML format text (see above for a
+demonstration), for example from using <span class="xref std std-doc">thermo_style yaml</span> or <span class="xref std std-doc">thermo_modify line yaml</span>, the
+keyboard shortcut <cite>Ctrl-Y</cite> (<cite>Command-Y</cite> on macOS) is available to save
+only the YAML parts to a file.  This option is also available from a
+context menu by clicking with the right mouse button into the <em>Output</em> window
+text area.</p>
+<p>By default, when starting a run, a <em>Charts</em> window opens that displays a
+plot of thermodynamic output of the LAMMPS calculation as shown below.</p>
+<a class="reference internal image-reference" href="_images/lammps-gui-chart.png"><img alt="_images/lammps-gui-chart.png" class="align-center" src="_images/lammps-gui-chart.png" style="width: 366.96000000000004px; height: 220.77px;" />
+</a>
+<p>The “Data:” drop down menu on the top right allows selection of
+different properties that are computed and written as thermodynamic
+output to the output window.  Only one property can be shown at a time.
+The plots are updated regularly with new data as the run progresses, so
+they can be used to visually monitor the evolution of available
+properties.  The update interval can be set in the <em>Preferences</em> dialog.
+By default, the raw data for the selected property is plotted as a blue
+graph.  From the “Plot:” drop menu on the second row and on the left,
+you can select whether to plot only raw data graph, only a smoothed data
+graph, or both graphs on top of each other.  The smoothing process uses
+a <a class="reference external" href="https://en.wikipedia.org/wiki/Savitzky%E2%80%93Golay_filter">Savitzky-Golay convolution filter</a>.  The
+convolution window width (left) and order (right) parameters can be set
+in the boxes next to the drop down menu.  Default settings are 10 and 4
+which means that the smoothing window includes 10 points each to the
+left and the right of the current data point for a total of 21 points
+and a fourth order polynomial is fitted to the data in the window.</p>
+<p>The “Title:” and “Y:” input boxes allow to edit the text shown as the
+plot title and the y-axis label, respectively.  The text entered in the
+“Title:” box is applied to <em>all</em> charts, while the “Y:” text changes
+only the y-axis label of the currently <em>selected</em> plot.</p>
+<p>The window title shows the current run number that this chart window
+corresponds to.  Same as for the <em>Output</em> window, the chart window is
+replaced on each new run, but the behavior can be changed in the
+<em>Preferences</em> dialog.</p>
+<p>From the <em>File</em> menu on the top left, it is possible to save an image
+of the currently displayed plot or export the data in either plain text
+columns (for use by plotting tools like <a class="reference external" href="http://www.gnuplot.info/">gnuplot</a> or <a class="reference external" href="https://plasma-gate.weizmann.ac.il/Grace/">grace</a>), as CSV data which can be
+imported for further processing with Microsoft Excel <a class="reference external" href="https://www.libreoffice.org/">LibreOffice Calc</a> or with Python via <a class="reference external" href="https://pandas.pydata.org/">pandas</a>, or as YAML which can be imported into
+Python with <a class="reference external" href="https://pyyaml.org/">PyYAML</a> or pandas.</p>
+<p>Thermo output data from successive run commands in the input script is
+combined into a single data set unless the format, number, or names of
+output columns are changed with a <span class="xref std std-doc">thermo_style</span> or
+a <span class="xref std std-doc">thermo_modify</span> command, or the current time step
+is reset with <span class="xref std std-doc">reset_timestep</span>, or if a
+<span class="xref std std-doc">clear</span> command is issued.  This is where the YAML export
+from the <em>Charts</em> window differs from that of the <em>Output</em> window:
+here you get the compounded data set starting with the last change of
+output fields or timestep setting, while the export from the log will
+contain <em>all</em> YAML output but <em>segmented</em> into individual runs.</p>
+<p>The <em>Preferences</em> dialog has a <em>Charts</em> tab, where you can configure
+multiple chart-related settings, like the default title, colors for the
+graphs, default choice of the raw / smooth graph selection, and the
+default chart graph size.</p>
+<div class="warning admonition">
+<p class="admonition-title">Slowdown of Simulations from Charts Data Processing</p>
+<p>Using frequent thermo output during long simulations can result in a
+significant slowdown of that simulation since it is accumulating many
+data points for each of the thermo properties in the chart window to
+be redrawn with every update.  The updates are consuming additional
+CPU time when smoothing enabled.  This slowdown can be confirmed when
+an increasing percentage of the total run time is spent in the
+“Output” or “Other” sections of the <span class="xref std std-doc">MPI task timing breakdown</span>.  It is thus recommended to use a large enough value as
+argument <cite>N</cite> for the <span class="xref std std-doc">thermo command</span> and to select
+plotting only the “Raw” data in the <em>Charts Window</em> during such
+simulations.  It is always possible to switch between the different
+display styles for charts during the simulation and after it has
+finished.</p>
+<div class="versionchanged">
+<p><span class="versionmodified changed">Changed in version 1.7: </span>As of LAMMPS-GUI version 1.7 the chart data processing is
+significantly optimized compared to older versions of LAMMPS-GUI.
+The general problem of accumulating excessive amounts of data
+and the overhead of too frequently polling LAMMPS for new data
+cannot be optimized away, though.  If necessary, the command
+line LAMMPS executable needs to be used and the output accumulated
+of a very fast disk (e.g. a high-performance SSD).</p>
+</div>
+</div>
+<p>By default, if the LAMMPS input contains a <span class="xref std std-doc">dump image</span> command, a “Slide Show” window opens which loads and
+displays the images created by LAMMPS as they are written.  This is a
+convenient way to visually monitor the progress of the simulation.</p>
+<a class="reference internal image-reference" href="_images/lammps-gui-slideshow.png"><img alt="_images/lammps-gui-slideshow.png" class="align-center" src="_images/lammps-gui-slideshow.png" style="width: 272.0px; height: 315.5px;" />
+</a>
+<p>The various buttons at the bottom right of the window allow single
+stepping through the sequence of images or playing an animation (as a
+continuous loop or once from first to last).  It is also possible to
+zoom in or zoom out of the displayed images. The button on the very
+left triggers an export of the slide show animation to a movie file,
+provided the <a class="reference external" href="https://ffmpeg.org/">FFmpeg program</a> is installed.</p>
+<p>When clicking on the “garbage can” icon, all image files of the slide
+show will be deleted.  Since their number can be large for long
+simulations, this option enables to safely and quickly clean up the
+clutter caused in the working directory by those image files without
+risk of deleting other files by accident when using wildcards.</p>
+<p>During a run, it may be of interest to monitor the value of input script
+variables, for example to monitor the progress of loops.  This can be
+done by enabling the “Variables Window” in the <em>View</em> menu or by using
+the <cite>Ctrl-Shift-W</cite> keyboard shortcut.  This shows info similar to the
+<span class="xref std std-doc">info variables</span> command in a separate window as shown
+below.</p>
+<a class="reference internal image-reference" href="_images/lammps-gui-variable-info.png"><img alt="_images/lammps-gui-variable-info.png" class="align-center" src="_images/lammps-gui-variable-info.png" style="width: 333.0px; height: 67.0px;" />
+</a>
+<p>Like for the <em>Output</em> and <em>Charts</em> windows, its content is continuously
+updated during a run.  It will show “(none)” if there are no variables
+defined.  Note that it is also possible to <em>set</em> <span class="xref std std-doc">index style
+variables</span>, that would normally be set via command-line
+flags, via the “Set Variables…” dialog from the <em>Run</em> menu.
+LAMMPS-GUI automatically defines the variable “gui_run” to the current
+value of the run counter.  That way it is possible to automatically
+record a separate log for each run attempt by using the command</p>
+<div class="highlight-LAMMPS notranslate"><div class="highlight"><pre><span></span>log logfile-${gui_run}.txt
+</pre></div>
+</div>
+<p>at the beginning of an input file. That would record logs to files
+<code class="docutils literal notranslate"><span class="pre">logfile-1.txt</span></code>, <code class="docutils literal notranslate"><span class="pre">logfile-2.txt</span></code>, and so on for successive runs.</p>
+<p id="snapshot-viewer">By selecting the <em>Create Image</em> entry in the <em>Run</em> menu, or by
+hitting the <cite>Ctrl-I</cite> (<cite>Command-I</cite> on macOS) keyboard shortcut, or by
+clicking on the “palette” button in the status bar of the <em>Editor</em>
+window, LAMMPS-GUI sends a custom <span class="xref std std-doc">write_dump image</span>
+command to LAMMPS and reads back the resulting snapshot image with the
+current state of the system into an image viewer.  This functionality is
+<em>not</em> available <em>during</em> an ongoing run.  In case LAMMPS is not yet
+initialized, LAMMPS-GUI tries to identify the line with the first run or
+minimize command and execute all commands from the input buffer up to
+that line, and then executes a “run 0” command.  This initializes the
+system so an image of the initial state of the system can be rendered.
+If there was an error in that process, the snapshot image viewer does
+not appear.</p>
+<p>When possible, LAMMPS-GUI tries to detect which elements the atoms
+correspond to (via their mass) and then colorize them in the image and
+set their atom diameters accordingly.  If this is not possible, for
+instance when using reduced (= ‘lj’) <span class="xref std std-doc">units</span>, then
+LAMMPS-GUI will check the current pair style and if it is a
+Lennard-Jones type potential, it will extract the <em>sigma</em> parameter for
+each atom type and assign atom diameters from those numbers.  For cases
+where atom diameters are not auto-detected, the <em>Atom size</em> field can be
+edited and a suitable value set manually. The default value is inferred
+from the x-direction lattice spacing. It is also possible to visualize
+regions and have bonds computed dynamically for potentials, where the
+bonds are determined implicitly (like <span class="xref std std-doc">AIREBO</span>.
+Please see the documentation of the <span class="xref std std-doc">dump image command</span> for more details on these two features.</p>
+<p>If elements cannot be detected the default sequence of colors of the
+<span class="xref std std-doc">dump image</span> command is assigned to the different atom
+types.</p>
+<p><a class="reference internal" href="_images/lammps-gui-image.png"><img alt="gui-image1" src="_images/lammps-gui-image.png" style="width: 24%;" /></a>  <a class="reference internal" href="_images/lammps-gui-funnel.png"><img alt="gui-image2" src="_images/lammps-gui-funnel.png" style="width: 24%;" /></a>  <a class="reference internal" href="_images/lammps-gui-regions.png"><img alt="gui-image3" src="_images/lammps-gui-regions.png" style="width: 24%;" /></a>  <a class="reference internal" href="_images/lammps-gui-autobond.png"><img alt="gui-image4" src="_images/lammps-gui-autobond.png" style="width: 24%;" /></a></p>
+<p>The default image size, some default image quality settings, the view
+style and some colors can be changed in the <em>Preferences</em> dialog window.
+From the image viewer window further adjustments can be made: actual
+image size, high-quality (SSAO) rendering, anti-aliasing, view style,
+display of box or axes, zoom factor.  The view of the system can be
+rotated horizontally and vertically.</p>
+<p>It is also possible to display only the atoms within a <span class="xref std std-doc">group
+defined in the input script</span> (default is “all”).  The available
+groups can be selected from the drop down list next to the “Group:”
+label.  Similarly, if there are <span class="xref std std-doc">molecules defined in the input</span>, it is possible to select one of them (default is “none”)
+and visualize it (it will be shown at the center of the simulation box).
+While a molecule is selected, the group selection is disabled.  It can
+be restored by selecting the molecule “none”.</p>
+<p>The image can also be re-centered on the center of mass of the selected
+group.  After each change, the image is rendered again and the display
+updated.  The small palette icon on the top left is colored while LAMMPS
+is running to render the new image; it is grayed out when LAMMPS is
+finished.  When there are many atoms to render and high quality images
+with anti-aliasing are requested, re-rendering may take several seconds.
+From the <em>File</em> menu of the image window, the current image can be saved
+to a file (keyboard shortcut <cite>Ctrl-S</cite>) or copied to the clipboard
+(keyboard shortcut <cite>Ctrl-C</cite>) for pasting the image into another
+application.</p>
+<p>From the <em>File</em> menu it is also possible to copy the current
+<span class="xref std std-doc">dump image</span> and <span class="xref std std-doc">dump_modify</span>
+commands to the clipboard so they can be pasted into a LAMMPS input file
+so that the visualization settings of the snapshot image can be repeated
+for the entire simulation (and thus be repeated in the slide show
+viewer). This feature has the keyboard shortcut <cite>Ctrl-D</cite>.</p>
+<p>The <em>Editor</em> window of LAMMPS-GUI has most of the usual functionality
+that similar programs have: text selection via mouse or with cursor
+moves while holding the Shift key, Cut (<cite>Ctrl-X</cite>), Copy (<cite>Ctrl-C</cite>),
+Paste (<cite>Ctrl-V</cite>), Undo (<cite>Ctrl-Z</cite>), Redo (<cite>Ctrl-Shift-Z</cite>), Select All
+(<cite>Ctrl-A</cite>).  When trying to exit the editor with a modified buffer, a
+dialog will pop up asking whether to cancel the exit operation, or to
+save or not save the buffer contents to a file.</p>
+<p>The editor has an auto-save mode that can be enabled or disabled in the
+<em>Preferences</em> dialog.  In auto-save mode, the editor buffer is
+automatically saved before running LAMMPS or before exiting LAMMPS-GUI.</p>
+</section>
+<section id="context-specific-word-completion">
+<h2><span class="section-number">2.10. </span>Context Specific Word Completion<a class="headerlink" href="#context-specific-word-completion" title="Link to this heading">¶</a></h2>
+<p>By default, LAMMPS-GUI displays a small pop-up frame with possible
+choices for LAMMPS input script commands or styles after 2 characters of
+a word have been typed.</p>
+<a class="reference internal image-reference" href="_images/lammps-gui-complete.png"><img alt="_images/lammps-gui-complete.png" class="align-center" src="_images/lammps-gui-complete.png" style="width: 407.25px; height: 170.25px;" />
+</a>
+<p>The word can then be completed through selecting an entry by scrolling
+up and down with the cursor keys and selecting with the ‘Enter’ key or
+by clicking on the entry with the mouse.  The automatic completion
+pop-up can be disabled in the <em>Preferences</em> dialog, but the completion
+can still be requested manually by either hitting the ‘Shift-TAB’ key or
+by right-clicking with the mouse and selecting the option from the
+context menu.  Most of the completion information is retrieved from the
+active LAMMPS instance and thus it shows only available options that
+have been enabled when compiling LAMMPS. That list, however, excludes
+accelerated styles and commands; for improved clarity, only the
+non-suffix version of styles are shown.</p>
+</section>
+<section id="line-reformatting">
+<h2><span class="section-number">2.11. </span>Line Reformatting<a class="headerlink" href="#line-reformatting" title="Link to this heading">¶</a></h2>
+<p>The editor supports reformatting lines according to the syntax in order
+to have consistently aligned lines.  This primarily means adding
+whitespace padding to commands, type specifiers, IDs and names.  This
+reformatting is performed manually by hitting the ‘Tab’ key.  It is
+also possible to have this done automatically when hitting the ‘Enter’
+key to start a new line.  This feature can be turned on or off in the
+<em>Preferences</em> dialog for <em>Editor Settings</em> with the
+“Reformat with ‘Enter’” checkbox. The amount of padding for multiple
+categories can be adjusted in the same dialog.</p>
+<p>Internally this functionality is achieved by splitting the line into
+“words” and then putting it back together with padding added where the
+context can be detected; otherwise a single space is used between words.</p>
+</section>
+<section id="context-specific-help">
+<h2><span class="section-number">2.12. </span>Context Specific Help<a class="headerlink" href="#context-specific-help" title="Link to this heading">¶</a></h2>
+<p><a class="reference internal" href="_images/lammps-gui-popup-help.png"><img alt="gui-popup1" src="_images/lammps-gui-popup-help.png" style="width: 48%;" /></a>  <a class="reference internal" href="_images/lammps-gui-popup-view.png"><img alt="gui-popup2" src="_images/lammps-gui-popup-view.png" style="width: 48%;" /></a></p>
+<p>A unique feature of LAMMPS-GUI is the option to look up the LAMMPS
+documentation for the command in the current line.  This can be done by
+either clicking the right mouse button or by using the <cite>Ctrl-?</cite> keyboard
+shortcut.  When using the mouse, there are additional entries in the
+context menu that open the corresponding documentation page in the
+online LAMMPS documentation in a web browser window.  When using the
+keyboard, the first of those entries is chosen.</p>
+<p>If the word under the cursor is a file, then additionally the context
+menu has an entry to open the file in a read-only text viewer window.
+If the file is a LAMMPS restart file, instead the menu entry offers to
+<a class="reference internal" href="#inspect-restart"><span class="std std-ref">inspect the restart</span></a>.</p>
+<p>The text viewer is a convenient way to view the contents of files that
+are referenced in the input.  The file viewer also supports on-the-fly
+decompression based on the file name suffix in a <span class="xref std std-ref">similar fashion
+as available with LAMMPS</span>.  If the necessary decompression
+program is missing or the file cannot be decompressed, the viewer window
+will contain a corresponding message.</p>
+</section>
+<section id="inspecting-a-restart-file">
+<span id="inspect-restart"></span><h2><span class="section-number">2.13. </span>Inspecting a Restart file<a class="headerlink" href="#inspecting-a-restart-file" title="Link to this heading">¶</a></h2>
+<p>When LAMMPS-GUI is asked to “Inspect a Restart”, it will read the
+restart file into a LAMMPS instance and then open three different
+windows.  The first window is a text viewer with the output of an
+<span class="xref std std-doc">info command</span> with system information stored in the
+restart.  The second window is text viewer containing a data file
+generated with a <span class="xref std std-doc">write_data command</span>.  The third
+window is a <a class="reference internal" href="#snapshot-viewer"><span class="std std-ref">Snapshot Image Viewer</span></a> containing a
+visualization of the system in the restart.</p>
+<p><a class="reference internal" href="_images/lammps-gui-inspect-data.png"><img alt="inspect1" src="_images/lammps-gui-inspect-data.png" style="width: 32%;" /></a>  <a class="reference internal" href="_images/lammps-gui-inspect-info.png"><img alt="inspect2" src="_images/lammps-gui-inspect-info.png" style="width: 32%;" /></a>  <a class="reference internal" href="_images/lammps-gui-inspect-image.png"><img alt="inspect3" src="_images/lammps-gui-inspect-image.png" style="width: 32%;" /></a></p>
+<div class="warning admonition">
+<p class="admonition-title">Large Restart Files</p>
+<p>If the restart file is larger than 250 MBytes, a dialog will ask for
+confirmation before continuing, since large restart files may require
+large amounts of RAM since the entire system must be read into RAM.
+Thus restart file for large simulations that have been run on an HPC
+cluster may overload a laptop or local workstation. The <em>Show
+Details…</em> button will display a rough estimate of the additional
+memory required.</p>
+</div>
+<p>The menu bar has entries <em>File</em>, <em>Edit</em>, <em>Run</em>, <em>View</em>, and
+<em>About</em>.  Instead of using the mouse to click on them, the individual
+menus can also be activated by hitting the <cite>Alt</cite> key together with the
+corresponding underlined letter, that is <cite>Alt-F</cite> activates the
+<em>File</em> menu.  For the corresponding activated sub-menus, the key
+corresponding the underlined letters can be used to select entries
+instead of using the mouse.</p>
+</section>
+<section id="file">
+<h2><span class="section-number">2.14. </span>File<a class="headerlink" href="#file" title="Link to this heading">¶</a></h2>
+<p>The <em>File</em> menu offers the usual options:</p>
+<ul class="simple">
+<li><p><em>New</em> clears the current buffer and resets the file name to <code class="docutils literal notranslate"><span class="pre">*unknown*</span></code></p></li>
+<li><p><em>Open</em> opens a dialog to select a new file for editing in the <em>Editor</em></p></li>
+<li><p><em>View</em> opens a dialog to select a file for viewing in a <em>separate</em> window (read-only) with support for on-the-fly decompression as explained above.</p></li>
+<li><p><em>Inspect restart</em> opens a dialog to select a file.  If that file is a <span class="xref std std-doc">LAMMPS restart</span> three windows with <a class="reference internal" href="#inspect-restart"><span class="std std-ref">information about the file are opened</span></a>.</p></li>
+<li><p><em>Save</em> saves the current file; if the file name is <code class="docutils literal notranslate"><span class="pre">*unknown*</span></code>
+a dialog will open to select a new file name</p></li>
+<li><p><em>Save As</em> opens a dialog to select and new file name (and folder, if
+desired) and saves the buffer to it.  Writing the buffer to a
+different folder will also switch the current working directory to
+that folder.</p></li>
+<li><p><em>Quit</em> exits LAMMPS-GUI. If there are unsaved changes, a dialog will
+appear to either cancel the operation, or to save, or to not save the
+modified buffer.</p></li>
+</ul>
+<p>In addition, up to 5 recent file names will be listed after the <em>Open</em>
+entry that allows re-opening recently opened files.  This list is stored
+when quitting and recovered when starting again.</p>
+</section>
+<section id="edit">
+<h2><span class="section-number">2.15. </span>Edit<a class="headerlink" href="#edit" title="Link to this heading">¶</a></h2>
+<p>The <em>Edit</em> menu offers the usual editor functions like <em>Undo</em>, <em>Redo</em>,
+<em>Cut</em>, <em>Copy</em>, <em>Paste</em>, and a <em>Find and Replace</em> dialog (keyboard
+shortcut <cite>Ctrl-F</cite>).  It can also open a <em>Preferences</em> dialog (keyboard
+shortcut <cite>Ctrl-P</cite>) and allows deleting all stored preferences and
+settings, so they are reset to their default values.</p>
+</section>
+<section id="run">
+<h2><span class="section-number">2.16. </span>Run<a class="headerlink" href="#run" title="Link to this heading">¶</a></h2>
+<p>The <em>Run</em> menu has options to start and stop a LAMMPS process.  Rather
+than calling the LAMMPS executable as a separate executable, the
+LAMMPS-GUI is linked to the LAMMPS library and thus can run LAMMPS
+internally through the <span class="xref std std-ref">LAMMPS C-library interface</span>
+in a separate thread.</p>
+<p>Specifically, a LAMMPS instance will be created by calling
+<code class="xref cpp cpp-func docutils literal notranslate"><span class="pre">lammps_open_no_mpi()</span></code>.  The buffer contents are then executed by
+calling <code class="xref cpp cpp-func docutils literal notranslate"><span class="pre">lammps_commands_string()</span></code>.  Certain commands and
+features are only available after a LAMMPS instance is created.  Its
+presence is indicated by a small LAMMPS <code class="docutils literal notranslate"><span class="pre">L</span></code> logo in the status bar
+at the bottom left of the main window.  As an alternative, it is also
+possible to run LAMMPS using the contents of the edited file by
+reading the file.  This is mainly provided as a fallback option in
+case the input uses some feature that is not available when running
+from a string buffer.</p>
+<p>The LAMMPS calculations are run in a concurrent thread so that the GUI
+can stay responsive and be updated during the run.  The GUI can retrieve
+data from the running LAMMPS instance and tell it to stop at the next
+timestep.  The <em>Stop LAMMPS</em> entry will do this by calling the
+<code class="xref cpp cpp-func docutils literal notranslate"><span class="pre">lammps_force_timeout()</span></code> library function, which is equivalent
+to a <span class="xref std std-doc">timer timeout 0</span> command.</p>
+<p>The <em>Relaunch LAMMPS Instance</em> will destroy the current LAMMPS thread
+and free its data and then create a new thread with a new LAMMPS
+instance.  This is usually not needed, since LAMMPS-GUI tries to detect
+when this is needed and does it automatically.  This is available
+in case it missed something and LAMMPS behaves in unexpected ways.</p>
+<p>The <em>Set Variables…</em> entry opens a dialog box where
+<span class="xref std std-doc">index style variables</span> can be set. Those variables
+are passed to the LAMMPS instance when it is created and are thus
+set <em>before</em> a run is started.</p>
+<a class="reference internal image-reference" href="_images/lammps-gui-variables.png"><img alt="_images/lammps-gui-variables.png" class="align-center" src="_images/lammps-gui-variables.png" style="width: 155.0px; height: 117.0px;" />
+</a>
+<p>The <em>Set Variables</em> dialog will be pre-populated with entries that
+are set as index variables in the input and any variables that are
+used but not defined, if the built-in parser can detect them.  New
+rows for additional variables can be added through the <em>Add Row</em>
+button and existing rows can be deleted by clicking on the <em>X</em> icons
+on the right.</p>
+<p>The <em>Create Image</em> entry will send a <span class="xref std std-doc">dump image</span>
+command to the LAMMPS instance, read the resulting file, and show it
+in an <em>Image Viewer</em> window.</p>
+<p>The <em>View in OVITO</em> entry will launch <a class="reference external" href="https://ovito.org">OVITO</a>
+with a <span class="xref std std-doc">data file</span> containing the current state of
+the system.  This option is only available if LAMMPS-GUI can find
+the OVITO executable in the system path.</p>
+<p>The <em>View in VMD</em> entry will launch VMD with a <span class="xref std std-doc">data file</span> containing the current state of the system.  This option
+is only available if LAMMPS-GUI can find the VMD executable in the
+system path.</p>
+</section>
+<section id="view">
+<h2><span class="section-number">2.17. </span>View<a class="headerlink" href="#view" title="Link to this heading">¶</a></h2>
+<p>The <em>View</em> menu offers to show or hide additional windows with log
+output, charts, slide show, variables, or snapshot images.  The
+default settings for their visibility can be changed in the
+<em>Preferences</em> dialog.</p>
+</section>
+<section id="tutorials">
+<h2><span class="section-number">2.18. </span>Tutorials<a class="headerlink" href="#tutorials" title="Link to this heading">¶</a></h2>
+<p>The <em>Tutorials</em> menu is to support the set of LAMMPS tutorials for
+beginners and intermediate LAMMPS users documented in (<a class="reference internal" href="#gravelle1"><span class="std std-ref">Gravelle1</span></a>).  From the drop down menu you can select which of the
+eight currently available tutorial sessions you want to begin.  This
+opens a ‘wizard’ dialog where you can choose in which folder you want to
+work, whether you want that folder to be wiped from <em>any</em> files, whether
+you want to download the solutions files (which can be large) to a
+<code class="docutils literal notranslate"><span class="pre">solution</span></code> sub-folder, and whether you want the corresponding
+tutorial’s online version opened in your web browser.  The dialog will
+then start downloading the files requested (download progress is
+reported in the status line) and load the first input file for the
+selected session into LAMMPS-GUI.</p>
+<a class="reference internal image-reference" href="_images/lammps-gui-tutorials.png"><img alt="_images/lammps-gui-tutorials.png" class="align-center" src="_images/lammps-gui-tutorials.png" style="width: 695.5px; height: 305.0px;" />
+</a>
+</section>
+<section id="about">
+<h2><span class="section-number">2.19. </span>About<a class="headerlink" href="#about" title="Link to this heading">¶</a></h2>
+<p>The <em>About</em> menu finally offers a couple of dialog windows and an
+option to launch the LAMMPS online documentation in a web browser.  The
+<em>About LAMMPS-GUI</em> entry displays a dialog with a summary of the
+configuration settings of the LAMMPS library in use and the version
+number of LAMMPS-GUI itself.  The <em>Quick Help</em> displays a dialog with
+a minimal description of LAMMPS-GUI.  The <em>LAMMPS-GUI Howto</em> entry
+will open this documentation page from the online documentation in a web
+browser window.  The <em>LAMMPS Manual</em> entry will open the main page of
+the LAMMPS online documentation in a web browser window.
+The <em>LAMMPS Tutorial</em> entry will open the main page of the set of
+LAMMPS tutorials authored and maintained by Simon Gravelle at
+<a class="reference external" href="https://lammpstutorials.github.io/">https://lammpstutorials.github.io/</a> in a web browser window.</p>
+<hr class="docutils" />
+<a class="reference internal image-reference" href="_images/lammps-gui-find.png"><img alt="_images/lammps-gui-find.png" class="align-center" src="_images/lammps-gui-find.png" style="width: 299.64px; height: 159.72px;" />
+</a>
+<p>The <em>Find and Replace</em> dialog allows searching for and replacing
+text in the <em>Editor</em> window.</p>
+<p>The dialog can be opened either from the <em>Edit</em> menu or with the
+keyboard shortcut <cite>Ctrl-F</cite>. You can enter the text to search for.
+Through three check-boxes the search behavior can be adjusted:</p>
+<ul class="simple">
+<li><p>If checked, “Match case” does a case sensitive search; otherwise
+the search is case insensitive.</p></li>
+<li><p>If checked, “Wrap around” starts searching from the start of the
+document, if there is no match found from the current cursor position
+until the end of the document; otherwise the search will stop.</p></li>
+<li><p>If checked, the “Whole word” setting only finds full word matches
+(white space and special characters are word boundaries).</p></li>
+</ul>
+<p>Clicking on the <em>Next</em> button will search for the next occurrence of the
+search text and select / highlight it. Clicking on the <em>Replace</em> button
+will replace an already highlighted search text and find the next one.
+If no text is selected, or the selected text does not match the
+selection string, then the first click on the <em>Replace</em> button will
+only search and highlight the next occurrence of the search string.
+Clicking on the <em>Replace All</em> button will replace all occurrences from
+the cursor position to the end of the file; if the <em>Wrap around</em> box is
+checked, then it will replace <strong>all</strong> occurrences in the <strong>entire</strong>
+document.  Clicking on the <em>Done</em> button will dismiss the dialog.</p>
+<hr class="docutils" />
+<p>The <em>Preferences</em> dialog allows customization of the behavior and
+look of LAMMPS-GUI.  The settings are grouped and each group is
+displayed within a tab.</p>
+<p><a class="reference internal" href="_images/lammps-gui-prefs-general.png"><img alt="guiprefs1" src="_images/lammps-gui-prefs-general.png" style="width: 19%;" /></a>  <a class="reference internal" href="_images/lammps-gui-prefs-accel.png"><img alt="guiprefs2" src="_images/lammps-gui-prefs-accel.png" style="width: 19%;" /></a>  <a class="reference internal" href="_images/lammps-gui-prefs-image.png"><img alt="guiprefs3" src="_images/lammps-gui-prefs-image.png" style="width: 19%;" /></a>  <a class="reference internal" href="_images/lammps-gui-prefs-editor.png"><img alt="guiprefs4" src="_images/lammps-gui-prefs-editor.png" style="width: 19%;" /></a>  <a class="reference internal" href="_images/lammps-gui-prefs-charts.png"><img alt="guiprefs5" src="_images/lammps-gui-prefs-charts.png" style="width: 19%;" /></a></p>
+</section>
+<section id="general-settings">
+<h2><span class="section-number">2.20. </span>General Settings:<a class="headerlink" href="#general-settings" title="Link to this heading">¶</a></h2>
+<ul class="simple">
+<li><p><em>Echo input to log:</em> when checked, all input commands, including
+variable expansions, are echoed to the <em>Output</em> window. This is
+equivalent to using <cite>-echo screen</cite> at the command-line.  There is no
+log <em>file</em> produced by default, since LAMMPS-GUI uses <cite>-log none</cite>.</p></li>
+<li><p><em>Include citation details:</em> when checked full citation info will be
+included to the log window.  This is equivalent to using <cite>-cite
+screen</cite> on the command-line.</p></li>
+<li><p><em>Show log window by default:</em> when checked, the screen output of a
+LAMMPS run will be collected in a log window during the run</p></li>
+<li><p><em>Show chart window by default:</em> when checked, the thermodynamic
+output of a LAMMPS run will be collected and displayed in a chart
+window as line graphs.</p></li>
+<li><p><em>Show slide show window by default:</em> when checked, a slide show
+window will be shown with images from a dump image command, if
+present, in the LAMMPS input.</p></li>
+<li><p><em>Replace log window on new run:</em> when checked, an existing log
+window will be replaced on a new LAMMPS run, otherwise each run will
+create a new log window.</p></li>
+<li><p><em>Replace chart window on new run:</em> when checked, an existing chart
+window will be replaced on a new LAMMPS run, otherwise each run will
+create a new chart window.</p></li>
+<li><p><em>Replace image window on new render:</em> when checked, an existing
+chart window will be replaced when a new snapshot image is requested,
+otherwise each command will create a new image window.</p></li>
+<li><p><em>Download tutorial solutions enabled</em> this controls whether the
+“Download solutions” option is enabled by default when setting up
+a tutorial.</p></li>
+<li><p><em>Open tutorial webpage enabled</em> this controls whether the “Open
+tutorial webpage in web browser” option is enabled by default when
+setting up a tutorial.</p></li>
+<li><p><em>Select Default Font:</em> Opens a font selection dialog where the type
+and size for the default font (used for everything but the editor and
+log) of the application can be set.</p></li>
+<li><p><em>Select Text Font:</em> Opens a font selection dialog where the type and
+size for the text editor and log font of the application can be set.</p></li>
+<li><p><em>Data update interval:</em> Allows to set the time interval between data
+updates during a LAMMPS run in milliseconds.  The default is to update
+the data (for charts and output window) every 10 milliseconds.  This
+is good for many cases.  Set this to 100 milliseconds or more if
+LAMMPS-GUI consumes too many resources during a run.  For LAMMPS runs
+that run <em>very</em> fast (for example in tutorial examples), however, data
+may be missed and through lowering this interval, this can be
+corrected.  However, this will make the GUI use more resources.  This
+setting may be changed to a value between 1 and 1000 milliseconds.</p></li>
+<li><p><em>Charts update interval:</em> Allows to set the time interval between redrawing
+the plots in the <em>Charts</em> window in milliseconds.  The default is to
+redraw the plots every 500 milliseconds.  This is just for the drawing,
+data collection is managed with the previous setting.</p></li>
+<li><p><em>HTTPS proxy setting:</em> Allows to enter a URL for an HTTPS proxy.  This
+may be needed when the LAMMPS input contains <span class="xref std std-doc">geturl commands</span>
+or for downloading tutorial files from the <em>Tutorials</em> menu.  If the
+<code class="docutils literal notranslate"><span class="pre">https_proxy</span></code> environment variable was set externally, its value is
+displayed but cannot be changed.</p></li>
+<li><p><em>Path to LAMMPS Shared Library File:</em> this option is only visible
+when LAMMPS-GUI was compiled to load the LAMMPS library at run time
+instead of being linked to it directly.  With the <em>Browse..</em> button
+or by changing the text, a different shared library file with a
+different compilation of LAMMPS with different settings or from a
+different version can be loaded.  After this setting was changed,
+LAMMPS-GUI needs to be re-launched.</p></li>
+</ul>
+</section>
+<section id="accelerators">
+<h2><span class="section-number">2.21. </span>Accelerators:<a class="headerlink" href="#accelerators" title="Link to this heading">¶</a></h2>
+<p>This tab enables selection of an accelerator package and modify some of
+its settings to use for running LAMMPS and is equivalent to using the
+<span class="xref std std-doc">-sf</span> and <span class="xref std std-doc">-pk</span> flags <span class="xref std std-doc">on the
+command-line</span>.  Only settings supported by the LAMMPS
+library and local hardware are available.  The <cite>Number of threads</cite> field
+allows setting the number of threads for the accelerator packages that
+support using threads (OPENMP, INTEL, KOKKOS, and GPU).  Furthermore,
+the choice of precision mode (double, mixed, or single) for the INTEL
+package can be selected and for the GPU package, whether the neighbor
+lists are built on the GPU or the host (required for <span class="xref std std-doc">pair style
+hybrid</span>) and whether only pair styles should be
+accelerated (i.e. run PPPM entirely on the CPU, which sometimes leads
+to better overall performance).  Whether settings can be changed depends
+on which accelerator package is chosen (or “None”).</p>
+</section>
+<section id="snapshot-image">
+<h2><span class="section-number">2.22. </span>Snapshot Image:<a class="headerlink" href="#snapshot-image" title="Link to this heading">¶</a></h2>
+<p>This tab allows setting defaults for the snapshot images displayed in
+the <em>Image Viewer</em> window, such as its dimensions and the zoom factor
+applied.  The <em>Antialias</em> switch will render images with twice the
+number of pixels for width and height and then smoothly scale the image
+back to the requested size.  This produces higher quality images with
+smoother edges at the expense of requiring more CPU time to render the
+image.  The <em>HQ Image mode</em> option turns on screen space ambient
+occlusion (SSAO) mode when rendering images.  This is also more time
+consuming, but produces a more ‘spatial’ representation of the system
+shading of atoms by their depth.  The <em>Shiny Image mode</em> option will
+render objects with a shiny surface when enabled.  Otherwise the
+surfaces will be matted.  The <em>Show Box</em> option selects whether the
+system box is drawn as a colored set of sticks.  Similarly, the <em>Show
+Axes</em> option selects whether a representation of the three system axes
+will be drawn as colored sticks. The <em>VDW Style</em> checkbox selects
+whether atoms are represented by space filling spheres when checked or
+by smaller spheres and sticks.  Finally there are a couple of drop down
+lists to select the background and box colors.</p>
+</section>
+<section id="editor-settings">
+<h2><span class="section-number">2.23. </span>Editor Settings:<a class="headerlink" href="#editor-settings" title="Link to this heading">¶</a></h2>
+<p>This tab allows tweaking settings of the editor window.  Specifically,
+the amount of padding to be added to LAMMPS commands, types or type
+ranges, IDs (e.g. for fixes), and names (e.g. for groups).  The value
+set is the minimum width for the text element and it can be chosen in
+the range between 1 and 32.</p>
+<p>The three settings which follow enable or disable the automatic
+reformatting when hitting the ‘Enter’ key, the automatic display of
+the completion pop-up window, and whether auto-save mode is enabled.
+In auto-save mode the editor buffer is saved before a run or before
+exiting LAMMPS-GUI.</p>
+<p>This tab allows tweaking settings of the <em>Charts</em> window.  Specifically,
+one can set the default chart title (if the title contains ‘%f’ it will
+be replaced with the name of the current input file), one can select
+whether by default the raw data, the smoothed data or both will be
+plotted, one can set the colors for the two lines, the default smoothing
+parameters, and the default size of the chart graph in pixels.</p>
+<hr class="docutils" />
+<p>Almost all functionality is accessible from the menu of the editor
+window or through keyboard shortcuts.  The following shortcuts are
+available (On macOS use the Command key instead of Ctrl/Control).</p>
+<table class="docutils align-default">
+<colgroup>
+<col style="width: 16.2%" />
+<col style="width: 19.2%" />
+<col style="width: 13.1%" />
+<col style="width: 16.2%" />
+<col style="width: 13.1%" />
+<col style="width: 22.2%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>Shortcut</p></th>
+<th class="head"><p>Function</p></th>
+<th class="head"><p>Shortcut</p></th>
+<th class="head"><p>Function</p></th>
+<th class="head"><p>Shortcut</p></th>
+<th class="head"><p>Function</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>Ctrl+N</p></td>
+<td><p>New File</p></td>
+<td><p>Ctrl+Z</p></td>
+<td><p>Undo edit</p></td>
+<td><p>Ctrl+Enter</p></td>
+<td><p>Run Input</p></td>
+</tr>
+<tr class="row-odd"><td><p>Ctrl+O</p></td>
+<td><p>Open File</p></td>
+<td><p>Ctrl+Shift+Z</p></td>
+<td><p>Redo edit</p></td>
+<td><p>Ctrl+/</p></td>
+<td><p>Stop Active Run</p></td>
+</tr>
+<tr class="row-even"><td><p>Ctrl+Shift+F</p></td>
+<td><p>View File</p></td>
+<td><p>Ctrl+C</p></td>
+<td><p>Copy text</p></td>
+<td><p>Ctrl+Shift+V</p></td>
+<td><p>Set Variables</p></td>
+</tr>
+<tr class="row-odd"><td><p>Ctrl+S</p></td>
+<td><p>Save File</p></td>
+<td><p>Ctrl+X</p></td>
+<td><p>Cut text</p></td>
+<td><p>Ctrl+I</p></td>
+<td><p>Snapshot Image</p></td>
+</tr>
+<tr class="row-even"><td><p>Ctrl+Shift+S</p></td>
+<td><p>Save File As</p></td>
+<td><p>Ctrl+V</p></td>
+<td><p>Paste text</p></td>
+<td><p>Ctrl+L</p></td>
+<td><p>Slide Show</p></td>
+</tr>
+<tr class="row-odd"><td><p>Ctrl+Q</p></td>
+<td><p>Quit Application</p></td>
+<td><p>Ctrl+A</p></td>
+<td><p>Select All</p></td>
+<td><p>Ctrl+F</p></td>
+<td><p>Find and Replace</p></td>
+</tr>
+<tr class="row-even"><td><p>Ctrl+W</p></td>
+<td><p>Close Window</p></td>
+<td><p>TAB</p></td>
+<td><p>Reformat line</p></td>
+<td><p>Shift+TAB</p></td>
+<td><p>Show Completions</p></td>
+</tr>
+<tr class="row-odd"><td><p>Ctrl+Shift+Enter</p></td>
+<td><p>Run File</p></td>
+<td><p>Ctrl+Shift+W</p></td>
+<td><p>Show Variables</p></td>
+<td><p>Ctrl+P</p></td>
+<td><p>Preferences</p></td>
+</tr>
+<tr class="row-even"><td><p>Ctrl+Shift+A</p></td>
+<td><p>About LAMMPS</p></td>
+<td><p>Ctrl+Shift+H</p></td>
+<td><p>Quick Help</p></td>
+<td><p>Ctrl+Shift+G</p></td>
+<td><p>LAMMPS-GUI Howto</p></td>
+</tr>
+<tr class="row-odd"><td><p>Ctrl+Shift+M</p></td>
+<td><p>LAMMPS Manual</p></td>
+<td><p>Ctrl+?</p></td>
+<td><p>Context Help</p></td>
+<td><p>Ctrl+Shift+T</p></td>
+<td><p>LAMMPS Tutorial</p></td>
+</tr>
+</tbody>
+</table>
+<p>Further keybindings of the editor window <a class="reference external" href="https://doc.qt.io/qt-5/qplaintextedit.html#editing-key-bindings">are documented with the Qt
+documentation</a>.  In
+case of conflicts the list above takes precedence.</p>
+<p>All other windows only support a subset of keyboard shortcuts listed
+above.  Typically, the shortcuts <cite>Ctrl-/</cite> (Stop Run), <cite>Ctrl-W</cite> (Close
+Window), and <cite>Ctrl-Q</cite> (Quit Application) are supported.</p>
+<hr class="docutils" />
+<p id="gravelle1"><strong>(Gravelle1)</strong> Gravelle, Alvares, Gissinger, Kohlmeyer, <a class="reference external" href="https://doi.org/10.48550/arXiv.2503.14020">arXiv:2503.14020 [physics.comp-ph]</a> (2025)</p>
+<p id="gravelle2"><strong>(Gravelle2)</strong> Gravelle <a class="reference external" href="https://lammpstutorials.github.io/">https://lammpstutorials.github.io/</a></p>
+</section>
+</section>
+
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="Main">
+        <div class="sphinxsidebarwrapper">
+            <p class="logo"><a href="index.html">
+              <img class="logo" src="_static/lammps-gui-banner.png" alt="Logo of LAMMPS-GUI"/>
+            </a></p>
+  <div>
+    <h3><a href="index.html">Table of Contents</a></h3>
+    <ul>
+<li><a class="reference internal" href="#">2. Installation</a><ul>
+<li><a class="reference internal" href="#pre-compiled-executables">2.1. Pre-compiled executables</a></li>
+<li><a class="reference internal" href="#compilation">2.2. Compilation</a><ul>
+<li><a class="reference internal" href="#plugin-version">2.2.1. Plugin version</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#platform-notes">2.3. Platform notes</a><ul>
+<li><a class="reference internal" href="#macos">2.3.1. macOS</a></li>
+<li><a class="reference internal" href="#windows">2.3.2. Windows</a></li>
+<li><a class="reference internal" href="#linux">2.3.3. Linux</a><ul>
+<li><a class="reference internal" href="#installing-pre-compiled-lammps-gui-packages">Installing Pre-compiled LAMMPS-GUI Packages</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li><a class="reference internal" href="#windows-10-and-later">2.4. Windows 10 and later</a></li>
+<li><a class="reference internal" href="#macos-11-and-later">2.5. MacOS 11 and later</a></li>
+<li><a class="reference internal" href="#linux-on-x86-64">2.6. Linux on x86_64</a></li>
+<li><a class="reference internal" href="#compiling-from-source">2.7. Compiling from Source</a></li>
+<li><a class="reference internal" href="#opening-files">2.8. Opening Files</a></li>
+<li><a class="reference internal" href="#running-lammps">2.9. Running LAMMPS</a></li>
+<li><a class="reference internal" href="#context-specific-word-completion">2.10. Context Specific Word Completion</a></li>
+<li><a class="reference internal" href="#line-reformatting">2.11. Line Reformatting</a></li>
+<li><a class="reference internal" href="#context-specific-help">2.12. Context Specific Help</a></li>
+<li><a class="reference internal" href="#inspecting-a-restart-file">2.13. Inspecting a Restart file</a></li>
+<li><a class="reference internal" href="#file">2.14. File</a></li>
+<li><a class="reference internal" href="#edit">2.15. Edit</a></li>
+<li><a class="reference internal" href="#run">2.16. Run</a></li>
+<li><a class="reference internal" href="#view">2.17. View</a></li>
+<li><a class="reference internal" href="#tutorials">2.18. Tutorials</a></li>
+<li><a class="reference internal" href="#about">2.19. About</a></li>
+<li><a class="reference internal" href="#general-settings">2.20. General Settings:</a></li>
+<li><a class="reference internal" href="#accelerators">2.21. Accelerators:</a></li>
+<li><a class="reference internal" href="#snapshot-image">2.22. Snapshot Image:</a></li>
+<li><a class="reference internal" href="#editor-settings">2.23. Editor Settings:</a></li>
+</ul>
+</li>
+</ul>
+
+  </div>
+  <div>
+    <h4>Previous topic</h4>
+    <p class="topless"><a href="overview.html"
+                          title="previous chapter"><span class="section-number">1. </span>Overview</a></p>
+  </div>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="_sources/installation.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<search id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</search>
+<script>document.getElementById('searchbox').style.display = "block"</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="Related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="overview.html" title="1. Overview"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="index.html">LAMMPS-GUI Documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href=""><span class="section-number">2. </span>Installation</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+    &#169; Copyright 2023 - 2025, Axel Kohlmeyer.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 8.2.3.
+    </div>
+  </body>
+</html>

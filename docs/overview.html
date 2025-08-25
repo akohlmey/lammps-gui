@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+
+<html lang="en" data-content_root="./">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>1. Overview &#8212; LAMMPS-GUI Documentation</title>
+    <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=d75fae25" />
+    <link rel="stylesheet" type="text/css" href="_static/sphinxdoc.css?v=34905f61" />
+    <link rel="stylesheet" type="text/css" href="_static/sphinx-design.min.css?v=95c83b7e" />
+    <script src="_static/jquery.js?v=5d32c60e"></script>
+    <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+    <script src="_static/documentation_options.js?v=5929fcd5"></script>
+    <script src="_static/doctools.js?v=9bcbadda"></script>
+    <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="_static/design-tabs.js?v=f930bc37"></script>
+    <link rel="canonical" href="https://lammps-gui.github.io/overview.html" />
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="2. Installation" href="installation.html" />
+    <link rel="prev" title="LAMMPS-GUI Documentation" href="index.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="Related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="installation.html" title="2. Installation"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="index.html" title="LAMMPS-GUI Documentation"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="index.html">LAMMPS-GUI Documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href=""><span class="section-number">1. </span>Overview</a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <section id="overview">
+<h1><span class="section-number">1. </span>Overview<a class="headerlink" href="#overview" title="Link to this heading">¶</a></h1>
+<p>LAMMPS-GUI is a graphical text editor customized for editing LAMMPS
+input files that is linked to the <span class="xref std std-ref">LAMMPS C-library</span>
+and thus can run LAMMPS directly using the contents of the editor’s text
+buffer as input.  It can retrieve and display information from LAMMPS
+while it is running, display visualizations created with the <span class="xref std std-doc">dump
+image command</span>, and is adapted specifically for editing
+LAMMPS input files through syntax highlighting, text completion, and
+reformatting, and linking to the online LAMMPS documentation for known
+LAMMPS commands and styles.</p>
+<p>This is similar to what people traditionally would do to run LAMMPS but
+all rolled into a single application: that is, using a text editor,
+plotting program, and a visualization program to edit the input, run
+LAMMPS, process the output into graphs and visualizations from a command
+line window.  This similarity is a design goal. While making it easy for
+beginners to start with LAMMPS, it is also the expectation that
+LAMMPS-GUI users will eventually transition to workflows that most
+experienced LAMMPS users employ.</p>
+<a class="reference internal image-reference" href="_images/lammps-gui-screen.png"><img alt="_images/lammps-gui-screen.png" class="align-center" src="_images/lammps-gui-screen.png" style="width: 882.0px; height: 622.5px;" />
+</a>
+<p>Features have been extensively exposed to keyboard shortcuts, so that
+there is also appeal for experienced LAMMPS users for prototyping and
+testing simulation setups.</p>
+<section id="features">
+<h2><span class="section-number">1.1. </span>Features<a class="headerlink" href="#features" title="Link to this heading">¶</a></h2>
+<p>A detailed discussion and explanation of all features and functionality
+are in the <span class="xref std std-doc">Howto_lammps_gui</span> tutorial Howto page.</p>
+<p>Here are a few highlights of LAMMPS-GUI</p>
+<ul class="simple">
+<li><p>Text editor with line numbers and syntax highlighting customized for LAMMPS</p></li>
+<li><p>Text editor features command completion and auto-indentation for known commands and styles</p></li>
+<li><p>Text editor will switch its working directory to folder of file in buffer</p></li>
+<li><p>Many adjustable settings and preferences that are persistent including the 5 most recent files</p></li>
+<li><p>Context specific LAMMPS command help via online documentation</p></li>
+<li><p>LAMMPS is running in a concurrent thread, so the GUI remains responsive</p></li>
+<li><p>Progress bar indicates how far a run command is completed</p></li>
+<li><p>LAMMPS can be started and stopped with a mouse click or a hotkey</p></li>
+<li><p>Screen output is captured in an <em>Output</em> Window</p></li>
+<li><p>Thermodynamic output is captured and displayed as line graph in a <em>Chart</em> Window</p></li>
+<li><p>Indicator for currently executed command</p></li>
+<li><p>Indicator for line that caused an error</p></li>
+<li><p>Visualization of current state in Image Viewer (via calling <span class="xref std std-doc">write_dump image</span>)</p></li>
+<li><p>Capture of images created via <span class="xref std std-doc">dump image</span> in Slide show window</p></li>
+<li><p>Dialog to set variables, similar to the LAMMPS command-line flag ‘-v’ / ‘-var’</p></li>
+<li><p>Support for GPU, INTEL, KOKKOS/OpenMP, OPENMP, and OPT accelerator packages</p></li>
+</ul>
+</section>
+<section id="parallelization">
+<h2><span class="section-number">1.2. </span>Parallelization<a class="headerlink" href="#parallelization" title="Link to this heading">¶</a></h2>
+<p>Due to its nature as a graphical application, it is not possible to use
+the LAMMPS-GUI in parallel with MPI, but OpenMP multi-threading and GPU
+acceleration is available and enabled by default.</p>
+</section>
+<section id="prerequisites-and-portability">
+<h2><span class="section-number">1.3. </span>Prerequisites and portability<a class="headerlink" href="#prerequisites-and-portability" title="Link to this heading">¶</a></h2>
+<div class="versionchanged">
+<p><span class="versionmodified changed">Changed in version TBD.</span></p>
+</div>
+<p>LAMMPS-GUI version 1.7.1 and later is programmed in C++ based on the C++17
+standard and using the <a class="reference external" href="https://www.qt.io/product/framework">Qt GUI framework</a>.  Currently, Qt version 5.15LTS
+or later is required; support for Qt version 6.x is available.  Building
+LAMMPS with CMake (version 3.20 or later) is required.</p>
+<p>The LAMMPS-GUI has been successfully compiled and tested on:</p>
+<ul class="simple">
+<li><p>Ubuntu Linux 22.04LTS x86_64 using GCC 11, Qt version 5.15</p></li>
+<li><p>Fedora Linux 41 x86_64 using GCC 14 and Clang 17, Qt version 5.15</p></li>
+<li><p>Fedora Linux 42 x86_64 using GCC 15, Qt version 6.9</p></li>
+<li><p>Apple macOS 12 (Monterey) and macOS 13 (Ventura) with Xcode on arm64 and x86_64, Qt version 5.15</p></li>
+<li><p>Windows 10 and 11 x86_64 with Visual Studio 2022 and Visual C++ 14.36, Qt version 5.15</p></li>
+<li><p>Windows 10 and 11 x86_64 with Visual Studio 2022 and Visual C++ 14.40, Qt version 6.7</p></li>
+<li><p>Windows 10 and 11 x86_64 with MinGW / GCC 14.2 cross-compiler on Fedora 42, Qt version 5.15</p></li>
+</ul>
+</section>
+</section>
+
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="Main">
+        <div class="sphinxsidebarwrapper">
+            <p class="logo"><a href="index.html">
+              <img class="logo" src="_static/lammps-gui-banner.png" alt="Logo of LAMMPS-GUI"/>
+            </a></p>
+  <div>
+    <h3><a href="index.html">Table of Contents</a></h3>
+    <ul>
+<li><a class="reference internal" href="#">1. Overview</a><ul>
+<li><a class="reference internal" href="#features">1.1. Features</a></li>
+<li><a class="reference internal" href="#parallelization">1.2. Parallelization</a></li>
+<li><a class="reference internal" href="#prerequisites-and-portability">1.3. Prerequisites and portability</a></li>
+</ul>
+</li>
+</ul>
+
+  </div>
+  <div>
+    <h4>Previous topic</h4>
+    <p class="topless"><a href="index.html"
+                          title="previous chapter">LAMMPS-GUI Documentation</a></p>
+  </div>
+  <div>
+    <h4>Next topic</h4>
+    <p class="topless"><a href="installation.html"
+                          title="next chapter"><span class="section-number">2. </span>Installation</a></p>
+  </div>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="_sources/overview.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<search id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</search>
+<script>document.getElementById('searchbox').style.display = "block"</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="Related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="installation.html" title="2. Installation"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="index.html" title="LAMMPS-GUI Documentation"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="index.html">LAMMPS-GUI Documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href=""><span class="section-number">1. </span>Overview</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+    &#169; Copyright 2023 - 2025, Axel Kohlmeyer.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 8.2.3.
+    </div>
+  </body>
+</html>
