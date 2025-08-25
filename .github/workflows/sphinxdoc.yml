@@ -1,0 +1,40 @@
+
+name: Build and Publish Documentation
+
+on:
+  push:
+    branches:
+      - develop
+
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 2
+    - name: Build Documentation with Sphinx
+      shell: bash
+      run: |
+        cmake -S . -B build-doc -D BUILD_DOC=yes
+        cmake --build build-doc --target doc
+    - name: Upload Artifacts
+      id: deployment
+      uses: actions/upload-pages-artifact@v4
+      with:
+        name: html-docs
+        path: build-doc/doc/html/
+
+  deploy:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    needs: build
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
