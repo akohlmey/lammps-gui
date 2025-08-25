@@ -8,10 +8,16 @@ on:
 
   workflow_dispatch:
 
+permissions:
+  content: read
+  id-token: write
+  pages: write
+
+concurrency:
+  group: "pages"
+  cancel-in-progress: false
+
 jobs:
-  permissions:
-    id-token: write
-    pages: write
   build:
     runs-on: ubuntu-latest
     steps:
@@ -20,6 +26,7 @@ jobs:
       with:
         fetch-depth: 2
     - name: Build Documentation with Sphinx
+      id: pages
       shell: bash
       run: |
         cmake -S . -B build-doc -D BUILD_DOC_ONLY=yes
@@ -28,13 +35,10 @@ jobs:
       id: deployment
       uses: actions/upload-pages-artifact@v4
       with:
-        name: html-docs
+        name: github-pages
         path: build-doc/doc/html/
 
   deploy:
-    permissions:
-      pages: write
-      id-token: write
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
