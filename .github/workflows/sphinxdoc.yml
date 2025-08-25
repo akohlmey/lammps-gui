@@ -9,6 +9,9 @@ on:
   workflow_dispatch:
 
 jobs:
+  permissions:
+    id-token: write
+    pages: write
   build:
     runs-on: ubuntu-latest
     steps:
