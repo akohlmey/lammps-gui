@@ -1,6 +1,29 @@
 cmake_minimum_required(VERSION 3.20)
 
-project(lammps-gui VERSION 1.8.0 LANGUAGES CXX)
+project(lammps-gui
+  VERSION 1.8.0
+  LANGUAGES CXX
+  DESCRIPTION "The LAMMPS GUI"
+  HOMEPAGE_URL "https://lammps-gui.github.io")
+include(GNUInstallDirs)
+
+##################################################################################
+# configuration settings
+
+# prefer compiling plugin version only if standalone compile and not on macOS
+if(LAMMPS_DIR OR APPLE)
+  option(LAMMPS_GUI_USE_PLUGIN "Load LAMMPS library dynamically at runtime" OFF)
+else()
+  option(LAMMPS_GUI_USE_PLUGIN "Load LAMMPS library dynamically at runtime" ON)
+endif()
+
+# prefer Qt6 by default
+option(LAMMPS_GUI_USE_QT5 "Prefer using Qt5 over Qt6" OFF)
+
+# build html documentation by default
+option(BUILD_DOC "Build LAMMPS-GUI HTML documentation" ON)
+##################################################################################
+
 
 set(CMAKE_AUTOUIC ON)
 set(CMAKE_AUTOMOC ON)
@@ -8,12 +31,6 @@ set(CMAKE_AUTORCC ON)
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
-
-# prefer compiling plugin version by default
-option(LAMMPS_GUI_USE_PLUGIN "Load LAMMPS library dynamically at runtime" ON)
-
-# prefer Qt6 by default
-option(LAMMPS_GUI_USE_QT5 "Prefer using Qt5 over Qt6" OFF)
 
 include(CheckIncludeFileCXX)
 # helper function to check for usable omp.h header
@@ -62,6 +79,9 @@ if(LAMMPS_DIR)
   set(LAMMPS_HEADER_DIR ${LAMMPS_SOURCE_DIR})
   set(LAMMPS_LIBRARY lammps)
 else()
+  if (NOT LAMMPS_SOURCE_DIR AND NOT LAMMPS_GUI_USE_PLUGIN)
+    message(FATAL_ERROR "Must provide -D LAMMPS_SOURCE_DIR=<path to LAMMPS sources> when not compiling with -D LAMMPS_GUI_USE_PLUGIN=on")
+  endif()
   # by default, install into $HOME/.local (not /usr/local),
   # so that no root access (and sudo) is needed
   if(CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
@@ -206,6 +226,106 @@ if(BUILD_OMP)
   find_package(OpenMP COMPONENTS CXX REQUIRED)
   target_link_libraries(lammps-gui PRIVATE OpenMP::OpenMP_CXX)
 endif()
+
+###################
+# documentation
+
+if(BUILD_DOC)
+  # Current Sphinx versions require at least Python 3.8
+  # use default (or custom) Python executable, if version is sufficient
+  if(Python_VERSION VERSION_GREATER_EQUAL 3.8)
+    set(Python3_EXECUTABLE ${Python_EXECUTABLE})
+  endif()
+  find_package(Python3 REQUIRED COMPONENTS Interpreter)
+  if(Python3_VERSION VERSION_LESS 3.8)
+    message(FATAL_ERROR "Python 3.8 and up is required to build the LAMMPS-GUI HTML documentation")
+  endif()
+  set(VIRTUALENV ${Python3_EXECUTABLE} -m venv)
+
+  set(SPHINX_CONFIG_DIR ${CMAKE_SOURCE_DIR}/doc)
+  set(SPHINX_CONFIG_FILE_TEMPLATE ${SPHINX_CONFIG_DIR}/conf.py.in)
+  set(SPHINX_STATIC_DIR  ${SPHINX_CONFIG_DIR}/_static)
+  file(GLOB DOC_SOURCES CONFIGURE_DEPENDS ${CMAKE_BINARY_DIR}/doc/source/*.rst)
+
+  # configuration and static files are copied to binary dir to avoid collisions with parallel builds
+  set(DOC_BUILD_DIR ${CMAKE_BINARY_DIR}/doc)
+  set(DOC_BUILD_CONFIG_FILE ${DOC_BUILD_DIR}/conf.py)
+  set(DOC_BUILD_STATIC_DIR ${DOC_BUILD_DIR}/_static)
+
+  # copy entire configuration folder to doc build directory
+  # files in _static are automatically copied during sphinx-build, so no need to copy them individually
+  file(COPY ${SPHINX_CONFIG_DIR}/ DESTINATION ${DOC_BUILD_DIR})
+
+  # configure paths in conf.py, since relative paths change when file is copied
+  configure_file(${SPHINX_CONFIG_FILE_TEMPLATE} ${DOC_BUILD_CONFIG_FILE})
+
+  add_custom_command(
+    OUTPUT docenv
+    COMMAND ${VIRTUALENV} docenv
+    WORKING_DIRECTORY ${CMAKE_BINARY_DIR}/doc
+  )
+
+  set(DOCENV_BINARY_DIR ${CMAKE_BINARY_DIR}/doc/docenv/bin)
+  set(DOCENV_REQUIREMENTS_FILE ${CMAKE_SOURCE_DIR}/doc/requirements.txt)
+
+  add_custom_command(
+    OUTPUT ${DOC_BUILD_DIR}/requirements.txt
+    DEPENDS docenv ${DOCENV_REQUIREMENTS_FILE}
+    COMMAND ${CMAKE_COMMAND} -E copy ${DOCENV_REQUIREMENTS_FILE} ${DOC_BUILD_DIR}/requirements.txt
+    COMMAND ${DOCENV_BINARY_DIR}/pip $ENV{PIP_OPTIONS} install --upgrade pip
+    COMMAND ${DOCENV_BINARY_DIR}/pip $ENV{PIP_OPTIONS} install -r ${DOC_BUILD_DIR}/requirements.txt --upgrade
+    WORKING_DIRECTORY ${CMAKE_BINARY_DIR}/doc
+    )
+
+  set(DOCENV_DEPS docenv ${DOC_BUILD_DIR}/requirements.txt)
+  if(NOT TARGET Sphinx::sphinx-build)
+    add_executable(Sphinx::sphinx-build IMPORTED GLOBAL)
+    set_target_properties(Sphinx::sphinx-build PROPERTIES IMPORTED_LOCATION "${DOCENV_BINARY_DIR}/sphinx-build")
+  endif()
+
+  set(MATHJAX_URL "https://github.com/mathjax/MathJax/archive/3.2.2.tar.gz" CACHE STRING "URL for MathJax tarball")
+  set(MATHJAX_MD5 "08dd6ef33ca08870220d9aade2a62845" CACHE STRING "MD5 checksum of MathJax tarball")
+  mark_as_advanced(MATHJAX_URL)
+
+
+  # download mathjax distribution and unpack to folder "mathjax"
+  if(NOT EXISTS ${DOC_BUILD_STATIC_DIR}/mathjax/es5)
+    if(EXISTS ${CMAKE_BINARY_DIR}/mathjax.tar.gz)
+      file(MD5 ${CMAKE_BINARY_DIR}/mathjax.tar.gz DL_MD5)
+    endif()
+    if(NOT "${DL_MD5}" STREQUAL "${MATHJAX_MD5}")
+      file(DOWNLOAD ${MATHJAX_URL} "${CMAKE_BINARY_DIR}/mathjax.tar.gz" STATUS DL_STATUS SHOW_PROGRESS)
+      file(MD5 ${CMAKE_BINARY_DIR}/mathjax.tar.gz DL_MD5)
+      if((NOT DL_STATUS EQUAL 0) OR (NOT "${DL_MD5}" STREQUAL "${MATHJAX_MD5}"))
+        message(WARNING "Download from primary URL ${MATHJAX_URL} failed\nTrying fallback URL ${MATHJAX_FALLBACK}")
+        file(DOWNLOAD ${MATHJAX_FALLBACK} ${CMAKE_BINARY_DIR}/libpace.tar.gz EXPECTED_HASH MD5=${MATHJAX_MD5} SHOW_PROGRESS)
+      endif()
+    else()
+      message(STATUS "Using already downloaded archive ${CMAKE_BINARY_DIR}/libpace.tar.gz")
+    endif()
+    execute_process(COMMAND ${CMAKE_COMMAND} -E tar xzf mathjax.tar.gz WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
+    file(GLOB MATHJAX_VERSION_DIR CONFIGURE_DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/MathJax-*)
+    execute_process(COMMAND ${CMAKE_COMMAND} -E make_directory ${DOC_BUILD_STATIC_DIR}/mathjax)
+    execute_process(COMMAND ${CMAKE_COMMAND} -E rename ${MATHJAX_VERSION_DIR} ${DOC_BUILD_STATIC_DIR}/mathjax)
+  endif()
+
+  add_custom_command(
+    OUTPUT ${DOC_BUILD_DIR}/html/index.html
+    DEPENDS docenv ${DOC_SOURCES} ${DOCENV_DEPS} ${BUILD_DOC_CONFIG_FILE}
+    COMMAND Sphinx::sphinx-build ${SPHINX_EXTRA_OPTS} -b html -c ${DOC_BUILD_DIR} -d ${DOC_BUILD_DIR}/doctrees ${DOC_BUILD_DIR}/source ${DOC_BUILD_DIR}/html ${DOC_SOURCES}
+  )
+
+  add_custom_target(
+    doc ALL
+    DEPENDS docenv ${DOC_BUILD_DIR}/html/index.html ${DOC_BUILD_STATIC_DIR}/mathjax/es5
+    SOURCES ${CMAKE_SOURCE_DIR}/doc/requirements.txt ${DOC_SOURCES}
+  )
+
+  install(DIRECTORY ${DOC_BUILD_DIR}/html DESTINATION ${CMAKE_INSTALL_DOCDIR})
+endif()
+
+###################
+# packaging support
 
 # build LAMMPS-GUI and LAMMPS as flatpak, if tools are installed
 find_program(FLATPAK_COMMAND flatpak DOC "Path to flatpak command")
