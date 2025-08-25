@@ -245,7 +245,7 @@ if(BUILD_DOC)
   set(SPHINX_CONFIG_DIR ${CMAKE_SOURCE_DIR}/doc)
   set(SPHINX_CONFIG_FILE_TEMPLATE ${SPHINX_CONFIG_DIR}/conf.py.in)
   set(SPHINX_STATIC_DIR  ${SPHINX_CONFIG_DIR}/_static)
-  file(GLOB DOC_SOURCES CONFIGURE_DEPENDS ${CMAKE_BINARY_DIR}/doc/source/*.rst)
+  file(GLOB DOC_SOURCES CONFIGURE_DEPENDS ${CMAKE_SOURCE_DIR}/doc/source/*.rst)
 
   # configuration and static files are copied to binary dir to avoid collisions with parallel builds
   set(DOC_BUILD_DIR ${CMAKE_BINARY_DIR}/doc)
@@ -312,7 +312,7 @@ if(BUILD_DOC)
   add_custom_command(
     OUTPUT ${DOC_BUILD_DIR}/html/index.html
     DEPENDS docenv ${DOC_SOURCES} ${DOCENV_DEPS} ${BUILD_DOC_CONFIG_FILE}
-    COMMAND Sphinx::sphinx-build ${SPHINX_EXTRA_OPTS} -b html -c ${DOC_BUILD_DIR} -d ${DOC_BUILD_DIR}/doctrees ${DOC_BUILD_DIR}/source ${DOC_BUILD_DIR}/html ${DOC_SOURCES}
+    COMMAND Sphinx::sphinx-build ${SPHINX_EXTRA_OPTS} -b html -c ${DOC_BUILD_DIR} -d ${DOC_BUILD_DIR}/doctrees ${CMAKE_SOURCE_DIR}/doc/source ${DOC_BUILD_DIR}/html ${DOC_SOURCES}
   )
 
   add_custom_target(
