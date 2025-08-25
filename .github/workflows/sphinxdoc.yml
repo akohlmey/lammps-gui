@@ -19,7 +19,7 @@ jobs:
     - name: Build Documentation with Sphinx
       shell: bash
       run: |
-        cmake -S . -B build-doc -D BUILD_DOC=yes
+        cmake -S . -B build-doc -D BUILD_DOC_ONLY=yes
         cmake --build build-doc --target doc
     - name: Upload Artifacts
       id: deployment

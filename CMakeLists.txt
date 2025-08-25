@@ -24,14 +24,6 @@ option(LAMMPS_GUI_USE_QT5 "Prefer using Qt5 over Qt6" OFF)
 option(BUILD_DOC "Build LAMMPS-GUI HTML documentation" ON)
 ##################################################################################
 
-
-set(CMAKE_AUTOUIC ON)
-set(CMAKE_AUTOMOC ON)
-set(CMAKE_AUTORCC ON)
-
-set(CMAKE_CXX_STANDARD 17)
-set(CMAKE_CXX_STANDARD_REQUIRED ON)
-
 include(CheckIncludeFileCXX)
 # helper function to check for usable omp.h header
 function(check_omp_h_include)
@@ -54,183 +46,192 @@ function(check_omp_h_include)
   set(HAVE_OMP_H_INCLUDE ${_have_omp_h} PARENT_SCOPE)
 endfunction()
 
-# detect if we may enable OpenMP support by default
-set(BUILD_OMP_DEFAULT OFF)
-find_package(OpenMP COMPONENTS CXX QUIET)
-if(OpenMP_CXX_FOUND)
-  check_omp_h_include()
-  if(HAVE_OMP_H_INCLUDE)
-    set(BUILD_OMP_DEFAULT ON)
-  endif()
-endif()
+set(CMAKE_AUTOUIC ON)
+set(CMAKE_AUTOMOC ON)
+set(CMAKE_AUTORCC ON)
 
-option(BUILD_OMP "Build with OpenMP support" ${BUILD_OMP_DEFAULT})
-if(BUILD_OMP)
-  find_package(OpenMP COMPONENTS CXX REQUIRED)
-  check_omp_h_include()
-  if(NOT HAVE_OMP_H_INCLUDE)
-    message(FATAL_ERROR "Cannot find the 'omp.h' header file required for full OpenMP support")
-  endif()
-endif()
+set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-# checks
-# when this file is included as subdirectory in the LAMMPS build, many settings are directly imported
-if(LAMMPS_DIR)
-  set(LAMMPS_HEADER_DIR ${LAMMPS_SOURCE_DIR})
-  set(LAMMPS_LIBRARY lammps)
-else()
-  if (NOT LAMMPS_SOURCE_DIR AND NOT LAMMPS_GUI_USE_PLUGIN)
-    message(FATAL_ERROR "Must provide -D LAMMPS_SOURCE_DIR=<path to LAMMPS sources> when not compiling with -D LAMMPS_GUI_USE_PLUGIN=on")
-  endif()
-  # by default, install into $HOME/.local (not /usr/local),
-  # so that no root access (and sudo) is needed
-  if(CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
-    set(CMAKE_INSTALL_PREFIX "$ENV{HOME}/.local" CACHE PATH "Default install path" FORCE)
-  endif()
-
-  # ugly hacks for MSVC which by default always reports an old C++ standard in the __cplusplus macro
-  # and prints lots of pointless warnings about "unsafe" functions
-  if(MSVC)
-    if(CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
-      add_compile_options(/Zc:__cplusplus)
-      add_compile_options(/wd4244)
-      add_compile_options(/wd4267)
-      add_compile_options(/wd4250)
-      add_compile_options(/EHsc)
+if (NOT BUILD_DOC_ONLY)
+  # detect if we may enable OpenMP support by default
+  set(BUILD_OMP_DEFAULT OFF)
+  find_package(OpenMP COMPONENTS CXX QUIET)
+  if(OpenMP_CXX_FOUND)
+    check_omp_h_include()
+    if(HAVE_OMP_H_INCLUDE)
+      set(BUILD_OMP_DEFAULT ON)
     endif()
-    add_compile_definitions(_CRT_SECURE_NO_WARNINGS)
   endif()
 
-  if (NOT LAMMPS_GUI_USE_PLUGIN)
-    get_filename_component(LAMMPS_SOURCE_DIR ${PROJECT_SOURCE_DIR}/../../src ABSOLUTE)
-    set(LAMMPS_HEADER_DIR ${LAMMPS_SOURCE_DIR} CACHE PATH "Location of LAMMPS headers")
-    if(NOT LAMMPS_HEADER_DIR)
-      message(FATAL_ERROR "Must set LAMMPS_HEADER_DIR")
+  option(BUILD_OMP "Build with OpenMP support" ${BUILD_OMP_DEFAULT})
+  if(BUILD_OMP)
+    find_package(OpenMP COMPONENTS CXX REQUIRED)
+    check_omp_h_include()
+    if(NOT HAVE_OMP_H_INCLUDE)
+      message(FATAL_ERROR "Cannot find the 'omp.h' header file required for full OpenMP support")
     endif()
-    get_filename_component(LAMMPS_DIR ${LAMMPS_SOURCE_DIR}/.. ABSOLUTE)
-    # find LAMMPS library
-    find_library(LAMMPS_LIBRARY
-      NAMES lammps lammps_serial
-      HINTS ${LAMMPS_LIB_DIR} ${LAMMPS_HEADER_DIR}/../build ${LAMMPS_HEADER_DIR}/../build-clang ${LAMMPS_HEADER_DIR}/../build-test ${LAMMPS_HEADER_DIR}
-      REQUIRED
+  endif()
+
+  # checks
+  # when this file is included as subdirectory in the LAMMPS build, many settings are directly imported
+  if(LAMMPS_DIR)
+    set(LAMMPS_HEADER_DIR ${LAMMPS_SOURCE_DIR})
+    set(LAMMPS_LIBRARY lammps)
+  else()
+    if (NOT LAMMPS_SOURCE_DIR AND NOT LAMMPS_GUI_USE_PLUGIN)
+      message(FATAL_ERROR "Must provide -D LAMMPS_SOURCE_DIR=<path to LAMMPS sources> when not compiling with -D LAMMPS_GUI_USE_PLUGIN=on")
+    endif()
+    # by default, install into $HOME/.local (not /usr/local),
+    # so that no root access (and sudo) is needed
+    if(CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
+      set(CMAKE_INSTALL_PREFIX "$ENV{HOME}/.local" CACHE PATH "Default install path" FORCE)
+    endif()
+
+    # ugly hacks for MSVC which by default always reports an old C++ standard in the __cplusplus macro
+    # and prints lots of pointless warnings about "unsafe" functions
+    if(MSVC)
+      if(CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
+        add_compile_options(/Zc:__cplusplus)
+        add_compile_options(/wd4244)
+        add_compile_options(/wd4267)
+        add_compile_options(/wd4250)
+        add_compile_options(/EHsc)
+      endif()
+      add_compile_definitions(_CRT_SECURE_NO_WARNINGS)
+    endif()
+
+    if (NOT LAMMPS_GUI_USE_PLUGIN)
+      get_filename_component(LAMMPS_SOURCE_DIR ${PROJECT_SOURCE_DIR}/../../src ABSOLUTE)
+      set(LAMMPS_HEADER_DIR ${LAMMPS_SOURCE_DIR} CACHE PATH "Location of LAMMPS headers")
+      if(NOT LAMMPS_HEADER_DIR)
+        message(FATAL_ERROR "Must set LAMMPS_HEADER_DIR")
+      endif()
+      get_filename_component(LAMMPS_DIR ${LAMMPS_SOURCE_DIR}/.. ABSOLUTE)
+      # find LAMMPS library
+      find_library(LAMMPS_LIBRARY
+        NAMES lammps lammps_serial
+        HINTS ${LAMMPS_LIB_DIR} ${LAMMPS_HEADER_DIR}/../build ${LAMMPS_HEADER_DIR}/../build-clang ${LAMMPS_HEADER_DIR}/../build-test ${LAMMPS_HEADER_DIR}
+        REQUIRED
+      )
+    endif()
+  endif()
+
+  set(LAMMPS_PLUGINLIB_DIR ${CMAKE_SOURCE_DIR}/plugin)
+  if(LAMMPS_GUI_USE_PLUGIN)
+    enable_language(C)
+    set(PLUGIN_LOADER_SRC ${LAMMPS_PLUGINLIB_DIR}/liblammpsplugin.c)
+  endif()
+
+  # include resource compiler to embed icons into the executable on Windows
+  if(CMAKE_SYSTEM_NAME STREQUAL "Windows")
+    enable_language(RC)
+    set(ICON_RC_FILE ${CMAKE_SOURCE_DIR}/resources/lmpicons.rc)
+  endif()
+
+  # we require at least Qt version 5.15, but prefer Qt 6.2 or later.
+  if(NOT LAMMPS_GUI_USE_QT5)
+    find_package(Qt6 6.2 QUIET COMPONENTS Widgets Charts)
+  endif()
+  if(NOT Qt6_FOUND)
+    find_package(Qt5 5.15 REQUIRED COMPONENTS Widgets Charts)
+    set(QT_VERSION_MAJOR 5)
+  else()
+    set(QT_VERSION_MAJOR 6)
+  endif()
+  message(STATUS "Using Qt version ${Qt${QT_VERSION_MAJOR}_VERSION} for LAMMPS-GUI")
+
+  set(PROJECT_SOURCES
+    ${CMAKE_SOURCE_DIR}/src/main.cpp
+    ${CMAKE_SOURCE_DIR}/src/lammpsgui.cpp
+    ${CMAKE_SOURCE_DIR}/src/lammpsgui.h
+    ${CMAKE_SOURCE_DIR}/src/lammpsgui.ui
+    ${CMAKE_SOURCE_DIR}/src/chartviewer.cpp
+    ${CMAKE_SOURCE_DIR}/src/chartviewer.h
+    ${CMAKE_SOURCE_DIR}/src/codeeditor.cpp
+    ${CMAKE_SOURCE_DIR}/src/codeeditor.h
+    ${CMAKE_SOURCE_DIR}/src/findandreplace.cpp
+    ${CMAKE_SOURCE_DIR}/src/findandreplace.h
+    ${CMAKE_SOURCE_DIR}/src/flagwarnings.cpp
+    ${CMAKE_SOURCE_DIR}/src/flagwarnings.h
+    ${CMAKE_SOURCE_DIR}/src/helpers.cpp
+    ${CMAKE_SOURCE_DIR}/src/highlighter.cpp
+    ${CMAKE_SOURCE_DIR}/src/highlighter.h
+    ${CMAKE_SOURCE_DIR}/src/imageviewer.cpp
+    ${CMAKE_SOURCE_DIR}/src/imageviewer.h
+    ${CMAKE_SOURCE_DIR}/src/lammpsrunner.h
+    ${CMAKE_SOURCE_DIR}/src/lammpswrapper.cpp
+    ${CMAKE_SOURCE_DIR}/src/lammpswrapper.h
+    ${CMAKE_SOURCE_DIR}/src/linenumberarea.h
+    ${CMAKE_SOURCE_DIR}/src/logwindow.cpp
+    ${CMAKE_SOURCE_DIR}/src/logwindow.h
+    ${CMAKE_SOURCE_DIR}/src/fileviewer.cpp
+    ${CMAKE_SOURCE_DIR}/src/fileviewer.h
+    ${CMAKE_SOURCE_DIR}/src/preferences.cpp
+    ${CMAKE_SOURCE_DIR}/src/preferences.h
+    ${CMAKE_SOURCE_DIR}/src/qaddon.cpp
+    ${CMAKE_SOURCE_DIR}/src/qaddon.h
+    ${CMAKE_SOURCE_DIR}/src/setvariables.cpp
+    ${CMAKE_SOURCE_DIR}/src/setvariables.h
+    ${CMAKE_SOURCE_DIR}/src/slideshow.h
+    ${CMAKE_SOURCE_DIR}/src/slideshow.cpp
+    ${CMAKE_SOURCE_DIR}/src/stdcapture.cpp
+    ${CMAKE_SOURCE_DIR}/src/rangeslider.h
+    ${CMAKE_SOURCE_DIR}/src/rangeslider.cpp
+    ${PLUGIN_LOADER_SRC}
+    ${ICON_RC_FILE}
+  )
+  if(QT_VERSION_MAJOR EQUAL 6)
+    qt6_add_resources(PROJECT_SOURCES resources/lammpsgui.qrc)
+  else()
+    qt5_add_resources(PROJECT_SOURCES resources/lammpsgui.qrc)
+  endif()
+
+  if(APPLE)
+    set(MACOSX_ICON_FILE ${CMAKE_SOURCE_DIR}/packaging/lammps.icns)
+    set(MACOSX_README_FILE ${CMAKE_SOURCE_DIR}/packaging/README.macos)
+    set(MACOSX_BACKGROUND_FILE ${CMAKE_SOURCE_DIR}/packaging/LAMMPS_DMG_Background.png)
+  endif()
+
+  if(QT_VERSION_MAJOR EQUAL 6)
+    qt_add_executable(lammps-gui
+      MANUAL_FINALIZATION
+      ${MACOSX_ICON_FILE}
+      ${PROJECT_SOURCES}
+    )
+  else()
+    add_executable(lammps-gui
+      ${MACOSX_ICON_FILE}
+      ${PROJECT_SOURCES}
     )
   endif()
-endif()
 
-set(LAMMPS_PLUGINLIB_DIR ${CMAKE_SOURCE_DIR}/plugin)
-if(LAMMPS_GUI_USE_PLUGIN)
-  enable_language(C)
-  set(PLUGIN_LOADER_SRC ${LAMMPS_PLUGINLIB_DIR}/liblammpsplugin.c)
-endif()
-
-# include resource compiler to embed icons into the executable on Windows
-if(CMAKE_SYSTEM_NAME STREQUAL "Windows")
-  enable_language(RC)
-  set(ICON_RC_FILE ${CMAKE_SOURCE_DIR}/resources/lmpicons.rc)
-endif()
-
-# we require at least Qt version 5.15, but prefer Qt 6.2 or later.
-if(NOT LAMMPS_GUI_USE_QT5)
-  find_package(Qt6 6.2 QUIET COMPONENTS Widgets Charts)
-endif()
-if(NOT Qt6_FOUND)
-  find_package(Qt5 5.15 REQUIRED COMPONENTS Widgets Charts)
-  set(QT_VERSION_MAJOR 5)
-else()
-  set(QT_VERSION_MAJOR 6)
-endif()
-message(STATUS "Using Qt version ${Qt${QT_VERSION_MAJOR}_VERSION} for LAMMPS-GUI")
-
-set(PROJECT_SOURCES
-  ${CMAKE_SOURCE_DIR}/src/main.cpp
-  ${CMAKE_SOURCE_DIR}/src/lammpsgui.cpp
-  ${CMAKE_SOURCE_DIR}/src/lammpsgui.h
-  ${CMAKE_SOURCE_DIR}/src/lammpsgui.ui
-  ${CMAKE_SOURCE_DIR}/src/chartviewer.cpp
-  ${CMAKE_SOURCE_DIR}/src/chartviewer.h
-  ${CMAKE_SOURCE_DIR}/src/codeeditor.cpp
-  ${CMAKE_SOURCE_DIR}/src/codeeditor.h
-  ${CMAKE_SOURCE_DIR}/src/findandreplace.cpp
-  ${CMAKE_SOURCE_DIR}/src/findandreplace.h
-  ${CMAKE_SOURCE_DIR}/src/flagwarnings.cpp
-  ${CMAKE_SOURCE_DIR}/src/flagwarnings.h
-  ${CMAKE_SOURCE_DIR}/src/helpers.cpp
-  ${CMAKE_SOURCE_DIR}/src/highlighter.cpp
-  ${CMAKE_SOURCE_DIR}/src/highlighter.h
-  ${CMAKE_SOURCE_DIR}/src/imageviewer.cpp
-  ${CMAKE_SOURCE_DIR}/src/imageviewer.h
-  ${CMAKE_SOURCE_DIR}/src/lammpsrunner.h
-  ${CMAKE_SOURCE_DIR}/src/lammpswrapper.cpp
-  ${CMAKE_SOURCE_DIR}/src/lammpswrapper.h
-  ${CMAKE_SOURCE_DIR}/src/linenumberarea.h
-  ${CMAKE_SOURCE_DIR}/src/logwindow.cpp
-  ${CMAKE_SOURCE_DIR}/src/logwindow.h
-  ${CMAKE_SOURCE_DIR}/src/fileviewer.cpp
-  ${CMAKE_SOURCE_DIR}/src/fileviewer.h
-  ${CMAKE_SOURCE_DIR}/src/preferences.cpp
-  ${CMAKE_SOURCE_DIR}/src/preferences.h
-  ${CMAKE_SOURCE_DIR}/src/qaddon.cpp
-  ${CMAKE_SOURCE_DIR}/src/qaddon.h
-  ${CMAKE_SOURCE_DIR}/src/setvariables.cpp
-  ${CMAKE_SOURCE_DIR}/src/setvariables.h
-  ${CMAKE_SOURCE_DIR}/src/slideshow.h
-  ${CMAKE_SOURCE_DIR}/src/slideshow.cpp
-  ${CMAKE_SOURCE_DIR}/src/stdcapture.cpp
-  ${CMAKE_SOURCE_DIR}/src/rangeslider.h
-  ${CMAKE_SOURCE_DIR}/src/rangeslider.cpp
-  ${PLUGIN_LOADER_SRC}
-  ${ICON_RC_FILE}
-)
-if(QT_VERSION_MAJOR EQUAL 6)
-  qt6_add_resources(PROJECT_SOURCES resources/lammpsgui.qrc)
-else()
-  qt5_add_resources(PROJECT_SOURCES resources/lammpsgui.qrc)
-endif()
-
-if(APPLE)
-  set(MACOSX_ICON_FILE ${CMAKE_SOURCE_DIR}/packaging/lammps.icns)
-  set(MACOSX_README_FILE ${CMAKE_SOURCE_DIR}/packaging/README.macos)
-  set(MACOSX_BACKGROUND_FILE ${CMAKE_SOURCE_DIR}/packaging/LAMMPS_DMG_Background.png)
-endif()
-
-if(QT_VERSION_MAJOR EQUAL 6)
-  qt_add_executable(lammps-gui
-    MANUAL_FINALIZATION
-    ${MACOSX_ICON_FILE}
-    ${PROJECT_SOURCES}
-  )
-else()
-  add_executable(lammps-gui
-    ${MACOSX_ICON_FILE}
-    ${PROJECT_SOURCES}
-  )
-endif()
-
-if(QT_VERSION_MAJOR EQUAL 6)
+  if(QT_VERSION_MAJOR EQUAL 6)
     qt_finalize_executable(lammps-gui)
-endif()
+  endif()
 
-# compilation settings
-if(LAMMPS_GUI_USE_PLUGIN)
-  target_compile_definitions(lammps-gui PRIVATE LAMMPS_GUI_USE_PLUGIN)
-  target_include_directories(lammps-gui PRIVATE ${LAMMPS_PLUGINLIB_DIR})
-else()
-  target_include_directories(lammps-gui PRIVATE ${LAMMPS_HEADER_DIR})
-  target_link_libraries(lammps-gui PRIVATE ${LAMMPS_LIBRARY})
-endif()
-target_include_directories(lammps-gui PRIVATE ${CMAKE_SOURCE_DIR}/src)
-target_compile_definitions(lammps-gui PRIVATE LAMMPS_GUI_VERSION="${PROJECT_VERSION}")
-target_link_libraries(lammps-gui PRIVATE Qt${QT_VERSION_MAJOR}::Widgets Qt${QT_VERSION_MAJOR}::Charts)
+  # compilation settings
+  if(LAMMPS_GUI_USE_PLUGIN)
+    target_compile_definitions(lammps-gui PRIVATE LAMMPS_GUI_USE_PLUGIN)
+    target_include_directories(lammps-gui PRIVATE ${LAMMPS_PLUGINLIB_DIR})
+  else()
+    target_include_directories(lammps-gui PRIVATE ${LAMMPS_HEADER_DIR})
+    target_link_libraries(lammps-gui PRIVATE ${LAMMPS_LIBRARY})
+  endif()
+  target_include_directories(lammps-gui PRIVATE ${CMAKE_SOURCE_DIR}/src)
+  target_compile_definitions(lammps-gui PRIVATE LAMMPS_GUI_VERSION="${PROJECT_VERSION}")
+  target_link_libraries(lammps-gui PRIVATE Qt${QT_VERSION_MAJOR}::Widgets Qt${QT_VERSION_MAJOR}::Charts)
 
-if(BUILD_OMP)
-  find_package(OpenMP COMPONENTS CXX REQUIRED)
-  target_link_libraries(lammps-gui PRIVATE OpenMP::OpenMP_CXX)
+  if(BUILD_OMP)
+    find_package(OpenMP COMPONENTS CXX REQUIRED)
+    target_link_libraries(lammps-gui PRIVATE OpenMP::OpenMP_CXX)
+  endif()
 endif()
 
 ###################
 # documentation
 
-if(BUILD_DOC)
+if(BUILD_DOC OR BUILD_DOC_ONLY)
   # Current Sphinx versions require at least Python 3.8
   # use default (or custom) Python executable, if version is sufficient
   if(Python_VERSION VERSION_GREATER_EQUAL 3.8)
