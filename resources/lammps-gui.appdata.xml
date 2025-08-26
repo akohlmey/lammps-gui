@@ -57,9 +57,11 @@
   <releases>
     <release version="1.8.0" timestamp="1755766131">
       <description>
-        Reorganize LAMMPS-GUI to have its own git repository
-        Default to loading shared LAMMPS library dynamically
-        Implement Wizard to select shared LAMMPS library, if not set
+        Unbundle LAMMPS-GUI from LAMMPS and set it up to have its own git repository
+        Default to loading shared LAMMPS library dynamically when compiled outside LAMMPS
+        Search LD_LIBRARY_PATH and equivalent and a few fixed folders for a suitable library
+        Reorgenize documentation to be its own webpage and set it up during compilation.
+        Use GitHub Action to translate and deploy docs at online website.
       </description>
     </release>
     <release version="1.7.1" timestamp="1754346906">
