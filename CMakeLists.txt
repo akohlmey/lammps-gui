@@ -254,8 +254,9 @@ if(BUILD_DOC OR BUILD_DOC_ONLY)
   set(DOC_BUILD_STATIC_DIR ${DOC_BUILD_DIR}/_static)
 
   # copy entire configuration folder to doc build directory
-  # files in _static are automatically copied during sphinx-build, so no need to copy them individually
   file(COPY ${SPHINX_CONFIG_DIR}/ DESTINATION ${DOC_BUILD_DIR})
+  file(COPY ${SPHINX_CONFIG_DIR}/_static DESTINATION ${DOC_BUILD_DIR}/)
+  file(COPY ${SPHINX_CONFIG_DIR}/_templates DESTINATION ${DOC_BUILD_DIR}/)
 
   # configure paths in conf.py, since relative paths change when file is copied
   configure_file(${SPHINX_CONFIG_FILE_TEMPLATE} ${DOC_BUILD_CONFIG_FILE})

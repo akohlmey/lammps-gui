@@ -49,6 +49,9 @@ templates_path = ['_templates']
 # The suffix of source filenames.
 source_suffix = {'.rst': 'restructuredtext'}
 
+# The name of an image file (within the static path) to use as favicon of the
+html_favicon = '_static/lammps.ico'
+
 # the main document
 master_doc = 'index'
 
