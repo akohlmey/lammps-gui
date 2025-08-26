@@ -5,39 +5,51 @@ LAMMPS-GUI Documentation
 .. toctree::
    :caption: About LAMMPS-GUI
 
+.. image:: JPG/lammps-gui-banner.png
+   :align: right
+   :scale: 50%
+
 ****************
 About LAMMPS-GUI
 ****************
 
-.. image:: JPG/lammps-gui-banner.png
-   :align: center
-   :scale: 75%
-
-LAMMPS-GUI is a graphical text editor programmed using the `Qt Framework
-<https://www.qt.io/>`_ and customized for editing and running LAMMPS
-input files.  It is linked to the :ref:`LAMMPS library <lammps_c_api>`
-and thus can run LAMMPS directly using the contents of the editor's text
-buffer as input and without having to launch the LAMMPS executable.
-
-It *differs* from other known interfaces to LAMMPS in that it can
+LAMMPS-GUI is a graphical text editor with syntax highlighting and
+auto-completions for `LAMMPS <https://www.lammps.org/>`_ input files
+programmed using the `Qt Framework <https://www.qt.io/>`_ and customized
+for running, monitoring, and visualizing LAMMPS simulations. It calls
+LAMMPS directly using the `LAMMPS library interface
+<https://docs.lammps.org/Library.html#lammps-c-library-api>`_ and does
+not have to run an external LAMMPS executable, and therefore it can
 retrieve and display information from LAMMPS *while it is running*,
-display visualizations created with the :doc:`dump image command
-<dump_image>`, can launch the online LAMMPS documentation for known
-LAMMPS commands and styles, and directly integrates with a collection
-of LAMMPS tutorials (:ref:`Gravelle1 <Gravelle1>`).
+display visualizations created with the dump image command, can access
+the online LAMMPS documentation for known LAMMPS commands and styles.
+
+The primary goal for it is to facilitate teaching LAMMPS to beginners
+using just LAMMPS-GUI and have a consistent behavior across major
+platforms like Linux, macOS, and Windows.  This way one can focus on
+teaching LAMMPS.  As a demonstration LAMMPS-GUI is directly integrated
+with a `collection of LAMMPS tutorials
+<https://lammpstutorials.github.io>`_.  But LAMMPS-GUI offers useful
+features beyond tutorials and for intermediate and advanced LAMMPS
+users.
+
+------------------
 
 This document describes LAMMPS-GUI version |version|.
 
+------------------
+
 .. toctree::
-   :caption: LAMMPS-GUI Documentation
+   :caption: Table of Contents
    :maxdepth: 2
    :numbered: 3
    :name: userdoc
    :includehidden:
 
-   overview
    installation
-             
+   overview
+   basic_usage
+
 ----------
 
 .. only:: html
