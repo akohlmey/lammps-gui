@@ -95,8 +95,6 @@ channels as for LAMMPS itself <Errors_bugs>` for that purpose.
 
 -----
 
------
-
 Starting LAMMPS-GUI
 -------------------
 
@@ -1092,6 +1090,3 @@ Window), and `Ctrl-Q` (Quit Application) are supported.
 
 **(Gravelle2)** Gravelle https://lammpstutorials.github.io/
 
-.. raw:: latex
-
-   \clearpage

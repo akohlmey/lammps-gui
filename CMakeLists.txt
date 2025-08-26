@@ -243,43 +243,33 @@ if(BUILD_DOC OR BUILD_DOC_ONLY)
   endif()
   set(VIRTUALENV ${Python3_EXECUTABLE} -m venv)
 
-  set(SPHINX_CONFIG_DIR ${CMAKE_SOURCE_DIR}/doc)
-  set(SPHINX_CONFIG_FILE_TEMPLATE ${SPHINX_CONFIG_DIR}/conf.py.in)
-  set(SPHINX_STATIC_DIR  ${SPHINX_CONFIG_DIR}/_static)
-  file(GLOB DOC_SOURCES CONFIGURE_DEPENDS ${CMAKE_SOURCE_DIR}/doc/source/*.rst)
+  set(SPHINX_DIR ${CMAKE_SOURCE_DIR}/doc)
+  set(SPHINX_CONFIG_FILE_TEMPLATE ${SPHINX_DIR}/conf.py.in)
+  file(GLOB DOC_SOURCES CONFIGURE_DEPENDS ${SPHINX_DIR}/*.rst)
 
   # configuration and static files are copied to binary dir to avoid collisions with parallel builds
   set(DOC_BUILD_DIR ${CMAKE_BINARY_DIR}/doc)
-  set(DOC_BUILD_CONFIG_FILE ${DOC_BUILD_DIR}/conf.py)
   set(DOC_BUILD_STATIC_DIR ${DOC_BUILD_DIR}/_static)
-
-  # copy entire configuration folder to doc build directory
-  file(COPY ${SPHINX_CONFIG_DIR}/ DESTINATION ${DOC_BUILD_DIR})
-  file(COPY ${SPHINX_CONFIG_DIR}/_static DESTINATION ${DOC_BUILD_DIR}/)
-  file(COPY ${SPHINX_CONFIG_DIR}/_templates DESTINATION ${DOC_BUILD_DIR}/)
-
-  # configure paths in conf.py, since relative paths change when file is copied
+  set(DOC_BUILD_CONFIG_FILE ${DOC_BUILD_DIR}/conf.py)
+  
+  file(MAKE_DIRECTORY ${DOC_BUILD_DIR})
   configure_file(${SPHINX_CONFIG_FILE_TEMPLATE} ${DOC_BUILD_CONFIG_FILE})
-
+  file(COPY ${SPHINX_DIR}/_static DESTINATION ${DOC_BUILD_DIR}/)
+  file(COPY ${SPHINX_DIR}/_templates DESTINATION ${DOC_BUILD_DIR}/)
+  file(COPY ${CMAKE_SOURCE_DIR}/resources/icons/lammps-gui-banner.png DESTINATION ${DOC_BUILD_DIR})
+  
+  # configure virtual environment for sphinx-build and related
+  set(DOCENV_BINARY_DIR ${CMAKE_BINARY_DIR}/docenv/bin)
+  set(DOCENV_REQUIREMENTS_FILE ${SPHINX_DIR}/requirements.txt)
+  set(DOCENV_DEPS docenv ${DOCENV_REQUIREMENTS_FILE})
   add_custom_command(
     OUTPUT docenv
     COMMAND ${VIRTUALENV} docenv
-    WORKING_DIRECTORY ${CMAKE_BINARY_DIR}/doc
+    COMMAND ${DOCENV_BINARY_DIR}/pip $ENV{PIP_OPTIONS} install --upgrade pip
+    COMMAND ${DOCENV_BINARY_DIR}/pip $ENV{PIP_OPTIONS} install -r ${DOCENV_REQUIREMENTS_FILE} --upgrade
+    WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
   )
 
-  set(DOCENV_BINARY_DIR ${CMAKE_BINARY_DIR}/doc/docenv/bin)
-  set(DOCENV_REQUIREMENTS_FILE ${CMAKE_SOURCE_DIR}/doc/requirements.txt)
-
-  add_custom_command(
-    OUTPUT ${DOC_BUILD_DIR}/requirements.txt
-    DEPENDS docenv ${DOCENV_REQUIREMENTS_FILE}
-    COMMAND ${CMAKE_COMMAND} -E copy ${DOCENV_REQUIREMENTS_FILE} ${DOC_BUILD_DIR}/requirements.txt
-    COMMAND ${DOCENV_BINARY_DIR}/pip $ENV{PIP_OPTIONS} install --upgrade pip
-    COMMAND ${DOCENV_BINARY_DIR}/pip $ENV{PIP_OPTIONS} install -r ${DOC_BUILD_DIR}/requirements.txt --upgrade
-    WORKING_DIRECTORY ${CMAKE_BINARY_DIR}/doc
-    )
-
-  set(DOCENV_DEPS docenv ${DOC_BUILD_DIR}/requirements.txt)
   if(NOT TARGET Sphinx::sphinx-build)
     add_executable(Sphinx::sphinx-build IMPORTED GLOBAL)
     set_target_properties(Sphinx::sphinx-build PROPERTIES IMPORTED_LOCATION "${DOCENV_BINARY_DIR}/sphinx-build")
@@ -288,7 +278,6 @@ if(BUILD_DOC OR BUILD_DOC_ONLY)
   set(MATHJAX_URL "https://github.com/mathjax/MathJax/archive/3.2.2.tar.gz" CACHE STRING "URL for MathJax tarball")
   set(MATHJAX_MD5 "08dd6ef33ca08870220d9aade2a62845" CACHE STRING "MD5 checksum of MathJax tarball")
   mark_as_advanced(MATHJAX_URL)
-
 
   # download mathjax distribution and unpack to folder "mathjax"
   if(NOT EXISTS ${DOC_BUILD_STATIC_DIR}/mathjax/es5)
@@ -313,8 +302,8 @@ if(BUILD_DOC OR BUILD_DOC_ONLY)
 
   add_custom_command(
     OUTPUT ${DOC_BUILD_DIR}/html/index.html
-    DEPENDS docenv ${DOC_SOURCES} ${DOCENV_DEPS} ${BUILD_DOC_CONFIG_FILE}
-    COMMAND Sphinx::sphinx-build ${SPHINX_EXTRA_OPTS} -b html -c ${DOC_BUILD_DIR} -d ${DOC_BUILD_DIR}/doctrees ${CMAKE_SOURCE_DIR}/doc/source ${DOC_BUILD_DIR}/html ${DOC_SOURCES}
+    DEPENDS docenv ${DOC_SOURCES} ${DOCENV_DEPS} ${SPHINX_CONFIG_FILE_TEMPLATE}
+    COMMAND Sphinx::sphinx-build ${SPHINX_EXTRA_OPTS} -b html -c ${DOC_BUILD_DIR} -d ${DOC_BUILD_DIR}/doctrees ${CMAKE_SOURCE_DIR}/doc ${DOC_BUILD_DIR}/html ${DOC_SOURCES}
   )
 
   add_custom_target(

@@ -5,7 +5,7 @@ LAMMPS-GUI Documentation
 .. toctree::
    :caption: About LAMMPS-GUI
 
-.. image:: JPG/lammps-gui-banner.png
+.. image:: _images/lammps-gui-banner.png
    :align: center
    :scale: 75%
 
