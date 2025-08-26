@@ -19,6 +19,26 @@ versions *without* LAMMPS included are posted on the
 `LAMMPS-GUI releases page on GitHub
 <https://github.com/akohlmey/lammps-gui/releases>`_
 
+
+Prerequisites and portability
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+LAMMPS-GUI version 1.8.0 and later is programmed in C++ based on the
+C++17 standard and using the `Qt GUI framework
+<https://www.qt.io/product/framework>`_.  Currently, Qt version 5.15LTS
+or later is required; support for Qt version 6.x is available.  Building
+LAMMPS with CMake (version 3.20 or later) is required.
+
+The LAMMPS-GUI has been successfully compiled and tested on:
+
+- Ubuntu Linux 22.04LTS x86_64 using GCC 11, Qt version 5.15
+- Fedora Linux 41 x86\_64 using GCC 14 and Clang 17, Qt version 5.15
+- Fedora Linux 42 x86\_64 using GCC 15, Qt version 6.9
+- Apple macOS 12 (Monterey) and macOS 13 (Ventura) with Xcode on arm64 and x86\_64, Qt version 5.15
+- Windows 10 and 11 x86_64 with Visual Studio 2022 and Visual C++ 14.36, Qt version 5.15
+- Windows 10 and 11 x86_64 with Visual Studio 2022 and Visual C++ 14.40, Qt version 6.7
+- Windows 10 and 11 x86_64 with MinGW / GCC 14.2 cross-compiler on Fedora 42, Qt version 5.15
+
 Pre-compiled executables
 ^^^^^^^^^^^^^^^^^^^^^^^^
 
