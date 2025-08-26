@@ -6,15 +6,18 @@ LAMMPS-GUI is distributed as `source code on GitHub
 <https://github.com/akohlmey/lammps-gui>`_ and can be compiled as part
 of compiling LAMMPS, where it will be linked to the corresponding
 version of LAMMPS directly.  Pre-compiled packages of LAMMPS with
-LAMMPS-GUI included are available.
+LAMMPS-GUI included are also available for download.
 
 LAMMPS-GUI can also be compiled as a standalone package and load the
-LAMMPS library dynamically at runtime (currently with the exception of
-macOS due to an unresolved technical issue).  This supports using
-LAMMPS-GUI with customized, patched, or extended LAMMPS versions
-containing features not available in the official LAMMPS distribution.
-It also supports using LAMMPS-GUI with LAMMPS shared libraries compiled
-using the traditional makefile based build process.
+LAMMPS library dynamically at runtime (currently not on macOS due to a
+technical issue).  This supports using LAMMPS-GUI with customized,
+patched, or extended LAMMPS versions containing features not available
+in the official LAMMPS distribution.  It also supports using LAMMPS-GUI
+with LAMMPS shared libraries compiled using the traditional makefile
+based build process.  Pre-compiled packages of standalone LAMMPS-GUI
+versions *without* LAMMPS included are posted on the
+`LAMMPS-GUI releases page on GitHub
+<https://github.com/akohlmey/lammps-gui/releases>`_
 
 Pre-compiled executables
 ^^^^^^^^^^^^^^^^^^^^^^^^
@@ -25,9 +28,9 @@ include both, LAMMPS-GUI and the command-line version of LAMMPS.  Such
 pre-compiled LAMMPS executable packages are available for download for
 Linux x86\_64 (Ubuntu 22.04LTS or later and compatible), macOS (version
 11 aka Big Sur or later), and Windows (version 10 or later) from the
-`LAMMPS release pages on GitHub
+`LAMMPS releases page on GitHub
 <https://github.com/lammps/lammps/releases/>`_.  A backup download
-location is at https://download.lammps.org/static/, but may not always
+location is at https://download.lammps.org/static/ but may not always
 be up-to-date.
 
 .. admonition:: GPU support and MPI parallelization
@@ -46,15 +49,29 @@ be up-to-date.
    LAMMPS executable <https://docs.lammps.org/Run_basics.html>`_
    compiled with MPI support for that.  For the use cases that
    LAMMPS-GUI has been conceived for this is not a significant
-   limitation.
+   limitation.  Many supercomputing centers and high-performance
+   computing clusters have parallel LAMMPS pre-installed.
 
 Windows 10 and later
 """"""""""""""""""""
 
+.. image:: JPG/windows-download-keep2.png
+   :align: right
+   :width: 45%
+
 After downloading the ``LAMMPS-Win10-64bit-GUI-<version>.exe`` installer
 package, you need to execute it, and start the installation process.
-Since those packages are currently unsigned, you have to enable "Developer Mode"
-in the Windows System Settings to run the installer.
+Depending on your security settings of your web browser, you may have to
+explicitly tell ot to download the file and then confirm **twice** to
+*keep the downloaded file* despite the claims that it may be dangerous
+and insecure.  Since the installer packages are currently not
+cryptographically signed, you may also have to enable "Developer Mode"
+in the Windows System Settings to be able to run the installer.
+
+.. image:: JPG/windows-download-keep1.png
+   :align: center
+   :width: 50%
+
 
 MacOS 11 and later
 """"""""""""""""""
@@ -66,28 +83,55 @@ the window that opens, drag the app bundle as indicated into the
 Then follow the instructions in the "README.txt" file to get access to
 the other included command-line executables.
 
+.. |macos1| image:: JPG/macos-install.png
+   :width: 49%
+
+.. |macos2| image:: JPG/macos-privacy.png
+   :width: 49%
+
+|macos1| |macos2|
+
 Linux on x86\_64
 """"""""""""""""
 
-For Linux with x86\_64 CPU there are currently two variants. The first
-is compiled on Ubuntu 20.04LTS, is using some wrapper scripts, and
-should be compatible with more recent Linux distributions.  After
-downloading and unpacking the
-``LAMMPS-Linux-x86_64-GUI-<version>.tar.gz`` package.  You can switch
-into the "LAMMPS_GUI" folder and execute "./lammps-gui" directly.  The
-``LAMMPS_GUI`` folder may also be moved around and added to the ``PATH``
-environment variable so the executables will be found automatically.
+For Linux with x86\_64 CPU there are currently two variants of
+pre-compiled packages. The first is compiled on Ubuntu 22.04LTS, is
+using some wrapper scripts, and should be compatible with most recent
+Linux distributions.  After downloading and unpacking the
+``LAMMPS-Linux-x86_64-GUI-<version>.tar.gz`` package, you can switch
+into the "LAMMPS_GUI" folder and execute "./lammps-gui" directly:
 
-The second variant uses `flatpak <https://www.flatpak.org>`_ and
-requires the flatpak management and runtime software to be installed.
-After downloading the ``LAMMPS-GUI-Linux-x86_64-GUI-<version>.flatpak``
-flatpak bundle, you can install it with ``flatpak install --user
-LAMMPS-GUI-Linux-x86_64-GUI-<version>.flatpak``.  After installation,
-LAMMPS-GUI should be integrated into your desktop environment under
-"Applications > Science" but also can be launched from the console with
-``flatpak run org.lammps.lammps-gui``.  The flatpak bundle also includes
-the console LAMMPS executable ``lmp`` which can be launched to run
-simulations with, for example with:
+.. code-block:: bash
+
+   $ cd ~/Downloads
+   $ tar -xzvvf LAMMPS-Linux-x86_64-GUI-22Jul2025.tar.gz
+   $ cd LAMMPS_GUI
+   $ ./lammps-gui &
+
+The ``LAMMPS_GUI`` folder may also be moved around and added to the
+``PATH`` environment variable so the executables will be found
+automatically.
+
+The second Linux package variant uses `flatpak
+<https://www.flatpak.org>`_ and requires the flatpak management and
+runtime software to be installed.  After downloading the
+``LAMMPS-GUI-Linux-x86_64-GUI-<version>.flatpak`` flatpak bundle, you
+can install it with:
+
+.. code-block:: bash
+
+   $ cd ~/Downloads
+   $ flatpak install --user LAMMPS-GUI-Linux-x86_64-GUI-<version>.flatpak
+
+.. image:: JPG/lammps-gui-menu.png
+   :align: right
+   :width: 33%
+
+After installation, LAMMPS-GUI should be integrated into your desktop
+environment under "Applications > Science" but also can be launched from
+the console with ``flatpak run org.lammps.lammps-gui``.  The flatpak
+bundle also includes the console LAMMPS executable ``lmp`` which can be
+launched to run simulations with, for example with:
 
 .. code-block:: sh
 
@@ -106,17 +150,21 @@ Compilation from source
 ^^^^^^^^^^^^^^^^^^^^^^^
 
 The source for the LAMMPS-GUI was included with the LAMMPS source code
-distribution until LAMMPS-GUI version 1.7.1 and LAMMPS version 22 July
-2025 in the folder ``tools/lammps-gui``.  The LAMMPS-GUI source is now
-distributed separately, but it can still be can be automatically
-downloaded and built as part of a regular LAMMPS compilation.  This is
-usually the most convenient way.  `Using CMake
-<https://docs.lammps.org/Howto_cmake.html>`_ is *required* to build
-LAMMPS-GUI.  To enable its compilation during compiling LAMMPS, the
-CMake variable ``-D BUILD_LAMMPS_GUI=on`` must be set when creating the
-CMake configuration.  All other settings (compiler, flags, compile type)
-for LAMMPS-GUI are then inherited from the regular LAMMPS build.  If the
-Qt library is packaged for Linux distributions, then its location is
+distribution until LAMMPS version 22 July 2025 in the folder
+``tools/lammps-gui``.  Starting with version 1.8.0, the LAMMPS-GUI
+sources are now distributed separately, in its own git repository at
+https://github.com/akohlmey/lammps-gui.
+
+LAMMPS-GUI can still be can be built as part of a regular LAMMPS
+compilation.  It will be automatically downloaded from its git
+repository and configured.  This is usually the most convenient way.
+`Since CMake <https://docs.lammps.org/Howto_cmake.html>`_ is *required*
+to build LAMMPS-GUI, you need to build LAMMPS with CMake as well.  To
+enable its compilation during compiling LAMMPS, the CMake variable ``-D
+BUILD_LAMMPS_GUI=on`` must be set when creating the CMake configuration.
+All other settings (compiler, flags, compile type) for LAMMPS-GUI are
+then inherited from the regular LAMMPS build.  If the Qt library is
+installed as packaged for Linux distributions, then its location is
 typically auto-detected since the required CMake configuration files are
 stored in a location where CMake can find them without additional help.
 Otherwise, the location of the Qt library installation must be indicated
@@ -128,37 +176,41 @@ Qt6_DIR=/path/to/qt6/lib/cmake/Qt6``, if necessary.  When both, Qt5 and
 Qt6 are available, Qt6 will be preferred unless ``-D
 LAMMPS_GUI_USE_QT5=yes`` is set.
 
+LAMMPS-GUI plugin version
+"""""""""""""""""""""""""
+
 It is possible to build LAMMPS-GUI as a standalone compilation
-(e.g. when LAMMPS has been compiled with traditional make).  Then the
-CMake configuration needs to be told where to find the LAMMPS headers
-and the LAMMPS library, via ``-D LAMMPS_SOURCE_DIR=/path/to/lammps/src``.
-CMake will try to guess a build folder with the LAMMPS library from that
-path, but it can also be set with ``-D LAMMPS_LIB_DIR=/path/to/lammps/lib``.
-
-LAMMPS plugin version
-"""""""""""""""""""""
-
-Rather than linking to the LAMMPS library during compilation, it is also
-possible to compile the GUI with a plugin loader that will load the
-LAMMPS library dynamically at runtime during the start of the GUI from a
-shared library; e.g. ``liblammps.so.0`` or ``liblammps.0.dylib`` or
+(e.g. when LAMMPS has been compiled with traditional make).  Rather than
+linking to the LAMMPS library during compilation, it will compile the
+GUI with a plugin loader that will load a LAMMPS shared library file
+dynamically at runtime during the start of the GUI from a shared
+library; e.g. ``liblammps.so.0`` or ``liblammps.0.dylib`` or
 ``liblammps.dll`` (depending on the operating system).  This has the
 advantage that the LAMMPS library can be built from updated or modified
-LAMMPS source without having to recompile the GUI.  The ABI of the
-LAMMPS C-library interface is very stable and generally backward
-compatible.  This feature is enabled by setting ``-D
-LAMMPS_GUI_USE_PLUGIN=on`` and when downloading and compiling LAMMPS-GUI
-directly, this setting is the default.
+LAMMPS source without having to recompile the GUI.
 
-When compiling LAMMPS-GUI with plugin support, there is an additional
-command-line flag (``-p <path>`` or ``--pluginpath <path>``) which
-allows to override the path to LAMMPS shared library used by LAMMPS-GUI.
-This is usually auto-detected on the first run and can be changed in the
-LAMMPS-GUI *Preferences* dialog.  The command-line flag allows to reset
-this path to a valid value in case the original setting has become
-invalid.  An empty path ("") as argument restores the default setting.
+The ABI of the LAMMPS C-library interface is very stable and generally
+backward compatible.  However, features used in LAMMPS-GUI may require a
+minimum LAMMPS version of the library.  LAMMPS-GUI will print a suitable
+error message and exit if an incompatible LAMMPS library is loaded.  You
+can override the path to the LAMMPS library with the ``-p <path>`` or
+``--pluginpath <path>`` command-line flag.  This is usually
+auto-detected on the first run and can be changed in the LAMMPS-GUI
+*Preferences* dialog.  The command-line flag allows to reset this path
+to a valid value in case the original setting has become invalid.  An
+empty path ("") as argument restores the default setting.
 
-Platform compilation notes
+It is also possible to link the standalone compiled LAMMPS-GUI version
+to the LAMMPS library directly.  This feature is enabled by setting ``-D
+LAMMPS_GUI_USE_PLUGIN=off`` (default is off for compilation within
+LAMMPS and on for standalone compilation). In this case the CMake
+configuration needs to be told where to find the LAMMPS headers and the
+LAMMPS library, via ``-D LAMMPS_SOURCE_DIR=/path/to/lammps/src``.  CMake
+will try to guess a build folder with the LAMMPS library from that path,
+but it can also be set with ``-D LAMMPS_LIB_DIR=/path/to/lammps/lib``.
+
+
+Compilation platform notes
 ^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 macOS
