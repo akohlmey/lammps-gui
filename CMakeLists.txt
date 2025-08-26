@@ -251,18 +251,18 @@ if(BUILD_DOC OR BUILD_DOC_ONLY)
   set(DOC_BUILD_DIR ${CMAKE_BINARY_DIR}/doc)
   set(DOC_BUILD_STATIC_DIR ${DOC_BUILD_DIR}/_static)
   set(DOC_BUILD_CONFIG_FILE ${DOC_BUILD_DIR}/conf.py)
-  
+
   file(MAKE_DIRECTORY ${DOC_BUILD_DIR})
   configure_file(${SPHINX_CONFIG_FILE_TEMPLATE} ${DOC_BUILD_CONFIG_FILE})
   file(COPY ${SPHINX_DIR}/_static DESTINATION ${DOC_BUILD_DIR}/)
   file(COPY ${SPHINX_DIR}/_templates DESTINATION ${DOC_BUILD_DIR}/)
   file(COPY ${SPHINX_DIR}/LAMMPSLexer.py DESTINATION ${DOC_BUILD_DIR}/)
   file(COPY ${CMAKE_SOURCE_DIR}/resources/icons/lammps-gui-banner.png DESTINATION ${DOC_BUILD_DIR})
-  
+
   # configure virtual environment for sphinx-build and related
   set(DOCENV_BINARY_DIR ${CMAKE_BINARY_DIR}/docenv/bin)
   set(DOCENV_REQUIREMENTS_FILE ${SPHINX_DIR}/requirements.txt)
-  set(DOCENV_DEPS docenv ${DOCENV_REQUIREMENTS_FILE})
+  set(DOCENV_DEPS docenv ${DOCENV_REQUIREMENTS_FILE} ${SPHINX_DIR}/_templates/page.html)
   add_custom_command(
     OUTPUT docenv
     COMMAND ${VIRTUALENV} docenv

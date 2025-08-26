@@ -17,10 +17,23 @@ except:
 # -- Project information -----------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#project-information
 
+def get_git_info():
+    import subprocess,time
+
+    git_n_date = ''
+    try:
+        gitinfo = subprocess.run(['git','describe'],stdout=subprocess.PIPE,stderr=subprocess.PIPE)
+        if gitinfo.returncode == 0:
+            git_n_date = gitinfo.stdout.decode().replace('_',' ').replace('patch ','').replace('stable ','')
+    except:
+        pass
+    return git_n_date.strip()
+
 project = 'LAMMPS-GUI'
 copyright = '2023 - {}, Axel Kohlmeyer'.format(date.today().year)
 author = 'Axel Kohlmeyer'
 version = '@PROJECT_VERSION@'
+release = get_git_info()
 language = 'en'
 
 # -- General configuration ---------------------------------------------------
@@ -67,6 +80,8 @@ html_logo = 'lammps-gui-banner.png'
 html_theme = 'sphinxdoc'
 html_static_path = ['_static']
 html_baseurl = 'https://akohlmey.github.io/lammps-gui/'
+html_last_updated_fmt = '%b %d, %Y'
+html_show_sourcelink = False
 
 conf_script_dir = os.path.dirname(os.path.realpath(__file__))
 sys.path.append(os.path.join(conf_script_dir, '.'))
