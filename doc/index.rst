@@ -32,6 +32,16 @@ LAMMPS.  As a demonstration LAMMPS-GUI is fully integrated with a
 LAMMPS-GUI also offers useful features beyond tutorials and for
 intermediate and advanced LAMMPS users.
 
+--------
+
+The text in the website provides documentation of the features and
+functionality of LAMMPS-GUI and how to compile and install it.
+Suggestions for new features and reports of bugs are always welcome.
+You can use the `the same channels as for LAMMPS itself
+<https://docs.lammps.org/Errors_bugs.html>`_ for that purpose or submit
+bug reports or pull requests in the `LAMMPS-GUI GitHub repository
+<https://github.com/akohlmey/lammps-gui>`_
+
 ------------------
 
 This document describes LAMMPS-GUI version |version|.
