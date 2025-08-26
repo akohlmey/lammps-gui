@@ -256,6 +256,7 @@ if(BUILD_DOC OR BUILD_DOC_ONLY)
   configure_file(${SPHINX_CONFIG_FILE_TEMPLATE} ${DOC_BUILD_CONFIG_FILE})
   file(COPY ${SPHINX_DIR}/_static DESTINATION ${DOC_BUILD_DIR}/)
   file(COPY ${SPHINX_DIR}/_templates DESTINATION ${DOC_BUILD_DIR}/)
+  file(COPY ${SPHINX_DIR}/LAMMPSLexer.py DESTINATION ${DOC_BUILD_DIR}/)
   file(COPY ${CMAKE_SOURCE_DIR}/resources/icons/lammps-gui-banner.png DESTINATION ${DOC_BUILD_DIR})
   
   # configure virtual environment for sphinx-build and related
