@@ -13,10 +13,10 @@
 
 #include "codeeditor.h"
 #include "fileviewer.h"
+#include "helpers.h"
 #include "lammpsgui.h"
 #include "lammpswrapper.h"
 #include "linenumberarea.h"
-#include "helpers.h"
 
 #include <QAbstractItemView>
 #include <QAction>

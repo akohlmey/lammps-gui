@@ -15,8 +15,8 @@
 
 #include "helpers.h"
 #include "lammpsgui.h"
-#include "rangeslider.h"
 #include "qaddon.h"
+#include "rangeslider.h"
 
 #include <QAction>
 #include <QApplication>

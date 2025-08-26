@@ -142,7 +142,7 @@ LammpsGui::LammpsGui(QWidget *parent, const QString &filename) :
         dirlist.append(
             QString::fromLocal8Bit(qgetenv("DYLD_LIBRARY_PATH")).split(":", Qt::SkipEmptyParts));
         dirlist.append({"/Applications/LAMMPS.app/Contents/Frameworks",
-                "/Applications/LAMMPS-GUI.app/Contents/Frameworks"});
+                        "/Applications/LAMMPS-GUI.app/Contents/Frameworks"});
 #elif Q_OS_WIN32
         QStringList filter("liblammps*.dll");
         dirlist.append(QString::fromLocal8Bit(qgetenv("PATH")).split(";", Qt::SkipEmptyParts));
@@ -183,8 +183,10 @@ LammpsGui::LammpsGui(QWidget *parent, const QString &filename) :
             // none of the plugin paths could load, remove key
             settings.remove("plugin_path");
             QMessageBox::critical(
-                this, "Error", "Cannot open LAMMPS shared library file or incompatible version.\n\n"
-                "Use -p command line flag to specify a path to a suitable LAMMPS shared library file.");
+                this, "Error",
+                "Cannot open LAMMPS shared library file or incompatible version.\n\n"
+                "Use -p command line flag to specify a path to a suitable LAMMPS shared library "
+                "file.");
             exit(1);
         }
 

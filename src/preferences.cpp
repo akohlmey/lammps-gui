@@ -675,7 +675,7 @@ SnapshotTab::SnapshotTab(QSettings *_settings, QWidget *parent) :
     auto *axes  = new QLabel("Show Axes:");
     auto *vdw   = new QLabel("VDW Style:");
     auto *bond  = new QLabel("Dynamic Bonds:");
-    auto *bclbl  = new QLabel("Bond Cutoff:");
+    auto *bclbl = new QLabel("Bond Cutoff:");
     auto *cback = new QLabel("Background Color:");
     auto *cbox  = new QLabel("Box Color:");
     settings->beginGroup("snapshot");
