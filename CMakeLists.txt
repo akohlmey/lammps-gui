@@ -245,7 +245,7 @@ if(BUILD_DOC OR BUILD_DOC_ONLY)
 
   set(SPHINX_DIR ${CMAKE_SOURCE_DIR}/doc)
   set(SPHINX_CONFIG_FILE_TEMPLATE ${SPHINX_DIR}/conf.py.in)
-  file(GLOB DOC_SOURCES CONFIGURE_DEPENDS ${SPHINX_DIR}/*.rst)
+  file(GLOB DOC_SOURCES CONFIGURE_DEPENDS ${SPHINX_DIR}/[a-z]*.rst)
 
   # configuration and static files are copied to binary dir to avoid collisions with parallel builds
   set(DOC_BUILD_DIR ${CMAKE_BINARY_DIR}/doc)
