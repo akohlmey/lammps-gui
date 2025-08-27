@@ -301,7 +301,7 @@ if(BUILD_DOC OR BUILD_DOC_ONLY)
 
   add_custom_command(
     OUTPUT ${DOC_BUILD_DIR}/html/index.html
-    DEPENDS docenv ${DOC_SOURCES} ${DOCENV_DEPS} ${SPHINX_CONFIG_FILE_TEMPLATE}
+    DEPENDS docenv ${DOC_SOURCES} ${DOCENV_DEPS} ${SPHINX_CONFIG_FILE_TEMPLATE} ${SPHINX_DIR}/_static/style.css
     COMMAND Sphinx::sphinx-build ${SPHINX_EXTRA_OPTS} -b html -c ${DOC_BUILD_DIR} -d ${DOC_BUILD_DIR}/doctrees ${CMAKE_SOURCE_DIR}/doc ${DOC_BUILD_DIR}/html ${DOC_SOURCES}
   )
 

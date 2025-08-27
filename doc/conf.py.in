@@ -75,12 +75,19 @@ master_doc = 'index'
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#options-for-html-output
 
 html_title = 'LAMMPS-GUI Documentation'
+html_short_title = 'LAMMPS-GUI'
 html_logo = 'lammps-gui-banner.png'
 html_theme = 'sphinxdoc'
+html_theme_options = {
+        "body_min_width": 700,
+        "body_max_width": 1200,
+}
 html_static_path = ['_static']
 html_baseurl = 'https://lammps-gui.lammps.org/'
 html_last_updated_fmt = '%b %d, %Y'
 html_show_sourcelink = False
+html_permalinks = True
+
 html_use_index = False
 html_copy_source = False
 html_domain_indices = False

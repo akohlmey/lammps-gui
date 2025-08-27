@@ -2,17 +2,10 @@ body {
     line-height: 140%;
 }
 
-div.body {
-    max-width: 1200px;
-}
-
 div.document {
     text-align: justify;
 }
 
-div.sphinxsidebar {
-    float: right;
-    font-size: 1em;
-    text-align: left;
+ul.simple {
+    line-height: 100%;
 }
-
