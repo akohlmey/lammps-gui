@@ -71,7 +71,6 @@ master_doc = 'index'
 # The encoding of source files.
 #source_encoding = 'utf-8-sig'
 
-
 # -- Options for HTML output -------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#options-for-html-output
 
@@ -86,6 +85,7 @@ html_use_index = False
 html_copy_source = False
 html_domain_indices = False
 
+# add LAMMPS input file lexer for Pygments
 conf_script_dir = os.path.dirname(os.path.realpath(__file__))
 sys.path.append(os.path.join(conf_script_dir, '.'))
 import LAMMPSLexer
@@ -93,8 +93,9 @@ from sphinx.highlighting import lexers
 
 lexers['LAMMPS'] = LAMMPSLexer.LAMMPSLexer(startinline=True)
 
-#sys.path.insert(1,LAMMPS_PYTHON_DIR)
-
 # avoid syntax highlighting in blocks that don't specify language
 highlight_language = 'none'
 
+# configure sitemap generation
+sitemap_url_scheme = "{link}"
+sitemap_filename = "sitemap.xml"
