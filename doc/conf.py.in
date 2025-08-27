@@ -42,8 +42,6 @@ language = 'en'
 needs_sphinx = '5.3.0'
 
 extensions = [
-        'sphinx.ext.mathjax',
-        'sphinx.ext.imgmath',
         'sphinxcontrib.jquery',
         'sphinx_design',
         'sphinx_sitemap',

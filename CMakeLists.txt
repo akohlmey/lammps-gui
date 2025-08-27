@@ -274,31 +274,6 @@ if(BUILD_DOC OR BUILD_DOC_ONLY)
     set_target_properties(Sphinx::sphinx-build PROPERTIES IMPORTED_LOCATION "${DOCENV_BINARY_DIR}/sphinx-build")
   endif()
 
-  set(MATHJAX_URL "https://github.com/mathjax/MathJax/archive/3.2.2.tar.gz" CACHE STRING "URL for MathJax tarball")
-  set(MATHJAX_MD5 "08dd6ef33ca08870220d9aade2a62845" CACHE STRING "MD5 checksum of MathJax tarball")
-  mark_as_advanced(MATHJAX_URL)
-
-  # download mathjax distribution and unpack to folder "mathjax"
-  if(NOT EXISTS ${DOC_BUILD_STATIC_DIR}/mathjax/es5)
-    if(EXISTS ${CMAKE_BINARY_DIR}/mathjax.tar.gz)
-      file(MD5 ${CMAKE_BINARY_DIR}/mathjax.tar.gz DL_MD5)
-    endif()
-    if(NOT "${DL_MD5}" STREQUAL "${MATHJAX_MD5}")
-      file(DOWNLOAD ${MATHJAX_URL} "${CMAKE_BINARY_DIR}/mathjax.tar.gz" STATUS DL_STATUS SHOW_PROGRESS)
-      file(MD5 ${CMAKE_BINARY_DIR}/mathjax.tar.gz DL_MD5)
-      if((NOT DL_STATUS EQUAL 0) OR (NOT "${DL_MD5}" STREQUAL "${MATHJAX_MD5}"))
-        message(WARNING "Download from primary URL ${MATHJAX_URL} failed\nTrying fallback URL ${MATHJAX_FALLBACK}")
-        file(DOWNLOAD ${MATHJAX_FALLBACK} ${CMAKE_BINARY_DIR}/libpace.tar.gz EXPECTED_HASH MD5=${MATHJAX_MD5} SHOW_PROGRESS)
-      endif()
-    else()
-      message(STATUS "Using already downloaded archive ${CMAKE_BINARY_DIR}/libpace.tar.gz")
-    endif()
-    execute_process(COMMAND ${CMAKE_COMMAND} -E tar xzf mathjax.tar.gz WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
-    file(GLOB MATHJAX_VERSION_DIR CONFIGURE_DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/MathJax-*)
-    execute_process(COMMAND ${CMAKE_COMMAND} -E make_directory ${DOC_BUILD_STATIC_DIR}/mathjax)
-    execute_process(COMMAND ${CMAKE_COMMAND} -E rename ${MATHJAX_VERSION_DIR} ${DOC_BUILD_STATIC_DIR}/mathjax)
-  endif()
-
   add_custom_command(
     OUTPUT ${DOC_BUILD_DIR}/html/index.html
     DEPENDS docenv ${DOC_SOURCES} ${DOCENV_DEPS} ${SPHINX_CONFIG_FILE_TEMPLATE} ${SPHINX_DIR}/_static/style.css
@@ -313,7 +288,7 @@ if(BUILD_DOC OR BUILD_DOC_ONLY)
 
   add_custom_target(
     doc ALL
-    DEPENDS docenv ${DOC_BUILD_DIR}/html/index.html ${DOC_BUILD_STATIC_DIR}/mathjax/es5
+    DEPENDS docenv ${DOC_BUILD_DIR}/html/index.html
     SOURCES ${CMAKE_SOURCE_DIR}/doc/requirements.txt ${DOC_SOURCES}
   )
 
