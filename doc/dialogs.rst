@@ -6,7 +6,7 @@ Find and Replace
 ----------------
 
 .. image:: JPG/lammps-gui-find.png
-   :align: center
+   :align: right
    :scale: 33%
 
 The *Find and Replace* dialog allows searching for and replacing
@@ -14,17 +14,18 @@ text in the *Editor* window.
 
 The dialog can be opened either from the *Edit* menu or with the
 keyboard shortcut `Ctrl-F`. You can enter the text to search for.
-Through three check-boxes the search behavior can be adjusted:
 
-- If checked, "Match case" does a case sensitive search; otherwise
-  the search is case insensitive.
+.. admonition:: Through three check-boxes the search behavior can be adjusted:
 
-- If checked, "Wrap around" starts searching from the start of the
-  document, if there is no match found from the current cursor position
-  until the end of the document; otherwise the search will stop.
+   - If checked, "Match case" does a case sensitive search; otherwise
+     the search is case insensitive.
 
-- If checked, the "Whole word" setting only finds full word matches
-  (white space and special characters are word boundaries).
+   - If checked, "Wrap around" starts searching from the start of the
+     document, if there is no match found from the current cursor position
+     until the end of the document; otherwise the search will stop.
+
+   - If checked, the "Whole word" setting only finds full word matches
+     (white space and special characters are word boundaries).
 
 Clicking on the *Next* button will search for the next occurrence of the
 search text and select / highlight it. Clicking on the *Replace* button

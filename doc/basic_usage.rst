@@ -95,6 +95,10 @@ the current `run <https://docs.lammps.org/run.html>`_ or `minimize
 .. admonition:: CPU Utilization
    :class: note
 
+   .. image:: JPG/lammps-gui-buffer-warn.png
+      :align: right
+      :scale: 75%
+
    The CPU Utilization should ideally be close to 100% times the number
    of threads like in the screenshot image above.  Since the GUI is
    running as a separate thread, the CPU utilization can be higher, for
@@ -113,9 +117,6 @@ the current `run <https://docs.lammps.org/run.html>`_ or `minimize
    GUI or other processes also running on the host computer and
    competing with LAMMPS-GUI for GPU resources.
 
-   .. image:: JPG/lammps-gui-buffer-warn.png
-      :align: center
-      :scale: 75%
 
 If an error occurs (in the example below the command `label
 <https://docs.lammps.org/label.html>`_ was incorrectly capitalized as
@@ -135,7 +136,7 @@ the status bar is set to "Failed."  instead of "Ready."
      in the input
 
 More information on those windows and how to adjust their behavior and
-contents is given below.
+contents is given in :doc:`the next pages <output>`.
 
 An active LAMMPS run can be stopped cleanly by using either the *Stop
 LAMMPS* entry in the *Run* menu, the keyboard shortcut `Ctrl-/`

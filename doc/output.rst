@@ -7,13 +7,13 @@ Monitoring LAMMPS output
 Output Window
 ^^^^^^^^^^^^^
 
+.. image:: JPG/lammps-gui-log.png
+   :align: right
+   :scale: 50%
+
 By default, when starting a run, an *Output* window opens that displays
 the screen output of the running LAMMPS calculation, as shown below.
 This text would normally be seen in the command-line window.
-
-.. image:: JPG/lammps-gui-log.png
-   :align: center
-   :scale: 50%
 
 LAMMPS-GUI captures the screen output from LAMMPS as it is generated and
 updates the *Output* window regularly during a run.  If there are any
@@ -62,12 +62,12 @@ area.
 Charts Window
 ^^^^^^^^^^^^^
 
+.. image:: JPG/lammps-gui-chart.png
+   :align: right
+   :scale: 33%
+
 By default, when starting a run, a *Charts* window opens that displays a
 plot of thermodynamic output of the LAMMPS calculation as shown below.
-
-.. image:: JPG/lammps-gui-chart.png
-   :align: center
-   :scale: 33%
 
 The "Data:" drop down menu on the top right allows selection of
 different properties that are computed and written as thermodynamic
@@ -158,16 +158,16 @@ default chart graph size.
 Variable Info
 ^^^^^^^^^^^^^
 
+.. image:: JPG/lammps-gui-variable-info.png
+   :align: right
+   :scale: 50%
+
 During a run, it may be of interest to monitor the value of input script
 variables, for example to monitor the progress of loops.  This can be
 done by enabling the "Variables Window" in the *View* menu or by using
 the `Ctrl-Shift-W` keyboard shortcut.  This shows info similar to the
 `info variables <https://docs.lammps.org/info.html>`_ command in a
 separate window as shown below.
-
-.. image:: JPG/lammps-gui-variable-info.png
-   :align: center
-   :scale: 50%
 
 Like for the *Output* and *Charts* windows, its content is continuously
 updated during a run.  It will show "(none)" if there are no variables
