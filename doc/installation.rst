@@ -86,7 +86,7 @@ Windows 10 and later
 After downloading the ``LAMMPS-Win10-64bit-GUI-<version>.exe`` installer
 package, you need to execute it, and start the installation process.
 Depending on your security settings of your web browser, you may have to
-explicitly tell ot to download the file and then confirm **twice** to
+explicitly tell it to download the file and then confirm **twice** to
 *keep the downloaded file* despite the claims that it may be dangerous
 and insecure.  Since the installer packages are currently not
 cryptographically signed, you may also have to enable "Developer Mode"

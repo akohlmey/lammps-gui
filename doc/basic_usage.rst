@@ -40,7 +40,7 @@ launch LAMMPS-GUI, an existing input file can be launched with
 LAMMPS-GUI through double clicking.
 
 Only one file can be edited at a time, so opening a new file with a file
-alread loaded into the buffer closes that buffer.  If the buffer has
+already loaded into the buffer closes that buffer.  If the buffer has
 unsaved modifications, you are asked to either cancel the operation,
 discard the changes, or save them.  A buffer with modifications can be
 saved any time from the "File" menu, by the keyboard shortcut `Ctrl-S`
