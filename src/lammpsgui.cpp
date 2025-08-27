@@ -124,7 +124,7 @@ LammpsGui::LammpsGui(QWidget *parent, const QString &filename) :
 #if defined(LAMMPS_GUI_USE_PLUGIN)
     plugin_path = settings.value("plugin_path", "").toString();
     if (!plugin_path.isEmpty()) {
-        // make canonical and try loading
+        // make canonical and try loading; reset to empty string if loading failed
         plugin_path = QFileInfo(plugin_path).canonicalFilePath();
         if (!lammps.load_lib(plugin_path)) plugin_path.clear();
     }
@@ -158,7 +158,7 @@ LammpsGui::LammpsGui(QWidget *parent, const QString &filename) :
         for (const auto &dir : dirlist)
             entries.append(QDir(dir).entryInfoList(filter));
 
-        // convert list to list of canonical file names
+        // convert list of paths to list of canonical file names
         QStringList choices;
         for (const auto &fn : entries)
             choices.append(fn.canonicalFilePath());
@@ -184,9 +184,9 @@ LammpsGui::LammpsGui(QWidget *parent, const QString &filename) :
             settings.remove("plugin_path");
             QMessageBox::critical(
                 this, "Error",
-                "Cannot open LAMMPS shared library file or incompatible version.\n\n"
-                "Use -p command line flag to specify a path to a suitable LAMMPS shared library "
-                "file.");
+                "Cannot open LAMMPS shared library file or provided path has an incompatible "
+                "version.\n\nPlease try again and use the -p command line flag to specify a "
+                "path to a suitable LAMMPS shared library file.");
             exit(1);
         }
 
