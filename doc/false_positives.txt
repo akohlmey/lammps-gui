@@ -11,8 +11,10 @@ makefile
 MBytes
 natively
 pre
+README
 Sur
 toolchain
+txt
 Ventura
 webpage
 whitespace
