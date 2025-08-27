@@ -29,8 +29,9 @@ C++17 standard and using the `Qt GUI framework
 or later is required; support for Qt version 6.x is available, too.
 When compiled With Qt version 6.x, LAMMPS-GUI can switch between a
 "light" and a "dark" theme according to the settings of the desktop
-environment.  Otherwise, there is no change in functionality.
-Building LAMMPS-GPU requires CMake version 3.20 or later.
+environment.  Otherwise, there is no changes in functionality between
+using either major version of Qt.  Building LAMMPS-GUI requires CMake
+version 3.20 or later.
 
 The LAMMPS-GUI has been successfully compiled and tested on:
 

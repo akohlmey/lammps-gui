@@ -3,15 +3,15 @@ Overview
 ********
 
 LAMMPS-GUI is a graphical text editor customized for editing LAMMPS
-input files that is linked to the
-`LAMMPS C-library <https://docs.lammps.org/Library.html#lammps-c-library-api>`_
-and thus can run LAMMPS directly using the contents of the editor's text
-buffer as input.  It can retrieve and display information from LAMMPS
-while it is running, display visualizations created with the :doc:`dump
-image command <dump_image>`, and is adapted specifically for editing
-LAMMPS input files through syntax highlighting, text completion, and
-reformatting, and linking to the online LAMMPS documentation for known
-LAMMPS commands and styles.
+input files that is linked to the `LAMMPS C-library
+<https://docs.lammps.org/Library.html#lammps-c-library-api>`_ and thus
+can run LAMMPS directly using the contents of the editor's text buffer
+as input.  It can retrieve and display information from LAMMPS while it
+is running, display visualizations created with the `dump image command
+<https://docs.lammps.org/dump_image.html>`_, and is adapted specifically
+for editing LAMMPS input files through syntax highlighting, text
+completion, and reformatting, and linking to the online LAMMPS
+documentation for known LAMMPS commands and styles.
 
 LAMMPS-GUI aims to support a workflow similar to the traditional
 experience of running LAMMPS using a text editor, a command-line window,
@@ -77,18 +77,11 @@ are in the following pages. Here are a few highlights of LAMMPS-GUI:
 - Screen output is captured in an *Output* Window
 - Many adjustable settings and preferences that are persistent including the 5 most recent files
 - Thermodynamic output is captured and displayed as line graph in a *Chart* Window
-- Interactive visualization of current state via calling `write_dump image <https://docs.lammps.org/dump_image.html`_
-- Capture of images created by `dump image <https://docs.lammps.org/dump_image.html>`_ in Slide show window
+- Interactive visualization of current state via calling `write_dump
+  image <https://docs.lammps.org/dump_image.html>`_
+- Capture of images created by `dump image
+  <https://docs.lammps.org/dump_image.html>`_ in Slide show window
 - Dialog to set variables, similar to the LAMMPS command-line flag '-v' / '-var'
 - Support for GPU, INTEL, KOKKOS/OpenMP, OPENMP, and OPT accelerator packages
 - Inspection of binary restart files created by LAMMPS
 - Integration with `LAMMPS tutorials <https://lammpstutorials.github.io>`_ 
-
-Parallelization
-^^^^^^^^^^^^^^^
-
-Due to its nature as a graphical application, it is not possible to use
-the LAMMPS-GUI in parallel with MPI, but OpenMP multi-threading and GPU
-acceleration is available and enabled by default.  GPU acceleration is
-currently incompatible with running LAMMPS-GUI in a flatpak sandbox.
-

@@ -58,6 +58,12 @@ This document describes LAMMPS-GUI version |version|.
    installation
    overview
    basic_usage
+   output
+   visualization
+   editor
+   menus
+   dialogs
+   shortcuts
 
 ----------
 
