@@ -431,14 +431,16 @@ void GeneralTab::newtextfont()
 
 void GeneralTab::pluginpath()
 {
-    auto *field = findChild<QLineEdit *>("pluginedit");
-    QString pluginfile =
-        QFileDialog::getOpenFileName(this, "Select Shared LAMMPS Library to Load", field->text(),
-                                     "Shared Objects (*.so *.dll *.dylib)");
+    auto *field        = findChild<QLineEdit *>("pluginedit");
+    QString pluginfile = QFileDialog::getOpenFileName(
+        this, "Select Shared LAMMPS Library to Load", field->text(),
+        "Shared Objects (liblammps*.so liblammps*.dll liblammps*.dylib)");
     if (!pluginfile.isEmpty() && pluginfile.contains("liblammps", Qt::CaseSensitive)) {
         auto canonical = QFileInfo(pluginfile).canonicalFilePath();
-        field->setText(pluginfile);
         settings->setValue("plugin_path", canonical);
+        field->setText(canonical);
+        settings->sync();
+
         // ugly hack
         qobject_cast<Preferences *>(parent()->parent()->parent())->set_relaunch(true);
     }
