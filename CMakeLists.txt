@@ -101,12 +101,8 @@ if (NOT BUILD_DOC_ONLY)
       add_compile_definitions(_CRT_SECURE_NO_WARNINGS)
     endif()
 
-    if (NOT LAMMPS_GUI_USE_PLUGIN)
-      get_filename_component(LAMMPS_SOURCE_DIR ${PROJECT_SOURCE_DIR}/../../src ABSOLUTE)
-      set(LAMMPS_HEADER_DIR ${LAMMPS_SOURCE_DIR} CACHE PATH "Location of LAMMPS headers")
-      if(NOT LAMMPS_HEADER_DIR)
-        message(FATAL_ERROR "Must set LAMMPS_HEADER_DIR")
-      endif()
+    set(LAMMPS_HEADER_DIR ${LAMMPS_SOURCE_DIR} CACHE PATH "Location of LAMMPS headers")
+    if (NOT LAMMPS_GUI_USE_PLUGIN AND NOT LAMMPS_LIBRARY)
       get_filename_component(LAMMPS_DIR ${LAMMPS_SOURCE_DIR}/.. ABSOLUTE)
       # find LAMMPS library
       find_library(LAMMPS_LIBRARY
