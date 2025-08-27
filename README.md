@@ -1,6 +1,6 @@
 # LAMMPS-GUI - The graphical interface for learning and running LAMMPS
 
-Please see the online documentation at https://akohlmey.github.io/lammps-gui/
+Please see the online documentation at https://lammps-gui.lammps.org/
 
 ## LAMMPS-GUI vs. LAMMPS
 

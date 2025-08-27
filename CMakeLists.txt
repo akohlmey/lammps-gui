@@ -4,7 +4,7 @@ project(lammps-gui
   VERSION 1.8.0
   LANGUAGES CXX
   DESCRIPTION "The LAMMPS GUI"
-  HOMEPAGE_URL "https://akohlmey.github.io/lammps-gui/")
+  HOMEPAGE_URL "https://lammps-gui.lammps.org/")
 include(GNUInstallDirs)
 
 ##################################################################################

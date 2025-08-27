@@ -579,7 +579,7 @@
     <iconset theme=":/icons/system-help.png"/>
    </property>
    <property name="text">
-    <string>LAMMPS-&amp;GUI Howto</string>
+    <string>LAMMPS-&amp;GUI Documentation</string>
    </property>
    <property name="shortcut">
     <string>Ctrl+Shift+G</string>

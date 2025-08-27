@@ -2072,9 +2072,7 @@ void LammpsGui::start_tutorial8()
 
 void LammpsGui::howto()
 {
-    if (docver.isEmpty()) setDocver();
-    QDesktopServices::openUrl(
-        QUrl(QString("https://docs.lammps.org%1Howto_lammps_gui.html").arg(docver)));
+    QDesktopServices::openUrl(QUrl("https://lammps-gui.lammps.org/"));
 }
 
 void LammpsGui::defaults()

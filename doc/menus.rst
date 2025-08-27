@@ -150,9 +150,10 @@ option to launch the LAMMPS online documentation in a web browser.  The
 *About LAMMPS-GUI* entry displays a dialog with a summary of the
 configuration settings of the LAMMPS library in use and the version
 number of LAMMPS-GUI itself.  The *Quick Help* displays a dialog with
-a minimal description of LAMMPS-GUI.  The *LAMMPS-GUI Howto* entry
-will open this documentation page from the online documentation in a web
-browser window.  The *LAMMPS Manual* entry will open the main page of
+a minimal description of LAMMPS-GUI.  The *LAMMPS-GUI Documentation* entry
+will open the LAMMPS-GUI online documentation website
+https://lammps-gui.lammps.org in a web browser window.
+The *LAMMPS Manual* entry will open the main page of
 the LAMMPS online documentation in a web browser window.
 The *LAMMPS Tutorial* entry will open the main page of the set of
 LAMMPS tutorials authored and maintained by Simon Gravelle at
