@@ -58,6 +58,7 @@
     <release version="1.8.1" timestamp="1756257931">
       <description>
         Add/Update files for a proper GitHub repository
+        Update lammps-gui website URL to https://lammps-gui.lammps.org/
         Improve and adapt packaging for standalone packages
       </description>
     <release version="1.8.0" timestamp="1755766131">
