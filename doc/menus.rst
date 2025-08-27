@@ -13,24 +13,24 @@ instead of using the mouse.
 File
 ^^^^
 
-The *File* menu offers the usual options:
+.. admonition:: The *File* menu offers the usual options:
 
-- *New* clears the current buffer and resets the file name to ``*unknown*``
-- *Open* opens a dialog to select a new file for editing in the *Editor*
-- *View* opens a dialog to select a file for viewing in a *separate* window (read-only) with support for on-the-fly decompression as explained above.
-- *Inspect restart* opens a dialog to select a file.  If that file is a
-  `LAMMPS restart <https://docs.lammps.org/write_restart.html>`_ three
-  windows with :ref:`information about the file are opened
-  <inspect_restart>`.
-- *Save* saves the current file; if the file name is ``*unknown*``
-  a dialog will open to select a new file name
-- *Save As* opens a dialog to select and new file name (and folder, if
-  desired) and saves the buffer to it.  Writing the buffer to a
-  different folder will also switch the current working directory to
-  that folder.
-- *Quit* exits LAMMPS-GUI. If there are unsaved changes, a dialog will
-  appear to either cancel the operation, or to save, or to not save the
-  modified buffer.
+   - *New* clears the current buffer and resets the file name to ``*unknown*``
+   - *Open* opens a dialog to select a new file for editing in the *Editor*
+   - *View* opens a dialog to select a file for viewing in a *separate* window (read-only) with support for on-the-fly decompression as explained above.
+   - *Inspect restart* opens a dialog to select a file.  If that file is a
+     `LAMMPS restart <https://docs.lammps.org/write_restart.html>`_ three
+     windows with :ref:`information about the file are opened
+     <inspect_restart>`.
+   - *Save* saves the current file; if the file name is ``*unknown*``
+     a dialog will open to select a new file name
+   - *Save As* opens a dialog to select and new file name (and folder, if
+     desired) and saves the buffer to it.  Writing the buffer to a
+     different folder will also switch the current working directory to
+     that folder.
+   - *Quit* exits LAMMPS-GUI. If there are unsaved changes, a dialog will
+     appear to either cancel the operation, or to save, or to not save the
+     modified buffer.
 
 In addition, up to 5 recent file names will be listed after the *Open*
 entry that allows re-opening recently opened files.  This list is stored

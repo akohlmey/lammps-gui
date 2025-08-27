@@ -58,30 +58,29 @@ Most features in LAMMPS-GUI have been exposed to keyboard shortcuts, so
 that there is also appeal for experienced LAMMPS users for prototyping
 and testing simulation setups.
 
-Features
-^^^^^^^^
+.. admonition:: Features
 
-A detailed discussion and explanation of all features and functionality
-are in the following pages. Here are a few highlights of LAMMPS-GUI:
+   A detailed discussion and explanation of all features and functionality
+   are in the following pages. Here are a few highlights of LAMMPS-GUI:
 
-- Text editor with line numbers and syntax highlighting customized for LAMMPS
-- Text editor features command completion and indentation for known commands and styles
-- Text editor will switch its working directory to folder of file in buffer
-- Indicator for currently executed command
-- Indicator for line that caused an error
-- Progress bar indicates how far a run command is completed and how CPUs are utilized
-- Context-sensitive help for LAMMPS commands via the online documentation
-- Auto-adapting to features and packages available in the LAMMPS library in use
-- LAMMPS is running in a concurrent thread, so the GUI remains responsive
-- LAMMPS can be started and stopped with a mouse click or a hotkey
-- Screen output is captured in an *Output* Window
-- Many adjustable settings and preferences that are persistent including the 5 most recent files
-- Thermodynamic output is captured and displayed as line graph in a *Chart* Window
-- Interactive visualization of current state via calling `write_dump
-  image <https://docs.lammps.org/dump_image.html>`_
-- Capture of images created by `dump image
-  <https://docs.lammps.org/dump_image.html>`_ in Slide show window
-- Dialog to set variables, similar to the LAMMPS command-line flag '-v' / '-var'
-- Support for GPU, INTEL, KOKKOS/OpenMP, OPENMP, and OPT accelerator packages
-- Inspection of binary restart files created by LAMMPS
-- Integration with `LAMMPS tutorials <https://lammpstutorials.github.io>`_ 
+   - Text editor with line numbers and syntax highlighting customized for LAMMPS
+   - Text editor features command completion and indentation for known commands and styles
+   - Text editor will switch its working directory to folder of file in buffer
+   - Indicator for currently executed command
+   - Indicator for line that caused an error
+   - Progress bar indicates how far a run command is completed and how CPUs are utilized
+   - Context-sensitive help for LAMMPS commands via the online documentation
+   - Auto-adapting to features and packages available in the LAMMPS library in use
+   - LAMMPS is running in a concurrent thread, so the GUI remains responsive
+   - LAMMPS can be started and stopped with a mouse click or a hotkey
+   - Screen output is captured in an *Output* Window
+   - Many adjustable settings and preferences that are persistent including the 5 most recent files
+   - Thermodynamic output is captured and displayed as line graph in a *Chart* Window
+   - Interactive visualization of current state via calling `write_dump
+     image <https://docs.lammps.org/dump_image.html>`_
+   - Capture of images created by `dump image
+     <https://docs.lammps.org/dump_image.html>`_ in Slide show window
+   - Dialog to set variables, similar to the LAMMPS command-line flag '-v' / '-var'
+   - Support for GPU, INTEL, KOKKOS/OpenMP, OPENMP, and OPT accelerator packages
+   - Inspection of binary restart files created by LAMMPS
+   - Integration with `LAMMPS tutorials <https://lammpstutorials.github.io>`_

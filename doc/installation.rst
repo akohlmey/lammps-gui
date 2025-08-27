@@ -33,15 +33,15 @@ environment.  Otherwise, there is no changes in functionality between
 using either major version of Qt.  Building LAMMPS-GUI requires CMake
 version 3.20 or later.
 
-The LAMMPS-GUI has been successfully compiled and tested on:
+.. admonition:: LAMMPS-GUI has been successfully compiled and tested on:
 
-- Ubuntu Linux 22.04LTS x86_64 using GCC 11, Qt version 5.15
-- Fedora Linux 41 x86\_64 using GCC 14 and Clang 17, Qt version 5.15
-- Fedora Linux 42 x86\_64 using GCC 15, Qt version 6.9
-- Apple macOS 12 (Monterey) and macOS 13 (Ventura) with Xcode on arm64 and x86\_64, Qt version 5.15
-- Windows 10 and 11 x86_64 with Visual Studio 2022 and Visual C++ 14.36, Qt version 5.15
-- Windows 10 and 11 x86_64 with Visual Studio 2022 and Visual C++ 14.40, Qt version 6.7
-- Windows 10 and 11 x86_64 with MinGW / GCC 14.2 cross-compiler on Fedora 42, Qt version 5.15
+   - Ubuntu Linux 22.04LTS x86_64 using GCC 11, Qt version 5.15
+   - Fedora Linux 41 x86\_64 using GCC 14 and Clang 17, Qt version 5.15
+   - Fedora Linux 42 x86\_64 using GCC 15, Qt version 6.9
+   - Apple macOS 12 (Monterey) and macOS 13 (Ventura) with Xcode on arm64 and x86\_64, Qt version 5.15
+   - Windows 10 and 11 x86_64 with Visual Studio 2022 and Visual C++ 14.36, Qt version 5.15
+   - Windows 10 and 11 x86_64 with Visual Studio 2022 and Visual C++ 14.40, Qt version 6.7
+   - Windows 10 and 11 x86_64 with MinGW / GCC 14.2 cross-compiler on Fedora 42, Qt version 5.15
 
 Pre-compiled executables
 ^^^^^^^^^^^^^^^^^^^^^^^^
@@ -173,7 +173,7 @@ listed with:
 Compilation from source
 ^^^^^^^^^^^^^^^^^^^^^^^
 
-The source for the LAMMPS-GUI was included with the LAMMPS source code
+The source for LAMMPS-GUI was included with the LAMMPS source code
 distribution until LAMMPS version 22 July 2025 in the folder
 ``tools/lammps-gui``.  Starting with version 1.8.0, the LAMMPS-GUI
 sources are now distributed separately, in its own git repository at
@@ -269,7 +269,7 @@ There is a custom `x64-GUI-MSVC` build configuration provided in the
 compilation settings for project.  Choosing this configuration will
 activate building the `lammps-gui.exe` executable in addition to LAMMPS
 through importing package selection from the ``windows.cmake`` preset
-file and enabling building the LAMMPS-GUI and disabling building with
+file and enabling building LAMMPS-GUI and disabling building with
 MPI.  When requesting an installation from the `Build` menu in Visual
 Studio, it will create a compressed ``LAMMPS-Win10-amd64.zip`` zip file
 with the executables and required dependent .dll files.  This zip file

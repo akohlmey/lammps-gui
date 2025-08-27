@@ -2,6 +2,8 @@
 Editor Window
 *************
 
+.. _editor:
+
 The *Editor* window of LAMMPS-GUI has most of the usual functionality
 that similar programs have: text selection via mouse or with cursor
 moves while holding the Shift key, Cut (`Ctrl-X`), Copy (`Ctrl-C`),

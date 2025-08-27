@@ -92,6 +92,8 @@ settings of the snapshot image can be repeated for the entire simulation
 (and thus be repeated in the slide show viewer). This feature has the
 keyboard shortcut `Ctrl-D`.
 
+.. _slideshow:
+
 Image Slide Show
 ^^^^^^^^^^^^^^^^
 

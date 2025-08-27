@@ -127,12 +127,12 @@ the status bar is set to "Failed."  instead of "Ready."
    :align: center
    :scale: 75%
 
-Up to three additional windows may open during a run:
+.. admonition:: Up to three additional windows may open during a run:
 
-- an *Output* window with the captured screen output from LAMMPS
-- a *Charts* window with a line graph created from thermodynamic output of the run
-- a *Slide Show* window with images created by a `dump image command <https://docs.lammps.org/dump_image.html>`_
-  in the input
+   - An :ref:`Output window <logfile>` with the captured screen output from LAMMPS
+   - A :ref:`Charts window <charts>` with a line graph created from thermodynamic output of the run
+   - A :ref:`Slide Show window <slideshow>` with images created by a `dump image command <https://docs.lammps.org/dump_image.html>`_
+     in the input
 
 More information on those windows and how to adjust their behavior and
 contents is given below.

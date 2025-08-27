@@ -2,6 +2,7 @@
 Monitoring LAMMPS output
 ************************
 
+.. _logfile:
 
 Output Window
 ^^^^^^^^^^^^^
@@ -55,6 +56,8 @@ shortcut `Ctrl-Y` (`Command-Y` on macOS) is available to save only the
 YAML parts to a file.  This option is also available from a context menu
 by clicking with the right mouse button into the *Output* window text
 area.
+
+.. _charts:
 
 Charts Window
 ^^^^^^^^^^^^^
