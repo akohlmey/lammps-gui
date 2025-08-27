@@ -58,7 +58,7 @@ exclude_patterns = ['_build']
 templates_path = ['_templates']
 
 # The suffix of source filenames.
-source_suffix = {'.rst': 'restructuredtext'}
+#source_suffix = {'.rst': 'restructuredtext'}
 
 # The name of an image file (within the static path) to use as favicon of the
 html_favicon = '_static/lammps-gui.ico'
@@ -68,6 +68,8 @@ master_doc = 'index'
 
 # The encoding of source files.
 #source_encoding = 'utf-8-sig'
+
+#nitpicky = True
 
 # -- Options for HTML output -------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#options-for-html-output
