@@ -206,6 +206,8 @@ if (NOT BUILD_DOC_ONLY)
     )
   endif()
 
+  install(TARGETS lammps-gui DESTINATION ${CMAKE_INSTALL_BINDIR})
+
   if(QT_VERSION_MAJOR EQUAL 6)
     qt_finalize_executable(lammps-gui)
   endif()
