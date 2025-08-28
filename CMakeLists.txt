@@ -287,6 +287,20 @@ if(BUILD_DOC OR BUILD_DOC_ONLY)
   )
 
   add_custom_target(
+    latex
+    DEPENDS docenv ${DOC_SOURCES} ${DOCENV_DEPS} ${SPHINX_CONFIG_FILE_TEMPLATE} ${SPHINX_DIR}/_static/style.css
+    COMMAND Sphinx::sphinx-build ${SPHINX_EXTRA_OPTS} -b latex -c ${DOC_BUILD_DIR} -d ${DOC_BUILD_DIR}/doctrees ${CMAKE_SOURCE_DIR}/doc ${DOC_BUILD_DIR}/latex ${DOC_SOURCES}
+  )
+
+  add_custom_target(
+    pdf
+    DEPENDS latex
+    COMMAND latexmk -pdf -dvi- -ps- lammps-gui.tex
+    COMMAND ${CMAKE_COMMAND} -E rename lammps-gui.pdf ../../lammps-gui.pdf
+    WORKING_DIRECTORY ${DOC_BUILD_DIR}/latex
+  )
+
+  add_custom_target(
     doc ALL
     DEPENDS docenv ${DOC_BUILD_DIR}/html/index.html
     SOURCES ${CMAKE_SOURCE_DIR}/doc/requirements.txt ${DOC_SOURCES}

@@ -3,11 +3,17 @@ LAMMPS-GUI Documentation
 ########################
 
 .. toctree::
-   :caption: About LAMMPS-GUI
+   :caption: LAMMPS-GUI Documentation
 
-.. image:: _images/lammps-gui-banner.png
-   :align: center
-   :scale: 75%
+.. only:: html
+
+   .. image:: _images/lammps-gui-banner.png
+      :align: center
+      :scale: 75%
+
+.. raw:: latex
+
+   \clearpage
 
 ****************
 About LAMMPS-GUI

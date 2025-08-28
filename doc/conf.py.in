@@ -30,8 +30,8 @@ def get_git_info():
     return git_n_date.strip()
 
 project = 'LAMMPS-GUI'
-copyright = '2023 - {}, Axel Kohlmeyer'.format(date.today().year)
 author = 'Axel Kohlmeyer'
+copyright = '2023 - {}, {}'.format(date.today().year, author)
 version = '@PROJECT_VERSION@'
 release = get_git_info()
 language = 'en'
@@ -114,3 +114,40 @@ if spelling_spec and has_enchant:
     extensions.append('sphinxcontrib.spelling')
     spelling_lang = 'en_US'
     spelling_word_list_filename='false_positives.txt'
+
+# configure latex output
+latex_engine = 'pdflatex'
+latex_theme = 'howto'
+latex_logo = 'lammps-gui-banner.png'
+latex_elements = {
+    'preamble': r'\usepackage{hyperref}',
+    'maketitle': r'''
+% customized titlepage
+{%
+  \hypersetup{pageanchor=false}% avoid duplicate destination warnings
+  \begin{titlepage}%
+    \sffamily\bfseries
+    \begingroup % for PDF information dictionary
+      \def\endgraf{ }\def\and{\& }%
+      \pdfstringdefDisableCommands{\def\\{, }}% overwrite hyperref setup
+      \hypersetup{pdfauthor={Axel Kohlmeyer}, pdftitle={LAMMPS-GUI Documentation}}%
+    \endgroup
+    \noindent\rule{\textwidth}{4pt}\par
+    \begin{center}%
+      \sphinxlogo
+      \vfill
+      {\Huge LAMMPS-GUI Documentation \par}
+      \vfill
+      {\LARGE \release \par}
+      \vfill
+      {\LARGE Axel Kohlmeyer \par}
+      {\Large akohlmey@gmail.com \par}
+      \vfill\vfill\vfill
+    \end{center}
+    \noindent\rule{\textwidth}{4pt}\par
+  \end{titlepage}%
+  \setcounter{footnote}{0}%
+  \clearpage
+}
+''',
+}
