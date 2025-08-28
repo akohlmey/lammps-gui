@@ -120,7 +120,7 @@ latex_engine = 'pdflatex'
 latex_theme = 'howto'
 latex_logo = 'lammps-gui-banner.png'
 latex_elements = {
-    'preamble': r'\usepackage{hyperref}',
+    'preamble': format("\\newcommand{\\lammpsversion}{Release v%s}" % version),
     'maketitle': r'''
 % customized titlepage
 {%
@@ -138,10 +138,10 @@ latex_elements = {
       \vfill
       {\Huge LAMMPS-GUI Documentation \par}
       \vfill
-      {\LARGE \release \par}
+      {\LARGE \lammpsversion \par}
       \vfill
       {\LARGE Axel Kohlmeyer \par}
-      {\Large akohlmey@gmail.com \par}
+      {\large akohlmey@gmail.com \par}
       \vfill\vfill\vfill
     \end{center}
     \noindent\rule{\textwidth}{4pt}\par
