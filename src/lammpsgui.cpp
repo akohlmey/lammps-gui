@@ -772,6 +772,9 @@ void LammpsGui::update_variables()
 // open file and switch CWD to path of file
 void LammpsGui::open_file(const QString &fileName)
 {
+    // do nothing, if no file name provided
+    if (fileName.isEmpty()) return;
+
     if (lammps.is_running()) {
         stop_run();
         runner->wait();
