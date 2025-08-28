@@ -99,3 +99,9 @@ Thumbs.db
 
 # build folders
 /build*
+
+# tutorial folders
+/tutorial*
+
+# binary packages
+/LAMMPS-GUI*
