@@ -623,7 +623,7 @@ QRectF ChartViewer::get_minmax() const
         }
     }
 
-    return QRectF(xmin, ymax, xmax - xmin, ymin - ymax);
+    return {xmin, ymax, xmax - xmin, ymin - ymax};
 }
 
 /* -------------------------------------------------------------------- */

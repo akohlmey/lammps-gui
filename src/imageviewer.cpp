@@ -152,7 +152,6 @@ constexpr double VDW_CUT          = 1.0;
 constexpr double SHINY_ON         = 0.6;
 constexpr double SHINY_OFF        = 0.2;
 constexpr double SHINY_CUT        = 0.4;
-constexpr double MAX_BOND_CUT     = 99.0;
 constexpr int DEFAULT_BUFLEN      = 1024;
 constexpr int DEFAULT_NPOINTS     = 100000;
 constexpr double DEFAULT_DIAMETER = 0.2;

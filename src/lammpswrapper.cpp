@@ -314,7 +314,7 @@ void LammpsWrapper::finalize()
 {
 #if defined(LAMMPS_GUI_USE_PLUGIN)
     if (lammps_handle) {
-        liblammpsplugin_t *lammps = (liblammpsplugin_t *)plugin_handle;
+        auto *lammps = (liblammpsplugin_t *)plugin_handle;
         lammps->close(lammps_handle);
         lammps->mpi_finalize();
         lammps->kokkos_finalize();
