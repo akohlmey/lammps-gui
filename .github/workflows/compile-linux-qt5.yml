@@ -49,7 +49,6 @@ jobs:
     - name: Building LAMMPS-GUI via CMake
       shell: bash
       run: |
-        ccache -z
         cmake -S . -B build \
               -D LAMMPS_GUI_USE_PLUGIN=yes \
               -D BUILD_DOC=no \
