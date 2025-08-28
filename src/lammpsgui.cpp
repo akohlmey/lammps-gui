@@ -183,9 +183,9 @@ LammpsGui::LammpsGui(QWidget *parent, const QString &filename) :
             settings.remove("plugin_path");
             QMessageBox::critical(
                 this, "Error",
-                "Cannot open LAMMPS shared library file or provided path has an incompatible "
-                "version.\n\nPlease try again and use the -p command line flag to specify a "
-                "path to a suitable LAMMPS shared library file.");
+                "Cannot open a LAMMPS shared library file or the provided path has an "
+                "incompatible LAMMPS version.\n\nPlease try again and use the -p command line "
+                "flag to specify a path to a suitable LAMMPS shared library file.");
             exit(1);
         }
 
