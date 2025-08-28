@@ -45,7 +45,6 @@
 #include <QProcess>
 #include <QProgressBar>
 #include <QPushButton>
-#include <QRadioButton>
 #include <QSettings>
 #include <QShortcut>
 #include <QStandardPaths>
