@@ -7,6 +7,10 @@ on:
 
   workflow_dispatch:
 
+concurrency:
+  group: ${{ github.event_name }}-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{github.event_name == 'pull_request'}}
+
 jobs:
   analyze:
     name: Analyze
@@ -24,6 +28,20 @@ jobs:
       with:
         fetch-depth: 2
 
+    - name: Install extra packages
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y \
+                                build-essential \
+                                cmake \
+                                libfontconfig1 \
+                                libglu1-mesa-dev \
+                                libomp-dev \
+                                mesa-common-dev \
+                                ninja-build \
+                                qt6-base-dev \
+                                qt6-charts-dev
+
     - name: Initialize CodeQL
       uses: github/codeql-action/init@v3
       with:
@@ -33,7 +51,12 @@ jobs:
     - name: Building LAMMPS-GUI via CMake
       shell: bash
       run: |
-        cmake -S . -B build -D BUILD_DOC=off
+        cmake -S . -B build \
+              -D LAMMPS_GUI_USE_PLUGIN=yes \
+              -D BUILD_DOC=no \
+              -D CMAKE_CXX_STANDARD=23 \
+              -D CMAKE_BUILD_TYPE=Debug \
+              -D CMAKE_CXX_FLAGS_DEBUG="-Og -g -Wall -Wextra"
         cmake --build build --parallel 2
 
     - name: Perform CodeQL Analysis

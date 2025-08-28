@@ -1,4 +1,4 @@
-# GitHub action to build LAMMPS-GUI on Linux with Qt 5.15LTS
+# GitHub action to build LAMMPS-GUI on Linux with Qt 6.x
 name: "Compile with Qt 6.x"
 
 on:
