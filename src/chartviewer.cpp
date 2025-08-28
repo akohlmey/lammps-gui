@@ -343,8 +343,8 @@ void ChartWindow::update_yrange(int low, int high)
 {
     for (auto &c : charts) {
         if (c->isVisible()) {
-            auto axes                 = c->get_axes();
-            auto ranges               = c->get_minmax();
+            auto axes   = c->get_axes();
+            auto ranges = c->get_minmax();
             double ymin = ranges.bottom() - (double)low * SLIDER_FRACTION * ranges.height();
             double ymax = ranges.bottom() - (double)high * SLIDER_FRACTION * ranges.height();
             axes[1]->setRange(ymin, ymax);
@@ -683,10 +683,10 @@ using float_vect = std::vector<double>;
 using int_vect = std::vector<int>;
 
 // forward declaration
-float_vect sg_smooth(const float_vect &v, const int w, const int deg);
+float_vect sg_smooth(const float_vect &v, const std::size_t w, const int deg);
 
 // savitzky golay smoothing.
-QList<QPointF> calc_sgsmooth(const QList<QPointF> &input, int window, int order)
+QList<QPointF> calc_sgsmooth(const QList<QPointF> &input, std::size_t window, int order)
 {
     const std::size_t ndat = input.count();
     if (ndat < ((2 * window) + 2)) window = (ndat / 2) - 1;
@@ -850,8 +850,8 @@ int partial_pivot(float_mat &A, const std::size_t row, const std::size_t col, fl
  * place.  A is not modified, and the solution, b, is returned in a. */
 void lu_backsubst(float_mat &A, float_mat &a, bool diag = false)
 {
-    for (std::size_t r = (A.nr_rows() - 1); r >= 0; --r) {
-        for (std::size_t c = (A.nr_cols() - 1); c > r; --c) {
+    for (int r = (A.nr_rows() - 1); r >= 0; --r) {
+        for (int c = (A.nr_cols() - 1); c > r; --c) {
             for (std::size_t k = 0; k < A.nr_cols(); ++k) {
                 a[r][k] -= A[r][c] * a[c][k];
             }
@@ -873,8 +873,8 @@ void lu_backsubst(float_mat &A, float_mat &a, bool diag = false)
  * place.  A is not modified, and the solution, b, is returned in a. */
 void lu_forwsubst(float_mat &A, float_mat &a, bool diag = true)
 {
-    for (std::size_t r = 0; r < A.nr_rows(); ++r) {
-        for (std::size_t c = 0; c < r; ++c) {
+    for (int r = 0; r < (int)A.nr_rows(); ++r) {
+        for (int c = 0; c < r; ++c) {
             for (std::size_t k = 0; k < A.nr_cols(); ++k) {
                 a[r][k] -= A[r][c] * a[c][k];
             }
@@ -909,10 +909,10 @@ int lu_factorize(float_mat &A, int_vect &idx)
     }
 
     int swapNum = 1;
-    for (std::size_t c = 0; c < A.nr_cols(); ++c) {            // loop over columns
-        swapNum *= partial_pivot(A, c, c, scale, idx); // bring pivot to diagonal
-        for (std::size_t r = 0; r < A.nr_rows(); ++r) {        //  loop over rows
-            int lim = (r < c) ? r : c;
+    for (std::size_t c = 0; c < A.nr_cols(); ++c) {     // loop over columns
+        swapNum *= partial_pivot(A, c, c, scale, idx);  // bring pivot to diagonal
+        for (std::size_t r = 0; r < A.nr_rows(); ++r) { //  loop over rows
+            std::size_t lim = (r < c) ? r : c;
             for (std::size_t j = 0; j < lim; ++j) {
                 A[idx[r]][c] -= A[idx[r]][j] * A[idx[j]][c];
             }
@@ -1023,11 +1023,11 @@ float_vect sg_coeff(const float_vect &b, const std::size_t deg)
  * vector of size 2w+1, e.g. for w=2 b=(0,0,1,0,0). evaluating the polynome
  * yields the sg-coefficients.  at the border non symmectric vectors b are
  * used. */
-float_vect sg_smooth(const float_vect &v, const int width, const int deg)
+float_vect sg_smooth(const float_vect &v, const std::size_t width, const int deg)
 {
     float_vect res(v.size(), 0.0);
-    const int window = (2 * width) + 1;
-    const int endidx = v.size() - 1;
+    const std::size_t window = (2 * (std::size_t)width) + 1;
+    const int endidx         = v.size() - 1;
 
     // do a regular sliding window average
     if (deg == 0) {
