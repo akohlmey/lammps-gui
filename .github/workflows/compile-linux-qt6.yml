@@ -34,7 +34,6 @@ jobs:
         sudo apt-get update
         sudo apt-get install -y \
                                 build-essential \
-                                ccache \
                                 cmake \
                                 libfontconfig1 \
                                 libglu1-mesa-dev \
@@ -51,20 +50,18 @@ jobs:
       uses: actions/cache@v4
       with:
         path: ${{ env.CCACHE_DIR }}
-        key: linux-qt6-ccache-${{ matrix.idx }}-${{ github.sha }}
-        restore-keys: linux-qt6-ccache-${{ matrix.idx }}
+        key: linux-qt5-ccache-${{ matrix.idx }}-${{ github.sha }}
+        restore-keys: linux-qt5-ccache-${{ matrix.idx }}
 
     - name: Building LAMMPS-GUI via CMake
       shell: bash
       run: |
         ccache -z
         cmake -S . -B build \
-              -D LAMMPS_GUI_USE_PLUGIN=yes
+              -D LAMMPS_GUI_USE_PLUGIN=yes \
               -D BUILD_DOC=no \
               -D CMAKE_CXX_STANDARD=23 \
-              -D CMAKE_CXX_COMPILER_LAUNCHER=ccache \
-              -D CMAKE_C_COMPILER_LAUNCHER=ccache \
               -D CMAKE_BUILD_TYPE=Debug \
-              -D CMAKE_CXX_FLAGS_DEBUG="-Og -g"
+              -D CMAKE_CXX_FLAGS_DEBUG="-Og -g -Wall -Wextra"
         cmake --build build
         ccache -s
