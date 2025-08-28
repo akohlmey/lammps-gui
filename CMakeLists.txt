@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.20)
 
 project(lammps-gui
-  VERSION 1.8.1.1
+  VERSION 1.8.1.2
   LANGUAGES CXX
   DESCRIPTION "The LAMMPS GUI"
   HOMEPAGE_URL "https://lammps-gui.lammps.org/")
