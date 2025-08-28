@@ -1,0 +1,40 @@
+# GitHub action to run static code analysis on C++
+name: "CodeQL Code Analysis"
+
+on:
+  push:
+    branches: [develop]
+
+  workflow_dispatch:
+
+jobs:
+  analyze:
+    name: Analyze
+    if: ${{ github.repository == 'akohlmey/lammps-gui' }}
+    runs-on: ubuntu-latest
+
+    permissions:
+      security-events: write
+      actions: read
+      contents: read
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 2
+
+    - name: Initialize CodeQL
+      uses: github/codeql-action/init@v3
+      with:
+        languages: cpp
+        config-file: ./.github/codeql/cpp.yml
+
+    - name: Building LAMMPS-GUI via CMake
+      shell: bash
+      run: |
+        cmake -S . -B build -D BUILD_DOC=off
+        cmake --build build --parallel 2
+
+    - name: Perform CodeQL Analysis
+      uses: github/codeql-action/analyze@v3

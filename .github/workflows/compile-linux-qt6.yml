@@ -55,5 +55,5 @@ jobs:
               -D CMAKE_CXX_STANDARD=23 \
               -D CMAKE_BUILD_TYPE=Debug \
               -D CMAKE_CXX_FLAGS_DEBUG="-Og -g -Wall -Wextra"
-        cmake --build build
+        cmake --build build --parallel 2
         build/lammps-gui --platform offscreen -v
