@@ -41,7 +41,8 @@ jobs:
                                 libomp-dev \
                                 mesa-common-dev \
                                 ninja-build \
-                                qt6-base-dev
+                                qt6-base-dev \
+                                qt6-charts-dev
 
     - name: Create Build Environment
       run: mkdir build
