@@ -36,7 +36,7 @@ jobs:
                                 build-essential \
                                 libomp-dev \
                                 ninja-build \
-                                qt5-default \
+                                qt5-base-dev \
                                 mesa-common-dev \
                                 libfontconfig1 \
                                 libglu1-mesa-dev
