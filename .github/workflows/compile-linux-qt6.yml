@@ -56,3 +56,4 @@ jobs:
               -D CMAKE_BUILD_TYPE=Debug \
               -D CMAKE_CXX_FLAGS_DEBUG="-Og -g -Wall -Wextra"
         cmake --build build
+        build/lammps-gui -v

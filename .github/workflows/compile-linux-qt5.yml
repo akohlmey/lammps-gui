@@ -56,3 +56,4 @@ jobs:
               -D CMAKE_BUILD_TYPE=Release \
               -G Ninja
         cmake --build build
+        build/lammps-gui -v
