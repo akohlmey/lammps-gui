@@ -1,0 +1,68 @@
+# GitHub action to build LAMMPS-GUI on Linux with Qt 5.15LTS
+name: "Compile with Qt 6.x"
+
+on:
+  push:
+    branches:
+      - develop
+  pull_request:
+    branches:
+      - develop
+
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.event_name }}-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{github.event_name == 'pull_request'}}
+
+jobs:
+  build:
+    name: Build with Qt 6.x support enabled
+    if: ${{ github.repository == 'akohlmey/lammps-gui' }}
+    runs-on: ubuntu-latest
+    env:
+      CCACHE_DIR: ${{ github.workspace }}/.ccache
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 20
+
+    - name: Install extra packages
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y ccache \
+                                build-essential \
+                                libomp-dev \
+                                ninja-build \
+                                qt6-default \
+                                mesa-common-dev \
+                                libfontconfig1 \
+                                libglu1-mesa-dev
+
+    - name: Create Build Environment
+      run: mkdir build
+
+    - name: Set up ccache
+      uses: actions/cache@v4
+      with:
+        path: ${{ env.CCACHE_DIR }}
+        key: linux-qt6-ccache-${{ matrix.idx }}-${{ github.sha }}
+        restore-keys: linux-qt6-ccache-${{ matrix.idx }}
+
+    - name: Building LAMMPS-GUI via CMake
+      shell: bash
+      run: |
+        ccache -z
+        cmake -S cmake -B build \
+              -D CMAKE_CXX_STANDARD=23 \
+              -D CMAKE_CXX_COMPILER_LAUNCHER=ccache \
+              -D CMAKE_C_COMPILER_LAUNCHER=ccache \
+              -D CMAKE_BUILD_TYPE=Debug \
+              -D CMAKE_CXX_FLAGS_DEBUG="-Og -g" \
+              -D BUILD_DOC=no \
+              -D LAMMPS_GUI_USE_PLUGIN=yes \
+              -G Ninja
+        cmake --build build
+        ccache -s
