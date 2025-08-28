@@ -280,13 +280,23 @@ if(BUILD_DOC OR BUILD_DOC_ONLY)
     COMMAND Sphinx::sphinx-build ${SPHINX_EXTRA_OPTS} -b latex -c ${DOC_BUILD_DIR} -d ${DOC_BUILD_DIR}/doctrees ${CMAKE_SOURCE_DIR}/doc ${DOC_BUILD_DIR}/latex ${DOC_SOURCES}
   )
 
-  add_custom_target(
-    pdf
-    DEPENDS latex
-    COMMAND latexmk -pdf -dvi- -ps- lammps-gui.tex
-    COMMAND ${CMAKE_COMMAND} -E rename lammps-gui.pdf ../../lammps-gui.pdf
-    WORKING_DIRECTORY ${DOC_BUILD_DIR}/latex
-  )
+  # need latexmk and pdflatex for tranlating LaTeX to PDF
+  find_program(PDFLATEX_COMMAND pdflatex DOC "Path to pdflatex command")
+  find_program(LATEXMK_COMMAND latexmk DOC "Path to latex command")
+  if (PDFLATEX_COMMAND AND LATEXMK_COMMAND)
+    add_custom_target(
+      pdf
+      DEPENDS latex
+      COMMAND ${LATEXMK_COMMAND} -pdf -dvi- -ps- lammps-gui.tex
+      COMMAND ${CMAKE_COMMAND} -E rename lammps-gui.pdf ../../lammps-gui-v${PROJECT_VERSION}.pdf
+      WORKING_DIRECTORY ${DOC_BUILD_DIR}/latex
+    )
+  else()
+    add_custom_target(
+      pdf
+      COMMAND ${CMAKE_COMMAND} -E echo "Need to have pdflatex and latexmk installed to create PDF of docs"
+    )
+  endif()
 
   add_custom_target(
     doc ALL
