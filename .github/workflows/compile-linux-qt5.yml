@@ -46,13 +46,6 @@ jobs:
     - name: Create Build Environment
       run: mkdir build
 
-    - name: Set up ccache
-      uses: actions/cache@v4
-      with:
-        path: ${{ env.CCACHE_DIR }}
-        key: linux-qt5-ccache-${{ matrix.idx }}-${{ github.sha }}
-        restore-keys: linux-qt5-ccache-${{ matrix.idx }}
-
     - name: Building LAMMPS-GUI via CMake
       shell: bash
       run: |
@@ -64,4 +57,3 @@ jobs:
               -D CMAKE_BUILD_TYPE=Release \
               -G Ninja
         cmake --build build
-        ccache -s
