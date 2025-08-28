@@ -74,43 +74,31 @@ if (NOT BUILD_DOC_ONLY)
   endif()
 
   # checks
-  # when this file is included as subdirectory in the LAMMPS build, many settings are directly imported
-  if(LAMMPS_DIR)
-    set(LAMMPS_HEADER_DIR ${LAMMPS_SOURCE_DIR})
-    set(LAMMPS_LIBRARY lammps)
-  else()
-    if (NOT LAMMPS_SOURCE_DIR AND NOT LAMMPS_GUI_USE_PLUGIN)
-      message(FATAL_ERROR "Must provide -D LAMMPS_SOURCE_DIR=<path to LAMMPS sources> when not compiling with -D LAMMPS_GUI_USE_PLUGIN=on")
-    endif()
-    # by default, install into $HOME/.local (not /usr/local),
-    # so that no root access (and sudo) is needed
-    if(CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
-      set(CMAKE_INSTALL_PREFIX "$ENV{HOME}/.local" CACHE PATH "Default install path" FORCE)
-    endif()
+  if (NOT LAMMPS_SOURCE_DIR AND NOT LAMMPS_GUI_USE_PLUGIN)
+    message(FATAL_ERROR "Must provide -D LAMMPS_SOURCE_DIR=<path to LAMMPS sources> when not compiling with -D LAMMPS_GUI_USE_PLUGIN=on")
+  endif()
+  set(LAMMPS_HEADER_DIR ${LAMMPS_SOURCE_DIR})
+  # by default, install into $HOME/.local (not /usr/local),
+  # so that no root access (and sudo) is needed
+  if(CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
+    set(CMAKE_INSTALL_PREFIX "$ENV{HOME}/.local" CACHE PATH "Default install path" FORCE)
+  endif()
 
-    # ugly hacks for MSVC which by default always reports an old C++ standard in the __cplusplus macro
-    # and prints lots of pointless warnings about "unsafe" functions
-    if(MSVC)
-      if(CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
-        add_compile_options(/Zc:__cplusplus)
-        add_compile_options(/wd4244)
-        add_compile_options(/wd4267)
-        add_compile_options(/wd4250)
-        add_compile_options(/EHsc)
-      endif()
-      add_compile_definitions(_CRT_SECURE_NO_WARNINGS)
+  # ugly hacks for MSVC which by default always reports an old C++ standard in the __cplusplus macro
+  # and prints lots of pointless warnings about "unsafe" functions
+  if(MSVC)
+    if(CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
+      add_compile_options(/Zc:__cplusplus)
+      add_compile_options(/wd4244)
+      add_compile_options(/wd4267)
+      add_compile_options(/wd4250)
+      add_compile_options(/EHsc)
     endif()
+    add_compile_definitions(_CRT_SECURE_NO_WARNINGS)
+  endif()
 
-    set(LAMMPS_HEADER_DIR ${LAMMPS_SOURCE_DIR} CACHE PATH "Location of LAMMPS headers")
-    if (NOT LAMMPS_GUI_USE_PLUGIN AND NOT LAMMPS_LIBRARY)
-      get_filename_component(LAMMPS_DIR ${LAMMPS_SOURCE_DIR}/.. ABSOLUTE)
-      # find LAMMPS library
-      find_library(LAMMPS_LIBRARY
-        NAMES lammps lammps_serial
-        HINTS ${LAMMPS_LIB_DIR} ${LAMMPS_HEADER_DIR}/../build ${LAMMPS_HEADER_DIR}/../build-clang ${LAMMPS_HEADER_DIR}/../build-test ${LAMMPS_HEADER_DIR}
-        REQUIRED
-      )
-    endif()
+  if (NOT LAMMPS_GUI_USE_PLUGIN AND NOT LAMMPS_LIBRARY)
+    message(FATAL_ERROR "Must provide -D LAMMPS_LIBRARY=<path to LAMMPS library file> when not compiling with -D LAMMPS_GUI_USE_PLUGIN=on")
   endif()
 
   set(LAMMPS_PLUGINLIB_DIR ${CMAKE_SOURCE_DIR}/plugin)
