@@ -103,5 +103,6 @@ Thumbs.db
 # tutorial folders
 /tutorial*
 
-# binary packages
+# binary and source packages
 /LAMMPS-GUI*
+/lammps-gui-src-*
