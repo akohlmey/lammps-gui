@@ -143,7 +143,7 @@ ChartWindow::ChartWindow(const QString &_filename, QWidget *parent) :
     row2->addWidget(units);
     row2->addWidget(new QLabel("Norm:"));
     norm = new QCheckBox("");
-    norm->setChecked(Qt::Unchecked);
+    norm->setCheckState(Qt::Unchecked);
     norm->setEnabled(false);
     row2->addWidget(norm);
     xrange = new RangeSlider;
@@ -267,7 +267,7 @@ void ChartWindow::set_units(const QString &_units)
 
 void ChartWindow::set_norm(bool _norm)
 {
-    norm->setChecked(_norm ? Qt::Checked : Qt::Unchecked);
+    norm->setChecked(_norm);
 }
 
 void ChartWindow::quit()
@@ -343,7 +343,6 @@ void ChartWindow::update_yrange(int low, int high)
 {
     for (auto &c : charts) {
         if (c->isVisible()) {
-            constexpr double fraction = 1.0 / (double)SLIDER_RANGE;
             auto axes                 = c->get_axes();
             auto ranges               = c->get_minmax();
             double ymin = ranges.bottom() - (double)low * SLIDER_FRACTION * ranges.height();
@@ -696,12 +695,12 @@ QList<QPointF> calc_sgsmooth(const QList<QPointF> &input, int window, int order)
         float_vect in(ndat);
         QList<QPointF> rv(input);
 
-        for (int i = 0; i < ndat; ++i)
+        for (std::size_t i = 0; i < ndat; ++i)
             in[i] = input[i].y();
 
         float_vect out = sg_smooth(in, window, order);
 
-        for (int i = 0; i < ndat; ++i)
+        for (std::size_t i = 0; i < ndat; ++i)
             rv[i].setY(out[i]);
 
         return rv;
@@ -782,16 +781,16 @@ void permute(float_mat &A, int_vect &idx)
 {
     int_vect i(idx.size());
 
-    for (int j = 0; j < A.nr_rows(); ++j) {
+    for (std::size_t j = 0; j < A.nr_rows(); ++j) {
         i[j] = j;
     }
 
     // loop over permuted indices
-    for (int j = 0; j < A.nr_rows(); ++j) {
+    for (std::size_t j = 0; j < A.nr_rows(); ++j) {
         if (i[j] != idx[j]) {
 
             // search only the remaining indices
-            for (int k = j + 1; k < A.nr_rows(); ++k) {
+            for (std::size_t k = j + 1; k < A.nr_rows(); ++k) {
                 if (i[k] == idx[j]) {
                     std::swap(A[j], A[k]); // swap the rows and
                     i[k] = i[j];           // the elements of
@@ -851,14 +850,14 @@ int partial_pivot(float_mat &A, const std::size_t row, const std::size_t col, fl
  * place.  A is not modified, and the solution, b, is returned in a. */
 void lu_backsubst(float_mat &A, float_mat &a, bool diag = false)
 {
-    for (int r = (A.nr_rows() - 1); r >= 0; --r) {
-        for (int c = (A.nr_cols() - 1); c > r; --c) {
-            for (int k = 0; k < A.nr_cols(); ++k) {
+    for (std::size_t r = (A.nr_rows() - 1); r >= 0; --r) {
+        for (std::size_t c = (A.nr_cols() - 1); c > r; --c) {
+            for (std::size_t k = 0; k < A.nr_cols(); ++k) {
                 a[r][k] -= A[r][c] * a[c][k];
             }
         }
         if (!diag) {
-            for (int k = 0; k < A.nr_cols(); ++k) {
+            for (std::size_t k = 0; k < A.nr_cols(); ++k) {
                 a[r][k] /= A[r][r];
             }
         }
@@ -874,14 +873,14 @@ void lu_backsubst(float_mat &A, float_mat &a, bool diag = false)
  * place.  A is not modified, and the solution, b, is returned in a. */
 void lu_forwsubst(float_mat &A, float_mat &a, bool diag = true)
 {
-    for (int r = 0; r < A.nr_rows(); ++r) {
-        for (int c = 0; c < r; ++c) {
-            for (int k = 0; k < A.nr_cols(); ++k) {
+    for (std::size_t r = 0; r < A.nr_rows(); ++r) {
+        for (std::size_t c = 0; c < r; ++c) {
+            for (std::size_t k = 0; k < A.nr_cols(); ++k) {
                 a[r][k] -= A[r][c] * a[c][k];
             }
         }
         if (!diag) {
-            for (int k = 0; k < A.nr_cols(); ++k) {
+            for (std::size_t k = 0; k < A.nr_cols(); ++k) {
                 a[r][k] /= A[r][r];
             }
         }
@@ -898,9 +897,9 @@ void lu_forwsubst(float_mat &A, float_mat &a, bool diag = true)
 int lu_factorize(float_mat &A, int_vect &idx)
 {
     float_vect scale(A.nr_rows()); // implicit pivot scaling
-    for (int i = 0; i < A.nr_rows(); ++i) {
+    for (std::size_t i = 0; i < A.nr_rows(); ++i) {
         double maxval = 0.0;
-        for (int j = 0; j < A.nr_cols(); ++j) {
+        for (std::size_t j = 0; j < A.nr_cols(); ++j) {
             maxval = std::max(fabs(A[i][j]), maxval);
         }
         if (maxval == 0.0) {
@@ -910,11 +909,11 @@ int lu_factorize(float_mat &A, int_vect &idx)
     }
 
     int swapNum = 1;
-    for (int c = 0; c < A.nr_cols(); ++c) {            // loop over columns
+    for (std::size_t c = 0; c < A.nr_cols(); ++c) {            // loop over columns
         swapNum *= partial_pivot(A, c, c, scale, idx); // bring pivot to diagonal
-        for (int r = 0; r < A.nr_rows(); ++r) {        //  loop over rows
+        for (std::size_t r = 0; r < A.nr_rows(); ++r) {        //  loop over rows
             int lim = (r < c) ? r : c;
-            for (int j = 0; j < lim; ++j) {
+            for (std::size_t j = 0; j < lim; ++j) {
                 A[idx[r]][c] -= A[idx[r]][j] * A[idx[j]][c];
             }
             if (r > c) A[idx[r]][c] /= A[idx[c]][c];
@@ -933,7 +932,7 @@ float_mat lin_solve(const float_mat &A, const float_mat &a)
     float_mat b(a);
     int_vect idx(B.nr_rows());
 
-    for (int j = 0; j < B.nr_rows(); ++j) {
+    for (std::size_t j = 0; j < B.nr_rows(); ++j) {
         idx[j] = j; // init row swap label array
     }
     lu_factorize(B, idx); // get the lu-decomp.
@@ -1033,10 +1032,10 @@ float_vect sg_smooth(const float_vect &v, const int width, const int deg)
     // do a regular sliding window average
     if (deg == 0) {
         // handle border cases first because we need different coefficients
-        for (int i = 0; i < width; ++i) {
+        for (std::size_t i = 0; i < width; ++i) {
             const double scale = 1.0 / double(i + 1);
             const float_vect c1(width, scale);
-            for (int j = 0; j <= i; ++j) {
+            for (std::size_t j = 0; j <= i; ++j) {
                 res[i] += c1[j] * v[j];
                 res[endidx - i] += c1[j] * v[endidx - j];
             }
@@ -1049,7 +1048,7 @@ float_vect sg_smooth(const float_vect &v, const int width, const int deg)
 #pragma omp parallel for schedule(static)
 #endif
         for (std::size_t i = 0; i <= (v.size() - window); ++i) {
-            for (int j = 0; j < window; ++j) {
+            for (std::size_t j = 0; j < window; ++j) {
                 res[i + width] += c2[j] * v[i + j];
             }
         }
@@ -1057,12 +1056,12 @@ float_vect sg_smooth(const float_vect &v, const int width, const int deg)
     }
 
     // handle border cases first because we need different coefficients
-    for (int i = 0; i < width; ++i) {
+    for (std::size_t i = 0; i < width; ++i) {
         float_vect b1(window, 0.0);
         b1[i] = 1.0;
 
         const float_vect c1(sg_coeff(b1, deg));
-        for (int j = 0; j < window; ++j) {
+        for (std::size_t j = 0; j < window; ++j) {
             res[i] += c1[j] * v[j];
             res[endidx - i] += c1[j] * v[endidx - j];
         }
@@ -1074,7 +1073,7 @@ float_vect sg_smooth(const float_vect &v, const int width, const int deg)
     const float_vect c2(sg_coeff(b2, deg));
 
     for (std::size_t i = 0; i <= (v.size() - window); ++i) {
-        for (int j = 0; j < window; ++j) {
+        for (std::size_t j = 0; j < window; ++j) {
             res[i + width] += c2[j] * v[i + j];
         }
     }

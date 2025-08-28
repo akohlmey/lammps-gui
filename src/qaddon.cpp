@@ -61,7 +61,7 @@ void QColorValidator::fixup(QString &input) const
     input = input.toLower();
 }
 
-QValidator::State QColorValidator::validate(QString &input, int &pos) const
+QValidator::State QColorValidator::validate(QString &input, int &) const
 {
     QString match;
 
