@@ -437,7 +437,7 @@ void GeneralTab::pluginpath()
 #elif Q_OS_WIN32
     const QString pattern = "LAMMPS shared library (liblammps*.dll)";
 #else
-    const QString pattern = "LAMMPS shared library (liblammps*.so)";
+    const QString pattern = "LAMMPS shared library (liblammps*.so*)";
 #endif
     if (field) {
         auto libdir      = QFileInfo(".").absoluteDir();
