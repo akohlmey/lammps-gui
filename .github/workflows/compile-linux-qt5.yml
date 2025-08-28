@@ -32,14 +32,16 @@ jobs:
     - name: Install extra packages
       run: |
         sudo apt-get update
-        sudo apt-get install -y ccache \
+        sudo apt-get install -y \
                                 build-essential \
-                                libomp-dev \
-                                ninja-build \
-                                qt5-base-dev \
-                                mesa-common-dev \
+                                ccache \
+                                cmake \
                                 libfontconfig1 \
-                                libglu1-mesa-dev
+                                libglu1-mesa-dev \
+                                libomp-dev \
+                                mesa-common-dev \
+                                ninja-build \
+                                qtbase5-dev
 
     - name: Create Build Environment
       run: mkdir build
@@ -55,14 +57,14 @@ jobs:
       shell: bash
       run: |
         ccache -z
-        cmake -S cmake -B build \
+        cmake -S . -B build \
+              -D LAMMPS_GUI_USE_PLUGIN=yes
+              -D BUILD_DOC=no \
               -D CMAKE_CXX_STANDARD=17 \
               -D CMAKE_CXX_COMPILER_LAUNCHER=ccache \
               -D CMAKE_C_COMPILER_LAUNCHER=ccache \
               -D CMAKE_BUILD_TYPE=Debug \
               -D CMAKE_CXX_FLAGS_DEBUG="-Og -g" \
-              -D BUILD_DOC=no \
-              -D LAMMPS_GUI_USE_PLUGIN=yes \
               -G Ninja
         cmake --build build
         ccache -s
