@@ -315,7 +315,7 @@ endif()
 # when linking to LAMMPS we are compiled as external project
 # and then LAMMPS provides the packaging targets.
 
-if (LAMMPS_GUI_USE_PLUGIN)
+if (LAMMPS_GUI_USE_PLUGIN AND NOT BUILD_DOC_ONLY)
   # build LAMMPS-GUI and LAMMPS as flatpak, if tools are installed
   find_program(FLATPAK_COMMAND flatpak DOC "Path to flatpak command")
   find_program(FLATPAK_BUILDER flatpak-builder DOC "Path to flatpak-builder command")
