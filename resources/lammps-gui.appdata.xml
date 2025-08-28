@@ -68,16 +68,16 @@
         Search LD_LIBRARY_PATH and equivalent and a few fixed folders for a suitable library
         Reorgenize documentation to be its own webpage and set it up during compilation.
         Use GitHub Action to translate and deploy docs at online website.
+        Remove workarounds for compatibility with Qt 5.12 on Ubuntu 20.04LTS.
+        Qt 5.15LTS is now the minimum required version and thus Ubuntu 22.04LTS.
+        Support new "dump image autobond" feature in image viewer.
+        Support new "dump image region" feature in image viewer.
       </description>
     </release>
     <release version="1.7.1" timestamp="1754346906">
       <description>
-        Remove workarounds for compatibility with Qt 5.12 on Ubuntu 20.04LTS.
-        Qt 5.15LTS is now the minimum required version and thus Ubuntu 22.04LTS.
         Fix bugs when using filenames or paths with blanks.
         Add action to editor context menu to open the Commands_all.html manual page
-        Support new "dump image autobond" feature in image viewer.
-        Support new "dump image region" feature in image viewer.
         Change color selections for dump image to text fields with completion and validation.
         Update minimum required LAMMPS version.
       </description>
