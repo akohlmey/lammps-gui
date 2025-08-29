@@ -5,7 +5,13 @@
 
 version: 2
 updates:
-  - package-ecosystem: "pip" # See documentation for possible values
-    directory: "/doc" # Location of package manifests
+  # Updates for Python packages installed via pip
+  - package-ecosystem: "pip"
+    directory: "/doc"
+    schedule:
+      interval: "weekly"
+  # Update for GitHub Actions
+  - package-ecosystem: "github-actions"
+    directory: "/"
     schedule:
       interval: "weekly"
