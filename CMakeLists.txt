@@ -10,12 +10,8 @@ include(GNUInstallDirs)
 ##################################################################################
 # configuration settings
 
-# prefer compiling plugin version only if standalone compile and not on macOS
-if(LAMMPS_DIR OR APPLE)
-  option(LAMMPS_GUI_USE_PLUGIN "Load LAMMPS library dynamically at runtime" OFF)
-else()
-  option(LAMMPS_GUI_USE_PLUGIN "Load LAMMPS library dynamically at runtime" ON)
-endif()
+# prefer compiling plugin version only if standalone compile
+option(LAMMPS_GUI_USE_PLUGIN "Load LAMMPS library dynamically at runtime" ON)
 
 # prefer Qt6 by default
 option(LAMMPS_GUI_USE_QT5 "Prefer using Qt5 over Qt6" OFF)
@@ -23,28 +19,6 @@ option(LAMMPS_GUI_USE_QT5 "Prefer using Qt5 over Qt6" OFF)
 # build html documentation by default
 option(BUILD_DOC "Build LAMMPS-GUI HTML documentation" ON)
 ##################################################################################
-
-include(CheckIncludeFileCXX)
-# helper function to check for usable omp.h header
-function(check_omp_h_include)
-  find_package(OpenMP COMPONENTS CXX QUIET)
-  if(OpenMP_CXX_FOUND)
-    set(CMAKE_REQUIRED_FLAGS ${OpenMP_CXX_FLAGS})
-    set(CMAKE_REQUIRED_INCLUDES ${OpenMP_CXX_INCLUDE_DIRS})
-    set(CMAKE_REQUIRED_LINK_OPTIONS ${OpenMP_CXX_FLAGS})
-    set(CMAKE_REQUIRED_LIBRARIES ${OpenMP_CXX_LIBRARIES})
-    # there are all kinds of problems with finding omp.h
-    # for Clang and derived compilers so we pretend it is there.
-    if(CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
-      set(_have_omp_h TRUE)
-    else()
-      check_include_file_cxx(omp.h _have_omp_h)
-    endif()
-  else()
-    set(_have_omp_h FALSE)
-  endif()
-  set(HAVE_OMP_H_INCLUDE ${_have_omp_h} PARENT_SCOPE)
-endfunction()
 
 set(CMAKE_AUTOUIC ON)
 set(CMAKE_AUTOMOC ON)
@@ -54,30 +28,15 @@ set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 if (NOT BUILD_DOC_ONLY)
-  # detect if we may enable OpenMP support by default
-  set(BUILD_OMP_DEFAULT OFF)
-  find_package(OpenMP COMPONENTS CXX QUIET)
-  if(OpenMP_CXX_FOUND)
-    check_omp_h_include()
-    if(HAVE_OMP_H_INCLUDE)
-      set(BUILD_OMP_DEFAULT ON)
-    endif()
-  endif()
-
-  option(BUILD_OMP "Build with OpenMP support" ${BUILD_OMP_DEFAULT})
-  if(BUILD_OMP)
-    find_package(OpenMP COMPONENTS CXX REQUIRED)
-    check_omp_h_include()
-    if(NOT HAVE_OMP_H_INCLUDE)
-      message(FATAL_ERROR "Cannot find the 'omp.h' header file required for full OpenMP support")
-    endif()
-  endif()
-
   # checks
   if (NOT LAMMPS_SOURCE_DIR AND NOT LAMMPS_GUI_USE_PLUGIN)
     message(FATAL_ERROR "Must provide -D LAMMPS_SOURCE_DIR=<path to LAMMPS sources> when not compiling with -D LAMMPS_GUI_USE_PLUGIN=on")
   endif()
   set(LAMMPS_HEADER_DIR ${LAMMPS_SOURCE_DIR})
+  if (NOT LAMMPS_GUI_USE_PLUGIN AND NOT LAMMPS_LIBRARY)
+    message(FATAL_ERROR "Must provide -D LAMMPS_LIBRARY=<path to LAMMPS library file> when not compiling with -D LAMMPS_GUI_USE_PLUGIN=on")
+  endif()
+
   # by default, install into $HOME/.local (not /usr/local),
   # so that no root access (and sudo) is needed
   if(CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
@@ -95,10 +54,6 @@ if (NOT BUILD_DOC_ONLY)
       add_compile_options(/EHsc)
     endif()
     add_compile_definitions(_CRT_SECURE_NO_WARNINGS)
-  endif()
-
-  if (NOT LAMMPS_GUI_USE_PLUGIN AND NOT LAMMPS_LIBRARY)
-    message(FATAL_ERROR "Must provide -D LAMMPS_LIBRARY=<path to LAMMPS library file> when not compiling with -D LAMMPS_GUI_USE_PLUGIN=on")
   endif()
 
   set(LAMMPS_PLUGINLIB_DIR ${CMAKE_SOURCE_DIR}/plugin)
