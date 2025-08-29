@@ -2,6 +2,12 @@
 
 Please see the online documentation at https://lammps-gui.lammps.org/
 
+## Test Status of the development branch
+
+[![Compile with Qt 5.15LTS](https://github.com/akohlmey/lammps-gui/actions/workflows/compile-linux-qt5.yml/badge.svg)](https://github.com/akohlmey/lammps-gui/actions/workflows/compile-linux-qt5.yml)
+[![Compile with Qt 6.x](https://github.com/akohlmey/lammps-gui/actions/workflows/compile-linux-qt6.yml/badge.svg)](https://github.com/akohlmey/lammps-gui/actions/workflows/compile-linux-qt6.yml)
+[![CodeQL Code Analysis](https://github.com/akohlmey/lammps-gui/actions/workflows/codeql-analysis.yml/badge.svg)](https://github.com/akohlmey/lammps-gui/actions/workflows/codeql-analysis.yml)
+
 ## LAMMPS-GUI vs. LAMMPS
 
 LAMMPS-GUI used to "live" in the "tools/lammps-gui" folder of the LAMMPS source distribution
