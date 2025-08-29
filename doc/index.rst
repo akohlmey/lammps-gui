@@ -51,6 +51,16 @@ bug reports or pull requests in the `LAMMPS-GUI GitHub repository
 ------------------
 
 This document describes LAMMPS-GUI version |version|.
+-----------------------------------------------------
+
+.. raw:: html
+
+   <hr>
+   <h3>Test Status of the development branch</h3>
+   <p dir="auto"><a href="https://github.com/akohlmey/lammps-gui/actions/workflows/compile-linux-qt5.yml"><img src="https://github.com/akohlmey/lammps-gui/actions/workflows/compile-linux-qt5.yml/badge.svg" alt="Compile with Qt 5.15LTS" style="max-width: 100%;"></a>
+   <a href="https://github.com/akohlmey/lammps-gui/actions/workflows/compile-linux-qt6.yml"><img src="https://github.com/akohlmey/lammps-gui/actions/workflows/compile-linux-qt6.yml/badge.svg" alt="Compile with Qt 6.x" style="max-width: 100%;"></a>
+   <a href="https://github.com/akohlmey/lammps-gui/actions/workflows/codeql-analysis.yml"><img src="https://github.com/akohlmey/lammps-gui/actions/workflows/codeql-analysis.yml/badge.svg" alt="CodeQL Code Analysis" style="max-width: 100%;"></a>
+   <a href="https://github.com/akohlmey/lammps-gui/actions/workflows/build-html-docs.yml"><img src="https://github.com/akohlmey/lammps-gui/actions/workflows/build-html-docs.yml/badge.svg" alt="Build Documentation in HTML" style="max-width: 100%;"></a></p>
 
 ------------------
 

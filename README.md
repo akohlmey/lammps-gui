@@ -7,6 +7,7 @@ Please see the online documentation at https://lammps-gui.lammps.org/
 [![Compile with Qt 5.15LTS](https://github.com/akohlmey/lammps-gui/actions/workflows/compile-linux-qt5.yml/badge.svg)](https://github.com/akohlmey/lammps-gui/actions/workflows/compile-linux-qt5.yml)
 [![Compile with Qt 6.x](https://github.com/akohlmey/lammps-gui/actions/workflows/compile-linux-qt6.yml/badge.svg)](https://github.com/akohlmey/lammps-gui/actions/workflows/compile-linux-qt6.yml)
 [![CodeQL Code Analysis](https://github.com/akohlmey/lammps-gui/actions/workflows/codeql-analysis.yml/badge.svg)](https://github.com/akohlmey/lammps-gui/actions/workflows/codeql-analysis.yml)
+[![Build Documentation in HTML](https://github.com/akohlmey/lammps-gui/actions/workflows/build-html-docs.yml/badge.svg)](https://github.com/akohlmey/lammps-gui/actions/workflows/build-html-docs.yml)
 
 ## LAMMPS-GUI vs. LAMMPS
 
