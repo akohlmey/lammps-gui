@@ -16,6 +16,7 @@
 #include <QApplication>
 #include <QCommandLineOption>
 #include <QCommandLineParser>
+#include <QFileInfo>
 #include <QLocale>
 #include <QSettings>
 #include <QString>
@@ -81,7 +82,7 @@ int main(int argc, char *argv[])
         QStringList pluginpath = parser.values(plugindir);
         if (pluginpath.length() > 0) {
             QSettings settings;
-            settings.setValue("plugin_path", QString(pluginpath.at(0)));
+            settings.setValue("plugin_path", QFileInfo(pluginpath.at(0)).canonicalFilePath());
             settings.sync();
         }
     }
