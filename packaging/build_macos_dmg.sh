@@ -27,7 +27,7 @@ mv ${APP_NAME}.app LAMMPS-GUI.app
 cd LAMMPS-GUI.app/Contents
 
 echo "Attach icons to LAMMPS console and GUI executables"
-echo "read 'icns' (-16455) \"Resources/lammps.icns\";" > icon.rsrc
+echo "read 'icns' (-16455) \"Resources/lammps-gui.icns\";" > icon.rsrc
 Rez -a icon.rsrc -o bin/lmp
 SetFile -a C bin/lmp
 Rez -a icon.rsrc -o MacOS/lammps-gui
@@ -100,7 +100,7 @@ hdiutil detach "${DEVICE}"
 hdiutil convert "${APP_NAME}-rw.dmg" -format UDZO -o "LAMMPS-GUI-macOS-multiarch-${VERSION}.dmg"
 
 echo "Attach icon to .dmg file"
-echo "read 'icns' (-16455) \"lammps-gui.app/Contents/Resources/lammps.icns\";" > icon.rsrc
+echo "read 'icns' (-16455) \"lammps-gui.app/Contents/Resources/lammps-gui.icns\";" > icon.rsrc
 Rez -a icon.rsrc -o LAMMPS-GUI-macOS-multiarch-${VERSION}.dmg
 SetFile -a C LAMMPS-GUI-macOS-multiarch-${VERSION}.dmg
 rm icon.rsrc

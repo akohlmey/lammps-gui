@@ -127,7 +127,7 @@ if (NOT BUILD_DOC_ONLY)
   endif()
 
   if(APPLE)
-    set(MACOSX_ICON_FILE ${CMAKE_SOURCE_DIR}/packaging/lammps.icns)
+    set(MACOSX_ICON_FILE ${CMAKE_SOURCE_DIR}/packaging/lammps-gui.icns)
     set(MACOSX_README_FILE ${CMAKE_SOURCE_DIR}/packaging/README.macos)
     set(MACOSX_BACKGROUND_FILE ${CMAKE_SOURCE_DIR}/packaging/LAMMPS_DMG_Background.png)
   endif()
@@ -152,7 +152,7 @@ if (NOT BUILD_DOC_ONLY)
       MACOSX_BUNDLE_INFO_PLIST ${CMAKE_SOURCE_DIR}/packaging/MacOSXBundleInfo.plist.in
       MACOSX_BUNDLE_BUNDLE_VERSION ${PROJECT_VERSION}
       MACOSX_BUNDLE_SHORT_VERSION_STRING ${PROJECT_VERSION_MAJOR}.${PROJECT_VERSION_MINOR}
-      MACOSX_BUNDLE_ICON_FILE lammps.icns
+      MACOSX_BUNDLE_ICON_FILE lammps-gui.icns
       MACOSX_BUNDLE_COPYRIGHT "(c) 2003 - ${CURRENT_YEAR}, Axel Kohlmeyer"
       MACOSX_BUNDLE TRUE
     )
@@ -314,11 +314,9 @@ if (LAMMPS_GUI_USE_PLUGIN AND NOT BUILD_DOC_ONLY)
       ${CMAKE_COMMAND} -E make_directory ${APP_CONTENTS}/bin
       COMMAND ${CMAKE_COMMAND} -E create_symlink ../MacOS/lammps-gui ${APP_CONTENTS}/bin/lammps-gui
       COMMAND ${CMAKE_COMMAND} -E make_directory ${APP_CONTENTS}/Resources
-      COMMAND ${CMAKE_COMMAND} -E copy_if_different ${CMAKE_SOURCE_DIR}/packaging/README.macos ${APP_CONTENTS}/Resources/README.txt
-      COMMAND ${CMAKE_COMMAND} -E copy_if_different ${CMAKE_SOURCE_DIR}/packaging/lammps.icns ${APP_CONTENTS}/Resources
-      COMMAND ${CMAKE_COMMAND} -E copy_if_different ${CMAKE_SOURCE_DIR}/packaging/LAMMPS_DMG_Background.png ${APP_CONTENTS}/Resources
-      COMMAND ${CMAKE_COMMAND} -E make_directory ${APP_CONTENTS}/share/lammps
-      COMMAND ${CMAKE_COMMAND} -E make_directory ${APP_CONTENTS}/share/lammps/man/man1
+      COMMAND ${CMAKE_COMMAND} -E copy_if_different ${MACOSX_README_FILE} ${APP_CONTENTS}/Resources/README.txt
+      COMMAND ${CMAKE_COMMAND} -E copy_if_different ${MACOSX_ICON_FILE} ${APP_CONTENTS}/Resources
+      COMMAND ${CMAKE_COMMAND} -E copy_if_different ${MACOSX_BACKGROUND_FILE} ${APP_CONTENTS}/Resources
       DEPENDS lammps-gui
       COMMENT "Copying additional files into macOS app bundle tree"
       WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
