@@ -7,7 +7,7 @@
         <key>CFBundleExecutable</key>
         <string>${MACOSX_BUNDLE_EXECUTABLE_NAME}</string>
         <key>CFBundleDisplayName</key>
-        <string>The LAMMPS Molecular Dynamics Software</string>
+        <string>The LAMMPS GUI</string>
         <key>CFBundleIconFile</key>
         <string>lammps-gui</string>
         <key>CFBundleIdentifier</key>
