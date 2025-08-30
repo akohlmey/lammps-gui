@@ -176,11 +176,6 @@ if (NOT BUILD_DOC_ONLY)
   target_include_directories(lammps-gui PRIVATE ${CMAKE_SOURCE_DIR}/src)
   target_compile_definitions(lammps-gui PRIVATE LAMMPS_GUI_VERSION="${PROJECT_VERSION}")
   target_link_libraries(lammps-gui PRIVATE Qt${QT_VERSION_MAJOR}::Widgets Qt${QT_VERSION_MAJOR}::Charts)
-
-  if(BUILD_OMP)
-    find_package(OpenMP COMPONENTS CXX REQUIRED)
-    target_link_libraries(lammps-gui PRIVATE OpenMP::OpenMP_CXX)
-  endif()
 endif()
 
 ###################
