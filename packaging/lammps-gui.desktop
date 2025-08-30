@@ -8,4 +8,4 @@ Name=LAMMPS-GUI
 Terminal=false
 GenericName=LAMMPS MD Simulator GUI
 Keywords=MD Simulation;LAMMPS;Molecular Dynamics;N-Body
-Icon=lammps
+Icon=lammps-gui

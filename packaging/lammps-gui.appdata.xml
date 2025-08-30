@@ -13,32 +13,32 @@
   </description>
   <screenshots>
     <screenshot type="default">
-      <image>https://docs.lammps.org/_images/lammps-gui-main.png</image>
+      <image>https://lammps-gui.lammps.org/_images/lammps-gui-main.png</image>
       <caption>LAMMPS-GUI main editor window</caption>
     </screenshot>
     <screenshot>
-      <image>https://docs.lammps.org/_images/lammps-gui-log.png</image>
+      <image>https://lammps-gui.lammps.org/_images/lammps-gui-log.png</image>
       <caption>LAMMPS-GUI output window</caption>
     </screenshot>
     <screenshot>
-      <image>https://docs.lammps.org/_images/lammps-gui-chart.png</image>
+      <image>https://lammps-gui.lammps.org/_images/lammps-gui-chart.png</image>
       <caption>LAMMPS-GUI chart window</caption>
     </screenshot>
     <screenshot>
-      <image>https://docs.lammps.org/_images/lammps-gui-slideshow.png</image>
+      <image>https://lammps-gui.lammps.org/_images/lammps-gui-slideshow.png</image>
       <caption>LAMMPS-GUI slideshow window</caption>
     </screenshot>
     <screenshot>
-      <image>https://docs.lammps.org/_images/lammps-gui-image.png</image>
+      <image>https://lammps-gui.lammps.org/_images/lammps-gui-image.png</image>
       <caption>LAMMPS-GUI snapshot image window</caption>
     </screenshot>
   </screenshots>
 
-  <url type="homepage">https://www.lammps.org/</url>
-  <url type="bugtracker">https://github.com/lammps/lammps/issues</url>
-  <url type="help">https://docs.lammps.org/stable/</url>
+  <url type="homepage">https://lammps-gui.lammps.org/</url>
+  <url type="bugtracker">https://github.com/akohlmey/lammps-gui/issues</url>
+  <url type="help">https://lammps-gui.lammps.org/</url>
 
-  <update_contact>packages@lammps.org</update_contact>
+  <update_contact>akohlmey@gmail.com</update_contact>
   <developer_name>Axel Kohlmeyer</developer_name>
   <project_group>LAMMPS</project_group>
   <keywords>
@@ -51,7 +51,6 @@
 
   <provides>
     <binary>lammps-gui</binary>
-    <binary>lmp</binary>
   </provides>
 
   <releases>
@@ -61,7 +60,7 @@
         Remove (unused) support for OpenMP (avoids crashes when loading LAMMPS dynamically with macOS)
         Add integration testing and static code analysis to repository, add dependabot support.
         Small updates due to tests and dependencies
-
+        Update icons and background images for macOS to reflect LAMMPS-GUI
       </description>
     <release version="1.8.1" timestamp="1756257931">
       <description>
