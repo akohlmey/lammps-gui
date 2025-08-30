@@ -56,11 +56,12 @@
   <releases>
     <release version="1.8.2" timestamp="1756521771">
       <description>
-        Complete updated packaging for macOS,
+        Complete to update packaging for macOS, Linux tgz
         Remove (unused) support for OpenMP (avoids crashes when loading LAMMPS dynamically with macOS)
         Add integration testing and static code analysis to repository, add dependabot support.
         Small updates due to tests and dependencies
         Update icons and background images for macOS to reflect LAMMPS-GUI
+        Update use of new icons in LAMMPS-GUI as well except for the LAMMPS status
       </description>
     <release version="1.8.1" timestamp="1756257931">
       <description>
