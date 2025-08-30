@@ -552,10 +552,20 @@ void CodeEditor::dropEvent(QDropEvent *event)
             moveCursor(QTextCursor::Start, QTextCursor::MoveAnchor);
             gui->open_file(file);
         }
+        // do proper event processing in base class,
+        // but set buffer to readonly, so it won't be modified.
+        setReadOnly(true);
+        QPlainTextEdit::dropEvent(event);
+        setReadOnly(false);
     } else if (event->mimeData()->hasText()) {
         event->accept();
         fprintf(stderr, "Drag - Drop for text block not yet implemented: text=%s\n",
                 event->mimeData()->text().toStdString().c_str());
+        // do proper event processing in base class,
+        // but set buffer to readonly, so it won't be modified.
+        setReadOnly(true);
+        QPlainTextEdit::dropEvent(event);
+        setReadOnly(false);
     } else
         event->ignore();
 }
