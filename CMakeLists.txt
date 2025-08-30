@@ -131,10 +131,12 @@ if (NOT BUILD_DOC_ONLY)
       set(MACOSX_ICON_FILE ${LAMMPS_SOURCE_DIR}/../cmake/packaging/lammps-gui.icns)
       set(MACOSX_README_FILE ${LAMMPS_SOURCE_DIR}/../cmake/packaging/README.macos)
       set(MACOSX_BACKGROUND_FILE ${LAMMPS_SOURCE_DIR}/../cmake/packaging/LAMMPS_DMG_Background.png)
+      set(MACOSX_PLIST_FILE ${LAMMPS_SOURCE_DIR}/../cmake/packaging/MacOSXBundleInfo.plist.in
     else()
       set(MACOSX_ICON_FILE ${CMAKE_SOURCE_DIR}/packaging/lammps-gui.icns)
       set(MACOSX_README_FILE ${CMAKE_SOURCE_DIR}/packaging/README.macos)
       set(MACOSX_BACKGROUND_FILE ${CMAKE_SOURCE_DIR}/packaging/LAMMPS_DMG_Background.png)
+      set(MACOSX_PLIST_FILE ${CMAKE_SOURCE_DIR}/packaging/MacOSXBundleInfo.plist.in
     endif()
   endif()
 
@@ -155,7 +157,7 @@ if (NOT BUILD_DOC_ONLY)
   if(APPLE)
     string(TIMESTAMP CURRENT_YEAR "%Y")
     set_target_properties(lammps-gui PROPERTIES
-      MACOSX_BUNDLE_INFO_PLIST ${CMAKE_SOURCE_DIR}/packaging/MacOSXBundleInfo.plist.in
+      MACOSX_BUNDLE_INFO_PLIST ${MACOSX_PLIST_FILE}
       MACOSX_BUNDLE_BUNDLE_VERSION ${PROJECT_VERSION}
       MACOSX_BUNDLE_SHORT_VERSION_STRING ${PROJECT_VERSION_MAJOR}.${PROJECT_VERSION_MINOR}
       MACOSX_BUNDLE_ICON_FILE lammps-gui.icns
