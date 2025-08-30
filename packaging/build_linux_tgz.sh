@@ -74,6 +74,7 @@ done
 pushd ..
 tar -czvvf LAMMPS-GUI-Linux-x86_64-${VERSION}.tar.gz LAMMPS_GUI
 popd
+mv ../LAMMPS-GUI-Linux-x86_64-${VERSION}.tar.gz .
 
 echo "Cleanup dir"
 rm -r ${DESTDIR}
