@@ -55,14 +55,37 @@
   </provides>
 
   <releases>
-    <release version="1.7.1" timestamp="1754346906">
+    <release version="1.8.2" timestamp="1756521771">
       <description>
+        Complete updated packaging for macOS,
+        Remove (unused) support for OpenMP (avoids crashes when loading LAMMPS dynamically with macOS)
+        Add integration testing and static code analysis to repository, add dependabot support.
+        Small updates due to tests and dependencies
+
+      </description>
+    <release version="1.8.1" timestamp="1756257931">
+      <description>
+        Add/Update files for a proper GitHub repository
+        Update lammps-gui website URL to https://lammps-gui.lammps.org/
+        Improve and adapt packaging for standalone packages
+      </description>
+    <release version="1.8.0" timestamp="1755766131">
+      <description>
+        Unbundle LAMMPS-GUI from LAMMPS and set it up to have its own git repository
+        Default to loading shared LAMMPS library dynamically when compiled outside LAMMPS
+        Search LD_LIBRARY_PATH and equivalent and a few fixed folders for a suitable library
+        Reorgenize documentation to be its own webpage and set it up during compilation.
+        Use GitHub Action to translate and deploy docs at online website.
         Remove workarounds for compatibility with Qt 5.12 on Ubuntu 20.04LTS.
         Qt 5.15LTS is now the minimum required version and thus Ubuntu 22.04LTS.
-        Fix bugs when using filenames or paths with blanks.
-        Add action to editor context menu to open the Commands_all.html manual page
         Support new "dump image autobond" feature in image viewer.
         Support new "dump image region" feature in image viewer.
+      </description>
+    </release>
+    <release version="1.7.1" timestamp="1754346906">
+      <description>
+        Fix bugs when using filenames or paths with blanks.
+        Add action to editor context menu to open the Commands_all.html manual page
         Change color selections for dump image to text fields with completion and validation.
         Update minimum required LAMMPS version.
       </description>
