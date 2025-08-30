@@ -72,7 +72,7 @@ FindAndReplace::FindAndReplace(CodeEditor *_editor, QWidget *parent) :
     connect(action, &QShortcut::activated, this, &FindAndReplace::quit);
 
     setLayout(layout);
-    setWindowIcon(QIcon(":/icons/lammps-icon-128x128.png"));
+    setWindowIcon(QIcon(":/icons/lammps-gui-icon-128x128.png"));
     setWindowTitle("LAMMPS-GUI - Find and Replace");
 }
 

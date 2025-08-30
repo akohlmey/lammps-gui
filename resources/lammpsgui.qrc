@@ -2,6 +2,7 @@
 <RCC>
   <qresource prefix="/">
     <file>icons/lammps-icon-128x128.png</file>
+    <file>icons/lammps-gui-icon-128x128.png</file>
     <file>icons/lammps-gui-banner.png</file>
     <file>icons/lammps-plugin.png</file>
     <file>icons/tutorial1-logo.png</file>

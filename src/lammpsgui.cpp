@@ -265,7 +265,7 @@ LammpsGui::LammpsGui(QWidget *parent, const QString &filename) :
 
     installEventFilter(this);
 
-    setWindowIcon(QIcon(":/icons/lammps-icon-128x128.png"));
+    setWindowIcon(QIcon(":/icons/lammps-gui-icon-128x128.png"));
 
     QFont all_font;
     all_font.fromString(settings.value("allfont", QFont("Arial", -1).toString()).toString());
@@ -285,7 +285,7 @@ LammpsGui::LammpsGui(QWidget *parent, const QString &filename) :
 
     varwindow = new QLabel(QString());
     varwindow->setWindowTitle(QString("LAMMPS-GUI - Current Variables"));
-    varwindow->setWindowIcon(QIcon(":/icons/lammps-icon-128x128.png"));
+    varwindow->setWindowIcon(QIcon(":/icons/lammps-gui-icon-128x128.png"));
     varwindow->setMinimumSize(100, 50);
     varwindow->setText("(none)");
     varwindow->setFont(text_font);
@@ -1482,7 +1482,7 @@ void LammpsGui::do_run(bool use_buffer)
     logwindow->moveCursor(QTextCursor::End);
     logwindow->setWindowTitle(
         QString("LAMMPS-GUI - Output - %1 - Run %2").arg(current_file).arg(run_counter));
-    logwindow->setWindowIcon(QIcon(":/icons/lammps-icon-128x128.png"));
+    logwindow->setWindowIcon(QIcon(":/icons/lammps-gui-icon-128x128.png"));
     QFont text_font;
     text_font.fromString(settings.value("textfont", text_font.toString()).toString());
     logwindow->document()->setDefaultFont(text_font);
@@ -1502,7 +1502,7 @@ void LammpsGui::do_run(bool use_buffer)
     chartwindow = new ChartWindow(current_file);
     chartwindow->setWindowTitle(
         QString("LAMMPS-GUI - Charts - %2 - Run %3").arg(current_file).arg(run_counter));
-    chartwindow->setWindowIcon(QIcon(":/icons/lammps-icon-128x128.png"));
+    chartwindow->setWindowIcon(QIcon(":/icons/lammps-gui-icon-128x128.png"));
     chartwindow->setMinimumSize(400, 300);
     const auto *unitptr = (const char *)lammps.extract_global("units");
     if (unitptr) chartwindow->set_units(QString("Units: %1").arg(unitptr));
@@ -1719,10 +1719,10 @@ void LammpsGui::about()
 
     QMessageBox msg;
     msg.setWindowTitle("About LAMMPS-GUI");
-    msg.setWindowIcon(QIcon(":/icons/lammps-icon-128x128.png"));
+    msg.setWindowIcon(QIcon(":/icons/lammps-gui-icon-128x128.png"));
     msg.setText(version.c_str());
     msg.setInformativeText(info.c_str());
-    msg.setIconPixmap(QPixmap(":/icons/lammps-icon-128x128.png").scaled(64, 64));
+    msg.setIconPixmap(QPixmap(":/icons/lammps-gui-icon-128x128.png").scaled(64, 64));
     msg.setStandardButtons(QMessageBox::Close);
     QFont myfont(font());
     myfont.setPointSize(myfont.pointSizeF() * 0.8);
@@ -1739,7 +1739,7 @@ void LammpsGui::help()
 {
     QMessageBox msg;
     msg.setWindowTitle("LAMMPS-GUI Quick Help");
-    msg.setWindowIcon(QIcon(":/icons/lammps-icon-128x128.png"));
+    msg.setWindowIcon(QIcon(":/icons/lammps-gui-icon-128x128.png"));
     msg.setText("<div>This is LAMMPS-GUI version " LAMMPS_GUI_VERSION "</div>");
     msg.setInformativeText(
         "<p>LAMMPS-GUI is a graphical text editor that is customized for "
@@ -1786,7 +1786,7 @@ void LammpsGui::help()
         "accelerator packages and number of OpenMP threads. Due to its nature "
         "as a graphical application, it is <b>not</b> possible to use the "
         "LAMMPS-GUI in parallel with MPI.</p>");
-    msg.setIconPixmap(QPixmap(":/icons/lammps-icon-128x128.png").scaled(64, 64));
+    msg.setIconPixmap(QPixmap(":/icons/lammps-gui-icon-128x128.png").scaled(64, 64));
     msg.setStandardButtons(QMessageBox::Close);
     msg.setFont(font());
     msg.exec();

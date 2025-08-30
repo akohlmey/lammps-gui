@@ -396,7 +396,7 @@ ImageViewer::ImageViewer(const QString &fileName, LammpsWrapper *_lammps, QWidge
 
     mainLayout->addLayout(topLayout);
     mainLayout->addWidget(scrollArea);
-    setWindowIcon(QIcon(":/icons/lammps-icon-128x128.png"));
+    setWindowIcon(QIcon(":/icons/lammps-gui-icon-128x128.png"));
     setWindowTitle(QString("LAMMPS-GUI - Image Viewer - ") + QFileInfo(fileName).fileName());
     createActions();
 
@@ -689,7 +689,7 @@ void ImageViewer::region_settings()
     if (regions.size() == 0) return;
     QDialog regionview;
     regionview.setWindowTitle(QString("LAMMPS-GUI - Visualize Regions"));
-    regionview.setWindowIcon(QIcon(":/icons/lammps-icon-128x128.png"));
+    regionview.setWindowIcon(QIcon(":/icons/lammps-gui-icon-128x128.png"));
     regionview.setMinimumSize(100, 50);
     regionview.setContentsMargins(5, 5, 5, 5);
     regionview.setSizePolicy(QSizePolicy::MinimumExpanding, QSizePolicy::MinimumExpanding);

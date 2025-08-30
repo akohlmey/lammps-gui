@@ -99,7 +99,7 @@ FileViewer::FileViewer(const QString &_filename, const QString &title, QWidget *
     setReadOnly(true);
     setLineWrapMode(NoWrap);
     setMinimumSize(800, 500);
-    setWindowIcon(QIcon(":/icons/lammps-icon-128x128.png"));
+    setWindowIcon(QIcon(":/icons/lammps-gui-icon-128x128.png"));
     if (title.isEmpty())
         setWindowTitle("LAMMPS-GUI - Viewer - " + fileName);
     else

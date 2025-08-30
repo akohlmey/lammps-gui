@@ -55,7 +55,7 @@ SetVariables::SetVariables(QList<QPair<QString, QString>> &_vars, QWidget *paren
 
     layout->addWidget(buttonBox);
     setLayout(layout);
-    setWindowIcon(QIcon(":/icons/lammps-icon-128x128.png"));
+    setWindowIcon(QIcon(":/icons/lammps-gui-icon-128x128.png"));
     setWindowTitle("LAMMPS-GUI - Set Variables");
     resize(300, 200);
 }
