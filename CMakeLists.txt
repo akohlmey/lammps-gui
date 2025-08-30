@@ -145,6 +145,20 @@ if (NOT BUILD_DOC_ONLY)
     )
   endif()
 
+  # when compiling for macOS request compilation of an app-bundle
+  if(APPLE)
+    string(TIMESTAMP CURRENT_YEAR "%Y")
+    set_target_properties(lammps-gui PROPERTIES
+      MACOSX_BUNDLE_INFO_PLIST ${CMAKE_SOURCE_DIR}/packaging/MacOSXBundleInfo.plist.in
+      MACOSX_BUNDLE_BUNDLE_VERSION ${PROJECT_VERSION}
+      MACOSX_BUNDLE_SHORT_VERSION_STRING ${PROJECT_VERSION_MAJOR}.${PROJECT_VERSION_MINOR}
+      MACOSX_BUNDLE_ICON_FILE lammps.icns
+      MACOSX_BUNDLE_COPYRIGHT "(c) 2003 - ${CURRENT_YEAR}, Axel Kohlmeyer"
+      MACOSX_BUNDLE TRUE
+    )
+    # purge app bundle directory during configure
+    file(REMOVE_RECURSE ${CMAKE_BINARY_DIR}/lammps-gui.app)
+  endif()
   install(TARGETS lammps-gui DESTINATION ${CMAKE_INSTALL_BINDIR})
 
   if(QT_VERSION_MAJOR EQUAL 6)
@@ -294,17 +308,6 @@ if (LAMMPS_GUI_USE_PLUGIN AND NOT BUILD_DOC_ONLY)
 
   # when compiling on macOS, create an "app bundle"
   if(APPLE)
-    set_target_properties(lammps-gui PROPERTIES
-      MACOSX_BUNDLE_INFO_PLIST ${CMAKE_SOURCE_DIR}/packaging/MacOSXBundleInfo.plist.in
-      MACOSX_BUNDLE_BUNDLE_VERSION ${PROJECT_VERSION}
-      MACOSX_BUNDLE_SHORT_VERSION_STRING ${PROJECT_VERSION_MAJOR}.${PROJECT_VERSION_MINOR}
-      MACOSX_BUNDLE_ICON_FILE lammps.icns
-      MACOSX_BUNDLE_COPYRIGHT "(c) 2003 - 2025, The LAMMPS Developers"
-      MACOSX_BUNDLE TRUE
-    )
-    # purge app bundle directory during configure
-    file(REMOVE_RECURSE ${CMAKE_BINARY_DIR}/lammps-gui.app)
-
     # additional targets to populate the bundle tree and create the .dmg image file
     set(APP_CONTENTS ${CMAKE_BINARY_DIR}/lammps-gui.app/Contents)
     add_custom_target(complete-bundle
