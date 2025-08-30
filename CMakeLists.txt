@@ -89,6 +89,8 @@ if (NOT BUILD_DOC_ONLY)
     ${CMAKE_SOURCE_DIR}/src/chartviewer.h
     ${CMAKE_SOURCE_DIR}/src/codeeditor.cpp
     ${CMAKE_SOURCE_DIR}/src/codeeditor.h
+    ${CMAKE_SOURCE_DIR}/src/fileviewer.cpp
+    ${CMAKE_SOURCE_DIR}/src/fileviewer.h
     ${CMAKE_SOURCE_DIR}/src/findandreplace.cpp
     ${CMAKE_SOURCE_DIR}/src/findandreplace.h
     ${CMAKE_SOURCE_DIR}/src/flagwarnings.cpp
@@ -104,19 +106,17 @@ if (NOT BUILD_DOC_ONLY)
     ${CMAKE_SOURCE_DIR}/src/linenumberarea.h
     ${CMAKE_SOURCE_DIR}/src/logwindow.cpp
     ${CMAKE_SOURCE_DIR}/src/logwindow.h
-    ${CMAKE_SOURCE_DIR}/src/fileviewer.cpp
-    ${CMAKE_SOURCE_DIR}/src/fileviewer.h
     ${CMAKE_SOURCE_DIR}/src/preferences.cpp
     ${CMAKE_SOURCE_DIR}/src/preferences.h
     ${CMAKE_SOURCE_DIR}/src/qaddon.cpp
     ${CMAKE_SOURCE_DIR}/src/qaddon.h
+    ${CMAKE_SOURCE_DIR}/src/rangeslider.cpp
+    ${CMAKE_SOURCE_DIR}/src/rangeslider.h
     ${CMAKE_SOURCE_DIR}/src/setvariables.cpp
     ${CMAKE_SOURCE_DIR}/src/setvariables.h
-    ${CMAKE_SOURCE_DIR}/src/slideshow.h
     ${CMAKE_SOURCE_DIR}/src/slideshow.cpp
+    ${CMAKE_SOURCE_DIR}/src/slideshow.h
     ${CMAKE_SOURCE_DIR}/src/stdcapture.cpp
-    ${CMAKE_SOURCE_DIR}/src/rangeslider.h
-    ${CMAKE_SOURCE_DIR}/src/rangeslider.cpp
     ${PLUGIN_LOADER_SRC}
     ${ICON_RC_FILE}
   )
@@ -217,8 +217,8 @@ if(BUILD_DOC OR BUILD_DOC_ONLY)
     set_target_properties(Sphinx::sphinx-build PROPERTIES IMPORTED_LOCATION "${DOCENV_BINARY_DIR}/sphinx-build")
   endif()
 
-  add_custom_command(
-    OUTPUT ${DOC_BUILD_DIR}/html/index.html
+  add_custom_target(
+    html
     DEPENDS docenv ${DOC_SOURCES} ${DOCENV_DEPS} ${SPHINX_CONFIG_FILE_TEMPLATE} ${SPHINX_DIR}/_static/style.css
     COMMAND Sphinx::sphinx-build ${SPHINX_EXTRA_OPTS} -b html -c ${DOC_BUILD_DIR} -d ${DOC_BUILD_DIR}/doctrees ${CMAKE_SOURCE_DIR}/doc ${DOC_BUILD_DIR}/html ${DOC_SOURCES}
   )
@@ -255,7 +255,7 @@ if(BUILD_DOC OR BUILD_DOC_ONLY)
 
   add_custom_target(
     doc ALL
-    DEPENDS docenv ${DOC_BUILD_DIR}/html/index.html
+    DEPENDS docenv html
     SOURCES ${CMAKE_SOURCE_DIR}/doc/requirements.txt ${DOC_SOURCES}
   )
 
