@@ -5,7 +5,7 @@ DESTDIR=${PWD}/../LAMMPS_GUI
 VERSION="$1"
 
 echo "Delete old files, if they exist"
-rm -rf ${DESTDIR} ../LAMMPS-GUI-Linux-amd64*.tar.gz
+rm -rf ${DESTDIR} ../LAMMPS-GUI-Linux-x86_64*.tar.gz
 
 echo "Create staging area for deployment and populate"
 DESTDIR=${DESTDIR} cmake --install .  --prefix "/"
@@ -72,7 +72,7 @@ do \
 done
 
 pushd ..
-tar -czvvf LAMMPS-GUI-Linux-amd64-${VERSION}.tar.gz LAMMPS_GUI
+tar -czvvf LAMMPS-GUI-Linux-x86_64-${VERSION}.tar.gz LAMMPS_GUI
 popd
 
 echo "Cleanup dir"
