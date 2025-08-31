@@ -432,9 +432,9 @@ void GeneralTab::newtextfont()
 void GeneralTab::pluginpath()
 {
     auto *field = findChild<QLineEdit *>("pluginedit");
-#ifdef Q_OS_MACOS
+#if defined(Q_OS_MACOS)
     const QString pattern = "LAMMPS shared library (liblammps*.dylib)";
-#elif Q_OS_WIN32
+#elif defined(Q_OS_WIN32)
     const QString pattern = "LAMMPS shared library (liblammps*.dll)";
 #else
     const QString pattern = "LAMMPS shared library (liblammps*.so*)";

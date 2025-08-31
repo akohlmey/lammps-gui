@@ -136,13 +136,13 @@ LammpsGui::LammpsGui(QWidget *parent, const QString &filename) :
         // we prefer the current directory, then the dynamic library path, then system folders
 
         QStringList dirlist{"."};
-#ifdef Q_OS_MACOS
+#if defined(Q_OS_MACOS)
         QStringList filter("liblammps*.dylib");
         dirlist.append(
             QString::fromLocal8Bit(qgetenv("DYLD_LIBRARY_PATH")).split(":", Qt::SkipEmptyParts));
         dirlist.append({"/Applications/LAMMPS.app/Contents/Frameworks",
                         "/Applications/LAMMPS-GUI.app/Contents/Frameworks"});
-#elif Q_OS_WIN32
+#elif defined(Q_OS_WIN32)
         QStringList filter("liblammps*.dll");
         dirlist.append(QString::fromLocal8Bit(qgetenv("PATH")).split(";", Qt::SkipEmptyParts));
 #else
