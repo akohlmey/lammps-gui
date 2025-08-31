@@ -24,6 +24,7 @@
 #include <QDesktopServices>
 #include <QDir>
 #include <QDragEnterEvent>
+#include <QDragLeaveEvent>
 #include <QDropEvent>
 #include <QFileInfo>
 #include <QFont>
@@ -537,9 +538,16 @@ void CodeEditor::dragEnterEvent(QDragEnterEvent *event)
     event->acceptProposedAction();
 }
 
+void CodeEditor::dragLeaveEvent(QDragLeaveEvent *event)
+{
+    event->accept();
+    cut();
+    QPlainTextEdit::dragLeaveEvent(event);
+}
+
 bool CodeEditor::canInsertFromMimeData(const QMimeData *source) const
 {
-    return source->hasUrls(); // || source->hasText();
+    return source->hasUrls() || source->hasText();
 }
 
 void CodeEditor::dropEvent(QDropEvent *event)
@@ -552,17 +560,23 @@ void CodeEditor::dropEvent(QDropEvent *event)
             moveCursor(QTextCursor::Start, QTextCursor::MoveAnchor);
             gui->open_file(file);
         }
-        // do proper event processing in base class,
-        // but set buffer to readonly, so it won't be modified.
+        // properly handle drop event in base class, but set editor
+        // buffer readonly to prevent undesired changes
         setReadOnly(true);
         QPlainTextEdit::dropEvent(event);
         setReadOnly(false);
     } else if (event->mimeData()->hasText()) {
         event->accept();
-        fprintf(stderr, "Drag - Drop for text block not yet implemented: text=%s\n",
-                event->mimeData()->text().toStdString().c_str());
-        // do proper event processing in base class,
-        // but set buffer to readonly, so it won't be modified.
+        // cut selected text to clipboard before we reposition
+        // the cursor and re-insert the text with drag-n-drop
+        cut();
+#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
+        cursorForPosition(event->pos()).insertText(event->mimeData()->text());
+#else
+        cursorForPosition(event->position().toPoint()).insertText(event->mimeData()->text());
+#endif
+        // properly handle drop event in base class, but set editor
+        // buffer readonly to prevent undesired changes
         setReadOnly(true);
         QPlainTextEdit::dropEvent(event);
         setReadOnly(false);

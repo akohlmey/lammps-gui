@@ -22,6 +22,7 @@
 class QCompleter;
 class QContextMenuEvent;
 class QDragEnterEvent;
+class QDragLeaveEvent;
 class QDropEvent;
 class QFont;
 class QKeyEvent;
@@ -81,8 +82,9 @@ public:
 
 protected:
     void resizeEvent(QResizeEvent *event) override;
-    void dragEnterEvent(QDragEnterEvent *event) override;
     bool canInsertFromMimeData(const QMimeData *source) const override;
+    void dragEnterEvent(QDragEnterEvent *event) override;
+    void dragLeaveEvent(QDragLeaveEvent *event) override;
     void dropEvent(QDropEvent *event) override;
     void contextMenuEvent(QContextMenuEvent *event) override;
     void keyPressEvent(QKeyEvent *event) override;
