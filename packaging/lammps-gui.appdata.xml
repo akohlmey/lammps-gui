@@ -67,6 +67,7 @@
         No build support for WHAM. This is only included if LAMMPS is included
         Corrections and improvements when building package on Windows
       </description>
+    </release>
     <release version="1.8.1" timestamp="1756257931">
       <description>
         Add/Update files for a proper GitHub repository

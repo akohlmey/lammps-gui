@@ -301,7 +301,7 @@ if (LAMMPS_GUI_USE_PLUGIN AND NOT BUILD_DOC_ONLY)
       COMMAND ${FLATPAK_BUILDER} --force-clean --verbose --repo=${CMAKE_CURRENT_BINARY_DIR}/flatpak-repo
                                --install-deps-from=flathub --state-dir=${CMAKE_CURRENT_BINARY_DIR}
                                --user --ccache --default-branch=${PROJECT_VERSION}
-                               flatpak-build ${CMAKE_SOURCE_DIR}/resources/org.lammps.lammps-gui.yml
+                               flatpak-build ${CMAKE_SOURCE_DIR}/packaging/org.lammps.lammps-gui.yml
       COMMAND ${FLATPAK_COMMAND} build-bundle --runtime-repo=https://flathub.org/repo/flathub.flatpakrepo --verbose
                                ${CMAKE_CURRENT_BINARY_DIR}/flatpak-repo
                                ${FLATPAK_BUNDLE} org.lammps.lammps-gui ${PROJECT_VERSION}
