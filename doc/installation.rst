@@ -182,7 +182,7 @@ https://github.com/akohlmey/lammps-gui.
 LAMMPS-GUI can still be can be built as part of a regular LAMMPS
 compilation.  It will be automatically downloaded from its git
 repository and configured.  This is usually the most convenient way.
-`Since CMake <https://docs.lammps.org/Howto_cmake.html>`_ is *required*
+Since `CMake <https://docs.lammps.org/Howto_cmake.html>`_ is *required*
 to build LAMMPS-GUI, you need to build LAMMPS with CMake as well.  To
 enable its compilation during compiling LAMMPS, the CMake variable ``-D
 BUILD_LAMMPS_GUI=on`` must be set when creating the CMake configuration.
@@ -203,15 +203,15 @@ LAMMPS_GUI_USE_QT5=yes`` is set.
 LAMMPS-GUI plugin version
 """""""""""""""""""""""""
 
-It is possible to build LAMMPS-GUI as a standalone compilation
-(e.g. when LAMMPS has been compiled with traditional make).  Rather than
-linking to the LAMMPS library during compilation, it will compile the
-GUI with a plugin loader that will load a LAMMPS shared library file
-dynamically at runtime during the start of the GUI from a shared
-library; e.g. ``liblammps.so.0`` or ``liblammps.0.dylib`` or
+It is possible to compile a standalone LAMMPS-GUI executable (e.g. when
+LAMMPS has been compiled with traditional make).  Rather than linking to
+the LAMMPS library during compilation, it includes a `plugin loader
+<https://github.com/akohlmey/lammps-gui/tree/main/plugin>`_ that will
+load a LAMMPS shared library file dynamically at runtime during the
+start of the GUI; e.g. ``liblammps.so.0`` or ``liblammps.0.dylib`` or
 ``liblammps.dll`` (depending on the operating system).  This has the
 advantage that the LAMMPS library can be built from updated or modified
-LAMMPS source without having to recompile the GUI.
+LAMMPS source without having to (re-)compile the GUI.
 
 The ABI of the LAMMPS C-library interface is very stable and generally
 backward compatible.  However, features used in LAMMPS-GUI may require a
@@ -226,12 +226,10 @@ empty path ("") as argument restores the default setting.
 
 It is also possible to link the standalone compiled LAMMPS-GUI version
 to the LAMMPS library directly.  This feature is enabled by setting ``-D
-LAMMPS_GUI_USE_PLUGIN=off`` (default is off for compilation within
-LAMMPS and on for standalone compilation). In this case the CMake
-configuration needs to be told where to find the LAMMPS headers and the
-LAMMPS library, via ``-D LAMMPS_SOURCE_DIR=/path/to/lammps/src``.  CMake
-will try to guess a build folder with the LAMMPS library from that path,
-but it can also be set with ``-D LAMMPS_LIB_DIR=/path/to/lammps/lib``.
+LAMMPS_GUI_USE_PLUGIN=off`` (default setting is on).  This is also the
+setting for compilation within LAMMPS.  In this case the CMake configuration
+needs to be told where to find the LAMMPS headers and the LAMMPS library, via ``-D
+LAMMPS_SOURCE_DIR=/path/to/lammps/src``.
 
 
 Compilation platform notes
@@ -241,8 +239,9 @@ macOS
 """""
 
 When building on macOS, the build procedure will try to manufacture a
-drag-n-drop installer, ``LAMMPS-macOS-multiarch.dmg``, when using the
-'dmg' target (i.e. ``cmake --build <build dir> --target dmg`` or ``make dmg``.
+drag-n-drop installer, ``LAMMPS-GUI-macOS-multiarch-<version>.dmg``,
+when using the 'dmg' target (i.e. ``cmake --build <build dir> --target
+dmg`` or ``make dmg``.
 
 To build multi-arch executables that will run on both, arm64 and x86_64
 architectures natively, it is necessary to set the CMake variable ``-D
@@ -271,7 +270,7 @@ activate building the `lammps-gui.exe` executable in addition to LAMMPS
 through importing package selection from the ``windows.cmake`` preset
 file and enabling building LAMMPS-GUI and disabling building with
 MPI.  When requesting an installation from the `Build` menu in Visual
-Studio, it will create a compressed ``LAMMPS-Win10-amd64.zip`` zip file
+Studio, it will create a compressed ``LAMMPS-GUI-Win10-amd64.zip`` zip file
 with the executables and required dependent .dll files.  This zip file
 can be uncompressed and ``lammps-gui.exe`` run directly from there.  The
 uncompressed folder can be added to the ``PATH`` environment and LAMMPS
@@ -279,15 +278,15 @@ and LAMMPS-GUI can be launched from anywhere from the command-line.
 
 **MinGW64 Cross-compiler**
 
-The standard CMake build procedure can be applied and the
-``mingw-cross.cmake`` preset used. By using ``mingw64-cmake`` the CMake
-command will automatically include a suitable CMake toolchain file (the
-regular cmake command can be used after that to modify the configuration
-settings, if needed).  After building the libraries and executables, you
-can build the target 'zip' (i.e. ``cmake --build <build dir> --target
-zip`` or ``make zip`` to stage all installed files into a LAMMPS_GUI
-folder and then run a script to copy all required dependencies, some
-other files, and create a zip file from it.
+The standard CMake build procedure for cross-compilation can be applied.
+By using the ``mingw64-cmake`` wrapper the CMake configuration will
+automatically include a suitable CMake toolchain file (the regular cmake
+command can be used after that to modify the configuration settings, if
+needed).  After building the libraries and executables, you can build
+the target 'zip' (i.e. ``cmake --build <build dir> --target zip`` or
+``make zip`` to stage all installed files into a LAMMPS_GUI folder and
+then run a script to copy all required dependencies, some other files,
+and create a zip file from it.
 
 Linux
 """""
