@@ -199,7 +199,12 @@ if(BUILD_DOC OR BUILD_DOC_ONLY)
   if(Python3_VERSION VERSION_LESS 3.8)
     message(FATAL_ERROR "Python 3.8 and up is required to build the LAMMPS-GUI HTML documentation")
   endif()
-  set(VIRTUALENV ${Python3_EXECUTABLE} -m venv)
+  if (CMAKE_CROSSCOMPILING)
+    # must force host python when cross-compiling
+    set(VIRTUALENV python3 -m venv)
+  else()
+    set(VIRTUALENV ${Python3_EXECUTABLE} -m venv)
+  endif()
 
   set(SPHINX_DIR ${CMAKE_SOURCE_DIR}/doc)
   set(SPHINX_CONFIG_FILE_TEMPLATE ${SPHINX_DIR}/conf.py.in)
