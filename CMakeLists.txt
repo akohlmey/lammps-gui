@@ -340,10 +340,6 @@ if (LAMMPS_GUI_USE_PLUGIN AND NOT BUILD_DOC_ONLY)
   elseif(MSVC)
     install(TARGETS lammps-gui DESTINATION ${CMAKE_INSTALL_BINDIR})
     install(FILES $<TARGET_RUNTIME_DLLS:lammps-gui> TYPE BIN)
-    if(BUILD_SHARED_LIBS)
-      install(FILES $<TARGET_RUNTIME_DLLS:lammps> TYPE BIN)
-    endif()
-    install(FILES $<TARGET_RUNTIME_DLLS:lmp> TYPE BIN)
     # find path to VC++ init batch file
     get_filename_component(VC_COMPILER_DIR "${CMAKE_CXX_COMPILER}" DIRECTORY)
     get_filename_component(VC_BASE_DIR "${VC_COMPILER_DIR}/../../../../../.." ABSOLUTE)
@@ -353,16 +349,11 @@ if (LAMMPS_GUI_USE_PLUGIN AND NOT BUILD_DOC_ONLY)
     install(CODE "execute_process(COMMAND \"${CMAKE_COMMAND}\" -D INSTNAME=${INSTNAME} -D VC_INIT=\"${VC_INIT}\" -D QT5_BIN_DIR=\"${QT5_BIN_DIR}\" -P \"${CMAKE_SOURCE_DIR}/packaging/build_windows_vs.cmake\" WORKING_DIRECTORY \"${CMAKE_INSTALL_PREFIX}/..\" COMMAND_ECHO STDOUT)")
   elseif((CMAKE_SYSTEM_NAME STREQUAL "Windows") AND CMAKE_CROSSCOMPILING)
     install(TARGETS lammps-gui DESTINATION ${CMAKE_INSTALL_BINDIR})
-    install(FILES $<TARGET_RUNTIME_DLLS:lammps-gui> TYPE BIN)
-    if(BUILD_SHARED_LIBS)
-      install(FILES $<TARGET_RUNTIME_DLLS:lammps> TYPE BIN)
-    endif()
-    install(FILES $<TARGET_RUNTIME_DLLS:lmp> TYPE BIN)
     add_custom_target(zip
       COMMAND sh -vx ${CMAKE_SOURCE_DIR}/packaging/build_windows_cross_zip.sh ${CMAKE_INSTALL_PREFIX} ${PROJECT_VERSION}
       DEPENDS lammps-gui
       COMMENT "Create zip file with windows binaries"
-      BYPRODUCT LAMMPS-GUI-Win10-amd64-${PROJECT_VERSION}.zip
+      BYPRODUCT LAMMPS-GUI-Win10-x86_64-${PROJECT_VERSION}.zip
       WORKING_DIRECTORY ${CMAKE_BINARY_DIR})
   elseif((CMAKE_SYSTEM_NAME STREQUAL "Linux") AND LAMMPS_GUI_USE_PLUGIN)
     install(TARGETS lammps-gui DESTINATION ${CMAKE_INSTALL_BINDIR})
