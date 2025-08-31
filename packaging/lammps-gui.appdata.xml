@@ -63,6 +63,8 @@
         Update icons and background images for macOS to reflect LAMMPS-GUI
         Update use of new icons in LAMMPS-GUI as well except for the LAMMPS status
         Fix frozen cursor on drag-n-drop bug
+        No build support for WHAM. This is only included if LAMMPS is included
+        Corrections and improvements when building package on Windows
       </description>
     <release version="1.8.1" timestamp="1756257931">
       <description>
