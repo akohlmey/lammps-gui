@@ -3,7 +3,7 @@ Overview
 ********
 
 LAMMPS-GUI is a graphical text editor customized for editing LAMMPS
-input files that is linked to the `LAMMPS C-library
+input files that are linked to the `LAMMPS C-library
 <https://docs.lammps.org/Library.html#lammps-c-library-api>`_ and thus
 can run LAMMPS directly using the contents of the editor's text buffer
 as input.  It can retrieve and display information from LAMMPS while it
@@ -23,7 +23,7 @@ LAMMPS-GUI integrates well with graphical desktop environments where the
 `.lmp` filename extension can be registered with LAMMPS-GUI as the
 executable to launch when double clicking on such files using a file
 manager.  LAMMPS-GUI will launch and read the file into its buffer.
-Input files also can be dropped into the editor window of the running
+Input files can also be dropped into the editor window of the running
 LAMMPS-GUI application, which will close the current file and open the
 new file.
 
@@ -39,7 +39,7 @@ separate text editor, plotting or visualization program.
 The tutorials at https://lammpstutorials.github.io/ are specifically
 updated for use with LAMMPS-GUI and their tutorial materials can be
 downloaded and edited directly from within the GUI while automatically
-loading the matching tutorial instructions into a webbrowser.
+loading the matching tutorial instructions into a web browser.
 
 While making it easy for beginners to start with LAMMPS, it is also the
 expectation that LAMMPS-GUI users will eventually transition to
