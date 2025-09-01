@@ -29,7 +29,7 @@ C++17 standard and using the `Qt GUI framework
 or later is required; support for Qt version 6.x is available, too.
 When compiled With Qt version 6.x, LAMMPS-GUI can switch between a
 "light" and a "dark" theme according to the settings of the desktop
-environment.  Otherwise, there is no changes in functionality between
+environment.  Otherwise, there are no changes in functionality between
 using either major version of Qt.  Building LAMMPS-GUI requires CMake
 version 3.20 or later.
 
@@ -179,7 +179,7 @@ distribution until LAMMPS version 22 July 2025 in the folder
 sources are now distributed separately, in its own git repository at
 https://github.com/akohlmey/lammps-gui.
 
-LAMMPS-GUI can still be can be built as part of a regular LAMMPS
+LAMMPS-GUI can still be built as part of a regular LAMMPS
 compilation.  It will be automatically downloaded from its git
 repository and configured.  This is usually the most convenient way.
 Since `CMake <https://docs.lammps.org/Howto_cmake.html>`_ is *required*
@@ -227,7 +227,7 @@ empty path ("") as argument restores the default setting.
 It is also possible to link the standalone compiled LAMMPS-GUI version
 to the LAMMPS library directly.  This feature is enabled by setting ``-D
 LAMMPS_GUI_USE_PLUGIN=off`` (default setting is on).  This is also the
-setting for compilation within LAMMPS.  In this case the CMake configuration
+setting for compilation within LAMMPS.  In this case, the CMake configuration
 needs to be told where to find the LAMMPS headers and the LAMMPS library, via ``-D
 LAMMPS_SOURCE_DIR=/path/to/lammps/src``.
 

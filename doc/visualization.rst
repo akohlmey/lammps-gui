@@ -22,8 +22,8 @@ state of the system can be rendered.  If there was an error in that
 process, the snapshot image viewer does not appear.
 
 When possible, LAMMPS-GUI tries to detect which elements the atoms
-correspond to (via their mass) and then colorize them in the image and
-set their atom diameters accordingly.  If this is not possible, for
+correspond to (via their mass) and then colorizes them in the image and
+sets their atom diameters accordingly.  If this is not possible, for
 instance when using reduced (= 'lj') `units
 <https://docs.lammps.org/units.html>`_, then LAMMPS-GUI will check the
 current pair style and if it is a Lennard-Jones type potential, it will
