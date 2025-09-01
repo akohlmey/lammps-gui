@@ -54,7 +54,7 @@ From within the LAMMPS-GUI main window LAMMPS can be started either from
 the *Run* menu using the *Run LAMMPS from Editor Buffer* entry, by the
 keyboard shortcut `Ctrl-Enter` (`Command-Enter` on macOS), or by
 clicking on the green "Run" button in the status bar.  All of these
-operations causes LAMMPS to process the entire input script in the
+operations cause LAMMPS to process the entire input script in the
 editor buffer, which may contain multiple `run
 <https://docs.lammps.org/run.html>`_ or `minimize
 <https://docs.lammps.org/minimize.html>`_ commands.
@@ -85,7 +85,7 @@ green in the line number display for the *Editor* Window.
 While LAMMPS is running, the contents of the status bar change.  The
 text fields that normally show "Ready." and the current working
 directory, change into an area showing the CPU utilization in percent.
-Nest to it is a text indicating that LAMMPS is running, which also
+Next to it is a text indicating that LAMMPS is running, which also
 indicates the number of active threads (in case thread-parallel
 acceleration was selected in the *Preferences* dialog).  On the right
 side, a progress bar is shown that displays the estimated progress for
