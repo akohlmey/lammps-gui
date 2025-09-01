@@ -396,3 +396,14 @@ if (LAMMPS_GUI_USE_PLUGIN AND NOT BUILD_DOC_ONLY)
     )
   endif()
 endif()
+
+find_package(Git)
+if (GIT_FOUND AND EXISTS ${CMAKE_SOURCE_DIR}/.git)
+  add_custom_target(tarball
+    COMMAND ${GIT_EXECUTABLE} archive --prefix=lammps-gui-v${PROJECT_VERSION}/
+            --output=${CMAKE_BINARY_DIR}/lammps-gui-src-v${PROJECT_VERSION}.tar.gz  HEAD
+    COMMENT "Create compressed tar file of the LAMMPS-GUI sources"
+    BYPRODUCT lammps-gui-src-v${PROJECT_VERSION}.tar.gz
+    WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+  )
+endif()
