@@ -97,12 +97,12 @@ sync
 
 echo "Unmount modified disk image and convert to compressed read-only image"
 hdiutil detach "${DEVICE}"
-hdiutil convert "${APP_NAME}-rw.dmg" -format UDZO -o "LAMMPS-GUI-macOS-multiarch-${VERSION}.dmg"
+hdiutil convert "${APP_NAME}-rw.dmg" -format UDZO -o "LAMMPS-GUI-macOS-multiarch-v${VERSION}.dmg"
 
 echo "Attach icon to .dmg file"
 echo "read 'icns' (-16455) \"lammps-gui.app/Contents/Resources/lammps-gui.icns\";" > icon.rsrc
-Rez -a icon.rsrc -o LAMMPS-GUI-macOS-multiarch-${VERSION}.dmg
-SetFile -a C LAMMPS-GUI-macOS-multiarch-${VERSION}.dmg
+Rez -a icon.rsrc -o LAMMPS-GUI-macOS-multiarch-v${VERSION}.dmg
+SetFile -a C LAMMPS-GUI-macOS-multiarch-v${VERSION}.dmg
 rm icon.rsrc
 
 echo "Delete temporary disk images"
