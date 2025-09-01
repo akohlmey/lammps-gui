@@ -56,16 +56,16 @@
   <releases>
     <release version="1.8.2" timestamp="1756521771">
       <description>
-        Complete to update packaging for macOS, Linux tgz
+        Complete packaging for macOS, Linux tgz and flatpak
+        Corrections and improvements when building package on Windows
+        Fix frozen cursor on drag-n-drop bug
+        Implement drag and drop of text blocks
         Remove (unused) support for OpenMP (avoids crashes when loading LAMMPS dynamically with macOS)
         Add integration testing and static code analysis to repository, add dependabot support.
         Small updates due to tests and dependencies
         Update icons and background images for macOS to reflect LAMMPS-GUI
         Update use of new icons in LAMMPS-GUI as well except for the LAMMPS status
-        Fix frozen cursor on drag-n-drop bug
-        Implement drag and drop of text blocks
         No build support for WHAM. This is only included if LAMMPS is included
-        Corrections and improvements when building package on Windows
       </description>
     </release>
     <release version="1.8.1" timestamp="1756257931">
