@@ -54,6 +54,12 @@
   </provides>
 
   <releases>
+    <release version="1.8.3" timestamp="1756739129">
+      <description>
+        Small tweaks to the theme colors in use
+        Update, correct, and reformat installation and compilation instructions
+      </description>
+    </release>
     <release version="1.8.2" timestamp="1756521771">
       <description>
         Complete packaging for macOS, Linux tgz and flatpak
