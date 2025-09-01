@@ -131,7 +131,7 @@ beginners and intermediate LAMMPS users documented in (:ref:`Gravelle1
 eight currently available tutorial sessions you want to begin.  This
 opens a 'wizard' dialog where you can choose in which folder you want to
 work, whether you want that folder to be wiped from *any* files, whether
-you want to download the solutions files (which can be large) to a
+you want to download the solution files (which can be large) to a
 ``solution`` sub-folder, and whether you want the corresponding
 tutorial's online version opened in your web browser.  The dialog will
 then start downloading the files requested (download progress is
