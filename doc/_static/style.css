@@ -6,6 +6,25 @@ div.document {
     text-align: justify;
 }
 
+div.sphinxsidebar {
+    background-color: white;
+}
+
+h3.sphinxsidebar {
+    color: white;
+    background-color: rgb(0 57 162);
+}
+
+h4.sphinxsidebar {
+    color: white;
+    background-color: rgb(0 57 162);
+}
+
+p.admonition-title {
+    color: white;
+    background-color: rgb(0 57 162);
+}
+
 ul.simple {
     line-height: 100%;
 }
