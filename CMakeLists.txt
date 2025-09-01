@@ -314,6 +314,9 @@ if (LAMMPS_GUI_USE_PLUGIN AND NOT BUILD_DOC_ONLY)
       add_custom_target(flatpak
         COMMAND ${CMAKE_COMMAND} -E echo "The flatpak and flatpak-builder commands required to build a LAMMPS-GUI flatpak bundle were not found. Skipping.")
     endif()
+  else()
+    add_custom_target(flatpak
+      COMMAND ${CMAKE_COMMAND} -E echo "Building LAMMPS-GUI in plugin mode for flatpak is currently not supported")
   endif()
 
   # when compiling on macOS, create an "app bundle"
