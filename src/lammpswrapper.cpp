@@ -13,13 +13,15 @@
 
 #include "lammpswrapper.h"
 
+#include "helpers.h"
+
 #if defined(LAMMPS_GUI_USE_PLUGIN)
 #include "liblammpsplugin.h"
 #else
 #include "library.h"
 #endif
 
-#include <stdio.h>
+#include <cstdio>
 
 LammpsWrapper::LammpsWrapper() : lammps_handle(nullptr)
 {
@@ -418,7 +420,14 @@ bool LammpsWrapper::load_lib(const char *libfile)
     CHECKSYM(config_has_omp_support);
     CHECKSYM(extract_pair);
 
-    return true;
+    // check minimum required version
+    QString lmpversion;
+    auto *ptr = (const char *)lmp->extract_global(nullptr, "lammps_version");
+    if (ptr) lmpversion = ptr;
+
+    // found a suitable version
+    if (!lmpversion.isEmpty() && (date_compare(lmpversion, "10 Sep 2025") >= 0)) return true;
+    return false;
 }
 #else
 bool LammpsWrapper::has_plugin() const

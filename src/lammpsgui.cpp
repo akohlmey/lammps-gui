@@ -158,16 +158,10 @@ LammpsGui::LammpsGui(QWidget *parent, const QString &filename) :
         QString lmpversion;
         for (const auto &libpath : choices) {
             if (lammps.load_lib(libpath)) {
-                auto *ptr = (const char *)lammps.extract_global("lammps_version");
-                if (ptr) lmpversion = ptr;
-
-                // found a suitable version
-                if (!lmpversion.isEmpty() && (date_compare(lmpversion, "22 July 2025") >= 0)) {
-                    plugin_path = libpath;
-                    settings.setValue("plugin_path", plugin_path);
-                    settings.sync();
-                    break;
-                }
+                plugin_path = libpath;
+                settings.setValue("plugin_path", plugin_path);
+                settings.sync();
+                break;
             }
         }
 
