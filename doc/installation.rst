@@ -200,8 +200,9 @@ Compilation from source
 
 The source for LAMMPS-GUI was included with the LAMMPS source code
 distribution until LAMMPS version 22 July 2025 in the folder
-``tools/lammps-gui``.  Starting with version 1.8.0, the LAMMPS-GUI
-sources are distributed separately through its own git repository at
+``tools/lammps-gui``.  Starting with LAMMPS-GUI version 1.8.0 and
+LAMMPS version 10 September 2025 the LAMMPS-GUI sources are distributed
+separately through its own git repository at
 https://github.com/akohlmey/lammps-gui.
 
 LAMMPS-GUI can still be built as part of a regular LAMMPS

@@ -60,7 +60,9 @@
         Update, correct, and reformat installation and compilation instructions
         Use new library interface call to determine if LAMMPS supports OpenMP
           remove all remaining ifdefs for _OPENMP
-        When loading library plugin, check if required recently added functions are present
+        When loading library plugin, check if required recently added functions
+              are present and also check the version string.
+        LAMMPS version 10 September 2025 or later is required for LAMMPS-GUI 1.8
       </description>
     </release>
     <release version="1.8.2" timestamp="1756521771">
