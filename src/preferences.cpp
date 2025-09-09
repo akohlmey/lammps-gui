@@ -511,22 +511,24 @@ AcceleratorTab::AcceleratorTab(QSettings *_settings, LammpsWrapper *_lammps, QWi
 
     auto *choices      = new QFrame;
     auto *choiceLayout = new QVBoxLayout;
-#if defined(_OPENMP)
-    // maximum number of threads is limited half of available threads and no more than 16
-    // unless OMP_NUM_THREADS is set to a larger value
-    int maxthreads = std::min(QThread::idealThreadCount() / 2, 16);
-    maxthreads     = std::max(maxthreads, 1);
-    maxthreads     = std::max(maxthreads, qEnvironmentVariable("OMP_NUM_THREADS").toInt());
+    QLabel *ntlabel = nullptr;
+    QLineEdit *ntchoice = nullptr;
+    if (lammps->config_has_omp_support()) {
+        // maximum number of threads is limited half of available threads and no more than 16
+        // unless OMP_NUM_THREADS is set to a larger value
+        int maxthreads = std::min(QThread::idealThreadCount() / 2, 16);
+        maxthreads     = std::max(maxthreads, 1);
+        maxthreads     = std::max(maxthreads, qEnvironmentVariable("OMP_NUM_THREADS").toInt());
 
-    auto *ntlabel  = new QLabel(QString("Number of threads (max %1):").arg(maxthreads));
-    auto *ntchoice = new QLineEdit(settings->value("nthreads", maxthreads).toString());
-    auto *intval   = new QIntValidator(1, maxthreads, this);
-    ntchoice->setValidator(intval);
-#else
-    auto *ntlabel  = new QLabel("Number of threads (OpenMP not available):");
-    auto *ntchoice = new QLineEdit("1");
-    ntchoice->setEnabled(false);
-#endif
+        ntlabel  = new QLabel(QString("Number of threads (max %1):").arg(maxthreads));
+        ntchoice = new QLineEdit(settings->value("nthreads", maxthreads).toString());
+        auto *intval   = new QIntValidator(1, maxthreads, this);
+        ntchoice->setValidator(intval);
+    } else {
+        ntlabel  = new QLabel("Number of threads (OpenMP not available):");
+        ntchoice = new QLineEdit("1");
+        ntchoice->setEnabled(false);
+    }
     ntchoice->setObjectName("nthreads");
 
     connect(none, &QRadioButton::released, this, &AcceleratorTab::update_accel);
