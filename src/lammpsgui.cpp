@@ -63,10 +63,6 @@
 #include <cstring>
 #include <string>
 
-#if defined(_OPENMP)
-#include <omp.h>
-#endif
-
 #if defined(_WIN32)
 #ifndef WIN32_LEAN_AND_MEAN
 #define WIN32_LEAN_AND_MEAN
@@ -79,10 +75,7 @@
 
 namespace {
 constexpr int DEFAULT_BUFLEN = 1024;
-
-#if defined(_OPENMP)
 constexpr int MAX_DEFAULT_THREADS = 16;
-#endif
 
 const QString blank(" ");
 const QString citeme("# When using LAMMPS-GUI in your project, please cite: "
@@ -239,7 +232,7 @@ LammpsGui::LammpsGui(QWidget *parent, const QString &filename) :
     // (assuming hyper-threading is enabled) and no more than MAX_DEFAULT_THREADS (=16).
     // This is only if there is no preference set but do not override OMP_NUM_THREADS
     nthreads = 1;
-#if defined(_OPENMP)
+
     int default_threads = std::min(QThread::idealThreadCount() / 2, MAX_DEFAULT_THREADS);
     default_threads     = std::max(default_threads, 1);
     if (qEnvironmentVariableIsSet("OMP_NUM_THREADS"))
@@ -249,13 +242,9 @@ LammpsGui::LammpsGui(QWidget *parent, const QString &filename) :
     // reset nthreads if accelerator does not support threads
     if ((accel == AcceleratorTab::Opt) || (accel == AcceleratorTab::None)) nthreads = 1;
 
-    // reset number of threads in use
-    omp_set_num_threads(nthreads);
-
     // set OMP_NUM_THREADS environment variable, if not set
     if (!qEnvironmentVariableIsSet("OMP_NUM_THREADS"))
         qputenv("OMP_NUM_THREADS", QByteArray::number(nthreads));
-#endif
 
     // set up default LAMMPS thread arguments
     lammps_args.clear();
@@ -2143,18 +2132,13 @@ void LammpsGui::preferences()
             }
             lammps.close();
             lammpsstatus->hide();
-#if defined(_OPENMP)
             // reset nthreads if accelerator does not support threads
             if ((newaccel == AcceleratorTab::Opt) || (newaccel == AcceleratorTab::None))
                 nthreads = 1;
             else
                 nthreads = newthreads;
 
-            // reset number of threads in use
-            omp_set_num_threads(nthreads);
-#else
-            nthreads = 1;
-#endif
+            qputenv("OMP_NUM_THREADS", QByteArray::number(nthreads));
         }
         if (imagewindow) imagewindow->createImage();
         settings.beginGroup("reformat");
@@ -2171,12 +2155,10 @@ void LammpsGui::start_lammps()
     QSettings settings;
     int accel = settings.value("accelerator", AcceleratorTab::None).toInt();
     // if non-threaded accelerator selected reset threads
-#if defined(_OPENMP)
     if ((accel == AcceleratorTab::None) || (accel == AcceleratorTab::Opt)) {
         nthreads = 1;
-        omp_set_num_threads(nthreads);
     }
-#endif
+    qputenv("OMP_NUM_THREADS", QByteArray::number(nthreads));
 
     if (accel == AcceleratorTab::Opt) {
         lammps_args.push_back(mystrdup("-suffix"));

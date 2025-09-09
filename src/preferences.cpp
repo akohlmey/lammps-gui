@@ -42,14 +42,8 @@
 #include <QSpinBox>
 #include <QTabWidget>
 #include <QValidator>
-#if defined(_OPENMP)
 #include <QThread>
-#endif
 #include <QVBoxLayout>
-
-#if defined(_OPENMP)
-#include <omp.h>
-#endif
 
 #if defined(_WIN32)
 #ifndef WIN32_LEAN_AND_MEAN
@@ -122,7 +116,6 @@ void Preferences::accept()
 
     QLineEdit *field;
 
-#if defined(_OPENMP)
     // store number of threads, reset to 1 for "None" and "Opt" settings
     auto *mainwidget = dynamic_cast<LammpsGui *>(get_main_widget());
     field            = tabWidget->findChild<QLineEdit *>("nthreads");
@@ -135,7 +128,6 @@ void Preferences::accept()
             mainwidget->nthreads = settings->value("nthreads", 1).toInt();
         }
     }
-#endif
 
     // store setting for GPU package
     auto *box = tabWidget->findChild<QCheckBox *>("gpuneigh");
@@ -664,7 +656,6 @@ void AcceleratorTab::update_accel()
         group->setEnabled(false);
     }
 
-#if defined(_OPENMP)
     // The number of threads field is disabled and the value set to 1 for "None" and "Opt" choice
     auto *field = findChild<QLineEdit *>("nthreads");
     if (field) {
@@ -676,7 +667,6 @@ void AcceleratorTab::update_accel()
             field->setEnabled(true);
         }
     }
-#endif
 }
 
 SnapshotTab::SnapshotTab(QSettings *_settings, QWidget *parent) :
