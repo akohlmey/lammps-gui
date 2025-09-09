@@ -19,6 +19,8 @@
 #include "library.h"
 #endif
 
+#include <stdio.h>
+
 LammpsWrapper::LammpsWrapper() : lammps_handle(nullptr)
 {
 #if defined(LAMMPS_GUI_USE_PLUGIN)
@@ -391,11 +393,31 @@ bool LammpsWrapper::load_lib(const char *libfile)
     }
     plugin_handle = liblammpsplugin_load(libfile);
     if (!plugin_handle) return false;
-    if (((liblammpsplugin_t *)plugin_handle)->abiversion != LAMMPSPLUGIN_ABI_VERSION) {
-        liblammpsplugin_release((liblammpsplugin_t *)plugin_handle);
+    liblammpsplugin_t *lmp = (liblammpsplugin_t *)plugin_handle;
+
+    // check if ABI matches
+    if (lmp->abiversion != LAMMPSPLUGIN_ABI_VERSION) {
+        liblammpsplugin_release(lmp);
         plugin_handle = nullptr;
+        fprintf(stderr, "LAMMPS library file %s rejected.\nIncompatible ABI: %d vs %d\n", libfile,
+                lmp->abiversion, LAMMPSPLUGIN_ABI_VERSION);
         return false;
     }
+
+    // check if all required recently added library functions are present
+#define CHECKSYM(symbol)                                                                   \
+    if (lmp->symbol == NULL) {                                                             \
+        fprintf(stderr, "LAMMPS library file %s is missing lammps_%s function\n", libfile, \
+                #symbol);                                                                  \
+        return false;                                                                      \
+    }
+
+    CHECKSYM(get_thermo);
+    CHECKSYM(last_thermo);
+    CHECKSYM(config_has_curl_support);
+    CHECKSYM(config_has_omp_support);
+    CHECKSYM(extract_pair);
+
     return true;
 }
 #else

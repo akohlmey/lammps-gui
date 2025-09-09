@@ -60,6 +60,7 @@
         Update, correct, and reformat installation and compilation instructions
         Use new library interface call to determine if LAMMPS supports OpenMP
           remove all remaining ifdefs for _OPENMP
+        When loading library plugin, check if required recently added functions are present
       </description>
     </release>
     <release version="1.8.2" timestamp="1756521771">
