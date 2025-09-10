@@ -41,9 +41,9 @@
 #include <QSpacerItem>
 #include <QSpinBox>
 #include <QTabWidget>
-#include <QValidator>
 #include <QThread>
 #include <QVBoxLayout>
+#include <QValidator>
 
 #if defined(_WIN32)
 #ifndef WIN32_LEAN_AND_MEAN
@@ -488,10 +488,11 @@ AcceleratorTab::AcceleratorTab(QSettings *_settings, LammpsWrapper *_lammps, QWi
     openmp->setObjectName("openmp");
     intel->setEnabled(lammps->config_has_package("INTEL"));
     intel->setObjectName("intel");
-    // Kokkos support only works with OpenMP for now.
+    // Kokkos support only works with Serial and OpenMP for now.
     kokkos->setEnabled(false);
     if (lammps->config_has_package("KOKKOS")) {
-        if (lammps->config_accelerator("KOKKOS", "api", "openmp") &&
+        if ((lammps->config_accelerator("KOKKOS", "api", "openmp") ||
+             lammps->config_accelerator("KOKKOS", "api", "serial")) &&
             !(lammps->config_accelerator("KOKKOS", "api", "cuda") ||
               lammps->config_accelerator("KOKKOS", "api", "hip") ||
               lammps->config_accelerator("KOKKOS", "api", "sycl")))
@@ -501,9 +502,9 @@ AcceleratorTab::AcceleratorTab(QSettings *_settings, LammpsWrapper *_lammps, QWi
     gpu->setEnabled(lammps->config_has_package("GPU") && lammps->has_gpu_device());
     gpu->setObjectName("gpu");
 
-    auto *choices      = new QFrame;
-    auto *choiceLayout = new QVBoxLayout;
-    QLabel *ntlabel = nullptr;
+    auto *choices       = new QFrame;
+    auto *choiceLayout  = new QVBoxLayout;
+    QLabel *ntlabel     = nullptr;
     QLineEdit *ntchoice = nullptr;
     if (lammps->config_has_omp_support()) {
         // maximum number of threads is limited half of available threads and no more than 16
@@ -512,9 +513,9 @@ AcceleratorTab::AcceleratorTab(QSettings *_settings, LammpsWrapper *_lammps, QWi
         maxthreads     = std::max(maxthreads, 1);
         maxthreads     = std::max(maxthreads, qEnvironmentVariable("OMP_NUM_THREADS").toInt());
 
-        ntlabel  = new QLabel(QString("Number of threads (max %1):").arg(maxthreads));
-        ntchoice = new QLineEdit(settings->value("nthreads", maxthreads).toString());
-        auto *intval   = new QIntValidator(1, maxthreads, this);
+        ntlabel      = new QLabel(QString("Number of threads (max %1):").arg(maxthreads));
+        ntchoice     = new QLineEdit(settings->value("nthreads", maxthreads).toString());
+        auto *intval = new QIntValidator(1, maxthreads, this);
         ntchoice->setValidator(intval);
     } else {
         ntlabel  = new QLabel("Number of threads (OpenMP not available):");
@@ -659,7 +660,8 @@ void AcceleratorTab::update_accel()
     // The number of threads field is disabled and the value set to 1 for "None" and "Opt" choice
     auto *field = findChild<QLineEdit *>("nthreads");
     if (field) {
-        if ((choice == AcceleratorTab::None) || (choice == AcceleratorTab::Opt)) {
+        if ((choice == AcceleratorTab::None) || (choice == AcceleratorTab::Opt)
+            || (lammps->config_has_omp_support() == 0)) {
             field->setText("1");
             field->setEnabled(false);
         } else {
