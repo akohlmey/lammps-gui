@@ -49,7 +49,7 @@ liblammpsplugin_t *liblammpsplugin_load(const char *lib)
   if (lib == NULL) return NULL;
 
 #ifdef _WIN32
-  handle = (void *) LoadLibrary(lib);
+  handle = (void *) LoadLibraryA(lib);
 #else
   handle = dlopen(lib,RTLD_NOW|RTLD_GLOBAL);
 #endif
