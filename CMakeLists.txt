@@ -43,8 +43,12 @@ if (NOT BUILD_DOC_ONLY)
     set(CMAKE_INSTALL_PREFIX "$ENV{HOME}/.local" CACHE PATH "Default install path" FORCE)
   endif()
 
-  # ugly hacks for MSVC which by default always reports an old C++ standard in the __cplusplus macro
-  # and prints lots of pointless warnings about "unsafe" functions
+  if(LAMMPS_GUI_USE_PLUGIN AND (CMAKE_SYSTEM_NAME STREQUAL "Windows"))
+    message(FATAL_ERROR "Building LAMMPS-GUI with -D LAMMPS_GUI_USE_PLUGIN=on is currently not supported on Windows")
+  endif()
+
+  # ugly hacks for MSVC which by default always reports an old C++ standard in
+  # the __cplusplus macro and prints lots of pointless warnings about "unsafe" functions
   if(MSVC)
     if(CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
       add_compile_options(/Zc:__cplusplus)
