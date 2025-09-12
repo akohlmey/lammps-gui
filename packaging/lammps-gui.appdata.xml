@@ -54,6 +54,11 @@
   </provides>
 
   <releases>
+    <release version="1.8.4" timestamp="1757684513">
+      <description>
+        Block compiling LAMMPS-GUI in plugin mode on Windows
+      </description>
+    </release>
     <release version="1.8.3" timestamp="1756739129">
       <description>
         Small tweaks to the theme colors in use
