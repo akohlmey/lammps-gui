@@ -653,6 +653,20 @@ void CodeEditor::contextMenuEvent(QContextMenuEvent *event)
         connect(action2, &QAction::triggered, this, &CodeEditor::uncomment_line);
     }
     menu->addSeparator();
+    LammpsWrapper *lammps = &qobject_cast<LammpsGui *>(parent())->lammps;
+    if (lammps->is_running()) {
+        auto *action1 = menu->addAction("Stop LAMMPS");
+        action1->setIcon(QIcon(":/icons/process-stop.png"));
+        connect(action1, &QAction::triggered, qobject_cast<LammpsGui *>(parent()), &LammpsGui::stop_run);
+    } else {
+        auto *action1 = menu->addAction("Run LAMMPS from Editor Buffer");
+        action1->setIcon(QIcon(":/icons/system-run.png"));
+        connect(action1, &QAction::triggered, qobject_cast<LammpsGui *>(parent()), &LammpsGui::run_buffer);
+        auto *action2 = menu->addAction("Run LAMMPS from File");
+        action2->setIcon(QIcon(":/icons/run-file.png"));
+        connect(action2, &QAction::triggered, qobject_cast<LammpsGui *>(parent()), &LammpsGui::run_file);
+    }
+    menu->addSeparator();
 
     // print augmented context menu if an entry was found
     if (!help.isEmpty()) {

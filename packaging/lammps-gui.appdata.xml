@@ -57,6 +57,7 @@
     <release version="1.8.4" timestamp="1757684513">
       <description>
         Block compiling LAMMPS-GUI in plugin mode on Windows
+        Add entries to run and stop LAMMPS to editor context menu
       </description>
     </release>
     <release version="1.8.3" timestamp="1756739129">
