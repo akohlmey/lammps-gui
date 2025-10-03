@@ -74,7 +74,7 @@
 #endif
 
 namespace {
-constexpr int DEFAULT_BUFLEN = 1024;
+constexpr int DEFAULT_BUFLEN      = 1024;
 constexpr int MAX_DEFAULT_THREADS = 16;
 
 const QString blank(" ");
@@ -576,51 +576,56 @@ void LammpsGui::get_directory()
 
 void LammpsGui::start_exe()
 {
-    if (!lammps.extract_setting("box_exists")) return;
     auto *act = qobject_cast<QAction *>(sender());
     if (act) {
-        auto exe        = act->data().toString();
-        QString datacmd = "write_data '";
-        QDir datadir(QDir::tempPath());
-        QFile datafile(datadir.absoluteFilePath(current_file + ".data"));
-        datacmd += datafile.fileName() + "'";
-        if (exe == "vmd") {
-            QStringList args;
-            QFile vmdfile(datadir.absoluteFilePath("tmp-loader.vmd"));
-            vmdfile.open(QIODevice::WriteOnly);
-            vmdfile.write("package require topotools\n");
-            vmdfile.write("topo readlammpsdata {");
-            vmdfile.write(datafile.fileName().toLocal8Bit());
-            vmdfile.write("}\ntopo guessatom lammps data\n");
-            vmdfile.write("animate write psf {");
-            vmdfile.write(datafile.fileName().toLocal8Bit());
-            vmdfile.write(".psf}\nanimate write dcd {");
-            vmdfile.write(datafile.fileName().toLocal8Bit());
-            vmdfile.write(".dcd}\nmol delete top\nmol new {");
-            vmdfile.write(datafile.fileName().toLocal8Bit());
-            vmdfile.write(".psf} type psf waitfor all\nmol addfile {");
-            vmdfile.write(datafile.fileName().toLocal8Bit());
-            vmdfile.write(".dcd} type dcd waitfor all\nfile delete {");
-            vmdfile.write(datafile.fileName().toLocal8Bit());
-            vmdfile.write("} {");
-            vmdfile.write(vmdfile.fileName().toLocal8Bit());
-            vmdfile.write("} {");
-            vmdfile.write(datafile.fileName().toLocal8Bit());
-            vmdfile.write(".dcd} {");
-            vmdfile.write(datafile.fileName().toLocal8Bit());
-            vmdfile.write(".psf}\n");
-            vmdfile.close();
-            args << "-e" << vmdfile.fileName();
-            lammps.command(datacmd);
-            auto *vmd = new QProcess(this);
-            vmd->start(exe, args);
-        }
-        if (exe == "ovito") {
-            QStringList args;
-            args << datafile.fileName();
-            lammps.command(datacmd);
-            auto *ovito = new QProcess(this);
-            ovito->start(exe, args);
+        auto exe = act->data().toString();
+        QStringList args;
+        if (lammps.extract_setting("box_exist")) {
+            QString datacmd = "write_data '";
+            QDir datadir(QDir::tempPath());
+            QFile datafile(datadir.absoluteFilePath(current_file + ".data"));
+            datacmd += datafile.fileName() + "'";
+            if (exe == "vmd") {
+                QFile vmdfile(datadir.absoluteFilePath("tmp-loader.vmd"));
+                vmdfile.open(QIODevice::WriteOnly);
+                vmdfile.write("package require topotools\n");
+                vmdfile.write("topo readlammpsdata {");
+                vmdfile.write(datafile.fileName().toLocal8Bit());
+                vmdfile.write("}\ntopo guessatom lammps data\n");
+                vmdfile.write("animate write psf {");
+                vmdfile.write(datafile.fileName().toLocal8Bit());
+                vmdfile.write(".psf}\nanimate write dcd {");
+                vmdfile.write(datafile.fileName().toLocal8Bit());
+                vmdfile.write(".dcd}\nmol delete top\nmol new {");
+                vmdfile.write(datafile.fileName().toLocal8Bit());
+                vmdfile.write(".psf} type psf waitfor all\nmol addfile {");
+                vmdfile.write(datafile.fileName().toLocal8Bit());
+                vmdfile.write(".dcd} type dcd waitfor all\nfile delete {");
+                vmdfile.write(datafile.fileName().toLocal8Bit());
+                vmdfile.write("} {");
+                vmdfile.write(vmdfile.fileName().toLocal8Bit());
+                vmdfile.write("} {");
+                vmdfile.write(datafile.fileName().toLocal8Bit());
+                vmdfile.write(".dcd} {");
+                vmdfile.write(datafile.fileName().toLocal8Bit());
+                vmdfile.write(".psf}\n");
+                vmdfile.close();
+                args << "-e" << vmdfile.fileName();
+                lammps.command(datacmd);
+                auto *vmd = new QProcess(this);
+                vmd->start(exe, args);
+            }
+            if (exe == "ovito") {
+                QStringList args;
+                args << datafile.fileName();
+                lammps.command(datacmd);
+                auto *ovito = new QProcess(this);
+                ovito->start(exe, args);
+            }
+        } else {
+            // launch program without arguments when no system exists (yet)
+            auto *proc = new QProcess(this);
+            proc->start(exe, args);
         }
     }
 }
