@@ -21,6 +21,7 @@
 #include <QFileInfo>
 #include <QPalette>
 #include <QProcess>
+#include <QRegularExpression>
 #include <QStringList>
 #include <QWidget>
 
@@ -194,9 +195,12 @@ bool has_exe(const QString &exe)
     if (!findProcess.waitForFinished()) return false; // Not found or which does not work
 
     QString retStr(findProcess.readAll());
-    retStr = retStr.trimmed();
 
-    QFile file(retStr);
+    // truncate multi-line output to first line
+    auto idx = retStr.indexOf(QRegularExpression("[\n\r]"), 0);
+    if (idx > 0) retStr.truncate(idx);
+
+    QFile file(retStr.trimmed());
     QFileInfo check_file(file);
     return (check_file.exists() && check_file.isFile());
 }
