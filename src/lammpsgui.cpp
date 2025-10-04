@@ -79,7 +79,7 @@ constexpr int MAX_DEFAULT_THREADS = 16;
 
 const QString blank(" ");
 const QString citeme("# When using LAMMPS-GUI in your project, please cite: "
-                     "https://arxiv.org/abs/2503.14020\n");
+                     "https://doi.org/10.33011/livecoms.6.1.3037\n");
 const QString bannerstyle("CodeEditor {background-position: center center; "
                           "padding: 0px; "
                           "background-repeat: no-repeat; "
