@@ -40,13 +40,50 @@ intermediate and advanced LAMMPS users.
 
 --------
 
-The text in the website provides documentation of the features and
-functionality of LAMMPS-GUI and how to compile and install it.
+******************
+About this website
+******************
+
+The content of this website provides the documentation of the features
+and functionality of LAMMPS-GUI and how to compile and install it.
 Suggestions for new features and reports of bugs are always welcome.
 You can use the `the same channels as for LAMMPS itself
 <https://docs.lammps.org/Errors_bugs.html>`_ for that purpose or submit
 bug reports or pull requests in the `LAMMPS-GUI GitHub repository
 <https://github.com/akohlmey/lammps-gui>`_
+
+------------------
+
+*****************
+Citing LAMMPS-GUI
+*****************
+
+There is currently no citation specifically describing LAMMPS-GUI, but
+an introduction to LAMMPS-GUI is included in the following publication
+in LiveCoMS for the LAMMPS tutorials that are linked from LAMMPS-GUI, so
+the suggestion is to cite that publication for now:
+
+   Gravelle, S., Alvares, C. M. S., Gissinger, J. R., &
+   Kohlmeyer, A. (2025). A Set of Tutorials for the LAMMPS Simulation
+   Package [Article v1.0]. Living Journal of Computational Molecular
+   Science, 6(1), 3027. https://doi.org/10.33011/livecoms.6.1.3037
+
+or in BibTeX format:
+
+.. code-block:: bibtex
+
+   @article{lammps_tutorials_2025,
+     author={Gravelle, Simon and Alvares, Cecilia M. S. and Gissinger, Jacob R. and Kohlmeyer, Axel},
+     title={A Set of Tutorials for the {LAMMPS} Simulation Package [Article v1.0]},
+     journal={Living Journal of Computational Molecular Science},
+     pages={3027},
+     volume={6},
+     number={1},
+     year={2025},
+     month={Sep.},
+     url={https://livecomsjournal.org/index.php/livecoms/article/view/v6i1e3037},
+     DOI={10.33011/livecoms.6.1.3037}
+   }
 
 ------------------
 
