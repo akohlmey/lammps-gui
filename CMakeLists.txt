@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.20)
 
 project(lammps-gui
-  VERSION 1.8.3.1
+  VERSION 1.8.3.2
   LANGUAGES CXX
   DESCRIPTION "The LAMMPS GUI"
   HOMEPAGE_URL "https://lammps-gui.lammps.org/")
@@ -13,7 +13,7 @@ include(GNUInstallDirs)
 # prefer compiling plugin version only if standalone compile
 option(LAMMPS_GUI_USE_PLUGIN "Load LAMMPS library dynamically at runtime" ON)
 
-# prefer Qt6 by default
+# prefer Qt6 by default now that Qt5 is no longer officially supported
 option(LAMMPS_GUI_USE_QT5 "Prefer using Qt5 over Qt6" OFF)
 
 # build html documentation by default
