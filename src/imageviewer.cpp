@@ -868,7 +868,7 @@ void ImageViewer::createImage()
     QString elements = "element ";
     QString adiams;
     useelements = false;
-    if ((units == "real") || (units == "metal")) {
+    if (masses && (units == "real") || (units == "metal")) {
         useelements = true;
         for (int i = 1; i <= ntypes; ++i) {
             int idx = get_pte_from_mass(masses[i]);
