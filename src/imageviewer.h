@@ -84,6 +84,7 @@ private:
     void scaleImage(double factor);
     void adjustScrollBar(QScrollBar *scrollBar, double factor);
     void update_regions();
+    bool has_autobonds();
 
 private:
     QImage image;

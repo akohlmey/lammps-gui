@@ -273,6 +273,7 @@ ImageViewer::ImageViewer(const QString &fileName, LammpsWrapper *_lammps, QWidge
     dobond->setCheckable(true);
     dobond->setToolTip("Toggle dynamic bond representation");
     dobond->setObjectName("autobond");
+    dobond->setEnabled(false);
     auto *bondcut = new QLineEdit(QString::number(bondcutoff));
     bondcut->setMaxLength(5);
     bondcut->setObjectName("bondcut");
@@ -401,13 +402,14 @@ ImageViewer::ImageViewer(const QString &fileName, LammpsWrapper *_lammps, QWidge
     createActions();
 
     reset_view();
-    // layout has not yet be established, so we need to fix up some pushbutton
+    // layout has not yet been established, so we need to fix up some pushbutton
     // properties directly since lookup in reset_view() will have failed
     dobox->setChecked(showbox);
     doshiny->setChecked(shinyfactor > SHINY_CUT);
     dovdw->setChecked(vdwfactor > VDW_CUT);
     dovdw->setEnabled(useelements || usediameter || usesigma);
     dobond->setChecked(autobond);
+    dobond->setEnabled(has_autobonds());
     doaxes->setChecked(showaxes);
     dossao->setChecked(usessao);
     doanti->setChecked(antialias);
@@ -457,10 +459,13 @@ void ImageViewer::reset_view()
     button = findChild<QPushButton *>("vdw");
     if (button) button->setChecked(vdwfactor > VDW_CUT);
     button = findChild<QPushButton *>("autobond");
-    if (button) button->setChecked(autobond);
+    if (button) {
+        button->setEnabled(has_autobonds());
+        button->setChecked(autobond && has_autobonds());
+    }
     auto *cutoff = findChild<QLineEdit *>("bondcut");
     if (cutoff) {
-        cutoff->setEnabled(autobond);
+        cutoff->setEnabled(autobond && has_autobonds());
         cutoff->setText(QString::number(bondcutoff));
     }
     button = findChild<QPushButton *>("box");
@@ -972,7 +977,8 @@ void ImageViewer::createImage()
     else
         dumpcmd += " axes no 0.0 0.0";
 
-    if (autobond) dumpcmd += blank + "autobond" + blank + QString::number(bondcutoff) + " 0.5";
+    if (autobond && pair_style && (strcmp(pair_style, "none") != 0))
+        dumpcmd += blank + "autobond" + blank + QString::number(bondcutoff) + " 0.5";
 
     if (regions.size() > 0) {
         for (const auto &reg : regions) {
@@ -1131,6 +1137,14 @@ void ImageViewer::update_regions()
 
     auto *button = findChild<QPushButton *>("regions");
     if (button) button->setEnabled(regions.size() > 0);
+}
+
+bool ImageViewer::has_autobonds()
+{
+    if (!lammps) return false;
+    const auto *pair_style = (const char*)lammps->extract_global("pair_style");
+    if (!pair_style) return false;
+    return strcmp(pair_style, "none") != 0;
 }
 
 // Local Variables:
