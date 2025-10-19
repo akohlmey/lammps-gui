@@ -852,6 +852,8 @@ void ImageViewer::createImage()
     }
 
     QSettings settings;
+    // attempt to clean up if a previous write_dump command failed
+    lammps->command("if $(is_defined(dump,WRITE_DUMP)) then 'undump WRITE_DUMP'");
     QString dumpcmd = QString("write_dump ") + group + " image ";
     QDir dumpdir(QDir::tempPath());
     QFile dumpfile(dumpdir.absoluteFilePath(filename + ".ppm"));
