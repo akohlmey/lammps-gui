@@ -60,6 +60,9 @@
         Add entries to run and stop LAMMPS to editor context menu
         Update suggested citation to the published LAMMPS tutorial paper
         Update CodeQL workflow
+        Only enable and use autobond feature if a pair style is defined
+        Clean up in case a previous write_dump command failed
+        Avoid segfault in image viewer when using per-atom masses
       </description>
     </release>
     <release version="1.8.3" timestamp="1756739129">
