@@ -1108,6 +1108,7 @@ void ImageViewer::adjustScrollBar(QScrollBar *scrollBar, double factor)
 void ImageViewer::update_regions()
 {
     if (!lammps) return;
+    if (lammps->version() < 20250910) return;
 
     // remove any regions that no longer exist. to avoid inconsistencies while looping
     // over the regions, we first collect the list of missing id and then apply it.
