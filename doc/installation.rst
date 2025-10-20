@@ -72,12 +72,14 @@ some system folders) and stop with an error, if no suitable library
 could be found.
 
 In that case, or if you want to override the default choice, you can use
-the ``-p`` command line flag to tell LAMMPS-GUI which LAMMPS
-shared library file you want it to load.  By using ``-p ""`` you
-can also reset any previous choice and trigger the automated search
-again.  Once LAMMPS-GUI is running, you can also change the path from
-the :doc:`Preferences dialog <dialogs>`.
+the ``-p`` command line flag to tell LAMMPS-GUI which LAMMPS shared
+library file you want it to load.  By using ``-p ""`` you can also reset
+any previous choice and trigger the automated search again.  Once
+LAMMPS-GUI is running, you can also change the path from the
+:doc:`Preferences dialog <dialogs>`.
 
+As of LAMMPS-GUI version 1.8.4, the minimum LAMMPS version required is
+22 July 2025 update 2.
 
 GPU support and MPI parallelization
 -----------------------------------
