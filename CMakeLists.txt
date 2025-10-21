@@ -281,7 +281,10 @@ if(BUILD_DOC OR BUILD_DOC_ONLY)
     DEPENDS docenv/bin ${DOC_SOURCES} ${DOCENV_DEPS} ${SPHINX_CONFIG_FILE_TEMPLATE} ${SPHINX_DIR}/_static/style.css
     COMMAND Sphinx::sphinx-build ${SPHINX_EXTRA_OPTS} -b html -c ${DOC_BUILD_DIR} -d ${DOC_BUILD_DIR}/doctrees ${CMAKE_SOURCE_DIR}/doc ${DOC_BUILD_DIR}/html ${DOC_SOURCES}
   )
-  
+  # remove virtual environment on "make clean"
+  set_target_properties(html
+    PROPERTIES ADDITIONAL_CLEAN_FILES "${CMAKE_BINARY_DIR}/docenv")
+
   # Make html target depend on doxygen if available
   if(DOXYGEN_FOUND)
     add_dependencies(html doxygen)
