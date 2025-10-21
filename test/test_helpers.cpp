@@ -88,6 +88,17 @@ TEST_F(HelpersTest, MyStrdupCStringEmpty)
     delete[] result;
 }
 
+TEST_F(HelpersTest, MyStrdupCStringNull)
+{
+    const char *input = nullptr;
+    char *result      = mystrdup(input);
+
+    ASSERT_NE(result, nullptr);
+    EXPECT_STREQ(result, "");
+
+    delete[] result;
+}
+
 TEST_F(HelpersTest, MyStrdupQString)
 {
     QString input = "Qt String Test";

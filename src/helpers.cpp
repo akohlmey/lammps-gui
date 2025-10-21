@@ -39,6 +39,7 @@ char *mystrdup(const std::string &text)
 // duplicate string, pointer version
 char *mystrdup(const char *text)
 {
+    if (text == nullptr) return mystrdup("");
     return mystrdup(std::string(text));
 }
 
