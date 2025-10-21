@@ -36,6 +36,8 @@ version = '@PROJECT_VERSION@'
 release = get_git_info()
 language = 'en'
 
+rst_prolog = ".. |copyright| replace:: {0}".format(copyright)
+
 # -- General configuration ---------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#general-configuration
 

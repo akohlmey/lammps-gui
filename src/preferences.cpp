@@ -1,15 +1,13 @@
-/* ----------------------------------------------------------------------
-   LAMMPS - Large-scale Atomic/Molecular Massively Parallel Simulator
-   https://www.lammps.org/, Sandia National Laboratories
-   LAMMPS development team: developers@lammps.org
-
-   Copyright (2003) Sandia Corporation.  Under the terms of Contract
-   DE-AC04-94AL85000 with Sandia Corporation, the U.S. Government retains
-   certain rights in this software.  This software is distributed under
-   the GNU General Public License.
-
-   See the README file in the top-level LAMMPS directory.
-------------------------------------------------------------------------- */
+// -*- c++ -*- /////////////////////////////////////////////////////////////////////////
+// LAMMPS-GUI - A Graphical Tool to Learn and Explore the LAMMPS MD Simulation Software
+//
+// Copyright (c) 2023, 2024, 2025  Axel Kohlmeyer
+//
+// Documentation: https://lammps-gui.lammps.org/
+// Contact: akohlmey@gmail.com
+//
+// This software is distributed under the GNU General Public License version 2 or later.
+////////////////////////////////////////////////////////////////////////////////////////
 
 #include "preferences.h"
 
