@@ -1,3 +1,4 @@
+accessors
 Alvares
 camelCase
 cmake
@@ -13,6 +14,7 @@ dmg
 Doxygen
 flatpak
 Gissinger
+Golay
 GPG
 Gravelle
 kspace
@@ -21,14 +23,20 @@ MBytes
 natively
 nullptr
 pre
+prev
+QFrame
 QObject
+QSettings
 QSize
 QString
 README
+Savitzky
 stdout
 Sur
 toolchain
 txt
+Validator
+varname
 Ventura
 webpage
 whitespace

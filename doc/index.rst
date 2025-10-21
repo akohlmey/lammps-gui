@@ -73,7 +73,7 @@ This document describes LAMMPS-GUI version |version|.
    <a href="https://github.com/akohlmey/lammps-gui/actions/workflows/codeql-analysis.yml"><img src="https://github.com/akohlmey/lammps-gui/actions/workflows/codeql-analysis.yml/badge.svg" alt="CodeQL Code Analysis" style="max-width: 100%;"></a>
    <a href="https://github.com/akohlmey/lammps-gui/actions/workflows/build-html-docs.yml"><img src="https://github.com/akohlmey/lammps-gui/actions/workflows/build-html-docs.yml/badge.svg" alt="Build Documentation in HTML" style="max-width: 100%;"></a></p>
 
-`------------------
+------------------
 
 *****************
 Citing LAMMPS-GUI
