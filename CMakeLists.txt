@@ -189,6 +189,14 @@ if (NOT BUILD_DOC_ONLY)
   target_include_directories(lammps-gui PRIVATE ${CMAKE_SOURCE_DIR}/src)
   target_compile_definitions(lammps-gui PRIVATE LAMMPS_GUI_VERSION="${PROJECT_VERSION}")
   target_link_libraries(lammps-gui PRIVATE Qt${QT_VERSION_MAJOR}::Widgets Qt${QT_VERSION_MAJOR}::Charts)
+
+  ###################
+  # unit tests
+  option(BUILD_TESTING "Build unit tests" ON)
+  if(BUILD_TESTING)
+    include(CTest)
+    add_subdirectory(test)
+  endif()
 endif()
 
 ###################
