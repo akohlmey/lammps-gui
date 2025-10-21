@@ -192,10 +192,13 @@ if (NOT BUILD_DOC_ONLY)
 
   ###################
   # unit tests
-  option(BUILD_TESTING "Build unit tests" ON)
-  if(BUILD_TESTING)
+  option(ENABLE_TESTING "Build unit tests" OFF)
+  if(ENABLE_TESTING)
+    message(STATUS "Testing is enabled")
     include(CTest)
     add_subdirectory(test)
+  else()
+    message(STATUS "Testing is disabled")
   endif()
 endif()
 

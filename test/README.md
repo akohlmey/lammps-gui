@@ -8,12 +8,12 @@ The test suite uses GoogleTest and is integrated with CMake's CTest framework. T
 
 ## Building the Tests
 
-Tests are built as part of the main project build when `BUILD_TESTING` is enabled (default: ON).
+Tests are built as part of the main project build when `ENABLE_TESTING` is enabled (default: ON).
 
 ### Quick Build (No Documentation)
 
 ```bash
-cmake -S . -B build -D LAMMPS_GUI_USE_PLUGIN=yes -D BUILD_DOC=no -D BUILD_TESTING=ON
+cmake -S . -B build -D LAMMPS_GUI_USE_PLUGIN=yes -D BUILD_DOC=no -D ENABLE_TESTING=ON
 cmake --build build --parallel 2
 ```
 
@@ -22,7 +22,7 @@ cmake --build build --parallel 2
 To build without tests:
 
 ```bash
-cmake -S . -B build -D BUILD_TESTING=OFF
+cmake -S . -B build -D ENABLE_TESTING=OFF
 ```
 
 ## Running Tests
@@ -146,6 +146,6 @@ TEST_F(HelpersTest, NewTestName)
 ## CI Integration
 
 The test suite integrates with existing CI workflows:
-- Tests run as part of the standard build process when `BUILD_TESTING=ON`
+- Tests run as part of the standard build process when `ENABLE_TESTING=ON`
 - CTest provides standard output for CI systems
 - Tests can be disabled for documentation-only builds
