@@ -1,0 +1,5 @@
+This folder contains a copy of the dynamic LAMMPS library loader plugin
+from the "examples/COUPLE/plugin" folder of the LAMMPS distribution.
+
+This allows to call the LAMMPS C-language library interface after
+loading it as a shared library at runtime.

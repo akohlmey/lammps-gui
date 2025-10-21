@@ -59,6 +59,7 @@
         Block compiling LAMMPS-GUI in plugin mode on Windows
         Add entries to run and stop LAMMPS to editor context menu
         Update suggested citation to the published LAMMPS tutorial paper
+        Update copyright header
         Update CodeQL workflow
         Only enable and use autobond feature if a pair style is defined
         and if the LAMMPS version (10 September 2025 and later) supports it

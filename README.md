@@ -39,4 +39,6 @@ from LAMMPS-GUI, so the suggestion is to cite that publication for now:
 }
 ```
 
+## License
 
+LAMMPS-GUI is distributed under the GNU public license version 2 or later (GPLv2+).
