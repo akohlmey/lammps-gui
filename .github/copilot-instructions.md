@@ -271,8 +271,9 @@ cmake --build build --parallel 2
 1. **Always test with offscreen platform** first: `./build/lammps-gui --platform offscreen -v`
 2. **Check for compiler warnings**: Build with `-D CMAKE_BUILD_TYPE=Debug` and `-Wall -Wextra`
 3. **Format before commit**: Use `clang-format` with project's `.clang-format` config
-4. **Test both Qt versions** if possible (Qt5 and Qt6 have subtle differences)
-5. **Update docs** if changing user-facing features (files in `doc/` directory)
+4. **GPG sign commits**: All git commits must be GPG signed with a verifiable signature
+5. **Test both Qt versions** if possible (Qt5 and Qt6 have subtle differences)
+6. **Update docs** if changing user-facing features (files in `doc/` directory)
 
 ### Adding New Source Files
 1. Add to `PROJECT_SOURCES` list in `CMakeLists.txt` (lines 88-127)
