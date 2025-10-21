@@ -54,7 +54,7 @@ jobs:
               -D BUILD_DOC=no \
               -D CMAKE_CXX_STANDARD=23 \
               -D CMAKE_BUILD_TYPE=Debug \
-              -D CMAKE_CXX_FLAGS_DEBUG="-Og -g -Wall -Wextra"
+              -D CMAKE_CXX_FLAGS_DEBUG="-Og -g -Wall -Wextra" \
               -D ENABLE_TESTING=yes \
         cmake --build build --parallel 2
 
