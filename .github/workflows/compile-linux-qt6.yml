@@ -54,8 +54,8 @@ jobs:
               -D BUILD_DOC=no \
               -D CMAKE_CXX_STANDARD=23 \
               -D CMAKE_BUILD_TYPE=Debug \
-              -D CMAKE_CXX_FLAGS_DEBUG="-Og -g -Wall -Wextra" \
               -D ENABLE_TESTING=yes \
+              -D CMAKE_CXX_FLAGS_DEBUG="-Og -g -Wall -Wextra"
         cmake --build build --parallel 2
 
     - name: Check if LAMMPS-GUI can run at all
