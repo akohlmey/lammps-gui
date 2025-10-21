@@ -55,5 +55,15 @@ jobs:
               -D CMAKE_CXX_STANDARD=23 \
               -D CMAKE_BUILD_TYPE=Debug \
               -D CMAKE_CXX_FLAGS_DEBUG="-Og -g -Wall -Wextra"
+              -D ENABLE_TESTING=yes \
         cmake --build build --parallel 2
+
+    - name: Check if LAMMPS-GUI can run at all
+      shell: bash
+      run: |
         build/lammps-gui --platform offscreen -v
+
+    - name: Run Tests via CTest
+      shell: bash
+      run: |
+        ctest --test-dir build/test -V
