@@ -6,6 +6,22 @@ The following sections provide detailed API documentation for the main
 classes in LAMMPS-GUI. Documentation is generated from Doxygen comments
 in the source code.
 
+Main Window
+===========
+
+LammpsGui Class
+---------------
+
+.. doxygenclass:: LammpsGui
+   :members:
+   :protected-members:
+
+TutorialWizard Class
+--------------------
+
+.. doxygenclass:: TutorialWizard
+   :members:
+
 Editor Components
 =================
 

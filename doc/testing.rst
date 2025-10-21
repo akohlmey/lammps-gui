@@ -82,62 +82,177 @@ The list of the names of all available tests can be obtained with:
 Current Test Coverage
 ^^^^^^^^^^^^^^^^^^^^^
 
-The test infrastructure is very much a work in progress and thus only
-a very limited number of tests are available.
+The test infrastructure is under active development. Currently, the test suite
+focuses on utility functions and command-line interface validation. Future
+expansion will include GUI component testing and integration tests.
+
+Test Organization
+=================
+
+Tests are organized into two main categories:
+
+1. **Unit Tests**: Using GoogleTest framework to test individual functions
+2. **Command-Line Tests**: Using CTest to validate executable behavior
+
+Unit Tests
+==========
 
 test_helpers.cpp
-================
+----------------
 
-Tests for functions in `src/helpers.h` and `src/helpers.cpp`:
+Comprehensive tests for functions in ``src/helpers.h`` and ``src/helpers.cpp``.
+This module contains 28 test cases covering utility functions used throughout
+the application.
 
-- **mystrdup**: String duplication functions (3 overloads)
-  - `mystrdup(const std::string&)`
-  - `mystrdup(const char*)`
-  - `mystrdup(const QString&)`
+**String Duplication (mystrdup)**
+  Tests for the three overloaded mystrdup functions that create heap-allocated
+  C-style strings from different input types:
   
-- **date_compare**: Date string comparison
-  - Same dates
-  - Different years, months, days
-  - Full month names
-  - Invalid formats
+  - ``mystrdup(const std::string&)`` - From std::string
+  - ``mystrdup(const char*)`` - From C string (handles nullptr)
+  - ``mystrdup(const QString&)`` - From Qt QString
   
-- **split_line**: String splitting with quote handling
-  - Simple whitespace splitting
-  - Single and double quotes
-  - Escaped quotes
-  - Mixed quotes
-  - Triple quotes
-  - Multiple whitespace characters
+  Coverage includes:
   
-- **has_exe**: Executable detection in PATH
-  - System commands
+  - Normal strings with content
+  - Empty strings
+  - Null pointers (C string variant)
+  - UTF-8 and special characters
+  - Long strings
+
+**Date Comparison (date_compare)**
+  Tests for the date_compare function that compares version date strings
+  in LAMMPS date format (e.g., "22 Jul 2025"):
+  
+  - Same dates (returns 0)
+  - Different years (returns positive/negative)
+  - Different months (returns positive/negative)
+  - Different days (returns positive/negative)
+  - Full month names vs. abbreviations
+  - Invalid date formats
+  - Edge cases (year boundaries, month boundaries)
+
+**Line Splitting (split_line)**
+  Tests for the split_line function that parses command-line style input
+  with proper quote handling:
+  
+  - Simple whitespace-separated tokens
+  - Single-quoted strings
+  - Double-quoted strings
+  - Escaped quotes within strings
+  - Mixed quoting styles
+  - Triple-nested quotes
+  - Multiple consecutive whitespace characters
+  - Empty input
+  - Quotes at string boundaries
+
+**Executable Detection (has_exe)**
+  Tests for the has_exe function that checks if an executable exists in PATH:
+  
+  - Common system commands (sh, ls on Unix; cmd on Windows)
   - Non-existent commands
-  
-- **is_light_theme**: Theme detection
-  - Boolean return value validation
+  - Commands with spaces in paths
+  - Platform-specific behavior (conditional compilation)
 
-Command Line Tests
+**Theme Detection (is_light_theme)**
+  Tests for the is_light_theme function that determines if the current
+  Qt theme is light or dark:
+  
+  - Boolean return value validation
+  - Consistency across calls
+  - No crashes on theme query
+
+Command-Line Tests
 ==================
-    
-There are two tests that launch LAMMPS-GUI but print some text output
-and then terminate before the GUI is initialized.
+
+These tests validate the ``lammps-gui`` executable behavior without starting
+the full GUI. They run quickly and are useful for CI/CD pipelines.
 
 CommandLine.GetVersion
-**********************
+-----------------------
 
-This runs the ``lammps-gui`` executable with the "-v" flag to have it
-print the LAMMPS-GUI version number which then compared to the
-PROJECT_VERSION CMake variable.
+**Purpose**: Verify version reporting consistency
+
+This test runs::
+
+  lammps-gui --platform offscreen -v
+
+and validates that:
+
+- The executable launches successfully
+- Version output includes "LAMMPS-GUI (QT5)" or "LAMMPS-GUI (QT6)"
+- Version number matches the ``PROJECT_VERSION`` CMake variable
+- Process exits cleanly with status 0
+
+**Environment**: ``OMP_NUM_THREADS=1`` to ensure consistent behavior
 
 CommandLine.HasPlugin
-*********************
+----------------------
 
-This runs the ``lammps-gui`` executable with the "-h" flag to have it
-print the LAMMPS-GUI command line usage help text.  Depending on whether
-CMake configuration was done with ``-D LAMMPS_GUI_USE_PLUGIN=ON`` (the
-default) or ``-D LAMMPS_GUI_USE_PLUGIN=OFF`` the help message will either
-contain some text about using the ``-p`` or not.  This test checks whether
-the help message is consistent with the configuration settings.
+**Purpose**: Verify build configuration is reflected in help text
+
+This test runs::
+
+  lammps-gui --platform offscreen -h
+
+and validates that help text is consistent with CMake configuration:
+
+- **Plugin Mode** (``LAMMPS_GUI_USE_PLUGIN=ON``): Help text includes
+  "-p, --pluginpath <path>" option
+- **Linked Mode** (``LAMMPS_GUI_USE_PLUGIN=OFF``): Help text omits
+  plugin path option
+
+**Environment**: ``OMP_NUM_THREADS=1`` to ensure consistent behavior
+
+Test Fixtures and Utilities
+============================
+
+**HelpersTest Fixture**
+  Base test fixture that creates a ``QCoreApplication`` instance for tests
+  that require Qt functionality. The application is created once per test
+  suite and reused across tests for efficiency.
+
+**Platform-Specific Testing**
+  Tests use conditional compilation (``#ifdef _WIN32``) to adapt to
+  platform differences in:
+  
+  - Path separators
+  - Line endings
+  - Available system executables
+  - Default shell commands
+
+Future Test Expansion
+=====================
+
+Planned additions to the test suite include:
+
+**GUI Component Tests**
+  - CodeEditor text manipulation
+  - Syntax highlighter accuracy
+  - Find/replace functionality
+  - Auto-completion behavior
+
+**LAMMPS Integration Tests**
+  - LammpsWrapper command execution
+  - Variable substitution
+  - Error handling
+  - Output capture
+
+**File I/O Tests**
+  - File opening/saving
+  - Recent files management
+  - Auto-save functionality
+  - Data file inspection
+
+**Preferences Tests**
+  - Settings persistence
+  - Default value initialization
+  - Migration between versions
+
+**Tutorial Tests**
+  - Tutorial file generation
+  - Directory setup
+  - Resource extraction
 
 Adding Tests
 ^^^^^^^^^^^^
