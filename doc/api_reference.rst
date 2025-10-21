@@ -44,13 +44,95 @@ LammpsRunner Class
 .. doxygenclass:: LammpsRunner
    :members:
 
-Utility Classes
-===============
+Visualization Components
+========================
+
+ChartWindow Class
+-----------------
+
+.. doxygenclass:: ChartWindow
+   :members:
+   :protected-members:
+
+ChartViewer Class
+-----------------
+
+.. doxygenclass:: QtCharts::ChartViewer
+   :members:
+
+ImageViewer Class
+-----------------
+
+.. doxygenclass:: ImageViewer
+   :members:
+
+SlideShow Class
+---------------
+
+.. doxygenclass:: SlideShow
+   :members:
+
+Dialog Components
+=================
+
+FindAndReplace Class
+--------------------
+
+.. doxygenclass:: FindAndReplace
+   :members:
+
+SetVariables Class
+------------------
+
+.. doxygenclass:: SetVariables
+   :members:
+
+Preferences Class
+-----------------
+
+.. doxygenclass:: Preferences
+   :members:
+
+Utility Components
+==================
+
+FileViewer Class
+----------------
+
+.. doxygenclass:: FileViewer
+   :members:
+   :protected-members:
+
+LogWindow Class
+---------------
+
+.. doxygenclass:: LogWindow
+   :members:
+   :protected-members:
+
+FlagWarnings Class
+------------------
+
+.. doxygenclass:: FlagWarnings
+   :members:
+   :protected-members:
 
 StdCapture Class
 ----------------
 
 .. doxygenclass:: StdCapture
+   :members:
+
+Qt Helper Widgets
+-----------------
+
+.. doxygenclass:: QHline
+   :members:
+
+.. doxygenclass:: QColorCompleter
+   :members:
+
+.. doxygenclass:: QColorValidator
    :members:
 
 Helper Functions
