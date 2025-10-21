@@ -121,6 +121,7 @@ This document describes LAMMPS-GUI version |version|.
    menus
    dialogs
    shortcuts
+   programmers_guide
 
 ----------
 

@@ -195,6 +195,27 @@ endif()
 # documentation
 
 if(BUILD_DOC OR BUILD_DOC_ONLY)
+  # Find Doxygen for API documentation
+  find_package(Doxygen)
+  if(DOXYGEN_FOUND)
+    set(DOXYGEN_CONFIG_FILE_IN ${CMAKE_SOURCE_DIR}/doc/Doxyfile.in)
+    set(DOXYGEN_CONFIG_FILE ${CMAKE_BINARY_DIR}/doc/Doxyfile)
+    set(DOXYGEN_OUTPUT_DIR ${CMAKE_BINARY_DIR}/doc/doxygen)
+    
+    # Configure Doxyfile
+    configure_file(${DOXYGEN_CONFIG_FILE_IN} ${DOXYGEN_CONFIG_FILE} @ONLY)
+    
+    # Create custom target for Doxygen
+    add_custom_target(doxygen
+      COMMAND ${DOXYGEN_EXECUTABLE} ${DOXYGEN_CONFIG_FILE}
+      WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
+      COMMENT "Generating API documentation with Doxygen"
+      VERBATIM
+    )
+  else()
+    message(WARNING "Doxygen not found. API documentation will not be generated.")
+  endif()
+
   # Current Sphinx versions require at least Python 3.8
   # use default (or custom) Python executable, if version is sufficient
   if(Python_VERSION VERSION_GREATER_EQUAL 3.8)
@@ -249,6 +270,11 @@ if(BUILD_DOC OR BUILD_DOC_ONLY)
     DEPENDS docenv/bin ${DOC_SOURCES} ${DOCENV_DEPS} ${SPHINX_CONFIG_FILE_TEMPLATE} ${SPHINX_DIR}/_static/style.css
     COMMAND Sphinx::sphinx-build ${SPHINX_EXTRA_OPTS} -b html -c ${DOC_BUILD_DIR} -d ${DOC_BUILD_DIR}/doctrees ${CMAKE_SOURCE_DIR}/doc ${DOC_BUILD_DIR}/html ${DOC_SOURCES}
   )
+  
+  # Make html target depend on doxygen if available
+  if(DOXYGEN_FOUND)
+    add_dependencies(html doxygen)
+  endif()
 
   add_custom_target(
     spelling
