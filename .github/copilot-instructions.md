@@ -9,9 +9,9 @@
 - Chart plotting capabilities
 - Image/slideshow viewing of simulation snapshots
 
-**Repository**: https://github.com/akohlmey/lammps-gui  
-**Documentation**: https://lammps-gui.lammps.org/  
-**Version**: 1.8.3.2 (see CMakeLists.txt line 4)  
+**Repository**: https://github.com/akohlmey/lammps-gui
+**Documentation**: https://lammps-gui.lammps.org/
+**Version**: 1.8.3.2 (see CMakeLists.txt line 4)
 **License**: GNU GPL v2
 
 ### Key Statistics
@@ -375,6 +375,11 @@ cmake -S . -B build -D CMAKE_BUILD_TYPE=Debug \
   -D LAMMPS_GUI_USE_PLUGIN=yes -D BUILD_DOC=no
 cmake --build build 2>&1 | grep -i "warning:"
 ```
+## Code Review
+
+When performing a code review, check any changes to the documentation
+(in the `doc/` folder) to be written in American English and with plain
+ASCII characters.
 
 ## Trust These Instructions
 
