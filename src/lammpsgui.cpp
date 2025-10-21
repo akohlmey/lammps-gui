@@ -155,7 +155,6 @@ LammpsGui::LammpsGui(QWidget *parent, const QString &filename) :
         for (const auto &fn : entries)
             choices.append(fn.canonicalFilePath());
         choices.removeDuplicates();
-        QString lmpversion;
         for (const auto &libpath : choices) {
             if (lammps.load_lib(libpath)) {
                 plugin_path = libpath;

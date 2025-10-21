@@ -426,7 +426,7 @@ bool LammpsWrapper::load_lib(const char *libfile)
     if (ptr) lmpversion = ptr;
 
     // found a suitable version
-    if (!lmpversion.isEmpty() && (date_compare(lmpversion, "10 Sep 2025") >= 0)) return true;
+    if (!lmpversion.isEmpty() && (date_compare(lmpversion, "22 Jul 2025") >= 0)) return true;
     return false;
 }
 #else
