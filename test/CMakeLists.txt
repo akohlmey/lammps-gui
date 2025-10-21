@@ -27,6 +27,25 @@ else()
   set(QT_VERSION_MAJOR 6)
 endif()
 
+# General command line tests on the LAMMPS-GUI executable
+add_test(NAME CommandLine.GetVersion
+  COMMAND $<TARGET_FILE:lammps-gui> --platform offscreen -v)
+set_tests_properties(CommandLine.GetVersion PROPERTIES
+  ENVIRONMENT "OMP_NUM_THREADS=1"
+  PASS_REGULAR_EXPRESSION "LAMMPS-GUI \\(QT${QT_VERSION_MAJOR}\\) ${PROJECT_VERSION}")
+
+add_test(NAME CommandLine.HasPlugin
+  COMMAND $<TARGET_FILE:lammps-gui> --platform offscreen -h)
+if (LAMMPS_GUI_USE_PLUGIN)
+  set_tests_properties(CommandLine.HasPlugin PROPERTIES
+    ENVIRONMENT "OMP_NUM_THREADS=1"
+    PASS_REGULAR_EXPRESSION "Options:.?  -p, --pluginpath <path>  Set path to LAMMPS")
+else()
+  set_tests_properties(CommandLine.HasPlugin PROPERTIES
+    ENVIRONMENT "OMP_NUM_THREADS=1"
+    PASS_REGULAR_EXPRESSION "Options:.?  -h, --help     Displays help on commandline options.")
+endif()
+
 # Test executable for helpers
 add_executable(test_helpers
   test_helpers.cpp
@@ -42,5 +61,5 @@ target_link_libraries(test_helpers
   Qt${QT_VERSION_MAJOR}::Widgets
 )
 
-# Discover tests
+# Discover tests for test executables
 gtest_discover_tests(test_helpers)
