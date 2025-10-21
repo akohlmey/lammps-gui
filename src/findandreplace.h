@@ -18,11 +18,28 @@
 class QLineEdit;
 class QCheckBox;
 
+/**
+ * @brief Find and Replace dialog for the code editor
+ * 
+ * FindAndReplace provides a dialog for searching and replacing text
+ * in the CodeEditor. It supports case-sensitive/insensitive search,
+ * whole word matching, text wrapping, and batch replace operations.
+ * The dialog is non-modal so users can continue editing while searching.
+ */
 class FindAndReplace : public QDialog {
     Q_OBJECT
 
 public:
+    /**
+     * @brief Constructor
+     * @param _editor Pointer to the CodeEditor to search in
+     * @param parent Parent widget
+     */
     explicit FindAndReplace(CodeEditor *_editor, QWidget *parent = nullptr);
+    
+    /**
+     * @brief Destructor
+     */
     ~FindAndReplace() override = default;
 
     FindAndReplace()                                  = delete;
@@ -32,15 +49,15 @@ public:
     FindAndReplace &operator=(FindAndReplace &&)      = delete;
 
 private slots:
-    void find_next();
-    void replace_next();
-    void replace_all();
-    void quit();
+    void find_next();     ///< Find next occurrence of search text
+    void replace_next();  ///< Replace current match and find next
+    void replace_all();   ///< Replace all occurrences in document
+    void quit();          ///< Close the dialog
 
 private:
-    CodeEditor *editor;
-    QLineEdit *search, *replace;
-    QCheckBox *withcase, *wrap, *whole;
+    CodeEditor *editor;              ///< Editor to search in
+    QLineEdit *search, *replace;     ///< Search and replacement text fields
+    QCheckBox *withcase, *wrap, *whole; ///< Options: case-sensitive, wrap around, whole words
 };
 
 #endif

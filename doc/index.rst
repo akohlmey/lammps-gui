@@ -38,24 +38,40 @@ LAMMPS.  As a demonstration LAMMPS-GUI is fully integrated with a
 LAMMPS-GUI also offers useful features beyond tutorials and for
 intermediate and advanced LAMMPS users.
 
--------
-
 LAMMPS-GUI is Copyright (c) |copyright|, and distributed under
 the terms of the GNU public license version 2 or later (GPLv2+)
 
 --------
 
-******************
-About this website
-******************
+*******************
+About this document
+*******************
 
-The content of this website provides the documentation of the features
-and functionality of LAMMPS-GUI and how to compile and install it.
-Suggestions for new features and reports of bugs are always welcome.
-You can use the `the same channels as for LAMMPS itself
+This document contains the documentation of LAMMPS-GUI and how to
+compile, install, use, configure, and modify it.  Suggestions for new
+features and reports of bugs are always welcome.  You can use the `the
+same channels as for LAMMPS itself
 <https://docs.lammps.org/Errors_bugs.html>`_ for that purpose or submit
 bug reports or pull requests in the `LAMMPS-GUI GitHub repository
 <https://github.com/akohlmey/lammps-gui>`_
+
+------------------
+
+.. raw:: html
+
+   <h2>
+
+This document describes LAMMPS-GUI version |version|.
+
+.. raw:: html
+
+   </h2>
+   <hr>
+   <h3>Test Status of the development branch:</h3>
+   <p dir="auto"><a href="https://github.com/akohlmey/lammps-gui/actions/workflows/compile-linux-qt5.yml"><img src="https://github.com/akohlmey/lammps-gui/actions/workflows/compile-linux-qt5.yml/badge.svg" alt="Compile with Qt 5.15LTS" style="max-width: 100%;"></a>
+   <a href="https://github.com/akohlmey/lammps-gui/actions/workflows/compile-linux-qt6.yml"><img src="https://github.com/akohlmey/lammps-gui/actions/workflows/compile-linux-qt6.yml/badge.svg" alt="Compile with Qt 6.x" style="max-width: 100%;"></a>
+   <a href="https://github.com/akohlmey/lammps-gui/actions/workflows/codeql-analysis.yml"><img src="https://github.com/akohlmey/lammps-gui/actions/workflows/codeql-analysis.yml/badge.svg" alt="CodeQL Code Analysis" style="max-width: 100%;"></a>
+   <a href="https://github.com/akohlmey/lammps-gui/actions/workflows/build-html-docs.yml"><img src="https://github.com/akohlmey/lammps-gui/actions/workflows/build-html-docs.yml/badge.svg" alt="Build Documentation in HTML" style="max-width: 100%;"></a></p>
 
 ------------------
 
@@ -92,23 +108,13 @@ or in BibTeX format:
 
 ------------------
 
-.. raw:: html
+.. raw:: latex
 
-   <h2>
+   \clearpage
 
-This document describes LAMMPS-GUI version |version|.
-
-.. raw:: html
-
-   </h2>
-   <hr>
-   <h4>Test Status of the development branch:</h4>
-   <p dir="auto"><a href="https://github.com/akohlmey/lammps-gui/actions/workflows/compile-linux-qt5.yml"><img src="https://github.com/akohlmey/lammps-gui/actions/workflows/compile-linux-qt5.yml/badge.svg" alt="Compile with Qt 5.15LTS" style="max-width: 100%;"></a>
-   <a href="https://github.com/akohlmey/lammps-gui/actions/workflows/compile-linux-qt6.yml"><img src="https://github.com/akohlmey/lammps-gui/actions/workflows/compile-linux-qt6.yml/badge.svg" alt="Compile with Qt 6.x" style="max-width: 100%;"></a>
-   <a href="https://github.com/akohlmey/lammps-gui/actions/workflows/codeql-analysis.yml"><img src="https://github.com/akohlmey/lammps-gui/actions/workflows/codeql-analysis.yml/badge.svg" alt="CodeQL Code Analysis" style="max-width: 100%;"></a>
-   <a href="https://github.com/akohlmey/lammps-gui/actions/workflows/build-html-docs.yml"><img src="https://github.com/akohlmey/lammps-gui/actions/workflows/build-html-docs.yml/badge.svg" alt="Build Documentation in HTML" style="max-width: 100%;"></a></p>
-
-------------------
+************
+User's Guide
+************
 
 .. toctree::
    :caption: Table of Contents
@@ -126,6 +132,34 @@ This document describes LAMMPS-GUI version |version|.
    menus
    dialogs
    shortcuts
+
+------------------
+
+.. raw:: latex
+
+   \clearpage
+
+******************
+Programmer's Guide
+******************
+
+This guide provides documentation for developers who want to understand
+the internals of LAMMPS-GUI or contribute to its development.
+
+.. toctree::
+   :caption: Table of Contents
+   :maxdepth: 2
+   :numbered: 3
+   :name: progdoc
+   :includehidden:
+
+   introduction
+   architecture
+   api_reference
+   guidelines
+   lammps_interface
+   qt_integration
+   testing
 
 ----------
 

@@ -44,10 +44,18 @@ rst_prolog = ".. |copyright| replace:: {0}".format(copyright)
 needs_sphinx = '5.3.0'
 
 extensions = [
+        'breathe',
         'sphinxcontrib.jquery',
         'sphinx_design',
         'sphinx_sitemap',
         ]
+
+# Breathe configuration
+breathe_projects = {
+    "LAMMPS-GUI": "@CMAKE_CURRENT_BINARY_DIR@/doxygen/xml"
+}
+breathe_default_project = "LAMMPS-GUI"
+breathe_default_members = ('members', 'undoc-members')
 
 images_config = {
         'default_image_width' : '25%',

@@ -20,11 +20,33 @@ class QSettings;
 class QTabWidget;
 class LammpsWrapper;
 
+/**
+ * @brief Preferences/Settings dialog for LAMMPS-GUI
+ * 
+ * This dialog provides a tabbed interface for configuring various aspects
+ * of LAMMPS-GUI including:
+ * - General settings (LAMMPS library path, plugins, etc.)
+ * - Accelerator package settings
+ * - Image viewer defaults
+ * - Editor appearance and behavior
+ * - Chart viewer settings
+ * 
+ * Settings are persisted using QSettings and loaded on startup.
+ */
 class Preferences : public QDialog {
     Q_OBJECT
 
 public:
+    /**
+     * @brief Constructor
+     * @param lammps Pointer to LammpsWrapper for querying LAMMPS configuration
+     * @param parent Parent widget
+     */
     explicit Preferences(LammpsWrapper *lammps, QWidget *parent = nullptr);
+    
+    /**
+     * @brief Destructor - saves settings on close
+     */
     ~Preferences() override;
 
     Preferences()                               = delete;
@@ -34,17 +56,26 @@ public:
     Preferences &operator=(Preferences &&)      = delete;
 
 private slots:
+    /**
+     * @brief Handle dialog acceptance - saves all settings
+     */
     void accept() override;
 
 public:
+    /**
+     * @brief Set flag indicating application needs restart
+     * @param val true if restart needed, false otherwise
+     * 
+     * Some settings require restarting the application to take effect.
+     */
     void set_relaunch(bool val) { need_relaunch = val; }
 
 private:
-    QTabWidget *tabWidget;
-    QDialogButtonBox *buttonBox;
-    QSettings *settings;
-    LammpsWrapper *lammps;
-    bool need_relaunch;
+    QTabWidget *tabWidget;       ///< Tab widget for preference categories
+    QDialogButtonBox *buttonBox; ///< Dialog buttons (OK, Cancel)
+    QSettings *settings;         ///< Qt settings storage
+    LammpsWrapper *lammps;       ///< LAMMPS interface for configuration queries
+    bool need_relaunch;          ///< Flag indicating restart is needed
 };
 
 // individual tabs

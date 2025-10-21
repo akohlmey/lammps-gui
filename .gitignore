@@ -67,6 +67,10 @@ Thumbs.db
 /.qmake.cache
 /.qmake.stash
 
+# patch generated files
+*.rej
+*.orig
+
 # qtcreator generated files
 *.pro.user*
 
