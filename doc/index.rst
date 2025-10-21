@@ -38,6 +38,11 @@ LAMMPS.  As a demonstration LAMMPS-GUI is fully integrated with a
 LAMMPS-GUI also offers useful features beyond tutorials and for
 intermediate and advanced LAMMPS users.
 
+-------
+
+LAMMPS-GUI is Copyright (c) |copyright|, and distributed under
+the terms of the GNU public license version 2 or later (GPLv2+)
+
 --------
 
 ******************

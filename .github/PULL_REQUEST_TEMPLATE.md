@@ -12,7 +12,7 @@
 
 **Licensing**
 
-By submitting this pull request, I agree, that my contribution will be included in LAMMPS-GUI and redistributed under the GNU General Public License version 2 (GPL v2).
+By submitting this pull request, I agree, that my contribution will be included in LAMMPS-GUI and redistributed under the GNU General Public License version 2 or later (GPL v2+).
 
 **Backward Compatibility**
 
