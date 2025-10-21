@@ -69,6 +69,7 @@
         update 2 and later instead of requiring 10 September 2025 and later.
         Clean up in case a previous write_dump command failed
         Avoid segfault in image viewer when using per-atom masses
+        Add "test" folder with some simple unit tests
       </description>
     </release>
     <release version="1.8.3" timestamp="1756739129">
