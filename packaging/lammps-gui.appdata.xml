@@ -68,6 +68,8 @@
         update 2 and later instead of requiring 10 September 2025 and later.
         Clean up in case a previous write_dump command failed
         Avoid segfault in image viewer when using per-atom masses
+        Add test folder with GoogleTest based testing framework
+        Add doxygen style comments to source code and a Programmer's Guide
       </description>
     </release>
     <release version="1.8.3" timestamp="1756739129">
