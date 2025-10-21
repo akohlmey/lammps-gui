@@ -162,6 +162,15 @@ TEST_F(HelpersTest, DateCompareFullMonthName)
     EXPECT_EQ(date_compare(date1, date2), -1);
 }
 
+TEST_F(HelpersTest, DateComparePartialMonthName)
+{
+    QString date1 = "15 January 2024";
+    QString date2 = "15 Jan 2024";
+    // Should truncate "January" to "Jan"
+    EXPECT_EQ(date_compare(date1, date2), 0);
+    EXPECT_EQ(date_compare(date2, date1), 0);
+}
+
 TEST_F(HelpersTest, DateCompareInvalidFormat)
 {
     QString invalid = "Invalid";
