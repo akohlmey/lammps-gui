@@ -71,6 +71,7 @@
         Avoid segfault in image viewer when using per-atom masses
         Add test folder with GoogleTest based testing framework with a few basic tests
         Add doxygen style comments to source code and a Programmer's Guide importing them
+        Create and add Index and add index directives throughout the docs
       </description>
     </release>
     <release version="1.8.3" timestamp="1756739129">
