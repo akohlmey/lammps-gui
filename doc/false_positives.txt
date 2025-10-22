@@ -12,6 +12,8 @@ dll
 dlopen
 dmg
 Doxygen
+dylib
+exe
 flatpak
 Gissinger
 Golay
@@ -20,8 +22,11 @@ Gravelle
 kspace
 makefile
 MBytes
+Mutex
+mystrdup
 natively
 nullptr
+pluginpath
 pre
 prev
 QFrame
@@ -29,12 +34,15 @@ QObject
 QSettings
 QSize
 QString
+QThread
 README
 Savitzky
+stderr
 stdout
 Sur
 toolchain
 txt
+ui
 Validator
 varname
 Ventura

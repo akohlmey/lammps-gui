@@ -70,11 +70,26 @@
 **Runner**:
 - `lammpsrunner.h` - Thread-based LAMMPS execution
 
+**Note**: All classes are documented in `doc/architecture.rst` with detailed descriptions organized into:
+- Main Window and Application Control (LammpsGui, TutorialWizard)
+- Editor Components (CodeEditor, LineNumberArea, Highlighter, FindAndReplace)
+- LAMMPS Interface (LammpsWrapper, LammpsRunner)
+- Visualization Components (ImageViewer, ChartWindow, ChartViewer, SlideShow, RangeSlider)
+- Dialog Components (Preferences, SetVariables, FileViewer, LogWindow)
+- Support Components (StdCapture, FlagWarnings, Qt helper widgets)
+
 ### Documentation (`doc/`)
-- **Format**: reStructuredText (Sphinx)
+- **Format**: reStructuredText (Sphinx) + Doxygen
 - **Build Target**: `html` (creates `build-doc/doc/html/`)
-- **Requirements**: `doc/requirements.txt` (Sphinx 6-8.2, extensions)
-- **Key Files**: index.rst, installation.rst, basic_usage.rst, etc.
+- **Requirements**: `doc/requirements.txt` (Sphinx 6-8.2.3, Breathe, extensions)
+- **Doxygen**: `Doxyfile.in` configures API documentation generation
+- **Key Files**:
+  - `index.rst` - Main documentation index with programmer's guide
+  - `api_reference.rst` - Doxygen-generated API documentation
+  - `architecture.rst` - Comprehensive architecture overview of all 26+ classes
+  - `lammps_interface.rst` - LAMMPS integration documentation
+  - `testing.rst` - Testing infrastructure and test case documentation
+  - `installation.rst`, `basic_usage.rst` - User-facing documentation
 
 ### Resources (`resources/`)
 - `lammpsgui.qrc` - Qt resource collection file
@@ -88,6 +103,13 @@
 - `lammps-gui.desktop` - Linux desktop entry
 - `lammps-gui.appdata.xml` - Linux appdata metadata
 - `org.lammps.lammps-gui.yml` - Flatpak manifest
+
+### Test Infrastructure (`test/`)
+- **Framework**: GoogleTest v1.17.0 (auto-fetched via CMake FetchContent)
+- **CMakeLists.txt**: Test configuration and executable definitions
+- **test_helpers.cpp**: Unit tests for utility functions (28 test cases)
+- **EXAMPLES.md**: Documentation for writing new tests
+- **Enable**: Use `-D ENABLE_TESTING=ON` (OFF by default to speed up builds)
 
 ## Build System & Configuration
 
@@ -128,6 +150,7 @@ cmake --build build-doc --target doc
 - `LAMMPS_GUI_USE_QT5` - ON to prefer Qt5, OFF (default) prefers Qt6
 - `BUILD_DOC` - ON (default) builds docs with app, OFF skips docs
 - `BUILD_DOC_ONLY` - ON builds only docs (no app), OFF (default) builds app
+- `ENABLE_TESTING` - ON enables GoogleTest unit tests, OFF (default) disables tests
 - `CMAKE_CXX_STANDARD` - 17 (required minimum), 23 supported
 - `CMAKE_BUILD_TYPE` - Release or Debug
 
@@ -147,6 +170,9 @@ sudo apt-get install -y \
     qtbase5-dev libqt5charts5-dev    # For Qt5
     # OR
     qt6-base-dev qt6-charts-dev      # For Qt6
+
+# For documentation building (optional)
+sudo apt-get install -y doxygen
 ```
 
 #### macOS (11+)
@@ -164,8 +190,9 @@ sudo apt-get install -y \
 
 ### Build Targets
 - `lammps-gui` (default) - Main executable
-- `doc` - Build HTML documentation (alias for `html`)
-- `html` - Build Sphinx HTML docs
+- `doc` - Build HTML documentation with Doxygen + Sphinx (alias for `html`)
+- `html` - Build complete HTML documentation (Doxygen → XML → Breathe → Sphinx)
+- `doxygen` - Run Doxygen only to generate XML (intermediate step)
 - `pdf` - Build PDF documentation (requires pdflatex, latexmk)
 - `spelling` - Run spell check on docs
 - `tarball` - Create source tarball (requires Git)
@@ -212,7 +239,9 @@ Before submitting a PR, ensure:
 3. **Application runs** (`./build/lammps-gui --platform offscreen -v` shows version)
 4. **Code follows style**: Use `.clang-format` (LLVM-based, 100 char limit)
 5. **No new compiler warnings** with `-Wall -Wextra`
-6. **CodeQL scans pass** (checked automatically on push to develop)
+6. **Tests pass** if modifying tested components (`ctest --test-dir build/test`)
+7. **Doxygen comments** added for new public classes/methods
+8. **CodeQL scans pass** (checked automatically on push to develop)
 
 ## Common Build Patterns & Issues
 
@@ -274,6 +303,8 @@ cmake --build build --parallel 2
 4. **GPG sign commits**: All git commits must be GPG signed with a verifiable signature
 5. **Test both Qt versions** if possible (Qt5 and Qt6 have subtle differences)
 6. **Update docs** if changing user-facing features (files in `doc/` directory)
+7. **Add Doxygen comments** for new classes/methods using `/** @brief */` style
+8. **Update architecture.rst** when adding new classes or major components
 
 ### Adding New Source Files
 1. Add to `PROJECT_SOURCES` list in `CMakeLists.txt` (lines 88-127)
@@ -287,10 +318,46 @@ cmake --build build --parallel 2
 - After changes: Qt resource system auto-compiles via `qt6_add_resources()` (line 129)
 
 ### Documentation Updates
-- **Format**: reStructuredText (`.rst` files in `doc/`)
+- **Format**: reStructuredText (`.rst` files in `doc/`) + Doxygen comments in C++ headers
+- **Doxygen**: Add `/** @brief */` style comments to classes and methods in header files
+- **API Reference**: Classes documented with Doxygen appear in `doc/api_reference.rst`
+- **Architecture**: Update `doc/architecture.rst` when adding new classes or components
 - **Spell check**: Run `cmake --build build-doc --target spelling`
 - **Preview locally**: Open `build-doc/doc/html/index.html` in browser
-- **CI validates**: Every PR builds docs automatically
+- **CI validates**: Every PR builds docs automatically (including Doxygen → Breathe → Sphinx)
+
+### Doxygen Documentation Standards
+Use Javadoc-style comments for C++ code documentation:
+
+**Class documentation**:
+```cpp
+/**
+ * @brief Brief one-line description
+ * 
+ * Detailed description paragraph. Can span multiple lines.
+ * List features and responsibilities.
+ * 
+ * @see RelatedClass for related functionality
+ */
+class MyClass {
+```
+
+**Method documentation**:
+```cpp
+/**
+ * @brief Brief description of what the method does
+ * @param paramName Description of parameter
+ * @return Description of return value
+ */
+void myMethod(int paramName);
+```
+
+**Member variables** (inline documentation):
+```cpp
+QString current_file;  ///< Brief description of member variable
+```
+
+**Example**: See `src/lammpsgui.h` for comprehensive Doxygen documentation of the main LammpsGui class with 69+ documented methods.
 
 ## Dependency Management
 
@@ -310,11 +377,37 @@ cmake --build build --parallel 2
 
 ## Testing & Validation
 
-### No Automated Unit Tests
-- **Important**: This project has NO automated test suite
-- **No test framework**: No gtest, catch2, Qt Test, etc.
-- **Validation method**: Manual testing and CI compilation checks
-- **CI only verifies**: Code compiles and app starts (`--platform offscreen -v`)
+### Automated Unit Tests (NEW)
+The project now includes a growing test suite using GoogleTest:
+
+- **Test Directory**: `test/` contains test files and CMakeLists.txt
+- **Test Framework**: GoogleTest v1.17.0 (fetched automatically via CMake)
+- **Current Coverage**: 28 test cases in `test_helpers.cpp` covering:
+  - String duplication functions (`mystrdup` - 3 overloads)
+  - Date comparison (`date_compare`)
+  - Line splitting with quote handling (`split_line`)
+  - Executable detection (`has_exe`)
+  - Theme detection (`is_light_theme`)
+- **Command-line Tests**: Two CTest tests validate executable behavior:
+  - `CommandLine.GetVersion` - Version string validation
+  - `CommandLine.HasPlugin` - Build configuration verification
+- **Enable Testing**: Use `-D ENABLE_TESTING=ON` during CMake configuration (OFF by default)
+
+### Running Tests
+```bash
+# Build with tests enabled
+cmake -S . -B build -D LAMMPS_GUI_USE_PLUGIN=yes -D BUILD_DOC=no -D ENABLE_TESTING=ON
+cmake --build build --parallel 2
+
+# Run all tests
+ctest --test-dir build/test
+
+# Run with verbose output
+ctest --test-dir build/test -V
+
+# Run specific test
+ctest --test-dir build/test -R MyStrdup
+```
 
 ### Manual Testing Checklist
 When making changes:
@@ -325,6 +418,7 @@ When making changes:
 5. Can run simulations (requires LAMMPS library in plugin mode)
 6. Documentation builds without errors
 7. No new compiler warnings
+8. Run unit tests if modifying tested components
 
 ## Important Notes & Constraints
 
@@ -376,11 +470,33 @@ cmake -S . -B build -D CMAKE_BUILD_TYPE=Debug \
   -D LAMMPS_GUI_USE_PLUGIN=yes -D BUILD_DOC=no
 cmake --build build 2>&1 | grep -i "warning:"
 ```
+
+### Run Tests
+```bash
+cmake -S . -B build -D LAMMPS_GUI_USE_PLUGIN=yes -D BUILD_DOC=no -D ENABLE_TESTING=ON
+cmake --build build --parallel 2
+ctest --test-dir build/test -V
+```
 ## Code Review
 
 When performing a code review, check any changes to the documentation
 (in the `doc/` folder) to be written in American English and with plain
 ASCII characters.
+
+## Programmer's Guide and API Documentation
+
+The project now includes comprehensive developer documentation:
+
+- **Programmer's Guide**: `doc/index.rst` includes a dedicated section for developers
+- **API Reference**: `doc/api_reference.rst` - Doxygen-generated class documentation
+- **Architecture**: `doc/architecture.rst` - Complete overview of all 26+ classes
+- **LAMMPS Interface**: `doc/lammps_interface.rst` - Integration documentation
+- **Testing Guide**: `doc/testing.rst` - Test infrastructure and examples
+
+**Note**: The initial version of the Programmer's Guide was created by a GitHub Copilot 
+Coding Agent. While comprehensive, not everything has been carefully verified yet. If you 
+spot errors or inconsistencies in the architecture or API documentation, please submit 
+a bug report.
 
 ## Trust These Instructions
 
@@ -389,6 +505,7 @@ These instructions have been thoroughly researched by examining:
 - Documentation (README, installation.rst, TODO.md)
 - Source code structure and build patterns
 - Actual successful build of documentation
+- Test infrastructure and examples
 
 **Only search or explore further if**:
 - These instructions are incomplete for your specific task
@@ -396,4 +513,4 @@ These instructions have been thoroughly researched by examining:
 - The information appears outdated or incorrect
 - You need details about specific source files not covered
 
-For implementation details of specific features, refer to the source files in `src/`. For user-facing behavior, check the documentation in `doc/`. For build system internals, study `CMakeLists.txt` (well-commented, 415 lines).
+For implementation details of specific features, refer to the source files in `src/`. For user-facing behavior, check the documentation in `doc/`. For build system internals, study `CMakeLists.txt` (well-commented, 415 lines). For API documentation, see `doc/api_reference.rst`.

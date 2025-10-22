@@ -146,6 +146,16 @@ Programmer's Guide
 This guide provides documentation for developers who want to understand
 the internals of LAMMPS-GUI or contribute to its development.
 
+.. admonition:: AI Generated Content
+   :class: note
+
+   The initial version of the Programmer's Guide section was created by
+   a `GitHub Copilot Coding Agent <https://docs.github.com/en/copilot>`_
+   and not everything has been carefully checked yet.  It is therefor
+   possible that there are errors where the LLM has misinterpreted the
+   LAMMPS-GUI source code.  If you spot any errors or inconsistencies,
+   please submit a bug report.
+
 .. toctree::
    :caption: Table of Contents
    :maxdepth: 2
