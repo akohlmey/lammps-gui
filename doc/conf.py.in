@@ -98,7 +98,7 @@ html_last_updated_fmt = '%b %d, %Y'
 html_show_sourcelink = False
 html_permalinks = True
 
-html_use_index = False
+html_use_index = True
 html_copy_source = False
 html_domain_indices = False
 
@@ -130,7 +130,10 @@ latex_engine = 'pdflatex'
 latex_theme = 'howto'
 latex_logo = 'lammps-gui-banner.png'
 latex_elements = {
-    'preamble': format("\\newcommand{\\lammpsversion}{Release v%s}" % version),
+    'preamble': format("""
+    \\usepackage[columns=1]{idxlayout}
+    \\newcommand{\\lammpsversion}{Release v%s}
+    """ % version),
     'maketitle': r'''
 % customized titlepage
 {%
@@ -161,3 +164,8 @@ latex_elements = {
 }
 ''',
 }
+
+# copy custom style files for tweaking layout
+latex_additional_files = [
+    'idxlayout.sty', 'ellipse.sty',
+]

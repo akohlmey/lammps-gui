@@ -2,8 +2,14 @@
 Dialogs
 *******
 
+.. index:: dialogs
+
 Find and Replace
 ----------------
+
+.. index:: Find and Replace
+.. index:: dialogs; Find and Replace
+.. index:: text search
 
 .. image:: JPG/lammps-gui-find.png
    :align: right
@@ -43,6 +49,11 @@ document.  Clicking on the *Done* button will dismiss the dialog.
 Preferences
 -----------
 
+.. index:: preferences
+.. index:: dialogs; Preferences
+.. index:: settings
+.. index:: configuration
+
 The *Preferences* dialog allows customization of the behavior and
 look of LAMMPS-GUI.  The settings are grouped and each group is
 displayed within a tab.
@@ -66,6 +77,9 @@ displayed within a tab.
 
 General Settings:
 ^^^^^^^^^^^^^^^^^
+
+.. index:: general settings
+.. index:: preferences; general
 
 .. admonition:: The following settings are available in this tab:
 
@@ -134,19 +148,24 @@ General Settings:
 Accelerators:
 ^^^^^^^^^^^^^
 
-This tab enables selection of an accelerator package and modify some of
-its settings to use for running LAMMPS and is equivalent to using the
-`-sf <https://docs.lammps.org/suffix.html>`_ and `-pk
+.. index:: accelerators
+.. index:: preferences; accelerators
+.. index:: GPU acceleration
+.. index:: thread parallelization
+
+This tab enables selection of an accelerator package and modification of
+some of its settings for use when running LAMMPS.  This is equivalent to
+using the `-sf <https://docs.lammps.org/suffix.html>`_ and `-pk
 <https://docs.lammps.org/package.html>`_ flags `on the command-line
 <https://docs.lammps.org/Run_options.html>`_.  Only settings supported
 by the LAMMPS library and local hardware are available.  The `Number of
 threads` field allows setting the number of threads for the accelerator
 packages that support using threads (OPENMP, INTEL, KOKKOS, and GPU).
 Furthermore, the choice of precision mode (double, mixed, or single) for
-the INTEL package can be selected and for the GPU package, whether the
+the INTEL package can be selected, and for the GPU package, whether the
 neighbor lists are built on the GPU or the host (required for `pair
 style hybrid <https://docs.lammps.org/pair_hybrid.html>`_) and whether
-only pair styles should be accelerated (i.e. run PPPM entirely on the
+only pair styles should be accelerated (i.e., run PPPM entirely on the
 CPU, which sometimes leads to better overall performance).  Whether
 settings can be changed depends on which accelerator package is chosen
 (or "None").
@@ -154,31 +173,40 @@ settings can be changed depends on which accelerator package is chosen
 Snapshot Image:
 ^^^^^^^^^^^^^^^
 
+.. index:: snapshot image settings
+.. index:: preferences; snapshot image
+.. index:: image rendering
+
 This tab allows setting defaults for the snapshot images displayed in
 the :ref:`Image Viewer window <snapshot_viewer>`, such as its dimensions
-and the zoom factor applied.  The **Antialias** switch will render images
-with twice the number of pixels for width and height and then smoothly
-scale the image back to the requested size.  This produces higher
-quality images with smoother edges at the expense of requiring more CPU
-time to render the image.  The **HQ Image mode** option turns on screen
-space ambient occlusion (SSAO) mode when rendering images.  This is also
-more time consuming, but produces a more 'spatial' representation of the
-system shading of atoms by their depth.  The **Shiny Image mode** option
-will render objects with a shiny surface when enabled.  Otherwise the
-surfaces will be matted.  The **Show Box** option selects whether the
-system box is drawn as a colored set of sticks.  Similarly, the **Show
-Axes** option selects whether a representation of the three system axes
-will be drawn as colored sticks. The **VDW Style** checkbox selects
-whether atoms are represented by space filling spheres when checked or
-by smaller spheres and sticks.  Finally there are a couple of drop down
-lists to select the background and box colors.
+and the zoom factor applied.  The **Antialias** switch will render
+images with double the number of pixels for width and height and then
+smoothly scale the image back to the requested size.  This produces
+higher quality images with smoother edges at the expense of requiring
+more CPU time to render a four times size initial image.  The **HQ Image
+mode** option turns on "Screen Space Ambient Occlusion (SSAO)" mode when
+rendering images.  This is also more time consuming, but produces a more
+'spatial' representation of the system with shading of atoms by their
+depth.  The **Shiny Image mode** option will render objects with a shiny
+surface when enabled.  Otherwise, the surfaces will be matte.  The
+**Show Box** option selects whether the system box is drawn as a colored
+set of sticks.  Similarly, the **Show Axes** option selects whether a
+representation of the three system axes will be drawn as colored sticks.
+The **VDW Style** checkbox selects whether atoms are represented by
+space filling spheres when checked or by smaller spheres and sticks.
+Finally, there are a couple of drop down lists to select the background
+and box colors.
 
 Editor Settings:
 ^^^^^^^^^^^^^^^^
 
+.. index:: editor settings
+.. index:: preferences; editor
+.. index:: code formatting preferences
+
 This tab allows tweaking settings of the :ref:`editor window <editor>`.
 Specifically, the amount of padding to be added to LAMMPS commands,
-types or type ranges, IDs (e.g. for fixes), and names (e.g. for groups).
+types or type ranges, IDs (e.g., for fixes), and names (e.g., for groups).
 The value set is the minimum width for the text element and it can be
 chosen in the range between 1 and 32.
 
@@ -191,9 +219,13 @@ exiting LAMMPS-GUI.
 Charts Settings:
 ----------------
 
+.. index:: charts settings
+.. index:: preferences; charts
+.. index:: plotting preferences
+
 This tab allows tweaking settings of the :ref:`Charts window <charts>`.
 Specifically, one can set the default chart title (if the title contains
 '%f' it will be replaced with the name of the current input file), one
-can select whether by default the raw data, the smoothed data or both
+can select whether by default the raw data, the smoothed data, or both
 will be plotted, one can set the colors for the two lines, the default
 smoothing parameters, and the default size of the chart graph in pixels.

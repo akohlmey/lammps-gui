@@ -23,20 +23,25 @@ LAMMPS-GUI is a graphical text editor with syntax highlighting,
 auto-completion, inline help, and indentation support for `LAMMPS
 <https://www.lammps.org/>`_ input files.  It is programmed using the `Qt
 Framework <https://www.qt.io/>`_ and customized for running, monitoring,
-and visualizing LAMMPS simulations. It calls LAMMPS directly using the
+and visualizing LAMMPS simulations.  It calls LAMMPS directly using the
 `LAMMPS library interface
-<https://docs.lammps.org/Library.html#lammps-c-library-api>`_ and does
-not have to run an external LAMMPS executable. Therefore it can retrieve
-and display information from LAMMPS *while it is running*, display
-visualizations created with the dump image command.
+<https://docs.lammps.org/Library.html#lammps-c-library-api>`_ instead of
+launching an external LAMMPS executable.  Therefore it can retrieve and
+display information from LAMMPS *while it is running* and *immediately*
+display visualizations created by a dump image command in the input.
 
-The primary goal is to facilitate teaching LAMMPS to beginners using
-just LAMMPS-GUI and have a consistent behavior across major platforms
-like Linux, macOS, and Windows.  This way one can focus on teaching
-LAMMPS.  As a demonstration LAMMPS-GUI is fully integrated with a
-`collection of LAMMPS tutorials <https://lammpstutorials.github.io>`_.
-LAMMPS-GUI also offers useful features beyond tutorials and for
-intermediate and advanced LAMMPS users.
+The primary motivation for implementing LAMMPS-GUI is to facilitate
+teaching LAMMPS to beginners using only LAMMPS-GUI and to have a
+consistent behavior across major platforms like Linux, macOS, and
+Windows.  This way one can focus on teaching LAMMPS and avoid having to
+spent time explaining different tools (for editing inputs, plotting
+graphs, visualizing systems) on the different platforms.  Also,
+LAMMPS-GUI is fully integrated with a `collection of LAMMPS tutorials
+<https://lammpstutorials.github.io>`_.
+
+Many of the features in LAMMPS-GUI are useful beyond working on
+tutorials.  For instance, it can streamline the process of prototyping
+new simulation projects or debugging misbehaving simulations.
 
 LAMMPS-GUI is Copyright (c) |copyright|, and distributed under
 the terms of the GNU public license version 2 or later (GPLv2+)
@@ -154,7 +159,8 @@ the internals of LAMMPS-GUI or contribute to its development.
    and not everything has been carefully checked yet.  It is therefore
    possible that it contains errors where the LLM has misinterpreted the
    LAMMPS-GUI source code.  If you spot any such errors or inconsistencies,
-   please submit a bug report.
+   please submit a bug report to point them out or a pull request with
+   corrections.
 
 .. toctree::
    :caption: Table of Contents
@@ -175,9 +181,17 @@ the internals of LAMMPS-GUI or contribute to its development.
 
 .. only:: html
 
-  .. _webbrowser:
-  .. admonition:: Web Browser Compatibility
-     :class: note
+   ****************
+   Index and Search
+   ****************
+
+          * :ref:`genindex`
+          * :ref:`search`
+
+   ----------
+
+   .. _webbrowser:
+   .. admonition:: Web Browser Compatibility
 
      This website makes use of advanced features present in "modern" web
      browsers.  This leads to incompatibilities with older web browsers

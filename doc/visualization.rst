@@ -7,6 +7,11 @@ Visualization
 Snapshot Image Viewer
 ^^^^^^^^^^^^^^^^^^^^^
 
+.. index:: snapshot viewer
+.. index:: image viewer
+.. index:: visualization
+.. index:: dump image
+
 By selecting the *Create Image* entry in the *Run* menu, or by hitting
 the `Ctrl-I` (`Command-I` on macOS) keyboard shortcut, or by clicking on
 the "palette" button in the status bar of the *Editor* window,
@@ -96,6 +101,11 @@ keyboard shortcut `Ctrl-D`.
 
 Image Slide Show
 ^^^^^^^^^^^^^^^^
+
+.. index:: slideshow
+.. index:: animation
+.. index:: image sequence
+.. index:: movie export
 
 By default, if the LAMMPS input contains a `dump image
 <https://docs.lammps.org/dump_image.html>`_ command, a "Slide Show"
