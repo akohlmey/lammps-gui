@@ -8,19 +8,14 @@ Main Components
 The application architecture consists of several key components organized into
 functional groups:
 
-Main Window and Application Control
-------------------------------------
+Main Window
+-----------
 
 **LammpsGui (lammpsgui.h/.cpp)**
   The main window class that coordinates all other components. It manages
   the editor, handles file operations, controls LAMMPS execution, and
   manages the overall application state. This is the central hub of the
   application that integrates all other components.
-
-**TutorialWizard (lammpsgui.h/.cpp)**
-  Wizard dialog for interactive LAMMPS tutorials. Guides users through
-  setting up tutorial directories and files, providing a structured
-  learning experience.
 
 Editor Components
 -----------------
@@ -66,27 +61,32 @@ Visualization Components
 
 **ChartWindow (chartviewer.h/.cpp)**
   Window for displaying thermodynamic data as charts using Qt Charts.
-  Supports line plots, scatter plots, and multiple data series.
+  Supports line plots and multiple data series.
 
 **ChartViewer (chartviewer.h/.cpp)**
   Custom chart view widget based on QChartView that provides interactive
-  features like zooming and panning for data visualization.
+  features like zooming, smoothing, and panning for data visualization.
 
 **SlideShow (slideshow.h/.cpp)**
-  Dialog for viewing multiple images as a slideshow with navigation
-  controls and a range slider for selecting image sequences.
+  Dialog for viewing multiple images as a slideshow or animation
+  with navigation controls.  Supports converting an animation to
+  a movie file when FFMpeg is available.
 
 **RangeSlider (rangeslider.h/.cpp)**
   Custom slider widget with two handles for selecting a range of values.
-  Used in slideshow for selecting image ranges.
+  Used in ChartViewer for selecting x- and y-direction plot ranges.
 
 Dialog and Utility Components
 ------------------------------
 
+**LogWindow (logwindow.h/.cpp)**
+  Window displaying captured output from LAMMPS simulations. Updates
+  in real-time as the simulation progresses and provides search functionality.
+
 **Preferences (preferences.h/.cpp)**
   Dialog for configuring application settings including accelerator packages,
   editor appearance, snapshot settings, and chart preferences. Settings are
-  persisted using QSettings.
+  made persistent across LAMMPS-GUI sessions using the QSettings class.
 
 **SetVariables (setvariables.h/.cpp)**
   Dialog for editing LAMMPS index-style variable definitions. Allows users
@@ -97,9 +97,10 @@ Dialog and Utility Components
   Read-only text viewer dialog for displaying file contents. Used for
   viewing auxiliary files without allowing modifications.
 
-**LogWindow (logwindow.h/.cpp)**
-  Window displaying captured output from LAMMPS simulations. Updates
-  in real-time as the simulation progresses and provides search functionality.
+**TutorialWizard (lammpsgui.h/.cpp)**
+  Wizard dialog for interactive LAMMPS tutorials. Guides users through
+  setting up tutorial directories and files, providing a structured
+  learning experience.
 
 Support Components
 ------------------
@@ -124,8 +125,8 @@ Support Components
   Validator for color input fields, ensuring they contain valid color
   names or hex color codes.
 
-Helper Functions (helpers.h/.cpp)
-----------------------------------
+Helper Functions
+----------------
 
 The helpers module provides utility functions used throughout the application:
 
@@ -164,20 +165,6 @@ Settings are stored in platform-specific locations:
 - Linux: ``~/.config/LAMMPS-GUI/LAMMPS-GUI.conf``
 - macOS: ``~/Library/Preferences/org.lammps.LAMMPS-GUI.plist``
 - Windows: Registry under ``HKEY_CURRENT_USER\Software\LAMMPS-GUI\LAMMPS-GUI``
-
-Plugin vs Linked Modes
-=======================
-
-LAMMPS-GUI can operate in two modes:
-
-**Plugin Mode** (Default)
-  LAMMPS is loaded dynamically at runtime from a shared library (.so/.dylib/.dll).
-  The path is auto-detected or configured via preferences. This allows using
-  different LAMMPS versions without recompiling the GUI.
-
-**Linked Mode**
-  LAMMPS is linked directly at compile time. Used when building LAMMPS-GUI
-  as part of the LAMMPS build system with ``-D BUILD_LAMMPS_GUI=on``.
 
 Threading Model
 ===============
