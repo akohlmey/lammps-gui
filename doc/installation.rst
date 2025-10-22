@@ -123,9 +123,6 @@ Platform notes
 --------------
 
 .. index:: platform notes
-.. index:: Windows installation
-.. index:: macOS installation
-.. index:: Linux installation
 
 Windows 10 and later
 """"""""""""""""""""
@@ -151,7 +148,7 @@ in the Windows System Settings to be able to run the installer.
 MacOS 11 and later
 """"""""""""""""""
 
-.. index:: macOS; installation
+.. index:: macOS installation
 
 After downloading the ``LAMMPS-macOS-multiarch-GUI-<version>.dmg``
 application bundle disk image, you need to double-click it and then, in
@@ -171,8 +168,7 @@ the other included command-line executables.
 Linux on x86\_64
 """"""""""""""""
 
-.. index:: Linux; installation
-.. index:: flatpak
+.. index:: Linux installation
 
 For Linux with x86\_64 CPU there are currently two variants of
 pre-compiled packages. The first is compiled on Ubuntu 22.04LTS, is
@@ -191,6 +187,8 @@ into the "LAMMPS_GUI" folder and execute "./lammps-gui" directly:
 The ``LAMMPS_GUI`` folder may also be moved around and added to the
 ``PATH`` environment variable so the executables will be found
 automatically.
+
+.. index:: flatpak
 
 The second Linux package variant uses `flatpak
 <https://www.flatpak.org>`_ and requires the flatpak management and
@@ -230,7 +228,7 @@ Compilation from source
 ^^^^^^^^^^^^^^^^^^^^^^^
 
 .. index:: compilation; from source
-.. index:: CMake; build configuration
+.. index:: CMake configuration
 
 The source for LAMMPS-GUI was included with the LAMMPS source code
 distribution until LAMMPS version 22 July 2025 in the folder
@@ -263,7 +261,7 @@ LAMMPS_GUI_USE_QT5=yes`` is set.
 LAMMPS-GUI plugin version
 -------------------------
 
-.. index:: plugin mode; compilation
+.. index:: compilation; plugin mode
 .. index:: dynamic library loading
 
 It is possible to compile a standalone LAMMPS-GUI executable (e.g. when

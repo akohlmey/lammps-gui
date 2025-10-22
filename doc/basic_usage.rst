@@ -60,7 +60,7 @@ Running LAMMPS
 
 .. index:: running LAMMPS
 .. index:: LAMMPS execution
-.. index:: keyboard shortcuts; run LAMMPS
+.. index:: keyboard shortcuts
 
 From within the LAMMPS-GUI main window LAMMPS can be started either from
 the *Run* menu using the *Run LAMMPS from Editor Buffer* entry, by the

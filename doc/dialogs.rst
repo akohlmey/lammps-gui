@@ -7,7 +7,7 @@ Dialogs
 Find and Replace
 ----------------
 
-.. index:: Find and Replace dialog
+.. index:: Find and Replace
 .. index:: dialogs; Find and Replace
 .. index:: text search
 
@@ -49,7 +49,7 @@ document.  Clicking on the *Done* button will dismiss the dialog.
 Preferences
 -----------
 
-.. index:: Preferences dialog
+.. index:: preferences
 .. index:: dialogs; Preferences
 .. index:: settings
 .. index:: configuration

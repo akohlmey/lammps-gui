@@ -49,7 +49,6 @@ Edit
 .. index:: Edit menu
 .. index:: menus; Edit
 .. index:: Find and Replace
-.. index:: Preferences
 
 The *Edit* menu offers the usual editor functions like *Undo*, *Redo*,
 *Cut*, *Copy*, *Paste*, and a *Find and Replace* dialog (keyboard
@@ -172,7 +171,8 @@ About
 
 .. index:: About menu
 .. index:: menus; About
-.. index:: documentation
+.. index:: documentation; online
+.. index:: LAMMPS documentation
 .. index:: help
 
 The *About* menu finally offers a couple of dialog windows and an

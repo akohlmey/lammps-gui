@@ -73,7 +73,8 @@ Context Specific Help
 
 .. index:: context help
 .. index:: documentation; inline help
-.. index:: online documentation
+.. index:: documentation; online
+.. index:: LAMMPS documentation
 
 .. |gui-popup1| image:: JPG/lammps-gui-popup-help.png
    :width: 48%
