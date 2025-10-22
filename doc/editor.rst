@@ -4,6 +4,10 @@ Editor Window
 
 .. _editor:
 
+.. index:: editor window
+.. index:: text editor
+.. index:: editing features
+
 The *Editor* window of LAMMPS-GUI has most of the usual functionality
 that similar programs have: text selection via mouse or with cursor
 moves while holding the Shift key, Cut (`Ctrl-X`), Copy (`Ctrl-C`),
@@ -18,6 +22,10 @@ automatically saved before running LAMMPS or before exiting LAMMPS-GUI.
 
 Context Specific Word Completion
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. index:: auto-completion
+.. index:: word completion
+.. index:: code completion
 
 By default, LAMMPS-GUI displays a small pop-up frame with possible
 choices for LAMMPS input script commands or styles after 2 characters of
@@ -42,6 +50,10 @@ non-suffix version of styles are shown.
 Line Reformatting
 ^^^^^^^^^^^^^^^^^
 
+.. index:: line reformatting
+.. index:: code formatting
+.. index:: indentation
+
 The editor supports reformatting lines according to the syntax in order
 to have consistently aligned lines.  This primarily means adding
 whitespace padding to commands, type specifiers, IDs and names.  This
@@ -58,6 +70,11 @@ context can be detected; otherwise a single space is used between words.
 
 Context Specific Help
 ^^^^^^^^^^^^^^^^^^^^^
+
+.. index:: context help
+.. index:: documentation; inline help
+.. index:: documentation; online
+.. index:: LAMMPS documentation
 
 .. |gui-popup1| image:: JPG/lammps-gui-popup-help.png
    :width: 48%
@@ -92,6 +109,10 @@ decompressed, the viewer window will contain a corresponding message.
 
 Inspecting a Restart file
 ^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. index:: restart file inspection
+.. index:: restart files
+.. index:: file inspection
 
 When LAMMPS-GUI is asked to "Inspect a Restart", it will read the
 restart file into a LAMMPS instance and then open three different

@@ -7,6 +7,10 @@ Monitoring LAMMPS output
 Output Window
 ^^^^^^^^^^^^^
 
+.. index:: output window
+.. index:: log window
+.. index:: screen output
+
 .. image:: JPG/lammps-gui-log.png
    :align: right
    :scale: 50%
@@ -62,6 +66,11 @@ area.
 Charts Window
 ^^^^^^^^^^^^^
 
+.. index:: charts window
+.. index:: plotting
+.. index:: thermodynamic output
+.. index:: data visualization
+
 .. image:: JPG/lammps-gui-chart.png
    :align: right
    :scale: 33%
@@ -102,8 +111,8 @@ of the currently displayed plot or export the data in either plain text
 columns (for use by plotting tools like `gnuplot
 <http://www.gnuplot.info/>`_ or `grace
 <https://plasma-gate.weizmann.ac.il/Grace/>`_), as CSV data which can be
-imported for further processing with Microsoft Excel `LibreOffice Calc
-<https://www.libreoffice.org/>`_ or with Python via `pandas
+imported for further processing with Microsoft Excel, `LibreOffice Calc
+<https://www.libreoffice.org/>`_, or with Python via `pandas
 <https://pandas.pydata.org/>`_, or as YAML which can be imported into
 Python with `PyYAML <https://pyyaml.org/>`_ or pandas.
 
@@ -157,6 +166,10 @@ default chart graph size.
 
 Variable Info
 ^^^^^^^^^^^^^
+
+.. index:: variable info window
+.. index:: variables
+.. index:: input script variables
 
 .. image:: JPG/lammps-gui-variable-info.png
    :align: right

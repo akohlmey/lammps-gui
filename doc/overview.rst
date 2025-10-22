@@ -2,6 +2,9 @@
 Overview
 ********
 
+.. index:: overview
+.. index:: features
+
 LAMMPS-GUI is a graphical text editor customized for editing LAMMPS
 input files that are linked to the `LAMMPS C-library
 <https://docs.lammps.org/Library.html#lammps-c-library-api>`_ and thus
