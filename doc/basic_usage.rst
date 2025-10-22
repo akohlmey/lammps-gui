@@ -113,21 +113,24 @@ the current `run <https://docs.lammps.org/run.html>`_ or `minimize
 
    The CPU Utilization should ideally be close to 100% times the number
    of threads like in the screenshot image above.  Since the GUI is
-   running as a separate thread, the CPU utilization can be higher, for
-   example when the GUI needs to work hard to keep up with the
-   simulation.  This can be caused by having frequent thermo output or
-   running a simulation of a small system.  In the *Preferences* dialog,
-   the polling interval for updating the *Output* and *Charts*
-   windows can be set. The intervals may need to be lowered to not miss
-   data between *Charts* data updates or to avoid stalling when the
+   running as a separate thread, the CPU utilization *may* be higher,
+   for example when the GUI needs to work hard to keep up with the
+   output produced by the simulation; for example when there is frequent
+   thermo output or the simulation run very fast.  In the *Preferences*
+   dialog, the polling interval for updating the *Output* and *Charts*
+   windows can be adjusted. The intervals may need to be lowered to not
+   miss data between *Charts* data updates or to avoid stalling when the
    thermo output is not transferred to the *Output* window fast enough.
-   It is also possible to reduce the amount of data by increasing the
-   `thermo interval <https://docs.lammps.org/thermo.html>`_.  LAMMPS-GUI detects if the
-   associated I/O buffer is significantly full and will print a
-   warning after the run with suggested adjustments.  The utilization
-   can also be lower, e.g.  when the simulation is slowed down by the
-   GUI or other processes also running on the host computer and
-   competing with LAMMPS-GUI for GPU resources.
+   You could also make LAMMPS run slower by reducing or turning off
+   thread parallelization.  It is also possible to reduce the amount of
+   data by increasing the `thermo interval
+   <https://docs.lammps.org/thermo.html>`_.  LAMMPS-GUI detects if the
+   associated I/O buffer is significantly full, and will print a warning
+   *after* the run with suggested adjustments.  The CPU utilization can
+   also be lower than expected, when some significant parts of the code
+   paths in use are not multi-threaded, when the simulation is slowed
+   down by the GUI or other processes also running on the host computer
+   and competing with LAMMPS-GUI for resources.
 
 
 If an error occurs (in the example below the command `label
