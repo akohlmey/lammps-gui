@@ -180,9 +180,17 @@ the internals of LAMMPS-GUI or contribute to its development.
 
 .. only:: html
 
-  .. _webbrowser:
-  .. admonition:: Web Browser Compatibility
-     :class: note
+   ****************
+   Index and Search
+   ****************
+
+          * :ref:`genindex`
+          * :ref:`search`
+
+   ----------
+
+   .. _webbrowser:
+   .. admonition:: Web Browser Compatibility
 
      This website makes use of advanced features present in "modern" web
      browsers.  This leads to incompatibilities with older web browsers
