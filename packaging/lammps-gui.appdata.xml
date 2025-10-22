@@ -63,7 +63,7 @@
         Update CodeQL workflow
         Only enable and use autobond feature if a pair style is defined
         and if the LAMMPS version (10 September 2025 and later) supports it
-        Only enable and use region visualization dialong if the
+        Only enable and use region visualization dialon if the
         LAMMPS version (10 September 2025 and later) supports it
         Make LAMMPS-GUI compatible with loading LAMMPS 22 July 2025
         update 2 and later instead of requiring 10 September 2025 and later.

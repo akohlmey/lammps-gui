@@ -1141,6 +1141,7 @@ void ImageViewer::update_regions()
 bool ImageViewer::has_autobonds()
 {
     if (!lammps) return false;
+    if (lammps->version() < 20250910) return false;
     const auto *pair_style = (const char*)lammps->extract_global("pair_style");
     if (!pair_style) return false;
     return strcmp(pair_style, "none") != 0;
