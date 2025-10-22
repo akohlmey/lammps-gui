@@ -151,9 +151,9 @@ the internals of LAMMPS-GUI or contribute to its development.
 
    The initial version of the Programmer's Guide section was created by
    a `GitHub Copilot Coding Agent <https://docs.github.com/en/copilot>`_
-   and not everything has been carefully checked yet.  It is therefor
-   possible that there are errors where the LLM has misinterpreted the
-   LAMMPS-GUI source code.  If you spot any errors or inconsistencies,
+   and not everything has been carefully checked yet.  It is therefore
+   possible that it contains errors where the LLM has misinterpreted the
+   LAMMPS-GUI source code.  If you spot any such errors or inconsistencies,
    please submit a bug report.
 
 .. toctree::
