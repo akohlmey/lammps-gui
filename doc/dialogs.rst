@@ -154,7 +154,7 @@ Accelerators:
 .. index:: thread parallelization
 
 This tab enables selection of an accelerator package and modification of
-some of its settings for use when running LAMMPS. This is equivalent to
+some of its settings for use when running LAMMPS.  This is equivalent to
 using the `-sf <https://docs.lammps.org/suffix.html>`_ and `-pk
 <https://docs.lammps.org/package.html>`_ flags `on the command-line
 <https://docs.lammps.org/Run_options.html>`_.  Only settings supported
@@ -179,22 +179,23 @@ Snapshot Image:
 
 This tab allows setting defaults for the snapshot images displayed in
 the :ref:`Image Viewer window <snapshot_viewer>`, such as its dimensions
-and the zoom factor applied.  The **Antialias** switch will render images
-with twice the number of pixels for width and height and then smoothly
-scale the image back to the requested size.  This produces higher
-quality images with smoother edges at the expense of requiring more CPU
-time to render the image.  The **HQ Image mode** option turns on screen
-space ambient occlusion (SSAO) mode when rendering images.  This is also
-more time consuming, but produces a more 'spatial' representation of the
-system with shading of atoms by their depth.  The **Shiny Image mode** option
-will render objects with a shiny surface when enabled.  Otherwise, the
-surfaces will be matte.  The **Show Box** option selects whether the
-system box is drawn as a colored set of sticks.  Similarly, the **Show
-Axes** option selects whether a representation of the three system axes
-will be drawn as colored sticks. The **VDW Style** checkbox selects
-whether atoms are represented by space filling spheres when checked or
-by smaller spheres and sticks.  Finally, there are a couple of drop down
-lists to select the background and box colors.
+and the zoom factor applied.  The **Antialias** switch will render
+images with double the number of pixels for width and height and then
+smoothly scale the image back to the requested size.  This produces
+higher quality images with smoother edges at the expense of requiring
+more CPU time to render a four times size initial image.  The **HQ Image
+mode** option turns on "Screen Space Ambient Occlusion (SSAO)" mode when
+rendering images.  This is also more time consuming, but produces a more
+'spatial' representation of the system with shading of atoms by their
+depth.  The **Shiny Image mode** option will render objects with a shiny
+surface when enabled.  Otherwise, the surfaces will be matte.  The
+**Show Box** option selects whether the system box is drawn as a colored
+set of sticks.  Similarly, the **Show Axes** option selects whether a
+representation of the three system axes will be drawn as colored sticks.
+The **VDW Style** checkbox selects whether atoms are represented by
+space filling spheres when checked or by smaller spheres and sticks.
+Finally, there are a couple of drop down lists to select the background
+and box colors.
 
 Editor Settings:
 ^^^^^^^^^^^^^^^^
