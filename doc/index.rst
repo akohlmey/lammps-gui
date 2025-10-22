@@ -27,8 +27,8 @@ and visualizing LAMMPS simulations. It calls LAMMPS directly using the
 `LAMMPS library interface
 <https://docs.lammps.org/Library.html#lammps-c-library-api>`_ and does
 not have to run an external LAMMPS executable. Therefore it can retrieve
-and display information from LAMMPS *while it is running*, display
-visualizations created with the dump image command.
+and display information from LAMMPS *while it is running* and display
+visualizations created with the dump image command in the input.
 
 The primary goal is to facilitate teaching LAMMPS to beginners using
 just LAMMPS-GUI and have a consistent behavior across major platforms
@@ -151,7 +151,7 @@ the internals of LAMMPS-GUI or contribute to its development.
 
    The initial version of the Programmer's Guide section was created by
    a `GitHub Copilot Coding Agent <https://docs.github.com/en/copilot>`_
-   and not everything has been carefully checked yet.  It is therefor
+   and not everything has been carefully checked yet.  It is therefore
    possible that there are errors where the LLM has misinterpreted the
    LAMMPS-GUI source code.  If you spot any errors or inconsistencies,
    please submit a bug report.

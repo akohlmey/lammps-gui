@@ -2,6 +2,10 @@
 Basic usage of LAMMPS-GUI
 *************************
 
+.. index:: basic usage
+.. index:: getting started
+.. index:: main window
+
 When LAMMPS-GUI starts, it shows the main window, labeled *Editor*, with
 either an empty buffer or the contents of the file used as argument. In
 the latter case it may look like the following:
@@ -27,6 +31,10 @@ window is stored when exiting and restored when starting again.
 Opening and saving files
 ^^^^^^^^^^^^^^^^^^^^^^^^
 
+.. index:: opening files
+.. index:: saving files
+.. index:: file operations
+
 The LAMMPS-GUI application can be launched without command-line
 arguments and then starts with an empty buffer in the *Editor* window.
 If arguments are given LAMMPS will use first command-line argument as
@@ -49,6 +57,10 @@ left in the status bar.
 
 Running LAMMPS
 ^^^^^^^^^^^^^^
+
+.. index:: running LAMMPS
+.. index:: LAMMPS execution
+.. index:: keyboard shortcuts; run LAMMPS
 
 From within the LAMMPS-GUI main window LAMMPS can be started either from
 the *Run* menu using the *Run LAMMPS from Editor Buffer* entry, by the
@@ -105,13 +117,13 @@ the current `run <https://docs.lammps.org/run.html>`_ or `minimize
    example when the GUI needs to work hard to keep up with the
    simulation.  This can be caused by having frequent thermo output or
    running a simulation of a small system.  In the *Preferences* dialog,
-   the polling interval for updating the the *Output* and *Charts*
+   the polling interval for updating the *Output* and *Charts*
    windows can be set. The intervals may need to be lowered to not miss
    data between *Charts* data updates or to avoid stalling when the
    thermo output is not transferred to the *Output* window fast enough.
    It is also possible to reduce the amount of data by increasing the
-   `thermo interval <https://docs.lammps.org/thermo.html>`_.  LAMMPS-GUI detects, if the
-   associated I/O buffer is by a significant percentage and will print a
+   `thermo interval <https://docs.lammps.org/thermo.html>`_.  LAMMPS-GUI detects if the
+   associated I/O buffer is significantly full and will print a
    warning after the run with suggested adjustments.  The utilization
    can also be lower, e.g.  when the simulation is slowed down by the
    GUI or other processes also running on the host computer and

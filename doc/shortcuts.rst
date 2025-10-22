@@ -2,6 +2,10 @@
 Keyboard Shortcuts
 ******************
 
+.. index:: keyboard shortcuts
+.. index:: hotkeys
+.. index:: keybindings
+
 Almost all functionality is accessible from the menu of the editor
 window or through keyboard shortcuts.  The following shortcuts are
 available (On macOS use the Command key instead of Ctrl/Control).

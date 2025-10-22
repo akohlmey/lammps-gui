@@ -2,6 +2,10 @@
 Menus
 *****
 
+.. index:: menus
+.. index:: menu bar
+.. index:: keyboard shortcuts
+
 The menu bar has entries *File*, *Edit*, *Run*, *View*, and
 *About*.  Instead of using the mouse to click on them, the individual
 menus can also be activated by hitting the `Alt` key together with the
@@ -12,6 +16,9 @@ instead of using the mouse.
 
 File
 ^^^^
+
+.. index:: File menu
+.. index:: menus; File
 
 .. admonition:: The *File* menu offers the usual options:
 
@@ -39,6 +46,11 @@ when quitting and recovered when starting again.
 Edit
 ^^^^
 
+.. index:: Edit menu
+.. index:: menus; Edit
+.. index:: Find and Replace
+.. index:: Preferences
+
 The *Edit* menu offers the usual editor functions like *Undo*, *Redo*,
 *Cut*, *Copy*, *Paste*, and a *Find and Replace* dialog (keyboard
 shortcut `Ctrl-F`).  It can also open a *Preferences* dialog (keyboard
@@ -47,6 +59,11 @@ settings, so they are reset to their default values.
 
 Run
 ^^^
+
+.. index:: Run menu
+.. index:: menus; Run
+.. index:: LAMMPS execution
+.. index:: LAMMPS library interface
 
 The *Run* menu has options to start and stop a LAMMPS process.  Rather
 than calling the LAMMPS executable as a separate executable, the
@@ -117,6 +134,10 @@ VMD executable in the system path.
 View
 ^^^^
 
+.. index:: View menu
+.. index:: menus; View
+.. index:: window visibility
+
 The *View* menu offers to show or hide additional windows with log
 output, charts, slide show, variables, or snapshot images.  The
 default settings for their visibility can be changed in the
@@ -124,6 +145,10 @@ default settings for their visibility can be changed in the
 
 Tutorials
 ^^^^^^^^^
+
+.. index:: Tutorials menu
+.. index:: menus; Tutorials
+.. index:: LAMMPS tutorials
 
 The *Tutorials* menu is to support the set of LAMMPS tutorials for
 beginners and intermediate LAMMPS users documented in (:ref:`Gravelle1
@@ -144,6 +169,11 @@ selected session into LAMMPS-GUI.
 
 About
 ^^^^^
+
+.. index:: About menu
+.. index:: menus; About
+.. index:: documentation
+.. index:: help
 
 The *About* menu finally offers a couple of dialog windows and an
 option to launch the LAMMPS online documentation in a web browser.  The

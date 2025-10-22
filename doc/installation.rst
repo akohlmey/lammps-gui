@@ -2,6 +2,10 @@
 Installation
 ************
 
+.. index:: installation
+.. index:: compilation
+.. index:: pre-compiled packages
+
 LAMMPS-GUI is distributed as `source code on GitHub
 <https://github.com/akohlmey/lammps-gui>`_ and can be compiled as part
 of compiling LAMMPS, where it will be linked to the corresponding
@@ -19,6 +23,10 @@ also available for download (see below).
 
 Prerequisites and portability
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. index:: prerequisites
+.. index:: Qt framework
+.. index:: CMake
 
 LAMMPS-GUI is programmed in C++ based on the
 C++17 standard and using the `Qt GUI framework
@@ -43,6 +51,9 @@ version 3.20 or later.
 Pre-compiled executables
 ^^^^^^^^^^^^^^^^^^^^^^^^
 
+.. index:: pre-compiled executables
+.. index:: installation; pre-compiled packages
+
 Packages including LAMMPS
 -------------------------
 
@@ -61,6 +72,9 @@ https://download.lammps.org/testing/ .
 
 Standalone packages without LAMMPS
 ----------------------------------
+
+.. index:: plugin mode
+.. index:: standalone packages
 
 LAMMPS-GUI packages compiled in plugin mode are also available from the
 `LAMMPS-GUI releases page on GitHub
@@ -84,6 +98,11 @@ As of LAMMPS-GUI version 1.8.4, the minimum LAMMPS version required is
 GPU support and MPI parallelization
 -----------------------------------
 
+.. index:: GPU support
+.. index:: MPI parallelization
+.. index:: OpenCL
+.. index:: KOKKOS package
+
 The pre-compiled packages include support for GPUs through the GPU
 package with OpenCL (in mixed precision).  However, this requires
 that you have a compatible driver and the OpenCL runtime installed.
@@ -102,6 +121,11 @@ computing clusters have parallel LAMMPS pre-installed.
 
 Platform notes
 --------------
+
+.. index:: platform notes
+.. index:: Windows installation
+.. index:: macOS installation
+.. index:: Linux installation
 
 Windows 10 and later
 """"""""""""""""""""
@@ -127,6 +151,8 @@ in the Windows System Settings to be able to run the installer.
 MacOS 11 and later
 """"""""""""""""""
 
+.. index:: macOS; installation
+
 After downloading the ``LAMMPS-macOS-multiarch-GUI-<version>.dmg``
 application bundle disk image, you need to double-click it and then, in
 the window that opens, drag the app bundle as indicated into the
@@ -144,6 +170,9 @@ the other included command-line executables.
 
 Linux on x86\_64
 """"""""""""""""
+
+.. index:: Linux; installation
+.. index:: flatpak
 
 For Linux with x86\_64 CPU there are currently two variants of
 pre-compiled packages. The first is compiled on Ubuntu 22.04LTS, is
@@ -200,6 +229,9 @@ listed with:
 Compilation from source
 ^^^^^^^^^^^^^^^^^^^^^^^
 
+.. index:: compilation; from source
+.. index:: CMake; build configuration
+
 The source for LAMMPS-GUI was included with the LAMMPS source code
 distribution until LAMMPS version 22 July 2025 in the folder
 ``tools/lammps-gui``.  Starting with LAMMPS-GUI version 1.8.0 and
@@ -230,6 +262,9 @@ LAMMPS_GUI_USE_QT5=yes`` is set.
 
 LAMMPS-GUI plugin version
 -------------------------
+
+.. index:: plugin mode; compilation
+.. index:: dynamic library loading
 
 It is possible to compile a standalone LAMMPS-GUI executable (e.g. when
 LAMMPS has been compiled with traditional make).  Rather than linking to
