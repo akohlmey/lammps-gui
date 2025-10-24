@@ -191,9 +191,9 @@ if (NOT BUILD_DOC_ONLY)
   target_link_libraries(lammps-gui PRIVATE Qt${QT_VERSION_MAJOR}::Widgets Qt${QT_VERSION_MAJOR}::Charts)
 
   ###################
-  # unit tests
+  # unit tests, only enabled on Linux
   option(ENABLE_TESTING "Build unit tests" OFF)
-  if(ENABLE_TESTING AND (NOT CMAKE_CROSSCOMPILING))
+  if(ENABLE_TESTING AND (NOT CMAKE_CROSSCOMPILING) AND (CMAKE_SYSTEM_NAME STREQUAL "Linux"))
     message(STATUS "Testing is enabled")
     include(CTest)
     add_subdirectory(test)
