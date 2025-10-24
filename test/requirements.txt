@@ -1,3 +1,4 @@
 pyautogui
 wheel
 build
+pygments

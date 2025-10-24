@@ -266,8 +266,8 @@ if(BUILD_DOC OR BUILD_DOC_ONLY)
   add_custom_command(
     OUTPUT docenv/bin
     COMMAND ${VIRTUALENV} docenv
-    COMMAND ${DOCENV_BINARY_DIR}/pip $ENV{PIP_OPTIONS} install --upgrade pip
-    COMMAND ${DOCENV_BINARY_DIR}/pip $ENV{PIP_OPTIONS} install -r ${DOCENV_REQUIREMENTS_FILE} --upgrade
+    COMMAND ${DOCENV_BINARY_DIR}/pip install --upgrade pip
+    COMMAND ${DOCENV_BINARY_DIR}/pip install -r ${DOCENV_REQUIREMENTS_FILE} --upgrade
     WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
   )
 
