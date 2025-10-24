@@ -56,7 +56,8 @@
   <releases>
     <release version="1.8.5" timestamp="1761171849">
       <description>
-        Add unit tests for the GUI using Xvfb and PyAutoGUI and some screen shooter
+        Minor bug fixes
+        Add unit tests for the GUI using Xvfb and PyAutoGUI and some screen shooter wrapper
       </description>
     </release>
     <release version="1.8.4" timestamp="1757684513">
