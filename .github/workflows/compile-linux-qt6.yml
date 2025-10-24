@@ -41,7 +41,9 @@ jobs:
                                 mesa-common-dev \
                                 ninja-build \
                                 qt6-base-dev \
-                                qt6-charts-dev
+                                qt6-charts-dev \
+                                xvfb \
+                                imagemagick
 
     - name: Create Build Environment
       run: mkdir build

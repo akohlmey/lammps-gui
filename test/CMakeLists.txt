@@ -27,6 +27,43 @@ else()
   set(QT_VERSION_MAJOR 6)
 endif()
 
+# check that Xvfb and a supported screenshooter are present
+find_program(XVFB_BINARY
+  NAMES Xvfb
+  REQUIRED
+  DOC "Path to Xvfb executable")
+
+find_program(SHOOTER_BINARY
+  NAMES magick import xfce4-screenshooter gnome-screenshooter
+  REQUIRED
+  DOC "Path to a supported screenshooter program")
+cmake_path(GET SHOOTER_BINARY FILENAME SHOOTER)
+message(STATUS "Using ${SHOOTER} as screen shooter")
+
+# configure virtual environment for tests using PyAutoGUI and Xvfb
+find_package(Python3 3.8 REQUIRED COMPONENTS Interpreter)
+set(TESTENV_BINARY_DIR ${CMAKE_CURRENT_BINARY_DIR}/testenv/bin)
+set(TESTENV_REQUIREMENTS_FILE ${CMAKE_CURRENT_SOURCE_DIR}/requirements.txt)
+add_custom_command(
+  OUTPUT ${TESTENV_BINARY_DIR}/activate
+  COMMAND ${Python3_EXECUTABLE} -m venv testenv
+  COMMAND ${TESTENV_BINARY_DIR}/pip $ENV{PIP_OPTIONS} install --upgrade pip
+  COMMAND ${TESTENV_BINARY_DIR}/pip $ENV{PIP_OPTIONS} install -r ${TESTENV_REQUIREMENTS_FILE} --upgrade
+  DEPENDS ${TESTENV_REQUIREMENTS_FILE}
+)
+
+# create wrapper script for screen shooter
+if(SHOOTER STREQUAL "magick")
+  file(WRITE ${TESTENV_BINARY_DIR}/shooter "#!/bin/sh\n\nmagick import -window root \"$@\"\n")
+elseif(SHOOTER STREQUAL "import")
+  file(WRITE ${TESTENV_BINARY_DIR}/shooter "#!/bin/sh\n\nimport -window root \"$@\"\n")
+elseif(SHOOTER STREQUAL "xfce4-screenshooter")
+  file(WRITE ${TESTENV_BINARY_DIR}/shooter "#!/bin/sh\n\nxfce4-screenshooter -f -s \"$@\"\n")
+elseif(SHOOTER STREQUAL "gnome-screenshooter")
+  file(WRITE ${TESTENV_BINARY_DIR}/shooter "#!/bin/sh\n\ngnome-screenshooter -f \"$@\"\n")
+endif()
+file(CHMOD ${TESTENV_BINARY_DIR}/shooter PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE)
+
 # General command line tests on the LAMMPS-GUI executable
 add_test(NAME CommandLine.GetVersion
   COMMAND $<TARGET_FILE:lammps-gui> --platform offscreen -v)
@@ -63,3 +100,8 @@ target_link_libraries(test_helpers
 
 # Discover tests for test executables
 gtest_discover_tests(test_helpers)
+
+# test screen shooter wrapper script
+add_test(NAME Screenshot.Create
+  COMMAND ${TESTENV_BINARY_DIR}/shooter shot.png
+  )
