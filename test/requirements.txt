@@ -1,5 +1,4 @@
 build
 pyautogui
 pygments
-unittest
 wheel
