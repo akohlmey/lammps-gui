@@ -42,14 +42,17 @@ message(STATUS "Using ${SHOOTER} as screen shooter")
 
 # configure virtual environment for tests using PyAutoGUI and Xvfb
 find_package(Python3 3.8 REQUIRED COMPONENTS Interpreter)
-set(TESTENV_BINARY_DIR ${CMAKE_CURRENT_BINARY_DIR}/testenv/bin)
-set(TESTENV_REQUIREMENTS_FILE ${CMAKE_CURRENT_SOURCE_DIR}/requirements.txt)
-add_custom_command(
-  OUTPUT ${TESTENV_BINARY_DIR}/activate
-  COMMAND ${Python3_EXECUTABLE} -m venv testenv
-  COMMAND ${TESTENV_BINARY_DIR}/pip $ENV{PIP_OPTIONS} install --upgrade pip
-  COMMAND ${TESTENV_BINARY_DIR}/pip $ENV{PIP_OPTIONS} install -r ${TESTENV_REQUIREMENTS_FILE} --upgrade
-  DEPENDS ${TESTENV_REQUIREMENTS_FILE}
+execute_process(
+  COMMAND ${Python3_EXECUTABLE} -m venv "${CMAKE_CURRENT_BINARY_DIR}/testenv"
+)
+set(ENV{VIRTUAL_ENV} "${CMAKE_CURRENT_BINARY_DIR}/testenv")
+set(TESTENV_BINARY_DIR "${CMAKE_CURRENT_BINARY_DIR}/testenv/bin/")
+set(Python3_FIND_VIRTUALENV FIRST)
+unset(Python3_EXECUTABLE)
+find_package(Python3 3.8 REQUIRED COMPONENTS Interpreter)
+execute_process(
+  COMMAND ${Python3_EXECUTABLE} -m pip $ENV{PIP_OPTIONS} install --upgrade pip
+  COMMAND ${Python3_EXECUTABLE} -m pip $ENV{PIP_OPTIONS} install -r ${CMAKE_CURRENT_SOURCE_DIR}/requirements.txt --upgrade
 )
 
 # create wrapper script for screen shooter
@@ -107,7 +110,12 @@ list(APPEND PYTHON_TEST_ENVIRONMENT "PYTHONDONTWRITEBYTECODE=1")
 list(APPEND PYTHON_TEST_ENVIRONMENT "OMP_NUM_THREADS=1")
 
 # test screen shooter wrapper script
-add_test(NAME Screenshot.Create
+add_test(NAME Framebuffer.CreateScreenshot
   COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/test_shooter.py ${TESTENV_BINARY_DIR}/shooter
 )
-set_tests_properties(Screenshot.Create PROPERTIES ENVIRONMENT "${PYTHON_TEST_ENVIRONMENT}")
+# test is PyAutoGUI is usable
+add_test(NAME Framebuffer.CheckSize
+  COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/test_xvfbsize.py
+)
+set_tests_properties(Framebuffer.CreateScreenshot  Framebuffer.CheckSize
+  PROPERTIES ENVIRONMENT "${PYTHON_TEST_ENVIRONMENT}")
