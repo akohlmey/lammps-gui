@@ -3,26 +3,35 @@ Testing
 *******
 
 The ``test`` directory contains some tests for the LAMMPS-GUI project
-using the `GoogleTest <https://github.com/google/googletest/>`_ framework.
+using either the `GoogleTest framework
+<https://github.com/google/googletest/>`_ or the `Python unittest
+framework <https://docs.python.org/dev/library/unittest.html>`_
 
 Overview
 ^^^^^^^^
 
-The test suite uses CMake's CTest framework. Tests implemented with GoogleTest
-are automatically discovered and can be run individually or as a complete suite
-for each test program.
+The test suite uses CMake's CTest front end to select and run the
+tests. Tests implemented with GoogleTest are automatically discovered
+and can be run individually or as a complete suite for each test
+program.  Test running LAMMPS-GUI itself use the "virtual frame buffer"
+X server ``Xvfb`` and are written in Python using the ``unittest``
+Python module and the `PyAutoGUI module
+<https://pyautogui.readthedocs.io/>`_
 
 Building the Tests
 ^^^^^^^^^^^^^^^^^^
 
-Tests are built as part of the main project build when using
-``-D ENABLE_TESTING=ON`` during CMake configuration (default setting is `OFF`).
+Tests are built as part of the main project build when using ``-D
+ENABLE_TESTING=ON`` during CMake configuration (default setting is
+`OFF`).  Due to technical requirements, testing is currently only
+enabled for native Linux builds of LAMMPS-GUI.  In any other build
+environments the ``-D ENABLE_TESTING=ON`` setting is ignored.
 
 Quick Build
 ===========
 
-For running the tests, it is not necessary to build the documentation, so it
-can be skipped during configuration.
+For running the tests, it is not necessary to build the documentation,
+so its build can be skipped during configuration.
 
 .. code-block:: bash
 
@@ -59,16 +68,6 @@ Run Tests with Verbose Output
 
    ctest --test-dir build/test -V
 
-Run Specific Test
-=================
-
-Individual tests can be selected in different ways.  Most common is the
-use of regular expressions. Example:
-
-.. code-block:: bash
-
-   ctest --test-dir build/test -R MyStrdup
-
 List Available Tests
 ====================
 
@@ -78,6 +77,20 @@ The list of the names of all available tests can be obtained with:
 
    ctest --test-dir build/test -N
 
+
+Run Specific Tests
+==================
+
+Individual tests can be selected in different ways.  Most common is the
+use of regular expressions to select (``-R``) or exclude (``-E``) tests.
+It is also possible to select tests by a range of Test numbers (``-I``)
+from the -N test list output. Examples:
+
+.. code-block:: bash
+
+   ctest --test-dir build/test -R MyStrdup
+   ctest --test-dir build/test -E Frame
+   ctest --test-dir build/test -I 20,25
 
 Current Test Coverage
 ^^^^^^^^^^^^^^^^^^^^^
@@ -89,10 +102,13 @@ expansion will include GUI component testing and integration tests.
 Test Organization
 =================
 
-Tests are organized into two main categories:
+Tests are organized into three main categories:
 
 1. **Unit Tests**: Using GoogleTest framework to test individual functions
-2. **Command-Line Tests**: Using CTest to validate executable behavior
+2. **Command-Line Tests**: Using command-line to validate basic executable behavior
+3. **GUI Tests**: Tests using the Python unittest framework and
+   PyAutoGUI to run LAMMPS-GUI inside a virtual frame buffer in a
+   "remote controlled fashion".
 
 Unit Tests
 ==========
