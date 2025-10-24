@@ -101,7 +101,13 @@ target_link_libraries(test_helpers
 # Discover tests for test executables
 gtest_discover_tests(test_helpers)
 
+# set up environment for python testing
+set(PYTHON_TEST_ENVIRONMENT PYTHONUNBUFFERED=1)
+list(APPEND PYTHON_TEST_ENVIRONMENT "PYTHONDONTWRITEBYTECODE=1")
+list(APPEND PYTHON_TEST_ENVIRONMENT "OMP_NUM_THREADS=1")
+
 # test screen shooter wrapper script
 add_test(NAME Screenshot.Create
-  COMMAND ${TESTENV_BINARY_DIR}/shooter shot.png
-  )
+  COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/test_shooter.py ${TESTENV_BINARY_DIR}/shooter
+)
+set_tests_properties(Screenshot.Create PROPERTIES ENVIRONMENT "${PYTHON_TEST_ENVIRONMENT}")
