@@ -239,9 +239,11 @@ This test validates the ``shooter`` wrapper script that provides a unified
 interface to various Linux screenshot utilities (ImageMagick's ``import``,
 ``magick import``, ``xfce4-screenshooter``, ``gnome-screenshooter``).
 
-The test runs::
+The test runs:
 
-  xvfb-run -a -s "-screen 0 1024x768x24" -w 1 python test_shooter.py
+.. code-block:: bash
+
+   xvfb-run -a -s "-screen 0 1024x768x24" -w 1 python test_shooter.py
 
 within a virtual frame buffer and validates:
 
@@ -276,7 +278,9 @@ Framebuffer.CheckSize (test_xvfbsize.py)
 This test validates that PyAutoGUI can properly interact with the virtual
 frame buffer created by Xvfb, which is essential for GUI automation tests.
 
-The test runs::
+The test runs:
+
+.. code-block:: bash
 
   xvfb-run -a -s "-screen 0 1024x768x24" -w 1 python test_xvfbsize.py
 
