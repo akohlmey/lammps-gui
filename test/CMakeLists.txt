@@ -105,6 +105,7 @@ gtest_discover_tests(test_helpers)
 set(PYTHON_TEST_ENVIRONMENT PYTHONUNBUFFERED=1)
 list(APPEND PYTHON_TEST_ENVIRONMENT "PYTHONDONTWRITEBYTECODE=1")
 list(APPEND PYTHON_TEST_ENVIRONMENT "OMP_NUM_THREADS=1")
+list(APPEND PYTHON_TEST_ENVIRONMENT "LAMMPS_GUI=$<TARGET_FILE:lammps-gui>")
 list(APPEND PYTHON_TEST_ENVIRONMENT "PATH=${TESTENV_BINARY_DIR}:$ENV{PATH}")
 
 # test screen shooter wrapper script
@@ -112,10 +113,18 @@ add_test(NAME Framebuffer.CreateScreenshot
   COMMAND ${XVFB_RUNNER} -n 11 -s "-screen 0 1024x768x24" -w 1
   ${TESTENV_BINARY_DIR}/python ${CMAKE_CURRENT_SOURCE_DIR}/test_shooter.py
 )
+
 # test if PyAutoGUI is usable
 add_test(NAME Framebuffer.CheckSize
   COMMAND ${XVFB_RUNNER} -n 12 -s "-screen 0 1024x768x24" -w 1
   ${TESTENV_BINARY_DIR}/python ${CMAKE_CURRENT_SOURCE_DIR}/test_xvfbsize.py
 )
+
+# test basic LAMMPS-GUI editor tasks
+add_test(NAME Framebuffer.GUIEditorChecks
+  COMMAND ${XVFB_RUNNER} -n 13 -s "-screen 0 1024x768x24" -w 1
+  ${TESTENV_BINARY_DIR}/python ${CMAKE_CURRENT_SOURCE_DIR}/test_gui_edit.py
+)
 set_tests_properties(Framebuffer.CreateScreenshot  Framebuffer.CheckSize
+  Framebuffer.GUIEditorChecks
   PROPERTIES ENVIRONMENT "${PYTHON_TEST_ENVIRONMENT}")
