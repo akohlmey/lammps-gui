@@ -42,30 +42,22 @@ message(STATUS "Using ${SHOOTER} as screen shooter")
 
 # configure virtual environment for tests using PyAutoGUI and Xvfb
 find_package(Python3 3.8 REQUIRED COMPONENTS Interpreter)
-execute_process(
-  COMMAND ${Python3_EXECUTABLE} -m venv "${CMAKE_CURRENT_BINARY_DIR}/testenv"
-)
-set(ENV{VIRTUAL_ENV} "${CMAKE_CURRENT_BINARY_DIR}/testenv")
 set(TESTENV_BINARY_DIR "${CMAKE_CURRENT_BINARY_DIR}/testenv/bin/")
-set(Python3_FIND_VIRTUALENV FIRST)
-unset(Python3_EXECUTABLE)
-find_package(Python3 3.8 REQUIRED COMPONENTS Interpreter)
-execute_process(
-  COMMAND ${Python3_EXECUTABLE} -m pip $ENV{PIP_OPTIONS} install --upgrade pip
-  COMMAND ${Python3_EXECUTABLE} -m pip $ENV{PIP_OPTIONS} install -r ${CMAKE_CURRENT_SOURCE_DIR}/requirements.txt --upgrade
+add_custom_command(
+  OUTPUT ${TESTENV_BINARY_DIR}
+  COMMAND ${Python3_EXECUTABLE} -m venv "${CMAKE_CURRENT_BINARY_DIR}/testenv"
+  COMMAND ${TESTENV_BINARY_DIR}/pip $ENV{PIP_OPTIONS} install --upgrade pip
+  COMMAND ${TESTENV_BINARY_DIR}/pip $ENV{PIP_OPTIONS} install -r ${CMAKE_CURRENT_SOURCE_DIR}/requirements.txt --upgrade
+  COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_SOURCE_DIR}/shooter.${SHOOTER} ${TESTENV_BINARY_DIR}/shooter
+  WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+  DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/requirements.txt
 )
-
-# create wrapper script for screen shooter
-if(SHOOTER STREQUAL "magick")
-  file(WRITE ${TESTENV_BINARY_DIR}/shooter "#!/bin/sh\n\nmagick import -window root \"$@\"\n")
-elseif(SHOOTER STREQUAL "import")
-  file(WRITE ${TESTENV_BINARY_DIR}/shooter "#!/bin/sh\n\nimport -window root \"$@\"\n")
-elseif(SHOOTER STREQUAL "xfce4-screenshooter")
-  file(WRITE ${TESTENV_BINARY_DIR}/shooter "#!/bin/sh\n\nxfce4-screenshooter -f -s \"$@\"\n")
-elseif(SHOOTER STREQUAL "gnome-screenshooter")
-  file(WRITE ${TESTENV_BINARY_DIR}/shooter "#!/bin/sh\n\ngnome-screenshooter -f \"$@\"\n")
-endif()
-file(CHMOD ${TESTENV_BINARY_DIR}/shooter PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE)
+add_custom_target(setup_tests ALL
+  ${CMAKE_COMMAND} -E echo "Setting up virtual environment for testing"
+  DEPENDS ${TESTENV_BINARY_DIR}
+  SOURCES requirements.txt shooter.magick shooter.import shooter.xfce4-screenshooter shooter.gnome-screenshooter
+)
+set_target_properties(setup_tests PROPERTIES ADDITIONAL_CLEAN_FILES ${CMAKE_CURRENT_BINARY_DIR}/testenv)
 
 # General command line tests on the LAMMPS-GUI executable
 add_test(NAME CommandLine.GetVersion
@@ -111,11 +103,11 @@ list(APPEND PYTHON_TEST_ENVIRONMENT "OMP_NUM_THREADS=1")
 
 # test screen shooter wrapper script
 add_test(NAME Framebuffer.CreateScreenshot
-  COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/test_shooter.py ${TESTENV_BINARY_DIR}/shooter
+  COMMAND ${TESTENV_BINARY_DIR}/python ${CMAKE_CURRENT_SOURCE_DIR}/test_shooter.py ${TESTENV_BINARY_DIR}/shooter
 )
 # test is PyAutoGUI is usable
 add_test(NAME Framebuffer.CheckSize
-  COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/test_xvfbsize.py
+  COMMAND ${TESTENV_BINARY_DIR}/python ${CMAKE_CURRENT_SOURCE_DIR}/test_xvfbsize.py
 )
 set_tests_properties(Framebuffer.CreateScreenshot  Framebuffer.CheckSize
   PROPERTIES ENVIRONMENT "${PYTHON_TEST_ENVIRONMENT}")
