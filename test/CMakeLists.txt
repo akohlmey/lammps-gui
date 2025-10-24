@@ -107,7 +107,7 @@ add_test(NAME Framebuffer.CreateScreenshot
   COMMAND ${XVFB_RUNNER} -a -s "-screen 0 1024x768x24" -w 1
   ${TESTENV_BINARY_DIR}/python ${CMAKE_CURRENT_SOURCE_DIR}/test_shooter.py
 )
-# test is PyAutoGUI is usable
+# test if PyAutoGUI is usable
 add_test(NAME Framebuffer.CheckSize
   COMMAND ${XVFB_RUNNER} -a -s "-screen 0 1024x768x24" -w 1
   ${TESTENV_BINARY_DIR}/python ${CMAKE_CURRENT_SOURCE_DIR}/test_xvfbsize.py
