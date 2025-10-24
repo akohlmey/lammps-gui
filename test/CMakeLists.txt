@@ -96,6 +96,11 @@ target_link_libraries(test_helpers
 # Discover tests for test executables
 gtest_discover_tests(test_helpers)
 
+########################################################################
+# Tests that check the GUI environment and the GUI
+# IMPORTANT NOTE: we must use a different display number for the -n flag
+# for each XFVB_RUNNER invocation, to allow parallel execution of tests.
+
 # set up environment for python testing
 set(PYTHON_TEST_ENVIRONMENT PYTHONUNBUFFERED=1)
 list(APPEND PYTHON_TEST_ENVIRONMENT "PYTHONDONTWRITEBYTECODE=1")
@@ -104,12 +109,12 @@ list(APPEND PYTHON_TEST_ENVIRONMENT "PATH=${TESTENV_BINARY_DIR}:$ENV{PATH}")
 
 # test screen shooter wrapper script
 add_test(NAME Framebuffer.CreateScreenshot
-  COMMAND ${XVFB_RUNNER} -a -s "-screen 0 1024x768x24" -w 1
+  COMMAND ${XVFB_RUNNER} -n 11 -s "-screen 0 1024x768x24" -w 1
   ${TESTENV_BINARY_DIR}/python ${CMAKE_CURRENT_SOURCE_DIR}/test_shooter.py
 )
 # test if PyAutoGUI is usable
 add_test(NAME Framebuffer.CheckSize
-  COMMAND ${XVFB_RUNNER} -a -s "-screen 0 1024x768x24" -w 1
+  COMMAND ${XVFB_RUNNER} -n 12 -s "-screen 0 1024x768x24" -w 1
   ${TESTENV_BINARY_DIR}/python ${CMAKE_CURRENT_SOURCE_DIR}/test_xvfbsize.py
 )
 set_tests_properties(Framebuffer.CreateScreenshot  Framebuffer.CheckSize

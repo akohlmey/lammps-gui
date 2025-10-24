@@ -227,6 +227,9 @@ These tests validate LAMMPS-GUI functionality using PyAutoGUI and Xvfb (virtual
 frame buffer). They run the actual GUI application in a headless X server
 environment, allowing automated interaction and screenshot capture.
 
+**Important Note**: The argument for the screen number flag ``-n`` for ``xvfb-run``
+*must* be different for each test, so that the tests may run in parallel.
+
 Framebuffer.CreateScreenshot (test_shooter.py)
 -----------------------------------------------
 
@@ -243,7 +246,7 @@ The test runs:
 
 .. code-block:: bash
 
-   xvfb-run -a -s "-screen 0 1024x768x24" -w 1 python test_shooter.py
+   xvfb-run -n 11 -s "-screen 0 1024x768x24" -w 1 python test_shooter.py
 
 within a virtual frame buffer and validates:
 
@@ -282,7 +285,7 @@ The test runs:
 
 .. code-block:: bash
 
-  xvfb-run -a -s "-screen 0 1024x768x24" -w 1 python test_xvfbsize.py
+  xvfb-run -n 12 -s "-screen 0 1024x768x24" -w 1 python test_xvfbsize.py
 
 within a virtual frame buffer and validates:
 
