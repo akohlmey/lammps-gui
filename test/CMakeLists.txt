@@ -27,11 +27,11 @@ else()
   set(QT_VERSION_MAJOR 6)
 endif()
 
-# check that Xvfb and a supported screenshooter are present
-find_program(XVFB_BINARY
-  NAMES Xvfb
+# check that the Xvfb runner and a supported screenshooter are present
+find_program(XVFB_RUNNER
+  NAMES xvfb-run
   REQUIRED
-  DOC "Path to Xvfb executable")
+  DOC "Path to Xvfb runner script")
 
 find_program(SHOOTER_BINARY
   NAMES magick import xfce4-screenshooter gnome-screenshooter
@@ -100,14 +100,17 @@ gtest_discover_tests(test_helpers)
 set(PYTHON_TEST_ENVIRONMENT PYTHONUNBUFFERED=1)
 list(APPEND PYTHON_TEST_ENVIRONMENT "PYTHONDONTWRITEBYTECODE=1")
 list(APPEND PYTHON_TEST_ENVIRONMENT "OMP_NUM_THREADS=1")
+list(APPEND PYTHON_TEST_ENVIRONMENT "PATH=${TESTENV_BINARY_DIR}:$ENV{PATH}")
 
 # test screen shooter wrapper script
 add_test(NAME Framebuffer.CreateScreenshot
-  COMMAND ${TESTENV_BINARY_DIR}/python ${CMAKE_CURRENT_SOURCE_DIR}/test_shooter.py ${TESTENV_BINARY_DIR}/shooter
+  COMMAND ${XVFB_RUNNER} -a -s "-screen 0 1024x768x24" -w 1
+  ${TESTENV_BINARY_DIR}/python ${CMAKE_CURRENT_SOURCE_DIR}/test_shooter.py
 )
 # test is PyAutoGUI is usable
 add_test(NAME Framebuffer.CheckSize
-  COMMAND ${TESTENV_BINARY_DIR}/python ${CMAKE_CURRENT_SOURCE_DIR}/test_xvfbsize.py
+  COMMAND ${XVFB_RUNNER} -a -s "-screen 0 1024x768x24" -w 1
+  ${TESTENV_BINARY_DIR}/python ${CMAKE_CURRENT_SOURCE_DIR}/test_xvfbsize.py
 )
 set_tests_properties(Framebuffer.CreateScreenshot  Framebuffer.CheckSize
   PROPERTIES ENVIRONMENT "${PYTHON_TEST_ENVIRONMENT}")
