@@ -43,8 +43,8 @@ Many of the features in LAMMPS-GUI are useful beyond working on
 tutorials.  For instance, it can streamline the process of prototyping
 new simulation projects or debugging misbehaving simulations.
 
-LAMMPS-GUI is Copyright (c) |copyright|, and distributed under
-the terms of the GNU public license version 2 or later (GPLv2+)
+LAMMPS-GUI is Copyright (c) |copyright|, and distributed under the
+terms of the GNU public license version 2.0 or later (GPL-2.0-or-later).
 
 --------
 

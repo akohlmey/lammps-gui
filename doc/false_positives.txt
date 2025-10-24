@@ -21,6 +21,7 @@ flatpak
 Gissinger
 Golay
 GPG
+GPL
 Gravelle
 gui
 kspace

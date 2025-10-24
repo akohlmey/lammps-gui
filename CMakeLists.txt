@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.20)
 
 project(lammps-gui
-  VERSION 1.8.4
+  VERSION 1.8.4.1
   LANGUAGES CXX
   DESCRIPTION "The LAMMPS GUI"
   HOMEPAGE_URL "https://lammps-gui.lammps.org/")
@@ -191,9 +191,9 @@ if (NOT BUILD_DOC_ONLY)
   target_link_libraries(lammps-gui PRIVATE Qt${QT_VERSION_MAJOR}::Widgets Qt${QT_VERSION_MAJOR}::Charts)
 
   ###################
-  # unit tests
+  # unit tests, only enabled on Linux
   option(ENABLE_TESTING "Build unit tests" OFF)
-  if(ENABLE_TESTING)
+  if(ENABLE_TESTING AND (NOT CMAKE_CROSSCOMPILING) AND (CMAKE_SYSTEM_NAME STREQUAL "Linux"))
     message(STATUS "Testing is enabled")
     include(CTest)
     add_subdirectory(test)

@@ -2,7 +2,7 @@
 <component type="desktop">
   <id>lammps-gui.desktop</id>
   <metadata_license>CC-BY-3.0</metadata_license>
-  <project_license>GPL-2.0</project_license>
+  <project_license>GPL-2.0-or-later</project_license>
   <name>LAMMPS-GUI</name>
   <summary>
     Graphical interface to edit, run, plot, and visualize simulations with the LAMMPS MD code
@@ -54,6 +54,12 @@
   </provides>
 
   <releases>
+    <release version="1.8.5" timestamp="1761171849">
+      <description>
+        Minor bug fixes
+        Add unit tests for the GUI using Xvfb and PyAutoGUI and some screen shooter wrapper
+      </description>
+    </release>
     <release version="1.8.4" timestamp="1757684513">
       <description>
         Block compiling LAMMPS-GUI in plugin mode on Windows

@@ -28,21 +28,20 @@ Prerequisites and portability
 .. index:: Qt framework
 .. index:: CMake
 
-LAMMPS-GUI is programmed in C++ based on the
-C++17 standard and using the `Qt GUI framework
-<https://www.qt.io/product/framework>`_.  Currently, Qt version 5.15LTS
-or later is required; support for Qt version 6.x is available, too.
-When compiled With Qt version 6.x, LAMMPS-GUI can switch between a
-"light" and a "dark" theme according to the settings of the desktop
-environment.  Otherwise, there are no changes in functionality between
-using either major version of Qt.  Building LAMMPS-GUI requires CMake
-version 3.20 or later.
+LAMMPS-GUI is programmed in C++ based on the C++17 standard and using
+the `Qt GUI framework <https://www.qt.io/product/framework>`_.
+Currently, Qt version 5.15LTS or later is required; support for Qt
+version 6.x is available, too.  When compiled With Qt version 6.x,
+LAMMPS-GUI can switch between a "light" and a "dark" theme according to
+the settings of the desktop environment.  Otherwise, there are no
+changes in functionality between using either major version of Qt.
+Building LAMMPS-GUI requires CMake version 3.20 or later.
 
-.. admonition:: LAMMPS-GUI has been successfully compiled and tested on:
+.. admonition:: LAMMPS-GUI 1.8.4 has been successfully compiled and tested on:
 
    - Ubuntu Linux 22.04LTS x86_64 using GCC 11, Qt version 5.15
    - Fedora Linux 41 x86\_64 using GCC 14 and Clang 17, Qt version 5.15
-   - Fedora Linux 42 x86\_64 using GCC 15, Qt version 6.9
+   - Fedora Linux 43 x86\_64 using GCC 15, Qt version 6.9
    - Apple macOS 12 (Monterey) and macOS 13 (Ventura) with Xcode on arm64 and x86\_64, Qt version 5.15
    - Windows 10 and 11 x86_64 with Visual Studio 2022 and Visual C++ 14.36, Qt version 5.15
    - Windows 10 and 11 x86_64 with Visual Studio 2022 and Visual C++ 14.40, Qt version 6.7

@@ -27,6 +27,38 @@ else()
   set(QT_VERSION_MAJOR 6)
 endif()
 
+# check that the Xvfb runner and a supported screenshooter are present
+find_program(XVFB_RUNNER
+  NAMES xvfb-run
+  REQUIRED
+  DOC "Path to Xvfb runner script")
+
+find_program(SHOOTER_BINARY
+  NAMES magick import xfce4-screenshooter gnome-screenshooter
+  REQUIRED
+  DOC "Path to a supported screenshooter program")
+cmake_path(GET SHOOTER_BINARY FILENAME SHOOTER)
+message(STATUS "Using ${SHOOTER} as screen shooter")
+
+# configure virtual environment for tests using PyAutoGUI and Xvfb
+find_package(Python3 3.8 REQUIRED COMPONENTS Interpreter)
+set(TESTENV_BINARY_DIR "${CMAKE_CURRENT_BINARY_DIR}/testenv/bin/")
+add_custom_command(
+  OUTPUT ${TESTENV_BINARY_DIR}
+  COMMAND ${Python3_EXECUTABLE} -m venv "${CMAKE_CURRENT_BINARY_DIR}/testenv"
+  COMMAND ${TESTENV_BINARY_DIR}/pip $ENV{PIP_OPTIONS} install --upgrade pip
+  COMMAND ${TESTENV_BINARY_DIR}/pip $ENV{PIP_OPTIONS} install -r ${CMAKE_CURRENT_SOURCE_DIR}/requirements.txt --upgrade
+  COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_SOURCE_DIR}/shooter.${SHOOTER} ${TESTENV_BINARY_DIR}/shooter
+  WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+  DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/requirements.txt
+)
+add_custom_target(setup_tests ALL
+  ${CMAKE_COMMAND} -E echo "Setting up virtual environment for testing"
+  DEPENDS ${TESTENV_BINARY_DIR}
+  SOURCES requirements.txt shooter.magick shooter.import shooter.xfce4-screenshooter shooter.gnome-screenshooter
+)
+set_target_properties(setup_tests PROPERTIES ADDITIONAL_CLEAN_FILES ${CMAKE_CURRENT_BINARY_DIR}/testenv)
+
 # General command line tests on the LAMMPS-GUI executable
 add_test(NAME CommandLine.GetVersion
   COMMAND $<TARGET_FILE:lammps-gui> --platform offscreen -v)
@@ -63,3 +95,22 @@ target_link_libraries(test_helpers
 
 # Discover tests for test executables
 gtest_discover_tests(test_helpers)
+
+# set up environment for python testing
+set(PYTHON_TEST_ENVIRONMENT PYTHONUNBUFFERED=1)
+list(APPEND PYTHON_TEST_ENVIRONMENT "PYTHONDONTWRITEBYTECODE=1")
+list(APPEND PYTHON_TEST_ENVIRONMENT "OMP_NUM_THREADS=1")
+list(APPEND PYTHON_TEST_ENVIRONMENT "PATH=${TESTENV_BINARY_DIR}:$ENV{PATH}")
+
+# test screen shooter wrapper script
+add_test(NAME Framebuffer.CreateScreenshot
+  COMMAND ${XVFB_RUNNER} -a -s "-screen 0 1024x768x24" -w 1
+  ${TESTENV_BINARY_DIR}/python ${CMAKE_CURRENT_SOURCE_DIR}/test_shooter.py
+)
+# test if PyAutoGUI is usable
+add_test(NAME Framebuffer.CheckSize
+  COMMAND ${XVFB_RUNNER} -a -s "-screen 0 1024x768x24" -w 1
+  ${TESTENV_BINARY_DIR}/python ${CMAKE_CURRENT_SOURCE_DIR}/test_xvfbsize.py
+)
+set_tests_properties(Framebuffer.CreateScreenshot  Framebuffer.CheckSize
+  PROPERTIES ENVIRONMENT "${PYTHON_TEST_ENVIRONMENT}")

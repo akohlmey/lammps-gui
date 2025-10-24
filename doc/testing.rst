@@ -3,28 +3,37 @@ Testing
 *******
 
 The ``test`` directory contains some tests for the LAMMPS-GUI project
-using the `GoogleTest <https://github.com/google/googletest/>`_ framework.
+using either the `GoogleTest framework
+<https://github.com/google/googletest/>`_ or the `Python unittest
+framework <https://docs.python.org/dev/library/unittest.html>`_
 
 Overview
 ^^^^^^^^
 
-The test suite uses CMake's CTest framework. Tests implemented with GoogleTest
-are automatically discovered and can be run individually or as a complete suite
-for each test program.
+The test suite uses CMake's CTest front end to select and run the
+tests. Tests implemented with GoogleTest are automatically discovered
+and can be run individually or as a complete suite for each test
+program.  Test running LAMMPS-GUI itself use the "virtual frame buffer"
+X server ``Xvfb`` and are written in Python using the ``unittest``
+Python module and the `PyAutoGUI module
+<https://pyautogui.readthedocs.io/>`_
 
 Building the Tests
 ^^^^^^^^^^^^^^^^^^
 
-Tests are built as part of the main project build when using
-``-D ENABLE_TESTING=ON`` during CMake configuration (default setting is `OFF`).
+Tests are built as part of the main project build when using ``-D
+ENABLE_TESTING=ON`` during CMake configuration (default setting is
+`OFF`).  Due to technical requirements, testing is currently only
+enabled for native Linux builds of LAMMPS-GUI.  In any other build
+environments the ``-D ENABLE_TESTING=ON`` setting is ignored.
 
 Quick Build
 ===========
 
-For running the tests, it is not necessary to build the documentation, so it
-can be skipped during configuration.
+For running the tests, it is not necessary to build the documentation,
+so its build can be skipped during configuration.
 
-.. code-block:: bash
+.. code-block:: text
 
    cmake -S . -B build -D LAMMPS_GUI_USE_PLUGIN=yes -D BUILD_DOC=no -D ENABLE_TESTING=ON
    cmake --build build --parallel 2
@@ -35,7 +44,7 @@ Disable Tests
 Tests are disabled by default.  If they have been enabled during CMake configuration
 they can be disabled at a later point with:To build without tests:
 
-.. code-block:: bash
+.. code-block:: text
 
    cmake -S . -B build -D ENABLE_TESTING=OFF
 
@@ -48,36 +57,40 @@ These examples assume that LAMMPS-GUI was compiled in the folder ``build``
 Run All Tests
 =============
 
-.. code-block:: bash
+.. code-block:: text
 
    ctest --test-dir build/test
 
 Run Tests with Verbose Output
 =============================
 
-.. code-block:: bash
+.. code-block:: text
 
    ctest --test-dir build/test -V
-
-Run Specific Test
-=================
-
-Individual tests can be selected in different ways.  Most common is the
-use of regular expressions. Example:
-
-.. code-block:: bash
-
-   ctest --test-dir build/test -R MyStrdup
 
 List Available Tests
 ====================
 
 The list of the names of all available tests can be obtained with:
 
-.. code-block:: bash
+.. code-block:: text
 
    ctest --test-dir build/test -N
 
+
+Run Specific Tests
+==================
+
+Individual tests can be selected in different ways.  Most common is the
+use of regular expressions to select (``-R``) or exclude (``-E``) tests.
+It is also possible to select tests by a range of Test numbers (``-I``)
+from the -N test list output. Examples:
+
+.. code-block:: text
+
+   ctest --test-dir build/test -R MyStrdup
+   ctest --test-dir build/test -E Frame
+   ctest --test-dir build/test -I 20,25
 
 Current Test Coverage
 ^^^^^^^^^^^^^^^^^^^^^
@@ -89,10 +102,13 @@ expansion will include GUI component testing and integration tests.
 Test Organization
 =================
 
-Tests are organized into two main categories:
+Tests are organized into three main categories:
 
 1. **Unit Tests**: Using GoogleTest framework to test individual functions
-2. **Command-Line Tests**: Using CTest to validate executable behavior
+2. **Command-Line Tests**: Using command-line to validate basic executable behavior
+3. **GUI Tests**: Tests using the Python unittest framework and
+   PyAutoGUI to run LAMMPS-GUI inside a virtual frame buffer in a
+   "remote controlled fashion".
 
 Unit Tests
 ==========
@@ -203,6 +219,90 @@ and validates that help text is consistent with CMake configuration:
   plugin path option
 
 **Environment**: ``OMP_NUM_THREADS=1`` to ensure consistent behavior
+
+GUI Tests
+=========
+
+These tests validate LAMMPS-GUI functionality using PyAutoGUI and Xvfb (virtual
+frame buffer). They run the actual GUI application in a headless X server
+environment, allowing automated interaction and screenshot capture.
+
+Framebuffer.CreateScreenshot (test_shooter.py)
+-----------------------------------------------
+
+**Purpose**: Test the screenshot wrapper utility that abstracts different
+screenshooter applications
+
+**Test File**: ``test/test_shooter.py``
+
+This test validates the ``shooter`` wrapper script that provides a unified
+interface to various Linux screenshot utilities (ImageMagick's ``import``,
+``magick import``, ``xfce4-screenshooter``, ``gnome-screenshooter``).
+
+The test runs:
+
+.. code-block:: bash
+
+   xvfb-run -a -s "-screen 0 1024x768x24" -w 1 python test_shooter.py
+
+within a virtual frame buffer and validates:
+
+**ScreenshotChecks.testCreateImage**
+  - The ``shooter`` command executes without errors
+  - A PNG file is created at the specified path
+  - The image dimensions match the virtual frame buffer size (1024x768)
+  - The image format is PNG
+  - The screenshot captures an all-black screen (expected for empty Xvfb)
+  - Specific pixel values at multiple locations are (0,0,0) RGB
+
+**Dependencies**:
+  - PyAutoGUI - for screen size detection
+  - Pillow (PIL) - for image file validation
+  - One of: ImageMagick (``import`` or ``magick``), ``xfce4-screenshooter``,
+    or ``gnome-screenshooter``
+
+**Setup/Teardown**:
+  - ``setUp()``: Removes leftover ``shot.png`` from previous runs
+  - ``tearDown()``: Cleans up ``shot.png`` after test completion
+
+**Environment**: Virtual frame buffer at 1024x768x24, ``PYTHONUNBUFFERED=1``,
+``PYTHONDONTWRITEBYTECODE=1``, ``OMP_NUM_THREADS=1``
+
+Framebuffer.CheckSize (test_xvfbsize.py)
+-----------------------------------------
+
+**Purpose**: Verify PyAutoGUI functionality and Xvfb screen size configuration
+
+**Test File**: ``test/test_xvfbsize.py``
+
+This test validates that PyAutoGUI can properly interact with the virtual
+frame buffer created by Xvfb, which is essential for GUI automation tests.
+
+The test runs:
+
+.. code-block:: bash
+
+  xvfb-run -a -s "-screen 0 1024x768x24" -w 1 python test_xvfbsize.py
+
+within a virtual frame buffer and validates:
+
+**PyAutoGUIChecks.testScreenSize**
+  - PyAutoGUI correctly detects the screen dimensions
+  - Screen width is 1024 pixels
+  - Screen height is 768 pixels
+
+**PyAutoGUIChecks.testMousePosition**
+  - PyAutoGUI can detect the mouse cursor position
+  - Initial mouse position is at screen center (512, 384)
+  - ``pyautogui.moveTo()`` can move cursor to absolute positions
+  - ``pyautogui.moveRel()`` can move cursor by relative offsets
+  - Position queries return expected coordinates after moves
+
+**Dependencies**:
+  - PyAutoGUI - for screen size detection and mouse control
+
+**Environment**: Virtual frame buffer at 1024x768x24, ``PYTHONUNBUFFERED=1``,
+``PYTHONDONTWRITEBYTECODE=1``, ``OMP_NUM_THREADS=1``
 
 Test Fixtures and Utilities
 ============================

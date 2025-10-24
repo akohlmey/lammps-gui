@@ -1,0 +1,5 @@
+build
+Pillow
+pyautogui
+pygments
+wheel
