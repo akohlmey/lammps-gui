@@ -33,7 +33,7 @@ Quick Build
 For running the tests, it is not necessary to build the documentation,
 so its build can be skipped during configuration.
 
-.. code-block:: bash
+.. code-block:: text
 
    cmake -S . -B build -D LAMMPS_GUI_USE_PLUGIN=yes -D BUILD_DOC=no -D ENABLE_TESTING=ON
    cmake --build build --parallel 2
@@ -44,7 +44,7 @@ Disable Tests
 Tests are disabled by default.  If they have been enabled during CMake configuration
 they can be disabled at a later point with:To build without tests:
 
-.. code-block:: bash
+.. code-block:: text
 
    cmake -S . -B build -D ENABLE_TESTING=OFF
 
@@ -57,14 +57,14 @@ These examples assume that LAMMPS-GUI was compiled in the folder ``build``
 Run All Tests
 =============
 
-.. code-block:: bash
+.. code-block:: text
 
    ctest --test-dir build/test
 
 Run Tests with Verbose Output
 =============================
 
-.. code-block:: bash
+.. code-block:: text
 
    ctest --test-dir build/test -V
 
@@ -73,7 +73,7 @@ List Available Tests
 
 The list of the names of all available tests can be obtained with:
 
-.. code-block:: bash
+.. code-block:: text
 
    ctest --test-dir build/test -N
 
@@ -86,7 +86,7 @@ use of regular expressions to select (``-R``) or exclude (``-E``) tests.
 It is also possible to select tests by a range of Test numbers (``-I``)
 from the -N test list output. Examples:
 
-.. code-block:: bash
+.. code-block:: text
 
    ctest --test-dir build/test -R MyStrdup
    ctest --test-dir build/test -E Frame
