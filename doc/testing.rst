@@ -220,6 +220,86 @@ and validates that help text is consistent with CMake configuration:
 
 **Environment**: ``OMP_NUM_THREADS=1`` to ensure consistent behavior
 
+GUI Tests
+=========
+
+These tests validate LAMMPS-GUI functionality using PyAutoGUI and Xvfb (virtual
+frame buffer). They run the actual GUI application in a headless X server
+environment, allowing automated interaction and screenshot capture.
+
+Framebuffer.CreateScreenshot (test_shooter.py)
+-----------------------------------------------
+
+**Purpose**: Test the screenshot wrapper utility that abstracts different
+screenshooter applications
+
+**Test File**: ``test/test_shooter.py``
+
+This test validates the ``shooter`` wrapper script that provides a unified
+interface to various Linux screenshot utilities (ImageMagick's ``import``,
+``magick import``, ``xfce4-screenshooter``, ``gnome-screenshooter``).
+
+The test runs::
+
+  xvfb-run -a -s "-screen 0 1024x768x24" -w 1 python test_shooter.py
+
+within a virtual frame buffer and validates:
+
+**ScreenshotChecks.testCreateImage**
+  - The ``shooter`` command executes without errors
+  - A PNG file is created at the specified path
+  - The image dimensions match the virtual frame buffer size (1024x768)
+  - The image format is PNG
+  - The screenshot captures an all-black screen (expected for empty Xvfb)
+  - Specific pixel values at multiple locations are (0,0,0) RGB
+
+**Dependencies**:
+  - PyAutoGUI - for screen size detection
+  - Pillow (PIL) - for image file validation
+  - One of: ImageMagick (``import`` or ``magick``), ``xfce4-screenshooter``,
+    or ``gnome-screenshooter``
+
+**Setup/Teardown**:
+  - ``setUp()``: Removes leftover ``shot.png`` from previous runs
+  - ``tearDown()``: Cleans up ``shot.png`` after test completion
+
+**Environment**: Virtual frame buffer at 1024x768x24, ``PYTHONUNBUFFERED=1``,
+``PYTHONDONTWRITEBYTECODE=1``, ``OMP_NUM_THREADS=1``
+
+Framebuffer.CheckSize (test_xvfbsize.py)
+-----------------------------------------
+
+**Purpose**: Verify PyAutoGUI functionality and Xvfb screen size configuration
+
+**Test File**: ``test/test_xvfbsize.py``
+
+This test validates that PyAutoGUI can properly interact with the virtual
+frame buffer created by Xvfb, which is essential for GUI automation tests.
+
+The test runs::
+
+  xvfb-run -a -s "-screen 0 1024x768x24" -w 1 python test_xvfbsize.py
+
+within a virtual frame buffer and validates:
+
+**PyAutoGUIChecks.testScreenSize**
+  - PyAutoGUI correctly detects the screen dimensions
+  - Screen width is 1024 pixels
+  - Screen height is 768 pixels
+
+**PyAutoGUIChecks.testMousePosition**
+  - PyAutoGUI can detect the mouse cursor position
+  - Initial mouse position is at screen center (512, 384)
+  - ``pyautogui.moveTo()`` can move cursor to absolute positions
+  - ``pyautogui.moveRel()`` can move cursor by relative offsets
+  - Position queries return expected coordinates after moves
+
+**Dependencies**:
+  - PyAutoGUI - for screen size detection and mouse control
+
+**Environment**: Virtual frame buffer at 1024x768x24, ``PYTHONUNBUFFERED=1``,
+``PYTHONDONTWRITEBYTECODE=1``, ``OMP_NUM_THREADS=1``
+
 Test Fixtures and Utilities
 ============================
 
