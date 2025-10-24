@@ -193,7 +193,7 @@ if (NOT BUILD_DOC_ONLY)
   ###################
   # unit tests
   option(ENABLE_TESTING "Build unit tests" OFF)
-  if(ENABLE_TESTING)
+  if(ENABLE_TESTING AND (NOT CMAKE_CROSSCOMPILING))
     message(STATUS "Testing is enabled")
     include(CTest)
     add_subdirectory(test)
