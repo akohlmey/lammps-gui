@@ -84,12 +84,13 @@ const QString bannerstyle("CodeEditor {background-position: center center; "
                           "background-image: url(:/icons/lammps-gui-banner.png);}");
 } // namespace
 
-LammpsGui::LammpsGui(QWidget *parent, const QString &filename) :
+LammpsGui::LammpsGui(QWidget *parent, const QString &filename, int width, int height) :
     QMainWindow(parent), ui(new Ui::LammpsGui), highlighter(nullptr), capturer(nullptr),
     status(nullptr), cpuuse(nullptr), logwindow(nullptr), imagewindow(nullptr),
     chartwindow(nullptr), slideshow(nullptr), logupdater(nullptr), dirstatus(nullptr),
     progress(nullptr), prefdialog(nullptr), lammpsstatus(nullptr), varwindow(nullptr),
-    wizard(nullptr), runner(nullptr), is_running(false), run_counter(0)
+    wizard(nullptr), runner(nullptr), is_running(false), run_counter(0), nthreads(1), mainx(width),
+    mainy(height)
 {
     docver = "";
     ui->setupUi(this);
@@ -222,8 +223,6 @@ LammpsGui::LammpsGui(QWidget *parent, const QString &filename) :
     // Default is to use OMP_NUM_THREADS setting, if that is not available, thenhalf of max
     // (assuming hyper-threading is enabled) and no more than MAX_DEFAULT_THREADS (=16).
     // This is only if there is no preference set but do not override OMP_NUM_THREADS
-    nthreads = 1;
-
     int default_threads = std::min(QThread::idealThreadCount() / 2, MAX_DEFAULT_THREADS);
     default_threads     = std::max(default_threads, 1);
     if (qEnvironmentVariableIsSet("OMP_NUM_THREADS"))
@@ -386,7 +385,13 @@ LammpsGui::LammpsGui(QWidget *parent, const QString &filename) :
     } else {
         setWindowTitle("LAMMPS-GUI - Editor - *unknown*");
     }
-    resize(settings.value("mainx", "500").toInt(), settings.value("mainy", "320").toInt());
+
+    // set width and height of main window.
+    // use last values unless overridden from command-line
+    // do not accept an geometry smaller than 800x400
+    if (mainx < 800) mainx = settings.value("mainx", "800").toInt();
+    if (mainy < 400) mainy = settings.value("mainy", "400").toInt();
+    resize(mainx, mainy);
 
     // start LAMMPS and initialize command completion
     start_lammps();
