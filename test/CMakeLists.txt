@@ -71,11 +71,11 @@ add_test(NAME CommandLine.HasPlugin
 if (LAMMPS_GUI_USE_PLUGIN)
   set_tests_properties(CommandLine.HasPlugin PROPERTIES
     ENVIRONMENT "OMP_NUM_THREADS=1"
-    PASS_REGULAR_EXPRESSION "Options:.?  -p, --pluginpath <path>  Set path to LAMMPS")
+    PASS_REGULAR_EXPRESSION "Options:.?  -p, --pluginpath <path> +Set path to LAMMPS")
 else()
   set_tests_properties(CommandLine.HasPlugin PROPERTIES
     ENVIRONMENT "OMP_NUM_THREADS=1"
-    PASS_REGULAR_EXPRESSION "Options:.?  -h, --help     Displays help on commandline options.")
+    PASS_REGULAR_EXPRESSION "Options:.?  -h, --help   +Displays help on commandline options.")
 endif()
 
 # Test executable for helpers
