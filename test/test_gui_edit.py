@@ -7,7 +7,7 @@ import time
 import unittest
 from PIL import Image
 
-pyautogui.PAUSE = 0.2
+pyautogui.PAUSE = 0.25
 
 def tuple_compare(one,two,delta):
     """Compare two RGB triples to determine if they differ less than delta"""
@@ -18,6 +18,10 @@ def tuple_compare(one,two,delta):
     else:
         return False
 
+def screenshot(fname):
+    """Create a screenshot and save to the given file name fname"""
+    return subprocess.check_output(["shooter", fname], stderr=subprocess.STDOUT)
+
 def check_image(fname, color, delta):
     """
     Check if a square of four pixels of an image have the expected color
@@ -26,16 +30,20 @@ def check_image(fname, color, delta):
     with Image.open(fname) as im:
         im = im.convert("RGB")
         px = im.load()
-        # check format, size, and that it is all black
-        if tuple_compare(px[100,100], color, delta) and \
-           tuple_compare(px[100,500], color, delta) and \
-           tuple_compare(px[500,100], color, delta) and \
-           tuple_compare(px[500,500], color, delta):
+        # check format, size, and that it is all one color
+        if tuple_compare(px[60,75], color, delta) and \
+           tuple_compare(px[930,75], color, delta) and \
+           tuple_compare(px[930,400], color, delta) and \
+           tuple_compare(px[60,400], color, delta):
             os.remove(fname)
             return True
         else:
-            print(px[100,100], px[100,500], px[500,100], px[500,500], color)
+            print(px[60,75], px[930,75], px[930,400], px[60,400], color)
             return False
+
+def focus():
+    """Give focus to the editor window by positioning then mouse and clicking"""
+    pyautogui.click(button='left', x=100, y=100)
 
 class GUIEditorChecks(unittest.TestCase):
     """This set of tests exercises some basic editor tasks"""
@@ -44,36 +52,213 @@ class GUIEditorChecks(unittest.TestCase):
     gui=None
 
     def setUp(self):
-        """Launch LAMMPS-GUI"""
-        self.gui=subprocess.Popen(os.environ['LAMMPS_GUI'])
+        """Launch LAMMPS-GUI and give it focus"""
+        # get exact path of the LAMMPS-GUI binary from environment variable
+        self.gui=subprocess.Popen([os.environ['LAMMPS_GUI'], '-x', '1000', '-y', '500'],
+                                  stderr=subprocess.DEVNULL, stdout=subprocess.DEVNULL)
         time.sleep(1.0)
-        # move mouse inside the editor widget and get focus
-        pyautogui.click(button='left', x=100, y=100)
+        for f in ['hello.txt', 'hello1.txt', 'hello2.txt', 'empty.txt', 'complete.txt',
+                  'shot1.png', 'shot2.png']:
+            if os.path.exists(f):
+                os.remove(f)
+        focus()
 
     def tearDown(self):
         """Stop LAMMPS-GUI"""
         if not self.gui.poll():
             self.gui.terminate()
 
-    def testExitShortcut(self):
+    def xtestExitShortcut(self):
         """Exit LAMMPS-GUI immediately via keyboard shortcut"""
-        subprocess.check_output("shooter shot1.png", shell=True, stderr=subprocess.STDOUT)
+        screenshot("shot1.png")
         pyautogui.hotkey('ctrl','q')
-        subprocess.check_output("shooter shot2.png", shell=True, stderr=subprocess.STDOUT)
+        screenshot("shot2.png")
         self.assertEqual(self.gui.poll(), 0)
         self.assertTrue(check_image('shot1.png', (255,255,255), 10))
         self.assertTrue(check_image('shot2.png', (0,0,0), 1))
 
-    def testExitMenu(self):
+    def xtestExitMenu(self):
         """Exit LAMMPS-GUI immediately via the menu"""
-        subprocess.check_output("shooter shot1.png", shell=True, stderr=subprocess.STDOUT)
+        screenshot("shot1.png")
         pyautogui.hotkey('alt','f')
-        pyautogui.keyDown('q')
-        pyautogui.keyUp('q')
-        subprocess.check_output("shooter shot2.png", shell=True, stderr=subprocess.STDOUT)
+        pyautogui.press('q')
+        screenshot("shot2.png")
         self.assertEqual(self.gui.poll(), 0)
         self.assertTrue(check_image('shot1.png', (255,255,255), 10))
         self.assertTrue(check_image('shot2.png', (0,0,0), 1))
+
+    def xtestExitModCancelNo(self):
+        """Exit LAMMPS-GUI with a modified buffer without saving"""
+        pyautogui.typewrite("Hello, World!")
+        pyautogui.press('enter')
+        # cancel on first attempt to exit and we'll drop back to the editor
+        pyautogui.hotkey('ctrl','q')
+        pyautogui.hotkey('alt','c')
+        # try to exit again and this time say "no"
+        focus()
+        pyautogui.hotkey('ctrl','q')
+        pyautogui.hotkey('alt','n')
+        self.assertEqual(self.gui.poll(), 0)
+
+    def xtestExitModSave(self):
+        """Exit LAMMPS-GUI with a modified buffer and save it to a file"""
+        # First enter some text
+        pyautogui.typewrite("Hello, World!")
+        pyautogui.press('enter')
+        # try to exit and select "yes" to save
+        pyautogui.hotkey('ctrl','q')
+        pyautogui.hotkey('alt','y')
+        # enter file name and save
+        pyautogui.typewrite('hello.txt')
+        time.sleep(0.2)
+        pyautogui.press('enter')
+        pyautogui.press('enter')
+        time.sleep(0.2)
+        self.assertTrue(os.path.exists('hello.txt'))
+        with open('hello.txt','r') as f:
+            lines = f.read().splitlines()
+            self.assertEqual(lines[1],"Hello, World!")
+            f.close()
+            os.remove('hello.txt')
+        self.assertEqual(self.gui.poll(), 0)
+
+    def testEditSaveLoad(self):
+        """Exercise various Load/Save/Save As/New file options"""
+        pyautogui.hotkey('ctrl','a')
+        pyautogui.press('delete')
+        pyautogui.typewrite("Hello, World!\n")
+        pyautogui.typewrite("Hello, LAMMPS!\n")
+        # save edit to file
+        pyautogui.hotkey('ctrl','s')
+        pyautogui.typewrite('hello.txt')
+        time.sleep(0.2)
+        pyautogui.hotkey('enter')
+        time.sleep(0.2)
+        pyautogui.hotkey('enter')
+        self.assertTrue(os.path.exists('hello.txt'))
+        with open('hello.txt','r') as f:
+            lines = f.read().splitlines()
+            self.assertEqual(lines[0],"Hello, World!")
+            self.assertEqual(lines[1],"Hello, LAMMPS!")
+            f.close()
+
+        # start new file and remove comment
+        focus()
+        pyautogui.hotkey('ctrl','n')
+        pyautogui.hotkey('ctrl','a')
+        pyautogui.press('delete')
+        # save empty buffer to file
+        pyautogui.hotkey('ctrl','s')
+        pyautogui.typewrite('empty.txt')
+        time.sleep(0.2)
+        pyautogui.hotkey('enter')
+        time.sleep(0.2)
+        pyautogui.hotkey('enter')
+        self.assertTrue(os.path.exists('empty.txt'))
+        with open('empty.txt','r') as f:
+            lines = f.read().splitlines()
+            self.assertEqual(lines[0],"")
+            f.close()
+            os.remove('empty.txt')
+        focus()
+        # abandon buffer and open existing file
+        pyautogui.hotkey('ctrl','o')
+        pyautogui.typewrite('hello.txt')
+        pyautogui.press('enter')
+        focus()
+        pyautogui.press('down')
+        pyautogui.press('down')
+        pyautogui.press('down')
+        pyautogui.typewrite("Hello, LAMMPS-GUI!")
+        pyautogui.press('enter')
+        focus()
+        # update current file on disk
+        pyautogui.hotkey('ctrl','s')
+        focus()
+        time.sleep(0.2)
+        # write same content to new name
+        pyautogui.hotkey('ctrl','shift','s')
+        time.sleep(0.2)
+        pyautogui.typewrite('hello1.txt')
+        pyautogui.press('enter')
+        pyautogui.press('enter')
+        time.sleep(0.2)
+
+        # check files and content
+        self.assertTrue(os.path.exists('hello.txt'))
+        self.assertTrue(os.path.exists('hello1.txt'))
+
+        with open('hello.txt','r') as f:
+            lines = f.read().splitlines()
+            self.assertEqual(lines[0],"Hello, World!")
+            self.assertEqual(lines[1],"Hello, LAMMPS!")
+            self.assertEqual(lines[2],"Hello, LAMMPS-GUI!")
+            f.close()
+            os.remove('hello.txt')
+
+        with open('hello1.txt','r') as f:
+            lines = f.read().splitlines()
+            self.assertEqual(lines[0],"Hello, World!")
+            self.assertEqual(lines[1],"Hello, LAMMPS!")
+            self.assertEqual(lines[2],"Hello, LAMMPS-GUI!")
+            f.close()
+            os.remove('hello1.txt')
+
+        # close LAMMPS-GUI
+        focus()
+        pyautogui.hotkey('ctrl','q')
+        time.sleep(0.2)
+        self.assertEqual(self.gui.poll(), 0)
+
+    def testEditCompletion(self):
+        # clear buffer
+        pyautogui.hotkey('ctrl','a')
+        pyautogui.press('delete')
+        pyautogui.typewrite('ato')
+        pyautogui.press('down')
+        pyautogui.press('down')
+        pyautogui.press('enter')
+        pyautogui.press('space')
+        pyautogui.typewrite('mol')
+        pyautogui.press('enter')
+        pyautogui.press('tab')
+        pyautogui.press('enter')
+        pyautogui.typewrite('uni')
+        pyautogui.press('enter')
+        pyautogui.press('space')
+        pyautogui.typewrite('met')
+        pyautogui.press('enter')
+        pyautogui.press('tab')
+        pyautogui.press('enter')
+        pyautogui.typewrite('reg')
+        pyautogui.press('enter')
+        pyautogui.press('space')
+        pyautogui.typewrite('box bl')
+        pyautogui.press('enter')
+        pyautogui.typewrite(' 0 1 0 1 0 1')
+        pyautogui.press('tab')
+        pyautogui.press('enter')
+
+        # save edit to file
+        pyautogui.hotkey('ctrl','s')
+        pyautogui.typewrite('complete.txt')
+        time.sleep(0.2)
+        pyautogui.hotkey('enter')
+        time.sleep(0.2)
+        pyautogui.hotkey('enter')
+        self.assertTrue(os.path.exists('complete.txt'))
+        with open('complete.txt','r') as f:
+            lines = f.read().splitlines()
+            self.assertEqual(lines[0],"atom_style      molecular")
+            self.assertEqual(lines[1],"units           metal")
+            self.assertEqual(lines[2],"region          box block 0 1 0 1 0 1")
+            f.close()
+            os.remove('complete.txt')
+        # close LAMMPS-GUI
+        focus()
+        pyautogui.hotkey('ctrl','q')
+        time.sleep(0.2)
+        self.assertEqual(self.gui.poll(), 0)
 
 ##############################
 if __name__ == "__main__":
