@@ -42,7 +42,7 @@ do \
     cp ${dep} ${DESTDIR}/lib
 done
 # download pre-compiled liblammps shared library without dependencies
-if [ $(env LD_LIBRARY_PATH=${DESTDIR}/lib:${LD_LIBRARY_PATH} ${DESTDIR}/bin/lammps-gui -h | grep pluginpath) ]; then
+if $(env LD_LIBRARY_PATH=${DESTDIR}/lib:${LD_LIBRARY_PATH} ${DESTDIR}/bin/lammps-gui -h | grep pluginpath); then
     curl -L -o ${DESTDIR}/lib/liblammps.so.0  https://download.lammps.org/lammps-gui/liblammps.so.0
 fi
 

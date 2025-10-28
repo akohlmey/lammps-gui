@@ -26,7 +26,7 @@ mv ${APP_NAME}.app/Contents/Resources/LAMMPS_DMG_Background.png .background/back
 mv ${APP_NAME}.app LAMMPS-GUI.app
 cd LAMMPS-GUI.app/Contents
 # download pre-compiled LAMMPS shared library if plugin-mode LAMMPS-GUI binary
-if [ $(./MacOS/lammps-gui -h | grep -q pluginpath) ]; then
+if $(./MacOS/lammps-gui -h | grep -q pluginpath); then
     curl -L -o MacOS/liblammps.dylib.so.0 https://download.lammps.org/lammps-gui/liblammps.dylib.0
 fi
 
