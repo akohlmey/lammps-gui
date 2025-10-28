@@ -122,12 +122,10 @@ add_test(NAME Framebuffer.CheckSize
 set_tests_properties(Framebuffer.CreateScreenshot  Framebuffer.CheckSize
                      PROPERTIES ENVIRONMENT "${PYTHON_TEST_ENVIRONMENT}")
 
-if(NOT LAMMPS_GUI_USE_PLUGIN)
-  # test basic LAMMPS-GUI editor tasks
-  add_test(NAME Framebuffer.GUIEditorChecks
-    COMMAND ${XVFB_RUNNER} -n 13 -s "-screen 0 1024x768x24" -w 1
-    ${TESTENV_BINARY_DIR}/python ${CMAKE_CURRENT_SOURCE_DIR}/test_gui_edit.py
-  )
-  set_tests_properties(Framebuffer.GUIEditorChecks
-                       PROPERTIES ENVIRONMENT "${PYTHON_TEST_ENVIRONMENT}")
-endif()
+# test basic LAMMPS-GUI editor tasks
+add_test(NAME Framebuffer.GUIEditorChecks
+  COMMAND ${XVFB_RUNNER} -n 13 -s "-screen 0 1024x768x24" -w 1
+  ${TESTENV_BINARY_DIR}/python ${CMAKE_CURRENT_SOURCE_DIR}/test_gui_edit.py
+)
+set_tests_properties(Framebuffer.GUIEditorChecks
+                     PROPERTIES ENVIRONMENT "${PYTHON_TEST_ENVIRONMENT}")
