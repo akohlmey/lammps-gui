@@ -25,13 +25,21 @@ mkdir  .background
 mv ${APP_NAME}.app/Contents/Resources/LAMMPS_DMG_Background.png .background/background.png
 mv ${APP_NAME}.app LAMMPS-GUI.app
 cd LAMMPS-GUI.app/Contents
+# download pre-compiled LAMMPS shared library if plugin-mode LAMMPS-GUI binary
+if [ $(./MacOS/lammps-gui -h | grep -q pluginpath) ]; then
+    curl -L -o MacOS/liblammps.dylib.so.0 https://download.lammps.org/lammps-gui/liblammps.dylib.0
+fi
 
-echo "Attach icons to LAMMPS console and GUI executables"
+echo "Attach icons to LAMMPS console and GUI executables and lib"
 echo "read 'icns' (-16455) \"Resources/lammps-gui.icns\";" > icon.rsrc
 Rez -a icon.rsrc -o bin/lmp
 SetFile -a C bin/lmp
 Rez -a icon.rsrc -o MacOS/lammps-gui
 SetFile -a C MacOS/lammps-gui
+if [ -f MacOS/liblammps.0.dylib ]; then
+    Rez -a icon.rsrc -o MacOS/liblammps.0.dylib
+    SetFile -a C MacOS/liblammps.0.dylib
+fi
 rm icon.rsrc
 popd
 
