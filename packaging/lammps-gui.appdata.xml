@@ -59,6 +59,8 @@
         Minor bug fixes
         Add -x/-width and -y/-height command line flags to override the main window geometry
         Add unit tests for the GUI using Xvfb and PyAutoGUI and some screen shooter wrapper
+        Bundle pre-compiled shared LAMMPS libraries without dependencies except for libcurl
+        Download pre-compiled shared LAMMPS library also for unit testing
       </description>
     </release>
     <release version="1.8.4" timestamp="1757684513">
