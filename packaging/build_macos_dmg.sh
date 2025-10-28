@@ -9,7 +9,7 @@ rm -f ${APP_NAME}.dmg ${APP_NAME}-rw.dmg LAMMPS-GUI-macOS-multiarch*.dmg \
 
 # download pre-compiled LAMMPS shared library if plugin-mode LAMMPS-GUI binary
 if $(./${APP_NAME}.app/Contents/MacOS/lammps-gui -h | grep -q pluginpath); then
-    mkdir ${APP_NAME}.app/Contents/Frameworks
+    mkdir -p ${APP_NAME}.app/Contents/Frameworks
     curl -L -o ${APP_NAME}.app/Contents/Frameworks/liblammps.0.dylib https://download.lammps.org/lammps-gui/liblammps.0.dylib
     chmod 0755 ${APP_NAME}.app/Contents/Frameworksw/liblammps.0.dylib
 fi

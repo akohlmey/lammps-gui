@@ -16,6 +16,13 @@ do \
         test -f $s && strip --strip-debug $s
 done
 
+# download pre-compiled LAMMPS shared library
+if $(LD_LIBRARY_PATH=${DESTDIR}/lib ${DESTDIR}/bin/lammps-gui -h | grep -q pluginpath)
+then \
+	curl -L -o ${DESTDIR}/lib/liblammps.so.0 https://download.lammps.org/lammps-gui/liblammps.so.0
+        chmod +x ${DESTDIR}/lib/liblammps.so.0
+fi
+
 echo "Remove libc, gcc, and X11 related shared libs"
 rm -f ${DESTDIR}/lib/ld*.so ${DESTDIR}/lib/ld*.so.[0-9]
 rm -f ${DESTDIR}/lib/lib{c,dl,rt,m,pthread}.so.?
@@ -41,10 +48,6 @@ for dep in ${QTDEPS}
 do \
     cp ${dep} ${DESTDIR}/lib
 done
-# download pre-compiled liblammps shared library without dependencies
-if $(env LD_LIBRARY_PATH=${DESTDIR}/lib:${LD_LIBRARY_PATH} ${DESTDIR}/bin/lammps-gui -h | grep pluginpath); then
-    curl -L -o ${DESTDIR}/lib/liblammps.so.0  https://download.lammps.org/lammps-gui/liblammps.so.0
-fi
 
 echo "Add additional plugins for Qt"
 for dir in styles imageformats
