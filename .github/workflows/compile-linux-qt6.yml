@@ -67,6 +67,11 @@ jobs:
       run: |
         build/lammps-gui --platform offscreen -v
 
+    - name: Download pre-compiled LAMMPS shared library
+      run: |
+        curl -L -o build/liblammps.so.0 https://download.lammps.org/lammps-gui/liblammps.so.0
+        chmod +x build/liblammps.so.0
+
     - name: Run Tests via CTest
       shell: bash
       run: |
