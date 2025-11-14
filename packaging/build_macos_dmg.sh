@@ -4,10 +4,18 @@ APP_NAME=lammps-gui
 VERSION="$1"
 
 echo "Delete old files, if they exist"
-rm -f ${APP_NAME}.dmg ${APP_NAME}-rw.dmg LAMMPS-GUI-macOS-multiarch*.dmg
+rm -f ${APP_NAME}.dmg ${APP_NAME}-rw.dmg LAMMPS-GUI-macOS-multiarch*.dmg \
+   ${APP_NAME}.app/Contents/Frameworks/liblammps.0.dylib
+
+# download pre-compiled LAMMPS shared library if plugin-mode LAMMPS-GUI binary
+if $(./${APP_NAME}.app/Contents/MacOS/lammps-gui -h | grep -q pluginpath); then
+    mkdir -p ${APP_NAME}.app/Contents/Frameworks
+    curl -L -o ${APP_NAME}.app/Contents/Frameworks/liblammps.0.dylib https://download.lammps.org/lammps-gui/liblammps.0.dylib
+    chmod 0755 ${APP_NAME}.app/Contents/Frameworksw/liblammps.0.dylib
+fi
 
 echo "Create initial dmg file with macdeployqt"
-macdeployqt  lammps-gui.app -dmg
+macdeployqt ${APP_NAME}.app -dmg
 echo "Create writable dmg file"
 hdiutil convert ${APP_NAME}.dmg -format UDRW -o ${APP_NAME}-rw.dmg
 
@@ -20,18 +28,22 @@ echo "Create link to Application folder and move README and background image fil
 
 pushd "${VOLUME}"
 ln -s /Applications .
-mv  ${APP_NAME}.app/Contents/Resources/README.txt .
+mv ${APP_NAME}.app/Contents/Resources/README.txt .
 mkdir  .background
 mv ${APP_NAME}.app/Contents/Resources/LAMMPS_DMG_Background.png .background/background.png
 mv ${APP_NAME}.app LAMMPS-GUI.app
 cd LAMMPS-GUI.app/Contents
 
-echo "Attach icons to LAMMPS console and GUI executables"
+echo "Attach icons to LAMMPS console and GUI executables and lib"
 echo "read 'icns' (-16455) \"Resources/lammps-gui.icns\";" > icon.rsrc
 Rez -a icon.rsrc -o bin/lmp
 SetFile -a C bin/lmp
 Rez -a icon.rsrc -o MacOS/lammps-gui
 SetFile -a C MacOS/lammps-gui
+if [ -f Frameworks/liblammps.0.dylib ]; then
+    Rez -a icon.rsrc -o Frameworks/liblammps.0.dylib
+    SetFile -a C Frameworks/liblammps.0.dylib
+fi
 rm icon.rsrc
 popd
 

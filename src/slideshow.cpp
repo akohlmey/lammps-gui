@@ -26,6 +26,7 @@
 #include <QImageReader>
 #include <QKeySequence>
 #include <QLabel>
+#include <QMessageBox>
 #include <QPalette>
 #include <QProcess>
 #include <QPushButton>
@@ -230,36 +231,42 @@ void SlideShow::movie()
 
     QDir curdir(".");
     QTemporaryFile concatfile;
-    concatfile.open();
-    for (const auto &image : imagefiles) {
-        concatfile.write("file '");
-        concatfile.write(curdir.absoluteFilePath(image).toLocal8Bit());
-        concatfile.write("'\n");
-    }
-    concatfile.close();
+    if (concatfile.open()) {
+        for (const auto &image : imagefiles) {
+            concatfile.write("file '");
+            concatfile.write(curdir.absoluteFilePath(image).toLocal8Bit());
+            concatfile.write("'\n");
+        }
+        concatfile.close();
 
-    QStringList args;
-    args << "-y";
-    args << "-safe"
-         << "0";
-    args << "-r"
-         << "10";
-    args << "-f"
-         << "concat";
-    args << "-i" << concatfile.fileName();
-    if (scaleFactor != 1.0) {
-        args << "-vf" << QString("scale=iw*%1:-1").arg(scaleFactor);
-    }
-    args << "-b:v"
-         << "2000k";
-    args << "-r"
-         << "24";
-    args << fileName;
+        QStringList args;
+        args << "-y";
+        args << "-safe"
+             << "0";
+        args << "-r"
+             << "10";
+        args << "-f"
+             << "concat";
+        args << "-i" << concatfile.fileName();
+        if (scaleFactor != 1.0) {
+            args << "-vf" << QString("scale=iw*%1:-1").arg(scaleFactor);
+        }
+        args << "-b:v"
+             << "2000k";
+        args << "-r"
+             << "24";
+        args << fileName;
 
-    auto *ffmpeg = new QProcess(this);
-    ffmpeg->start("ffmpeg", args);
-    ffmpeg->waitForFinished(-1);
-    delete ffmpeg;
+        // NOTE: the button triggering this function is disabled if FFMpeg is missing
+        auto *ffmpeg = new QProcess(this);
+        ffmpeg->start("ffmpeg", args);
+        ffmpeg->waitForFinished(-1);
+        delete ffmpeg;
+    } else {
+        QMessageBox::warning(this, "SlideShow Error",
+                             "Cannot create temporary file for generating movie " +
+                                 concatfile.errorString());
+    }
 }
 
 void SlideShow::first()

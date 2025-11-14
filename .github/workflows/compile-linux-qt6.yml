@@ -1,5 +1,5 @@
 # GitHub action to build LAMMPS-GUI on Linux with Qt 6.x
-name: "Compile with Qt 6.x"
+name: "Compile and run tests with Qt 6.x"
 
 on:
   push:
@@ -66,6 +66,11 @@ jobs:
       shell: bash
       run: |
         build/lammps-gui --platform offscreen -v
+
+    - name: Download pre-compiled LAMMPS shared library
+      run: |
+        curl -L -o build/test/liblammps.so.0 https://download.lammps.org/lammps-gui/liblammps.so.0
+        chmod +x build/test/liblammps.so.0
 
     - name: Run Tests via CTest
       shell: bash

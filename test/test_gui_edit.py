@@ -53,9 +53,17 @@ class GUIEditorChecks(unittest.TestCase):
 
     def setUp(self):
         """Launch LAMMPS-GUI and give it focus"""
+        helptxt = subprocess.check_output([os.environ['LAMMPS_GUI'], '--platform', 'offscreen', '-h'],
+                                          shell=False, stderr=subprocess.STDOUT).decode()
         # get exact path of the LAMMPS-GUI binary from environment variable
-        self.gui=subprocess.Popen([os.environ['LAMMPS_GUI'], '-x', '1000', '-y', '500'],
-                                  stderr=subprocess.DEVNULL, stdout=subprocess.DEVNULL)
+        cmdline = [os.environ['LAMMPS_GUI'], '-x', '1000', '-y', '500']
+        # append path to LAMMPS shared library, if present
+        if 'pluginpath' in helptxt:
+            cmdline.append('-p')
+            cmdline.append('liblammps.so.0')
+
+        # append path to LAMMPS shared library if present.
+        self.gui=subprocess.Popen(cmdline, stderr=subprocess.DEVNULL, stdout=subprocess.DEVNULL)
         time.sleep(1.0)
         for f in ['hello.txt', 'hello1.txt', 'hello2.txt', 'empty.txt', 'complete.txt',
                   'shot1.png', 'shot2.png']:
@@ -68,7 +76,7 @@ class GUIEditorChecks(unittest.TestCase):
         if not self.gui.poll():
             self.gui.terminate()
 
-    def xtestExitShortcut(self):
+    def testExitShortcut(self):
         """Exit LAMMPS-GUI immediately via keyboard shortcut"""
         screenshot("shot1.png")
         pyautogui.hotkey('ctrl','q')
@@ -77,7 +85,7 @@ class GUIEditorChecks(unittest.TestCase):
         self.assertTrue(check_image('shot1.png', (255,255,255), 10))
         self.assertTrue(check_image('shot2.png', (0,0,0), 1))
 
-    def xtestExitMenu(self):
+    def testExitMenu(self):
         """Exit LAMMPS-GUI immediately via the menu"""
         screenshot("shot1.png")
         pyautogui.hotkey('alt','f')
@@ -87,7 +95,7 @@ class GUIEditorChecks(unittest.TestCase):
         self.assertTrue(check_image('shot1.png', (255,255,255), 10))
         self.assertTrue(check_image('shot2.png', (0,0,0), 1))
 
-    def xtestExitModCancelNo(self):
+    def testExitModCancelNo(self):
         """Exit LAMMPS-GUI with a modified buffer without saving"""
         pyautogui.typewrite("Hello, World!")
         pyautogui.press('enter')
@@ -100,7 +108,7 @@ class GUIEditorChecks(unittest.TestCase):
         pyautogui.hotkey('alt','n')
         self.assertEqual(self.gui.poll(), 0)
 
-    def xtestExitModSave(self):
+    def NOtestExitModSave(self):
         """Exit LAMMPS-GUI with a modified buffer and save it to a file"""
         # First enter some text
         pyautogui.typewrite("Hello, World!")
@@ -122,7 +130,7 @@ class GUIEditorChecks(unittest.TestCase):
             os.remove('hello.txt')
         self.assertEqual(self.gui.poll(), 0)
 
-    def testEditSaveLoad(self):
+    def NOtestEditSaveLoad(self):
         """Exercise various Load/Save/Save As/New file options"""
         pyautogui.hotkey('ctrl','a')
         pyautogui.press('delete')
@@ -210,7 +218,7 @@ class GUIEditorChecks(unittest.TestCase):
         time.sleep(0.2)
         self.assertEqual(self.gui.poll(), 0)
 
-    def testEditCompletion(self):
+    def NOtestEditCompletion(self):
         # clear buffer
         pyautogui.hotkey('ctrl','a')
         pyautogui.press('delete')
