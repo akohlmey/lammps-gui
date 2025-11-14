@@ -1,12 +1,14 @@
 accessors
 Alvares
 camelCase
+CheckSize
 cmake
 CMake
 cpp
-Ctrl
+CreateScreenshot
 cryptographically
 CTest
+Ctrl
 Destructor
 dialogs
 dihedral
@@ -18,6 +20,7 @@ dylib
 executables
 exe
 flatpak
+Framebuffer
 Gissinger
 Golay
 GPG
@@ -37,6 +40,7 @@ nullptr
 pluginpath
 pre
 prev
+py
 QFrame
 QObject
 QSettings
@@ -45,6 +49,7 @@ QString
 QThread
 README
 Savitzky
+screenshooter
 SSAO
 stderr
 stdout
@@ -62,3 +67,5 @@ Ventura
 webpage
 whitespace
 Xcode
+Xvfb
+xvfbsize
