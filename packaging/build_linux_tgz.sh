@@ -11,16 +11,18 @@ echo "Create staging area for deployment and populate"
 DESTDIR=${DESTDIR} cmake --install .  --prefix "/"
 
 echo "Remove debug info"
-for s in ${DESTDIR}/bin/*
+for s in ${DESTDIR}/bin/* ${DESTDIR}/lib/liblammps*
 do \
-        test -f $s && strip --strip-debug $s
+    test -f $s && strip --strip-debug $s
 done
 
 # download pre-compiled LAMMPS shared library
 if $(LD_LIBRARY_PATH=${DESTDIR}/lib ${DESTDIR}/bin/lammps-gui -h | grep -q pluginpath)
 then \
-	curl -L -o ${DESTDIR}/lib/liblammps.so.0 https://download.lammps.org/lammps-gui/liblammps.so.0
-        chmod +x ${DESTDIR}/lib/liblammps.so.0
+    echo "Download basic LAMMPS shared library"
+    mkdir -p ${DESTDIR}/libexec/lammps
+    curl -L -o ${DESTDIR}/libexec/lammps/liblammps.so.0 https://download.lammps.org/lammps-gui/liblammps.so.0
+    chmod +x ${DESTDIR}/libexec/lammps/liblammps.so.0
 fi
 
 echo "Remove libc, gcc, and X11 related shared libs"
@@ -31,11 +33,19 @@ rm -f ${DESTDIR}/lib/libX* ${DESTDIR}/lib/libxcb*
 rm -f ${DESTDIR}/lib/libgcc_s*
 rm -f ${DESTDIR}/lib/libstdc++*
 
-# get qt dir
+# get Qt dir
 QTDIR=$(ldd ${DESTDIR}/bin/lammps-gui | grep libQt.Core | sed -e 's/^.*=> *//' -e 's/libQt\(.\)Core.so.*$/qt\1/')
+
+# configure some settings files for Qt
 cat > ${DESTDIR}/bin/qt.conf <<EOF
 [Paths]
 Plugins = ../qtplugins
+EOF
+
+cat > ${DESTDIR}/bin/qtlogging.ini <<EOF
+[Rules]
+*.debug=false
+qt.qpa.xcb.xcberror.warning=false
 EOF
 
 # platform plugin
