@@ -170,9 +170,18 @@ Linux on x86\_64
 .. index:: Linux installation
 
 For Linux with x86\_64 CPU there are currently two variants of
-pre-compiled packages. The first is compiled on Ubuntu 22.04LTS, is
-using some wrapper scripts, and should be compatible with most recent
-Linux distributions.  After downloading and unpacking the
+pre-compiled LAMMPS-GUI: 1) a tar file with binaries and a wrapper
+script and 2) a flatpak bundle.  The first is currently compiled on
+Ubuntu 22.04LTS (the oldest popular Linux distribution that provides the
+required C++17 compatibility out of the box) and depends on the backward
+compatibility of the core libraries between different releases on Linux
+distributions, and should be compatible with most recent Linux
+distributions.  The second uses the flatpak sandbox environment
+to maintain binary compatibility across platforms.
+
+*Linux binary tarball*
+
+After downloading and unpacking the
 ``LAMMPS-Linux-x86_64-GUI-<version>.tar.gz`` package, you can switch
 into the "LAMMPS_GUI" folder and execute "./lammps-gui" directly:
 
@@ -186,6 +195,26 @@ into the "LAMMPS_GUI" folder and execute "./lammps-gui" directly:
 The ``LAMMPS_GUI`` folder may also be moved around and added to the
 ``PATH`` environment variable so the executables will be found
 automatically.
+
+.. admonition:: Installing required compatibility packages
+
+   Since software is constantly evolving, it may be required to install
+   additional software packages for your Linux distribution to achieve
+   compatibility with binaries compiled on older distributions.  For
+   example the libraries ``libxcb-xinput.so.0`` and
+   ``libxcb-xinerama.so.0`` may be missing and you thus get the error
+
+   .. code-block:: console
+
+      qt.qpa.plugin: Could not load the Qt platform plugin "xcb" in "" even though it was found.
+
+   On Ubuntu 24.04 for example, those libraries are in the packages
+   ``libxcb-xinput0`` and ``libxcb-xinerama0`` which are not installed
+   by default.  Using the flatpak bundle (see below) avoids these kind
+   of issues by compiling and running the application in a standardized
+   sandbox which is maintained by the flatpak software manager.
+
+*Linux flatpack bundle*
 
 .. index:: flatpak
 
@@ -362,7 +391,7 @@ folder> --target tgz`` or ``make tgz`` to build a
 ``LAMMPS-Linux-amd64.tar.gz`` file with the executables and their
 support libraries.
 
-**Flatpak bundle**
+*Flatpak bundle*
 
 It is also possible to build a `flatpak bundle
 <https://docs.flatpak.org/en/latest/single-file-bundles.html>`_ which is
