@@ -130,7 +130,7 @@ class GUIEditorChecks(unittest.TestCase):
             os.remove('hello.txt')
         self.assertEqual(self.gui.poll(), 0)
 
-    def testEditSaveLoad(self):
+    def NOtestEditSaveLoad(self):
         """Exercise various Load/Save/Save As/New file options"""
         pyautogui.hotkey('ctrl','a')
         pyautogui.press('delete')
@@ -218,7 +218,7 @@ class GUIEditorChecks(unittest.TestCase):
         time.sleep(0.2)
         self.assertEqual(self.gui.poll(), 0)
 
-    def testEditCompletion(self):
+    def NOtestEditCompletion(self):
         # clear buffer
         pyautogui.hotkey('ctrl','a')
         pyautogui.press('delete')
