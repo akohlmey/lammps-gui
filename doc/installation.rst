@@ -16,10 +16,11 @@ LAMMPS-GUI can also be compiled as a standalone package and load the
 LAMMPS library dynamically at runtime.  This enables using LAMMPS-GUI
 with customized, patched, or extended LAMMPS versions containing
 features not available in the official LAMMPS distribution packages.  It
-also supports using LAMMPS-GUI with LAMMPS shared libraries compiled
-using the traditional makefile based build process.  Pre-compiled
-packages of standalone LAMMPS-GUI versions *without* LAMMPS included are
-also available for download (see below).
+also allows to use LAMMPS-GUI with LAMMPS shared libraries compiled
+using the traditional makefile based build process (which does not
+support compiling LAMMPS-GUI directly).  Pre-compiled packages of
+standalone LAMMPS-GUI versions with some basic LAMMPS shared library
+included are also available for download (see below).
 
 Prerequisites and portability
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -69,27 +70,24 @@ up-to-date.  Occasionally, also test version packages previewing
 recently added features are available at
 https://download.lammps.org/testing/ .
 
-Standalone packages without LAMMPS
-----------------------------------
+Standalone packages with a basic LAMMPS version
+-----------------------------------------------
 
 .. index:: plugin mode
 .. index:: standalone packages
 
 LAMMPS-GUI packages compiled in plugin mode are also available from the
 `LAMMPS-GUI releases page on GitHub
-<https://github.com/akohlmey/lammps-gui/releases>`_.  These packages do
-not include LAMMPS and thus need to find a suitable LAMMPS shared
-library to be functional.  By default, it will look in a few places for
-it (current directory, folders in LD_LIBRARY_PATH, DYLD_LIBRARY_PATH,
-some system folders) and stop with an error, if no suitable library
-could be found.
+<https://github.com/akohlmey/lammps-gui/releases>`_.  These packages
+include a LAMMPS shared library with some subset of functionality
+that does not depend on additional libraries.
 
-In that case, or if you want to override the default choice, you can use
-the ``-p`` command line flag to tell LAMMPS-GUI which LAMMPS shared
-library file you want it to load.  By using ``-p ""`` you can also reset
-any previous choice and trigger the automated search again.  Once
-LAMMPS-GUI is running, you can also change the path from the
-:doc:`Preferences dialog <dialogs>`.
+If you want to override that choice library, you can use the ``-p``
+command line flag to tell LAMMPS-GUI which LAMMPS shared library file
+you want it to load.  By using ``-p ""`` you can also reset any previous
+choice and trigger loading the default library again.  Once LAMMPS-GUI
+is running, you can also change the path to the LAMMPS shared library
+from the :doc:`Preferences dialog <dialogs>`.
 
 As of LAMMPS-GUI version 1.8.4, the minimum LAMMPS version required is
 22 July 2025 update 2.
@@ -105,18 +103,19 @@ GPU support and MPI parallelization
 The pre-compiled packages include support for GPUs through the GPU
 package with OpenCL (in mixed precision).  However, this requires
 that you have a compatible driver and the OpenCL runtime installed.
-This is not always available and when using the flatpak package, the
+This is not always available and when using the flatpak bundle, the
 flatpak sandbox prevents accessing the GPU.  GPU support through
 the KOKKOS package is currently not available for technical reasons,
 but serial and OpenMP multi-threading use of KOKKOS is available.
 
-The design decisions for LAMMPS-GUI and how it launches LAMMPS
-conflict with parallel runs using MPI.  You have to `use a regular
-LAMMPS executable <https://docs.lammps.org/Run_basics.html>`_
-compiled with MPI support for that.  For the use cases that
-LAMMPS-GUI has been conceived for this is not a significant
-limitation.  Many supercomputing centers and high-performance
-computing clusters have parallel LAMMPS pre-installed.
+The design decisions for LAMMPS-GUI and how it launches LAMMPS conflict
+with parallel runs using MPI.  You have to `use a regular LAMMPS
+executable <https://docs.lammps.org/Run_basics.html>`_ compiled with MPI
+support for that.  For the use cases that LAMMPS-GUI has been conceived
+for (learning LAMMPS, testing or debugging LAMMPS inputs, prototyping
+new projects or complex workflows), this is not a significant
+limitation.  Many supercomputing centers and high-performance computing
+clusters have parallel LAMMPS pre-installed.
 
 Platform notes
 --------------
