@@ -7,7 +7,7 @@ import time
 import unittest
 from PIL import Image
 
-pyautogui.PAUSE = 0.25
+pyautogui.PAUSE = 0.30
 
 def tuple_compare(one,two,delta):
     """Compare two RGB triples to determine if they differ less than delta"""
