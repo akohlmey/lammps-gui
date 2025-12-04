@@ -1,4 +1,6 @@
-# Configuration file for the Sphinx documentation builder.
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+# LAMMPS-GUI configuration file for the Sphinx documentation builder.
 #
 # For the full list of built-in configuration values, see the documentation:
 # https://www.sphinx-doc.org/en/master/usage/configuration.html
@@ -18,7 +20,7 @@ except:
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#project-information
 
 def get_git_info():
-    import subprocess,time
+    import subprocess
 
     git_n_date = ''
     try:
@@ -41,12 +43,11 @@ rst_prolog = ".. |copyright| replace:: {0}".format(copyright)
 # -- General configuration ---------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#general-configuration
 
-needs_sphinx = '5.3.0'
+needs_sphinx = '6.0.0'
 
 extensions = [
         'breathe',
         'sphinxcontrib.jquery',
-        'sphinx_design',
         'sphinx_sitemap',
         ]
 
