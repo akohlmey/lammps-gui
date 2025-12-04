@@ -23,7 +23,7 @@ class QTimer;
 
 /**
  * @brief Slideshow viewer for displaying sequences of images
- * 
+ *
  * SlideShow provides a dialog for viewing and navigating through
  * sequences of images, typically from LAMMPS dump image commands.
  * It supports manual navigation (first/prev/next/last), automatic
@@ -40,7 +40,7 @@ public:
      * @param parent Parent widget
      */
     explicit SlideShow(const QString &fileName, QWidget *parent = nullptr);
-    
+
     /**
      * @brief Destructor
      */
@@ -57,26 +57,26 @@ public:
      * @param filename Path to image file to add
      */
     void add_image(const QString &filename);
-    
+
     /**
      * @brief Clear all images from slideshow
      */
     void clear();
 
 private slots:
-    void quit();           ///< Close slideshow window
-    void delete_images();  ///< Delete all image files in sequence
-    void stop_run();       ///< Stop running simulation
-    void movie();          ///< Export images as movie file
-    void first();          ///< Jump to first image
-    void last();           ///< Jump to last image
-    void next();           ///< Advance to next image
-    void prev();           ///< Go back to previous image
-    void play();           ///< Start/stop automatic playback
-    void loop();           ///< Toggle looping mode
-    void zoomIn();         ///< Zoom in on current image
-    void zoomOut();        ///< Zoom out on current image
-    void normalSize();     ///< Reset zoom to 100%
+    void quit();          ///< Close slideshow window
+    void delete_images(); ///< Delete all image files in sequence
+    void stop_run();      ///< Stop running simulation
+    void movie();         ///< Export images as movie file
+    void first();         ///< Jump to first image
+    void last();          ///< Jump to last image
+    void next();          ///< Advance to next image
+    void prev();          ///< Go back to previous image
+    void play();          ///< Start/stop automatic playback
+    void loop();          ///< Toggle looping mode
+    void zoomIn();        ///< Zoom in on current image
+    void zoomOut();       ///< Zoom out on current image
+    void normalSize();    ///< Reset zoom to 100%
 
 private:
     /**
@@ -84,7 +84,7 @@ private:
      * @param factor Scaling factor to apply
      */
     void scaleImage(double factor);
-    
+
     /**
      * @brief Load and display image at given index
      * @param idx Image index in sequence
@@ -99,10 +99,10 @@ private:
     QDialogButtonBox *buttonBox; ///< Dialog control buttons
     double scaleFactor = 1.0;    ///< Current zoom scale factor
 
-    int current;                 ///< Index of current image
-    int maxwidth, maxheight;     ///< Maximum image dimensions
-    bool do_loop;                ///< Loop playback flag
-    QStringList imagefiles;      ///< List of image file paths
+    int current;             ///< Index of current image
+    int maxwidth, maxheight; ///< Maximum image dimensions
+    bool do_loop;            ///< Loop playback flag
+    QStringList imagefiles;  ///< List of image file paths
 };
 #endif
 

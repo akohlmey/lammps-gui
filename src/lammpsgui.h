@@ -67,15 +67,20 @@ class StdCapture;
  * - LAMMPS simulation execution and control
  * - Visualization windows (images, charts, log output)
  * - Application preferences and settings
- * - Tutorial wizard for interactive learning
+ * - Tutorial wizard for interactive LAMMPS learning
  *
  * The class integrates with Qt's main window framework and provides menu actions,
  * toolbars, and status bar components. It uses a LammpsWrapper to interface with
  * the LAMMPS library and LammpsRunner to execute simulations in a separate thread.
  *
- * @see LammpsWrapper for LAMMPS library interface
- * @see LammpsRunner for threaded simulation execution
  * @see CodeEditor for the text editor component
+ * @see ChartWindow for the charts window component
+ * @see LogWindow for the log output window component
+ * @see ImageViewer for the snapshot image window component
+ * @see SlideShow for the slide show viewer window component
+ * @see Preferences for the preferences window component
+ * @see LammpsRunner for simulation execution in a separate thread
+ * @see LammpsWrapper for LAMMPS library interface
  */
 class LammpsGui : public QMainWindow {
     Q_OBJECT

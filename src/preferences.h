@@ -22,7 +22,7 @@ class LammpsWrapper;
 
 /**
  * @brief Preferences/Settings dialog for LAMMPS-GUI
- * 
+ *
  * This dialog provides a tabbed interface for configuring various aspects
  * of LAMMPS-GUI including:
  * - General settings (LAMMPS library path, plugins, etc.)
@@ -30,7 +30,7 @@ class LammpsWrapper;
  * - Image viewer defaults
  * - Editor appearance and behavior
  * - Chart viewer settings
- * 
+ *
  * Settings are persisted using QSettings and loaded on startup.
  */
 class Preferences : public QDialog {
@@ -43,7 +43,7 @@ public:
      * @param parent Parent widget
      */
     explicit Preferences(LammpsWrapper *lammps, QWidget *parent = nullptr);
-    
+
     /**
      * @brief Destructor - saves settings on close
      */
@@ -65,7 +65,7 @@ public:
     /**
      * @brief Set flag indicating application needs restart
      * @param val true if restart needed, false otherwise
-     * 
+     *
      * Some settings require restarting the application to take effect.
      */
     void set_relaunch(bool val) { need_relaunch = val; }
@@ -80,6 +80,9 @@ private:
 
 // individual tabs
 
+/**
+ * @brief Preferences Tab for General LAMMPS-GUI Settings
+ */
 class GeneralTab : public QWidget {
     Q_OBJECT
 
@@ -97,6 +100,9 @@ private:
     LammpsWrapper *lammps;
 };
 
+/**
+ * @brief Preferences Tab for LAMMPS Accelerator settings
+ */
 class AcceleratorTab : public QWidget {
     Q_OBJECT
 
@@ -113,6 +119,9 @@ private:
     LammpsWrapper *lammps;
 };
 
+/**
+ * @brief Preferences Tab for Snapshot Viewer Settings
+ */
 class SnapshotTab : public QWidget {
     Q_OBJECT
 
@@ -127,6 +136,9 @@ private:
     QSettings *settings;
 };
 
+/**
+ * @brief Preferences Tab for LAMMPS-GUI Editor Settings
+ */
 class EditorTab : public QWidget {
     Q_OBJECT
 
@@ -137,6 +149,9 @@ private:
     QSettings *settings;
 };
 
+/**
+ * @brief Preferences Tab for LAMMPS-GUI Charts Viewer Settings
+ */
 class ChartsTab : public QWidget {
     Q_OBJECT
 

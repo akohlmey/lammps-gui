@@ -19,7 +19,7 @@ class QLabel;
 
 /**
  * @brief Window for displaying LAMMPS log output with warning detection
- * 
+ *
  * LogWindow provides a specialized text viewer for LAMMPS log files.
  * It highlights warnings and errors using FlagWarnings, supports
  * extraction of embedded YAML data, navigation to warnings, and
@@ -36,7 +36,7 @@ public:
      * @param parent Parent widget
      */
     LogWindow(const QString &filename, QWidget *parent = nullptr);
-    
+
     /**
      * @brief Destructor
      */
@@ -49,12 +49,12 @@ public:
     LogWindow &operator=(LogWindow &&)      = delete;
 
 private slots:
-    void extract_yaml();   ///< Extract YAML data to separate file
-    void quit();           ///< Close window
-    void save_as();        ///< Save log to file
-    void stop_run();       ///< Stop running simulation
-    void next_warning();   ///< Navigate to next warning
-    void open_errorurl();  ///< Open error documentation URL in browser
+    void extract_yaml();  ///< Extract YAML data to separate file
+    void quit();          ///< Close window
+    void save_as();       ///< Save log to file
+    void stop_run();      ///< Stop running simulation
+    void next_warning();  ///< Navigate to next warning
+    void open_errorurl(); ///< Open error documentation URL in browser
 
 protected:
     /**
@@ -62,19 +62,19 @@ protected:
      * @param event Close event
      */
     void closeEvent(QCloseEvent *event) override;
-    
+
     /**
      * @brief Handle double-click to open URLs
      * @param event Mouse event
      */
     void mouseDoubleClickEvent(QMouseEvent *event) override;
-    
+
     /**
      * @brief Show context menu with log-specific actions
      * @param event Context menu event
      */
     void contextMenuEvent(QContextMenuEvent *event) override;
-    
+
     /**
      * @brief Event filter for keyboard shortcuts
      * @param watched Object being watched
@@ -82,7 +82,7 @@ protected:
      * @return true if event handled, false otherwise
      */
     bool eventFilter(QObject *watched, QEvent *event) override;
-    
+
     /**
      * @brief Check if log contains embedded YAML data
      * @return true if YAML data detected, false otherwise

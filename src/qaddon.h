@@ -18,7 +18,7 @@
 
 /**
  * @brief Horizontal line widget for visual separation in dialogs
- * 
+ *
  * QHline provides a simple horizontal line widget that can be
  * used to visually separate sections in forms and dialogs.
  * It's essentially a styled QFrame with a horizontal line shape.
@@ -34,7 +34,7 @@ public:
 
 /**
  * @brief Auto-completer for color name inputs
- * 
+ *
  * QColorCompleter provides auto-completion for color names
  * in text input fields. It suggests valid color names from
  * Qt's color name list as the user types.
@@ -50,7 +50,7 @@ public:
 
 /**
  * @brief Validator for color name inputs
- * 
+ *
  * QColorValidator validates color input fields to ensure they
  * contain valid color names or hex color codes. It can also
  * fix up partially entered color names to valid values.
@@ -68,7 +68,7 @@ public:
      * @param input String to fix (modified in place)
      */
     void fixup(QString &input) const override;
-    
+
     /**
      * @brief Validate color input string
      * @param input String to validate

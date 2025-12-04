@@ -658,8 +658,8 @@ void AcceleratorTab::update_accel()
     // The number of threads field is disabled and the value set to 1 for "None" and "Opt" choice
     auto *field = findChild<QLineEdit *>("nthreads");
     if (field) {
-        if ((choice == AcceleratorTab::None) || (choice == AcceleratorTab::Opt)
-            || (lammps->config_has_omp_support() == 0)) {
+        if ((choice == AcceleratorTab::None) || (choice == AcceleratorTab::Opt) ||
+            (lammps->config_has_omp_support() == 0)) {
             field->setText("1");
             field->setEnabled(false);
         } else {

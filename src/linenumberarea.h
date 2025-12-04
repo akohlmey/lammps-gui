@@ -17,7 +17,7 @@
 
 /**
  * @brief Widget for displaying line numbers alongside the code editor
- * 
+ *
  * This class provides a custom widget that displays line numbers in the
  * margin of the CodeEditor. It delegates painting to the CodeEditor class.
  */
@@ -28,7 +28,7 @@ public:
      * @param editor Pointer to the associated CodeEditor
      */
     explicit LineNumberArea(CodeEditor *editor) : QWidget(editor), codeEditor(editor) {}
-    
+
     /**
      * @brief Destructor
      */
@@ -54,7 +54,7 @@ protected:
     void paintEvent(QPaintEvent *event) override { codeEditor->lineNumberAreaPaintEvent(event); }
 
 private:
-    CodeEditor *codeEditor;  ///< Pointer to the associated code editor
+    CodeEditor *codeEditor; ///< Pointer to the associated code editor
 };
 #endif
 // Local Variables:
