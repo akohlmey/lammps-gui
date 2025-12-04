@@ -270,6 +270,14 @@ if(BUILD_DOC OR BUILD_DOC_ONLY)
     COMMAND ${DOCENV_BINARY_DIR}/pip $ENV{PIP_OPTIONS} install -r ${DOCENV_REQUIREMENTS_FILE} --upgrade
     WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
   )
+  # custom target to update the python virtual environment
+  add_custom_target(
+    upgrade
+    DEPENDS docenv/bin
+    COMMAND ${DOCENV_BINARY_DIR}/pip $ENV{PIP_OPTIONS} install --upgrade pip
+    COMMAND ${DOCENV_BINARY_DIR}/pip $ENV{PIP_OPTIONS} install -r ${DOCENV_REQUIREMENTS_FILE} --upgrade
+    WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
+  )
 
   if(NOT TARGET Sphinx::sphinx-build)
     add_executable(Sphinx::sphinx-build IMPORTED GLOBAL)
