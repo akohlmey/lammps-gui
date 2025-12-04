@@ -54,6 +54,14 @@
   </provides>
 
   <releases>
+    <release version="1.9.0" timestamp="1761171849">
+      <description>
+        Improvements and corrections for tgz binary packaging on Linux
+        Updates to documentation configuration and remove unused Sphinx extensions
+        Checked for and enabled compatibility with Sphinx 9.0.x
+        Added missing Doxygen comments and corrections to Doxygen configuration file
+      </description>
+    </release>
     <release version="1.8.5" timestamp="1761171849">
       <description>
         Minor bug fixes
