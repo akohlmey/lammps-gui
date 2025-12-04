@@ -54,40 +54,44 @@ Pre-compiled executables
 .. index:: pre-compiled executables
 .. index:: installation; pre-compiled packages
 
-Packages including LAMMPS
--------------------------
+Packages including a full LAMMPS version
+----------------------------------------
+
+.. index:: full LAMMPS packages
 
 For many users and especially for beginners learning to use LAMMPS, it
 is most convenient to install and use one of the pre-compiled packages
 that include both, LAMMPS-GUI and the command-line version of LAMMPS.
-Such pre-compiled LAMMPS executable packages are available for download
-for Linux x86\_64 (Ubuntu 22.04LTS or later and compatible), macOS
-(version 11 aka Big Sur or later), and Windows (version 10 or later)
-from the `LAMMPS releases page on GitHub
+In these packages LAMMPS-GUI is linked directly to the included LAMMPS
+library and thus it *cannot* be changed in the :doc:`LAMMPS-GUI
+perferences dialog <dialogs>`.  Such pre-compiled LAMMPS executable
+packages are available for download for Linux x86\_64 (Ubuntu 22.04LTS
+or later and compatible), macOS (version 11 aka Big Sur or later), and
+Windows (version 10 or later) from the `LAMMPS releases page on GitHub
 <https://github.com/lammps/lammps/releases/>`_.  A backup download
 location is at https://download.lammps.org/static/ but may not always be
 up-to-date.  Occasionally, also test version packages previewing
 recently added features are available at
 https://download.lammps.org/testing/ .
 
-Standalone packages with a basic LAMMPS version
+Standalone packages with a basic LAMMPS library
 -----------------------------------------------
 
 .. index:: plugin mode
 .. index:: standalone packages
 
-LAMMPS-GUI packages compiled in plugin mode are also available from the
-`LAMMPS-GUI releases page on GitHub
+LAMMPS-GUI packages containing *only* LAMMPS-GUI compiled in plugin mode
+are available from the `LAMMPS-GUI releases page on GitHub
 <https://github.com/akohlmey/lammps-gui/releases>`_.  These packages
-include a LAMMPS shared library with some subset of functionality
-that does not depend on additional libraries.
+include a LAMMPS shared library with some subset of LAMMPS' features
+that do not depend on additional libraries.
 
-If you want to override that choice library, you can use the ``-p``
-command line flag to tell LAMMPS-GUI which LAMMPS shared library file
-you want it to load.  By using ``-p ""`` you can also reset any previous
-choice and trigger loading the default library again.  Once LAMMPS-GUI
-is running, you can also change the path to the LAMMPS shared library
-from the :doc:`Preferences dialog <dialogs>`.
+If you want to override that choice of LAMMPS library, you can use the
+``-p`` command line flag to tell LAMMPS-GUI which other LAMMPS shared
+library file you want it to load.  By using ``-p ""`` you can also reset
+any previous choice and thus trigger loading the default library again.
+Once LAMMPS-GUI is running, you can also change the path to the LAMMPS
+shared library from the :doc:`Preferences dialog <dialogs>`.
 
 As of LAMMPS-GUI version 1.8.4, the minimum LAMMPS version required is
 22 July 2025 update 2.
