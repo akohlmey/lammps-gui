@@ -155,12 +155,12 @@ the internals of LAMMPS-GUI or contribute to its development.
    :class: note
 
    The initial version of the Programmer's Guide section was created by
-   a `GitHub Copilot Coding Agent <https://docs.github.com/en/copilot>`_
-   and not everything has been carefully checked yet.  It is therefore
+   the `GitHub Copilot Coding Agent <https://docs.github.com/en/copilot>`_
+   and not everything has been carefully checked.  It is therefore
    possible that it contains errors where the LLM has misinterpreted the
    LAMMPS-GUI source code.  If you spot any such errors or inconsistencies,
-   please submit a bug report to point them out or a pull request with
-   corrections.
+   please submit a bug report issue to point them out or - even better -
+   submit a pull request with the necessary corrections.
 
 .. toctree::
    :caption: Table of Contents

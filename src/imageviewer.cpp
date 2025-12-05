@@ -158,20 +158,24 @@ enum { FRAME, FILLED, POINTS };
 
 } // namespace
 
+/**
+ * @brief Store settings for displaying a region in a LAMMPS snapshot image
+ */
 class RegionInfo {
 public:
     RegionInfo() = delete;
+    /** Custom constructor */
     RegionInfo(bool _enabled, int _style, const std::string &_color, double _diameter,
                int _npoints) :
         enabled(_enabled), style(_style), color(_color), diameter(_diameter), npoints(_npoints)
     {
     }
 
-    bool enabled;
-    int style;
-    std::string color;
-    double diameter;
-    int npoints;
+    bool enabled;      ///< display region if true
+    int style;         ///< style of region object: FRAME, FILLED, or POINTS
+    std::string color; ///< color of region display
+    double diameter;   ///< diameter value for POINTS and FRAME
+    int npoints;       ///< number of points to be used for POINTS style region display
 };
 
 ImageViewer::ImageViewer(const QString &fileName, LammpsWrapper *_lammps, QWidget *parent) :
@@ -1142,7 +1146,7 @@ bool ImageViewer::has_autobonds()
 {
     if (!lammps) return false;
     if (lammps->version() < 20250910) return false;
-    const auto *pair_style = (const char*)lammps->extract_global("pair_style");
+    const auto *pair_style = (const char *)lammps->extract_global("pair_style");
     if (!pair_style) return false;
     return strcmp(pair_style, "none") != 0;
 }

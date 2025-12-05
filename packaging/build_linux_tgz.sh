@@ -51,18 +51,21 @@ EOF
 # platform plugin
 mkdir -p ${DESTDIR}/qtplugins/platforms
 cp ${QTDIR}/plugins/platforms/libqxcb.so ${DESTDIR}/qtplugins/platforms
+chmod +x ${DESTDIR}/qtplugins/platforms/libqxcb.so
 
 # get platform plugin dependencies
 QTDEPS=$(LD_LIBRARY_PATH=${DESTDIR}/lib ldd ${QTDIR}/plugins/platforms/libqxcb.so | grep -v ${DESTDIR} | grep libQt[56] | sed -e 's/^.*=> *//' -e 's/\(libQt[56].*.so.*\) .*$/\1/')
 for dep in ${QTDEPS}
 do \
     cp ${dep} ${DESTDIR}/lib
+    chmod +x ${DESTDIR}/lib/${dep}
 done
 
 echo "Add additional plugins for Qt"
 for dir in styles imageformats
 do \
     cp -r  ${QTDIR}/plugins/${dir} ${DESTDIR}/qtplugins/
+    chmod +x ${DESTDIR}/qtplugins/*/*.so
 done
 
 # get imageplugin dependencies
@@ -72,6 +75,7 @@ do \
     for dep in ${QTDEPS}
     do \
         cp ${dep} ${DESTDIR}/lib
+        chmod +x ${DESTDIR}/lib/${dep}
     done
 done
 
@@ -79,11 +83,13 @@ echo "Set up wrapper script"
 MYDIR=$(dirname "$0")
 cp ${MYDIR}/xdg-open ${DESTDIR}/bin
 cp ${MYDIR}/linux_wrapper.sh ${DESTDIR}/bin
+chmod 0755 ${DESTDIR}/bin/linux_wrapper.sh
 for s in ${DESTDIR}/bin/*
 do \
         EXE=$(basename $s)
         test ${EXE} = linux_wrapper.sh && continue
         test ${EXE} = qt.conf && continue
+        test ${EXE} = qtlogging.ini && continue
         test ${EXE} = xdg-open && continue
         ln -s bin/linux_wrapper.sh ${DESTDIR}/${EXE}
 done

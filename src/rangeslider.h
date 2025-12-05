@@ -1,4 +1,5 @@
-/** Copyright Hoyoung Lee (2024-07-14).
+/** -*- C++ -*-
+ ** Copyright Hoyoung Lee (2024-07-14).
  **
  ** hoyoung.yi@gmail.com
  **
@@ -50,19 +51,27 @@ class QMouseEvent;
  * Modification refered from
  * https://gist.github.com/Riateche/27e36977f7d5ea72cf4f
  */
+
+/**
+ * @brief Custom Qt Widget implementing a variant of QSlider that has two instead of one handle
+ */
 class RangeSlider : public QSlider {
     Q_OBJECT
 
 public:
     RangeSlider(Qt::Orientation ot = Qt::Horizontal, QWidget *parent = nullptr);
 
+    /// Return the rangeslider's current low handle value
     int low() const { return this->lowLimit; }
+    /// Set the rangeslider's current low handle value
     void setLow(int low_limit)
     {
         this->lowLimit = low_limit;
         update();
     }
+    /// Return the rangeslider's current high handle value
     int high() const { return this->highLimit; }
+    /// Set the rangeslider's current high handle value
     void setHigh(int high_limit)
     {
         this->highLimit = high_limit;
@@ -70,10 +79,14 @@ public:
     }
 
 signals:
+    /// This signal is emitted when sliderDown is true and one of the two sliders moves.
+    // This usually happens when the user is dragging the slider.
+    // The values are the new slider positions.
     void sliderMoved(int, int);
 
 protected:
-    int lowLimit, highLimit;
+    int lowLimit;  ///< position of rangeslider's lower handle
+    int highLimit; ///< position of rangeslider's upper handle
     QStyle::SubControl pressed_control;
     int tick_interval;
     QSlider::TickPosition tick_position;

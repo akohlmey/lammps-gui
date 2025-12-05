@@ -73,8 +73,8 @@ int main(int argc, char *argv[])
 
     parser.addHelpOption();
     parser.addVersionOption();
-    parser.addOptions({{{"x","width"}, "Override LAMMPS-GUI editor window width", "width"},
-                       {{"y","height"},"Override LAMMPS-GUI editor window height", "height"}});
+    parser.addOptions({{{"x", "width"}, "Override LAMMPS-GUI editor window width", "width"},
+                       {{"y", "height"}, "Override LAMMPS-GUI editor window height", "height"}});
     parser.addPositionalArgument("file", "The LAMMPS input file to open (optional).");
     parser.process(app);
 
@@ -91,9 +91,9 @@ int main(int argc, char *argv[])
 
     QString infile;
     QStringList flags = parser.optionNames();
-    int width = parser.value("width").toInt();
-    int height = parser.value("height").toInt();
-    QStringList args = parser.positionalArguments();
+    int width         = parser.value("width").toInt();
+    int height        = parser.value("height").toInt();
+    QStringList args  = parser.positionalArguments();
     if (!args.empty()) infile = args[0];
     LammpsGui w(nullptr, infile, width, height);
     w.show();

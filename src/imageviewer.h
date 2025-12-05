@@ -32,7 +32,7 @@ class RegionInfo;
 
 /**
  * @brief Dialog for viewing and manipulating LAMMPS snapshot images
- * 
+ *
  * This class provides an image viewer dialog for displaying LAMMPS snapshots
  * created by the `dump image` command. It allows interactive manipulation of
  * visualization parameters such as zoom, rotation, atom size, coloring, and
@@ -51,7 +51,7 @@ public:
      */
     explicit ImageViewer(const QString &fileName, LammpsWrapper *_lammps,
                          QWidget *parent = nullptr);
-    
+
     /**
      * @brief Destructor
      */
@@ -64,50 +64,50 @@ public:
     ImageViewer &operator=(ImageViewer &&)      = delete;
 
 private slots:
-    void saveAs();                   ///< Save image to file
-    void copy();                     ///< Copy image to clipboard
-    void quit();                     ///< Close dialog
+    void saveAs(); ///< Save image to file
+    void copy();   ///< Copy image to clipboard
+    void quit();   ///< Close dialog
 
-    void set_atom_size();            ///< Set atom display size
-    void edit_size();                ///< Edit image dimensions
-    void reset_view();               ///< Reset view to defaults
-    void toggle_ssao();              ///< Toggle screen-space ambient occlusion
-    void toggle_anti();              ///< Toggle antialiasing
-    void toggle_shiny();             ///< Toggle shiny/specular rendering
-    void toggle_vdw();               ///< Toggle Van der Waals radii
-    void toggle_bond();              ///< Toggle bond display
-    void set_bondcut();              ///< Set bond cutoff distance
-    void toggle_box();               ///< Toggle simulation box display
-    void toggle_axes();              ///< Toggle coordinate axes display
-    void do_zoom_in();               ///< Zoom in view
-    void do_zoom_out();              ///< Zoom out view
-    void do_rot_left();              ///< Rotate view left
-    void do_rot_right();             ///< Rotate view right
-    void do_rot_up();                ///< Rotate view up
-    void do_rot_down();              ///< Rotate view down
-    void do_recenter();              ///< Recenter view
-    void cmd_to_clipboard();         ///< Copy dump command to clipboard
-    void region_settings();          ///< Configure region display
-    void change_group(int);          ///< Change atom group selection
-    void change_molecule(int);       ///< Change molecule selection
+    void set_atom_size();      ///< Set atom display size
+    void edit_size();          ///< Edit image dimensions
+    void reset_view();         ///< Reset view to defaults
+    void toggle_ssao();        ///< Toggle screen-space ambient occlusion
+    void toggle_anti();        ///< Toggle antialiasing
+    void toggle_shiny();       ///< Toggle shiny/specular rendering
+    void toggle_vdw();         ///< Toggle Van der Waals radii
+    void toggle_bond();        ///< Toggle bond display
+    void set_bondcut();        ///< Set bond cutoff distance
+    void toggle_box();         ///< Toggle simulation box display
+    void toggle_axes();        ///< Toggle coordinate axes display
+    void do_zoom_in();         ///< Zoom in view
+    void do_zoom_out();        ///< Zoom out view
+    void do_rot_left();        ///< Rotate view left
+    void do_rot_right();       ///< Rotate view right
+    void do_rot_up();          ///< Rotate view up
+    void do_rot_down();        ///< Rotate view down
+    void do_recenter();        ///< Recenter view
+    void cmd_to_clipboard();   ///< Copy dump command to clipboard
+    void region_settings();    ///< Configure region display
+    void change_group(int);    ///< Change atom group selection
+    void change_molecule(int); ///< Change molecule selection
 
 public:
     /**
      * @brief Generate image using current settings
-     * 
+     *
      * Constructs and executes a LAMMPS dump image command with current
      * visualization parameters and updates the displayed image.
      */
     void createImage();
 
 private:
-    void createActions();                                         ///< Setup menu actions
-    void updateActions();                                         ///< Update action states
-    void saveFile(const QString &fileName);                       ///< Save image file
-    void scaleImage(double factor);                               ///< Scale image display
-    void adjustScrollBar(QScrollBar *scrollBar, double factor);   ///< Adjust scrollbar for zoom
-    void update_regions();                                        ///< Update region information
-    bool has_autobonds();                                         ///< Check if autobonds are enabled
+    void createActions();                                       ///< Setup menu actions
+    void updateActions();                                       ///< Update action states
+    void saveFile(const QString &fileName);                     ///< Save image file
+    void scaleImage(double factor);                             ///< Scale image display
+    void adjustScrollBar(QScrollBar *scrollBar, double factor); ///< Adjust scrollbar for zoom
+    void update_regions();                                      ///< Update region information
+    bool has_autobonds();                                       ///< Check if autobonds are enabled
 
 private:
     QImage image;                ///< Currently displayed image
@@ -118,34 +118,34 @@ private:
     double scaleFactor;          ///< Current zoom scale factor
     double atomSize;             ///< Atom display size
 
-    QAction *saveAsAct;          ///< Save As action
-    QAction *copyAct;            ///< Copy action
-    QAction *cmdAct;             ///< Copy command action
-    QAction *zoomInAct;          ///< Zoom in action
-    QAction *zoomOutAct;         ///< Zoom out action
-    QAction *normalSizeAct;      ///< Normal size action
+    QAction *saveAsAct;     ///< Save As action
+    QAction *copyAct;       ///< Copy action
+    QAction *cmdAct;        ///< Copy command action
+    QAction *zoomInAct;     ///< Zoom in action
+    QAction *zoomOutAct;    ///< Zoom out action
+    QAction *normalSizeAct; ///< Normal size action
 
-    LammpsWrapper *lammps;       ///< LAMMPS interface for image generation
-    QString group;               ///< Current atom group
-    QString molecule;            ///< Current molecule selection
-    QString filename;            ///< Image filename
-    QString last_dump_cmd;       ///< Last executed dump command
-    int xsize, ysize;            ///< Image dimensions in pixels
-    int hrot, vrot;              ///< Horizontal and vertical rotation angles
-    double zoom;                 ///< Zoom level
-    double vdwfactor;            ///< Van der Waals radius scaling factor
-    double shinyfactor;          ///< Shininess/specular factor
-    double bondcutoff;           ///< Bond cutoff distance
-    double xcenter, ycenter, zcenter;  ///< View center coordinates
-    bool showbox;                ///< Show simulation box flag
-    bool showaxes;               ///< Show coordinate axes flag
-    bool antialias;              ///< Antialiasing enabled flag
-    bool usessao;                ///< SSAO enabled flag
-    bool useelements;            ///< Use element properties flag
-    bool usediameter;            ///< Use diameter attribute flag
-    bool usesigma;               ///< Use sigma attribute flag
-    bool autobond;               ///< Auto-detect bonds flag
-    std::map<std::string, RegionInfo *> regions;  ///< Region definitions
+    LammpsWrapper *lammps;                       ///< LAMMPS interface for image generation
+    QString group;                               ///< Current atom group
+    QString molecule;                            ///< Current molecule selection
+    QString filename;                            ///< Image filename
+    QString last_dump_cmd;                       ///< Last executed dump command
+    int xsize, ysize;                            ///< Image dimensions in pixels
+    int hrot, vrot;                              ///< Horizontal and vertical rotation angles
+    double zoom;                                 ///< Zoom level
+    double vdwfactor;                            ///< Van der Waals radius scaling factor
+    double shinyfactor;                          ///< Shininess/specular factor
+    double bondcutoff;                           ///< Bond cutoff distance
+    double xcenter, ycenter, zcenter;            ///< View center coordinates
+    bool showbox;                                ///< Show simulation box flag
+    bool showaxes;                               ///< Show coordinate axes flag
+    bool antialias;                              ///< Antialiasing enabled flag
+    bool usessao;                                ///< SSAO enabled flag
+    bool useelements;                            ///< Use element properties flag
+    bool usediameter;                            ///< Use diameter attribute flag
+    bool usesigma;                               ///< Use sigma attribute flag
+    bool autobond;                               ///< Auto-detect bonds flag
+    std::map<std::string, RegionInfo *> regions; ///< Region definitions
 };
 #endif
 

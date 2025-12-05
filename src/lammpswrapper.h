@@ -17,7 +17,7 @@
 
 /**
  * @brief C++ wrapper for the LAMMPS C library interface
- * 
+ *
  * This class provides a C++ interface to the LAMMPS library. It wraps
  * the C library API functions and handles dynamic loading of the LAMMPS
  * library when built in plugin mode. All LAMMPS library function calls
@@ -29,7 +29,7 @@ public:
      * @brief Constructor - initializes wrapper
      */
     LammpsWrapper();
-    
+
     /**
      * @brief Destructor - cleans up LAMMPS instance if open
      */
@@ -47,12 +47,12 @@ public:
      * @param args Command-line arguments array
      */
     void open(int nargs, char **args);
-    
+
     /**
      * @brief Close the LAMMPS instance
      */
     void close();
-    
+
     /**
      * @brief Finalize MPI (if used) and close LAMMPS
      */
@@ -60,57 +60,64 @@ public:
 
     /**
      * @brief Process commands from a LAMMPS input file
-     * @param fname Filename (QString version)
+     * @param fname Filename as C-style string
+     */
+    void file(const char *fname);
+
+    /**
+     * @brief Process commands from a LAMMPS input file
+     * @overload
+     * @param fname Filename as Qt-style QString
      */
     void file(const QString &fname) { file(fname.toStdString()); }
-    
+
     /**
      * @brief Process commands from a LAMMPS input file
-     * @param fname Filename (std::string version)
+     * @overload
+     * @param fname Filename as C++-style std::string
      */
     void file(const std::string &fname) { file(fname.c_str()); }
-    
-    /**
-     * @brief Process commands from a LAMMPS input file
-     * @param fname Filename (C-string version)
-     */
-    void file(const char *);
-    
+
     /**
      * @brief Execute a single LAMMPS command
-     * @param cmd Command string (QString version)
+     *
+     * @param  cmd  Command string as C-style string
+     */
+    void command(const char *cmd);
+
+    /**
+     * @brief Execute a single LAMMPS command
+     * @overload
+     * @param cmd Command string as Qt-style QString
      */
     void command(const QString &cmd) { command(cmd.toStdString()); }
-    
+
     /**
      * @brief Execute a single LAMMPS command
-     * @param cmd Command string (std::string version)
+     * @overload
+     * @param cmd Command string as C++-style std::string
      */
     void command(const std::string &cmd) { command(cmd.c_str()); }
-    
-    /**
-     * @brief Execute a single LAMMPS command
-     * @param cmd Command string (C-string version)
-     */
-    void command(const char *);
-    
+
     /**
      * @brief Execute multiple LAMMPS commands from a string
-     * @param cmd Commands string with newlines (QString version)
+     * @param cmd Commands string with newlines as C-style string
+     */
+    void commands_string(const char *cmd);
+
+    /**
+     * @brief Execute multiple LAMMPS commands from a string
+     * @overload
+     * @param cmd Commands string with newlines as Qt-style QString
      */
     void commands_string(const QString &cmd) { commands_string(cmd.toStdString()); }
-    
+
     /**
      * @brief Execute multiple LAMMPS commands from a string
-     * @param cmd Commands string with newlines (std::string version)
+     * @overload
+     * @param cmd Commands string with newlines as C++-style std::string
      */
     void commands_string(const std::string &cmd) { commands_string(cmd.c_str()); }
-    
-    /**
-     * @brief Execute multiple LAMMPS commands from a string
-     * @param cmd Commands string with newlines (C-string version)
-     */
-    void commands_string(const char *);
 
     /**
      * @brief Force a timeout condition in LAMMPS
@@ -122,35 +129,35 @@ public:
      * @return Version number as integer (YYYYMMDD format)
      */
     int version();
-    
+
     /**
      * @brief Extract a global setting from LAMMPS
      * @param keyword Setting name to extract
      * @return Integer value of the setting
      */
     int extract_setting(const char *keyword);
-    
+
     /**
      * @brief Extract a pointer to global data from LAMMPS
      * @param keyword Name of global data to extract
      * @return Pointer to the data
      */
     void *extract_global(const char *keyword);
-    
+
     /**
      * @brief Extract pair style data from LAMMPS
      * @param keyword Name of pair data to extract
      * @return Pointer to the pair data
      */
     void *extract_pair(const char *keyword);
-    
+
     /**
      * @brief Extract atom data from LAMMPS
      * @param keyword Name of atom data to extract
      * @return Pointer to the atom data
      */
     void *extract_atom(const char *keyword);
-    
+
     /**
      * @brief Extract a variable value from LAMMPS
      * @param keyword Variable name to extract
@@ -165,14 +172,14 @@ public:
      * @return 1 if exists, 0 otherwise
      */
     int has_id(const char *idtype, const char *id);
-    
+
     /**
      * @brief Get count of IDs of a specific type
      * @param idtype Type of ID ("compute", "fix", "variable", "group")
      * @return Number of IDs of that type
      */
     int id_count(const char *idtype);
-    
+
     /**
      * @brief Get name of an ID by index
      * @param idtype Type of ID
@@ -182,14 +189,14 @@ public:
      * @return 0 on success, -1 on error
      */
     int id_name(const char *idtype, int idx, char *buf, int buflen);
-    
+
     /**
      * @brief Get count of styles of a specific type
      * @param keyword Type of style ("compute", "fix", "pair", etc.)
      * @return Number of available styles
      */
     int style_count(const char *keyword);
-    
+
     /**
      * @brief Get name of a style by index
      * @param keyword Type of style
@@ -199,7 +206,7 @@ public:
      * @return 0 on success, -1 on error
      */
     int style_name(const char *keyword, int idx, char *buf, int buflen);
-    
+
     /**
      * @brief Get information about a variable by index
      * @param idx Variable index
@@ -215,7 +222,7 @@ public:
      * @return Value of the thermo quantity
      */
     double get_thermo(const char *keyword);
-    
+
     /**
      * @brief Get a specific value from last thermo output
      * @param keyword Thermo keyword
@@ -229,7 +236,7 @@ public:
      * @return true if LAMMPS is initialized, false otherwise
      */
     bool is_open() const { return lammps_handle != nullptr; }
-    
+
     /**
      * @brief Check if LAMMPS is currently executing a run
      * @return true if running, false otherwise
@@ -241,7 +248,7 @@ public:
      * @return true if error occurred, false otherwise
      */
     bool has_error() const;
-    
+
     /**
      * @brief Get the last error message from LAMMPS
      * @param errorbuf Buffer to store error message
@@ -258,26 +265,26 @@ public:
      * @return true if available, false otherwise
      */
     bool config_accelerator(const char *package, const char *category, const char *setting) const;
-    
+
     /**
      * @brief Check if a package is included in LAMMPS build
      * @param pkg Package name
      * @return true if included, false otherwise
      */
     bool config_has_package(const char *pkg) const;
-    
+
     /**
      * @brief Check if LAMMPS was built with CURL support
      * @return true if CURL is available, false otherwise
      */
     bool config_has_curl_support() const;
-    
+
     /**
      * @brief Check if LAMMPS was built with OpenMP support
      * @return true if OpenMP is available, false otherwise
      */
     bool config_has_omp_support() const;
-    
+
     /**
      * @brief Check if GPU device is available for GPU package
      * @return true if GPU device found, false otherwise
@@ -290,14 +297,14 @@ public:
      * @return true on success, false on failure
      */
     bool load_lib(const QString &fname) { return load_lib(fname.toStdString().c_str()); }
-    
+
     /**
      * @brief Load LAMMPS shared library (plugin mode)
      * @param lammpslib Library filename (C-string version)
      * @return true on success, false on failure
      */
     bool load_lib(const char *lammpslib);
-    
+
     /**
      * @brief Check if running in plugin mode
      * @return true if plugin mode enabled, false if linked mode
@@ -305,9 +312,9 @@ public:
     bool has_plugin() const;
 
 private:
-    void *lammps_handle;  ///< Handle to LAMMPS instance
+    void *lammps_handle; ///< Handle to LAMMPS instance
 #if defined(LAMMPS_GUI_USE_PLUGIN)
-    void *plugin_handle;  ///< Handle to dynamically loaded LAMMPS library
+    void *plugin_handle; ///< Handle to dynamically loaded LAMMPS library
 #endif
 };
 #endif

@@ -16,7 +16,7 @@
 
 /**
  * @brief Read-only text viewer for displaying file contents
- * 
+ *
  * FileViewer provides a simple read-only text window for viewing
  * file contents. It's used in the context menu of the code editor
  * to view files referenced in LAMMPS input scripts (data files,
@@ -34,7 +34,7 @@ public:
      * @param parent Parent widget
      */
     FileViewer(const QString &filename, const QString &title = "", QWidget *parent = nullptr);
-    
+
     /**
      * @brief Destructor
      */
@@ -47,8 +47,8 @@ public:
     FileViewer &operator=(FileViewer &&)      = delete;
 
 private slots:
-    void quit();      ///< Close the viewer window
-    void stop_run();  ///< Stop the running simulation
+    void quit();     ///< Close the viewer window
+    void stop_run(); ///< Stop the running simulation
 
 protected:
     /**
@@ -60,7 +60,7 @@ protected:
     bool eventFilter(QObject *watched, QEvent *event) override;
 
 private:
-    QString fileName;  ///< Path to the displayed file
+    QString fileName; ///< Path to the displayed file
 };
 
 #endif

@@ -21,7 +21,7 @@ class QTextDocument;
 
 /**
  * @brief Syntax highlighter for LAMMPS warning and error messages
- * 
+ *
  * FlagWarnings extends QSyntaxHighlighter to detect and highlight
  * warning and error messages in LAMMPS log output. It also detects
  * and highlights URLs for documentation links. The class maintains
@@ -37,7 +37,7 @@ public:
      * @param parent Text document to apply highlighting to
      */
     explicit FlagWarnings(QLabel *label = nullptr, QTextDocument *parent = nullptr);
-    
+
     /**
      * @brief Destructor
      */
@@ -59,21 +59,21 @@ protected:
     /**
      * @brief Highlight a single block (line) of text
      * @param text Text to highlight
-     * 
+     *
      * Searches for warning/error patterns and URLs, applies formatting,
      * and updates warning count.
      */
     void highlightBlock(const QString &text) override;
 
 private:
-    QRegularExpression isWarning;    ///< Pattern for warning/error messages
-    QRegularExpression isURL;        ///< Pattern for URLs
-    QTextCharFormat formatWarning;   ///< Format for warnings/errors
-    QTextCharFormat formatURL;       ///< Format for URLs
-    QLabel *summary;                 ///< Label to display warning summary
-    QTextDocument *document;         ///< Document being highlighted
-    int nwarnings, oldwarnings;      ///< Current and previous warning count
-    int nlines, oldlines;            ///< Current and previous line count
+    QRegularExpression isWarning;  ///< Pattern for warning/error messages
+    QRegularExpression isURL;      ///< Pattern for URLs
+    QTextCharFormat formatWarning; ///< Format for warnings/errors
+    QTextCharFormat formatURL;     ///< Format for URLs
+    QLabel *summary;               ///< Label to display warning summary
+    QTextDocument *document;       ///< Document being highlighted
+    int nwarnings, oldwarnings;    ///< Current and previous warning count
+    int nlines, oldlines;          ///< Current and previous line count
 };
 #endif
 // Local Variables:

@@ -18,7 +18,7 @@
 
 /**
  * @brief Syntax highlighter for LAMMPS input scripts
- * 
+ *
  * This class provides syntax highlighting for LAMMPS input files in the
  * CodeEditor. It categorizes and colors different types of LAMMPS commands,
  * keywords, variables, numbers, strings, and comments.
@@ -32,7 +32,7 @@ public:
      * @param parent Parent text document to highlight
      */
     explicit Highlighter(QTextDocument *parent = nullptr);
-    
+
     /**
      * @brief Destructor
      */
@@ -53,26 +53,27 @@ protected:
 
 private:
     // Regular expressions for different LAMMPS command categories
-    QRegularExpression isLattice1, isLattice2, isLattice3;  ///< Lattice setup commands
-    QRegularExpression isOutput1, isOutput2, isRead;        ///< Output and input commands
-    QTextCharFormat formatOutput, formatRead, formatLattice, formatSetup;  ///< Formats for setup commands
-    QRegularExpression isStyle, isForce, isDefine, isUndo;  ///< Style and force commands
-    QRegularExpression isParticle, isRun, isSetup, isSetup1;  ///< Particle and run commands
-    QTextCharFormat formatParticle, formatRun, formatDefine;   ///< Formats for various command types
-    QRegularExpression isVariable, isReference;             ///< Variable definitions and references
-    QTextCharFormat formatVariable;                         ///< Format for variables
-    QRegularExpression isNumber1, isNumber2, isNumber3, isNumber4;  ///< Various number formats
-    QTextCharFormat formatNumber;                           ///< Format for numbers
-    QRegularExpression isSpecial, isContinue;               ///< Special keywords and line continuations
-    QTextCharFormat formatSpecial;                          ///< Format for special keywords
-    QRegularExpression isComment;                           ///< Comment patterns
-    QRegularExpression isQuotedComment;                     ///< Quoted comment patterns
-    QTextCharFormat formatComment;                          ///< Format for comments
-    QRegularExpression isTriple;                            ///< Triple-quoted strings
-    QRegularExpression isString;                            ///< Regular strings
-    QTextCharFormat formatString;                           ///< Format for strings
+    QRegularExpression isLattice1, isLattice2, isLattice3; ///< Lattice setup commands
+    QRegularExpression isOutput1, isOutput2, isRead;       ///< Output and input commands
+    QTextCharFormat formatOutput, formatRead, formatLattice,
+        formatSetup;                                         ///< Formats for setup commands
+    QRegularExpression isStyle, isForce, isDefine, isUndo;   ///< Style and force commands
+    QRegularExpression isParticle, isRun, isSetup, isSetup1; ///< Particle and run commands
+    QTextCharFormat formatParticle, formatRun, formatDefine; ///< Formats for various command types
+    QRegularExpression isVariable, isReference; ///< Variable definitions and references
+    QTextCharFormat formatVariable;             ///< Format for variables
+    QRegularExpression isNumber1, isNumber2, isNumber3, isNumber4; ///< Various number formats
+    QTextCharFormat formatNumber;                                  ///< Format for numbers
+    QRegularExpression isSpecial, isContinue; ///< Special keywords and line continuations
+    QTextCharFormat formatSpecial;            ///< Format for special keywords
+    QRegularExpression isComment;             ///< Comment patterns
+    QRegularExpression isQuotedComment;       ///< Quoted comment patterns
+    QTextCharFormat formatComment;            ///< Format for comments
+    QRegularExpression isTriple;              ///< Triple-quoted strings
+    QRegularExpression isString;              ///< Regular strings
+    QTextCharFormat formatString;             ///< Format for strings
 
-    int in_triple;  ///< State flag for multi-line triple-quoted strings
+    int in_triple; ///< State flag for multi-line triple-quoted strings
 };
 #endif
 // Local Variables:

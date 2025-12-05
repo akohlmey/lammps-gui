@@ -19,7 +19,7 @@
 
 /**
  * @brief Dialog for editing LAMMPS index-style variable definitions
- * 
+ *
  * SetVariables provides a dialog for managing name-value pairs that
  * will be used as index-style variables in LAMMPS input scripts.
  * Users can add, delete, and edit variable definitions. The dialog
@@ -35,7 +35,7 @@ public:
      * @param parent Parent widget
      */
     explicit SetVariables(QList<QPair<QString, QString>> &vars, QWidget *parent = nullptr);
-    
+
     /**
      * @brief Destructor
      */
@@ -52,12 +52,12 @@ private slots:
      * @brief Accept dialog and update variable list
      */
     void accept() override;
-    
+
     /**
      * @brief Add a new empty variable row
      */
     void add_row();
-    
+
     /**
      * @brief Delete the currently selected variable row
      */
