@@ -102,8 +102,11 @@ LammpsGui::LammpsGui(QWidget *parent, const QString &filename, int width, int he
     capturer    = new StdCapture;
     current_file.clear();
     current_dir = QDir(".").absolutePath();
-    // use $HOME if we get dropped to "/" like on macOS or the installation folder like on Windows
-    if ((current_dir == "/") || (current_dir.contains("AppData"))) current_dir = QDir::homePath();
+    // use $HOME if we get dropped to "/" like on macOS or the installation folder or
+    // system folder like on Windows
+    if ((current_dir == "/") || (current_dir.contains("AppData")) ||
+        (current_dir.contains("system32")))
+        current_dir = QDir::homePath();
     QDir::setCurrent(current_dir);
 
     inspectList.clear();
@@ -1862,7 +1865,7 @@ QWizardPage *LammpsGui::tutorial_directory(const int ntutorial)
 
     // if current dir is home, or application folder, switch to desktop path
     if ((current_dir == QDir::homePath()) || current_dir.contains("AppData") ||
-        current_dir.contains("Program Files")) {
+        current_dir.contains("system32") || current_dir.contains("Program Files")) {
         current_dir = QStandardPaths::writableLocation(QStandardPaths::DesktopLocation);
     }
     if (!haveDir) current_dir.append(QString("/tutorial%1").arg(ntutorial));
