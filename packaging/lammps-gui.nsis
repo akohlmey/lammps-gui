@@ -149,7 +149,7 @@ Section "${LAMMPSGUI}" SecLammps
   WriteRegStr HKCU "Software\Microsoft\Windows\CurrentVersion\Uninstall\LAMMPS-GUI" \
                  "DisplayName" "${LAMMPSGUI} -- LAMMPS Graphical User Interface"
   WriteRegStr HKCU "Software\Microsoft\Windows\CurrentVersion\Uninstall\LAMMPS-GUI" \
-                 "Publisher" "The LAMMPS Developers"
+                 "Publisher" "Axel Kohlmeyer"
   WriteRegStr HKCU "Software\Microsoft\Windows\CurrentVersion\Uninstall\LAMMPS-GUI" \
                  "URLInfoAbout" "lammps-gui.lammps.org"
   WriteRegStr HKCU "Software\Microsoft\Windows\CurrentVersion\Uninstall\LAMMPS-GUI" \
