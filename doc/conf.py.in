@@ -166,7 +166,3 @@ latex_elements = {
 ''',
 }
 
-# copy custom style files for tweaking layout
-latex_additional_files = [
-    'idxlayout.sty', 'ellipse.sty',
-]

@@ -60,6 +60,8 @@
         Updates to documentation configuration and remove unused Sphinx extensions
         Checked for and enabled compatibility with Sphinx 9.0.x
         Added missing Doxygen comments and corrections to Doxygen configuration file
+        Added packaging of standalone LAMMPS-GUI version for Windows using a pre-compiled basic LAMMPS dll file.
+        Switch away from system folders to home or desktop folder on Windows
       </description>
     </release>
     <release version="1.8.5" timestamp="1761171849">

@@ -38,7 +38,7 @@ the settings of the desktop environment.  Otherwise, there are no
 changes in functionality between using either major version of Qt.
 Building LAMMPS-GUI requires CMake version 3.20 or later.
 
-.. admonition:: LAMMPS-GUI 1.8.4 has been successfully compiled and tested on:
+.. admonition:: LAMMPS-GUI 1.9.0 has been successfully compiled and tested on:
 
    - Ubuntu Linux 22.04LTS x86_64 using GCC 11, Qt version 5.15
    - Fedora Linux 41 x86\_64 using GCC 14 and Clang 17, Qt version 5.15
@@ -46,7 +46,7 @@ Building LAMMPS-GUI requires CMake version 3.20 or later.
    - Apple macOS 12 (Monterey) and macOS 13 (Ventura) with Xcode on arm64 and x86\_64, Qt version 5.15
    - Windows 10 and 11 x86_64 with Visual Studio 2022 and Visual C++ 14.36, Qt version 5.15
    - Windows 10 and 11 x86_64 with Visual Studio 2022 and Visual C++ 14.40, Qt version 6.7
-   - Windows 10 and 11 x86_64 with MinGW / GCC 14.2 cross-compiler on Fedora 42, Qt version 5.15
+   - Windows 10 and 11 x86_64 with MinGW / GCC 15.2 cross-compiler on Fedora 43, Qt version 6.10
 
 Pre-compiled executables
 ^^^^^^^^^^^^^^^^^^^^^^^^
@@ -93,8 +93,8 @@ any previous choice and thus trigger loading the default library again.
 Once LAMMPS-GUI is running, you can also change the path to the LAMMPS
 shared library from the :doc:`Preferences dialog <dialogs>`.
 
-As of LAMMPS-GUI version 1.8.4, the minimum LAMMPS version required is
-22 July 2025 update 2.
+As of LAMMPS-GUI version 1.9.0 and since LAMMPS-GUI version 1.8.4, the
+minimum LAMMPS version required is 22 July 2025 update 2.
 
 GPU support and MPI parallelization
 -----------------------------------
@@ -108,7 +108,7 @@ The pre-compiled packages include support for GPUs through the GPU
 package with OpenCL (in mixed precision).  However, this requires
 that you have a compatible driver and the OpenCL runtime installed.
 This is not always available and when using the flatpak bundle, the
-flatpak sandbox prevents accessing the GPU.  GPU support through
+flatpak sandbox usually prevents accessing the GPU.  GPU support through
 the KOKKOS package is currently not available for technical reasons,
 but serial and OpenMP multi-threading use of KOKKOS is available.
 
@@ -133,7 +133,8 @@ Windows 10 and later
    :align: right
    :width: 45%
 
-After downloading the ``LAMMPS-Win10-64bit-GUI-<version>.exe`` installer
+After downloading either the ``LAMMPS-Win10-64bit-GUI-<LAMMPS version>.exe``
+or the ``LAMMPS-GUI-Win10-x86_64-<LAMMPS-GUI version>.exe`` installer
 package, you need to execute it, and start the installation process.
 Depending on your security settings of your web browser, you may have to
 explicitly tell it to download the file and then confirm **twice** to
@@ -152,12 +153,13 @@ MacOS 11 and later
 
 .. index:: macOS installation
 
-After downloading the ``LAMMPS-macOS-multiarch-GUI-<version>.dmg``
-application bundle disk image, you need to double-click it and then, in
-the window that opens, drag the app bundle as indicated into the
-"Applications" folder.  Afterwards, the disk image can be unmounted.
-Then follow the instructions in the "README.txt" file to get access to
-the other included command-line executables.
+After downloading the ``LAMMPS-macOS-multiarch-GUI-<LAMMPS version>.dmg``
+or ``LAMMPS-GUI-multiarch-<LAMMPS-GUI version>.dmg`` application bundle disk
+image, you need to double-click it and then - in the window that opens -
+drag the app bundle as indicated into the "Applications" folder.  Afterwards,
+the disk image can be unmounted or ejected.  Then follow the instructions in
+the "README.txt" file to get access to the other included command-line
+executables, if desired.
 
 .. |macos1| image:: JPG/macos-install.png
    :width: 49%
@@ -185,8 +187,10 @@ to maintain binary compatibility across platforms.
 *Linux binary tarball*
 
 After downloading and unpacking the
-``LAMMPS-Linux-x86_64-GUI-<version>.tar.gz`` package, you can switch
-into the "LAMMPS_GUI" folder and execute "./lammps-gui" directly:
+``LAMMPS-Linux-x86_64-GUI-<LAMMPS version>.tar.gz`` or the
+``LAMMPS-GUI-Linux-x86_64-<LAMMPS-GUI version>.tar.gz`` package,
+you can switch into the "LAMMPS_GUI" folder and execute
+"./lammps-gui" directly:
 
 .. code-block:: bash
 
@@ -283,7 +287,7 @@ stored in a location where CMake can find them without additional help.
 Otherwise, the location of the Qt library installation must be indicated
 by setting ``-D Qt5_DIR=/path/to/qt5/lib/cmake/Qt5``, which is a path to
 a folder inside the Qt installation that contains the file
-``Qt5Config.cmake``. Similarly, for Qt6 the location of the Qt library
+``Qt5Config.cmake``.  Similarly, for Qt6 the location of the Qt library
 installation can be indicated by setting ``-D
 Qt6_DIR=/path/to/qt6/lib/cmake/Qt6``, if necessary.  When both, Qt5 and
 Qt6 are available, Qt6 will be preferred unless ``-D
@@ -375,10 +379,11 @@ By using the ``mingw64-cmake`` wrapper the CMake configuration will
 automatically include a suitable CMake toolchain file (the regular cmake
 command can be used after that to modify the configuration settings, if
 needed).  After building the libraries and executables, you can build
-the target 'zip' (i.e. ``cmake --build <build dir> --target zip`` or
-``make zip`` to stage all installed files into a LAMMPS_GUI folder and
-then run a script to copy all required dependencies, some other files,
-and create a zip file from it.
+the target 'nsis' (i.e. ``cmake --build <build dir> --target nsis`` or
+``make nsis`` to build an Nullsoft installer package executable that
+can be executed on a Windows 10 or later machine with x86\_64 CPU and
+will then install LAMMPS-GUI including a basic LAMMPS shared library
+file and all required dependencies.
 
 Linux
 """""
