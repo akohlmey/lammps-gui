@@ -43,10 +43,6 @@ if (NOT BUILD_DOC_ONLY)
     set(CMAKE_INSTALL_PREFIX "$ENV{HOME}/.local" CACHE PATH "Default install path" FORCE)
   endif()
 
-  if(LAMMPS_GUI_USE_PLUGIN AND (CMAKE_SYSTEM_NAME STREQUAL "Windows"))
-    message(FATAL_ERROR "Building LAMMPS-GUI with -D LAMMPS_GUI_USE_PLUGIN=on is currently not supported on Windows")
-  endif()
-
   # ugly hacks for MSVC which by default always reports an old C++ standard in
   # the __cplusplus macro and prints lots of pointless warnings about "unsafe" functions
   if(MSVC)
@@ -308,6 +304,8 @@ if(BUILD_DOC OR BUILD_DOC_ONLY)
     latex
     DEPENDS docenv/bin ${DOC_SOURCES} ${DOCENV_DEPS} ${SPHINX_CONFIG_FILE_TEMPLATE} ${SPHINX_DIR}/_static/style.css
     COMMAND Sphinx::sphinx-build ${SPHINX_EXTRA_OPTS} -b latex -c ${DOC_BUILD_DIR} -d ${DOC_BUILD_DIR}/doctrees ${CMAKE_SOURCE_DIR}/doc ${DOC_BUILD_DIR}/latex ${DOC_SOURCES}
+    COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_SOURCE_DIR}/doc/idxlayout.sty ${DOC_BUILD_DIR}/latex/
+    COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_SOURCE_DIR}/doc/ellipse.sty ${DOC_BUILD_DIR}/latex/
   )
 
   # need latexmk and pdflatex for tranlating LaTeX to PDF
@@ -394,7 +392,7 @@ if (LAMMPS_GUI_USE_PLUGIN AND NOT BUILD_DOC_ONLY)
       BYPRODUCT LAMMPS-GUI-macOS-multiarch-${PROJECT_VERSION}.dmg
       WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
     )
-  # settings or building on Windows with Visual Studio
+  # settings for building on Windows with Visual Studio
   elseif(MSVC)
     install(TARGETS lammps-gui DESTINATION ${CMAKE_INSTALL_BINDIR})
     install(FILES $<TARGET_RUNTIME_DLLS:lammps-gui> TYPE BIN)
@@ -405,13 +403,14 @@ if (LAMMPS_GUI_USE_PLUGIN AND NOT BUILD_DOC_ONLY)
     get_filename_component(QT5_BIN_DIR "${Qt5Core_DIR}/../../../bin" ABSOLUTE)
     get_filename_component(INSTNAME ${CMAKE_INSTALL_PREFIX} NAME)
     install(CODE "execute_process(COMMAND \"${CMAKE_COMMAND}\" -D INSTNAME=${INSTNAME} -D VC_INIT=\"${VC_INIT}\" -D QT5_BIN_DIR=\"${QT5_BIN_DIR}\" -P \"${CMAKE_SOURCE_DIR}/packaging/build_windows_vs.cmake\" WORKING_DIRECTORY \"${CMAKE_INSTALL_PREFIX}/..\" COMMAND_ECHO STDOUT)")
+  # settings for packaging Windows NSIS installer on Linux with MinGW cross-compiler
   elseif((CMAKE_SYSTEM_NAME STREQUAL "Windows") AND CMAKE_CROSSCOMPILING)
     install(TARGETS lammps-gui DESTINATION ${CMAKE_INSTALL_BINDIR})
-    add_custom_target(zip
-      COMMAND sh -vx ${CMAKE_SOURCE_DIR}/packaging/build_windows_cross_zip.sh ${CMAKE_INSTALL_PREFIX} ${PROJECT_VERSION}
-      DEPENDS lammps-gui
-      COMMENT "Create zip file with windows binaries"
-      BYPRODUCT LAMMPS-GUI-Win10-x86_64-${PROJECT_VERSION}.zip
+    add_custom_target(nsis
+      COMMAND sh -vx ${CMAKE_SOURCE_DIR}/packaging/build_windows_cross_nsis.sh ${CMAKE_INSTALL_PREFIX} ${PROJECT_VERSION} ${CMAKE_SOURCE_DIR}
+      DEPENDS lammps-gui pdf
+      COMMENT "Create nsis installer with windows binaries"
+      BYPRODUCT LAMMPS-GUI-Win10-x86_64-${PROJECT_VERSION}.exe
       WORKING_DIRECTORY ${CMAKE_BINARY_DIR})
   elseif((CMAKE_SYSTEM_NAME STREQUAL "Linux") AND LAMMPS_GUI_USE_PLUGIN)
     install(TARGETS lammps-gui DESTINATION ${CMAKE_INSTALL_BINDIR})
