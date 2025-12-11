@@ -14,9 +14,16 @@ DESTDIR=${DESTDIR} cmake --install .  --prefix "/"
 
 # no static libs needed
 rm -rvf ${DESTDIR}/lib ${DESTDIR}/bin/liblammps.dll
-# but the generic LAMMPS library dll
+# download a precompiled LAMMPS library dll
 wget https://download.lammps.org/lammps-gui/liblammps.dll
 mv -v liblammps.dll ${DESTDIR}/bin/
+# download ffmpeg and gzip
+wget https://download.lammps.org/thirdparty/ffmpeg-win64.exe.gz
+gunzip ffmpeg-win64.exe.gz
+mv ffmpeg-win64.exe ${DESTDIR}/bin/ffmpeg.exe
+wget https://download.lammps.org/thirdparty/gzip.exe.gz
+gunzip gzip.exe.gz
+mv gzip.exe ${DESTDIR}/bin/
 
 skipdlls="msvcrt ADVAPI32 CFGMGR32 GDI32 KERNEL32 MPR NETAPI32 PSAPI SHELL32 USER32 USERENV UxTheme VERSION WS2_32 WSOCK32 d3d11 dwmapi liblammps msvcrt_ole32 dxgi IMM32 ole32 OLEAUT32 WINMM WTSAPI32 COMCTL32 PSAPI bcrypt CRYPT32 IPHLPAPI Secur32 api-ms-win-core-path-l1-1-0 WLDAP32"
 echo "Copying required DLL files"
