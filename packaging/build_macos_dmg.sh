@@ -11,7 +11,7 @@ rm -f ${APP_NAME}.dmg ${APP_NAME}-rw.dmg LAMMPS-GUI-macOS-multiarch*.dmg \
 if $(./${APP_NAME}.app/Contents/MacOS/lammps-gui -h | grep -q pluginpath); then
     mkdir -p ${APP_NAME}.app/Contents/Frameworks
     curl -L -o ${APP_NAME}.app/Contents/Frameworks/liblammps.0.dylib https://download.lammps.org/lammps-gui/liblammps.0.dylib
-    chmod 0755 ${APP_NAME}.app/Contents/Frameworksw/liblammps.0.dylib
+    chmod 0755 ${APP_NAME}.app/Contents/Frameworks/liblammps.0.dylib
 fi
 
 echo "Create initial dmg file with macdeployqt"
