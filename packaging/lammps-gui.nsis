@@ -129,15 +129,16 @@ Section "${LAMMPSGUI}" SecLammps
   File bin/*.dll
   File bin/qt.conf
 
-  # install Qt5 plugins
-  SetOutPath "$INSTDIR\qt5plugins\platforms"
-  File ${MINGW}/../lib/qt5/plugins/platforms/qwindows.dll
-  SetOutPath "$INSTDIR\qt5plugins\imageformats"
-  File ${MINGW}/../lib/qt5/plugins/imageformats/qgif.dll
-  File ${MINGW}/../lib/qt5/plugins/imageformats/qico.dll
-  File ${MINGW}/../lib/qt5/plugins/imageformats/qjpeg.dll
-  SetOutPath "$INSTDIR\qt5plugins\styles"
-  File ${MINGW}/../lib/qt5/plugins/styles/qwindowsvistastyle.dll
+  # install Qt6 plugins
+  SetOutPath "$INSTDIR\qt6plugins\platforms"
+  File ${MINGW}/../lib/qt6/plugins/platforms/qwindows.dll
+  File ${MINGW}/../lib/qt6/plugins/platforms/qdirect2d.dll
+  SetOutPath "$INSTDIR\qt6plugins\imageformats"
+  File ${MINGW}/../lib/qt6/plugins/imageformats/qgif.dll
+  File ${MINGW}/../lib/qt6/plugins/imageformats/qico.dll
+  File ${MINGW}/../lib/qt6/plugins/imageformats/qjpeg.dll
+  SetOutPath "$INSTDIR\qt6plugins\styles"
+  File ${MINGW}/../lib/qt6/plugins/styles/qmodernwindowsstyle.dll
 
   SetOutPath "$INSTDIR\Doc"
   File *.pdf
@@ -203,7 +204,7 @@ Section "Uninstall"
   Delete /REBOOTOK   "$INSTDIR\Uninstall.exe"
   RMDir /r /REBOOTOK "$INSTDIR\bin"
   RMDir /r /REBOOTOK "$INSTDIR\Doc"
-  RMDir /r /REBOOTOK "$INSTDIR\qt5plugins"
+  RMDir /r /REBOOTOK "$INSTDIR\qt6plugins"
   RMDir /REBOOTOK "$INSTDIR"
 SectionEnd
 
