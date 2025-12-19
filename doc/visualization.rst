@@ -120,7 +120,10 @@ progress of the simulation.
 The various buttons at the bottom right of the window allow single
 stepping through the sequence of images or playing an animation (as a
 continuous loop or once from first to last).  It is also possible to
-zoom in or zoom out of the displayed images. The button on the very
+zoom in or zoom out of the displayed images. Additionally, the displayed
+images can be rotated in 90-degree increments or mirrored horizontally and
+vertically, which is useful when the simulation setup orientation needs
+to be adjusted for presentation purposes. The button on the very
 left triggers an export of the slide show animation to a movie file,
 provided the `FFmpeg program <https://ffmpeg.org/>`_ is installed.
 

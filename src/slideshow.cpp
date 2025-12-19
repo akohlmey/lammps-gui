@@ -35,13 +35,14 @@
 #include <QSpacerItem>
 #include <QTemporaryFile>
 #include <QTimer>
+#include <QTransform>
 #include <QVBoxLayout>
 
 #include <algorithm>
 
 SlideShow::SlideShow(const QString &fileName, QWidget *parent) :
     QDialog(parent), playtimer(nullptr), imageLabel(new QLabel), imageName(new QLabel("(none)")),
-    do_loop(true)
+    do_loop(true), imageRotation(0), imageFlipH(false), imageFlipV(false)
 {
     imageLabel->setBackgroundRole(QPalette::Base);
     imageLabel->setScaledContents(false);
@@ -104,6 +105,15 @@ SlideShow::SlideShow(const QString &fileName, QWidget *parent) :
     auto *normal = new QPushButton(QIcon(":/icons/gtk-zoom-fit.png"), "");
     normal->setToolTip("Reset zoom to normal");
 
+    auto *imgrotcw = new QPushButton(QIcon(":/icons/object-rotate-right.png"), "");
+    imgrotcw->setToolTip("Rotate displayed image 90° clockwise");
+    auto *imgrotccw = new QPushButton(QIcon(":/icons/object-rotate-left.png"), "");
+    imgrotccw->setToolTip("Rotate displayed image 90° counter-clockwise");
+    auto *imgfliph = new QPushButton(QIcon(":/icons/object-flip-horizontal.png"), "");
+    imgfliph->setToolTip("Mirror displayed image horizontally");
+    auto *imgflipv = new QPushButton(QIcon(":/icons/object-flip-vertical.png"), "");
+    imgflipv->setToolTip("Mirror displayed image vertically");
+
     connect(tomovie, &QPushButton::released, this, &SlideShow::movie);
     connect(totrash, &QPushButton::released, this, &SlideShow::delete_images);
     connect(gofirst, &QPushButton::released, this, &SlideShow::first);
@@ -116,6 +126,10 @@ SlideShow::SlideShow(const QString &fileName, QWidget *parent) :
     connect(zoomout, &QPushButton::released, this, &SlideShow::zoomOut);
     connect(gofirst, &QPushButton::released, this, &SlideShow::first);
     connect(normal, &QPushButton::released, this, &SlideShow::normalSize);
+    connect(imgrotcw, &QPushButton::released, this, &SlideShow::do_image_rotate_cw);
+    connect(imgrotccw, &QPushButton::released, this, &SlideShow::do_image_rotate_ccw);
+    connect(imgfliph, &QPushButton::released, this, &SlideShow::do_image_flip_h);
+    connect(imgflipv, &QPushButton::released, this, &SlideShow::do_image_flip_v);
 
     navLayout->addSpacerItem(new QSpacerItem(10, 10, QSizePolicy::Expanding, QSizePolicy::Minimum));
     navLayout->addWidget(dummy);
@@ -131,6 +145,10 @@ SlideShow::SlideShow(const QString &fileName, QWidget *parent) :
     navLayout->addWidget(zoomin);
     navLayout->addWidget(zoomout);
     navLayout->addWidget(normal);
+    navLayout->addWidget(imgrotcw);
+    navLayout->addWidget(imgrotccw);
+    navLayout->addWidget(imgfliph);
+    navLayout->addWidget(imgflipv);
 
     mainLayout->addWidget(imageLabel);
     mainLayout->addLayout(navLayout);
@@ -194,12 +212,8 @@ void SlideShow::loadImage(int idx)
         if (newImage.isNull()) {
             --idx;
         } else {
-            int newheight = newImage.height() * scaleFactor;
-            int newwidth  = newImage.width() * scaleFactor;
-            image         = newImage.scaled(newwidth, newheight, Qt::IgnoreAspectRatio,
-                                            Qt::SmoothTransformation);
-            imageLabel->setPixmap(QPixmap::fromImage(image));
-            imageLabel->setMinimumSize(newwidth, newheight);
+            rawImage = newImage;
+            applyImageTransform();
             imageName->setText(QString(" Image %1 / %2 : %3 ")
                                    .arg(idx + 1)
                                    .arg(imagefiles.size())
@@ -364,6 +378,78 @@ void SlideShow::scaleImage(double factor)
     scaleFactor = std::max(scaleFactor, 0.25);
 
     loadImage(current);
+}
+
+void SlideShow::do_image_rotate_cw()
+{
+    imageRotation = (imageRotation + 90) % 360;
+    applyImageTransform();
+}
+
+void SlideShow::do_image_rotate_ccw()
+{
+    imageRotation = (imageRotation + 270) % 360;
+    applyImageTransform();
+}
+
+void SlideShow::do_image_flip_h()
+{
+    imageFlipH = !imageFlipH;
+    applyImageTransform();
+}
+
+void SlideShow::do_image_flip_v()
+{
+    imageFlipV = !imageFlipV;
+    applyImageTransform();
+}
+
+void SlideShow::applyImageTransform()
+{
+    // If no raw image is available yet, use the current image
+    if (rawImage.isNull()) {
+        if (!image.isNull()) {
+            rawImage = image;
+        } else {
+            return;
+        }
+    }
+
+    QImage transformedImage = rawImage;
+
+    // Apply rotation
+    if (imageRotation != 0) {
+        QTransform transform;
+        transform.rotate(imageRotation);
+        transformedImage = transformedImage.transformed(transform, Qt::SmoothTransformation);
+    }
+
+    // Apply horizontal flip
+    if (imageFlipH) {
+#if QT_VERSION >= QT_VERSION_CHECK(6, 9, 0)
+        transformedImage = transformedImage.flipped(Qt::Horizontal);
+#else
+        transformedImage = transformedImage.mirrored(true, false);
+#endif
+    }
+
+    // Apply vertical flip
+    if (imageFlipV) {
+#if QT_VERSION >= QT_VERSION_CHECK(6, 9, 0)
+        transformedImage = transformedImage.flipped(Qt::Vertical);
+#else
+        transformedImage = transformedImage.mirrored(false, true);
+#endif
+    }
+
+    // Scale the transformed image
+    int newheight = transformedImage.height() * scaleFactor;
+    int newwidth  = transformedImage.width() * scaleFactor;
+    image         = transformedImage.scaled(newwidth, newheight, Qt::IgnoreAspectRatio,
+                                            Qt::SmoothTransformation);
+    imageLabel->setPixmap(QPixmap::fromImage(image));
+    imageLabel->setMinimumSize(newwidth, newheight);
+    imageLabel->adjustSize();
 }
 
 // Local Variables:
