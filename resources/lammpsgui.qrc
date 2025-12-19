@@ -62,6 +62,8 @@
     <file>icons/move-recenter.png</file>
     <file>icons/object-rotate-left.png</file>
     <file>icons/object-rotate-right.png</file>
+    <file>icons/object-flip-horizontal.png</file>
+    <file>icons/object-flip-vertical.png</file>
     <file>icons/ovito.png</file>
     <file>icons/preferences-desktop-font.png</file>
     <file>icons/preferences-desktop-personal.png</file>

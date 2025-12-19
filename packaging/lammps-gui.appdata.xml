@@ -54,6 +54,11 @@
   </provides>
 
   <releases>
+    <release version="1.9.1" timestamp="1766154745">
+      <description>
+        Add support for mirroring and rotating images to slideshow viewer
+      </description>
+    </release>
     <release version="1.9.0" timestamp="1761171849">
       <description>
         Improvements and corrections for tgz binary packaging on Linux

@@ -77,6 +77,10 @@ private slots:
     void zoomIn();        ///< Zoom in on current image
     void zoomOut();       ///< Zoom out on current image
     void normalSize();    ///< Reset zoom to 100%
+    void do_image_rotate_cw(); ///< Rotate displayed image 90° clockwise
+    void do_image_rotate_ccw(); ///< Rotate displayed image 90° counter-clockwise
+    void do_image_flip_h();    ///< Mirror displayed image horizontally
+    void do_image_flip_v();    ///< Mirror displayed image vertically
 
 private:
     /**
@@ -91,8 +95,14 @@ private:
      */
     void loadImage(int idx);
 
+    /**
+     * @brief Apply rotation and flip transformations to displayed image
+     */
+    void applyImageTransform();
+
 private:
     QImage image;                ///< Currently displayed image
+    QImage rawImage;             ///< Raw image before transformations
     QTimer *playtimer;           ///< Timer for automatic playback
     QLabel *imageLabel;          ///< Label displaying the image
     QLabel *imageName;           ///< Label showing image filename
@@ -103,6 +113,9 @@ private:
     int maxwidth, maxheight; ///< Maximum image dimensions
     bool do_loop;            ///< Loop playback flag
     QStringList imagefiles;  ///< List of image file paths
+    int imageRotation;       ///< Image rotation angle (0, 90, 180, 270)
+    bool imageFlipH;         ///< Horizontal flip state
+    bool imageFlipV;         ///< Vertical flip state
 };
 #endif
 

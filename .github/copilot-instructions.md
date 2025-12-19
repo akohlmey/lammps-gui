@@ -429,6 +429,7 @@ When making changes:
 4. **Plugin mode doesn't work on Windows** - This is a known limitation (see CMakeLists.txt:46-48)
 5. **Qt version auto-detection** - Qt6 preferred over Qt5 unless `LAMMPS_GUI_USE_QT5=ON`
 6. **C++17 minimum** - Can use C++23 for Qt6 builds, but C++17 for Qt5 compatibility
+7. **Work around deprecated Qt features** - If an API is deprecated in a recent version of Qt, implement a version check and use the deprecated feature only with older versions of Qt and the new API where available
 
 ### Known Issues & Workarounds
 - **No TBD/TODO in code**: Only one found at `src/lammpsgui.cpp` (update tutorial URL)
