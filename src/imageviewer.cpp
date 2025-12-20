@@ -212,6 +212,7 @@ ImageViewer::ImageViewer(const QString &fileName, LammpsWrapper *_lammps, QWidge
     usessao     = settings.value("ssao", false).toBool();
     antialias   = settings.value("antialias", false).toBool();
     xcenter = ycenter = zcenter = 0.5;
+    if (lammps->extract_setting("dimension") == 2) zcenter = 0.0;
     settings.endGroup();
 
     auto pix   = QPixmap(":/icons/emblem-photos.png");
@@ -443,6 +444,7 @@ void ImageViewer::reset_view()
     usessao     = settings.value("ssao", false).toBool();
     antialias   = settings.value("antialias", false).toBool();
     xcenter = ycenter = zcenter = 0.5;
+    if (lammps->extract_setting("dimension") == 2) zcenter = 0.0;
     settings.endGroup();
 
     // reset state of checkable push buttons and combo box (if accessible)
@@ -654,6 +656,7 @@ void ImageViewer::do_recenter()
     xcenter = lammps->extract_variable("LAMMPSGUI_CX");
     ycenter = lammps->extract_variable("LAMMPSGUI_CY");
     zcenter = lammps->extract_variable("LAMMPSGUI_CZ");
+    if (lammps->extract_setting("dimension") == 2) zcenter = 0.0;
     lammps->commands_string("variable LAMMPSGUI_CX delete\n"
                             "variable LAMMPSGUI_CY delete\n"
                             "variable LAMMPSGUI_CZ delete\n");
