@@ -955,6 +955,8 @@ void ImageViewer::createImage()
         dumpcmd += blank + "diameter";
     else
         dumpcmd += blank + settings.value("diameter", "type").toString();
+
+    if (lammps->extract_setting("body_flag") == 1) dumpcmd += QString(" body type 0 1");
     dumpcmd += QString(" size %1 %2").arg(xsize).arg(ysize);
     dumpcmd += QString(" zoom %1").arg(zoom);
     dumpcmd += QString(" shiny %1 ").arg(shinyfactor);
