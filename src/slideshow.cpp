@@ -262,8 +262,21 @@ void SlideShow::movie()
         args << "-f"
              << "concat";
         args << "-i" << concatfile.fileName();
-        if (scaleFactor != 1.0) {
-            args << "-vf" << QString("scale=iw*%1:-1").arg(scaleFactor);
+        QString filters;
+        if (scaleFactor != 1.0) filters += QString("scale=iw*%1:-1,").arg(scaleFactor);
+        if (imageRotation == 90.0) {
+            filters += "transpose=1,";
+        } else if (imageRotation == 180.0) {
+            filters += "transpose=1,transpose1,";
+        } else if (imageRotation == 270.0) {
+            filters += "transpose=2,";
+        }
+        if (imageFlipH) filters += "hflip,";
+        if (imageFlipV) filters += "vflip,";
+        if (!filters.isEmpty()) {
+            // chop off trailing comma
+            filters.resize(filters.size()-1);
+            args << "-vf" << filters;
         }
         args << "-b:v"
              << "2000k";
