@@ -962,6 +962,7 @@ void ImageViewer::createImage()
     if (lammps->extract_setting("body_flag") == 1) dumpcmd += QString(" body type 0 1");
     else if (lammps->extract_setting("line_flag") == 1) dumpcmd += QString(" line type 0 0.2");
     else if (lammps->extract_setting("tri_flag") == 1) dumpcmd += QString(" tri type 1 0.2");
+    else if (lammps->extract_setting("ellipsoid_flag") == 1) dumpcmd += QString(" ellipsoid type 1 3 0.2");
     dumpcmd += QString(" size %1 %2").arg(xsize).arg(ysize);
     dumpcmd += QString(" zoom %1").arg(zoom);
     dumpcmd += QString(" shiny %1 ").arg(shinyfactor);

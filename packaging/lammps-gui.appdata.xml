@@ -57,7 +57,7 @@
     <release version="1.9.1" timestamp="1766154745">
       <description>
         Add support for mirroring and rotating images to slideshow viewer
-        Display body, line, and tri particles by their lines or faces, if detected
+        Display body, line, tri, and ellipsoid particles by their lines or faces, if detected
         Fix issue with centering for 2d systems
       </description>
     </release>
