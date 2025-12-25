@@ -153,8 +153,9 @@ constexpr double SHINY_CUT        = 0.4;
 constexpr int DEFAULT_BUFLEN      = 1024;
 constexpr int DEFAULT_NPOINTS     = 100000;
 constexpr double DEFAULT_DIAMETER = 0.2;
+constexpr double DEFAULT_OPACITY  = 0.5;
 
-enum { FRAME, FILLED, POINTS };
+enum { FRAME, FILLED, TRANSPARENT, POINTS };
 
 } // namespace
 
@@ -166,15 +167,17 @@ public:
     RegionInfo() = delete;
     /** Custom constructor */
     RegionInfo(bool _enabled, int _style, const std::string &_color, double _diameter,
-               int _npoints) :
-        enabled(_enabled), style(_style), color(_color), diameter(_diameter), npoints(_npoints)
+               double _opacity, int _npoints) :
+        enabled(_enabled), style(_style), color(_color), diameter(_diameter), opacity(_opacity),
+        npoints(_npoints)
     {
     }
 
     bool enabled;      ///< display region if true
-    int style;         ///< style of region object: FRAME, FILLED, or POINTS
+    int style;         ///< style of region object: FRAME, FILLED, TRANSPARENT, or POINTS
     std::string color; ///< color of region display
     double diameter;   ///< diameter value for POINTS and FRAME
+    double opacity;    ///< opacity for TRANSPARENT
     int npoints;       ///< number of points to be used for POINTS style region display
 };
 
@@ -709,7 +712,7 @@ void ImageViewer::region_settings()
     title->setLineWidth(1);
 
     auto *layout = new QGridLayout;
-    layout->addWidget(title, 0, 0, 1, 6, Qt::AlignHCenter);
+    layout->addWidget(title, 0, 0, 1, 7, Qt::AlignHCenter);
 
     layout->addWidget(new QLabel("Region:"), 1, 0);
     layout->addWidget(new QLabel("Show:"), 1, 1, Qt::AlignHCenter);
@@ -717,10 +720,12 @@ void ImageViewer::region_settings()
     layout->addWidget(new QLabel("Color:"), 1, 3, Qt::AlignHCenter);
     layout->addWidget(new QLabel("Size:"), 1, 4, Qt::AlignHCenter);
     layout->addWidget(new QLabel("# Points:"), 1, 5, Qt::AlignHCenter);
+    layout->addWidget(new QLabel("Opacity:"), 1, 6, Qt::AlignHCenter);
 
     auto *colorcompleter = new QColorCompleter;
     auto *colorvalidator = new QColorValidator;
     auto *framevalidator = new QDoubleValidator(1.0e-10, 1.0e10, 10);
+    auto *transvalidator = new QDoubleValidator(0.0, 1.0, 5);
     auto *pointvalidator = new QIntValidator(100, 1000000);
     QFontMetrics metrics(regionview.fontMetrics());
 
@@ -736,6 +741,7 @@ void ImageViewer::region_settings()
         style->setEditable(false);
         style->addItem("frame");
         style->addItem("filled");
+        style->addItem("transparent");
         style->addItem("points");
         style->setCurrentIndex(reg.second->style);
         layout->addWidget(style, idx, 2);
@@ -755,6 +761,11 @@ void ImageViewer::region_settings()
         points->setFixedSize(metrics.averageCharWidth() * 10, metrics.height() + 4);
         points->setText(QString::number(reg.second->npoints));
         layout->addWidget(points, idx, 5);
+        auto *trans = new QLineEdit(QString::number(reg.second->opacity));
+        trans->setValidator(transvalidator);
+        trans->setFixedSize(metrics.averageCharWidth() * 8, metrics.height() + 4);
+        trans->setText(QString::number(reg.second->opacity));
+        layout->addWidget(trans, idx, 6);
         ++idx;
     }
     auto *cancel = new QPushButton("&Cancel");
@@ -792,6 +803,9 @@ void ImageViewer::region_settings()
         item = layout->itemAtPosition(idx, 5);
         line = qobject_cast<QLineEdit *>(item->widget());
         if (line && line->hasAcceptableInput()) regions[id]->npoints = line->text().toInt();
+        item = layout->itemAtPosition(idx, 6);
+        line = qobject_cast<QLineEdit *>(item->widget());
+        if (line && line->hasAcceptableInput()) regions[id]->opacity = line->text().toDouble();
     }
     createImage();
 }
@@ -1009,6 +1023,10 @@ void ImageViewer::createImage()
                     case FILLED:
                         dumpcmd += " region " + id + blank + color + " filled";
                         break;
+                    case TRANSPARENT:
+                        dumpcmd += " region " + id + blank + color;
+                        dumpcmd += " transparent " + QString::number(reg.second->opacity);
+                        break;
                     case POINTS:
                     default:
                         dumpcmd += " region " + id + blank + color;
@@ -1145,9 +1163,9 @@ void ImageViewer::update_regions()
             std::string id = buffer;
             if (regions.count(id) == 0) {
                 const auto &color = defaultcolors[i % defaultcolors.size()].toStdString();
-                auto *reginfo =
-                    new RegionInfo(false, FRAME, color, DEFAULT_DIAMETER, DEFAULT_NPOINTS);
-                regions[id] = reginfo;
+                auto *reginfo     = new RegionInfo(false, FRAME, color, DEFAULT_DIAMETER,
+                                                   DEFAULT_OPACITY, DEFAULT_NPOINTS);
+                regions[id]       = reginfo;
             }
         }
     }

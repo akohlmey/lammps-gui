@@ -58,6 +58,7 @@
       <description>
         Add support for mirroring and rotating images to slideshow viewer
         Display body, line, tri, and ellipsoid particles by their lines or faces, if detected
+        Add support for rendering regions in style "transparent"
         Fix issue with centering for 2d systems
       </description>
     </release>
