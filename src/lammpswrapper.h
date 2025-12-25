@@ -286,6 +286,18 @@ public:
     bool config_has_omp_support() const;
 
     /**
+     * @brief Check if LAMMPS was compiled with PNG format image support
+     * @return true if PNG image format support is available, false if not
+     */
+    bool config_has_png_support() const;
+
+    /**
+     * @brief Check if LAMMPS was compiled with JPEG format image support
+     * @return true if JPEG image format support is available, false if not
+     */
+    bool config_has_jpeg_support() const;
+
+    /**
      * @brief Check if GPU device is available for GPU package
      * @return true if GPU device found, false otherwise
      */
