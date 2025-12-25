@@ -57,6 +57,7 @@
     <release version="1.9.1" timestamp="1766154745">
       <description>
         Add support for mirroring and rotating images to slideshow viewer
+        Export to FFMpeg honors image mirroring and rotating settings
         Display body, line, tri, and ellipsoid particles by their lines or faces, if detected
         Add support for rendering regions in style "transparent"
         Fix issue with centering for 2d systems
