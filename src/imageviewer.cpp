@@ -714,7 +714,7 @@ void ImageViewer::region_settings()
     auto *layout = new QGridLayout;
     layout->addWidget(title, 0, 0, 1, 7, Qt::AlignHCenter);
 
-    layout->addWidget(new QLabel("Region:"), 1, 0);
+    layout->addWidget(new QLabel("Region ID:"), 1, 0);
     layout->addWidget(new QLabel("Show:"), 1, 1, Qt::AlignHCenter);
     layout->addWidget(new QLabel("Style:"), 1, 2, Qt::AlignHCenter);
     layout->addWidget(new QLabel("Color:"), 1, 3, Qt::AlignHCenter);
