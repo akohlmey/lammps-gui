@@ -71,10 +71,10 @@ if (NOT BUILD_DOC_ONLY)
 
   # we require at least Qt version 5.15, but prefer Qt 6.2 or later.
   if(NOT LAMMPS_GUI_USE_QT5)
-    find_package(Qt6 6.2 QUIET COMPONENTS Widgets Charts)
+    find_package(Qt6 6.2 QUIET COMPONENTS Gui Widgets Charts)
   endif()
   if(NOT Qt6_FOUND)
-    find_package(Qt5 5.15 REQUIRED COMPONENTS Widgets Charts)
+    find_package(Qt5 5.15 REQUIRED COMPONENTS Gui Widgets Charts)
     set(QT_VERSION_MAJOR 5)
   else()
     set(QT_VERSION_MAJOR 6)
@@ -184,7 +184,7 @@ if (NOT BUILD_DOC_ONLY)
   endif()
   target_include_directories(lammps-gui PRIVATE ${CMAKE_SOURCE_DIR}/src)
   target_compile_definitions(lammps-gui PRIVATE LAMMPS_GUI_VERSION="${PROJECT_VERSION}")
-  target_link_libraries(lammps-gui PRIVATE Qt${QT_VERSION_MAJOR}::Widgets Qt${QT_VERSION_MAJOR}::Charts)
+  target_link_libraries(lammps-gui PRIVATE Qt${QT_VERSION_MAJOR}::Gui Qt${QT_VERSION_MAJOR}::Widgets Qt${QT_VERSION_MAJOR}::Charts)
 
   ###################
   # unit tests, only enabled on Linux
