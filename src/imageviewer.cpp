@@ -690,7 +690,9 @@ void ImageViewer::cmd_to_clipboard()
         dumpcmd += " " + words[i];
     dumpcmd += '\n';
 #if QT_CONFIG(clipboard)
-    QGuiApplication::clipboard()->setText(dumpcmd.c_str());
+    QGuiApplication::clipboard()->setText(dumpcmd.c_str(), QClipboard::Clipboard);
+    if (QGuiApplication::clipboard()->supportsSelection())
+        QGuiApplication::clipboard()->setText(dumpcmd.c_str(), QClipboard::Selection);
 #else
     fprintf(stderr, "# customized dump image command:\n%s", dumpcmd.c_str())
 #endif
