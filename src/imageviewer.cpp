@@ -680,7 +680,15 @@ void ImageViewer::cmd_to_clipboard()
 
     std::string dumpcmd = "dump viz ";
     dumpcmd += words[1];
-    dumpcmd += " image 100 myimage-*.ppm";
+
+    if (lammps->config_has_png_support()) {
+        dumpcmd += " image 100 myimage-*.png";
+    } else if (lammps->config_has_jpeg_support()) {
+        dumpcmd += " image 100 myimage-*.jpg";
+    } else {
+        dumpcmd += " image 100 myimage-*.ppm";
+    }
+
     for (int i = 4; i < modidx; ++i)
         if (words[i] != "noinit") dumpcmd += " " + words[i];
     dumpcmd += '\n';
