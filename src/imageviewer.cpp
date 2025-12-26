@@ -717,20 +717,24 @@ void ImageViewer::region_settings()
     regionview.setContentsMargins(5, 5, 5, 5);
     regionview.setSizePolicy(QSizePolicy::MinimumExpanding, QSizePolicy::MinimumExpanding);
 
+    int idx     = 0;
+    int n       = 0;
     auto *title = new QLabel("Visualize Regions:");
     title->setFrameStyle(QFrame::Panel | QFrame::Raised);
     title->setLineWidth(1);
 
     auto *layout = new QGridLayout;
-    layout->addWidget(title, 0, 0, 1, 7, Qt::AlignHCenter);
+    layout->addWidget(title, idx++, n, 1, 7, Qt::AlignHCenter);
+    layout->addWidget(new QHline, idx++, n, 1, 7);
 
-    layout->addWidget(new QLabel("Region ID:"), 1, 0);
-    layout->addWidget(new QLabel("Show:"), 1, 1, Qt::AlignHCenter);
-    layout->addWidget(new QLabel("Style:"), 1, 2, Qt::AlignHCenter);
-    layout->addWidget(new QLabel("Color:"), 1, 3, Qt::AlignHCenter);
-    layout->addWidget(new QLabel("Size:"), 1, 4, Qt::AlignHCenter);
-    layout->addWidget(new QLabel("# Points:"), 1, 5, Qt::AlignHCenter);
-    layout->addWidget(new QLabel("Opacity:"), 1, 6, Qt::AlignHCenter);
+    layout->addWidget(new QLabel("Region ID:"), idx, n++, Qt::AlignHCenter);
+    layout->addWidget(new QLabel("Show:"), idx, n++, Qt::AlignHCenter);
+    layout->addWidget(new QLabel("Style:"), idx, n++, Qt::AlignHCenter);
+    layout->addWidget(new QLabel("Color:"), idx, n++, Qt::AlignHCenter);
+    layout->addWidget(new QLabel("Size:"), idx, n++, Qt::AlignHCenter);
+    layout->addWidget(new QLabel("# Points:"), idx, n++, Qt::AlignHCenter);
+    layout->addWidget(new QLabel("Opacity:"), idx, n++, Qt::AlignHCenter);
+    layout->addWidget(new QHline, idx++, 0, 1, 7);
 
     auto *colorcompleter = new QColorCompleter;
     auto *colorvalidator = new QColorValidator;
@@ -739,14 +743,14 @@ void ImageViewer::region_settings()
     auto *pointvalidator = new QIntValidator(100, 1000000);
     QFontMetrics metrics(regionview.fontMetrics());
 
-    int idx = 2;
     for (const auto &reg : regions) {
-        layout->addWidget(new QLabel(reg.first.c_str()), idx, 0);
+        n = 0;
+        layout->addWidget(new QLabel(reg.first.c_str()), idx, n++);
         layout->setObjectName(QString(reg.first.c_str()));
 
         auto *check = new QCheckBox("");
         check->setCheckState(reg.second->enabled ? Qt::Checked : Qt::Unchecked);
-        layout->addWidget(check, idx, 1, Qt::AlignHCenter);
+        layout->addWidget(check, idx, n++, Qt::AlignHCenter);
         auto *style = new QComboBox;
         style->setEditable(false);
         style->addItem("frame");
@@ -754,30 +758,32 @@ void ImageViewer::region_settings()
         style->addItem("transparent");
         style->addItem("points");
         style->setCurrentIndex(reg.second->style);
-        layout->addWidget(style, idx, 2);
+        layout->addWidget(style, idx, n++);
         auto *color = new QLineEdit(reg.second->color.c_str());
         color->setCompleter(colorcompleter);
         color->setValidator(colorvalidator);
         color->setFixedSize(metrics.averageCharWidth() * 12, metrics.height() + 4);
         color->setText(reg.second->color.c_str());
-        layout->addWidget(color, idx, 3);
+        layout->addWidget(color, idx, n++);
         auto *frame = new QLineEdit(QString::number(reg.second->diameter));
         frame->setValidator(framevalidator);
         frame->setFixedSize(metrics.averageCharWidth() * 8, metrics.height() + 4);
         frame->setText(QString::number(reg.second->diameter));
-        layout->addWidget(frame, idx, 4);
+        layout->addWidget(frame, idx, n++);
         auto *points = new QLineEdit(QString::number(reg.second->npoints));
         points->setValidator(pointvalidator);
         points->setFixedSize(metrics.averageCharWidth() * 10, metrics.height() + 4);
         points->setText(QString::number(reg.second->npoints));
-        layout->addWidget(points, idx, 5);
+        layout->addWidget(points, idx, n++);
         auto *trans = new QLineEdit(QString::number(reg.second->opacity));
         trans->setValidator(transvalidator);
         trans->setFixedSize(metrics.averageCharWidth() * 8, metrics.height() + 4);
         trans->setText(QString::number(reg.second->opacity));
-        layout->addWidget(trans, idx, 6);
+        layout->addWidget(trans, idx, n++);
         ++idx;
     }
+    layout->addWidget(new QHline, idx++, 0, 1, 7);
+
     auto *cancel = new QPushButton("&Cancel");
     auto *apply  = new QPushButton("&Apply");
     cancel->setAutoDefault(false);
@@ -794,26 +800,27 @@ void ImageViewer::region_settings()
     if (!rv) return;
 
     // retrieve data from dialog and store in map
-    for (int idx = 2; idx < (int)regions.size() + 2; ++idx) {
-        auto *item           = layout->itemAtPosition(idx, 0);
+    for (int idx = 4; idx < (int)regions.size() + 4; ++idx) {
+        n = 0;
+        auto *item           = layout->itemAtPosition(idx, n++);
         auto *label          = qobject_cast<QLabel *>(item->widget());
         auto id              = label->text().toStdString();
-        item                 = layout->itemAtPosition(idx, 1);
+        item                 = layout->itemAtPosition(idx, n++);
         auto *box            = qobject_cast<QCheckBox *>(item->widget());
         regions[id]->enabled = (box->checkState() == Qt::Checked);
-        item                 = layout->itemAtPosition(idx, 2);
+        item                 = layout->itemAtPosition(idx, n++);
         auto *combo          = qobject_cast<QComboBox *>(item->widget());
         regions[id]->style   = combo->currentIndex();
-        item                 = layout->itemAtPosition(idx, 3);
+        item                 = layout->itemAtPosition(idx, n++);
         auto *line           = qobject_cast<QLineEdit *>(item->widget());
         if (line && line->hasAcceptableInput()) regions[id]->color = line->text().toStdString();
-        item = layout->itemAtPosition(idx, 4);
+        item = layout->itemAtPosition(idx, n++);
         line = qobject_cast<QLineEdit *>(item->widget());
         if (line && line->hasAcceptableInput()) regions[id]->diameter = line->text().toDouble();
-        item = layout->itemAtPosition(idx, 5);
+        item = layout->itemAtPosition(idx, n++);
         line = qobject_cast<QLineEdit *>(item->widget());
         if (line && line->hasAcceptableInput()) regions[id]->npoints = line->text().toInt();
-        item = layout->itemAtPosition(idx, 6);
+        item = layout->itemAtPosition(idx, n++);
         line = qobject_cast<QLineEdit *>(item->widget());
         if (line && line->hasAcceptableInput()) regions[id]->opacity = line->text().toDouble();
     }
@@ -1155,7 +1162,7 @@ void ImageViewer::update_regions()
     if (lammps->version() < 20250910) return;
 
     // remove any regions that no longer exist. to avoid inconsistencies while looping
-    // over the regions, we first collect the list of missing id and then apply it.
+    // over the regions, we first collect the list of missing ids and then apply it.
     std::unordered_set<std::string> oldkeys;
     for (const auto &reg : regions) {
         if (!lammps->has_id("region", reg.first.c_str())) oldkeys.insert(reg.first);
