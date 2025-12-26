@@ -52,6 +52,7 @@ SlideShow::SlideShow(const QString &fileName, QWidget *parent) :
     imageName->setFrameShape(QFrame::Panel);
     imageName->setAlignment(Qt::AlignCenter);
     imageName->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
+    imageName->setTextInteractionFlags(Qt::TextSelectableByMouse);
 
     auto *shortcut = new QShortcut(QKeySequence(Qt::CTRL | Qt::Key_W), this);
     QObject::connect(shortcut, &QShortcut::activated, this, &QWidget::close);
