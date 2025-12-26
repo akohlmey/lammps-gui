@@ -268,7 +268,7 @@ void SlideShow::movie()
         if (imageRotation == 90.0) {
             filters += "transpose=1,";
         } else if (imageRotation == 180.0) {
-            filters += "transpose=1,transpose1,";
+            filters += "transpose=1,transpose=1,";
         } else if (imageRotation == 270.0) {
             filters += "transpose=2,";
         }

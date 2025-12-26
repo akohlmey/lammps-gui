@@ -736,7 +736,7 @@ void ImageViewer::cmd_to_clipboard()
     if (QGuiApplication::clipboard()->supportsSelection())
         QGuiApplication::clipboard()->setText(dumpcmd.c_str(), QClipboard::Selection);
 #else
-    fprintf(stderr, "# customized dump image command:\n%s", dumpcmd.c_str())
+    fprintf(stderr, "# customized dump image command:\n%s", dumpcmd.c_str());
 #endif
 }
 
@@ -1354,7 +1354,7 @@ void ImageViewer::update_fixes()
     // for fix graphics until after that version. So the check is needed for this date.
     if (lammps->version() < 20251210) return;
 
-    // remove any files that no longer exist. to avoid inconsistencies while looping
+    // remove any fixes that no longer exist. to avoid inconsistencies while looping
     // over the fixes, we first collect the list of missing ids and then apply it.
     std::unordered_set<std::string> oldkeys;
     for (const auto &fix : fixes) {
