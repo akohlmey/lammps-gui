@@ -370,6 +370,24 @@ bool LammpsWrapper::config_has_omp_support() const
 #endif
 }
 
+bool LammpsWrapper::config_has_png_support() const
+{
+#if defined(LAMMPS_GUI_USE_PLUGIN)
+    return ((liblammpsplugin_t *)plugin_handle)->config_has_png_support() != 0;
+#else
+    return lammps_config_has_png_support() != 0;
+#endif
+}
+
+bool LammpsWrapper::config_has_jpeg_support() const
+{
+#if defined(LAMMPS_GUI_USE_PLUGIN)
+    return ((liblammpsplugin_t *)plugin_handle)->config_has_jpeg_support() != 0;
+#else
+    return lammps_config_has_jpeg_support() != 0;
+#endif
+}
+
 bool LammpsWrapper::has_gpu_device() const
 {
 #if defined(LAMMPS_GUI_USE_PLUGIN)

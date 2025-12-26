@@ -52,6 +52,7 @@ SlideShow::SlideShow(const QString &fileName, QWidget *parent) :
     imageName->setFrameShape(QFrame::Panel);
     imageName->setAlignment(Qt::AlignCenter);
     imageName->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
+    imageName->setTextInteractionFlags(Qt::TextSelectableByMouse);
 
     auto *shortcut = new QShortcut(QKeySequence(Qt::CTRL | Qt::Key_W), this);
     QObject::connect(shortcut, &QShortcut::activated, this, &QWidget::close);
@@ -262,8 +263,21 @@ void SlideShow::movie()
         args << "-f"
              << "concat";
         args << "-i" << concatfile.fileName();
-        if (scaleFactor != 1.0) {
-            args << "-vf" << QString("scale=iw*%1:-1").arg(scaleFactor);
+        QString filters;
+        if (scaleFactor != 1.0) filters += QString("scale=iw*%1:-1,").arg(scaleFactor);
+        if (imageRotation == 90.0) {
+            filters += "transpose=1,";
+        } else if (imageRotation == 180.0) {
+            filters += "transpose=1,transpose=1,";
+        } else if (imageRotation == 270.0) {
+            filters += "transpose=2,";
+        }
+        if (imageFlipH) filters += "hflip,";
+        if (imageFlipV) filters += "vflip,";
+        if (!filters.isEmpty()) {
+            // chop off trailing comma
+            filters.resize(filters.size()-1);
+            args << "-vf" << filters;
         }
         args << "-b:v"
              << "2000k";
