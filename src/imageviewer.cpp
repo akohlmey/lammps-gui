@@ -890,7 +890,7 @@ void ImageViewer::region_settings()
     layout->addWidget(new QLabel("Color:"), idx, n++, Qt::AlignHCenter);
     layout->addWidget(new QLabel("Size:"), idx, n++, Qt::AlignHCenter);
     layout->addWidget(new QLabel("# Points:"), idx, n++, Qt::AlignHCenter);
-    layout->addWidget(new QLabel("Opacity:"), idx, n++, Qt::AlignHCenter);
+    layout->addWidget(new QLabel("Opacity:"), idx++, n++, Qt::AlignHCenter);
     layout->addWidget(new QHline, idx++, 0, 1, 7);
 
     auto *colorcompleter = new QColorCompleter;
