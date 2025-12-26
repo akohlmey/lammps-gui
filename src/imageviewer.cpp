@@ -15,6 +15,7 @@
 #include "lammpsgui.h"
 #include "lammpswrapper.h"
 #include "qaddon.h"
+#include "stdcapture.h"
 
 #include <QAction>
 #include <QApplication>
@@ -40,6 +41,7 @@
 #include <QPalette>
 #include <QPixmap>
 #include <QPushButton>
+#include <QRegularExpression>
 #include <QScrollArea>
 #include <QScrollBar>
 #include <QSettings>
@@ -51,6 +53,7 @@
 
 #include <algorithm>
 #include <cmath>
+#include <unordered_map>
 #include <unordered_set>
 
 // clang-format off
@@ -156,8 +159,32 @@ constexpr double DEFAULT_DIAMETER = 0.2;
 constexpr double DEFAULT_OPACITY  = 0.5;
 
 enum { FRAME, FILLED, TRANSPARENT, POINTS };
+enum { TYPE, ELEMENT, CONSTANT };
 
 } // namespace
+
+/**
+ * @brief Store settings for displaying graphics from a fix in a LAMMPS snapshot image
+ */
+class FixInfo {
+public:
+    FixInfo() = delete;
+    /** Custom constructor */
+    FixInfo(bool _enabled, const QString &_style, int _colorstyle, const std::string &_color,
+            double _opacity, double _flag1, double _flag2) :
+        enabled(_enabled), style(_style), colorstyle(_colorstyle), color(_color), opacity(_opacity),
+        flag1(_flag1), flag2(_flag2)
+    {
+    }
+
+    bool enabled;      ///< display fix graphics if true
+    QString style;     ///< name of fix style
+    int colorstyle;    ///< color style for fix graphics: TYPE, ELEMENT, CONSTANT
+    std::string color; ///< custom color of fix graphics objects for style == CONSTANT
+    double opacity;    ///< opacity of fix graphics objects for style == CONSTANT
+    double flag1;      ///< Flag #1 for fix graphics
+    double flag2;      ///< Flag #2 for fix graphics
+};
 
 /**
  * @brief Store settings for displaying a region in a LAMMPS snapshot image
@@ -311,6 +338,10 @@ ImageViewer::ImageViewer(const QString &fileName, LammpsWrapper *_lammps, QWidge
     recenter->setToolTip("Recenter on group");
     auto *reset = new QPushButton(QIcon(":/icons/gtk-zoom-fit.png"), "");
     reset->setToolTip("Reset view to defaults");
+    auto *fixviz = new QPushButton("Fixes");
+    fixviz->setToolTip("Open dialog for visualizing graphics from fixes");
+    fixviz->setObjectName("fixes");
+    fixviz->setEnabled(false);
     auto *regviz = new QPushButton("Regions");
     regviz->setToolTip("Open dialog for visualizing regions");
     regviz->setObjectName("regions");
@@ -378,6 +409,7 @@ ImageViewer::ImageViewer(const QString &fileName, LammpsWrapper *_lammps, QWidge
     buttonLayout->addWidget(rotdown);
     buttonLayout->addWidget(recenter);
     buttonLayout->addWidget(reset);
+    buttonLayout->addWidget(fixviz);
     buttonLayout->addWidget(regviz);
     buttonLayout->addStretch(1);
 
@@ -397,6 +429,7 @@ ImageViewer::ImageViewer(const QString &fileName, LammpsWrapper *_lammps, QWidge
     connect(rotdown, &QPushButton::released, this, &ImageViewer::do_rot_down);
     connect(recenter, &QPushButton::released, this, &ImageViewer::do_recenter);
     connect(reset, &QPushButton::released, this, &ImageViewer::reset_view);
+    connect(fixviz, &QPushButton::released, this, &ImageViewer::fix_settings);
     connect(regviz, &QPushButton::released, this, &ImageViewer::region_settings);
     connect(combo, SIGNAL(currentIndexChanged(int)), this, SLOT(change_group(int)));
     connect(molbox, SIGNAL(currentIndexChanged(int)), this, SLOT(change_molecule(int)));
@@ -426,6 +459,7 @@ ImageViewer::ImageViewer(const QString &fileName, LammpsWrapper *_lammps, QWidge
     scrollArea->setVisible(true);
     updateActions();
     setLayout(mainLayout);
+    update_fixes();
     update_regions();
 }
 
@@ -704,6 +738,129 @@ void ImageViewer::cmd_to_clipboard()
 #else
     fprintf(stderr, "# customized dump image command:\n%s", dumpcmd.c_str())
 #endif
+}
+
+void ImageViewer::fix_settings()
+{
+    update_fixes();
+    if (fixes.size() == 0) return;
+    QDialog fixview;
+    fixview.setWindowTitle(QString("LAMMPS-GUI - Visualize Fix Graphics Objects"));
+    fixview.setWindowIcon(QIcon(":/icons/lammps-gui-icon-128x128.png"));
+    fixview.setMinimumSize(100, 50);
+    fixview.setContentsMargins(5, 5, 5, 5);
+    fixview.setSizePolicy(QSizePolicy::MinimumExpanding, QSizePolicy::MinimumExpanding);
+
+    auto *title = new QLabel("Visualize Fix Graphics Objects:");
+    title->setFrameStyle(QFrame::Panel | QFrame::Raised);
+    title->setLineWidth(1);
+
+    int idx      = 0;
+    int n        = 0;
+    auto *layout = new QGridLayout;
+    layout->addWidget(title, idx++, n, 1, 8, Qt::AlignHCenter);
+    layout->addWidget(new QHline, idx++, n, 1, 8);
+
+    layout->addWidget(new QLabel("Fix ID:"), idx, n++, 1, 1, Qt::AlignHCenter);
+    layout->addWidget(new QLabel("Fix style:"), idx, n++, 1, 1, Qt::AlignHCenter);
+    layout->addWidget(new QLabel("Show:"), idx, n++, Qt::AlignHCenter);
+    layout->addWidget(new QLabel("Color Style:"), idx, n++, Qt::AlignHCenter);
+    layout->addWidget(new QLabel("Color:"), idx, n++, Qt::AlignHCenter);
+    layout->addWidget(new QLabel("Opacity:"), idx, n++, Qt::AlignHCenter);
+    layout->addWidget(new QLabel("Flag #1:"), idx, n++, Qt::AlignHCenter);
+    layout->addWidget(new QLabel("Flag #2:"), idx++, n++, Qt::AlignHCenter);
+    layout->addWidget(new QHline, idx++, 0, 1, 8);
+
+    auto *colorcompleter = new QColorCompleter;
+    auto *colorvalidator = new QColorValidator;
+    auto *transvalidator = new QDoubleValidator(0.0, 1.0, 5);
+    QFontMetrics metrics(fixview.fontMetrics());
+
+    for (const auto &fix : fixes) {
+        n           = 0;
+        auto *label = new QLabel(fix.first.c_str());
+        label->setObjectName(QString(fix.first.c_str()));
+        layout->addWidget(label, idx, n++);
+        layout->addWidget(new QLabel(fix.second->style), idx, n++);
+        auto *check = new QCheckBox("");
+        check->setCheckState(fix.second->enabled ? Qt::Checked : Qt::Unchecked);
+        layout->addWidget(check, idx, n++, Qt::AlignHCenter);
+        auto *cstyle = new QComboBox;
+        cstyle->setEditable(false);
+        cstyle->addItem("type");
+        cstyle->addItem("element");
+        cstyle->addItem("const");
+        cstyle->setCurrentIndex(fix.second->colorstyle);
+        layout->addWidget(cstyle, idx, n++);
+        auto *color = new QLineEdit(fix.second->color.c_str());
+        color->setCompleter(colorcompleter);
+        color->setValidator(colorvalidator);
+        color->setFixedSize(metrics.averageCharWidth() * 12, metrics.height() + 4);
+        color->setText(fix.second->color.c_str());
+        layout->addWidget(color, idx, n++);
+        auto *trans = new QLineEdit(QString::number(fix.second->opacity));
+        trans->setValidator(transvalidator);
+        trans->setFixedSize(metrics.averageCharWidth() * 8, metrics.height() + 4);
+        trans->setText(QString::number(fix.second->opacity));
+        layout->addWidget(trans, idx, n++);
+        auto *flag1 = new QLineEdit(QString::number(fix.second->flag1));
+        flag1->setFixedSize(metrics.averageCharWidth() * 8, metrics.height() + 4);
+        flag1->setText(QString::number(fix.second->flag1));
+        layout->addWidget(flag1, idx, n++);
+        auto *flag2 = new QLineEdit(QString::number(fix.second->flag2));
+        flag2->setFixedSize(metrics.averageCharWidth() * 8, metrics.height() + 4);
+        flag2->setText(QString::number(fix.second->flag2));
+        layout->addWidget(flag2, idx, n++);
+        ++idx;
+    }
+    layout->addWidget(new QHline, idx++, 0, 1, 8);
+
+    auto *cancel = new QPushButton("&Cancel");
+    auto *apply  = new QPushButton("&Apply");
+    cancel->setAutoDefault(false);
+    apply->setAutoDefault(true);
+    layout->addWidget(cancel, idx, 0, 1, 4, Qt::AlignHCenter);
+    layout->addWidget(apply, idx, 4, 1, 4, Qt::AlignHCenter);
+    connect(cancel, &QPushButton::released, &fixview, &QDialog::reject);
+    connect(apply, &QPushButton::released, &fixview, &QDialog::accept);
+    fixview.setLayout(layout);
+
+    int rv = fixview.exec();
+
+    // return immediately on cancel
+    if (!rv) return;
+
+    // retrieve data from dialog and store in map
+    for (int idx = 4; idx < (int)fixes.size() + 4; ++idx) {
+        n          = 0;
+        auto *item = layout->itemAtPosition(idx, n++);
+        if (!item) continue;
+        auto *label = qobject_cast<QLabel *>(item->widget());
+        auto id     = label->text().toStdString();
+        // fix ID is not registered with a widget; skip rest to avoid segfault
+        if (fixes.count(id) == 0) continue;
+        ++n; // skip over label for style name
+
+        item                  = layout->itemAtPosition(idx, n++);
+        auto *box             = qobject_cast<QCheckBox *>(item->widget());
+        fixes[id]->enabled    = (box->checkState() == Qt::Checked);
+        item                  = layout->itemAtPosition(idx, n++);
+        auto *combo           = qobject_cast<QComboBox *>(item->widget());
+        fixes[id]->colorstyle = combo->currentIndex();
+        item                  = layout->itemAtPosition(idx, n++);
+        auto *line            = qobject_cast<QLineEdit *>(item->widget());
+        if (line && line->hasAcceptableInput()) fixes[id]->color = line->text().toStdString();
+        item = layout->itemAtPosition(idx, n++);
+        line = qobject_cast<QLineEdit *>(item->widget());
+        if (line && line->hasAcceptableInput()) fixes[id]->opacity = line->text().toDouble();
+        item = layout->itemAtPosition(idx, n++);
+        line = qobject_cast<QLineEdit *>(item->widget());
+        if (line && line->hasAcceptableInput()) fixes[id]->flag1 = line->text().toDouble();
+        item = layout->itemAtPosition(idx, n++);
+        line = qobject_cast<QLineEdit *>(item->widget());
+        if (line && line->hasAcceptableInput()) fixes[id]->flag2 = line->text().toDouble();
+    }
+    createImage();
 }
 
 void ImageViewer::region_settings()
@@ -1056,6 +1213,28 @@ void ImageViewer::createImage()
         }
     }
 
+    if (fixes.size() > 0) {
+        for (const auto &fix : fixes) {
+            if (fix.second->enabled) {
+                QString id(fix.first.c_str());
+                switch (fix.second->colorstyle) {
+                    case TYPE:
+                        dumpcmd += " fix " + id + blank + "type ";
+                        break;
+                    case ELEMENT:
+                        dumpcmd += " fix " + id + blank + "element ";
+                        break;
+                    case CONSTANT: // FALLTHROUGH
+                    default:
+                        dumpcmd += " fix " + id + blank + "const ";
+                        break;
+                }
+                dumpcmd += QString::number(fix.second->flag1) + blank +
+                           QString::number(fix.second->flag2) + blank;
+            }
+        }
+    }
+
     dumpcmd += QString(" center s %1 %2 %3").arg(xcenter).arg(ycenter).arg(zcenter);
     dumpcmd += " noinit";
     dumpcmd += " modify boxcolor " + settings.value("boxcolor", "yellow").toString();
@@ -1064,6 +1243,18 @@ void ImageViewer::createImage()
     if (usesigma) dumpcmd += blank + adiams + blank;
     if (!useelements && !usesigma && (atomSize != 1.0)) dumpcmd += blank + adiams + blank;
     settings.endGroup();
+
+    if (fixes.size() > 0) {
+        for (const auto &fix : fixes) {
+            if (fix.second->enabled) {
+                QString id(fix.first.c_str());
+                QString color(fix.second->color.c_str());
+                dumpcmd += " fcolor " + id + blank + color;
+                dumpcmd += " ftrans " + id + blank + QString::number(fix.second->opacity);
+                dumpcmd += blank;
+            }
+        }
+    }
 
     last_dump_cmd = dumpcmd;
     lammps->command(dumpcmd);
@@ -1154,6 +1345,67 @@ void ImageViewer::adjustScrollBar(QScrollBar *scrollBar, double factor)
 {
     scrollBar->setValue(
         int((factor * scrollBar->value()) + ((factor - 1) * scrollBar->pageStep() / 2)));
+}
+
+void ImageViewer::update_fixes()
+{
+    if (!lammps) return;
+    // we can query for fixes before 10 December 2025, but there is no support
+    // for fix graphics until after that version. So the check is needed for this date.
+    if (lammps->version() < 20251210) return;
+
+    // remove any files that no longer exist. to avoid inconsistencies while looping
+    // over the fixes, we first collect the list of missing ids and then apply it.
+    std::unordered_set<std::string> oldkeys;
+    for (const auto &fix : fixes) {
+        if (!lammps->has_id("fix", fix.first.c_str())) oldkeys.insert(fix.first);
+    }
+    for (const auto &id : oldkeys) {
+        delete fixes[id];
+        fixes.erase(id);
+    }
+
+    // map fix styles to fix ids by parsing info command output.
+    StdCapture capturer;
+    capturer.BeginCapture();
+    lammps->command("info fixes");
+    capturer.EndCapture();
+    QString fixinfo(capturer.GetCapture().c_str());
+    QRegularExpression infoline(QStringLiteral("^Fix\\[.*\\]: *([^,]+), *style = ([^,]+).*"));
+    QRegularExpression newline(QStringLiteral("[\r\n]+"));
+    std::unordered_map<std::string, QString> fixstyles;
+    for (const auto &line : fixinfo.split(newline, Qt::SkipEmptyParts)) {
+        auto match = infoline.match(line);
+        if (match.hasMatch()) {
+            fixstyles[match.captured(1).toStdString()] = match.captured(2);
+        }
+    }
+
+    // skip over internal and popular fixes without graphics
+    QRegularExpression skipfix(QStringLiteral("^([^a-z]+|nv[et]|np[th]|rigid|shake|package_).*"));
+    char buffer[DEFAULT_BUFLEN];
+    int nfixes = lammps->id_count("fix");
+    for (int i = 0; i < nfixes; ++i) {
+        if (lammps->id_name("fix", i, buffer, DEFAULT_BUFLEN)) {
+            std::string id = buffer;
+
+            // skip over matching fixes
+            auto skipme = skipfix.match(fixstyles[id]);
+            // add new fixes or update style names
+            if (fixes.count(id) == 0) {
+                if (!skipme.hasMatch()) {
+                    const auto &color = defaultcolors[i % defaultcolors.size()].toStdString();
+                    auto *fixinfo = new FixInfo(false, fixstyles[id], TYPE, color, 1.0, 0.0, 0.0);
+                    fixes[id]     = fixinfo;
+                }
+            } else if (fixes[id]->style != fixstyles[id]) {
+                fixes[id]->style = fixstyles[id];
+            }
+        }
+    }
+
+    auto *button = findChild<QPushButton *>("fixes");
+    if (button) button->setEnabled(fixes.size() > 0);
 }
 
 void ImageViewer::update_regions()

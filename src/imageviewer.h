@@ -28,6 +28,7 @@ class QScrollBar;
 class QStatusBar;
 class LammpsWrapper;
 class QComboBox;
+class FixInfo;
 class RegionInfo;
 
 /**
@@ -87,6 +88,7 @@ private slots:
     void do_rot_down();        ///< Rotate view down
     void do_recenter();        ///< Recenter view
     void cmd_to_clipboard();   ///< Copy dump command to clipboard
+    void fix_settings();       ///< Configure fix graphics display
     void region_settings();    ///< Configure region display
     void change_group(int);    ///< Change atom group selection
     void change_molecule(int); ///< Change molecule selection
@@ -106,6 +108,7 @@ private:
     void saveFile(const QString &fileName);                     ///< Save image file
     void scaleImage(double factor);                             ///< Scale image display
     void adjustScrollBar(QScrollBar *scrollBar, double factor); ///< Adjust scrollbar for zoom
+    void update_fixes();                                        ///< Update fix graphics information
     void update_regions();                                      ///< Update region information
     bool has_autobonds();                                       ///< Check if autobonds are enabled
 
@@ -145,6 +148,7 @@ private:
     bool usediameter;                            ///< Use diameter attribute flag
     bool usesigma;                               ///< Use sigma attribute flag
     bool autobond;                               ///< Auto-detect bonds flag
+    std::map<std::string, FixInfo *> fixes;      ///< Fix graphics definitions
     std::map<std::string, RegionInfo *> regions; ///< Region definitions
 };
 #endif
