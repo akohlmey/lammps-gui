@@ -338,11 +338,11 @@ ImageViewer::ImageViewer(const QString &fileName, LammpsWrapper *_lammps, QWidge
     recenter->setToolTip("Recenter on group");
     auto *reset = new QPushButton(QIcon(":/icons/gtk-zoom-fit.png"), "");
     reset->setToolTip("Reset view to defaults");
-    auto *fixviz = new QPushButton("Fixes");
+    auto *fixviz = new QPushButton("Fi&xes");
     fixviz->setToolTip("Open dialog for visualizing graphics from fixes");
     fixviz->setObjectName("fixes");
     fixviz->setEnabled(false);
-    auto *regviz = new QPushButton("Regions");
+    auto *regviz = new QPushButton("&Regions");
     regviz->setToolTip("Open dialog for visualizing regions");
     regviz->setObjectName("regions");
     regviz->setEnabled(false);
