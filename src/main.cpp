@@ -29,7 +29,6 @@
 
 int main(int argc, char *argv[])
 {
-    Q_INIT_RESOURCE(lammpsgui);
 #if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
     // register QList<QString> only needed for Qt5
     qRegisterMetaTypeStreamOperators<QList<QString>>("QList<QString>");
@@ -95,6 +94,8 @@ int main(int argc, char *argv[])
     int height        = parser.value("height").toInt();
     QStringList args  = parser.positionalArguments();
     if (!args.empty()) infile = args[0];
+
+    Q_INIT_RESOURCE(lammpsgui);
     LammpsGui w(nullptr, infile, width, height);
     w.show();
     return app.exec();
