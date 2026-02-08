@@ -1,0 +1,99 @@
+Metadata-Version: 2.4
+Name: LinkChecker
+Version: 10.6.0
+Summary: check links in web documents or full websites
+Project-URL: Homepage, https://linkchecker.github.io/linkchecker/
+Project-URL: Bug Tracker, https://github.com/linkchecker/linkchecker/issues
+Project-URL: Repository, https://github.com/linkchecker/linkchecker
+Project-URL: Changelog, https://github.com/linkchecker/linkchecker/blob/master/doc/changelog.txt
+Author: LinkChecker Authors
+Maintainer: LinkChecker Authors
+License-File: COPYING
+Keywords: checking,crawling,link,site,url,validation,verification
+Classifier: Development Status :: 5 - Production/Stable
+Classifier: License :: OSI Approved :: GNU General Public License v2 or later (GPLv2+)
+Classifier: Programming Language :: Python
+Classifier: Programming Language :: Python :: 3.9
+Classifier: Programming Language :: Python :: 3.10
+Classifier: Programming Language :: Python :: 3.11
+Classifier: Programming Language :: Python :: 3.12
+Classifier: Programming Language :: Python :: 3.13
+Classifier: Programming Language :: Python :: 3.14
+Classifier: Topic :: Internet :: WWW/HTTP :: Site Management :: Link Checking
+Requires-Python: >=3.9
+Requires-Dist: beautifulsoup4>=4.8.1
+Requires-Dist: dnspython>=2.0
+Requires-Dist: requests>=2.20
+Description-Content-Type: text/x-rst
+
+LinkChecker
+============
+
+|Build Status|_ |License|_
+
+.. |Build Status| image:: https://github.com/linkchecker/linkchecker/actions/workflows/build.yml/badge.svg?branch=master
+.. _Build Status: https://github.com/linkchecker/linkchecker/actions/workflows/build.yml
+.. |License| image:: https://img.shields.io/badge/license-GPL2-d49a6a.svg
+.. _License: https://opensource.org/licenses/GPL-2.0
+
+Check for broken links in web sites.
+
+Features
+---------
+
+- recursive and multithreaded checking and site crawling
+- output in colored or normal text, HTML, SQL, CSV, XML or a sitemap graph in different formats
+- HTTP/1.1, HTTPS, FTP, mailto: and local file links support
+- restrict link checking with regular expression filters for URLs
+- proxy support
+- username/password authorization for HTTP and FTP
+- honors robots.txt exclusion protocol
+- Cookie support
+- HTML5 support
+- a command line and web interface
+- various check plugins available
+
+Installation
+-------------
+
+Python 3.9 or later is needed. Using pip to install LinkChecker:
+
+``pip3 install linkchecker``
+
+pipx can also be used to install LinkChecker.
+
+The version in the pip repository may be old, to find out how to get the latest
+code, plus platform-specific information and other advice see `doc/install.txt`_
+in the source code archive.
+
+.. _doc/install.txt: https://linkchecker.github.io/linkchecker/install.html
+
+
+Usage
+------
+Execute ``linkchecker https://www.example.com``.
+For other options see ``linkchecker --help``, and for more information the
+manual pages `linkchecker(1)`_ and `linkcheckerrc(5)`_.
+
+.. _linkchecker(1): https://linkchecker.github.io/linkchecker/man/linkchecker.html
+
+.. _linkcheckerrc(5): https://linkchecker.github.io/linkchecker/man/linkcheckerrc.html
+
+Docker usage
+-------------
+
+If you do not want to install any additional libraries/dependencies you can use
+the Docker image which is published on GitHub Packages.
+
+Example for external web site check::
+
+  docker run --rm -it -u $(id -u):$(id -g) ghcr.io/linkchecker/linkchecker:latest --verbose https://www.example.com
+
+Local HTML file check::
+
+  docker run --rm -it -u $(id -u):$(id -g) -v "$PWD":/mnt ghcr.io/linkchecker/linkchecker:latest --verbose index.html
+
+In addition to the rolling latest image, uniquely tagged images can also be found
+on the `packages`_ page.
+
+.. _packages: https://github.com/linkchecker/linkchecker/pkgs/container/linkchecker
