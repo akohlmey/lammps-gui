@@ -276,8 +276,34 @@ void SlideShow::save_current_image()
             if (!has_exe("magick")) cmd = "convert";
             auto *convert = new QProcess(this);
             convert->start(cmd, args);
-            convert->waitForFinished(-1);
+            if (!convert->waitForFinished(-1)) {
+                const QString err = convert->errorString();
+                delete convert;
+                QFile::remove(fileName);
+                QMessageBox::warning(this, "SlideShow Error",
+                                     "ImageMagick conversion failed while saving to file "
+                                         + fileName + ":\n" + err);
+                return;
+            }
+            if (convert->exitStatus() != QProcess::NormalExit || convert->exitCode() != 0) {
+                const QString stderrText = QString::fromLocal8Bit(convert->readAllStandardError());
+                delete convert;
+                QFile::remove(fileName);
+                QString msg =
+                    "ImageMagick conversion failed while saving to file " + fileName + ".";
+                if (!stderrText.trimmed().isEmpty()) {
+                    msg += "\n\nDetails:\n" + stderrText.trimmed();
+                }
+                QMessageBox::warning(this, "SlideShow Error", msg);
+                return;
+            }
             delete convert;
+            if (!QFile::exists(fileName)) {
+                QMessageBox::warning(this, "SlideShow Error",
+                                     "ImageMagick reported success, but the output file "
+                                         + fileName + " was not created.");
+                return;
+            }
         } else {
             QMessageBox::warning(this, "SlideShow Error",
                                  "Could not save image to file " + fileName);
