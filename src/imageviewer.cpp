@@ -28,7 +28,6 @@
 #include <QFileInfo>
 #include <QFontMetrics>
 #include <QGuiApplication>
-#include <QScreen>
 #include <QHBoxLayout>
 #include <QIcon>
 #include <QImage>
@@ -45,6 +44,7 @@
 #include <QProcess>
 #include <QPushButton>
 #include <QRegularExpression>
+#include <QScreen>
 #include <QScrollArea>
 #include <QScrollBar>
 #include <QSettings>
@@ -162,6 +162,8 @@ constexpr int DEFAULT_BUFLEN      = 1024;
 constexpr int DEFAULT_NPOINTS     = 100000;
 constexpr double DEFAULT_DIAMETER = 0.2;
 constexpr double DEFAULT_OPACITY  = 0.5;
+constexpr int EXTRA_WIDTH         = 25;
+constexpr int EXTRA_HEIGHT        = 90;
 
 enum { FRAME, FILLED, TRANSPARENT, POINTS };
 enum { TYPE, ELEMENT, CONSTANT };
@@ -1337,11 +1339,10 @@ void ImageViewer::saveFile(const QString &fileName)
             auto *convert = new QProcess(this);
             convert->start(cmd, args);
             bool finished = convert->waitForFinished(-1);
-            if (!finished ||
-                convert->exitStatus() != QProcess::NormalExit ||
+            if (!finished || convert->exitStatus() != QProcess::NormalExit ||
                 convert->exitCode() != 0) {
                 QString errorOutput = QString::fromLocal8Bit(convert->readAllStandardError());
-                QString message = "ImageMagick failed to convert image to file " + fileName;
+                QString message     = "ImageMagick failed to convert image to file " + fileName;
                 if (!errorOutput.trimmed().isEmpty()) {
                     message += "\n\n" + errorOutput.trimmed();
                 }
@@ -1398,25 +1399,16 @@ void ImageViewer::adjustWindowSize()
 {
     if (image.isNull()) return;
 
-    // extra space for menu bar, button bar, borders, etc.
-    constexpr int extraWidth  = 25;
-    constexpr int extraHeight = 80;
-
-    int desiredWidth  = image.width() + extraWidth;
-    int desiredHeight = image.height() + extraHeight;
+    int desiredWidth  = image.width() + EXTRA_WIDTH;
+    int desiredHeight = image.height() + EXTRA_HEIGHT;
 
     auto *screen = QGuiApplication::primaryScreen();
-    if (!screen) {
-        resize(desiredWidth, desiredHeight);
-        return;
+    if (screen) {
+        auto screenSize = screen->availableSize();
+        int maxWidth    = std::min(desiredWidth, screenSize.width() * 2 / 3);
+        int maxHeight   = std::min(desiredHeight, screenSize.height() * 2 / 3);
     }
-
-    auto screenSize = screen->availableSize();
-    int maxWidth    = screenSize.width() * 2 / 3;
-    int maxHeight   = screenSize.height() * 2 / 3;
-
-    if (image.width() < maxWidth && image.height() < maxHeight)
-        resize(desiredWidth, desiredHeight);
+    resize(desiredWidth, desiredHeight);
 }
 
 void ImageViewer::adjustScrollBar(QScrollBar *scrollBar, double factor)
