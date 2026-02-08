@@ -1,29 +1,28 @@
 cmake_minimum_required(VERSION 3.20)
 
 project(lammps-gui
-  VERSION 1.9.0.5
+  VERSION 1.9.0.6
   LANGUAGES CXX
   DESCRIPTION "The LAMMPS GUI"
   HOMEPAGE_URL "https://lammps-gui.lammps.org/")
 include(GNUInstallDirs)
 
 ##################################################################################
-# configuration settings
-
+# configuration settings:
 # prefer compiling plugin version only if standalone compile
 option(LAMMPS_GUI_USE_PLUGIN "Load LAMMPS library dynamically at runtime" ON)
-
 # prefer Qt6 by default now that Qt5 is no longer officially supported
 option(LAMMPS_GUI_USE_QT5 "Prefer using Qt5 over Qt6" OFF)
-
 # build html documentation by default
 option(BUILD_DOC "Build LAMMPS-GUI HTML documentation" ON)
 ##################################################################################
 
+# add automatic Qt infrastructure rules
 set(CMAKE_AUTOUIC ON)
 set(CMAKE_AUTOMOC ON)
 set(CMAKE_AUTORCC ON)
 
+# follow the default setting of LAMMPS
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
@@ -208,10 +207,10 @@ if(BUILD_DOC OR BUILD_DOC_ONLY)
     set(DOXYGEN_CONFIG_FILE_IN ${CMAKE_SOURCE_DIR}/doc/Doxyfile.in)
     set(DOXYGEN_CONFIG_FILE ${CMAKE_BINARY_DIR}/doc/Doxyfile)
     set(DOXYGEN_OUTPUT_DIR ${CMAKE_BINARY_DIR}/doc/doxygen)
-    
+
     # Configure Doxyfile
     configure_file(${DOXYGEN_CONFIG_FILE_IN} ${DOXYGEN_CONFIG_FILE} @ONLY)
-    
+
     # Create custom target for Doxygen
     add_custom_target(doxygen
       COMMAND ${DOXYGEN_EXECUTABLE} ${DOXYGEN_CONFIG_FILE}

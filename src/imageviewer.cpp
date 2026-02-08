@@ -44,8 +44,8 @@
 #include <QProcess>
 #include <QPushButton>
 #include <QRegularExpression>
+#include <QScreen>
 #include <QScrollArea>
-#include <QScrollBar>
 #include <QSettings>
 #include <QSizePolicy>
 #include <QSpinBox>
@@ -161,6 +161,8 @@ constexpr int DEFAULT_BUFLEN      = 1024;
 constexpr int DEFAULT_NPOINTS     = 100000;
 constexpr double DEFAULT_DIAMETER = 0.2;
 constexpr double DEFAULT_OPACITY  = 0.5;
+constexpr int EXTRA_WIDTH         = 25;
+constexpr int EXTRA_HEIGHT        = 90;
 
 enum { FRAME, FILLED, TRANSPARENT, POINTS };
 enum { TYPE, ELEMENT, CONSTANT };
@@ -214,10 +216,9 @@ public:
 
 ImageViewer::ImageViewer(const QString &fileName, LammpsWrapper *_lammps, QWidget *parent) :
     QDialog(parent), menuBar(new QMenuBar), imageLabel(new QLabel), scrollArea(new QScrollArea),
-    buttonBox(nullptr), scaleFactor(1.0), atomSize(1.0), saveAsAct(nullptr), copyAct(nullptr),
-    cmdAct(nullptr), zoomInAct(nullptr), zoomOutAct(nullptr), normalSizeAct(nullptr),
-    lammps(_lammps), group("all"), molecule("none"), filename(fileName), useelements(false),
-    usediameter(false), usesigma(false)
+    buttonBox(nullptr), atomSize(1.0), saveAsAct(nullptr), copyAct(nullptr), cmdAct(nullptr),
+    zoomInAct(nullptr), zoomOutAct(nullptr), normalSizeAct(nullptr), lammps(_lammps), group("all"),
+    molecule("none"), filename(fileName), useelements(false), usediameter(false), usesigma(false)
 {
     imageLabel->setBackgroundRole(QPalette::Base);
     imageLabel->setSizePolicy(QSizePolicy::Ignored, QSizePolicy::Ignored);
@@ -460,10 +461,8 @@ ImageViewer::ImageViewer(const QString &fileName, LammpsWrapper *_lammps, QWidge
     dossao->setChecked(usessao);
     doanti->setChecked(antialias);
 
-    scaleFactor = 1.0;
-    resize(image.width() + 25, image.height() + 80);
-
     scrollArea->setVisible(true);
+    adjustWindowSize();
     updateActions();
     setLayout(mainLayout);
     update_fixes();
@@ -1291,6 +1290,7 @@ void ImageViewer::createImage()
     image = newImage;
     imageLabel->setPixmap(QPixmap::fromImage(image));
     imageLabel->adjustSize();
+    adjustWindowSize();
     if (renderstatus) renderstatus->setEnabled(false);
     repaint();
 
@@ -1341,11 +1341,10 @@ void ImageViewer::saveFile(const QString &fileName)
             auto *convert = new QProcess(this);
             convert->start(cmd, args);
             bool finished = convert->waitForFinished(-1);
-            if (!finished ||
-                convert->exitStatus() != QProcess::NormalExit ||
+            if (!finished || convert->exitStatus() != QProcess::NormalExit ||
                 convert->exitCode() != 0) {
                 QString errorOutput = QString::fromLocal8Bit(convert->readAllStandardError());
-                QString message = "ImageMagick failed to convert image to file " + fileName;
+                QString message     = "ImageMagick failed to convert image to file " + fileName;
                 if (!errorOutput.trimmed().isEmpty()) {
                     message += "\n\n" + errorOutput.trimmed();
                 }
@@ -1389,19 +1388,20 @@ void ImageViewer::updateActions()
     copyAct->setEnabled(!image.isNull());
 }
 
-void ImageViewer::scaleImage(double factor)
+void ImageViewer::adjustWindowSize()
 {
-    scaleFactor *= factor;
-    imageLabel->resize(scaleFactor * imageLabel->pixmap(Qt::ReturnByValue).size());
+    if (image.isNull()) return;
 
-    adjustScrollBar(scrollArea->horizontalScrollBar(), factor);
-    adjustScrollBar(scrollArea->verticalScrollBar(), factor);
-}
+    int desiredWidth  = image.width() + EXTRA_WIDTH;
+    int desiredHeight = image.height() + EXTRA_HEIGHT;
 
-void ImageViewer::adjustScrollBar(QScrollBar *scrollBar, double factor)
-{
-    scrollBar->setValue(
-        int((factor * scrollBar->value()) + ((factor - 1) * scrollBar->pageStep() / 2)));
+    auto *screen = QGuiApplication::primaryScreen();
+    if (screen) {
+        auto screenSize = screen->availableSize();
+        desiredWidth    = std::min(desiredWidth, screenSize.width() * 2 / 3);
+        desiredHeight   = std::min(desiredHeight, screenSize.height() * 2 / 3);
+    }
+    resize(desiredWidth, desiredHeight);
 }
 
 void ImageViewer::update_fixes()

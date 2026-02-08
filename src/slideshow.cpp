@@ -31,6 +31,7 @@
 #include <QProcess>
 #include <QPushButton>
 #include <QScreen>
+#include <QScrollArea>
 #include <QShortcut>
 #include <QSpacerItem>
 #include <QTemporaryFile>
@@ -40,18 +41,28 @@
 
 #include <algorithm>
 
+namespace {
+constexpr int EXTRA_WIDTH  = 40;
+constexpr int EXTRA_HEIGHT = 100;
+} // namespace
+
 SlideShow::SlideShow(const QString &fileName, QWidget *parent) :
-    QDialog(parent), playtimer(nullptr), imageLabel(new QLabel), imageName(new QLabel("(none)")),
-    do_loop(true), imageRotation(0), imageFlipH(false), imageFlipV(false)
+    QDialog(parent), playtimer(nullptr), imageLabel(new QLabel), scrollArea(new QScrollArea),
+    imageName(new QLabel("(none)")), do_loop(true), imageRotation(0), imageFlipH(false),
+    imageFlipV(false)
 {
     imageLabel->setBackgroundRole(QPalette::Base);
+    imageLabel->setSizePolicy(QSizePolicy::Ignored, QSizePolicy::Ignored);
     imageLabel->setScaledContents(false);
-    imageLabel->setMinimumSize(100, 100);
+
+    scrollArea->setBackgroundRole(QPalette::Dark);
+    scrollArea->setWidget(imageLabel);
+    scrollArea->setVisible(false);
 
     imageName->setFrameStyle(QFrame::Raised);
     imageName->setFrameShape(QFrame::Panel);
     imageName->setAlignment(Qt::AlignCenter);
-    imageName->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
+    imageName->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
     imageName->setTextInteractionFlags(Qt::TextSelectableByMouse);
 
     auto *shortcut = new QShortcut(QKeySequence(Qt::CTRL | Qt::Key_W), this);
@@ -156,7 +167,7 @@ SlideShow::SlideShow(const QString &fileName, QWidget *parent) :
     navLayout->addWidget(imgfliph);
     navLayout->addWidget(imgflipv);
 
-    mainLayout->addWidget(imageLabel);
+    mainLayout->addWidget(scrollArea, 10);
     mainLayout->addLayout(navLayout);
 
     botLayout->addWidget(imageName);
@@ -171,10 +182,8 @@ SlideShow::SlideShow(const QString &fileName, QWidget *parent) :
     scaleFactor = 1.0;
     current     = 0;
 
-    auto maxsize = QGuiApplication::primaryScreen()->availableSize() * 4 / 5;
-    maxheight    = maxsize.height();
-    maxwidth     = maxsize.width();
-
+    scrollArea->setVisible(true);
+    adjustWindowSize();
     setLayout(mainLayout);
 
     // set window flags for window manager
@@ -237,6 +246,7 @@ void SlideShow::loadImage(int idx)
             break;
         }
     } while (idx >= 0);
+    adjustWindowSize();
 }
 
 void SlideShow::quit()
@@ -281,8 +291,8 @@ void SlideShow::save_current_image()
                 delete convert;
                 QFile::remove(fileName);
                 QMessageBox::warning(this, "SlideShow Error",
-                                     "ImageMagick conversion failed while saving to file "
-                                         + fileName + ":\n" + err);
+                                     "ImageMagick conversion failed while saving to file " +
+                                         fileName + ":\n" + err);
                 return;
             }
             if (convert->exitStatus() != QProcess::NormalExit || convert->exitCode() != 0) {
@@ -300,8 +310,8 @@ void SlideShow::save_current_image()
             delete convert;
             if (!QFile::exists(fileName)) {
                 QMessageBox::warning(this, "SlideShow Error",
-                                     "ImageMagick reported success, but the output file "
-                                         + fileName + " was not created.");
+                                     "ImageMagick reported success, but the output file " +
+                                         fileName + " was not created.");
                 return;
             }
         } else {
@@ -475,16 +485,27 @@ void SlideShow::normalSize()
 
 void SlideShow::scaleImage(double factor)
 {
-    // compute maxfactor so the image is not scaled beyond 80 of width or height of screen
-    double maxfactor = 10.0;
-    maxfactor        = qMin((double)maxheight / (double)image.height(), maxfactor);
-    maxfactor        = qMin((double)maxwidth / (double)image.width(), maxfactor);
-
-    factor = std::min(factor, maxfactor);
     scaleFactor *= factor;
-    scaleFactor = std::max(scaleFactor, 0.25);
+    // don't let the image become smaller than 10%
+    scaleFactor = std::max(scaleFactor, 0.1);
 
     loadImage(current);
+}
+
+void SlideShow::adjustWindowSize()
+{
+    if (image.isNull()) return;
+
+    int desiredWidth  = image.width() + EXTRA_WIDTH;
+    int desiredHeight = image.height() + EXTRA_HEIGHT;
+
+    auto *screen = QGuiApplication::primaryScreen();
+    if (screen) {
+        auto screenSize = screen->availableSize();
+        desiredWidth    = std::min(desiredWidth, screenSize.width() * 2 / 3);
+        desiredHeight   = std::min(desiredHeight, screenSize.height() * 2 / 3);
+    }
+    resize(desiredWidth, desiredHeight);
 }
 
 void SlideShow::do_image_rotate_cw()
@@ -555,7 +576,6 @@ void SlideShow::applyImageTransform()
     image         = transformedImage.scaled(newwidth, newheight, Qt::IgnoreAspectRatio,
                                             Qt::SmoothTransformation);
     imageLabel->setPixmap(QPixmap::fromImage(image));
-    imageLabel->setMinimumSize(newwidth, newheight);
     imageLabel->adjustSize();
 }
 

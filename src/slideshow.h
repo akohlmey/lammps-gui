@@ -19,6 +19,7 @@
 
 class QDialogButtonBox;
 class QLabel;
+class QScrollArea;
 class QTimer;
 
 /**
@@ -64,24 +65,24 @@ public:
     void clear();
 
 private slots:
-    void quit();          ///< Close slideshow window
-    void delete_images(); ///< Delete all image files in sequence
-    void stop_run();      ///< Stop running simulation
-    void movie();         ///< Export images as movie file
-    void save_current_image(); ///< Save current image with zoom/flip/rotate applied
-    void first();         ///< Jump to first image
-    void last();          ///< Jump to last image
-    void next();          ///< Advance to next image
-    void prev();          ///< Go back to previous image
-    void play();          ///< Start/stop automatic playback
-    void loop();          ///< Toggle looping mode
-    void zoomIn();        ///< Zoom in on current image
-    void zoomOut();       ///< Zoom out on current image
-    void normalSize();    ///< Reset zoom to 100%
-    void do_image_rotate_cw(); ///< Rotate displayed image 90° clockwise
+    void quit();                ///< Close slideshow window
+    void delete_images();       ///< Delete all image files in sequence
+    void stop_run();            ///< Stop running simulation
+    void movie();               ///< Export images as movie file
+    void save_current_image();  ///< Save current image with zoom/flip/rotate applied
+    void first();               ///< Jump to first image
+    void last();                ///< Jump to last image
+    void next();                ///< Advance to next image
+    void prev();                ///< Go back to previous image
+    void play();                ///< Start/stop automatic playback
+    void loop();                ///< Toggle looping mode
+    void zoomIn();              ///< Zoom in on current image
+    void zoomOut();             ///< Zoom out on current image
+    void normalSize();          ///< Reset zoom to 100%
+    void do_image_rotate_cw();  ///< Rotate displayed image 90° clockwise
     void do_image_rotate_ccw(); ///< Rotate displayed image 90° counter-clockwise
-    void do_image_flip_h();    ///< Mirror displayed image horizontally
-    void do_image_flip_v();    ///< Mirror displayed image vertically
+    void do_image_flip_h();     ///< Mirror displayed image horizontally
+    void do_image_flip_v();     ///< Mirror displayed image vertically
 
 private:
     /**
@@ -101,11 +102,17 @@ private:
      */
     void applyImageTransform();
 
+    /**
+     * @brief Auto-resize window to fit image
+     */
+    void adjustWindowSize();
+
 private:
     QImage image;                ///< Currently displayed image
     QImage rawImage;             ///< Raw image before transformations
     QTimer *playtimer;           ///< Timer for automatic playback
     QLabel *imageLabel;          ///< Label displaying the image
+    QScrollArea *scrollArea;     ///< Scrollable area for image display
     QLabel *imageName;           ///< Label showing image filename
     QDialogButtonBox *buttonBox; ///< Dialog control buttons
     double scaleFactor = 1.0;    ///< Current zoom scale factor
