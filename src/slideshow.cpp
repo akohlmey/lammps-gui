@@ -31,6 +31,7 @@
 #include <QProcess>
 #include <QPushButton>
 #include <QScreen>
+#include <QScrollArea>
 #include <QShortcut>
 #include <QSpacerItem>
 #include <QTemporaryFile>
@@ -41,17 +42,22 @@
 #include <algorithm>
 
 SlideShow::SlideShow(const QString &fileName, QWidget *parent) :
-    QDialog(parent), playtimer(nullptr), imageLabel(new QLabel), imageName(new QLabel("(none)")),
-    do_loop(true), imageRotation(0), imageFlipH(false), imageFlipV(false)
+    QDialog(parent), playtimer(nullptr), imageLabel(new QLabel), scrollArea(new QScrollArea),
+    imageName(new QLabel("(none)")), do_loop(true), imageRotation(0), imageFlipH(false),
+    imageFlipV(false)
 {
     imageLabel->setBackgroundRole(QPalette::Base);
-    imageLabel->setScaledContents(false);
-    imageLabel->setMinimumSize(100, 100);
+    imageLabel->setSizePolicy(QSizePolicy::Ignored, QSizePolicy::Ignored);
+    imageLabel->setScaledContents(true);
+
+    scrollArea->setBackgroundRole(QPalette::Dark);
+    scrollArea->setWidget(imageLabel);
+    scrollArea->setWidgetResizable(true);
 
     imageName->setFrameStyle(QFrame::Raised);
     imageName->setFrameShape(QFrame::Panel);
     imageName->setAlignment(Qt::AlignCenter);
-    imageName->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
+    imageName->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
     imageName->setTextInteractionFlags(Qt::TextSelectableByMouse);
 
     auto *shortcut = new QShortcut(QKeySequence(Qt::CTRL | Qt::Key_W), this);
@@ -156,7 +162,7 @@ SlideShow::SlideShow(const QString &fileName, QWidget *parent) :
     navLayout->addWidget(imgfliph);
     navLayout->addWidget(imgflipv);
 
-    mainLayout->addWidget(imageLabel);
+    mainLayout->addWidget(scrollArea, 1);
     mainLayout->addLayout(navLayout);
 
     botLayout->addWidget(imageName);
@@ -171,9 +177,17 @@ SlideShow::SlideShow(const QString &fileName, QWidget *parent) :
     scaleFactor = 1.0;
     current     = 0;
 
-    auto maxsize = QGuiApplication::primaryScreen()->availableSize() * 4 / 5;
-    maxheight    = maxsize.height();
-    maxwidth     = maxsize.width();
+    auto *screen = QGuiApplication::primaryScreen();
+    if (screen) {
+        auto maxsize = screen->availableSize() * 2 / 3;
+        maxheight    = maxsize.height();
+        maxwidth     = maxsize.width();
+        setMaximumSize(maxsize);
+    } else {
+        maxheight = 600;
+        maxwidth  = 800;
+        setMaximumSize(maxwidth, maxheight);
+    }
 
     setLayout(mainLayout);
 
@@ -555,7 +569,6 @@ void SlideShow::applyImageTransform()
     image         = transformedImage.scaled(newwidth, newheight, Qt::IgnoreAspectRatio,
                                             Qt::SmoothTransformation);
     imageLabel->setPixmap(QPixmap::fromImage(image));
-    imageLabel->setMinimumSize(newwidth, newheight);
     imageLabel->adjustSize();
 }
 

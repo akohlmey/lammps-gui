@@ -19,6 +19,7 @@
 
 class QDialogButtonBox;
 class QLabel;
+class QScrollArea;
 class QTimer;
 
 /**
@@ -106,6 +107,7 @@ private:
     QImage rawImage;             ///< Raw image before transformations
     QTimer *playtimer;           ///< Timer for automatic playback
     QLabel *imageLabel;          ///< Label displaying the image
+    QScrollArea *scrollArea;     ///< Scrollable area for image display
     QLabel *imageName;           ///< Label showing image filename
     QDialogButtonBox *buttonBox; ///< Dialog control buttons
     double scaleFactor = 1.0;    ///< Current zoom scale factor
