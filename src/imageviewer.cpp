@@ -28,6 +28,7 @@
 #include <QFileInfo>
 #include <QFontMetrics>
 #include <QGuiApplication>
+#include <QScreen>
 #include <QHBoxLayout>
 #include <QIcon>
 #include <QImage>
@@ -458,7 +459,7 @@ ImageViewer::ImageViewer(const QString &fileName, LammpsWrapper *_lammps, QWidge
     doanti->setChecked(antialias);
 
     scaleFactor = 1.0;
-    resize(image.width() + 25, image.height() + 80);
+    adjustWindowSize();
 
     scrollArea->setVisible(true);
     updateActions();
@@ -1285,6 +1286,7 @@ void ImageViewer::createImage()
     image = newImage;
     imageLabel->setPixmap(QPixmap::fromImage(image));
     imageLabel->adjustSize();
+    adjustWindowSize();
     if (renderstatus) renderstatus->setEnabled(false);
     repaint();
 
@@ -1390,6 +1392,31 @@ void ImageViewer::scaleImage(double factor)
 
     adjustScrollBar(scrollArea->horizontalScrollBar(), factor);
     adjustScrollBar(scrollArea->verticalScrollBar(), factor);
+}
+
+void ImageViewer::adjustWindowSize()
+{
+    if (image.isNull()) return;
+
+    // extra space for menu bar, button bar, borders, etc.
+    constexpr int extraWidth  = 25;
+    constexpr int extraHeight = 80;
+
+    int desiredWidth  = image.width() + extraWidth;
+    int desiredHeight = image.height() + extraHeight;
+
+    auto *screen = QGuiApplication::primaryScreen();
+    if (!screen) {
+        resize(desiredWidth, desiredHeight);
+        return;
+    }
+
+    auto screenSize = screen->availableSize();
+    int maxWidth    = screenSize.width() * 2 / 3;
+    int maxHeight   = screenSize.height() * 2 / 3;
+
+    if (image.width() < maxWidth && image.height() < maxHeight)
+        resize(desiredWidth, desiredHeight);
 }
 
 void ImageViewer::adjustScrollBar(QScrollBar *scrollBar, double factor)

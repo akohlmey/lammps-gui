@@ -107,6 +107,7 @@ private:
     void updateActions();                                       ///< Update action states
     void saveFile(const QString &fileName);                     ///< Save image file
     void scaleImage(double factor);                             ///< Scale image display
+    void adjustWindowSize();                                    ///< Auto-resize window to fit image
     void adjustScrollBar(QScrollBar *scrollBar, double factor); ///< Adjust scrollbar for zoom
     void update_fixes();                                        ///< Update fix graphics information
     void update_regions();                                      ///< Update region information
