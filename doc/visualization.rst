@@ -87,7 +87,11 @@ with anti-aliasing are requested, re-rendering may take several seconds.
 From the *File* menu of the image window, the current image can be saved
 to a file (keyboard shortcut `Ctrl-S`) or copied to the clipboard
 (keyboard shortcut `Ctrl-C`) for pasting the image into another
-application.
+application.  The file format of the saved image is inferred from the
+file name extension.  When the `ImageMagick software
+<https://imagemagick.org/>`_ is installed, file formats not supported by
+the Qt library are available by first writing a temporary PNG format
+file which is then converted to the desired file format.
 
 From the *File* menu it is also possible to copy the current `dump image
 <https://docs.lammps.org/dump_image.html>`_ and `dump_modify
@@ -135,11 +139,11 @@ animation to a movie or `animated GIF file
 <https://imagemagick.org/>`_ is installed.  The file name extension
 determines the file format.  The button next to it triggers exporting
 the current image to a file, which includes the applied transformations.
-Again, the file format is inferred from the file name extension.  When
-the `ImageMagick software <https://imagemagick.org/>`_ is installed,
-file formats not supported by the Qt library are available to first
-writing a temporary PNG format file which is then converted to the
-desired file format.
+Again, the file format of the image is inferred from the file name
+extension.  When the `ImageMagick software <https://imagemagick.org/>`_
+is installed, file formats not supported by the Qt library are available
+by first writing a temporary PNG format file which is then converted to
+the desired file format.
 
 When clicking on the "garbage can" icon, all image files of the slide
 show will be deleted.  Since their number can be large for long
