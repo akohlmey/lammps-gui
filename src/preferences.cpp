@@ -831,9 +831,6 @@ SnapshotTab::SnapshotTab(QSettings *_settings, QWidget *parent) :
     grid->addWidget(background2, i++, 1, Qt::AlignVCenter);
     int nrows = i;
 
-    // vertical separator spanning all rows (column 2)
-    grid->addWidget(separator, 0, 2, nrows, 1);
-
     // right column layout (columns 3-4)
     int j = 0;
     grid->addWidget(bbox, j, 3, Qt::AlignTop);
@@ -855,11 +852,18 @@ SnapshotTab::SnapshotTab(QSettings *_settings, QWidget *parent) :
     grid->addWidget(bclbl, j, 3, Qt::AlignTop);
     grid->addWidget(bcut, j++, 4, Qt::AlignVCenter);
 
-    grid->addItem(new QSpacerItem(100, 100, QSizePolicy::Minimum, QSizePolicy::Expanding), nrows, 0);
-    grid->addItem(new QSpacerItem(100, 100, QSizePolicy::Minimum, QSizePolicy::Expanding), nrows, 1);
-    grid->addItem(new QSpacerItem(100, 100, QSizePolicy::Minimum, QSizePolicy::Expanding), nrows, 3);
-    grid->addItem(new QSpacerItem(100, 100, QSizePolicy::Minimum, QSizePolicy::Expanding), nrows, 4);
-    grid->addItem(new QSpacerItem(100, 100, QSizePolicy::Expanding, QSizePolicy::Expanding), nrows, 5);
+    // equal weight for left and right halves
+    grid->setColumnStretch(0, 1);
+    grid->setColumnStretch(1, 1);
+    grid->setColumnStretch(3, 1);
+    grid->setColumnStretch(4, 1);
+
+    // expanding spacer row so preferences stay at the top
+    grid->setRowStretch(nrows, 1);
+
+    // extend separator to span all rows including the spacer row
+    grid->addWidget(separator, 0, 2, nrows + 1, 1);
+
     setLayout(grid);
 
     connect(vval, &QCheckBox::toggled, this, &SnapshotTab::choose_vdw);
