@@ -178,24 +178,37 @@ Snapshot Image:
 .. index:: image rendering
 
 This tab allows setting defaults for the snapshot images displayed in
-the :ref:`Image Viewer window <snapshot_viewer>`, such as its dimensions
-and the zoom factor applied.  The **Antialias** switch will render
-images with double the number of pixels for width and height and then
-smoothly scale the image back to the requested size.  This produces
-higher quality images with smoother edges at the expense of requiring
-more CPU time to render a four times size initial image.  The **HQ Image
-mode** option turns on "Screen Space Ambient Occlusion (SSAO)" mode when
-rendering images.  This is also more time consuming, but produces a more
-'spatial' representation of the system with shading of atoms by their
-depth.  The **Shiny Image mode** option will render objects with a shiny
-surface when enabled.  Otherwise, the surfaces will be matte.  The
-**Show Box** option selects whether the system box is drawn as a colored
-set of sticks.  Similarly, the **Show Axes** option selects whether a
-representation of the three system axes will be drawn as colored sticks.
-The **VDW Style** checkbox selects whether atoms are represented by
-space filling spheres when checked or by smaller spheres and sticks.
-Finally, there are a couple of drop down lists to select the background
-and box colors.
+the :ref:`Image Viewer window <snapshot_viewer>`, such as its
+dimensions, the zoom factor, and view angles.  The **Antialias** switch
+will render images with double the number of pixels for width and height
+and then smoothly scale the image back to the requested size.  This
+produces higher quality images with smoother edges at the expense of
+requiring more CPU time to render a four times size initial image.  The
+**HQ Image mode** option turns on "Screen Space Ambient Occlusion
+(SSAO)" mode when rendering images.  This is also more time consuming,
+but produces a more 'spatial' representation of the system with shading
+of atoms by their depth.  The **Shiny Image mode** option will render
+objects with a shiny surface when enabled.  Otherwise, the surfaces will
+be matte.  The **Show Box** option selects whether the system box is
+drawn as a colored set of sticks.  Furthermore, the diameter of the
+sticks and their color can be set. Similarly, the **Show Axes** option
+selects whether a representation of the three system axes will be drawn
+or not (as colored and labeled arrows).  In addition, the axes length
+and diameter can be set in fractions of the image size.  The **VDW
+Style** checkbox selects whether atoms are represented by space filling
+spheres when checked or by smaller spheres and sticks.  The **Dynamic
+Bonds** checkbox selects whether bonds between atoms shall be
+automatically determined from the atom distances (for instance to
+visualize simulations using force fields with implicit bonds), and the
+corresponding "Bond Cutoff" text field allow to set the cutoff used for
+that feature.  Finally, there are a couple of text fields to select the
+two **Background Colors**.  If the two colors differ, there will be a
+vertical background gradient starting with the "Background" color at the
+bottom and ending with the "Background2" color at the top.
+
+These settings correspond to the available settings for the LAMMPS `dump
+image and corresponding dump_modify commands
+<https://docs.lammps.org/dump_image.html>`_.
 
 Editor Settings:
 ^^^^^^^^^^^^^^^^
