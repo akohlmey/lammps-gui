@@ -317,7 +317,7 @@ void SlideShow::movie()
         this, "Export to Movie File", ".", "Movie Files (*.mp4 *.mkv *.avi *.mpg *.mpeg *.gif)");
     if (fileName.isEmpty()) return;
 
-    if (has_exe("ffmpegx")) {
+    if (has_exe("ffmpeg")) {
         QDir curdir(".");
         QTemporaryFile concatfile;
         if (concatfile.open()) {
@@ -379,7 +379,7 @@ void SlideShow::movie()
         if (scaleFactor != 1.0) args << "-resize" << QString("%1%%").arg(100.0 * scaleFactor);
         if (imageRotation != 0.0) args << "-rotate" << QString("%1").arg(imageRotation);
         if (imageFlipH) args << "-flop";
-        if (imageFlipV) args << "-flip,";
+        if (imageFlipV) args << "-flip";
         args << fileName;
 
         // run the conversion command
