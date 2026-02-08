@@ -161,6 +161,8 @@ void Preferences::accept()
     if (box) settings->setValue("autobond", box->isChecked());
     field = tabWidget->findChild<QLineEdit *>("background");
     if (field && field->hasAcceptableInput()) settings->setValue("background", field->text());
+    field = tabWidget->findChild<QLineEdit *>("background2");
+    if (field && field->hasAcceptableInput()) settings->setValue("background2", field->text());
     field = tabWidget->findChild<QLineEdit *>("boxcolor");
     if (field && field->hasAcceptableInput()) settings->setValue("boxcolor", field->text());
     settings->endGroup();
@@ -686,6 +688,7 @@ SnapshotTab::SnapshotTab(QSettings *_settings, QWidget *parent) :
     auto *bond  = new QLabel("Dynamic Bonds:");
     auto *bclbl = new QLabel("Bond Cutoff:");
     auto *cback = new QLabel("Background Color:");
+    auto *cbac2 = new QLabel("Background2 Color:");
     auto *cbox  = new QLabel("Box Color:");
     settings->beginGroup("snapshot");
     auto *xval = new QLineEdit(settings->value("xsize", "600").toString());
@@ -734,6 +737,12 @@ SnapshotTab::SnapshotTab(QSettings *_settings, QWidget *parent) :
     background->setValidator(colorvalidator);
     background->setFixedSize(metrics.averageCharWidth() * 12, metrics.height() + 4);
 
+    auto *background2 = new QLineEdit(settings->value("background2", "white").toString());
+    background2->setObjectName("background2");
+    background2->setCompleter(colorcompleter);
+    background2->setValidator(colorvalidator);
+    background2->setFixedSize(metrics.averageCharWidth() * 12, metrics.height() + 4);
+
     auto *boxcolor = new QLineEdit(settings->value("boxcolor", "yellow").toString());
     boxcolor->setObjectName("boxcolor");
     boxcolor->setCompleter(colorcompleter);
@@ -767,6 +776,8 @@ SnapshotTab::SnapshotTab(QSettings *_settings, QWidget *parent) :
     grid->addWidget(bcut, i++, 1, Qt::AlignVCenter);
     grid->addWidget(cback, i, 0, Qt::AlignTop);
     grid->addWidget(background, i++, 1, Qt::AlignVCenter);
+    grid->addWidget(cbac2, i, 0, Qt::AlignTop);
+    grid->addWidget(background2, i++, 1, Qt::AlignVCenter);
     grid->addWidget(cbox, i, 0, Qt::AlignTop);
     grid->addWidget(boxcolor, i++, 1, Qt::AlignVCenter);
 

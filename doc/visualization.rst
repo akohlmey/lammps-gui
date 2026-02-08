@@ -87,7 +87,12 @@ with anti-aliasing are requested, re-rendering may take several seconds.
 From the *File* menu of the image window, the current image can be saved
 to a file (keyboard shortcut `Ctrl-S`) or copied to the clipboard
 (keyboard shortcut `Ctrl-C`) for pasting the image into another
-application.
+application.  The file format of the saved image is inferred from the
+file name extension.  When the `ImageMagick software
+<https://imagemagick.org/>`_ is installed, file formats not supported by
+the Qt library are available by first writing a temporary `PNG format
+file <https://en.wikipedia.org/wiki/portable_network_graphics>`_ which
+is then converted to the desired file format.
 
 From the *File* menu it is also possible to copy the current `dump image
 <https://docs.lammps.org/dump_image.html>`_ and `dump_modify
@@ -106,6 +111,7 @@ Image Slide Show
 .. index:: animation
 .. index:: image sequence
 .. index:: movie export
+.. index:: image export
 
 By default, if the LAMMPS input contains a `dump image
 <https://docs.lammps.org/dump_image.html>`_ command, a "Slide Show"
@@ -120,16 +126,29 @@ progress of the simulation.
 The various buttons at the bottom right of the window allow single
 stepping through the sequence of images or playing an animation (as a
 continuous loop or once from first to last).  It is also possible to
-zoom in or zoom out of the displayed images. Additionally, the displayed
-images can be rotated in 90-degree increments or mirrored horizontally and
-vertically, which is useful when the simulation setup orientation needs
-to be adjusted for presentation purposes. The button on the very
-left triggers an export of the slide show animation to a movie file,
-provided the `FFmpeg program <https://ffmpeg.org/>`_ is installed.
+zoom in or zoom out of the displayed images or rotate them in 90-degree
+increments or mirror them horizontally or vertically. This is useful
+when the simulation images need to be adjusted for presentation
+purposes.  If you are uncertain about the function of a specific button,
+you can place the cursor on top of it and a descriptive tooltip should
+appear.
+
+The button on the very left triggers an export of the slide show
+animation to a movie or `animated GIF file
+<https://en.wikipedia.org/wiki/GIF#Animated_GIF>`_, provided either the
+`FFmpeg program <https://ffmpeg.org/>`_ or the `ImageMagick software
+<https://imagemagick.org/>`_ is installed.  The file name extension
+determines the file format.  The button next to it triggers exporting
+the current image to a file, which includes the applied transformations.
+Again, the file format of the image is inferred from the file name
+extension.  When the `ImageMagick software <https://imagemagick.org/>`_
+is installed, file formats not supported by the Qt library are available
+by first writing a temporary `PNG format file
+<https://en.wikipedia.org/wiki/portable_network_graphics>`_ which is
+then converted to the desired file format.
 
 When clicking on the "garbage can" icon, all image files of the slide
 show will be deleted.  Since their number can be large for long
 simulations, this option enables to safely and quickly clean up the
 clutter caused in the working directory by those image files without
 risk of deleting other files by accident when using wildcards.
-

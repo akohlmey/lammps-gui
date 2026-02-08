@@ -1,6 +1,7 @@
 accessors
 Alvares
 camelCase
+cecill
 CheckSize
 cmake
 CMake
@@ -27,8 +28,11 @@ GPG
 GPL
 Gravelle
 gui
+Hoyoung
+http
 kspace
 Lennard
+licensors
 lj
 macOS
 makefile
@@ -36,7 +40,9 @@ MBytes
 Mutex
 mystrdup
 natively
+nsis
 nullptr
+Nullsoft
 pluginpath
 pre
 prev
@@ -45,11 +51,14 @@ QFrame
 QObject
 QSettings
 QSize
+QSlider
 QString
 QThread
+rangeslider
 README
 Savitzky
 screenshooter
+sliderDown
 SSAO
 stderr
 stdout
@@ -59,6 +68,7 @@ Thermo
 thermo
 timestep
 toolchain
+tooltip
 txt
 ui
 Validator
@@ -66,6 +76,7 @@ varname
 Ventura
 webpage
 whitespace
+www
 Xcode
 Xvfb
 xvfbsize

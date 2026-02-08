@@ -4,4 +4,4 @@ sphinxcontrib-spelling
 sphinxcontrib-jquery
 sphinx-sitemap
 linkchecker
-docutils > 0.18, < 0.24
+docutils > 0.18, < 0.23

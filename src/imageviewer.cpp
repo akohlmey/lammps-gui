@@ -38,8 +38,10 @@
 #include <QLineEdit>
 #include <QMenu>
 #include <QMenuBar>
+#include <QMessageBox>
 #include <QPalette>
 #include <QPixmap>
+#include <QProcess>
 #include <QPushButton>
 #include <QRegularExpression>
 #include <QScrollArea>
@@ -47,7 +49,9 @@
 #include <QSettings>
 #include <QSizePolicy>
 #include <QSpinBox>
+#include <QString>
 #include <QStringList>
+#include <QTemporaryFile>
 #include <QVBoxLayout>
 #include <QVariant>
 
@@ -338,11 +342,11 @@ ImageViewer::ImageViewer(const QString &fileName, LammpsWrapper *_lammps, QWidge
     recenter->setToolTip("Recenter on group");
     auto *reset = new QPushButton(QIcon(":/icons/gtk-zoom-fit.png"), "");
     reset->setToolTip("Reset view to defaults");
-    auto *fixviz = new QPushButton("Fixes");
+    auto *fixviz = new QPushButton("Fi&xes");
     fixviz->setToolTip("Open dialog for visualizing graphics from fixes");
     fixviz->setObjectName("fixes");
     fixviz->setEnabled(false);
-    auto *regviz = new QPushButton("Regions");
+    auto *regviz = new QPushButton("&Regions");
     regviz->setToolTip("Open dialog for visualizing regions");
     regviz->setObjectName("regions");
     regviz->setEnabled(false);
@@ -461,6 +465,14 @@ ImageViewer::ImageViewer(const QString &fileName, LammpsWrapper *_lammps, QWidge
     setLayout(mainLayout);
     update_fixes();
     update_regions();
+
+    // set window flags for window manager
+    auto flags = windowFlags();
+    flags &= ~Qt::Dialog;
+    flags |= Qt::CustomizeWindowHint;
+    flags |= Qt::WindowMinimizeButtonHint;
+    flags &= ~Qt::WindowMaximizeButtonHint;
+    setWindowFlags(flags);
 }
 
 void ImageViewer::reset_view()
@@ -958,7 +970,7 @@ void ImageViewer::region_settings()
 
     // retrieve data from dialog and store in map
     for (int idx = 4; idx < (int)regions.size() + 4; ++idx) {
-        n = 0;
+        n                    = 0;
         auto *item           = layout->itemAtPosition(idx, n++);
         auto *label          = qobject_cast<QLabel *>(item->widget());
         auto id              = label->text().toStdString();
@@ -1177,7 +1189,7 @@ void ImageViewer::createImage()
         dumpcmd += " box no 0.0";
 
     if (showaxes)
-        dumpcmd += " axes yes 0.5 0.025";
+        dumpcmd += " axes yes 0.5 0.05";
     else
         dumpcmd += " axes no 0.0 0.0";
 
@@ -1239,6 +1251,8 @@ void ImageViewer::createImage()
     dumpcmd += " noinit";
     dumpcmd += " modify boxcolor " + settings.value("boxcolor", "yellow").toString();
     dumpcmd += " backcolor " + settings.value("background", "black").toString();
+    if (lammps->version() > 20251210)
+        dumpcmd += " backcolor2 " + settings.value("background2", "white").toString();
     if (useelements) dumpcmd += blank + elements + blank + adiams + blank;
     if (usesigma) dumpcmd += blank + adiams + blank;
     if (!useelements && !usesigma && (atomSize != 1.0)) dumpcmd += blank + adiams + blank;
@@ -1284,8 +1298,9 @@ void ImageViewer::createImage()
 
 void ImageViewer::saveAs()
 {
-    QString fileName = QFileDialog::getSaveFileName(this, "Save Image File As", QString(),
-                                                    "Image Files (*.jpg *.png *.bmp *.ppm)");
+    QString fileName = QFileDialog::getSaveFileName(
+        this, "Save Image File As", QString(),
+        "Image Files (*.png *.jpg *.jpeg *.gif *.bmp *.tga *.ppm *.tiff *.pgm *.xpm *.xbm)");
     saveFile(fileName);
 }
 
@@ -1299,7 +1314,43 @@ void ImageViewer::quit()
 
 void ImageViewer::saveFile(const QString &fileName)
 {
-    if (!fileName.isEmpty()) image.save(fileName);
+    if (fileName.isEmpty()) return;
+
+    // try direct save and if it fails write to PNG and then convert with ImageMagick if available
+    if (!image.save(fileName)) {
+        if (has_exe("magick") || has_exe("convert")) {
+            QTemporaryFile tmpfile(QDir::tempPath() + "/LAMMPS_GUI.XXXXXX.png");
+            // open and close to generate temporary file name
+            (void)tmpfile.open();
+            (void)tmpfile.close();
+            if (!image.save(tmpfile.fileName())) {
+                QMessageBox::warning(this, "Image Viewer Error",
+                                     "Could not save image to file " + fileName);
+                return;
+            }
+
+            QString cmd = "magick";
+            QStringList args{tmpfile.fileName(), fileName};
+            if (!has_exe("magick")) cmd = "convert";
+            auto *convert = new QProcess(this);
+            convert->start(cmd, args);
+            bool finished = convert->waitForFinished(-1);
+            if (!finished ||
+                convert->exitStatus() != QProcess::NormalExit ||
+                convert->exitCode() != 0) {
+                QString errorOutput = QString::fromLocal8Bit(convert->readAllStandardError());
+                QString message = "ImageMagick failed to convert image to file " + fileName;
+                if (!errorOutput.trimmed().isEmpty()) {
+                    message += "\n\n" + errorOutput.trimmed();
+                }
+                QMessageBox::warning(this, "Image Viewer Error", message);
+            }
+            delete convert;
+        } else {
+            QMessageBox::warning(this, "Image Viewer Error",
+                                 "Could not save image to file " + fileName);
+        }
+    }
 }
 
 void ImageViewer::createActions()
