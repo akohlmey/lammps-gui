@@ -76,7 +76,10 @@ SlideShow::SlideShow(const QString &fileName, QWidget *parent) :
 
     auto *tomovie = new QPushButton(QIcon(":/icons/export-movie.png"), "");
     tomovie->setToolTip("Export to movie file");
-    tomovie->setEnabled(has_exe("ffmpeg"));
+    tomovie->setEnabled(has_exe("ffmpeg") || has_exe("magick") || has_exe("convert"));
+
+    auto *toimage = new QPushButton(QIcon(":/icons/document-save-as.png"), "");
+    tomovie->setToolTip("Export to image file");
 
     auto *totrash = new QPushButton(QIcon(":/icons/trash.png"), "");
     totrash->setToolTip("Delete all image files");
@@ -116,6 +119,7 @@ SlideShow::SlideShow(const QString &fileName, QWidget *parent) :
     imgflipv->setToolTip("Mirror displayed image vertically");
 
     connect(tomovie, &QPushButton::released, this, &SlideShow::movie);
+    connect(toimage, &QPushButton::released, this, &SlideShow::save_current_image);
     connect(totrash, &QPushButton::released, this, &SlideShow::delete_images);
     connect(gofirst, &QPushButton::released, this, &SlideShow::first);
     connect(goprev, &QPushButton::released, this, &SlideShow::prev);
@@ -135,6 +139,7 @@ SlideShow::SlideShow(const QString &fileName, QWidget *parent) :
     navLayout->addSpacerItem(new QSpacerItem(10, 10, QSizePolicy::Expanding, QSizePolicy::Minimum));
     navLayout->addWidget(dummy);
     navLayout->addWidget(tomovie);
+    navLayout->addWidget(toimage);
     navLayout->addWidget(totrash);
     navLayout->addWidget(gofirst);
     navLayout->addWidget(goprev);
@@ -246,62 +251,116 @@ void SlideShow::stop_run()
     if (main) main->stop_run();
 }
 
-void SlideShow::movie()
+void SlideShow::save_current_image()
 {
-    QString fileName = QFileDialog::getSaveFileName(this, "Export to Movie File", ".",
-                                                    "Movie Files (*.mpg *.mp4 *.mkv *.avi *.mpeg)");
+    QString fileName = QFileDialog::getSaveFileName(
+        this, "Export Current Image to Image File", ".",
+        "Image Files (*.png *.jpg *.jpeg *.gif *.bmp *.tga *.ppm *.tiff *.pgm *.xpm *.xbm)");
     if (fileName.isEmpty()) return;
 
-    QDir curdir(".");
-    QTemporaryFile concatfile;
-    if (concatfile.open()) {
-        for (const auto &image : imagefiles) {
-            concatfile.write("file '");
-            concatfile.write(curdir.absoluteFilePath(image).toLocal8Bit());
-            concatfile.write("'\n");
-        }
-        concatfile.close();
+    // try direct save and if it fails write to PNG and then convert with ImageMagick if available
+    if (!image.save(fileName)) {
+        if (has_exe("magick") || has_exe("convert")) {
+            QTemporaryFile tmpfile(QDir::tempPath() + "/LAMMPS_GUI.XXXXXX.png");
+            // open and close to generate temporary file name
+            (void)tmpfile.open();
+            (void)tmpfile.close();
+            if (!image.save(tmpfile.fileName())) {
+                QMessageBox::warning(this, "SlideShow Error",
+                                     "Could not save image to file " + fileName);
+                return;
+            }
 
+            QString cmd = "magick";
+            QStringList args{tmpfile.fileName(), fileName};
+            if (!has_exe("magick")) cmd = "convert";
+            auto *convert = new QProcess(this);
+            convert->start(cmd, args);
+            convert->waitForFinished(-1);
+            delete convert;
+        } else {
+            QMessageBox::warning(this, "SlideShow Error",
+                                 "Could not save image to file " + fileName);
+        }
+    }
+}
+
+void SlideShow::movie()
+{
+    QString fileName = QFileDialog::getSaveFileName(
+        this, "Export to Movie File", ".", "Movie Files (*.mp4 *.mkv *.avi *.mpg *.mpeg *.gif)");
+    if (fileName.isEmpty()) return;
+
+    if (has_exe("ffmpegx")) {
+        QDir curdir(".");
+        QTemporaryFile concatfile;
+        if (concatfile.open()) {
+            for (const auto &img : imagefiles) {
+                concatfile.write("file '");
+                concatfile.write(curdir.absoluteFilePath(img).toLocal8Bit());
+                concatfile.write("'\n");
+            }
+            concatfile.close();
+
+            QStringList args;
+            args << "-y";
+            args << "-safe"
+                 << "0";
+            args << "-r"
+                 << "10";
+            args << "-f"
+                 << "concat";
+            args << "-i" << concatfile.fileName();
+            QString filters;
+            if (scaleFactor != 1.0) filters += QString("scale=iw*%1:-1,").arg(scaleFactor);
+            if (imageRotation == 90.0) {
+                filters += "transpose=1,";
+            } else if (imageRotation == 180.0) {
+                filters += "transpose=1,transpose=1,";
+            } else if (imageRotation == 270.0) {
+                filters += "transpose=2,";
+            }
+            if (imageFlipH) filters += "hflip,";
+            if (imageFlipV) filters += "vflip,";
+            if (!filters.isEmpty()) {
+                // chop off trailing comma
+                filters.resize(filters.size() - 1);
+                args << "-vf" << filters;
+            }
+            args << "-b:v"
+                 << "2000k";
+            args << "-r"
+                 << "24";
+            args << fileName;
+
+            auto *ffmpeg = new QProcess(this);
+            ffmpeg->start("ffmpeg", args);
+            ffmpeg->waitForFinished(-1);
+            delete ffmpeg;
+        } else {
+            QMessageBox::warning(this, "SlideShow Error",
+                                 "Cannot create temporary file for generating movie " +
+                                     concatfile.errorString());
+        }
+    } else {
+        QString cmd = "magick";
+        if (!has_exe("magick")) cmd = "convert";
         QStringList args;
-        args << "-y";
-        args << "-safe"
-             << "0";
-        args << "-r"
-             << "10";
-        args << "-f"
-             << "concat";
-        args << "-i" << concatfile.fileName();
-        QString filters;
-        if (scaleFactor != 1.0) filters += QString("scale=iw*%1:-1,").arg(scaleFactor);
-        if (imageRotation == 90.0) {
-            filters += "transpose=1,";
-        } else if (imageRotation == 180.0) {
-            filters += "transpose=1,transpose=1,";
-        } else if (imageRotation == 270.0) {
-            filters += "transpose=2,";
-        }
-        if (imageFlipH) filters += "hflip,";
-        if (imageFlipV) filters += "vflip,";
-        if (!filters.isEmpty()) {
-            // chop off trailing comma
-            filters.resize(filters.size()-1);
-            args << "-vf" << filters;
-        }
-        args << "-b:v"
-             << "2000k";
-        args << "-r"
-             << "24";
+        args << "-delay" << "10";
+        QDir curdir(".");
+        for (const auto &img : imagefiles)
+            args << curdir.absoluteFilePath(img);
+        if (scaleFactor != 1.0) args << "-resize" << QString("%1%%").arg(100.0 * scaleFactor);
+        if (imageRotation != 0.0) args << "-rotate" << QString("%1").arg(imageRotation);
+        if (imageFlipH) args << "-flop";
+        if (imageFlipV) args << "-flip,";
         args << fileName;
 
-        // NOTE: the button triggering this function is disabled if FFMpeg is missing
-        auto *ffmpeg = new QProcess(this);
-        ffmpeg->start("ffmpeg", args);
-        ffmpeg->waitForFinished(-1);
-        delete ffmpeg;
-    } else {
-        QMessageBox::warning(this, "SlideShow Error",
-                             "Cannot create temporary file for generating movie " +
-                                 concatfile.errorString());
+        // run the conversion command
+        auto *convert = new QProcess(this);
+        convert->start(cmd, args);
+        convert->waitForFinished(-1);
+        delete convert;
     }
 }
 

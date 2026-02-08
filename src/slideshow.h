@@ -68,6 +68,7 @@ private slots:
     void delete_images(); ///< Delete all image files in sequence
     void stop_run();      ///< Stop running simulation
     void movie();         ///< Export images as movie file
+    void save_current_image(); ///< Save current image with zoom/flip/rotate applied
     void first();         ///< Jump to first image
     void last();          ///< Jump to last image
     void next();          ///< Advance to next image
