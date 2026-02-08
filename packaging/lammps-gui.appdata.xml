@@ -68,6 +68,7 @@
         Add option to save scaled/flipped image to slide show viewer
         Try using ImageMagick, if available, to convert images when desired format is not available
         Update docs for changes to Image and SlideShow viewers
+        Make image area in SlideShow viewer a scrollable area and auto-adjust window size up to a maximum
       </description>
     </release>
     <release version="1.9.0" timestamp="1761171849">
