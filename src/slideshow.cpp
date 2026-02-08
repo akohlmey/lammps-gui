@@ -503,7 +503,7 @@ void SlideShow::adjustWindowSize()
     if (screen) {
         auto screenSize = screen->availableSize();
         desiredWidth    = std::min(desiredWidth, screenSize.width() * 2 / 3);
-        desiredHeight   = std::min(desiredHeight, screenSize.height() * 2 / 3);
+        desiredHeight   = std::min(desiredHeight, screenSize.height() * 4 / 5);
     }
     resize(desiredWidth, desiredHeight);
 }

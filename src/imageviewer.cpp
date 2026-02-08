@@ -161,7 +161,7 @@ constexpr int DEFAULT_BUFLEN      = 1024;
 constexpr int DEFAULT_NPOINTS     = 100000;
 constexpr double DEFAULT_DIAMETER = 0.2;
 constexpr double DEFAULT_OPACITY  = 0.5;
-constexpr int EXTRA_WIDTH         = 25;
+constexpr int EXTRA_WIDTH         = 120;
 constexpr int EXTRA_HEIGHT        = 90;
 
 enum { FRAME, FILLED, TRANSPARENT, POINTS };
@@ -229,7 +229,9 @@ ImageViewer::ImageViewer(const QString &fileName, LammpsWrapper *_lammps, QWidge
     scrollArea->setWidget(imageLabel);
     scrollArea->setVisible(false);
 
-    auto *mainLayout = new QVBoxLayout;
+    auto *imageLayout    = new QHBoxLayout;
+    auto *settingsLayout = new QVBoxLayout;
+    auto *mainLayout     = new QVBoxLayout;
 
     QSettings settings;
     settings.beginGroup("snapshot");
@@ -346,6 +348,16 @@ ImageViewer::ImageViewer(const QString &fileName, LammpsWrapper *_lammps, QWidge
     recenter->setToolTip("Recenter on group");
     auto *reset = new QPushButton(QIcon(":/icons/gtk-zoom-fit.png"), "");
     reset->setToolTip("Reset view to defaults");
+
+    auto *setviz = new QPushButton("&Settings");
+    setviz->setToolTip("Open dialog for general graphics settings");
+    setviz->setObjectName("settings");
+    setviz->setEnabled(false);
+    auto *atomviz = new QPushButton("&Atoms");
+    atomviz->setToolTip("Open dialog for Atom and Bond settings");
+    atomviz->setObjectName("atoms");
+    atomviz->setEnabled(false);
+
     auto *fixviz = new QPushButton("Fi&xes");
     fixviz->setToolTip("Open dialog for visualizing graphics from fixes");
     fixviz->setObjectName("fixes");
@@ -385,21 +397,18 @@ ImageViewer::ImageViewer(const QString &fileName, LammpsWrapper *_lammps, QWidge
     topLayout->addLayout(buttonLayout);
 
     menuLayout->addWidget(menuBar);
+    menuLayout->insertStretch(1, 10);
     menuLayout->addWidget(renderstatus);
     menuLayout->addWidget(new QLabel(" Atom Size: "));
     menuLayout->addWidget(asize);
     // hide item initially
-    menuLayout->itemAt(2)->widget()->setObjectName("AtomLabel");
-    menuLayout->itemAt(2)->widget()->hide();
+    menuLayout->itemAt(3)->widget()->setObjectName("AtomLabel");
+    menuLayout->itemAt(3)->widget()->hide();
     menuLayout->addWidget(new QLabel(" Width: "));
     menuLayout->addWidget(xval);
     menuLayout->addWidget(new QLabel(" Height: "));
     menuLayout->addWidget(yval);
-    menuLayout->addWidget(dummy1);
-    menuLayout->addWidget(new QLabel(" Group: "));
-    menuLayout->addWidget(combo);
-    menuLayout->addWidget(new QLabel(" Molecule: "));
-    menuLayout->addWidget(molbox);
+    menuLayout->insertStretch(-1, 50);
     buttonLayout->addWidget(dummy2);
     buttonLayout->addWidget(dossao);
     buttonLayout->addWidget(doanti);
@@ -417,9 +426,19 @@ ImageViewer::ImageViewer(const QString &fileName, LammpsWrapper *_lammps, QWidge
     buttonLayout->addWidget(rotdown);
     buttonLayout->addWidget(recenter);
     buttonLayout->addWidget(reset);
-    buttonLayout->addWidget(fixviz);
-    buttonLayout->addWidget(regviz);
-    buttonLayout->addStretch(1);
+    buttonLayout->insertStretch(-1, 1);
+    settingsLayout->addWidget(new QHline);
+    settingsLayout->addWidget(new QLabel("Group:"));
+    settingsLayout->addWidget(combo);
+    settingsLayout->addWidget(new QLabel("Molecule:"));
+    settingsLayout->addWidget(molbox);
+    settingsLayout->addWidget(new QHline);
+    settingsLayout->addWidget(setviz);
+    settingsLayout->addWidget(atomviz);
+    settingsLayout->addWidget(fixviz);
+    settingsLayout->addWidget(regviz);
+    settingsLayout->addWidget(new QHline);
+    settingsLayout->insertStretch(-1, 10);
 
     connect(dossao, &QPushButton::released, this, &ImageViewer::toggle_ssao);
     connect(doanti, &QPushButton::released, this, &ImageViewer::toggle_anti);
@@ -443,7 +462,9 @@ ImageViewer::ImageViewer(const QString &fileName, LammpsWrapper *_lammps, QWidge
     connect(molbox, SIGNAL(currentIndexChanged(int)), this, SLOT(change_molecule(int)));
 
     mainLayout->addLayout(topLayout);
-    mainLayout->addWidget(scrollArea);
+    imageLayout->addWidget(scrollArea, 10);
+    imageLayout->addLayout(settingsLayout, 0);
+    mainLayout->addLayout(imageLayout);
     setWindowIcon(QIcon(":/icons/lammps-gui-icon-128x128.png"));
     setWindowTitle(QString("LAMMPS-GUI - Image Viewer - ") + QFileInfo(fileName).fileName());
     createActions();
@@ -1399,7 +1420,7 @@ void ImageViewer::adjustWindowSize()
     if (screen) {
         auto screenSize = screen->availableSize();
         desiredWidth    = std::min(desiredWidth, screenSize.width() * 2 / 3);
-        desiredHeight   = std::min(desiredHeight, screenSize.height() * 2 / 3);
+        desiredHeight   = std::min(desiredHeight, screenSize.height() * 4 / 5);
     }
     resize(desiredWidth, desiredHeight);
 }
