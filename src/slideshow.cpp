@@ -79,7 +79,7 @@ SlideShow::SlideShow(const QString &fileName, QWidget *parent) :
     tomovie->setEnabled(has_exe("ffmpeg") || has_exe("magick") || has_exe("convert"));
 
     auto *toimage = new QPushButton(QIcon(":/icons/document-save-as.png"), "");
-    tomovie->setToolTip("Export to image file");
+    toimage->setToolTip("Export to image file");
 
     auto *totrash = new QPushButton(QIcon(":/icons/trash.png"), "");
     totrash->setToolTip("Delete all image files");
