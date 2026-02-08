@@ -24,7 +24,6 @@ class QDialogButtonBox;
 class QLabel;
 class QObject;
 class QScrollArea;
-class QScrollBar;
 class QStatusBar;
 class LammpsWrapper;
 class QComboBox;
@@ -106,9 +105,7 @@ private:
     void createActions();                                       ///< Setup menu actions
     void updateActions();                                       ///< Update action states
     void saveFile(const QString &fileName);                     ///< Save image file
-    void scaleImage(double factor);                             ///< Scale image display
     void adjustWindowSize();                                    ///< Auto-resize window to fit image
-    void adjustScrollBar(QScrollBar *scrollBar, double factor); ///< Adjust scrollbar for zoom
     void update_fixes();                                        ///< Update fix graphics information
     void update_regions();                                      ///< Update region information
     bool has_autobonds();                                       ///< Check if autobonds are enabled
@@ -119,7 +116,6 @@ private:
     QLabel *imageLabel;          ///< Label displaying the image
     QScrollArea *scrollArea;     ///< Scrollable area for image
     QDialogButtonBox *buttonBox; ///< Dialog buttons
-    double scaleFactor;          ///< Current zoom scale factor
     double atomSize;             ///< Atom display size
 
     QAction *saveAsAct;     ///< Save As action
