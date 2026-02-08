@@ -139,6 +139,9 @@ private:
     double vdwfactor;                            ///< Van der Waals radius scaling factor
     double shinyfactor;                          ///< Shininess/specular factor
     double bondcutoff;                           ///< Bond cutoff distance
+    double boxdiam;                              ///< Simulation box diameter
+    double axeslen;                              ///< Axes length
+    double axesdiam;                             ///< Axes diameter
     double xcenter, ycenter, zcenter;            ///< View center coordinates
     bool showbox;                                ///< Show simulation box flag
     bool showaxes;                               ///< Show coordinate axes flag

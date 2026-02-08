@@ -25,6 +25,7 @@
 #include <QDoubleValidator>
 #include <QFileDialog>
 #include <QFontDialog>
+#include <QFrame>
 #include <QGroupBox>
 #include <QHBoxLayout>
 #include <QHash>
@@ -145,6 +146,12 @@ void Preferences::accept()
     field = tabWidget->findChild<QLineEdit *>("zoom");
     if (field)
         if (field->hasAcceptableInput()) settings->setValue("zoom", field->text());
+    field = tabWidget->findChild<QLineEdit *>("hrot");
+    if (field)
+        if (field->hasAcceptableInput()) settings->setValue("hrot", field->text());
+    field = tabWidget->findChild<QLineEdit *>("vrot");
+    if (field)
+        if (field->hasAcceptableInput()) settings->setValue("vrot", field->text());
     box = tabWidget->findChild<QCheckBox *>("anti");
     if (box) settings->setValue("antialias", box->isChecked());
     box = tabWidget->findChild<QCheckBox *>("ssao");
@@ -153,8 +160,17 @@ void Preferences::accept()
     if (box) settings->setValue("shinystyle", box->isChecked());
     box = tabWidget->findChild<QCheckBox *>("box");
     if (box) settings->setValue("box", box->isChecked());
+    field = tabWidget->findChild<QLineEdit *>("boxdiam");
+    if (field)
+        if (field->hasAcceptableInput()) settings->setValue("boxdiam", field->text());
     box = tabWidget->findChild<QCheckBox *>("axes");
     if (box) settings->setValue("axes", box->isChecked());
+    field = tabWidget->findChild<QLineEdit *>("axeslen");
+    if (field)
+        if (field->hasAcceptableInput()) settings->setValue("axeslen", field->text());
+    field = tabWidget->findChild<QLineEdit *>("axesdiam");
+    if (field)
+        if (field->hasAcceptableInput()) settings->setValue("axesdiam", field->text());
     box = tabWidget->findChild<QCheckBox *>("vdwstyle");
     if (box) settings->setValue("vdwstyle", box->isChecked());
     box = tabWidget->findChild<QCheckBox *>("autobond");
@@ -676,48 +692,47 @@ SnapshotTab::SnapshotTab(QSettings *_settings, QWidget *parent) :
 {
     auto *grid = new QGridLayout;
 
+    // left column labels
     auto *xsize = new QLabel("Image width:");
     auto *ysize = new QLabel("Image height:");
     auto *zoom  = new QLabel("Zoom factor:");
+    auto *hrota = new QLabel("Horizontal View Angle:");
+    auto *vrota = new QLabel("Vertical View Angle:");
     auto *anti  = new QLabel("Antialias:");
     auto *ssao  = new QLabel("HQ Image mode:");
     auto *shiny = new QLabel("Shiny Image mode:");
-    auto *bbox  = new QLabel("Show Box:");
-    auto *axes  = new QLabel("Show Axes:");
-    auto *vdw   = new QLabel("VDW Style:");
-    auto *bond  = new QLabel("Dynamic Bonds:");
-    auto *bclbl = new QLabel("Bond Cutoff:");
     auto *cback = new QLabel("Background Color:");
     auto *cbac2 = new QLabel("Background2 Color:");
-    auto *cbox  = new QLabel("Box Color:");
-    settings->beginGroup("snapshot");
-    auto *xval = new QLineEdit(settings->value("xsize", "600").toString());
-    auto *yval = new QLineEdit(settings->value("ysize", "600").toString());
-    auto *zval = new QLineEdit(settings->value("zoom", "1.0").toString());
-    auto *aval = new QCheckBox;
-    auto *sval = new QCheckBox;
-    auto *hval = new QCheckBox;
-    auto *bval = new QCheckBox;
-    auto *eval = new QCheckBox;
-    auto *vval = new QCheckBox;
-    auto *uval = new QCheckBox;
-    auto *bcut = new QLineEdit(settings->value("bondcut", "1.6").toString());
 
-    sval->setCheckState(settings->value("ssao", false).toBool() ? Qt::Checked : Qt::Unchecked);
-    sval->setObjectName("ssao");
+    // right column labels
+    auto *bbox   = new QLabel("Show Box:");
+    auto *bxdiam = new QLabel("Box Diameter:");
+    auto *cbox   = new QLabel("Box Color:");
+    auto *axes   = new QLabel("Show Axes:");
+    auto *axlen  = new QLabel("Axes Length:");
+    auto *axdia  = new QLabel("Axes Diameter:");
+    auto *vdw    = new QLabel("VDW Style:");
+    auto *bond   = new QLabel("Dynamic Bonds:");
+    auto *bclbl  = new QLabel("Bond Cutoff:");
+
+    settings->beginGroup("snapshot");
+
+    // left column values
+    auto *xval  = new QLineEdit(settings->value("xsize", "600").toString());
+    auto *yval  = new QLineEdit(settings->value("ysize", "600").toString());
+    auto *zval  = new QLineEdit(settings->value("zoom", "1.0").toString());
+    auto *hrval = new QLineEdit(settings->value("hrot", "60").toString());
+    auto *vrval = new QLineEdit(settings->value("vrot", "30").toString());
+    auto *aval  = new QCheckBox;
+    auto *sval  = new QCheckBox;
+    auto *hval  = new QCheckBox;
+
     aval->setCheckState(settings->value("antialias", false).toBool() ? Qt::Checked : Qt::Unchecked);
     aval->setObjectName("anti");
+    sval->setCheckState(settings->value("ssao", false).toBool() ? Qt::Checked : Qt::Unchecked);
+    sval->setObjectName("ssao");
     hval->setCheckState(settings->value("shinystyle", true).toBool() ? Qt::Checked : Qt::Unchecked);
     hval->setObjectName("shiny");
-    bval->setCheckState(settings->value("box", true).toBool() ? Qt::Checked : Qt::Unchecked);
-    bval->setObjectName("box");
-    eval->setCheckState(settings->value("axes", false).toBool() ? Qt::Checked : Qt::Unchecked);
-    eval->setObjectName("axes");
-    vval->setCheckState(settings->value("vdwstyle", false).toBool() ? Qt::Checked : Qt::Unchecked);
-    vval->setObjectName("vdwstyle");
-    uval->setCheckState(settings->value("autobond", false).toBool() ? Qt::Checked : Qt::Unchecked);
-    uval->setObjectName("autobond");
-    bcut->setObjectName("bondcut");
 
     auto *intval = new QIntValidator(100, 100000, this);
     xval->setValidator(intval);
@@ -726,6 +741,10 @@ SnapshotTab::SnapshotTab(QSettings *_settings, QWidget *parent) :
     yval->setObjectName("ysize");
     zval->setValidator(new QDoubleValidator(0.01, 100.0, 100, this));
     zval->setObjectName("zoom");
+    hrval->setValidator(new QIntValidator(0, 360, this));
+    hrval->setObjectName("hrot");
+    vrval->setValidator(new QIntValidator(-180, 180, this));
+    vrval->setObjectName("vrot");
 
     auto *colorcompleter = new QColorCompleter();
     auto *colorvalidator = new QColorValidator();
@@ -743,14 +762,52 @@ SnapshotTab::SnapshotTab(QSettings *_settings, QWidget *parent) :
     background2->setValidator(colorvalidator);
     background2->setFixedSize(metrics.averageCharWidth() * 12, metrics.height() + 4);
 
+    // right column values
+    auto *bval = new QCheckBox;
+    bval->setCheckState(settings->value("box", true).toBool() ? Qt::Checked : Qt::Unchecked);
+    bval->setObjectName("box");
+
+    auto *bdval = new QLineEdit(settings->value("boxdiam", "0.025").toString());
+    bdval->setValidator(new QDoubleValidator(0.001, 1.0, 100, this));
+    bdval->setObjectName("boxdiam");
+
     auto *boxcolor = new QLineEdit(settings->value("boxcolor", "yellow").toString());
     boxcolor->setObjectName("boxcolor");
     boxcolor->setCompleter(colorcompleter);
     boxcolor->setValidator(colorvalidator);
     boxcolor->setFixedSize(metrics.averageCharWidth() * 12, metrics.height() + 4);
 
+    auto *eval = new QCheckBox;
+    eval->setCheckState(settings->value("axes", false).toBool() ? Qt::Checked : Qt::Unchecked);
+    eval->setObjectName("axes");
+
+    auto *alval = new QLineEdit(settings->value("axeslen", "0.5").toString());
+    alval->setValidator(new QDoubleValidator(0.01, 10.0, 100, this));
+    alval->setObjectName("axeslen");
+
+    auto *adval = new QLineEdit(settings->value("axesdiam", "0.05").toString());
+    adval->setValidator(new QDoubleValidator(0.001, 1.0, 100, this));
+    adval->setObjectName("axesdiam");
+
+    auto *vval = new QCheckBox;
+    vval->setCheckState(settings->value("vdwstyle", false).toBool() ? Qt::Checked : Qt::Unchecked);
+    vval->setObjectName("vdwstyle");
+
+    auto *uval = new QCheckBox;
+    uval->setCheckState(settings->value("autobond", false).toBool() ? Qt::Checked : Qt::Unchecked);
+    uval->setObjectName("autobond");
+
+    auto *bcut = new QLineEdit(settings->value("bondcut", "1.6").toString());
+    bcut->setObjectName("bondcut");
+
     settings->endGroup();
 
+    // vertical separator
+    auto *separator = new QFrame;
+    separator->setFrameShape(QFrame::VLine);
+    separator->setFrameShadow(QFrame::Sunken);
+
+    // left column layout (columns 0-1)
     int i = 0;
     grid->addWidget(xsize, i, 0, Qt::AlignTop);
     grid->addWidget(xval, i++, 1, Qt::AlignTop);
@@ -758,32 +815,51 @@ SnapshotTab::SnapshotTab(QSettings *_settings, QWidget *parent) :
     grid->addWidget(yval, i++, 1, Qt::AlignTop);
     grid->addWidget(zoom, i, 0, Qt::AlignTop);
     grid->addWidget(zval, i++, 1, Qt::AlignTop);
+    grid->addWidget(hrota, i, 0, Qt::AlignTop);
+    grid->addWidget(hrval, i++, 1, Qt::AlignTop);
+    grid->addWidget(vrota, i, 0, Qt::AlignTop);
+    grid->addWidget(vrval, i++, 1, Qt::AlignTop);
     grid->addWidget(anti, i, 0, Qt::AlignTop);
-    grid->addWidget(aval, i++, 1, Qt::AlignTop);
+    grid->addWidget(aval, i++, 1, Qt::AlignVCenter);
     grid->addWidget(ssao, i, 0, Qt::AlignTop);
     grid->addWidget(sval, i++, 1, Qt::AlignVCenter);
     grid->addWidget(shiny, i, 0, Qt::AlignTop);
     grid->addWidget(hval, i++, 1, Qt::AlignVCenter);
-    grid->addWidget(bbox, i, 0, Qt::AlignTop);
-    grid->addWidget(bval, i++, 1, Qt::AlignVCenter);
-    grid->addWidget(axes, i, 0, Qt::AlignTop);
-    grid->addWidget(eval, i++, 1, Qt::AlignVCenter);
-    grid->addWidget(vdw, i, 0, Qt::AlignTop);
-    grid->addWidget(vval, i++, 1, Qt::AlignVCenter);
-    grid->addWidget(bond, i, 0, Qt::AlignTop);
-    grid->addWidget(uval, i++, 1, Qt::AlignVCenter);
-    grid->addWidget(bclbl, i, 0, Qt::AlignTop);
-    grid->addWidget(bcut, i++, 1, Qt::AlignVCenter);
     grid->addWidget(cback, i, 0, Qt::AlignTop);
     grid->addWidget(background, i++, 1, Qt::AlignVCenter);
     grid->addWidget(cbac2, i, 0, Qt::AlignTop);
     grid->addWidget(background2, i++, 1, Qt::AlignVCenter);
-    grid->addWidget(cbox, i, 0, Qt::AlignTop);
-    grid->addWidget(boxcolor, i++, 1, Qt::AlignVCenter);
+    int nrows = i;
 
-    grid->addItem(new QSpacerItem(100, 100, QSizePolicy::Minimum, QSizePolicy::Expanding), i, 0);
-    grid->addItem(new QSpacerItem(100, 100, QSizePolicy::Minimum, QSizePolicy::Expanding), i, 1);
-    grid->addItem(new QSpacerItem(100, 100, QSizePolicy::Expanding, QSizePolicy::Expanding), i, 2);
+    // vertical separator spanning all rows (column 2)
+    grid->addWidget(separator, 0, 2, nrows, 1);
+
+    // right column layout (columns 3-4)
+    int j = 0;
+    grid->addWidget(bbox, j, 3, Qt::AlignTop);
+    grid->addWidget(bval, j++, 4, Qt::AlignVCenter);
+    grid->addWidget(bxdiam, j, 3, Qt::AlignTop);
+    grid->addWidget(bdval, j++, 4, Qt::AlignTop);
+    grid->addWidget(cbox, j, 3, Qt::AlignTop);
+    grid->addWidget(boxcolor, j++, 4, Qt::AlignVCenter);
+    grid->addWidget(axes, j, 3, Qt::AlignTop);
+    grid->addWidget(eval, j++, 4, Qt::AlignVCenter);
+    grid->addWidget(axlen, j, 3, Qt::AlignTop);
+    grid->addWidget(alval, j++, 4, Qt::AlignTop);
+    grid->addWidget(axdia, j, 3, Qt::AlignTop);
+    grid->addWidget(adval, j++, 4, Qt::AlignTop);
+    grid->addWidget(vdw, j, 3, Qt::AlignTop);
+    grid->addWidget(vval, j++, 4, Qt::AlignVCenter);
+    grid->addWidget(bond, j, 3, Qt::AlignTop);
+    grid->addWidget(uval, j++, 4, Qt::AlignVCenter);
+    grid->addWidget(bclbl, j, 3, Qt::AlignTop);
+    grid->addWidget(bcut, j++, 4, Qt::AlignVCenter);
+
+    grid->addItem(new QSpacerItem(100, 100, QSizePolicy::Minimum, QSizePolicy::Expanding), nrows, 0);
+    grid->addItem(new QSpacerItem(100, 100, QSizePolicy::Minimum, QSizePolicy::Expanding), nrows, 1);
+    grid->addItem(new QSpacerItem(100, 100, QSizePolicy::Minimum, QSizePolicy::Expanding), nrows, 3);
+    grid->addItem(new QSpacerItem(100, 100, QSizePolicy::Minimum, QSizePolicy::Expanding), nrows, 4);
+    grid->addItem(new QSpacerItem(100, 100, QSizePolicy::Expanding, QSizePolicy::Expanding), nrows, 5);
     setLayout(grid);
 
     connect(vval, &QCheckBox::toggled, this, &SnapshotTab::choose_vdw);

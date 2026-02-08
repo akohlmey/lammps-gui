@@ -1,0 +1,6 @@
+#!/home/runner/work/lammps-gui/lammps-gui/_codeql_build_dir/docenv/bin/python3.12
+import sys
+from sphinx.cmd.quickstart import main
+if __name__ == '__main__':
+    sys.argv[0] = sys.argv[0].removesuffix('.exe')
+    sys.exit(main())

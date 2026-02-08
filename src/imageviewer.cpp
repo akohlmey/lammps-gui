@@ -245,6 +245,9 @@ ImageViewer::ImageViewer(const QString &fileName, LammpsWrapper *_lammps, QWidge
     showaxes    = settings.value("axes", false).toBool();
     usessao     = settings.value("ssao", false).toBool();
     antialias   = settings.value("antialias", false).toBool();
+    boxdiam     = settings.value("boxdiam", 0.025).toDouble();
+    axeslen     = settings.value("axeslen", 0.5).toDouble();
+    axesdiam    = settings.value("axesdiam", 0.05).toDouble();
     xcenter = ycenter = zcenter = 0.5;
     if (lammps->extract_setting("dimension") == 2) zcenter = 0.0;
     settings.endGroup();
@@ -492,6 +495,9 @@ void ImageViewer::reset_view()
     showaxes    = settings.value("axes", false).toBool();
     usessao     = settings.value("ssao", false).toBool();
     antialias   = settings.value("antialias", false).toBool();
+    boxdiam     = settings.value("boxdiam", 0.025).toDouble();
+    axeslen     = settings.value("axeslen", 0.5).toDouble();
+    axesdiam    = settings.value("axesdiam", 0.05).toDouble();
     xcenter = ycenter = zcenter = 0.5;
     if (lammps->extract_setting("dimension") == 2) zcenter = 0.0;
     settings.endGroup();
@@ -1184,12 +1190,12 @@ void ImageViewer::createImage()
     }
     if (usessao) dumpcmd += " ssao yes 453983 0.75";
     if (showbox)
-        dumpcmd += " box yes 0.025";
+        dumpcmd += QString(" box yes %1").arg(boxdiam);
     else
         dumpcmd += " box no 0.0";
 
     if (showaxes)
-        dumpcmd += " axes yes 0.5 0.05";
+        dumpcmd += QString(" axes yes %1 %2").arg(axeslen).arg(axesdiam);
     else
         dumpcmd += " axes no 0.0 0.0";
 
