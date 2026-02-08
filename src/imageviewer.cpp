@@ -1334,7 +1334,17 @@ void ImageViewer::saveFile(const QString &fileName)
             if (!has_exe("magick")) cmd = "convert";
             auto *convert = new QProcess(this);
             convert->start(cmd, args);
-            convert->waitForFinished(-1);
+            bool finished = convert->waitForFinished(-1);
+            if (!finished ||
+                convert->exitStatus() != QProcess::NormalExit ||
+                convert->exitCode() != 0) {
+                QString errorOutput = QString::fromLocal8Bit(convert->readAllStandardError());
+                QString message = "ImageMagick failed to convert image to file " + fileName;
+                if (!errorOutput.trimmed().isEmpty()) {
+                    message += "\n\n" + errorOutput.trimmed();
+                }
+                QMessageBox::warning(this, "Image Viewer Error", message);
+            }
             delete convert;
         } else {
             QMessageBox::warning(this, "Image Viewer Error",
