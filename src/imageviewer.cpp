@@ -966,7 +966,7 @@ void ImageViewer::region_settings()
 
     // retrieve data from dialog and store in map
     for (int idx = 4; idx < (int)regions.size() + 4; ++idx) {
-        n = 0;
+        n                    = 0;
         auto *item           = layout->itemAtPosition(idx, n++);
         auto *label          = qobject_cast<QLabel *>(item->widget());
         auto id              = label->text().toStdString();
@@ -1294,8 +1294,9 @@ void ImageViewer::createImage()
 
 void ImageViewer::saveAs()
 {
-    QString fileName = QFileDialog::getSaveFileName(this, "Save Image File As", QString(),
-                                                    "Image Files (*.jpg *.png *.bmp *.ppm)");
+    QString fileName = QFileDialog::getSaveFileName(
+        this, "Save Image File As", QString(),
+        "Image Files (*.png *.jpg *.jpeg *.gif *.bmp *.tga *.ppm *.tiff *.pgm *.xpm *.xbm)");
     saveFile(fileName);
 }
 
@@ -1309,7 +1310,33 @@ void ImageViewer::quit()
 
 void ImageViewer::saveFile(const QString &fileName)
 {
-    if (!fileName.isEmpty()) image.save(fileName);
+    if (fileName.isEmpty()) return;
+
+    // try direct save and if it fails write to PNG and then convert with ImageMagick if available
+    if (!image.save(fileName)) {
+        if (has_exe("magick") || has_exe("convert")) {
+            QTemporaryFile tmpfile(QDir::tempPath() + "/LAMMPS_GUI.XXXXXX.png");
+            // open and close to generate temporary file name
+            (void)tmpfile.open();
+            (void)tmpfile.close();
+            if (!image.save(tmpfile.fileName())) {
+                QMessageBox::warning(this, "Image Viewer Error",
+                                     "Could not save image to file " + fileName);
+                return;
+            }
+
+            QString cmd = "magick";
+            QStringList args{tmpfile.fileName(), fileName};
+            if (!has_exe("magick")) cmd = "convert";
+            auto *convert = new QProcess(this);
+            convert->start(cmd, args);
+            convert->waitForFinished(-1);
+            delete convert;
+        } else {
+            QMessageBox::warning(this, "Image Viewer Error",
+                                 "Could not save image to file " + fileName);
+        }
+    }
 }
 
 void ImageViewer::createActions()
