@@ -64,6 +64,9 @@
         Add support for rendering regions in style "transparent"
         Fix issue with centering for 2d systems
         Adjust window manager hints for several windows: remove dialog property and maximize button to windows can be on top or below
+        Try using ImageMagick, if available, when FFMpeg is not found for creating movies
+        Add option to save scaled/flipped image
+        Try using ImageMagick, if available, to convert images when desired format is not available
       </description>
     </release>
     <release version="1.9.0" timestamp="1761171849">
