@@ -103,6 +103,9 @@ Thumbs.db
 # build folders
 /build*
 
+# CodeQL build artifacts
+/_codeql_*
+
 # tutorial folders
 /tutorial*
 
