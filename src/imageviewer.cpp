@@ -38,8 +38,10 @@
 #include <QLineEdit>
 #include <QMenu>
 #include <QMenuBar>
+#include <QMessageBox>
 #include <QPalette>
 #include <QPixmap>
+#include <QProcess>
 #include <QPushButton>
 #include <QRegularExpression>
 #include <QScrollArea>
@@ -47,7 +49,9 @@
 #include <QSettings>
 #include <QSizePolicy>
 #include <QSpinBox>
+#include <QString>
 #include <QStringList>
+#include <QTemporaryFile>
 #include <QVBoxLayout>
 #include <QVariant>
 
