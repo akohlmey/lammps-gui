@@ -1185,7 +1185,7 @@ void ImageViewer::createImage()
         dumpcmd += " box no 0.0";
 
     if (showaxes)
-        dumpcmd += " axes yes 0.5 0.025";
+        dumpcmd += " axes yes 0.5 0.05";
     else
         dumpcmd += " axes no 0.0 0.0";
 
@@ -1247,6 +1247,8 @@ void ImageViewer::createImage()
     dumpcmd += " noinit";
     dumpcmd += " modify boxcolor " + settings.value("boxcolor", "yellow").toString();
     dumpcmd += " backcolor " + settings.value("background", "black").toString();
+    if (lammps->version() > 20251210)
+        dumpcmd += " backcolor2 " + settings.value("background2", "white").toString();
     if (useelements) dumpcmd += blank + elements + blank + adiams + blank;
     if (usesigma) dumpcmd += blank + adiams + blank;
     if (!useelements && !usesigma && (atomSize != 1.0)) dumpcmd += blank + adiams + blank;
