@@ -90,8 +90,9 @@ to a file (keyboard shortcut `Ctrl-S`) or copied to the clipboard
 application.  The file format of the saved image is inferred from the
 file name extension.  When the `ImageMagick software
 <https://imagemagick.org/>`_ is installed, file formats not supported by
-the Qt library are available by first writing a temporary PNG format
-file which is then converted to the desired file format.
+the Qt library are available by first writing a temporary `PNG format
+file <https://en.wikipedia.org/wiki/portable_network_graphics>`_ which
+is then converted to the desired file format.
 
 From the *File* menu it is also possible to copy the current `dump image
 <https://docs.lammps.org/dump_image.html>`_ and `dump_modify
@@ -142,8 +143,9 @@ the current image to a file, which includes the applied transformations.
 Again, the file format of the image is inferred from the file name
 extension.  When the `ImageMagick software <https://imagemagick.org/>`_
 is installed, file formats not supported by the Qt library are available
-by first writing a temporary PNG format file which is then converted to
-the desired file format.
+by first writing a temporary `PNG format file
+<https://en.wikipedia.org/wiki/portable_network_graphics>`_ which is
+then converted to the desired file format.
 
 When clicking on the "garbage can" icon, all image files of the slide
 show will be deleted.  Since their number can be large for long
