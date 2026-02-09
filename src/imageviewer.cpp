@@ -43,6 +43,7 @@
 #include <QPixmap>
 #include <QProcess>
 #include <QPushButton>
+#include <QRadioButton>
 #include <QRegularExpression>
 #include <QScreen>
 #include <QScrollArea>
@@ -163,6 +164,7 @@ constexpr double DEFAULT_DIAMETER = 0.2;
 constexpr double DEFAULT_OPACITY  = 0.5;
 constexpr int EXTRA_WIDTH         = 120;
 constexpr int EXTRA_HEIGHT        = 90;
+constexpr int TITLE_MARGIN        = 10;
 
 enum { FRAME, FILLED, TRANSPARENT, POINTS };
 enum { TYPE, ELEMENT, CONSTANT };
@@ -251,7 +253,10 @@ ImageViewer::ImageViewer(const QString &fileName, LammpsWrapper *_lammps, QWidge
     boxdiam     = settings.value("boxdiam", 0.025).toDouble();
     axeslen     = settings.value("axeslen", 0.5).toDouble();
     axesdiam    = settings.value("axesdiam", 0.05).toDouble();
+    axestrans   = 1.0;
+    axesloc     = "yes"; // = "lowerleft"
     xcenter = ycenter = zcenter = 0.5;
+
     if (lammps->extract_setting("dimension") == 2) zcenter = 0.0;
     settings.endGroup();
 
@@ -352,11 +357,9 @@ ImageViewer::ImageViewer(const QString &fileName, LammpsWrapper *_lammps, QWidge
     auto *setviz = new QPushButton("&Settings");
     setviz->setToolTip("Open dialog for general graphics settings");
     setviz->setObjectName("settings");
-    setviz->setEnabled(false);
     auto *atomviz = new QPushButton("&Atoms");
     atomviz->setToolTip("Open dialog for Atom and Bond settings");
     atomviz->setObjectName("atoms");
-    atomviz->setEnabled(false);
 
     auto *fixviz = new QPushButton("Fi&xes");
     fixviz->setToolTip("Open dialog for visualizing graphics from fixes");
@@ -456,6 +459,8 @@ ImageViewer::ImageViewer(const QString &fileName, LammpsWrapper *_lammps, QWidge
     connect(rotdown, &QPushButton::released, this, &ImageViewer::do_rot_down);
     connect(recenter, &QPushButton::released, this, &ImageViewer::do_recenter);
     connect(reset, &QPushButton::released, this, &ImageViewer::reset_view);
+    connect(setviz, &QPushButton::released, this, &ImageViewer::global_settings);
+    connect(atomviz, &QPushButton::released, this, &ImageViewer::atom_settings);
     connect(fixviz, &QPushButton::released, this, &ImageViewer::fix_settings);
     connect(regviz, &QPushButton::released, this, &ImageViewer::region_settings);
     connect(combo, SIGNAL(currentIndexChanged(int)), this, SLOT(change_group(int)));
@@ -778,6 +783,142 @@ void ImageViewer::cmd_to_clipboard()
 #endif
 }
 
+void ImageViewer::global_settings()
+{
+    QDialog setview;
+    setview.setWindowTitle(QString("LAMMPS-GUI - Global dump image settings"));
+    setview.setWindowIcon(QIcon(":/icons/lammps-gui-icon-128x128.png"));
+    setview.setMinimumSize(100, 50);
+    setview.setContentsMargins(5, 5, 5, 5);
+    setview.setSizePolicy(QSizePolicy::MinimumExpanding, QSizePolicy::MinimumExpanding);
+
+    auto *title = new QLabel("Global dump image settings:");
+    title->setFrameStyle(QFrame::Panel | QFrame::Raised);
+    title->setLineWidth(1);
+    title->setMargin(TITLE_MARGIN);
+    title->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Minimum);
+
+    auto *colorcompleter = new QColorCompleter;
+    auto *colorvalidator = new QColorValidator;
+    auto *transvalidator = new QDoubleValidator(0.0, 1.0, 5);
+    QFontMetrics metrics(setview.fontMetrics());
+
+    QSettings settings;
+    settings.beginGroup("snapshot");
+
+    auto *layout = new QGridLayout;
+    int idx      = 0;
+    int n        = 0;
+    layout->addWidget(title, idx++, n, 1, 8, Qt::AlignCenter);
+    layout->addWidget(new QHline, idx++, n, 1, 8);
+    for (int i = 0; i < 8; ++i)
+        layout->setColumnStretch(i, 1);
+
+    layout->addWidget(new QLabel("Axes: "), idx, n++, 1, 1);
+    auto *offbutton = new QRadioButton("Off", this);
+    offbutton->setChecked(!showaxes);
+    auto *llbutton = new QRadioButton("Lower Left", this);
+    llbutton->setChecked(showaxes && (axesloc == "yes"));
+    auto *lrbutton = new QRadioButton("Lower Right", this);
+    lrbutton->setChecked(showaxes && (axesloc == "lowerright"));
+    auto *ulbutton = new QRadioButton("Upper Left", this);
+    ulbutton->setChecked(showaxes && (axesloc == "upperleft"));
+    auto *urbutton = new QRadioButton("Upper Right", this);
+    urbutton->setChecked(showaxes && (axesloc == "upperright"));
+    auto *cbutton = new QRadioButton("Center", this);
+    cbutton->setChecked(showaxes && (axesloc == "center"));
+    layout->addWidget(offbutton, idx, n++, 1, 1);
+    layout->addWidget(llbutton, idx, n++, 1, 1);
+    layout->addWidget(lrbutton, idx, n++, 1, 1);
+    layout->addWidget(ulbutton, idx, n++, 1, 1);
+    layout->addWidget(urbutton, idx, n++, 1, 1);
+    layout->addWidget(cbutton, idx++, n++, 1, 1);
+
+    n = 1;
+    layout->addWidget(new QLabel("Length:"), idx, n++, 1, 1);
+    auto *alval = new QLineEdit(QString::number(axeslen));
+    alval->setValidator(new QDoubleValidator(0.000001, 10.0, 100, this));
+    alval->setObjectName("axeslen");
+    layout->addWidget(alval, idx, n++, 1, 1);
+    layout->addWidget(new QLabel("Diameter:"), idx, n++, 1, 1);
+    auto *adval = new QLineEdit(QString::number(axesdiam));
+    adval->setValidator(new QDoubleValidator(0.000001, 1.0, 100, this));
+    adval->setObjectName("axesdiam");
+    layout->addWidget(adval, idx, n++, 1, 1);
+    layout->addWidget(new QLabel("Tansparency:"), idx, n++, 1, 1);
+    auto *atval = new QLineEdit(QString::number(axestrans));
+    atval->setValidator(transvalidator);
+    atval->setObjectName("axestrans");
+    layout->addWidget(atval, idx++, n++, 1, 1);
+    // disable and uncheck unsupported fields for older LAMMPS versions
+    if (lammps->version() < 20260211) {
+        offbutton->setChecked(!showaxes);
+        llbutton->setChecked(showaxes);
+        axesloc = "yes";
+        lrbutton->setEnabled(false);
+        lrbutton->setChecked(false);
+        ulbutton->setEnabled(false);
+        ulbutton->setChecked(false);
+        urbutton->setEnabled(false);
+        urbutton->setChecked(false);
+        cbutton->setEnabled(false);
+        cbutton->setChecked(false);
+        atval->setEnabled(false);
+        atval->setText("1.0");
+    }
+
+    n = 0;
+    layout->addWidget(new QHline, idx++, n, 1, 8);
+    auto *cancel = new QPushButton("&Cancel");
+    auto *apply  = new QPushButton("&Apply");
+    cancel->setAutoDefault(false);
+    apply->setAutoDefault(true);
+    layout->addWidget(cancel, idx, 0, 1, 4, Qt::AlignHCenter);
+    layout->addWidget(apply, idx, 4, 1, 4, Qt::AlignHCenter);
+    connect(cancel, &QPushButton::released, &setview, &QDialog::reject);
+    connect(apply, &QPushButton::released, &setview, &QDialog::accept);
+    setview.setLayout(layout);
+    settings.endGroup();
+
+    int rv = setview.exec();
+
+    // return immediately on cancel
+    if (!rv) return;
+
+    // retrieve and apply data
+    if (offbutton->isChecked()) {
+        showaxes = false;
+    } else if (llbutton->isChecked()) {
+        showaxes = true;
+        axesloc  = "yes";
+    } else if (lrbutton->isChecked()) {
+        showaxes = true;
+        axesloc  = "lowerright";
+    } else if (ulbutton->isChecked()) {
+        showaxes = true;
+        axesloc  = "upperleft";
+    } else if (urbutton->isChecked()) {
+        showaxes = true;
+        axesloc  = "upperright";
+    } else if (cbutton->isChecked()) {
+        showaxes = true;
+        axesloc  = "center";
+    }
+    auto *button = findChild<QPushButton *>("axes");
+    if (button) button->setChecked(showaxes);
+
+    axeslen   = alval->text().toDouble();
+    axesdiam  = adval->text().toDouble();
+    axestrans = atval->text().toDouble();
+
+    // update image with new settings
+    createImage();
+}
+
+void ImageViewer::atom_settings()
+{
+}
+
 void ImageViewer::fix_settings()
 {
     update_fixes();
@@ -792,6 +933,7 @@ void ImageViewer::fix_settings()
     auto *title = new QLabel("Visualize Fix Graphics Objects:");
     title->setFrameStyle(QFrame::Panel | QFrame::Raised);
     title->setLineWidth(1);
+    title->setMargin(TITLE_MARGIN);
 
     int idx      = 0;
     int n        = 0;
@@ -917,6 +1059,7 @@ void ImageViewer::region_settings()
     auto *title = new QLabel("Visualize Regions:");
     title->setFrameStyle(QFrame::Panel | QFrame::Raised);
     title->setLineWidth(1);
+    title->setMargin(TITLE_MARGIN);
 
     auto *layout = new QGridLayout;
     layout->addWidget(title, idx++, n, 1, 7, Qt::AlignHCenter);
@@ -1215,7 +1358,7 @@ void ImageViewer::createImage()
         dumpcmd += " box no 0.0";
 
     if (showaxes)
-        dumpcmd += QString(" axes yes %1 %2").arg(axeslen).arg(axesdiam);
+        dumpcmd += QString(" axes %1 %2 %3").arg(axesloc).arg(axeslen).arg(axesdiam);
     else
         dumpcmd += " axes no 0.0 0.0";
 
