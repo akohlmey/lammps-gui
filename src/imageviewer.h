@@ -139,12 +139,17 @@ private:
     double shinyfactor;                          ///< Shininess/specular factor
     double bondcutoff;                           ///< Bond cutoff distance
     double boxdiam;                              ///< Simulation box diameter
+    double boxtrans;                             ///< Transparency for box and subbox
     double axeslen;                              ///< Axes length
     double axesdiam;                             ///< Axes diameter
     double axestrans;                            ///< Axes transparency
     QString axesloc;                             ///< Axes location
+    QString boxcolor;                            ///< Color for box and subbox
+    QString backcolor;                           ///< (lower) background color
+    QString backcolor2;                          ///< (upper) background color
     double xcenter, ycenter, zcenter;            ///< View center coordinates
     bool showbox;                                ///< Show simulation box flag
+    bool showsubbox;                             ///< Show subdomain boxes flag
     bool showaxes;                               ///< Show coordinate axes flag
     bool antialias;                              ///< Antialiasing enabled flag
     bool usessao;                                ///< SSAO enabled flag

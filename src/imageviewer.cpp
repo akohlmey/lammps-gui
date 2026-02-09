@@ -803,9 +803,6 @@ void ImageViewer::global_settings()
     auto *transvalidator = new QDoubleValidator(0.0, 1.0, 5);
     QFontMetrics metrics(setview.fontMetrics());
 
-    QSettings settings;
-    settings.beginGroup("snapshot");
-
     auto *layout = new QGridLayout;
     int idx      = 0;
     int n        = 0;
@@ -878,7 +875,6 @@ void ImageViewer::global_settings()
     connect(cancel, &QPushButton::released, &setview, &QDialog::reject);
     connect(apply, &QPushButton::released, &setview, &QDialog::accept);
     setview.setLayout(layout);
-    settings.endGroup();
 
     int rv = setview.exec();
 
@@ -926,7 +922,7 @@ void ImageViewer::fix_settings()
     QDialog fixview;
     fixview.setWindowTitle(QString("LAMMPS-GUI - Visualize Fix Graphics Objects"));
     fixview.setWindowIcon(QIcon(":/icons/lammps-gui-icon-128x128.png"));
-    fixview.setMinimumSize(100, 50);
+    fixview.setMinimumSize(100, 100);
     fixview.setContentsMargins(5, 5, 5, 5);
     fixview.setSizePolicy(QSizePolicy::MinimumExpanding, QSizePolicy::MinimumExpanding);
 
