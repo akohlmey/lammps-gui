@@ -788,7 +788,7 @@ void ImageViewer::global_settings()
     QDialog setview;
     setview.setWindowTitle(QString("LAMMPS-GUI - Global dump image settings"));
     setview.setWindowIcon(QIcon(":/icons/lammps-gui-icon-128x128.png"));
-    setview.setMinimumSize(100, 50);
+    setview.setMinimumSize(100, 100);
     setview.setContentsMargins(5, 5, 5, 5);
     setview.setSizePolicy(QSizePolicy::MinimumExpanding, QSizePolicy::MinimumExpanding);
 
@@ -1050,7 +1050,7 @@ void ImageViewer::region_settings()
     QDialog regionview;
     regionview.setWindowTitle(QString("LAMMPS-GUI - Visualize Regions"));
     regionview.setWindowIcon(QIcon(":/icons/lammps-gui-icon-128x128.png"));
-    regionview.setMinimumSize(100, 50);
+    regionview.setMinimumSize(100, 100);
     regionview.setContentsMargins(5, 5, 5, 5);
     regionview.setSizePolicy(QSizePolicy::MinimumExpanding, QSizePolicy::MinimumExpanding);
 
@@ -1420,8 +1420,11 @@ void ImageViewer::createImage()
     dumpcmd += " noinit";
     dumpcmd += " modify boxcolor " + settings.value("boxcolor", "yellow").toString();
     dumpcmd += " backcolor " + settings.value("background", "black").toString();
-    if (lammps->version() > 20251210)
+    if (lammps->version() > 20251210) {
         dumpcmd += " backcolor2 " + settings.value("background2", "white").toString();
+        dumpcmd += QString(" axestrans %1").arg(axestrans);
+    }
+
     if (useelements) dumpcmd += blank + elements + blank + adiams + blank;
     if (usesigma) dumpcmd += blank + adiams + blank;
     if (!useelements && !usesigma && (atomSize != 1.0)) dumpcmd += blank + adiams + blank;
@@ -1529,6 +1532,7 @@ void ImageViewer::createActions()
     saveAsAct = fileMenu->addAction("&Save As...", this, &ImageViewer::saveAs);
     saveAsAct->setIcon(QIcon(":/icons/document-save-as.png"));
     saveAsAct->setEnabled(false);
+    saveAsAct->setShortcut(QKeySequence(Qt::CTRL | Qt::Key_S));
     fileMenu->addSeparator();
     copyAct = fileMenu->addAction("&Copy Image", this, &ImageViewer::copy);
     copyAct->setIcon(QIcon(":/icons/edit-copy.png"));
