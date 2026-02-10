@@ -365,6 +365,7 @@ ImageViewer::ImageViewer(const QString &fileName, LammpsWrapper *_lammps, QWidge
     fixviz->setToolTip("Open dialog for visualizing graphics from fixes");
     fixviz->setObjectName("fixes");
     fixviz->setEnabled(false);
+    fixviz->setVisible(false); // FIXME: hide button until implementation issues have been resolved
     auto *regviz = new QPushButton("&Regions");
     regviz->setToolTip("Open dialog for visualizing regions");
     regviz->setObjectName("regions");
