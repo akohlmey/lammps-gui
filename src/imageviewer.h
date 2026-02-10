@@ -139,10 +139,12 @@ private:
     double shinyfactor;                          ///< Shininess/specular factor
     double bondcutoff;                           ///< Bond cutoff distance
     double boxdiam;                              ///< Simulation box diameter
+    double subboxdiam;                           ///< Simulation subbox diameter
     double boxtrans;                             ///< Transparency for box and subbox
     double axeslen;                              ///< Axes length
     double axesdiam;                             ///< Axes diameter
     double axestrans;                            ///< Axes transparency
+    double ssaoval;                              ///< SSAO strength
     QString axesloc;                             ///< Axes location
     QString boxcolor;                            ///< Color for box and subbox
     QString backcolor;                           ///< (lower) background color
