@@ -958,6 +958,7 @@ void ImageViewer::global_settings()
     auto *apply  = new QPushButton("&Apply");
     cancel->setAutoDefault(false);
     apply->setAutoDefault(true);
+    apply->setDefault(true);
     layout->addWidget(cancel, idx, 0, 1, MAXCOLS / 2, Qt::AlignHCenter);
     layout->addWidget(apply, idx, MAXCOLS / 2, 1, MAXCOLS / 2, Qt::AlignHCenter);
     connect(cancel, &QPushButton::released, &setview, &QDialog::reject);
@@ -1099,6 +1100,7 @@ void ImageViewer::fix_settings()
     auto *apply  = new QPushButton("&Apply");
     cancel->setAutoDefault(false);
     apply->setAutoDefault(true);
+    apply->setDefault(true);
     layout->addWidget(cancel, idx, 0, 1, 4, Qt::AlignHCenter);
     layout->addWidget(apply, idx, 4, 1, 4, Qt::AlignHCenter);
     connect(cancel, &QPushButton::released, &fixview, &QDialog::reject);
@@ -1226,6 +1228,7 @@ void ImageViewer::region_settings()
     auto *apply  = new QPushButton("&Apply");
     cancel->setAutoDefault(false);
     apply->setAutoDefault(true);
+    apply->setDefault(true);
     layout->addWidget(cancel, idx, 0, 1, 3, Qt::AlignHCenter);
     layout->addWidget(apply, idx, 3, 1, 3, Qt::AlignHCenter);
     connect(cancel, &QPushButton::released, &regionview, &QDialog::reject);
