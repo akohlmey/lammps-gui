@@ -35,11 +35,12 @@ current pair style and if it is a Lennard-Jones type potential, it will
 extract the *sigma* parameter for each atom type and assign atom
 diameters from those numbers.  For cases where atom diameters are not
 auto-detected, the *Atom size* field can be edited and a suitable value
-set manually. The default value is inferred from the x-direction lattice
-spacing. It is also possible to visualize regions and have bonds
-computed dynamically for potentials, where the bonds are determined
-implicitly (like `AIREBO <https://docs.lammps.org/pair_airebo.html>`_.
-Please see the documentation of the `dump image command
+set manually.  The default value is inferred from the x-direction
+lattice spacing.  It is also possible to visualize regions and have
+bonds computed dynamically for potentials, where the bonds are
+determined implicitly (like `AIREBO
+<https://docs.lammps.org/pair_airebo.html>`_.  Please see the
+documentation of the `dump image command
 <https://docs.lammps.org/dump_image.html>`_ for more details on these
 two features.
 
@@ -48,16 +49,16 @@ If elements cannot be detected the default sequence of colors of the
 assigned to the different atom types.
 
 .. |gui-image1| image:: JPG/lammps-gui-image.png
-   :width: 24%
+   :width: 21.9%
 
 .. |gui-image2| image:: JPG/lammps-gui-funnel.png
-   :width: 24%
+   :width: 25.3%
 
 .. |gui-image3| image:: JPG/lammps-gui-regions.png
-   :width: 24%
+   :width: 25%
 
 .. |gui-image4| image:: JPG/lammps-gui-autobond.png
-   :width: 24%
+   :width: 25%
 
 |gui-image1|  |gui-image2|  |gui-image3|  |gui-image4|
 
@@ -101,6 +102,22 @@ they can be pasted into a LAMMPS input file so that the visualization
 settings of the snapshot image can be repeated for the entire simulation
 (and thus be repeated in the slide show viewer). This feature has the
 keyboard shortcut `Ctrl-D`.
+
+Global image settings
+---------------------
+
+.. index:: image settings
+
+While some default settings for the image output can be configured in
+the "Snapshot Image" tab of the :ref:`Preferences dialog <image_preferences>`
+and more fine-grained configuration is possible when opening the "Global
+image settings" dialog by pressing on the "Settings" button or using the
+`Alt-S` keyboard shortcut.  Many global settings can be explicitly
+adjusted and applied.
+
+.. figure:: JPG/lammps-gui-image-settings.png
+
+   Detailed image settings dialog
 
 .. _slideshow:
 

@@ -819,11 +819,13 @@ void ImageViewer::global_settings()
     layout->addWidget(title, idx++, n, 1, MAXCOLS, Qt::AlignCenter);
     layout->addWidget(new QHline, idx++, n, 1, MAXCOLS);
     for (int i = 0; i < MAXCOLS; ++i)
-        layout->setColumnStretch(i, 1);
+        layout->setColumnStretch(i, 2.0);
+    layout->setColumnStretch(MAXCOLS - 1, 1.0);
 
     auto *axesbutton = new QCheckBox("Axes ", this);
     axesbutton->setCheckState(showaxes ? Qt::Checked : Qt::Unchecked);
     layout->addWidget(axesbutton, idx, n++, 1, 1);
+    layout->addWidget(new QLabel("Location:"), idx, n++, 1, 1);
     auto *llbutton = new QRadioButton("Lower Left", this);
     llbutton->setChecked(axesloc == "yes");
     layout->addWidget(llbutton, idx, n++, 1, 1);
@@ -922,10 +924,10 @@ void ImageViewer::global_settings()
 
     n = 0;
     layout->addWidget(new QLabel("Quality:"), idx, n++, 1, 1);
-    auto *fsaa = new QCheckBox("Anti-alias ", this);
+    auto *fsaa = new QCheckBox("FSAA ", this);
     fsaa->setCheckState(antialias ? Qt::Checked : Qt::Unchecked);
     layout->addWidget(fsaa, idx, n++, 1, 1);
-    auto *ssao = new QCheckBox("Ambient Occlusion ", this);
+    auto *ssao = new QCheckBox("SSAO ", this);
     ssao->setCheckState(usessao ? Qt::Checked : Qt::Unchecked);
     layout->addWidget(ssao, idx, n++, 1, 1);
     layout->addWidget(new QLabel("SSAO strength:"), idx, n++, 1, 1);
