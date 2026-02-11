@@ -1,7 +1,7 @@
 // -*- c++ -*- /////////////////////////////////////////////////////////////////////////
 // LAMMPS-GUI - A Graphical Tool to Learn and Explore the LAMMPS MD Simulation Software
 //
-// Copyright (c) 2023, 2024, 2025  Axel Kohlmeyer
+// Copyright (c) 2023, 2024, 2025, 2026  Axel Kohlmeyer
 //
 // Documentation: https://lammps-gui.lammps.org/
 // Contact: akohlmey@gmail.com

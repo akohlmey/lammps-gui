@@ -1,7 +1,7 @@
 // -*- c++ -*- /////////////////////////////////////////////////////////////////////////
 // LAMMPS-GUI - A Graphical Tool to Learn and Explore the LAMMPS MD Simulation Software
 //
-// Copyright (c) 2023, 2024, 2025  Axel Kohlmeyer
+// Copyright (c) 2023, 2024, 2025, 2026  Axel Kohlmeyer
 //
 // Documentation: https://lammps-gui.lammps.org/
 // Contact: akohlmey@gmail.com
@@ -74,6 +74,8 @@
 namespace {
 constexpr int DEFAULT_BUFLEN      = 1024;
 constexpr int MAX_DEFAULT_THREADS = 16;
+constexpr int MINIMUM_WIDTH       = 400;
+constexpr int MINIMUM_HEIGHT      = 300;
 
 const QString blank(" ");
 const QString citeme("# When using LAMMPS-GUI in your project, please cite: "
@@ -263,7 +265,7 @@ LammpsGui::LammpsGui(QWidget *parent, const QString &filename, int width, int he
     settings.setValue("textfont", text_font.toString());
     ui->textEdit->setFont(text_font);
     ui->textEdit->document()->setDefaultFont(text_font);
-    ui->textEdit->setMinimumSize(600, 400);
+    ui->textEdit->setMinimumSize(MINIMUM_WIDTH, MINIMUM_HEIGHT);
 
     varwindow = new QLabel(QString());
     varwindow->setWindowTitle(QString("LAMMPS-GUI - Current Variables"));
@@ -374,11 +376,11 @@ LammpsGui::LammpsGui(QWidget *parent, const QString &filename, int width, int he
     status->setFixedWidth(300);
     ui->statusbar->addWidget(status);
     dirstatus = new QLabel(QString(" Directory: ") + current_dir);
-    dirstatus->setMinimumWidth(400);
+    dirstatus->setMinimumWidth(MINIMUM_WIDTH);
     ui->statusbar->addWidget(dirstatus);
     progress = new QProgressBar();
     progress->setRange(0, 1000);
-    progress->setMinimumWidth(400);
+    progress->setMinimumWidth(MINIMUM_WIDTH);
     progress->hide();
     dirstatus->show();
     ui->statusbar->addWidget(progress);
@@ -391,9 +393,11 @@ LammpsGui::LammpsGui(QWidget *parent, const QString &filename, int width, int he
 
     // set width and height of main window.
     // use last values unless overridden from command-line
-    // do not accept an geometry smaller than 800x400
-    if (mainx < 800) mainx = settings.value("mainx", "800").toInt();
-    if (mainy < 400) mainy = settings.value("mainy", "400").toInt();
+    // do not accept an geometry smaller than minimum
+    if (mainx < MINIMUM_WIDTH)
+        mainx = settings.value("mainx", QString::number(MINIMUM_WIDTH)).toInt();
+    if (mainy < MINIMUM_HEIGHT)
+        mainy = settings.value("mainy", QString::number(MINIMUM_HEIGHT)).toInt();
     resize(mainx, mainy);
 
     // start LAMMPS and initialize command completion
@@ -990,6 +994,7 @@ void LammpsGui::inspect_file(const QString &fileName)
             QFile(infodata).remove();
             auto *inspect_image = new ImageViewer(fileName, &lammps);
             inspect_image->setFont(font());
+            inspect_image->setMinimumSize(MINIMUM_WIDTH, MINIMUM_HEIGHT);
             inspect_image->show();
             ilist->image = inspect_image;
         }
@@ -1493,7 +1498,7 @@ void LammpsGui::do_run(bool use_buffer)
     text_font.fromString(settings.value("textfont", text_font.toString()).toString());
     logwindow->document()->setDefaultFont(text_font);
     logwindow->setLineWrapMode(LogWindow::NoWrap);
-    logwindow->setMinimumSize(400, 300);
+    logwindow->setMinimumSize(MINIMUM_WIDTH, MINIMUM_HEIGHT);
     auto *shortcut = new QShortcut(QKeySequence(Qt::CTRL | Qt::Key_W), logwindow);
     QObject::connect(shortcut, &QShortcut::activated, logwindow, &LogWindow::close);
     shortcut = new QShortcut(QKeySequence(Qt::CTRL | Qt::Key_Slash), logwindow);
@@ -1509,7 +1514,7 @@ void LammpsGui::do_run(bool use_buffer)
     chartwindow->setWindowTitle(
         QString("LAMMPS-GUI - Charts - %2 - Run %3").arg(current_file).arg(run_counter));
     chartwindow->setWindowIcon(QIcon(":/icons/lammps-gui-icon-128x128.png"));
-    chartwindow->setMinimumSize(400, 300);
+    chartwindow->setMinimumSize(MINIMUM_WIDTH, MINIMUM_HEIGHT);
     const auto *unitptr = (const char *)lammps.extract_global("units");
     if (unitptr) chartwindow->set_units(QString("Units: %1").arg(unitptr));
     auto normflag = lammps.extract_setting("thermo_norm");
@@ -1571,6 +1576,7 @@ void LammpsGui::render_image()
         // if configured, delete old image window before opening new one
         if (QSettings().value("imagereplace", true).toBool()) delete imagewindow;
         imagewindow = new ImageViewer(current_file, &lammps);
+        imagewindow->setMinimumSize(MINIMUM_WIDTH, MINIMUM_HEIGHT);
     } else {
         QMessageBox::warning(this, "ImageViewer Error",
                              "Cannot create snapshot image while LAMMPS is running");
@@ -1581,7 +1587,10 @@ void LammpsGui::render_image()
 
 void LammpsGui::view_slides()
 {
-    if (!slideshow) slideshow = new SlideShow(current_file);
+    if (!slideshow) {
+        slideshow = new SlideShow(current_file);
+        slideshow->setMinimumSize(MINIMUM_WIDTH, MINIMUM_HEIGHT);
+    }
     if (slideshow->isVisible())
         slideshow->hide();
     else

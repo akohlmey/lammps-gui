@@ -1,7 +1,7 @@
 // -*- c++ -*- /////////////////////////////////////////////////////////////////////////
 // LAMMPS-GUI - A Graphical Tool to Learn and Explore the LAMMPS MD Simulation Software
 //
-// Copyright (c) 2023, 2024, 2025  Axel Kohlmeyer
+// Copyright (c) 2023, 2024, 2025, 2026  Axel Kohlmeyer
 //
 // Documentation: https://lammps-gui.lammps.org/
 // Contact: akohlmey@gmail.com
@@ -87,6 +87,8 @@ private slots:
     void do_rot_down();        ///< Rotate view down
     void do_recenter();        ///< Recenter view
     void cmd_to_clipboard();   ///< Copy dump command to clipboard
+    void global_settings();    ///< Configure global dump image settings
+    void atom_settings();      ///< Configure atom and bond settings
     void fix_settings();       ///< Configure fix graphics display
     void region_settings();    ///< Configure region display
     void change_group(int);    ///< Change atom group selection
@@ -102,13 +104,13 @@ public:
     void createImage();
 
 private:
-    void createActions();                                       ///< Setup menu actions
-    void updateActions();                                       ///< Update action states
-    void saveFile(const QString &fileName);                     ///< Save image file
-    void adjustWindowSize();                                    ///< Auto-resize window to fit image
-    void update_fixes();                                        ///< Update fix graphics information
-    void update_regions();                                      ///< Update region information
-    bool has_autobonds();                                       ///< Check if autobonds are enabled
+    void createActions();                   ///< Setup menu actions
+    void updateActions();                   ///< Update action states
+    void saveFile(const QString &fileName); ///< Save image file
+    void adjustWindowSize();                ///< Auto-resize window to fit image
+    void update_fixes();                    ///< Update fix graphics information
+    void update_regions();                  ///< Update region information
+    bool has_autobonds();                   ///< Check if autobonds are enabled
 
 private:
     QImage image;                ///< Currently displayed image
@@ -137,10 +139,19 @@ private:
     double shinyfactor;                          ///< Shininess/specular factor
     double bondcutoff;                           ///< Bond cutoff distance
     double boxdiam;                              ///< Simulation box diameter
+    double subboxdiam;                           ///< Simulation subbox diameter
+    double boxtrans;                             ///< Transparency for box and subbox
     double axeslen;                              ///< Axes length
     double axesdiam;                             ///< Axes diameter
+    double axestrans;                            ///< Axes transparency
+    double ssaoval;                              ///< SSAO strength
+    QString axesloc;                             ///< Axes location
+    QString boxcolor;                            ///< Color for box and subbox
+    QString backcolor;                           ///< (lower) background color
+    QString backcolor2;                          ///< (upper) background color
     double xcenter, ycenter, zcenter;            ///< View center coordinates
     bool showbox;                                ///< Show simulation box flag
+    bool showsubbox;                             ///< Show subdomain boxes flag
     bool showaxes;                               ///< Show coordinate axes flag
     bool antialias;                              ///< Antialiasing enabled flag
     bool usessao;                                ///< SSAO enabled flag

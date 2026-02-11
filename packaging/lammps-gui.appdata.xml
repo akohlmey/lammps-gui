@@ -60,7 +60,7 @@
         Make image file name in slideshow selectable by mouse
         Export to FFMpeg honors image mirroring and rotating settings
         Display body, line, tri, and ellipsoid particles by their lines or faces, if detected
-        Add dialog for selecting displaying graphics objects from fixes to image viewer
+        Add dialog for configuring most global image settings
         Add support for rendering regions in style "transparent"
         Fix issue with centering for 2d systems
         Adjust window manager hints for several windows: remove dialog property and maximize button to windows can be on top or below

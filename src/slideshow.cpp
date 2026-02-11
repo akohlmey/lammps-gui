@@ -1,7 +1,7 @@
 // -*- c++ -*- /////////////////////////////////////////////////////////////////////////
 // LAMMPS-GUI - A Graphical Tool to Learn and Explore the LAMMPS MD Simulation Software
 //
-// Copyright (c) 2023, 2024, 2025  Axel Kohlmeyer
+// Copyright (c) 2023, 2024, 2025, 2026  Axel Kohlmeyer
 //
 // Documentation: https://lammps-gui.lammps.org/
 // Contact: akohlmey@gmail.com
@@ -54,6 +54,7 @@ SlideShow::SlideShow(const QString &fileName, QWidget *parent) :
     imageLabel->setBackgroundRole(QPalette::Base);
     imageLabel->setSizePolicy(QSizePolicy::Ignored, QSizePolicy::Ignored);
     imageLabel->setScaledContents(false);
+    imageLabel->minimumSizeHint();
 
     scrollArea->setBackgroundRole(QPalette::Dark);
     scrollArea->setWidget(imageLabel);
@@ -503,7 +504,7 @@ void SlideShow::adjustWindowSize()
     if (screen) {
         auto screenSize = screen->availableSize();
         desiredWidth    = std::min(desiredWidth, screenSize.width() * 2 / 3);
-        desiredHeight   = std::min(desiredHeight, screenSize.height() * 2 / 3);
+        desiredHeight   = std::min(desiredHeight, screenSize.height() * 4 / 5);
     }
     resize(desiredWidth, desiredHeight);
 }

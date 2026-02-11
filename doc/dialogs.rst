@@ -170,6 +170,8 @@ CPU, which sometimes leads to better overall performance).  Whether
 settings can be changed depends on which accelerator package is chosen
 (or "None").
 
+.. _image_preferences:
+
 Snapshot Image:
 ^^^^^^^^^^^^^^^
 

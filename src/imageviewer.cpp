@@ -1,7 +1,7 @@
 // -*- c++ -*- /////////////////////////////////////////////////////////////////////////
 // LAMMPS-GUI - A Graphical Tool to Learn and Explore the LAMMPS MD Simulation Software
 //
-// Copyright (c) 2023, 2024, 2025  Axel Kohlmeyer
+// Copyright (c) 2023, 2024, 2025, 2026  Axel Kohlmeyer
 //
 // Documentation: https://lammps-gui.lammps.org/
 // Contact: akohlmey@gmail.com
@@ -43,6 +43,7 @@
 #include <QPixmap>
 #include <QProcess>
 #include <QPushButton>
+#include <QRadioButton>
 #include <QRegularExpression>
 #include <QScreen>
 #include <QScrollArea>
@@ -161,8 +162,9 @@ constexpr int DEFAULT_BUFLEN      = 1024;
 constexpr int DEFAULT_NPOINTS     = 100000;
 constexpr double DEFAULT_DIAMETER = 0.2;
 constexpr double DEFAULT_OPACITY  = 0.5;
-constexpr int EXTRA_WIDTH         = 25;
+constexpr int EXTRA_WIDTH         = 120;
 constexpr int EXTRA_HEIGHT        = 90;
+constexpr int TITLE_MARGIN        = 10;
 
 enum { FRAME, FILLED, TRANSPARENT, POINTS };
 enum { TYPE, ELEMENT, CONSTANT };
@@ -229,7 +231,9 @@ ImageViewer::ImageViewer(const QString &fileName, LammpsWrapper *_lammps, QWidge
     scrollArea->setWidget(imageLabel);
     scrollArea->setVisible(false);
 
-    auto *mainLayout = new QVBoxLayout;
+    auto *imageLayout    = new QHBoxLayout;
+    auto *settingsLayout = new QVBoxLayout;
+    auto *mainLayout     = new QVBoxLayout;
 
     QSettings settings;
     settings.beginGroup("snapshot");
@@ -243,13 +247,23 @@ ImageViewer::ImageViewer(const QString &fileName, LammpsWrapper *_lammps, QWidge
     autobond    = settings.value("autobond", false).toBool();
     bondcutoff  = settings.value("bondcutoff", 1.6).toDouble();
     showbox     = settings.value("box", true).toBool();
+    showsubbox  = false;
+    boxdiam     = settings.value("boxdiam", 0.025).toDouble();
+    subboxdiam  = boxdiam;
+    boxcolor    = settings.value("boxcolor", "yellow").toString();
     showaxes    = settings.value("axes", false).toBool();
     usessao     = settings.value("ssao", false).toBool();
     antialias   = settings.value("antialias", false).toBool();
-    boxdiam     = settings.value("boxdiam", 0.025).toDouble();
     axeslen     = settings.value("axeslen", 0.5).toDouble();
     axesdiam    = settings.value("axesdiam", 0.05).toDouble();
+    axestrans   = 1.0;
+    axesloc     = "yes"; // = "lowerleft"
+    boxtrans    = 1.0;
+    backcolor   = settings.value("backcolor", "black").toString();
+    backcolor2  = settings.value("backcolor2", "white").toString();
+    ssaoval     = 0.6;
     xcenter = ycenter = zcenter = 0.5;
+
     if (lammps->extract_setting("dimension") == 2) zcenter = 0.0;
     settings.endGroup();
 
@@ -346,10 +360,20 @@ ImageViewer::ImageViewer(const QString &fileName, LammpsWrapper *_lammps, QWidge
     recenter->setToolTip("Recenter on group");
     auto *reset = new QPushButton(QIcon(":/icons/gtk-zoom-fit.png"), "");
     reset->setToolTip("Reset view to defaults");
+
+    auto *setviz = new QPushButton("&Settings");
+    setviz->setToolTip("Open dialog for general graphics settings");
+    setviz->setObjectName("settings");
+    auto *atomviz = new QPushButton("&Atoms");
+    atomviz->setToolTip("Open dialog for Atom and Bond settings");
+    atomviz->setObjectName("atoms");
+    atomviz->setVisible(false); // FIXME: hide button until implementation has started
+
     auto *fixviz = new QPushButton("Fi&xes");
     fixviz->setToolTip("Open dialog for visualizing graphics from fixes");
     fixviz->setObjectName("fixes");
     fixviz->setEnabled(false);
+    fixviz->setVisible(false); // FIXME: hide button until implementation issues have been resolved
     auto *regviz = new QPushButton("&Regions");
     regviz->setToolTip("Open dialog for visualizing regions");
     regviz->setObjectName("regions");
@@ -385,21 +409,18 @@ ImageViewer::ImageViewer(const QString &fileName, LammpsWrapper *_lammps, QWidge
     topLayout->addLayout(buttonLayout);
 
     menuLayout->addWidget(menuBar);
+    menuLayout->insertStretch(1, 10);
     menuLayout->addWidget(renderstatus);
     menuLayout->addWidget(new QLabel(" Atom Size: "));
     menuLayout->addWidget(asize);
     // hide item initially
-    menuLayout->itemAt(2)->widget()->setObjectName("AtomLabel");
-    menuLayout->itemAt(2)->widget()->hide();
+    menuLayout->itemAt(3)->widget()->setObjectName("AtomLabel");
+    menuLayout->itemAt(3)->widget()->hide();
     menuLayout->addWidget(new QLabel(" Width: "));
     menuLayout->addWidget(xval);
     menuLayout->addWidget(new QLabel(" Height: "));
     menuLayout->addWidget(yval);
-    menuLayout->addWidget(dummy1);
-    menuLayout->addWidget(new QLabel(" Group: "));
-    menuLayout->addWidget(combo);
-    menuLayout->addWidget(new QLabel(" Molecule: "));
-    menuLayout->addWidget(molbox);
+    menuLayout->insertStretch(-1, 50);
     buttonLayout->addWidget(dummy2);
     buttonLayout->addWidget(dossao);
     buttonLayout->addWidget(doanti);
@@ -417,9 +438,19 @@ ImageViewer::ImageViewer(const QString &fileName, LammpsWrapper *_lammps, QWidge
     buttonLayout->addWidget(rotdown);
     buttonLayout->addWidget(recenter);
     buttonLayout->addWidget(reset);
-    buttonLayout->addWidget(fixviz);
-    buttonLayout->addWidget(regviz);
-    buttonLayout->addStretch(1);
+    buttonLayout->insertStretch(-1, 1);
+    settingsLayout->addWidget(new QHline);
+    settingsLayout->addWidget(new QLabel("Group:"));
+    settingsLayout->addWidget(combo);
+    settingsLayout->addWidget(new QLabel("Molecule:"));
+    settingsLayout->addWidget(molbox);
+    settingsLayout->addWidget(new QHline);
+    settingsLayout->addWidget(setviz);
+    settingsLayout->addWidget(atomviz);
+    settingsLayout->addWidget(fixviz);
+    settingsLayout->addWidget(regviz);
+    settingsLayout->addWidget(new QHline);
+    settingsLayout->insertStretch(-1, 10);
 
     connect(dossao, &QPushButton::released, this, &ImageViewer::toggle_ssao);
     connect(doanti, &QPushButton::released, this, &ImageViewer::toggle_anti);
@@ -437,13 +468,17 @@ ImageViewer::ImageViewer(const QString &fileName, LammpsWrapper *_lammps, QWidge
     connect(rotdown, &QPushButton::released, this, &ImageViewer::do_rot_down);
     connect(recenter, &QPushButton::released, this, &ImageViewer::do_recenter);
     connect(reset, &QPushButton::released, this, &ImageViewer::reset_view);
+    connect(setviz, &QPushButton::released, this, &ImageViewer::global_settings);
+    connect(atomviz, &QPushButton::released, this, &ImageViewer::atom_settings);
     connect(fixviz, &QPushButton::released, this, &ImageViewer::fix_settings);
     connect(regviz, &QPushButton::released, this, &ImageViewer::region_settings);
     connect(combo, SIGNAL(currentIndexChanged(int)), this, SLOT(change_group(int)));
     connect(molbox, SIGNAL(currentIndexChanged(int)), this, SLOT(change_molecule(int)));
 
     mainLayout->addLayout(topLayout);
-    mainLayout->addWidget(scrollArea);
+    imageLayout->addWidget(scrollArea, 10);
+    imageLayout->addLayout(settingsLayout, 0);
+    mainLayout->addLayout(imageLayout);
     setWindowIcon(QIcon(":/icons/lammps-gui-icon-128x128.png"));
     setWindowTitle(QString("LAMMPS-GUI - Image Viewer - ") + QFileInfo(fileName).fileName());
     createActions();
@@ -757,6 +792,236 @@ void ImageViewer::cmd_to_clipboard()
 #endif
 }
 
+void ImageViewer::global_settings()
+{
+    QDialog setview;
+    setview.setWindowTitle(QString("LAMMPS-GUI - Global image settings"));
+    setview.setWindowIcon(QIcon(":/icons/lammps-gui-icon-128x128.png"));
+    setview.setMinimumSize(100, 100);
+    setview.setContentsMargins(5, 5, 5, 5);
+    setview.setSizePolicy(QSizePolicy::MinimumExpanding, QSizePolicy::MinimumExpanding);
+
+    auto *title = new QLabel("Global image settings:");
+    title->setFrameStyle(QFrame::Panel | QFrame::Raised);
+    title->setLineWidth(1);
+    title->setMargin(TITLE_MARGIN);
+    title->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Minimum);
+
+    auto *colorcompleter = new QColorCompleter;
+    auto *colorvalidator = new QColorValidator;
+    auto *transvalidator = new QDoubleValidator(0.0, 1.0, 5);
+    QFontMetrics metrics(setview.fontMetrics());
+
+    auto *layout          = new QGridLayout;
+    int idx               = 0;
+    int n                 = 0;
+    constexpr int MAXCOLS = 7;
+    layout->addWidget(title, idx++, n, 1, MAXCOLS, Qt::AlignCenter);
+    layout->addWidget(new QHline, idx++, n, 1, MAXCOLS);
+    for (int i = 0; i < MAXCOLS; ++i)
+        layout->setColumnStretch(i, 2.0);
+    layout->setColumnStretch(MAXCOLS - 1, 1.0);
+
+    auto *axesbutton = new QCheckBox("Axes ", this);
+    axesbutton->setCheckState(showaxes ? Qt::Checked : Qt::Unchecked);
+    layout->addWidget(axesbutton, idx, n++, 1, 1);
+    layout->addWidget(new QLabel("Location:"), idx, n++, 1, 1);
+    auto *llbutton = new QRadioButton("Lower Left", this);
+    llbutton->setChecked(axesloc == "yes");
+    layout->addWidget(llbutton, idx, n++, 1, 1);
+    auto *lrbutton = new QRadioButton("Lower Right", this);
+    lrbutton->setChecked(axesloc == "lowerright");
+    layout->addWidget(lrbutton, idx, n++, 1, 1);
+    auto *ulbutton = new QRadioButton("Upper Left", this);
+    ulbutton->setChecked(axesloc == "upperleft");
+    layout->addWidget(ulbutton, idx, n++, 1, 1);
+    auto *urbutton = new QRadioButton("Upper Right", this);
+    urbutton->setChecked(axesloc == "upperright");
+    layout->addWidget(urbutton, idx, n++, 1, 1);
+    auto *cbutton = new QRadioButton("Center", this);
+    cbutton->setChecked(axesloc == "center");
+    layout->addWidget(cbutton, idx++, n++, 1, 1);
+
+    n = 1;
+
+    layout->addWidget(new QLabel("Length:"), idx, n++, 1, 1);
+    auto *alval = new QLineEdit(QString::number(axeslen));
+    alval->setValidator(new QDoubleValidator(0.000001, 10.0, 100, this));
+    layout->addWidget(alval, idx, n++, 1, 1);
+    layout->addWidget(new QLabel("Diameter:"), idx, n++, 1, 1);
+    auto *adval = new QLineEdit(QString::number(axesdiam));
+    adval->setValidator(new QDoubleValidator(0.000001, 1.0, 100, this));
+    layout->addWidget(adval, idx, n++, 1, 1);
+    layout->addWidget(new QLabel("Tansparency:"), idx, n++, 1, 1);
+    auto *atval = new QLineEdit(QString::number(axestrans));
+    atval->setValidator(transvalidator);
+    layout->addWidget(atval, idx++, n++, 1, 1);
+    // disable and uncheck unsupported fields for older LAMMPS versions
+    if (lammps->version() < 20260211) {
+        llbutton->setChecked(true);
+        axesloc = "yes";
+        lrbutton->setEnabled(false);
+        lrbutton->setChecked(false);
+        ulbutton->setEnabled(false);
+        ulbutton->setChecked(false);
+        urbutton->setEnabled(false);
+        urbutton->setChecked(false);
+        cbutton->setEnabled(false);
+        cbutton->setChecked(false);
+        atval->setEnabled(false);
+        atval->setText("1.0");
+    }
+
+    n = 0;
+
+    auto *boxbutton = new QCheckBox("Box ", this);
+    boxbutton->setCheckState(showbox ? Qt::Checked : Qt::Unchecked);
+    layout->addWidget(boxbutton, idx, n++, 1, 1);
+    layout->addWidget(new QLabel("Color:"), idx, n++, 1, 1);
+    auto *bcolor = new QLineEdit(boxcolor);
+    bcolor->setCompleter(colorcompleter);
+    bcolor->setValidator(colorvalidator);
+    layout->addWidget(bcolor, idx, n++, 1, 1);
+    layout->addWidget(new QLabel("Diameter:"), idx, n++, 1, 1);
+    auto *bdiam = new QLineEdit(QString::number(boxdiam));
+    bdiam->setValidator(new QDoubleValidator(0.000001, 1.0, 100, this));
+    layout->addWidget(bdiam, idx, n++, 1, 1);
+    layout->addWidget(new QLabel("Tansparency:"), idx, n++, 1, 1);
+    auto *btrans = new QLineEdit(QString::number(boxtrans));
+    btrans->setValidator(transvalidator);
+    layout->addWidget(btrans, idx++, n++, 1, 1);
+    if (lammps->version() < 20260211) {
+        btrans->setEnabled(false);
+    }
+
+    n = 0;
+
+    auto *subboxbutton = new QCheckBox("Subbox ", this);
+    subboxbutton->setCheckState(showsubbox ? Qt::Checked : Qt::Unchecked);
+    layout->addWidget(subboxbutton, idx, n++, 1, 1);
+    layout->addWidget(new QLabel("Diameter:"), idx, n++, 1, 1);
+    auto *subdiam = new QLineEdit(QString::number(subboxdiam));
+    subdiam->setValidator(new QDoubleValidator(0.000001, 1.0, 100, this));
+    layout->addWidget(subdiam, idx++, n++, 1, 1);
+
+    n = 0;
+
+    layout->addWidget(new QLabel("Background:"), idx, n++, 1, 1);
+    layout->addWidget(new QLabel("Bottomcolor:"), idx, n++, 1, 1);
+    auto *bgcolor = new QLineEdit(backcolor);
+    bgcolor->setCompleter(colorcompleter);
+    bgcolor->setValidator(colorvalidator);
+    layout->addWidget(bgcolor, idx, n++, 1, 1);
+    layout->addWidget(new QLabel("Topcolor:"), idx, n++, 1, 1);
+    auto *b2color = new QLineEdit(backcolor2);
+    b2color->setCompleter(colorcompleter);
+    b2color->setValidator(colorvalidator);
+    layout->addWidget(b2color, idx++, n++, 1, 1);
+    if (lammps->version() < 20260211) {
+        b2color->setEnabled(false);
+        b2color->setText(backcolor);
+    }
+
+    n = 0;
+    layout->addWidget(new QLabel("Quality:"), idx, n++, 1, 1);
+    auto *fsaa = new QCheckBox("FSAA ", this);
+    fsaa->setCheckState(antialias ? Qt::Checked : Qt::Unchecked);
+    layout->addWidget(fsaa, idx, n++, 1, 1);
+    auto *ssao = new QCheckBox("SSAO ", this);
+    ssao->setCheckState(usessao ? Qt::Checked : Qt::Unchecked);
+    layout->addWidget(ssao, idx, n++, 1, 1);
+    layout->addWidget(new QLabel("SSAO strength:"), idx, n++, 1, 1);
+    auto *aoval = new QLineEdit(QString::number(ssaoval));
+    aoval->setValidator(new QDoubleValidator(0.0, 1.0, 100, this));
+    layout->addWidget(aoval, idx, n++, 1, 1);
+    layout->addWidget(new QLabel("Shiny:"), idx, n++, 1, 1);
+    auto *shiny = new QLineEdit(QString::number(shinyfactor));
+    shiny->setValidator(new QDoubleValidator(0.0, 1.0, 100, this));
+    layout->addWidget(shiny, idx++, n++, 1, 1);
+
+    n = 0;
+    layout->addWidget(new QLabel("Center:"), idx, n++, 1, 1);
+    layout->addWidget(new QLabel("X-direction:"), idx, n++, 1, 1);
+    auto *xval = new QLineEdit(QString::number(xcenter));
+    xval->setValidator(new QDoubleValidator(0.0, 1.0, 100, this));
+    layout->addWidget(xval, idx, n++, 1, 1);
+    layout->addWidget(new QLabel("Y-direction:"), idx, n++, 1, 1);
+    auto *yval = new QLineEdit(QString::number(ycenter));
+    yval->setValidator(new QDoubleValidator(0.0, 1.0, 100, this));
+    layout->addWidget(yval, idx, n++, 1, 1);
+    layout->addWidget(new QLabel("Z-direction:"), idx, n++, 1, 1);
+    auto *zval = new QLineEdit(QString::number(zcenter));
+    zval->setValidator(new QDoubleValidator(0.0, 1.0, 100, this));
+    layout->addWidget(zval, idx++, n++, 1, 1);
+
+    n = 0;
+    layout->addWidget(new QHline, idx++, n, 1, MAXCOLS);
+    auto *cancel = new QPushButton("&Cancel");
+    auto *apply  = new QPushButton("&Apply");
+    cancel->setAutoDefault(false);
+    apply->setAutoDefault(true);
+    apply->setDefault(true);
+    layout->addWidget(cancel, idx, 0, 1, MAXCOLS / 2, Qt::AlignHCenter);
+    layout->addWidget(apply, idx, MAXCOLS / 2, 1, MAXCOLS / 2, Qt::AlignHCenter);
+    connect(cancel, &QPushButton::released, &setview, &QDialog::reject);
+    connect(apply, &QPushButton::released, &setview, &QDialog::accept);
+    setview.setLayout(layout);
+
+    int rv = setview.exec();
+
+    // return immediately on cancel
+    if (!rv) return;
+
+    // retrieve and apply data
+    showaxes = axesbutton->isChecked();
+    if (llbutton->isChecked()) {
+        axesloc = "yes";
+    } else if (lrbutton->isChecked()) {
+        axesloc = "lowerright";
+    } else if (ulbutton->isChecked()) {
+        axesloc = "upperleft";
+    } else if (urbutton->isChecked()) {
+        axesloc = "upperright";
+    } else if (cbutton->isChecked()) {
+        axesloc = "center";
+    }
+    auto *button = findChild<QPushButton *>("axes");
+    if (button) button->setChecked(showaxes);
+
+    if (alval->hasAcceptableInput()) axeslen = alval->text().toDouble();
+    if (adval->hasAcceptableInput()) axesdiam = adval->text().toDouble();
+    if (atval->hasAcceptableInput()) axestrans = atval->text().toDouble();
+
+    showbox = boxbutton->isChecked();
+    button  = findChild<QPushButton *>("box");
+    if (button) button->setChecked(showbox);
+    if (bdiam->hasAcceptableInput()) boxdiam = bdiam->text().toDouble();
+    if (btrans->hasAcceptableInput()) boxtrans = btrans->text().toDouble();
+    if (bcolor->hasAcceptableInput()) boxcolor = bcolor->text();
+    showsubbox = subboxbutton->isChecked();
+    if (subdiam->hasAcceptableInput()) subboxdiam = subdiam->text().toDouble();
+    if (bgcolor->hasAcceptableInput()) backcolor = bgcolor->text();
+    if (b2color->hasAcceptableInput()) backcolor2 = b2color->text();
+
+    antialias = fsaa->isChecked();
+    button    = findChild<QPushButton *>("antialias");
+    if (button) button->setChecked(antialias);
+    usessao = ssao->isChecked();
+    button  = findChild<QPushButton *>("ssao");
+    if (button) button->setChecked(usessao);
+    if (aoval->hasAcceptableInput()) ssaoval = aoval->text().toDouble();
+    if (shiny->hasAcceptableInput()) shinyfactor = shiny->text().toDouble();
+
+    if (xval->hasAcceptableInput()) xcenter = xval->text().toDouble();
+    if (yval->hasAcceptableInput()) ycenter = yval->text().toDouble();
+    if (zval->hasAcceptableInput()) zcenter = zval->text().toDouble();
+
+    // update image with new settings
+    createImage();
+}
+
+void ImageViewer::atom_settings() {}
+
 void ImageViewer::fix_settings()
 {
     update_fixes();
@@ -764,13 +1029,14 @@ void ImageViewer::fix_settings()
     QDialog fixview;
     fixview.setWindowTitle(QString("LAMMPS-GUI - Visualize Fix Graphics Objects"));
     fixview.setWindowIcon(QIcon(":/icons/lammps-gui-icon-128x128.png"));
-    fixview.setMinimumSize(100, 50);
+    fixview.setMinimumSize(100, 100);
     fixview.setContentsMargins(5, 5, 5, 5);
     fixview.setSizePolicy(QSizePolicy::MinimumExpanding, QSizePolicy::MinimumExpanding);
 
     auto *title = new QLabel("Visualize Fix Graphics Objects:");
     title->setFrameStyle(QFrame::Panel | QFrame::Raised);
     title->setLineWidth(1);
+    title->setMargin(TITLE_MARGIN);
 
     int idx      = 0;
     int n        = 0;
@@ -836,6 +1102,7 @@ void ImageViewer::fix_settings()
     auto *apply  = new QPushButton("&Apply");
     cancel->setAutoDefault(false);
     apply->setAutoDefault(true);
+    apply->setDefault(true);
     layout->addWidget(cancel, idx, 0, 1, 4, Qt::AlignHCenter);
     layout->addWidget(apply, idx, 4, 1, 4, Qt::AlignHCenter);
     connect(cancel, &QPushButton::released, &fixview, &QDialog::reject);
@@ -887,7 +1154,7 @@ void ImageViewer::region_settings()
     QDialog regionview;
     regionview.setWindowTitle(QString("LAMMPS-GUI - Visualize Regions"));
     regionview.setWindowIcon(QIcon(":/icons/lammps-gui-icon-128x128.png"));
-    regionview.setMinimumSize(100, 50);
+    regionview.setMinimumSize(100, 100);
     regionview.setContentsMargins(5, 5, 5, 5);
     regionview.setSizePolicy(QSizePolicy::MinimumExpanding, QSizePolicy::MinimumExpanding);
 
@@ -896,6 +1163,7 @@ void ImageViewer::region_settings()
     auto *title = new QLabel("Visualize Regions:");
     title->setFrameStyle(QFrame::Panel | QFrame::Raised);
     title->setLineWidth(1);
+    title->setMargin(TITLE_MARGIN);
 
     auto *layout = new QGridLayout;
     layout->addWidget(title, idx++, n, 1, 7, Qt::AlignHCenter);
@@ -962,6 +1230,7 @@ void ImageViewer::region_settings()
     auto *apply  = new QPushButton("&Apply");
     cancel->setAutoDefault(false);
     apply->setAutoDefault(true);
+    apply->setDefault(true);
     layout->addWidget(cancel, idx, 0, 1, 3, Qt::AlignHCenter);
     layout->addWidget(apply, idx, 3, 1, 3, Qt::AlignHCenter);
     connect(cancel, &QPushButton::released, &regionview, &QDialog::reject);
@@ -1170,8 +1439,8 @@ void ImageViewer::createImage()
         dumpcmd += QString(" line type 0 0.2");
     else if (lammps->extract_setting("tri_flag") == 1)
         dumpcmd += QString(" tri type 1 0.2");
-    else if ((lammps->extract_setting("ellipsoid_flag") == 1) && (lammps->version() > 20251210)) {
-        // added after 10 December 2025 release version
+    else if ((lammps->extract_setting("ellipsoid_flag") == 1) && (lammps->version() > 20260210)) {
+        // available since 11 February 2026 release
         dumpcmd += QString(" ellipsoid type 1 3 0.2");
     }
     dumpcmd += QString(" size %1 %2").arg(xsize).arg(ysize);
@@ -1187,14 +1456,18 @@ void ImageViewer::createImage()
     if (lammps->extract_setting("dimension") == 3) {
         dumpcmd += QString(" view %1 %2").arg(hhrot).arg(vrot);
     }
-    if (usessao) dumpcmd += " ssao yes 453983 0.75";
+    if (usessao) dumpcmd += QString(" ssao yes 453983 %1").arg(ssaoval);
     if (showbox)
         dumpcmd += QString(" box yes %1").arg(boxdiam);
     else
         dumpcmd += " box no 0.0";
+    if (showsubbox)
+        dumpcmd += QString(" subbox yes %1").arg(subboxdiam);
+    else
+        dumpcmd += " subbox no 0.0";
 
     if (showaxes)
-        dumpcmd += QString(" axes yes %1 %2").arg(axeslen).arg(axesdiam);
+        dumpcmd += QString(" axes %1 %2 %3").arg(axesloc).arg(axeslen).arg(axesdiam);
     else
         dumpcmd += " axes no 0.0 0.0";
 
@@ -1254,10 +1527,14 @@ void ImageViewer::createImage()
 
     dumpcmd += QString(" center s %1 %2 %3").arg(xcenter).arg(ycenter).arg(zcenter);
     dumpcmd += " noinit";
-    dumpcmd += " modify boxcolor " + settings.value("boxcolor", "yellow").toString();
-    dumpcmd += " backcolor " + settings.value("background", "black").toString();
-    if (lammps->version() > 20251210)
-        dumpcmd += " backcolor2 " + settings.value("background2", "white").toString();
+    dumpcmd += " modify boxcolor " + boxcolor;
+    dumpcmd += " backcolor " + backcolor;
+    if (lammps->version() > 20260210) {
+        dumpcmd += " backcolor2 " + backcolor2;
+        dumpcmd += QString(" axestrans %1").arg(axestrans);
+        dumpcmd += QString(" boxtrans %1").arg(boxtrans);
+    }
+
     if (useelements) dumpcmd += blank + elements + blank + adiams + blank;
     if (usesigma) dumpcmd += blank + adiams + blank;
     if (!useelements && !usesigma && (atomSize != 1.0)) dumpcmd += blank + adiams + blank;
@@ -1365,6 +1642,7 @@ void ImageViewer::createActions()
     saveAsAct = fileMenu->addAction("&Save As...", this, &ImageViewer::saveAs);
     saveAsAct->setIcon(QIcon(":/icons/document-save-as.png"));
     saveAsAct->setEnabled(false);
+    saveAsAct->setShortcut(QKeySequence(Qt::CTRL | Qt::Key_S));
     fileMenu->addSeparator();
     copyAct = fileMenu->addAction("&Copy Image", this, &ImageViewer::copy);
     copyAct->setIcon(QIcon(":/icons/edit-copy.png"));
@@ -1399,7 +1677,7 @@ void ImageViewer::adjustWindowSize()
     if (screen) {
         auto screenSize = screen->availableSize();
         desiredWidth    = std::min(desiredWidth, screenSize.width() * 2 / 3);
-        desiredHeight   = std::min(desiredHeight, screenSize.height() * 2 / 3);
+        desiredHeight   = std::min(desiredHeight, screenSize.height() * 4 / 5);
     }
     resize(desiredWidth, desiredHeight);
 }

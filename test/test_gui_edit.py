@@ -1,4 +1,13 @@
-# -*- Python -*-
+## -*- Python -*- ######################################################################
+## LAMMPS-GUI - A Graphical Tool to Learn and Explore the LAMMPS MD Simulation Software
+##
+## Copyright (c) 2023, 2024, 2025, 2026  Axel Kohlmeyer
+##
+## Documentation: https://lammps-gui.lammps.org/
+## Contact: akohlmey@gmail.com
+##
+## This software is distributed under the GNU General Public License version 2 or later.
+########################################################################################
 
 import os
 import pyautogui
