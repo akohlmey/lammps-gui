@@ -367,7 +367,6 @@ ImageViewer::ImageViewer(const QString &fileName, LammpsWrapper *_lammps, QWidge
     auto *atomviz = new QPushButton("&Atoms");
     atomviz->setToolTip("Open dialog for Atom and Bond settings");
     atomviz->setObjectName("atoms");
-    atomviz->setVisible(false); // FIXME: hide button until implementation has started
 
     auto *fixviz = new QPushButton("Fi&xes");
     fixviz->setToolTip("Open dialog for visualizing graphics from fixes");
