@@ -1199,11 +1199,14 @@ void ImageViewer::fix_settings()
     title->setLineWidth(1);
     title->setMargin(TITLE_MARGIN);
 
-    int idx      = 0;
-    int n        = 0;
-    auto *layout = new QGridLayout;
-    layout->addWidget(title, idx++, n, 1, 8, Qt::AlignHCenter);
-    layout->addWidget(new QHline, idx++, n, 1, 8);
+    int idx               = 0;
+    int n                 = 0;
+    constexpr int MAXCOLS = 8;
+    auto *layout          = new QGridLayout;
+    layout->addWidget(title, idx++, n, 1, MAXCOLS, Qt::AlignHCenter);
+    layout->addWidget(new QHline, idx++, n, 1, MAXCOLS);
+    for (int i = 0; i < MAXCOLS; ++i)
+        layout->setColumnStretch(i, 2.0);
 
     layout->addWidget(new QLabel("Fix ID:"), idx, n++, 1, 1, Qt::AlignHCenter);
     layout->addWidget(new QLabel("Fix style:"), idx, n++, 1, 1, Qt::AlignHCenter);
@@ -1213,7 +1216,7 @@ void ImageViewer::fix_settings()
     layout->addWidget(new QLabel("Opacity:"), idx, n++, Qt::AlignHCenter);
     layout->addWidget(new QLabel("Flag #1:"), idx, n++, Qt::AlignHCenter);
     layout->addWidget(new QLabel("Flag #2:"), idx++, n++, Qt::AlignHCenter);
-    layout->addWidget(new QHline, idx++, 0, 1, 8);
+    layout->addWidget(new QHline, idx++, 0, 1, MAXCOLS);
 
     auto *colorcompleter = new QColorCompleter;
     auto *colorvalidator = new QColorValidator;
@@ -1257,7 +1260,7 @@ void ImageViewer::fix_settings()
         layout->addWidget(flag2, idx, n++);
         ++idx;
     }
-    layout->addWidget(new QHline, idx++, 0, 1, 8);
+    layout->addWidget(new QHline, idx++, 0, 1, MAXCOLS);
 
     auto *cancel = new QPushButton("&Cancel");
     auto *apply  = new QPushButton("&Apply");
@@ -1326,9 +1329,10 @@ void ImageViewer::region_settings()
     title->setLineWidth(1);
     title->setMargin(TITLE_MARGIN);
 
+    constexpr int MAXCOLS = 7;
     auto *layout = new QGridLayout;
-    layout->addWidget(title, idx++, n, 1, 7, Qt::AlignHCenter);
-    layout->addWidget(new QHline, idx++, n, 1, 7);
+    layout->addWidget(title, idx++, n, 1, MAXCOLS, Qt::AlignHCenter);
+    layout->addWidget(new QHline, idx++, n, 1, MAXCOLS);
 
     layout->addWidget(new QLabel("Region ID:"), idx, n++, Qt::AlignHCenter);
     layout->addWidget(new QLabel("Show:"), idx, n++, Qt::AlignHCenter);
@@ -1337,7 +1341,7 @@ void ImageViewer::region_settings()
     layout->addWidget(new QLabel("Size:"), idx, n++, Qt::AlignHCenter);
     layout->addWidget(new QLabel("# Points:"), idx, n++, Qt::AlignHCenter);
     layout->addWidget(new QLabel("Opacity:"), idx++, n++, Qt::AlignHCenter);
-    layout->addWidget(new QHline, idx++, 0, 1, 7);
+    layout->addWidget(new QHline, idx++, 0, 1, MAXCOLS);
 
     auto *colorcompleter = new QColorCompleter;
     auto *colorvalidator = new QColorValidator;
@@ -1385,7 +1389,7 @@ void ImageViewer::region_settings()
         layout->addWidget(trans, idx, n++);
         ++idx;
     }
-    layout->addWidget(new QHline, idx++, 0, 1, 7);
+    layout->addWidget(new QHline, idx++, 0, 1, MAXCOLS);
 
     auto *cancel = new QPushButton("&Cancel");
     auto *apply  = new QPushButton("&Apply");
