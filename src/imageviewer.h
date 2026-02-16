@@ -134,6 +134,11 @@ private:
     QString last_dump_cmd;                       ///< Last executed dump command
     int xsize, ysize;                            ///< Image dimensions in pixels
     int hrot, vrot;                              ///< Horizontal and vertical rotation angles
+    double bodydiam;                             ///< bflag1 setting (diameter)
+    int bodyflag;                                ///< bflag2 setting (cylinder, triangle or both)
+    double linediam;                             ///< linewidth setting (diameter)
+    double tridiam;                              ///< lflag1 setting (diameter)
+    int triflag;                                 ///< lflag2 setting (cylinder, triangle or both)
     double zoom;                                 ///< Zoom level
     double vdwfactor;                            ///< Van der Waals radius scaling factor
     double shinyfactor;                          ///< Shininess/specular factor
@@ -155,6 +160,10 @@ private:
     bool showaxes;                               ///< Show coordinate axes flag
     bool antialias;                              ///< Antialiasing enabled flag
     bool usessao;                                ///< SSAO enabled flag
+    bool showbodies;                             ///< Show bodies if atom style supports it
+    bool showellipsoids;                         ///< Show ellipsoids if atom style supports it
+    bool showlines;                              ///< Show lines if atom style supports it
+    bool showtris;                               ///< Show tris if atom style supports it
     bool useelements;                            ///< Use element properties flag
     bool usediameter;                            ///< Use diameter attribute flag
     bool usesigma;                               ///< Use sigma attribute flag

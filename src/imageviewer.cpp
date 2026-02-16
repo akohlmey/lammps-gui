@@ -19,6 +19,7 @@
 
 #include <QAction>
 #include <QApplication>
+#include <QButtonGroup>
 #include <QCheckBox>
 #include <QClipboard>
 #include <QDir>
@@ -237,31 +238,40 @@ ImageViewer::ImageViewer(const QString &fileName, LammpsWrapper *_lammps, QWidge
 
     QSettings settings;
     settings.beginGroup("snapshot");
-    xsize       = settings.value("xsize", "600").toInt();
-    ysize       = settings.value("ysize", "600").toInt();
-    zoom        = settings.value("zoom", 1.0).toDouble();
-    hrot        = settings.value("hrot", 60).toInt();
-    vrot        = settings.value("vrot", 30).toInt();
-    shinyfactor = settings.value("shinystyle", true).toBool() ? SHINY_ON : SHINY_OFF;
-    vdwfactor   = settings.value("vdwstyle", false).toBool() ? VDW_ON : VDW_OFF;
-    autobond    = settings.value("autobond", false).toBool();
-    bondcutoff  = settings.value("bondcutoff", 1.6).toDouble();
-    showbox     = settings.value("box", true).toBool();
-    showsubbox  = false;
-    boxdiam     = settings.value("boxdiam", 0.025).toDouble();
-    subboxdiam  = boxdiam;
-    boxcolor    = settings.value("boxcolor", "yellow").toString();
-    showaxes    = settings.value("axes", false).toBool();
-    usessao     = settings.value("ssao", false).toBool();
-    antialias   = settings.value("antialias", false).toBool();
-    axeslen     = settings.value("axeslen", 0.5).toDouble();
-    axesdiam    = settings.value("axesdiam", 0.05).toDouble();
-    axestrans   = 1.0;
-    axesloc     = "yes"; // = "lowerleft"
-    boxtrans    = 1.0;
-    backcolor   = settings.value("backcolor", "black").toString();
-    backcolor2  = settings.value("backcolor2", "white").toString();
-    ssaoval     = 0.6;
+    xsize          = settings.value("xsize", "600").toInt();
+    ysize          = settings.value("ysize", "600").toInt();
+    zoom           = settings.value("zoom", 1.0).toDouble();
+    hrot           = settings.value("hrot", 60).toInt();
+    vrot           = settings.value("vrot", 30).toInt();
+    shinyfactor    = settings.value("shinystyle", true).toBool() ? SHINY_ON : SHINY_OFF;
+    vdwfactor      = settings.value("vdwstyle", false).toBool() ? VDW_ON : VDW_OFF;
+    autobond       = settings.value("autobond", false).toBool();
+    bondcutoff     = settings.value("bondcutoff", 1.6).toDouble();
+    showbox        = settings.value("box", true).toBool();
+    showsubbox     = false;
+    boxdiam        = settings.value("boxdiam", 0.025).toDouble();
+    subboxdiam     = boxdiam;
+    boxcolor       = settings.value("boxcolor", "yellow").toString();
+    showaxes       = settings.value("axes", false).toBool();
+    usessao        = settings.value("ssao", false).toBool();
+    antialias      = settings.value("antialias", false).toBool();
+    axeslen        = settings.value("axeslen", 0.5).toDouble();
+    axesdiam       = settings.value("axesdiam", 0.05).toDouble();
+    axestrans      = 1.0;
+    axesloc        = "yes"; // = "lowerleft"
+    boxtrans       = 1.0;
+    backcolor      = settings.value("backcolor", "black").toString();
+    backcolor2     = settings.value("backcolor2", "white").toString();
+    ssaoval        = 0.6;
+    showbodies     = true;
+    bodydiam       = 0.2;
+    bodyflag       = 3;
+    showellipsoids = true;
+    showlines      = true;
+    linediam       = 0.2;
+    showtris       = true;
+    tridiam        = 0.2;
+    triflag        = 3;
     xcenter = ycenter = zcenter = 0.5;
 
     if (lammps->extract_setting("dimension") == 2) zcenter = 0.0;
@@ -1019,7 +1029,160 @@ void ImageViewer::global_settings()
     createImage();
 }
 
-void ImageViewer::atom_settings() {}
+void ImageViewer::atom_settings()
+{
+    QDialog setview;
+    setview.setWindowTitle(QString("LAMMPS-GUI - Atom and Bond settings for images"));
+    setview.setWindowIcon(QIcon(":/icons/lammps-gui-icon-128x128.png"));
+    setview.setMinimumSize(100, 100);
+    setview.setContentsMargins(5, 5, 5, 5);
+    setview.setSizePolicy(QSizePolicy::MinimumExpanding, QSizePolicy::MinimumExpanding);
+
+    auto *title = new QLabel("Atom and Bond settings for images:");
+    title->setFrameStyle(QFrame::Panel | QFrame::Raised);
+    title->setLineWidth(1);
+    title->setMargin(TITLE_MARGIN);
+    title->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Minimum);
+
+    auto *colorcompleter = new QColorCompleter;
+    auto *colorvalidator = new QColorValidator;
+    auto *transvalidator = new QDoubleValidator(0.0, 1.0, 5);
+    QFontMetrics metrics(setview.fontMetrics());
+
+    auto *layout          = new QGridLayout;
+    int idx               = 0;
+    int n                 = 0;
+    constexpr int MAXCOLS = 7;
+    layout->addWidget(title, idx++, n, 1, MAXCOLS, Qt::AlignCenter);
+    layout->addWidget(new QHline, idx++, n, 1, MAXCOLS);
+    for (int i = 0; i < MAXCOLS; ++i)
+        layout->setColumnStretch(i, 2.0);
+
+    n = 0;
+
+    auto *bodybutton = new QCheckBox("Bodies ", this);
+    bodybutton->setCheckState(showbodies ? Qt::Checked : Qt::Unchecked);
+    layout->addWidget(bodybutton, idx, n++, 1, 1);
+    layout->addWidget(new QLabel("Diameter:"), idx, n++, 1, 1);
+    auto *bdiam = new QLineEdit(QString::number(bodydiam));
+    bdiam->setValidator(new QDoubleValidator(0.1, 10.0, 100, this));
+    layout->addWidget(bdiam, idx, n++, 1, 1);
+    auto *bstyle = new QLabel("Style:");
+    bstyle->setAlignment(Qt::AlignRight | Qt::AlignVCenter);
+    layout->addWidget(bstyle, idx, n++, 1, 1);
+    auto *bgroup   = new QButtonGroup;
+    auto *bcbutton = new QRadioButton("Cylinders", this);
+    bcbutton->setChecked(bodyflag == 2);
+    bgroup->addButton(bcbutton);
+    layout->addWidget(bcbutton, idx, n++, 1, 1);
+    auto *btbutton = new QRadioButton("Triangles", this);
+    btbutton->setChecked(bodyflag == 1);
+    bgroup->addButton(btbutton);
+    layout->addWidget(btbutton, idx, n++, 1, 1);
+    auto *bbbutton = new QRadioButton("Both", this);
+    bbbutton->setChecked(bodyflag == 3);
+    bgroup->addButton(bbbutton);
+    layout->addWidget(bbbutton, idx++, n++, 1, 1);
+    if (lammps->extract_setting("body_flag") != 1) {
+        bodybutton->setEnabled(false);
+        bdiam->setEnabled(false);
+        bcbutton->setEnabled(false);
+        btbutton->setEnabled(false);
+        bbbutton->setEnabled(false);
+    }
+
+    n = 0;
+
+    auto *linebutton = new QCheckBox("Lines ", this);
+    linebutton->setCheckState(showlines ? Qt::Checked : Qt::Unchecked);
+    layout->addWidget(linebutton, idx, n++, 1, 1);
+    layout->addWidget(new QLabel("Diameter:"), idx, n++, 1, 1);
+    auto *ldiam = new QLineEdit(QString::number(linediam));
+    ldiam->setValidator(new QDoubleValidator(0.1, 10.0, 100, this));
+    layout->addWidget(ldiam, idx++, n++, 1, 1);
+    if (lammps->extract_setting("line_flag") != 1) {
+        linebutton->setEnabled(false);
+        ldiam->setEnabled(false);
+    }
+
+    n = 0;
+
+    auto *tributton = new QCheckBox("Triangles ", this);
+    tributton->setCheckState(showtris ? Qt::Checked : Qt::Unchecked);
+    layout->addWidget(tributton, idx, n++, 1, 1);
+    layout->addWidget(new QLabel("Diameter:"), idx, n++, 1, 1);
+    auto *tdiam = new QLineEdit(QString::number(tridiam));
+    tdiam->setValidator(new QDoubleValidator(0.1, 10.0, 100, this));
+    layout->addWidget(tdiam, idx, n++, 1, 1);
+    auto *tstyle = new QLabel("Style:");
+    tstyle->setAlignment(Qt::AlignRight | Qt::AlignVCenter);
+    layout->addWidget(tstyle, idx, n++, 1, 1);
+    auto *tgroup   = new QButtonGroup;
+    auto *tcbutton = new QRadioButton("Cylinders", this);
+    tcbutton->setChecked(triflag == 1);
+    tgroup->addButton(tcbutton);
+    layout->addWidget(tcbutton, idx, n++, 1, 1);
+    auto *ttbutton = new QRadioButton("Triangles", this);
+    ttbutton->setChecked(triflag == 2);
+    tgroup->addButton(ttbutton);
+    layout->addWidget(ttbutton, idx, n++, 1, 1);
+    auto *tbbutton = new QRadioButton("Both", this);
+    tbbutton->setChecked(triflag == 3);
+    tgroup->addButton(tbbutton);
+    layout->addWidget(tbbutton, idx++, n++, 1, 1);
+    if (lammps->extract_setting("tri_flag") != 1) {
+        tributton->setEnabled(false);
+        tdiam->setEnabled(false);
+        tcbutton->setEnabled(false);
+        ttbutton->setEnabled(false);
+        tbbutton->setEnabled(false);
+    }
+
+    n = 0;
+    layout->addWidget(new QHline, idx++, n, 1, MAXCOLS);
+    auto *cancel = new QPushButton("&Cancel");
+    auto *apply  = new QPushButton("&Apply");
+    cancel->setAutoDefault(false);
+    apply->setAutoDefault(true);
+    apply->setDefault(true);
+    layout->addWidget(cancel, idx, 0, 1, MAXCOLS / 2, Qt::AlignHCenter);
+    layout->addWidget(apply, idx, MAXCOLS / 2, 1, MAXCOLS / 2, Qt::AlignHCenter);
+    connect(cancel, &QPushButton::released, &setview, &QDialog::reject);
+    connect(apply, &QPushButton::released, &setview, &QDialog::accept);
+    setview.setLayout(layout);
+
+    int rv = setview.exec();
+
+    // return immediately on cancel
+    if (!rv) return;
+
+    // retrieve and apply data
+    showbodies = bodybutton->isChecked();
+    if (bdiam->hasAcceptableInput()) bodydiam = bdiam->text().toDouble();
+    if (bcbutton->isChecked()) {
+        bodyflag = 2;
+    } else if (btbutton->isChecked()) {
+        bodyflag = 1;
+    } else if (bbbutton->isChecked()) {
+        bodyflag = 3;
+    }
+
+    showlines = linebutton->isChecked();
+    if (ldiam->hasAcceptableInput()) linediam = ldiam->text().toDouble();
+
+    showlines = tributton->isChecked();
+    if (ldiam->hasAcceptableInput()) tridiam = tdiam->text().toDouble();
+    if (tcbutton->isChecked()) {
+        triflag = 1;
+    } else if (ttbutton->isChecked()) {
+        triflag = 2;
+    } else if (tbbutton->isChecked()) {
+        triflag = 3;
+    }
+
+    // update image with new settings
+    createImage();
+}
 
 void ImageViewer::fix_settings()
 {
@@ -1432,12 +1595,12 @@ void ImageViewer::createImage()
     else
         dumpcmd += blank + settings.value("diameter", "type").toString();
 
-    if (lammps->extract_setting("body_flag") == 1)
-        dumpcmd += QString(" body type 0 1");
-    else if (lammps->extract_setting("line_flag") == 1)
-        dumpcmd += QString(" line type 0 0.2");
-    else if (lammps->extract_setting("tri_flag") == 1)
-        dumpcmd += QString(" tri type 1 0.2");
+    if (showbodies && (lammps->extract_setting("body_flag") == 1))
+        dumpcmd += QString(" body type %1 %2").arg(bodydiam).arg(bodyflag);
+    else if (showlines && (lammps->extract_setting("line_flag") == 1))
+        dumpcmd += QString(" line type %1").arg(linediam);
+    else if (showtris && (lammps->extract_setting("tri_flag") == 1))
+        dumpcmd += QString(" tri type %1 %2").arg(triflag).arg(tridiam);
     else if ((lammps->extract_setting("ellipsoid_flag") == 1) && (lammps->version() > 20260210)) {
         // available since 11 February 2026 release
         dumpcmd += QString(" ellipsoid type 1 3 0.2");
