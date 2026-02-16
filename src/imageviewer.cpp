@@ -382,7 +382,6 @@ ImageViewer::ImageViewer(const QString &fileName, LammpsWrapper *_lammps, QWidge
     fixviz->setToolTip("Open dialog for visualizing graphics from fixes");
     fixviz->setObjectName("fixes");
     fixviz->setEnabled(false);
-    fixviz->setVisible(false); // FIXME: hide button until implementation issues have been resolved
     auto *regviz = new QPushButton("&Regions");
     regviz->setToolTip("Open dialog for visualizing regions");
     regviz->setObjectName("regions");
@@ -1665,9 +1664,11 @@ void ImageViewer::createImage()
         }
     }
 
+    bool dofixes = false;
     if (fixes.size() > 0) {
         for (const auto &fix : fixes) {
             if (fix.second->enabled) {
+                dofixes = true;
                 QString id(fix.first.c_str());
                 switch (fix.second->colorstyle) {
                     case TYPE:
@@ -1688,7 +1689,7 @@ void ImageViewer::createImage()
     }
 
     dumpcmd += QString(" center s %1 %2 %3").arg(xcenter).arg(ycenter).arg(zcenter);
-    dumpcmd += " noinit";
+    if (!dofixes) dumpcmd += " noinit";
     dumpcmd += " modify boxcolor " + boxcolor;
     dumpcmd += " backcolor " + backcolor;
     if (lammps->version() > 20260210) {
