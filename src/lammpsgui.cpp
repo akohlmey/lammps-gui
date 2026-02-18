@@ -844,12 +844,14 @@ void LammpsGui::open_file(const QString &fileName)
                              "Cannot open file " + path.absoluteFilePath() + ":\n " +
                                  file.errorString() +
                                  ".\n\nWill create new file on saving editor buffer.");
+        ui->textEdit->document()->clear();
         ui->textEdit->document()->setPlainText(citeme);
         ui->textEdit->document()->setModified(false);
         ui->textEdit->setStyleSheet(bannerstyle);
     } else {
         QTextStream in(&file);
         QString text = in.readAll();
+        ui->textEdit->document()->clear();
         ui->textEdit->document()->setPlainText(text);
         ui->textEdit->moveCursor(QTextCursor::Start, QTextCursor::MoveAnchor);
         file.close();
