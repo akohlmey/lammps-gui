@@ -24,6 +24,7 @@
 #include <QClipboard>
 #include <QDir>
 #include <QDoubleValidator>
+#include <QEvent>
 #include <QFile>
 #include <QFileDialog>
 #include <QFileInfo>
@@ -34,6 +35,7 @@
 #include <QImage>
 #include <QImageReader>
 #include <QIntValidator>
+#include <QKeyEvent>
 #include <QKeySequence>
 #include <QLabel>
 #include <QLineEdit>
@@ -532,6 +534,13 @@ ImageViewer::ImageViewer(const QString &fileName, LammpsWrapper *_lammps, QWidge
     setLayout(mainLayout);
     update_fixes();
     update_regions();
+    menuBar->setFocus();
+
+    installEventFilter(xval);
+    installEventFilter(yval);
+    installEventFilter(combo);
+    installEventFilter(molbox);
+    installEventFilter(this);
 
     // set window flags for window manager
     auto flags = windowFlags();
@@ -1442,7 +1451,7 @@ void ImageViewer::region_settings()
     title->setMargin(TITLE_MARGIN);
 
     constexpr int MAXCOLS = 7;
-    auto *layout = new QGridLayout;
+    auto *layout          = new QGridLayout;
     layout->addWidget(title, idx++, n, 1, MAXCOLS, Qt::AlignHCenter);
     layout->addWidget(new QHline, idx++, n, 1, MAXCOLS);
 
@@ -1574,6 +1583,30 @@ void ImageViewer::change_molecule(int)
     }
 
     createImage();
+}
+
+// intercept events
+bool ImageViewer::eventFilter(QObject *watched, QEvent *event)
+{
+    if (event->type() == QEvent::KeyPress) {
+        QKeyEvent *kev = static_cast<QKeyEvent *>(event);
+        if ((kev->key() == Qt::Key_G) && (kev->modifiers() == Qt::AltModifier)) {
+            auto *box = findChild<QComboBox *>("group");
+            if (box) {
+                box->setFocus();
+                box->showPopup();
+                return true;
+            }
+        } else if ((kev->key() == Qt::Key_M) && (kev->modifiers() == Qt::AltModifier)) {
+            auto *box = findChild<QComboBox *>("molecule");
+            if (box) {
+                box->setFocus();
+                box->showPopup();
+                return true;
+            }
+        }
+    }
+    return QDialog::event(event);
 }
 
 // This function creates a visualization of the current system using the

@@ -22,6 +22,7 @@
 class QAction;
 class QMenuBar;
 class QDialogButtonBox;
+class QEvent;
 class QLabel;
 class QObject;
 class QScrollArea;
@@ -103,6 +104,9 @@ public:
      * visualization parameters and updates the displayed image.
      */
     void createImage();
+
+protected:
+    bool eventFilter(QObject *watched, QEvent *event) override;
 
 private:
     void createActions();                   ///< Setup menu actions
