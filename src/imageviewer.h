@@ -16,6 +16,7 @@
 #include <QDialog>
 #include <QImage>
 #include <QString>
+#include <QStringList>
 #include <map>
 
 class QAction;
@@ -27,7 +28,7 @@ class QScrollArea;
 class QStatusBar;
 class LammpsWrapper;
 class QComboBox;
-class FixInfo;
+class ImageInfo;
 class RegionInfo;
 
 /**
@@ -127,6 +128,8 @@ private:
     QAction *zoomOutAct;    ///< Zoom out action
     QAction *normalSizeAct; ///< Normal size action
 
+    QStringList image_computes;                  ///< list of computes supporting dump image
+    QStringList image_fixes;                     ///< list of fixes supporting dump image
     LammpsWrapper *lammps;                       ///< LAMMPS interface for image generation
     QString group;                               ///< Current atom group
     QString molecule;                            ///< Current molecule selection
@@ -168,8 +171,9 @@ private:
     bool usediameter;                            ///< Use diameter attribute flag
     bool usesigma;                               ///< Use sigma attribute flag
     bool autobond;                               ///< Auto-detect bonds flag
-    std::map<std::string, FixInfo *> fixes;      ///< Fix graphics definitions
-    std::map<std::string, RegionInfo *> regions; ///< Region definitions
+    std::map<std::string, ImageInfo *> computes; ///< Compute graphics settings
+    std::map<std::string, ImageInfo *> fixes;    ///< Fix graphics settings
+    std::map<std::string, RegionInfo *> regions; ///< Region settings
 };
 #endif
 
