@@ -184,8 +184,8 @@ SlideShow::SlideShow(const QString &fileName, QWidget *parent) :
     current     = 0;
 
     scrollArea->setVisible(true);
-    adjustWindowSize();
     setLayout(mainLayout);
+    adjustWindowSize();
 
     // set window flags for window manager
     auto flags = windowFlags();
@@ -242,7 +242,6 @@ void SlideShow::loadImage(int idx)
                                    .arg(idx + 1)
                                    .arg(imagefiles.size())
                                    .arg(imagefiles[idx]));
-            adjustSize();
             current = idx;
             break;
         }

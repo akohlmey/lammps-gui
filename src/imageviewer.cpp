@@ -529,9 +529,9 @@ ImageViewer::ImageViewer(const QString &fileName, LammpsWrapper *_lammps, QWidge
     doanti->setChecked(antialias);
 
     scrollArea->setVisible(true);
-    adjustWindowSize();
     updateActions();
     setLayout(mainLayout);
+    adjustWindowSize();
     update_fixes();
     update_regions();
     menuBar->setFocus();
