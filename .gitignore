@@ -100,8 +100,13 @@ Thumbs.db
 *.pyc
 /__pycache__
 
+# Visual Studio internal files
+/.vs
+/CMakeSettings.json
+
 # build folders
 /build*
+/out
 
 # CodeQL build artifacts
 /_codeql_*
