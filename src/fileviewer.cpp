@@ -108,7 +108,6 @@ FileViewer::FileViewer(const QString &_filename, const QString &title, QWidget *
     flags &= ~Qt::Dialog;
     flags |= Qt::CustomizeWindowHint;
     flags |= Qt::WindowMinimizeButtonHint;
-    flags &= ~Qt::WindowMaximizeButtonHint;
     setWindowFlags(flags);
 }
 

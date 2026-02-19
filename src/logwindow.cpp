@@ -91,7 +91,6 @@ LogWindow::LogWindow(const QString &_filename, QWidget *parent) :
     flags &= ~Qt::Dialog;
     flags |= Qt::CustomizeWindowHint;
     flags |= Qt::WindowMinimizeButtonHint;
-    flags &= ~Qt::WindowMaximizeButtonHint;
     setWindowFlags(flags);
 }
 

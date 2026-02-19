@@ -193,7 +193,6 @@ SlideShow::SlideShow(const QString &fileName, QWidget *parent) :
     flags &= ~Qt::Dialog;
     flags |= Qt::CustomizeWindowHint;
     flags |= Qt::WindowMinimizeButtonHint;
-    flags &= ~Qt::WindowMaximizeButtonHint;
     setWindowFlags(flags);
 }
 
