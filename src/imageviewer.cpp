@@ -300,7 +300,7 @@ ImageViewer::ImageViewer(const QString &fileName, LammpsWrapper *_lammps, QWidge
     settings.endGroup();
 
     auto pix   = QPixmap(":/icons/emblem-photos.png");
-    auto bsize = QFontMetrics(QApplication::font()).size(Qt::TextSingleLine, "Height:  200");
+    auto bsize = QFontMetrics(QApplication::font()).size(Qt::TextSingleLine, "Height:  200xxxx");
 
     auto *renderstatus = new QLabel(QString());
     renderstatus->setPixmap(pix.scaled(22, 22, Qt::KeepAspectRatio));
