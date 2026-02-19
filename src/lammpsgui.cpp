@@ -1729,7 +1729,9 @@ void LammpsGui::about()
         info       = capturer->GetCapture();
         auto start = info.find("LAMMPS version:");
         auto end   = info.find("Info-Info-Info", start);
-        info       = std::string(info, start, end - start);
+        // protect from a failed or incomplete capture
+        if ((start != std::string::npos) && (end != std::string::npos))
+            info       = std::string(info, start, end - start);
     }
 
     info += citeme.toStdString();
