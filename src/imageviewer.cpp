@@ -165,8 +165,8 @@ constexpr int DEFAULT_BUFLEN      = 1024;
 constexpr int DEFAULT_NPOINTS     = 100000;
 constexpr double DEFAULT_DIAMETER = 0.2;
 constexpr double DEFAULT_OPACITY  = 0.5;
-constexpr int EXTRA_WIDTH         = 140;
-constexpr int EXTRA_HEIGHT        = 100;
+constexpr int EXTRA_WIDTH         = 150;
+constexpr int EXTRA_HEIGHT        = 105;
 constexpr int TITLE_MARGIN        = 10;
 
 enum { FRAME, FILLED, TRANSPARENT, POINTS };
