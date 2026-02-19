@@ -167,9 +167,10 @@ SlideShow::SlideShow(const QString &fileName, QWidget *parent) :
     navLayout->addWidget(imgrotccw);
     navLayout->addWidget(imgfliph);
     navLayout->addWidget(imgflipv);
+    navLayout->addSpacerItem(new QSpacerItem(10, 10, QSizePolicy::Expanding, QSizePolicy::Minimum));
 
-    mainLayout->addWidget(scrollArea, 10);
     mainLayout->addLayout(navLayout);
+    mainLayout->addWidget(scrollArea, 10);
 
     botLayout->addWidget(imageName);
     botLayout->addWidget(buttonBox);
