@@ -1606,7 +1606,7 @@ bool ImageViewer::eventFilter(QObject *watched, QEvent *event)
             }
         }
     }
-    return QDialog::event(event);
+    return QDialog::eventFilter(watched, event);
 }
 
 // This function creates a visualization of the current system using the
