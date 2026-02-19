@@ -2044,9 +2044,7 @@ void ImageViewer::update_fixes()
     }
     oldkeys.clear();
     for (const auto &istyle : fixes) {
-        if ((!lammps->has_id("fix", istyle.first.c_str())) &&
-            (!lammps->has_id("compute", istyle.first.c_str())))
-            oldkeys.insert(istyle.first);
+        if (!lammps->has_id("fix", istyle.first.c_str())) oldkeys.insert(istyle.first);
     }
     for (const auto &id : oldkeys) {
         delete fixes[id];
