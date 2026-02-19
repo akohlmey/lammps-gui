@@ -54,6 +54,18 @@
   </provides>
 
   <releases>
+    <release version="1.9.2" timestamp="1771473565">
+      <description>
+        Add dialog to enable and configure atom / particle visualization settings
+        Add dialog to enable and configure graphics objects from compute and fixes
+        Update layout of Image and SlideShow viewers
+        Update docs for changes to Image and SlideShow viewers
+        Update help index table
+        Add table for know fixes and computes with graphics data
+        Update resource file syntax for better Windows compatibility
+        Fix several small glitches and avoid unexpected crashes
+      </description>
+    </release>
     <release version="1.9.1" timestamp="1766154745">
       <description>
         Add support for mirroring and rotating images to slideshow viewer
