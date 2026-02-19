@@ -446,9 +446,9 @@ ImageViewer::ImageViewer(const QString &fileName, LammpsWrapper *_lammps, QWidge
     // hide item initially
     menuLayout->itemAt(3)->widget()->setObjectName("AtomLabel");
     menuLayout->itemAt(3)->widget()->hide();
-    menuLayout->addWidget(new QLabel(" Width: "));
+    menuLayout->addWidget(new QLabel(" <u>W</u>idth: "));
     menuLayout->addWidget(xval);
-    menuLayout->addWidget(new QLabel(" Height: "));
+    menuLayout->addWidget(new QLabel(" <u>H</u>eight: "));
     menuLayout->addWidget(yval);
     menuLayout->insertStretch(-1, 50);
     buttonLayout->addWidget(dummy2);
@@ -470,9 +470,9 @@ ImageViewer::ImageViewer(const QString &fileName, LammpsWrapper *_lammps, QWidge
     buttonLayout->addWidget(reset);
     buttonLayout->insertStretch(-1, 1);
     settingsLayout->addWidget(new QHline);
-    settingsLayout->addWidget(new QLabel("Group:"));
+    settingsLayout->addWidget(new QLabel("<u>G</u>roup:"));
     settingsLayout->addWidget(combo);
-    settingsLayout->addWidget(new QLabel("Molecule:"));
+    settingsLayout->addWidget(new QLabel("<u>M</u>olecule:"));
     settingsLayout->addWidget(molbox);
     settingsLayout->addWidget(new QHline);
     settingsLayout->addWidget(setviz);
@@ -534,10 +534,15 @@ ImageViewer::ImageViewer(const QString &fileName, LammpsWrapper *_lammps, QWidge
     update_regions();
     menuBar->setFocus();
 
-    installEventFilter(xval);
-    installEventFilter(yval);
-    installEventFilter(combo);
-    installEventFilter(molbox);
+    // make Alt-G, Alt-H, Alt-M, and Alt-W hotkeys work for comboboxes and spinboxes
+    xval->installEventFilter(this);
+    yval->installEventFilter(this);
+    combo->installEventFilter(this);
+    for (auto &obj : combo->children())
+        obj->installEventFilter(this);
+    molbox->installEventFilter(this);
+    for (auto &obj : molbox->children())
+        obj->installEventFilter(this);
     installEventFilter(this);
 
     // set window flags for window manager
@@ -1589,19 +1594,55 @@ bool ImageViewer::eventFilter(QObject *watched, QEvent *event)
     if (event->type() == QEvent::KeyPress) {
         QKeyEvent *kev = static_cast<QKeyEvent *>(event);
         if ((kev->key() == Qt::Key_G) && (kev->modifiers() == Qt::AltModifier)) {
-            auto *box = findChild<QComboBox *>("group");
+            auto *box = findChild<QComboBox *>("molecule");
+            if (box) box->hidePopup();
+
+            box = findChild<QComboBox *>("group");
             if (box) {
                 box->setFocus();
                 box->showPopup();
                 return true;
             }
         } else if ((kev->key() == Qt::Key_M) && (kev->modifiers() == Qt::AltModifier)) {
-            auto *box = findChild<QComboBox *>("molecule");
+            auto *box = findChild<QComboBox *>("group");
+            if (box) box->hidePopup();
+
+            box = findChild<QComboBox *>("molecule");
             if (box) {
                 box->setFocus();
                 box->showPopup();
                 return true;
             }
+        } else if ((kev->key() == Qt::Key_W) && (kev->modifiers() == Qt::AltModifier)) {
+            auto *combo = findChild<QComboBox *>("molecule");
+            if (combo) combo->hidePopup();
+            combo = findChild<QComboBox *>("group");
+            if (combo) combo->hidePopup();
+
+            auto *box = findChild<QSpinBox *>("xsize");
+            if (box) {
+                box->setFocus();
+                box->selectAll();
+                return true;
+            }
+        } else if ((kev->key() == Qt::Key_H) && (kev->modifiers() == Qt::AltModifier)) {
+            auto *combo = findChild<QComboBox *>("molecule");
+            if (combo) combo->hidePopup();
+            combo = findChild<QComboBox *>("group");
+            if (combo) combo->hidePopup();
+
+            auto *box = findChild<QSpinBox *>("ysize");
+            if (box) {
+                box->setFocus();
+                box->selectAll();
+                return true;
+            }
+        } else if (kev->modifiers() == Qt::AltModifier) {
+            auto *combo = findChild<QComboBox *>("molecule");
+            if (combo) combo->hidePopup();
+            combo = findChild<QComboBox *>("group");
+            if (combo) combo->hidePopup();
+            setFocus();
         }
     }
     return QDialog::eventFilter(watched, event);
