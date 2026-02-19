@@ -1376,7 +1376,7 @@ void ImageViewer::fix_settings()
     if (!rv) return;
 
     // retrieve compute data from dialog and store in map
-    for (int idx = computes_offset; idx < computes_offset + computes.size(); ++idx) {
+    for (int idx = computes_offset; idx < computes_offset + (int)computes.size(); ++idx) {
         n          = 0;
         auto *item = layout->itemAtPosition(idx, n++);
         if (!item) continue;
@@ -1408,7 +1408,7 @@ void ImageViewer::fix_settings()
     }
 
     // retrieve fix data from dialog and store in map
-    for (int idx = fixes_offset; idx < fixes_offset + fixes.size(); ++idx) {
+    for (int idx = fixes_offset; idx < fixes_offset + (int)fixes.size(); ++idx) {
         n          = 0;
         auto *item = layout->itemAtPosition(idx, n++);
         if (!item) continue;
