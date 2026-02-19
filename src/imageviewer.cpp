@@ -227,11 +227,12 @@ ImageViewer::ImageViewer(const QString &fileName, LammpsWrapper *_lammps, QWidge
 {
     imageLabel->setBackgroundRole(QPalette::Base);
     imageLabel->setSizePolicy(QSizePolicy::Ignored, QSizePolicy::Ignored);
-    imageLabel->setScaledContents(true);
+    imageLabel->setScaledContents(false);
     imageLabel->minimumSizeHint();
 
     scrollArea->setBackgroundRole(QPalette::Dark);
     scrollArea->setWidget(imageLabel);
+    scrollArea->setSizePolicy(QSizePolicy::MinimumExpanding, QSizePolicy::MinimumExpanding);
     scrollArea->setVisible(false);
 
     auto *imageLayout    = new QHBoxLayout;
@@ -2059,16 +2060,37 @@ void ImageViewer::adjustWindowSize()
 {
     if (image.isNull()) return;
 
-    int desiredWidth  = image.width() + EXTRA_WIDTH;
-    int desiredHeight = image.height() + EXTRA_HEIGHT;
+    int desiredWidth  = image.width() + 2;
+    int desiredHeight = image.height() + 2;
+    int currentWidth  = scrollArea->size().width();
+    int currentHeight = scrollArea->size().height();
 
+    // do nothing if the scroll area is already large enough (don't shrink unexpectedly)
+    if ((currentWidth >= desiredWidth) && (currentHeight >= desiredHeight)) return;
+
+    // make sure the window is not scaled beyond a certain fraction of the screen
     auto *screen = QGuiApplication::primaryScreen();
     if (screen) {
         auto screenSize = screen->availableSize();
         desiredWidth    = std::min(desiredWidth, screenSize.width() * 2 / 3);
-        desiredHeight   = std::min(desiredHeight, screenSize.height() * 4 / 5);
+        desiredHeight   = std::min(desiredHeight, screenSize.height() * 10 / 9);
     }
-    resize(desiredWidth, desiredHeight);
+
+    // automaticall expand but don't shrink
+    desiredWidth  = std::max(desiredWidth, currentWidth);
+    desiredHeight = std::max(desiredHeight, currentHeight);
+
+    scrollArea->resize(image.width() + 2, image.height() + 2);
+    scrollArea->setMinimumSize(desiredWidth, desiredHeight);
+
+    // update layout, if available
+    auto *mainLayout = layout();
+    if (mainLayout) {
+        auto *item = mainLayout->itemAt(1);
+        if (item) item->invalidate();
+        mainLayout->update();
+    }
+    adjustSize();
 }
 
 void ImageViewer::update_fixes()
