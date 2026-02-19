@@ -188,8 +188,6 @@ public:
     {
     }
 
-    enum { FIX, COMPUTE };
-    int type;          ///< type of style (currently either FIX or COMPUTE)
     bool enabled;      ///< display graphics if true
     QString style;     ///< name of style
     int colorstyle;    ///< color style for graphics: TYPE, ELEMENT, CONSTANT
