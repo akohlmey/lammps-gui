@@ -1203,8 +1203,8 @@ void ImageViewer::atom_settings()
     showlines = linebutton->isChecked();
     if (ldiam->hasAcceptableInput()) linediam = ldiam->text().toDouble();
 
-    showlines = tributton->isChecked();
-    if (ldiam->hasAcceptableInput()) tridiam = tdiam->text().toDouble();
+    showtris = tributton->isChecked();
+    if (tdiam->hasAcceptableInput()) tridiam = tdiam->text().toDouble();
     if (tcbutton->isChecked()) {
         triflag = 1;
     } else if (ttbutton->isChecked()) {
