@@ -1103,7 +1103,7 @@ void ImageViewer::atom_settings()
     auto *bstyle = new QLabel("Style:");
     bstyle->setAlignment(Qt::AlignRight | Qt::AlignVCenter);
     layout->addWidget(bstyle, idx, n++, 1, 1);
-    auto *bgroup   = new QButtonGroup;
+    auto *bgroup   = new QButtonGroup(this);
     auto *bcbutton = new QRadioButton("Cylinders", this);
     bcbutton->setChecked(bodyflag == 2);
     bgroup->addButton(bcbutton);
@@ -1150,7 +1150,7 @@ void ImageViewer::atom_settings()
     auto *tstyle = new QLabel("Style:");
     tstyle->setAlignment(Qt::AlignRight | Qt::AlignVCenter);
     layout->addWidget(tstyle, idx, n++, 1, 1);
-    auto *tgroup   = new QButtonGroup;
+    auto *tgroup   = new QButtonGroup(this);
     auto *tcbutton = new QRadioButton("Cylinders", this);
     tcbutton->setChecked(triflag == 1);
     tgroup->addButton(tcbutton);
