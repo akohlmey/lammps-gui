@@ -101,7 +101,11 @@ SlideShow::SlideShow(const QString &fileName, QWidget *parent) :
     auto *totrash = new QPushButton(QIcon(":/icons/trash.png"), "");
     totrash->setToolTip("Delete all image files");
 
-    auto dsize  = QFontMetrics(QApplication::font()).size(Qt::TextSingleLine, "Delay  100");
+    auto dsize  = QFontMetrics(QApplication::font()).size(Qt::TextSingleLine, "Delay:  100");
+    // need some extra space on Windows
+#if Q_OS_WIN32
+    dsize = dsize * 3 / 2;
+#endif
     auto *delay = new QSpinBox;
     delay->setRange(10, 10000);
     delay->setStepType(QAbstractSpinBox::AdaptiveDecimalStepType);
@@ -112,6 +116,8 @@ SlideShow::SlideShow(const QString &fileName, QWidget *parent) :
 
     auto *gofirst = new QPushButton(QIcon(":/icons/go-first.png"), "");
     gofirst->setToolTip("Go to first Image");
+    gofirst->setObjectName("first");
+    gofirst->setCheckable(false);
     auto *goprev = new QPushButton(QIcon(":/icons/go-previous-2.png"), "");
     goprev->setToolTip("Go to previous Image");
     auto *goplay = new QPushButton(QIcon(":/icons/media-playback-start-2.png"), "");
@@ -165,26 +171,26 @@ SlideShow::SlideShow(const QString &fileName, QWidget *parent) :
     connect(imgflipv, &QPushButton::released, this, &SlideShow::do_image_flip_v);
 
     navLayout->addSpacerItem(new QSpacerItem(10, 10, QSizePolicy::Expanding, QSizePolicy::Minimum));
-    navLayout->addWidget(dummy);
-    navLayout->addWidget(tomovie);
-    navLayout->addWidget(toimage);
-    navLayout->addWidget(totrash);
+    navLayout->addWidget(tomovie,1);
+    navLayout->addWidget(toimage,1);
+    navLayout->addWidget(totrash,1);
     navLayout->addWidget(new QLabel("Delay (ms):"));
-    navLayout->addWidget(delay);
-    navLayout->addWidget(gofirst);
-    navLayout->addWidget(goprev);
-    navLayout->addWidget(goplay);
-    navLayout->addWidget(gonext);
-    navLayout->addWidget(golast);
-    navLayout->addWidget(goloop);
+    navLayout->addWidget(delay, 5);
+    navLayout->addWidget(dummy);
+    navLayout->addWidget(gofirst,1);
+    navLayout->addWidget(goprev,1);
+    navLayout->addWidget(goplay,1);
+    navLayout->addWidget(gonext,1);
+    navLayout->addWidget(golast,1);
+    navLayout->addWidget(goloop,1);
 
-    navLayout->addWidget(zoomin);
-    navLayout->addWidget(zoomout);
-    navLayout->addWidget(normal);
-    navLayout->addWidget(imgrotcw);
-    navLayout->addWidget(imgrotccw);
-    navLayout->addWidget(imgfliph);
-    navLayout->addWidget(imgflipv);
+    navLayout->addWidget(zoomin,1);
+    navLayout->addWidget(zoomout,1);
+    navLayout->addWidget(normal,1);
+    navLayout->addWidget(imgrotcw,1);
+    navLayout->addWidget(imgrotccw,1);
+    navLayout->addWidget(imgfliph,1);
+    navLayout->addWidget(imgflipv,1);
     navLayout->addSpacerItem(new QSpacerItem(10, 10, QSizePolicy::Expanding, QSizePolicy::Minimum));
     navLayout->setSizeConstraint(QLayout::SetMinimumSize);
 
