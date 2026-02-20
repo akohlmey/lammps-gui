@@ -103,7 +103,7 @@ SlideShow::SlideShow(const QString &fileName, QWidget *parent) :
 
     auto dsize  = QFontMetrics(QApplication::font()).size(Qt::TextSingleLine, "Delay:  100");
     // need some extra space on Windows
-#if Q_OS_WIN32
+#if defined(Q_OS_WIN32)
     dsize = dsize * 3 / 2;
 #endif
     auto *delay = new QSpinBox;
