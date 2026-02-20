@@ -66,6 +66,7 @@ Thumbs.db
 *.res
 /.qmake.cache
 /.qmake.stash
+*.oldtable
 
 # patch generated files
 *.rej
