@@ -170,6 +170,9 @@ constexpr int TITLE_MARGIN        = 10;
 enum { FRAME, FILLED, TRANSPARENT, POINTS };
 enum { TYPE, ELEMENT, CONSTANT };
 
+// needs to be kept in sync with the dump image tri flag values
+enum { NONE, TRIANGLES, CYLINDERS, BOTH };
+
 } // namespace
 
 /**
@@ -292,7 +295,7 @@ ImageViewer::ImageViewer(const QString &fileName, LammpsWrapper *_lammps, QWidge
     linediam       = 0.2;
     showtris       = true;
     tridiam        = 0.2;
-    triflag        = 3;
+    triflag        = CYLINDERS;
     xcenter = ycenter = zcenter = 0.5;
 
     if (lammps->extract_setting("dimension") == 2) zcenter = 0.0;
@@ -1162,15 +1165,15 @@ void ImageViewer::atom_settings()
     layout->addWidget(tstyle, idx, n++, 1, 1);
     auto *tgroup   = new QButtonGroup(this);
     auto *tcbutton = new QRadioButton("Cylinders", this);
-    tcbutton->setChecked(triflag == 2);
+    tcbutton->setChecked(triflag == CYLINDERS);
     tgroup->addButton(tcbutton);
     layout->addWidget(tcbutton, idx, n++, 1, 1);
     auto *ttbutton = new QRadioButton("Triangles", this);
-    ttbutton->setChecked(triflag == 1);
+    ttbutton->setChecked(triflag == TRIANGLES);
     tgroup->addButton(ttbutton);
     layout->addWidget(ttbutton, idx, n++, 1, 1);
     auto *tbbutton = new QRadioButton("Both", this);
-    tbbutton->setChecked(triflag == 3);
+    tbbutton->setChecked(triflag == BOTH);
     tgroup->addButton(tbbutton);
     layout->addWidget(tbbutton, idx++, n++, 1, 1);
     if (lammps->extract_setting("tri_flag") != 1) {
@@ -1216,11 +1219,11 @@ void ImageViewer::atom_settings()
     showtris = tributton->isChecked();
     if (tdiam->hasAcceptableInput()) tridiam = tdiam->text().toDouble();
     if (tcbutton->isChecked()) {
-        triflag = 2;
+        triflag = CYLINDERS;
     } else if (ttbutton->isChecked()) {
-        triflag = 1;
+        triflag = TRIANGLES;
     } else if (tbbutton->isChecked()) {
-        triflag = 3;
+        triflag = BOTH;
     }
 
     // update image with new settings
