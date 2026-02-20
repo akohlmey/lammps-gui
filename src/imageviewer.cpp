@@ -567,6 +567,15 @@ ImageViewer::ImageViewer(const QString &fileName, LammpsWrapper *_lammps, QWidge
     setWindowFlags(flags);
 }
 
+ImageViewer::~ImageViewer()
+{
+    // clear dynamically allocated storage
+
+    for (auto &comp : computes) delete comp.second;
+    for (auto &ifix : fixes) delete ifix.second;
+    for (auto &ireg : regions) delete ireg.second;
+}
+
 void ImageViewer::reset_view()
 {
     QSettings settings;

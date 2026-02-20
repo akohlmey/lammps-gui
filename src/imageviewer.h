@@ -57,7 +57,7 @@ public:
     /**
      * @brief Destructor
      */
-    ~ImageViewer() override = default;
+    ~ImageViewer() override;
 
     ImageViewer()                               = delete;
     ImageViewer(const ImageViewer &)            = delete;
