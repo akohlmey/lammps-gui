@@ -456,6 +456,7 @@ ImageViewer::ImageViewer(const QString &fileName, LammpsWrapper *_lammps, QWidge
     menuLayout->addWidget(new QLabel(" <u>H</u>eight: "));
     menuLayout->addWidget(yval);
     menuLayout->insertStretch(-1, 50);
+
     buttonLayout->addWidget(dummy2);
     buttonLayout->addWidget(dossao);
     buttonLayout->addWidget(doanti);

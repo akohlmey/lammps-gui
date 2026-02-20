@@ -1733,7 +1733,7 @@ void LammpsGui::about()
         auto end   = info.find("Info-Info-Info", start);
         // protect from a failed or incomplete capture
         if ((start != std::string::npos) && (end != std::string::npos))
-            info       = std::string(info, start, end - start);
+            info = std::string(info, start, end - start);
     }
 
     info += citeme.toStdString();
