@@ -36,6 +36,7 @@
 #include <QShortcut>
 #include <QSlider>
 #include <QSpacerItem>
+#include <QSpinBox>
 #include <QTemporaryFile>
 #include <QTimer>
 #include <QTransform>
@@ -45,8 +46,8 @@
 
 SlideShow::SlideShow(const QString &fileName, QWidget *parent) :
     QDialog(parent), playtimer(nullptr), imageLabel(new QLabel), scrollArea(new QScrollArea),
-    scrollBar(new QSlider), imageName(new QLabel("(none)")), do_loop(true), imageRotation(0),
-    imageFlipH(false), imageFlipV(false)
+    scrollBar(new QSlider), imageName(new QLabel("(none)")), timer_delay(100), do_loop(true),
+    imageRotation(0), imageFlipH(false), imageFlipV(false)
 {
     imageLabel->setBackgroundRole(QPalette::Base);
     imageLabel->setSizePolicy(QSizePolicy::Minimum, QSizePolicy::Minimum);
@@ -100,6 +101,15 @@ SlideShow::SlideShow(const QString &fileName, QWidget *parent) :
     auto *totrash = new QPushButton(QIcon(":/icons/trash.png"), "");
     totrash->setToolTip("Delete all image files");
 
+    auto dsize  = QFontMetrics(QApplication::font()).size(Qt::TextSingleLine, "Delay  100");
+    auto *delay = new QSpinBox;
+    delay->setRange(10, 10000);
+    delay->setStepType(QAbstractSpinBox::AdaptiveDecimalStepType);
+    delay->setValue(timer_delay);
+    delay->setObjectName("delay");
+    delay->setToolTip("Set delay between images in milliseconds");
+    delay->setMinimumSize(dsize);
+
     auto *gofirst = new QPushButton(QIcon(":/icons/go-first.png"), "");
     gofirst->setToolTip("Go to first Image");
     auto *goprev = new QPushButton(QIcon(":/icons/go-previous-2.png"), "");
@@ -137,6 +147,8 @@ SlideShow::SlideShow(const QString &fileName, QWidget *parent) :
     connect(tomovie, &QPushButton::released, this, &SlideShow::movie);
     connect(toimage, &QPushButton::released, this, &SlideShow::save_current_image);
     connect(totrash, &QPushButton::released, this, &SlideShow::delete_images);
+    connect(delay, &QAbstractSpinBox::editingFinished, this, &SlideShow::set_delay);
+
     connect(gofirst, &QPushButton::released, this, &SlideShow::first);
     connect(goprev, &QPushButton::released, this, &SlideShow::prev);
     connect(goplay, &QPushButton::released, this, &SlideShow::play);
@@ -157,6 +169,8 @@ SlideShow::SlideShow(const QString &fileName, QWidget *parent) :
     navLayout->addWidget(tomovie);
     navLayout->addWidget(toimage);
     navLayout->addWidget(totrash);
+    navLayout->addWidget(new QLabel("Delay (ms):"));
+    navLayout->addWidget(delay);
     navLayout->addWidget(gofirst);
     navLayout->addWidget(goprev);
     navLayout->addWidget(goplay);
@@ -240,6 +254,14 @@ void SlideShow::clear()
     scrollBar->setMaximum(1);
     adjustWindowSize();
     repaint();
+}
+
+void SlideShow::set_delay()
+{
+    auto *field = qobject_cast<QSpinBox *>(sender());
+    if (field->objectName() == "delay") {
+        timer_delay = field->value();
+    }
 }
 
 void SlideShow::loadImage(int idx)
@@ -358,12 +380,13 @@ void SlideShow::movie()
             }
             concatfile.close();
 
+            const auto fps = QString::number(1.0/((double)timer_delay/1000.0));
             QStringList args;
             args << "-y";
             args << "-safe"
                  << "0";
             args << "-r"
-                 << "10";
+                 << fps;
             args << "-f"
                  << "concat";
             args << "-i" << concatfile.fileName();
@@ -386,7 +409,7 @@ void SlideShow::movie()
             args << "-b:v"
                  << "2000k";
             args << "-r"
-                 << "24";
+                 << fps;
             args << fileName;
 
             auto *ffmpeg = new QProcess(this);
@@ -402,7 +425,7 @@ void SlideShow::movie()
         QString cmd = "magick";
         if (!has_exe("magick")) cmd = "convert";
         QStringList args;
-        args << "-delay" << "10";
+        args << "-delay" << QString::number(timer_delay / 10);
         QDir curdir(".");
         for (const auto &img : imagefiles)
             args << curdir.absoluteFilePath(img);
@@ -436,15 +459,18 @@ void SlideShow::play()
 {
     // if we do not loop, start animation from beginning
     if (!do_loop) current = 0;
+    auto *delay = findChild<QSpinBox *>("delay");
 
     if (playtimer) {
         playtimer->stop();
         delete playtimer;
         playtimer = nullptr;
+        if (delay) delay->setEnabled(true);
     } else {
         playtimer = new QTimer(this);
         connect(playtimer, &QTimer::timeout, this, &SlideShow::next);
-        playtimer->start(100);
+        playtimer->start(timer_delay);
+        if (delay) delay->setEnabled(false);
     }
 
     // reset push button state. use findChild() if not triggered from button.

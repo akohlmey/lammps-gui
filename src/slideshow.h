@@ -71,6 +71,7 @@ private slots:
     void stop_run();            ///< Stop running simulation
     void movie();               ///< Export images as movie file
     void save_current_image();  ///< Save current image with zoom/flip/rotate applied
+    void set_delay();           ///< Set timer delay for slideshow animation
     void first();               ///< Jump to first image
     void last();                ///< Jump to last image
     void next();                ///< Advance to next image
@@ -80,8 +81,8 @@ private slots:
     void zoomIn();              ///< Zoom in on current image
     void zoomOut();             ///< Zoom out on current image
     void normalSize();          ///< Reset zoom to 100%
-    void do_image_rotate_cw();  ///< Rotate displayed image 90° clockwise
-    void do_image_rotate_ccw(); ///< Rotate displayed image 90° counter-clockwise
+    void do_image_rotate_cw();  ///< Rotate displayed image 90 degrees clockwise
+    void do_image_rotate_ccw(); ///< Rotate displayed image 90 degrees counter-clockwise
     void do_image_flip_h();     ///< Mirror displayed image horizontally
     void do_image_flip_v();     ///< Mirror displayed image vertically
 
@@ -121,6 +122,7 @@ private:
 
     int current;             ///< Index of current image
     int maxwidth, maxheight; ///< Maximum image dimensions
+    int timer_delay;         ///< delay between images when playing images
     bool do_loop;            ///< Loop playback flag
     QStringList imagefiles;  ///< List of image file paths
     int imageRotation;       ///< Image rotation angle (0, 90, 180, 270)
