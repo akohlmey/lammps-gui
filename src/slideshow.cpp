@@ -101,7 +101,7 @@ SlideShow::SlideShow(const QString &fileName, QWidget *parent) :
     auto *totrash = new QPushButton(QIcon(":/icons/trash.png"), "");
     totrash->setToolTip("Delete all image files");
 
-    auto dsize  = QFontMetrics(QApplication::font()).size(Qt::TextSingleLine, "Delay:  100");
+    auto dsize = QFontMetrics(QApplication::font()).size(Qt::TextSingleLine, "Delay:  100");
     // need some extra space on Windows
 #if defined(Q_OS_WIN32)
     dsize = dsize * 3 / 2;
@@ -163,7 +163,6 @@ SlideShow::SlideShow(const QString &fileName, QWidget *parent) :
     connect(goloop, &QPushButton::released, this, &SlideShow::loop);
     connect(zoomin, &QPushButton::released, this, &SlideShow::zoomIn);
     connect(zoomout, &QPushButton::released, this, &SlideShow::zoomOut);
-    connect(gofirst, &QPushButton::released, this, &SlideShow::first);
     connect(normal, &QPushButton::released, this, &SlideShow::normalSize);
     connect(imgrotcw, &QPushButton::released, this, &SlideShow::do_image_rotate_cw);
     connect(imgrotccw, &QPushButton::released, this, &SlideShow::do_image_rotate_ccw);
@@ -171,26 +170,26 @@ SlideShow::SlideShow(const QString &fileName, QWidget *parent) :
     connect(imgflipv, &QPushButton::released, this, &SlideShow::do_image_flip_v);
 
     navLayout->addSpacerItem(new QSpacerItem(10, 10, QSizePolicy::Expanding, QSizePolicy::Minimum));
-    navLayout->addWidget(tomovie,1);
-    navLayout->addWidget(toimage,1);
-    navLayout->addWidget(totrash,1);
+    navLayout->addWidget(tomovie, 1);
+    navLayout->addWidget(toimage, 1);
+    navLayout->addWidget(totrash, 1);
     navLayout->addWidget(new QLabel("Delay (ms):"));
     navLayout->addWidget(delay, 5);
     navLayout->addWidget(dummy);
-    navLayout->addWidget(gofirst,1);
-    navLayout->addWidget(goprev,1);
-    navLayout->addWidget(goplay,1);
-    navLayout->addWidget(gonext,1);
-    navLayout->addWidget(golast,1);
-    navLayout->addWidget(goloop,1);
+    navLayout->addWidget(gofirst, 1);
+    navLayout->addWidget(goprev, 1);
+    navLayout->addWidget(goplay, 1);
+    navLayout->addWidget(gonext, 1);
+    navLayout->addWidget(golast, 1);
+    navLayout->addWidget(goloop, 1);
 
-    navLayout->addWidget(zoomin,1);
-    navLayout->addWidget(zoomout,1);
-    navLayout->addWidget(normal,1);
-    navLayout->addWidget(imgrotcw,1);
-    navLayout->addWidget(imgrotccw,1);
-    navLayout->addWidget(imgfliph,1);
-    navLayout->addWidget(imgflipv,1);
+    navLayout->addWidget(zoomin, 1);
+    navLayout->addWidget(zoomout, 1);
+    navLayout->addWidget(normal, 1);
+    navLayout->addWidget(imgrotcw, 1);
+    navLayout->addWidget(imgrotccw, 1);
+    navLayout->addWidget(imgfliph, 1);
+    navLayout->addWidget(imgflipv, 1);
     navLayout->addSpacerItem(new QSpacerItem(10, 10, QSizePolicy::Expanding, QSizePolicy::Minimum));
     navLayout->setSizeConstraint(QLayout::SetMinimumSize);
 
@@ -265,7 +264,7 @@ void SlideShow::clear()
 void SlideShow::set_delay()
 {
     auto *field = qobject_cast<QSpinBox *>(sender());
-    if (field->objectName() == "delay") {
+    if (field && (field->objectName() == "delay")) {
         timer_delay = field->value();
     }
 }
@@ -386,13 +385,12 @@ void SlideShow::movie()
             }
             concatfile.close();
 
-            const auto fps = QString::number(1.0/((double)timer_delay/1000.0));
+            const auto fps = QString::number(1.0 / ((double)timer_delay / 1000.0));
             QStringList args;
             args << "-y";
             args << "-safe"
                  << "0";
-            args << "-r"
-                 << fps;
+            args << "-r" << fps;
             args << "-f"
                  << "concat";
             args << "-i" << concatfile.fileName();
@@ -414,8 +412,7 @@ void SlideShow::movie()
             }
             args << "-b:v"
                  << "2000k";
-            args << "-r"
-                 << fps;
+            args << "-r" << fps;
             args << fileName;
 
             auto *ffmpeg = new QProcess(this);
