@@ -1162,11 +1162,11 @@ void ImageViewer::atom_settings()
     layout->addWidget(tstyle, idx, n++, 1, 1);
     auto *tgroup   = new QButtonGroup(this);
     auto *tcbutton = new QRadioButton("Cylinders", this);
-    tcbutton->setChecked(triflag == 1);
+    tcbutton->setChecked(triflag == 2);
     tgroup->addButton(tcbutton);
     layout->addWidget(tcbutton, idx, n++, 1, 1);
     auto *ttbutton = new QRadioButton("Triangles", this);
-    ttbutton->setChecked(triflag == 2);
+    ttbutton->setChecked(triflag == 1);
     tgroup->addButton(ttbutton);
     layout->addWidget(ttbutton, idx, n++, 1, 1);
     auto *tbbutton = new QRadioButton("Both", this);
@@ -1216,9 +1216,9 @@ void ImageViewer::atom_settings()
     showtris = tributton->isChecked();
     if (tdiam->hasAcceptableInput()) tridiam = tdiam->text().toDouble();
     if (tcbutton->isChecked()) {
-        triflag = 1;
-    } else if (ttbutton->isChecked()) {
         triflag = 2;
+    } else if (ttbutton->isChecked()) {
+        triflag = 1;
     } else if (tbbutton->isChecked()) {
         triflag = 3;
     }
