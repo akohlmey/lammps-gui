@@ -1095,8 +1095,10 @@ void LammpsGui::quit()
     }
     settings.sync();
 
+#if QT_CONFIG(clipboard)
     auto *clip = QGuiApplication::clipboard();
-    clip->clear();
+    if (clip) clip->clear();
+#endif
 
     // quit application
     QCoreApplication::quit();
