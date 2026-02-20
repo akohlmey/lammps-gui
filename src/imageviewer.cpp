@@ -50,6 +50,7 @@
 #include <QRegularExpression>
 #include <QScreen>
 #include <QScrollArea>
+#include <QScrollBar>
 #include <QSettings>
 #include <QSizePolicy>
 #include <QSpinBox>
@@ -165,8 +166,6 @@ constexpr int DEFAULT_BUFLEN      = 1024;
 constexpr int DEFAULT_NPOINTS     = 100000;
 constexpr double DEFAULT_DIAMETER = 0.2;
 constexpr double DEFAULT_OPACITY  = 0.5;
-constexpr int EXTRA_WIDTH         = 150;
-constexpr int EXTRA_HEIGHT        = 105;
 constexpr int TITLE_MARGIN        = 10;
 
 enum { FRAME, FILLED, TRANSPARENT, POINTS };
@@ -226,7 +225,7 @@ ImageViewer::ImageViewer(const QString &fileName, LammpsWrapper *_lammps, QWidge
     molecule("none"), filename(fileName), useelements(false), usediameter(false), usesigma(false)
 {
     imageLabel->setBackgroundRole(QPalette::Base);
-    imageLabel->setSizePolicy(QSizePolicy::Ignored, QSizePolicy::Ignored);
+    imageLabel->setSizePolicy(QSizePolicy::Minimum, QSizePolicy::Minimum);
     imageLabel->setScaledContents(false);
     imageLabel->minimumSizeHint();
 
@@ -470,6 +469,7 @@ ImageViewer::ImageViewer(const QString &fileName, LammpsWrapper *_lammps, QWidge
     buttonLayout->addWidget(recenter);
     buttonLayout->addWidget(reset);
     buttonLayout->insertStretch(-1, 1);
+    buttonLayout->setSizeConstraint(QLayout::SetMinimumSize);
     settingsLayout->addWidget(new QHline);
     settingsLayout->addWidget(new QLabel("<u>G</u>roup:"));
     settingsLayout->addWidget(combo);
@@ -482,6 +482,7 @@ ImageViewer::ImageViewer(const QString &fileName, LammpsWrapper *_lammps, QWidge
     settingsLayout->addWidget(regviz);
     settingsLayout->addWidget(new QHline);
     settingsLayout->insertStretch(-1, 10);
+    settingsLayout->setSizeConstraint(QLayout::SetMinimumSize);
 
     connect(dossao, &QPushButton::released, this, &ImageViewer::toggle_ssao);
     connect(doanti, &QPushButton::released, this, &ImageViewer::toggle_anti);
@@ -530,6 +531,7 @@ ImageViewer::ImageViewer(const QString &fileName, LammpsWrapper *_lammps, QWidge
     scrollArea->setVisible(true);
     updateActions();
     setLayout(mainLayout);
+    mainLayout->setSizeConstraint(QLayout::SetMinAndMaxSize);
     adjustWindowSize();
     update_fixes();
     update_regions();
@@ -1956,7 +1958,8 @@ void ImageViewer::createImage()
     // show show image
     image = newImage;
     imageLabel->setPixmap(QPixmap::fromImage(image));
-    imageLabel->adjustSize();
+    imageLabel->setMinimumSize(image.width(), image.height());
+    imageLabel->resize(image.width(), image.height());
     adjustWindowSize();
     if (renderstatus) renderstatus->setEnabled(false);
     repaint();
@@ -2060,36 +2063,20 @@ void ImageViewer::adjustWindowSize()
 {
     if (image.isNull()) return;
 
-    int desiredWidth  = image.width() + 2;
-    int desiredHeight = image.height() + 2;
-    int currentWidth  = scrollArea->size().width();
-    int currentHeight = scrollArea->size().height();
+    auto *hbar        = scrollArea->horizontalScrollBar();
+    auto *vbar        = scrollArea->verticalScrollBar();
+    int desiredWidth  = image.width() + 2 + (vbar->isVisible() ? vbar->width() : 0);
+    int desiredHeight = image.height() + 2 + (hbar->isVisible() ? hbar->height() : 0);
 
-    // do nothing if the scroll area is already large enough (don't shrink unexpectedly)
-    if ((currentWidth >= desiredWidth) && (currentHeight >= desiredHeight)) return;
-
-    // make sure the window is not scaled beyond a certain fraction of the screen
+    // make sure the scroll area is not resized beyond a certain fraction of the screen
     auto *screen = QGuiApplication::primaryScreen();
     if (screen) {
         auto screenSize = screen->availableSize();
-        desiredWidth    = std::min(desiredWidth, screenSize.width() * 2 / 3);
-        desiredHeight   = std::min(desiredHeight, screenSize.height() * 10 / 9);
+        desiredWidth    = std::min(desiredWidth, screenSize.width() * 3 / 4);
+        desiredHeight   = std::min(desiredHeight, screenSize.height() * 9 / 10);
     }
-
-    // automaticall expand but don't shrink
-    desiredWidth  = std::max(desiredWidth, currentWidth);
-    desiredHeight = std::max(desiredHeight, currentHeight);
-
-    scrollArea->resize(image.width() + 2, image.height() + 2);
     scrollArea->setMinimumSize(desiredWidth, desiredHeight);
-
-    // update layout, if available
-    auto *mainLayout = layout();
-    if (mainLayout) {
-        auto *item = mainLayout->itemAt(1);
-        if (item) item->invalidate();
-        mainLayout->update();
-    }
+    scrollArea->resize(desiredWidth, desiredHeight);
     adjustSize();
 }
 

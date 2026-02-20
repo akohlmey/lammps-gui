@@ -32,6 +32,7 @@
 #include <QPushButton>
 #include <QScreen>
 #include <QScrollArea>
+#include <QScrollBar>
 #include <QShortcut>
 #include <QSpacerItem>
 #include <QTemporaryFile>
@@ -41,23 +42,19 @@
 
 #include <algorithm>
 
-namespace {
-constexpr int EXTRA_WIDTH  = 40;
-constexpr int EXTRA_HEIGHT = 100;
-} // namespace
-
 SlideShow::SlideShow(const QString &fileName, QWidget *parent) :
     QDialog(parent), playtimer(nullptr), imageLabel(new QLabel), scrollArea(new QScrollArea),
     imageName(new QLabel("(none)")), do_loop(true), imageRotation(0), imageFlipH(false),
     imageFlipV(false)
 {
     imageLabel->setBackgroundRole(QPalette::Base);
-    imageLabel->setSizePolicy(QSizePolicy::Ignored, QSizePolicy::Ignored);
+    imageLabel->setSizePolicy(QSizePolicy::Minimum, QSizePolicy::Minimum);
     imageLabel->setScaledContents(false);
     imageLabel->minimumSizeHint();
 
     scrollArea->setBackgroundRole(QPalette::Dark);
     scrollArea->setWidget(imageLabel);
+    scrollArea->setSizePolicy(QSizePolicy::MinimumExpanding, QSizePolicy::MinimumExpanding);
     scrollArea->setVisible(false);
 
     imageName->setFrameStyle(QFrame::Raised);
@@ -122,9 +119,9 @@ SlideShow::SlideShow(const QString &fileName, QWidget *parent) :
     normal->setToolTip("Reset zoom to normal");
 
     auto *imgrotcw = new QPushButton(QIcon(":/icons/object-rotate-right.png"), "");
-    imgrotcw->setToolTip("Rotate displayed image 90° clockwise");
+    imgrotcw->setToolTip("Rotate displayed image 90<sup>o</sup> clockwise");
     auto *imgrotccw = new QPushButton(QIcon(":/icons/object-rotate-left.png"), "");
-    imgrotccw->setToolTip("Rotate displayed image 90° counter-clockwise");
+    imgrotccw->setToolTip("Rotate displayed image 90<sup>o</sup> counter-clockwise");
     auto *imgfliph = new QPushButton(QIcon(":/icons/object-flip-horizontal.png"), "");
     imgfliph->setToolTip("Mirror displayed image horizontally");
     auto *imgflipv = new QPushButton(QIcon(":/icons/object-flip-vertical.png"), "");
@@ -168,6 +165,7 @@ SlideShow::SlideShow(const QString &fileName, QWidget *parent) :
     navLayout->addWidget(imgfliph);
     navLayout->addWidget(imgflipv);
     navLayout->addSpacerItem(new QSpacerItem(10, 10, QSizePolicy::Expanding, QSizePolicy::Minimum));
+    navLayout->setSizeConstraint(QLayout::SetMinimumSize);
 
     mainLayout->addLayout(navLayout);
     mainLayout->addWidget(scrollArea, 10);
@@ -175,6 +173,7 @@ SlideShow::SlideShow(const QString &fileName, QWidget *parent) :
     botLayout->addWidget(imageName);
     botLayout->addWidget(buttonBox);
     botLayout->setStretch(0, 3);
+    botLayout->setSizeConstraint(QLayout::SetMinimumSize);
     mainLayout->addLayout(botLayout);
 
     setWindowIcon(QIcon(":/icons/lammps-gui-icon-128x128.png"));
@@ -186,6 +185,7 @@ SlideShow::SlideShow(const QString &fileName, QWidget *parent) :
 
     scrollArea->setVisible(true);
     setLayout(mainLayout);
+    mainLayout->setSizeConstraint(QLayout::SetMinAndMaxSize);
     adjustWindowSize();
 
     // set window flags for window manager
@@ -224,8 +224,10 @@ void SlideShow::clear()
     imagefiles.clear();
     image.fill(Qt::black);
     imageLabel->setPixmap(QPixmap::fromImage(image));
-    imageLabel->adjustSize();
+    imageLabel->setMinimumSize(image.width(), image.height());
+    imageLabel->resize(image.width(), image.height());
     imageName->setText("(none)");
+    adjustWindowSize();
     repaint();
 }
 
@@ -501,17 +503,21 @@ void SlideShow::scaleImage(double factor)
 void SlideShow::adjustWindowSize()
 {
     if (image.isNull()) return;
+    auto *hbar        = scrollArea->horizontalScrollBar();
+    auto *vbar        = scrollArea->verticalScrollBar();
+    int desiredWidth  = image.width() + 2 + (vbar->isVisible() ? vbar->width() : 0);
+    int desiredHeight = image.height() + 2 + (hbar->isVisible() ? hbar->height() : 0);
 
-    int desiredWidth  = image.width() + EXTRA_WIDTH;
-    int desiredHeight = image.height() + EXTRA_HEIGHT;
-
+    // make sure the scroll area is not resized beyond a certain fraction of the screen
     auto *screen = QGuiApplication::primaryScreen();
     if (screen) {
         auto screenSize = screen->availableSize();
-        desiredWidth    = std::min(desiredWidth, screenSize.width() * 2 / 3);
-        desiredHeight   = std::min(desiredHeight, screenSize.height() * 4 / 5);
+        desiredWidth    = std::min(desiredWidth, screenSize.width() * 3 / 4);
+        desiredHeight   = std::min(desiredHeight, screenSize.height() * 9 / 10);
     }
-    resize(desiredWidth, desiredHeight);
+    scrollArea->setMinimumSize(desiredWidth, desiredHeight);
+    scrollArea->resize(desiredWidth, desiredHeight);
+    adjustSize();
 }
 
 void SlideShow::do_image_rotate_cw()
