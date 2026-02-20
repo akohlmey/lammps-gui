@@ -571,9 +571,12 @@ ImageViewer::~ImageViewer()
 {
     // clear dynamically allocated storage
 
-    for (auto &comp : computes) delete comp.second;
-    for (auto &ifix : fixes) delete ifix.second;
-    for (auto &ireg : regions) delete ireg.second;
+    for (auto &comp : computes)
+        delete comp.second;
+    for (auto &ifix : fixes)
+        delete ifix.second;
+    for (auto &ireg : regions)
+        delete ireg.second;
 }
 
 void ImageViewer::reset_view()
@@ -848,9 +851,12 @@ void ImageViewer::cmd_to_clipboard()
         dumpcmd += " " + words[i];
     dumpcmd += '\n';
 #if QT_CONFIG(clipboard)
-    QGuiApplication::clipboard()->setText(dumpcmd.c_str(), QClipboard::Clipboard);
-    if (QGuiApplication::clipboard()->supportsSelection())
-        QGuiApplication::clipboard()->setText(dumpcmd.c_str(), QClipboard::Selection);
+    auto *clip = QGuiApplication::clipboard();
+    if (clip) {
+        clip->setText(dumpcmd.c_str(), QClipboard::Clipboard);
+        if (clip->supportsSelection()) clip->setText(dumpcmd.c_str(), QClipboard::Selection);
+    } else
+        fprintf(stderr, "# customized dump image command:\n%s", dumpcmd.c_str());
 #else
     fprintf(stderr, "# customized dump image command:\n%s", dumpcmd.c_str());
 #endif

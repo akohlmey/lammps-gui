@@ -1739,7 +1739,7 @@ void LammpsGui::about()
     info += citeme.toStdString();
     to_clipboard += info.c_str();
 #if QT_CONFIG(clipboard)
-    QGuiApplication::clipboard()->setText(to_clipboard);
+    if (auto *clip = QGuiApplication::clipboard()) clip->setText(to_clipboard);
 #endif
 
     QMessageBox msg;
