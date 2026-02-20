@@ -24,7 +24,6 @@
 #include <QClipboard>
 #include <QDir>
 #include <QDoubleValidator>
-#include <QEvent>
 #include <QFile>
 #include <QFileDialog>
 #include <QFileInfo>

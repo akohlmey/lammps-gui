@@ -34,6 +34,7 @@
 #include <QScrollArea>
 #include <QScrollBar>
 #include <QShortcut>
+#include <QSlider>
 #include <QSpacerItem>
 #include <QTemporaryFile>
 #include <QTimer>
@@ -44,8 +45,8 @@
 
 SlideShow::SlideShow(const QString &fileName, QWidget *parent) :
     QDialog(parent), playtimer(nullptr), imageLabel(new QLabel), scrollArea(new QScrollArea),
-    imageName(new QLabel("(none)")), do_loop(true), imageRotation(0), imageFlipH(false),
-    imageFlipV(false)
+    scrollBar(new QSlider), imageName(new QLabel("(none)")), do_loop(true), imageRotation(0),
+    imageFlipH(false), imageFlipV(false)
 {
     imageLabel->setBackgroundRole(QPalette::Base);
     imageLabel->setSizePolicy(QSizePolicy::Minimum, QSizePolicy::Minimum);
@@ -56,6 +57,12 @@ SlideShow::SlideShow(const QString &fileName, QWidget *parent) :
     scrollArea->setWidget(imageLabel);
     scrollArea->setSizePolicy(QSizePolicy::MinimumExpanding, QSizePolicy::MinimumExpanding);
     scrollArea->setVisible(false);
+
+    scrollBar->setMinimum(0);
+    scrollBar->setMaximum(1);
+    scrollBar->setOrientation(Qt::Horizontal);
+    scrollBar->setToolTip("Select Image to display");
+    connect(scrollBar, &QSlider::valueChanged, this, &SlideShow::loadImage);
 
     imageName->setFrameStyle(QFrame::Raised);
     imageName->setFrameShape(QFrame::Panel);
@@ -175,6 +182,7 @@ SlideShow::SlideShow(const QString &fileName, QWidget *parent) :
     botLayout->setStretch(0, 3);
     botLayout->setSizeConstraint(QLayout::SetMinimumSize);
     mainLayout->addLayout(botLayout);
+    mainLayout->addWidget(scrollBar, 10);
 
     setWindowIcon(QIcon(":/icons/lammps-gui-icon-128x128.png"));
     setWindowTitle(QString("LAMMPS-GUI - Slide Show: ") + QFileInfo(fileName).fileName());
@@ -208,6 +216,8 @@ void SlideShow::add_image(const QString &filename)
         int lastidx = imagefiles.size();
         imagefiles.append(filename);
         loadImage(lastidx);
+        scrollBar->setMaximum(lastidx);
+        scrollBar->setValue(lastidx);
     }
 }
 
@@ -227,6 +237,7 @@ void SlideShow::clear()
     imageLabel->setMinimumSize(image.width(), image.height());
     imageLabel->resize(image.width(), image.height());
     imageName->setText("(none)");
+    scrollBar->setMaximum(1);
     adjustWindowSize();
     repaint();
 }
@@ -254,6 +265,7 @@ void SlideShow::loadImage(int idx)
             break;
         }
     } while (idx >= 0);
+    scrollBar->setValue(idx);
     adjustWindowSize();
 }
 
