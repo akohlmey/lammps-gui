@@ -141,11 +141,11 @@ private:
     QString last_dump_cmd;                       ///< Last executed dump command
     int xsize, ysize;                            ///< Image dimensions in pixels
     int hrot, vrot;                              ///< Horizontal and vertical rotation angles
-    double bodydiam;                             ///< bflag1 setting (diameter)
-    int bodyflag;                                ///< bflag2 setting (cylinder, triangle or both)
+    int bodyflag;                                ///< bflag1 setting (triangle, cylinder or both)
+    int triflag;                                 ///< tflag1 setting (triangle, cylinder or both)
+    double bodydiam;                             ///< bflag2 setting (diameter)
     double linediam;                             ///< linewidth setting (diameter)
-    double tridiam;                              ///< lflag1 setting (diameter)
-    int triflag;                                 ///< lflag2 setting (cylinder, triangle or both)
+    double tridiam;                              ///< tflag2 setting (diameter)
     double zoom;                                 ///< Zoom level
     double vdwfactor;                            ///< Van der Waals radius scaling factor
     double shinyfactor;                          ///< Shininess/specular factor
