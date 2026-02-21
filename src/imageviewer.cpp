@@ -1123,7 +1123,12 @@ void ImageViewer::atom_settings()
 
     layout->setColumnStretch(0, 4);
     layout->setColumnStretch(1, 3);
+    // need extra space for spinboxes on Windows
+#if defined(Q_OS_WIN32)
+    layout->setColumnStretch(2, 3);
+#else
     layout->setColumnStretch(2, 2);
+#endif
     layout->setColumnStretch(3, 4);
     layout->setColumnStretch(4, 4);
     layout->setColumnStretch(5, 3);
