@@ -142,8 +142,11 @@ private:
     int xsize, ysize;                            ///< Image dimensions in pixels
     int hrot, vrot;                              ///< Horizontal and vertical rotation angles
     int bodyflag;                                ///< bflag1 setting (triangle, cylinder or both)
+    int ellipsoidflag;                           ///< eflag1 setting (triangle, cylinder or both)
+    int ellipsoidlevel;                          ///< eflag2 setting (refinement level)
     int triflag;                                 ///< tflag1 setting (triangle, cylinder or both)
     double bodydiam;                             ///< bflag2 setting (diameter)
+    double ellipsoiddiam;                        ///< eflag3 setting (diameter)
     double linediam;                             ///< linewidth setting (diameter)
     double tridiam;                              ///< tflag2 setting (diameter)
     double zoom;                                 ///< Zoom level

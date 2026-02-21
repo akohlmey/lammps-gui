@@ -289,8 +289,11 @@ ImageViewer::ImageViewer(const QString &fileName, LammpsWrapper *_lammps, QWidge
     ssaoval        = 0.6;
     showbodies     = true;
     bodydiam       = 0.2;
-    bodyflag       = 3;
+    bodyflag       = TRIANGLES;
     showellipsoids = true;
+    ellipsoidflag  = BOTH;
+    ellipsoidlevel = 3;
+    ellipsoiddiam  = 0.2;
     showlines      = true;
     linediam       = 0.2;
     showtris       = true;
@@ -890,8 +893,8 @@ void ImageViewer::global_settings()
     layout->addWidget(title, idx++, n, 1, MAXCOLS, Qt::AlignCenter);
     layout->addWidget(new QHline, idx++, n, 1, MAXCOLS);
     for (int i = 0; i < MAXCOLS; ++i)
-        layout->setColumnStretch(i, 2.0);
-    layout->setColumnStretch(MAXCOLS - 1, 1.0);
+        layout->setColumnStretch(i, 2);
+    layout->setColumnStretch(MAXCOLS - 1, 1);
 
     auto *axesbutton = new QCheckBox("Axes ", this);
     axesbutton->setCheckState(showaxes ? Qt::Checked : Qt::Unchecked);
@@ -1114,37 +1117,47 @@ void ImageViewer::atom_settings()
     auto *layout          = new QGridLayout;
     int idx               = 0;
     int n                 = 0;
-    constexpr int MAXCOLS = 7;
+    constexpr int MAXCOLS = 6;
     layout->addWidget(title, idx++, n, 1, MAXCOLS, Qt::AlignCenter);
     layout->addWidget(new QHline, idx++, n, 1, MAXCOLS);
-    for (int i = 0; i < MAXCOLS; ++i)
-        layout->setColumnStretch(i, 2.0);
+
+    layout->setColumnStretch(0, 4);
+    layout->setColumnStretch(1, 3);
+    layout->setColumnStretch(2, 2);
+    layout->setColumnStretch(3, 4);
+    layout->setColumnStretch(4, 4);
+    layout->setColumnStretch(5, 3);
+
+    n = 0;
+
+    layout->addWidget(new QLabel("  Shape:"), idx, n++, 1, 1);
+    layout->addWidget(new QLabel("Diameter:"), idx, n++, 1, 1, Qt::AlignCenter);
+    layout->addWidget(new QLabel("Refine:"), idx, n++, 1, 1, Qt::AlignCenter);
+    layout->addWidget(new QLabel("Style:"), idx++, n++, 1, 3, Qt::AlignCenter);
 
     n = 0;
 
     auto *bodybutton = new QCheckBox("Bodies ", this);
     bodybutton->setCheckState(showbodies ? Qt::Checked : Qt::Unchecked);
     layout->addWidget(bodybutton, idx, n++, 1, 1);
-    layout->addWidget(new QLabel("Diameter:"), idx, n++, 1, 1);
     auto *bdiam = new QLineEdit(QString::number(bodydiam));
     bdiam->setValidator(new QDoubleValidator(0.1, 10.0, 100, this));
     layout->addWidget(bdiam, idx, n++, 1, 1);
-    auto *bstyle = new QLabel("Style:");
-    bstyle->setAlignment(Qt::AlignRight | Qt::AlignVCenter);
-    layout->addWidget(bstyle, idx, n++, 1, 1);
+    // skip one column
+    ++n;
     auto *bgroup   = new QButtonGroup(this);
     auto *bcbutton = new QRadioButton("Cylinders", this);
-    bcbutton->setChecked(bodyflag == 2);
+    bcbutton->setChecked(bodyflag == CYLINDERS);
     bgroup->addButton(bcbutton);
-    layout->addWidget(bcbutton, idx, n++, 1, 1);
+    layout->addWidget(bcbutton, idx, n++, 1, 1, Qt::AlignVCenter | Qt::AlignRight);
     auto *btbutton = new QRadioButton("Triangles", this);
-    btbutton->setChecked(bodyflag == 1);
+    btbutton->setChecked(bodyflag == TRIANGLES);
     bgroup->addButton(btbutton);
-    layout->addWidget(btbutton, idx, n++, 1, 1);
+    layout->addWidget(btbutton, idx, n++, 1, 1, Qt::AlignCenter);
     auto *bbbutton = new QRadioButton("Both", this);
-    bbbutton->setChecked(bodyflag == 3);
+    bbbutton->setChecked(bodyflag == BOTH);
     bgroup->addButton(bbbutton);
-    layout->addWidget(bbbutton, idx++, n++, 1, 1);
+    layout->addWidget(bbbutton, idx++, n++, 1, 1, Qt::AlignVCenter | Qt::AlignLeft);
     if (lammps->extract_setting("body_flag") != 1) {
         bodybutton->setEnabled(false);
         bdiam->setEnabled(false);
@@ -1155,10 +1168,45 @@ void ImageViewer::atom_settings()
 
     n = 0;
 
+    auto *ellipsoidbutton = new QCheckBox("Ellipsoids ", this);
+    ellipsoidbutton->setCheckState(showellipsoids ? Qt::Checked : Qt::Unchecked);
+    layout->addWidget(ellipsoidbutton, idx, n++, 1, 1);
+    auto *ediam = new QLineEdit(QString::number(ellipsoiddiam));
+    ediam->setValidator(new QDoubleValidator(0.1, 10.0, 100, this));
+    layout->addWidget(ediam, idx, n++, 1, 1);
+    auto *elevel = new QSpinBox;
+    elevel->setRange(1, 6);
+    elevel->setStepType(QAbstractSpinBox::DefaultStepType);
+    elevel->setValue(ellipsoidlevel);
+    elevel->setWrapping(false);
+    layout->addWidget(elevel, idx, n++, 1, 1);
+    auto *egroup   = new QButtonGroup(this);
+    auto *ecbutton = new QRadioButton("Cylinders", this);
+    ecbutton->setChecked(ellipsoidflag == CYLINDERS);
+    egroup->addButton(ecbutton);
+    layout->addWidget(ecbutton, idx, n++, 1, 1, Qt::AlignVCenter | Qt::AlignRight);
+    auto *etbutton = new QRadioButton("Triangles", this);
+    etbutton->setChecked(ellipsoidflag == TRIANGLES);
+    egroup->addButton(etbutton);
+    layout->addWidget(etbutton, idx, n++, 1, 1, Qt::AlignCenter);
+    auto *ebbutton = new QRadioButton("Both", this);
+    ebbutton->setChecked(ellipsoidflag == BOTH);
+    egroup->addButton(ebbutton);
+    layout->addWidget(ebbutton, idx++, n++, 1, 1, Qt::AlignVCenter | Qt::AlignLeft);
+    if (lammps->extract_setting("ellipsoid_flag") != 1) {
+        ellipsoidbutton->setEnabled(false);
+        elevel->setEnabled(false);
+        ediam->setEnabled(false);
+        ecbutton->setEnabled(false);
+        etbutton->setEnabled(false);
+        ebbutton->setEnabled(false);
+    }
+
+    n = 0;
+
     auto *linebutton = new QCheckBox("Lines ", this);
     linebutton->setCheckState(showlines ? Qt::Checked : Qt::Unchecked);
     layout->addWidget(linebutton, idx, n++, 1, 1);
-    layout->addWidget(new QLabel("Diameter:"), idx, n++, 1, 1);
     auto *ldiam = new QLineEdit(QString::number(linediam));
     ldiam->setValidator(new QDoubleValidator(0.1, 10.0, 100, this));
     layout->addWidget(ldiam, idx++, n++, 1, 1);
@@ -1172,26 +1220,24 @@ void ImageViewer::atom_settings()
     auto *tributton = new QCheckBox("Triangles ", this);
     tributton->setCheckState(showtris ? Qt::Checked : Qt::Unchecked);
     layout->addWidget(tributton, idx, n++, 1, 1);
-    layout->addWidget(new QLabel("Diameter:"), idx, n++, 1, 1);
     auto *tdiam = new QLineEdit(QString::number(tridiam));
     tdiam->setValidator(new QDoubleValidator(0.1, 10.0, 100, this));
     layout->addWidget(tdiam, idx, n++, 1, 1);
-    auto *tstyle = new QLabel("Style:");
-    tstyle->setAlignment(Qt::AlignRight | Qt::AlignVCenter);
-    layout->addWidget(tstyle, idx, n++, 1, 1);
+    // skip one column
+    ++n;
     auto *tgroup   = new QButtonGroup(this);
     auto *tcbutton = new QRadioButton("Cylinders", this);
     tcbutton->setChecked(triflag == CYLINDERS);
     tgroup->addButton(tcbutton);
-    layout->addWidget(tcbutton, idx, n++, 1, 1);
+    layout->addWidget(tcbutton, idx, n++, 1, 1, Qt::AlignVCenter | Qt::AlignRight);
     auto *ttbutton = new QRadioButton("Triangles", this);
     ttbutton->setChecked(triflag == TRIANGLES);
     tgroup->addButton(ttbutton);
-    layout->addWidget(ttbutton, idx, n++, 1, 1);
+    layout->addWidget(ttbutton, idx, n++, 1, 1, Qt::AlignCenter);
     auto *tbbutton = new QRadioButton("Both", this);
     tbbutton->setChecked(triflag == BOTH);
     tgroup->addButton(tbbutton);
-    layout->addWidget(tbbutton, idx++, n++, 1, 1);
+    layout->addWidget(tbbutton, idx++, n++, 1, 1, Qt::AlignVCenter | Qt::AlignLeft);
     if (lammps->extract_setting("tri_flag") != 1) {
         tributton->setEnabled(false);
         tdiam->setEnabled(false);
@@ -1219,14 +1265,26 @@ void ImageViewer::atom_settings()
     if (!rv) return;
 
     // retrieve and apply data
+
     showbodies = bodybutton->isChecked();
     if (bdiam->hasAcceptableInput()) bodydiam = bdiam->text().toDouble();
     if (bcbutton->isChecked()) {
-        bodyflag = 2;
+        bodyflag = CYLINDERS;
     } else if (btbutton->isChecked()) {
-        bodyflag = 1;
+        bodyflag = TRIANGLES;
     } else if (bbbutton->isChecked()) {
-        bodyflag = 3;
+        bodyflag = BOTH;
+    }
+
+    showellipsoids = ellipsoidbutton->isChecked();
+    if (ediam->hasAcceptableInput()) ellipsoiddiam = ediam->text().toDouble();
+    if (elevel->hasAcceptableInput()) ellipsoidlevel = elevel->text().toInt();
+    if (ecbutton->isChecked()) {
+        ellipsoidflag = CYLINDERS;
+    } else if (etbutton->isChecked()) {
+        ellipsoidflag = TRIANGLES;
+    } else if (ebbutton->isChecked()) {
+        ellipsoidflag = BOTH;
     }
 
     showlines = linebutton->isChecked();
@@ -1274,7 +1332,7 @@ void ImageViewer::fix_settings()
     layout->addWidget(title, idx++, n, 1, MAXCOLS, Qt::AlignHCenter);
     layout->addWidget(new QHline, idx++, 0, 1, MAXCOLS);
     for (int i = 0; i < MAXCOLS; ++i)
-        layout->setColumnStretch(i, 2.0);
+        layout->setColumnStretch(i, 2);
 
     int computes_offset = idx + 2;
     if (computes.size() > 0) {
@@ -1817,9 +1875,13 @@ void ImageViewer::createImage()
         dumpcmd += QString(" line type %1").arg(linediam);
     else if (showtris && (lammps->extract_setting("tri_flag") == 1))
         dumpcmd += QString(" tri type %1 %2").arg(triflag).arg(tridiam);
-    else if ((lammps->extract_setting("ellipsoid_flag") == 1) && (lammps->version() > 20260210)) {
+    else if (showellipsoids && (lammps->extract_setting("ellipsoid_flag") == 1) &&
+             (lammps->version() > 20260210)) {
         // available since 11 February 2026 release
-        dumpcmd += QString(" ellipsoid type 1 3 0.2");
+        dumpcmd += QString(" ellipsoid type %1 %2 %3")
+                       .arg(ellipsoidflag)
+                       .arg(ellipsoidlevel)
+                       .arg(ellipsoiddiam);
     }
     dumpcmd += QString(" size %1 %2").arg(xsize).arg(ysize);
     dumpcmd += QString(" zoom %1").arg(zoom);
