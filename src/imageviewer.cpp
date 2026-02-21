@@ -251,10 +251,10 @@ ImageViewer::ImageViewer(const QString &fileName, LammpsWrapper *_lammps, QWidge
                 } else if (words.at(0) == "fix") {
                     image_fixes << words.at(1);
                 } else {
-                    fprintf(stderr, "unhandled image style: %s", line.toStdString().c_str());
+                    fprintf(stderr, "unhandled image style: %s\n", line.toStdString().c_str());
                 }
             } else {
-                fprintf(stderr, "unhandled image style: %s", line.toStdString().c_str());
+                fprintf(stderr, "unhandled image style: %s\n", line.toStdString().c_str());
             }
         }
         image_styles.close();
@@ -1746,7 +1746,8 @@ bool ImageViewer::eventFilter(QObject *watched, QEvent *event)
                 box->setFocus();
                 box->showPopup();
                 return true;
-            }
+            } else
+                return false;
         } else if ((kev->key() == Qt::Key_M) && (kev->modifiers() == Qt::AltModifier)) {
             auto *box = findChild<QComboBox *>("group");
             if (box) box->hidePopup();
@@ -1756,7 +1757,8 @@ bool ImageViewer::eventFilter(QObject *watched, QEvent *event)
                 box->setFocus();
                 box->showPopup();
                 return true;
-            }
+            } else
+                return false;
         } else if ((kev->key() == Qt::Key_W) && (kev->modifiers() == Qt::AltModifier)) {
             auto *combo = findChild<QComboBox *>("molecule");
             if (combo) combo->hidePopup();
@@ -1768,7 +1770,8 @@ bool ImageViewer::eventFilter(QObject *watched, QEvent *event)
                 box->setFocus();
                 box->selectAll();
                 return true;
-            }
+            } else
+                return false;
         } else if ((kev->key() == Qt::Key_H) && (kev->modifiers() == Qt::AltModifier)) {
             auto *combo = findChild<QComboBox *>("molecule");
             if (combo) combo->hidePopup();
@@ -1780,7 +1783,8 @@ bool ImageViewer::eventFilter(QObject *watched, QEvent *event)
                 box->setFocus();
                 box->selectAll();
                 return true;
-            }
+            } else
+                return false;
         } else if (kev->modifiers() == Qt::AltModifier) {
             auto *combo = findChild<QComboBox *>("molecule");
             if (combo) combo->hidePopup();

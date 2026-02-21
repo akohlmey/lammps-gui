@@ -7,7 +7,7 @@ then
     exit 1
 fi
 
-cd $(dirname $0)
+cd "$(dirname $0)" || exit 1
 
 mv help_index.table help_index.oldtable
 grep '\.\. index::' "$1"/src/*.rst | sort \
