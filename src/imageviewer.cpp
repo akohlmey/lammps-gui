@@ -532,7 +532,7 @@ ImageViewer::ImageViewer(const QString &fileName, LammpsWrapper *_lammps, QWidge
     dobox->setChecked(showbox);
     doshiny->setChecked(shinyfactor > SHINY_CUT);
     dovdw->setChecked(vdwfactor > VDW_CUT);
-    dovdw->setEnabled(useelements || usediameter || usesigma);
+    dovdw->setEnabled(showatoms && (useelements || usediameter || usesigma));
     dobond->setChecked(autobond);
     dobond->setEnabled(has_autobonds());
     doaxes->setChecked(showaxes);
@@ -892,8 +892,8 @@ void ImageViewer::global_settings()
     int idx               = 0;
     int n                 = 0;
     constexpr int MAXCOLS = 7;
-    layout->addWidget(title, idx++, n, 1, MAXCOLS, Qt::AlignCenter);
-    layout->addWidget(new QHline, idx++, n, 1, MAXCOLS);
+    layout->addWidget(title, idx++, 0, 1, MAXCOLS, Qt::AlignCenter);
+    layout->addWidget(new QHline, idx++, 0, 1, MAXCOLS);
     for (int i = 0; i < MAXCOLS; ++i)
         layout->setColumnStretch(i, 2);
     layout->setColumnStretch(MAXCOLS - 1, 1);
@@ -1031,7 +1031,7 @@ void ImageViewer::global_settings()
     layout->addWidget(zval, idx++, n++, 1, 1);
 
     n = 0;
-    layout->addWidget(new QHline, idx++, n, 1, MAXCOLS);
+    layout->addWidget(new QHline, idx++, 0, 1, MAXCOLS);
     auto *cancel = new QPushButton("&Cancel");
     auto *apply  = new QPushButton("&Apply");
     cancel->setAutoDefault(false);
@@ -1120,8 +1120,8 @@ void ImageViewer::atom_settings()
     int idx               = 0;
     int n                 = 0;
     constexpr int MAXCOLS = 6;
-    layout->addWidget(title, idx++, n, 1, MAXCOLS, Qt::AlignCenter);
-    layout->addWidget(new QHline, idx++, n, 1, MAXCOLS);
+    layout->addWidget(title, idx++, 0, 1, MAXCOLS, Qt::AlignCenter);
+    layout->addWidget(new QHline, idx++, 0, 1, MAXCOLS);
 
     layout->setColumnStretch(0, 4);
     layout->setColumnStretch(1, 3);
@@ -1139,20 +1139,29 @@ void ImageViewer::atom_settings()
 
     auto *atombutton = new QCheckBox("Atoms ", this);
     atombutton->setCheckState(showatoms ? Qt::Checked : Qt::Unchecked);
-    layout->addWidget(atombutton, idx++, n++, 1, 1);
+    layout->addWidget(atombutton, idx, n++, 1, 1);
+    auto *vdwbutton = new QCheckBox("VDW style ", this);
+    vdwbutton->setCheckState((vdwfactor > VDW_CUT) ? Qt::Checked : Qt::Unchecked);
+    layout->addWidget(vdwbutton, idx++, n++, 1, 1);
 
     n = 0;
 
     auto *bondbutton = new QCheckBox("Bonds ", this);
     bondbutton->setCheckState(showbonds ? Qt::Checked : Qt::Unchecked);
-    layout->addWidget(bondbutton, idx++, n++, 1, 1);
+    layout->addWidget(bondbutton, idx, n++, 1, 1);
+    auto *autobutton = new QCheckBox("AutoBonds ", this);
+    autobutton->setCheckState(autobond ? Qt::Checked : Qt::Unchecked);
+    autobutton->setEnabled(has_autobonds());
+    layout->addWidget(autobutton, idx, n++, 1, 1);
+    auto *bcutoff = new QLineEdit(QString::number(bondcutoff));
+    bcutoff->setValidator(new QDoubleValidator(0.001, 10.0, 100, this));
+    bcutoff->setEnabled(has_autobonds());
+    layout->addWidget(bcutoff, idx++, n++, 1, 1);
     if (lammps->extract_setting("molecule_flag") != 1) {
         bondbutton->setEnabled(false);
     }
 
-    n = 0;
-
-    layout->addWidget(new QHline, idx++, n, 1, MAXCOLS);
+    layout->addWidget(new QHline, idx++, 0, 1, MAXCOLS);
 
     n = 0;
 
@@ -1273,7 +1282,7 @@ void ImageViewer::atom_settings()
     }
 
     n = 0;
-    layout->addWidget(new QHline, idx++, n, 1, MAXCOLS);
+    layout->addWidget(new QHline, idx++, 0, 1, MAXCOLS);
     auto *cancel = new QPushButton("&Cancel");
     auto *apply  = new QPushButton("&Apply");
     cancel->setAutoDefault(false);
@@ -1292,9 +1301,27 @@ void ImageViewer::atom_settings()
 
     // retrieve and apply data
 
-    showatoms = atombutton->isChecked();
+    showatoms    = atombutton->isChecked();
+    vdwfactor    = vdwbutton->isChecked() ? VDW_ON : VDW_OFF;
+    auto *button = findChild<QPushButton *>("vdw");
+    if (button) {
+        if (showatoms) {
+            button->setEnabled(true);
+            button->setChecked(vdwfactor > VDW_CUT);
+        } else {
+            button->setEnabled(false);
+            button->setChecked(false);
+        }
+    }
 
-    showbonds = bondbutton->isChecked();
+    showbonds  = bondbutton->isChecked();
+    autobond   = autobutton->isChecked();
+    bondcutoff = bcutoff->text().toDouble();
+
+    button = findChild<QPushButton *>("autobond");
+    if (button) button->setChecked(autobond && has_autobonds());
+    auto *cutoff = findChild<QLineEdit *>("bondcut");
+    if (cutoff) cutoff->setText(QString::number(bondcutoff));
 
     showbodies = bodybutton->isChecked();
     if (bdiam->hasAcceptableInput()) bodydiam = bdiam->text().toDouble();
@@ -1572,8 +1599,8 @@ void ImageViewer::region_settings()
 
     constexpr int MAXCOLS = 7;
     auto *layout          = new QGridLayout;
-    layout->addWidget(title, idx++, n, 1, MAXCOLS, Qt::AlignHCenter);
-    layout->addWidget(new QHline, idx++, n, 1, MAXCOLS);
+    layout->addWidget(title, idx++, 0, 1, MAXCOLS, Qt::AlignHCenter);
+    layout->addWidget(new QHline, idx++, 0, 1, MAXCOLS);
 
     layout->addWidget(new QLabel("Region ID:"), idx, n++, Qt::AlignHCenter);
     layout->addWidget(new QLabel("Show:"), idx, n++, Qt::AlignHCenter);
@@ -1844,7 +1871,7 @@ void ImageViewer::createImage()
         }
     }
     // adjust pushbutton state and clear adiams string to disable VDW display, if needed
-    if (useelements || usediameter || usesigma) {
+    if (showatoms && (useelements || usediameter || usesigma)) {
         auto *button = findChild<QPushButton *>("vdw");
         if (button) button->setEnabled(true);
         auto *edit = findChild<QLineEdit *>("atomSize");
