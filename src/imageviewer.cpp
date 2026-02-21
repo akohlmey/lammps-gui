@@ -287,6 +287,8 @@ ImageViewer::ImageViewer(const QString &fileName, LammpsWrapper *_lammps, QWidge
     backcolor      = settings.value("backcolor", "black").toString();
     backcolor2     = settings.value("backcolor2", "white").toString();
     ssaoval        = 0.6;
+    showatoms      = true;
+    showbonds      = true;
     showbodies     = true;
     bodydiam       = 0.2;
     bodyflag       = TRIANGLES;
@@ -1135,6 +1137,25 @@ void ImageViewer::atom_settings()
 
     n = 0;
 
+    auto *atombutton = new QCheckBox("Atoms ", this);
+    atombutton->setCheckState(showatoms ? Qt::Checked : Qt::Unchecked);
+    layout->addWidget(atombutton, idx++, n++, 1, 1);
+
+    n = 0;
+
+    auto *bondbutton = new QCheckBox("Bonds ", this);
+    bondbutton->setCheckState(showbonds ? Qt::Checked : Qt::Unchecked);
+    layout->addWidget(bondbutton, idx++, n++, 1, 1);
+    if (lammps->extract_setting("molecule_flag") != 1) {
+        bondbutton->setEnabled(false);
+    }
+
+    n = 0;
+
+    layout->addWidget(new QHline, idx++, n, 1, MAXCOLS);
+
+    n = 0;
+
     layout->addWidget(new QLabel("  Shape:"), idx, n++, 1, 1);
     layout->addWidget(new QLabel("Diameter:"), idx, n++, 1, 1, Qt::AlignCenter);
     layout->addWidget(new QLabel("Refine:"), idx, n++, 1, 1, Qt::AlignCenter);
@@ -1270,6 +1291,10 @@ void ImageViewer::atom_settings()
     if (!rv) return;
 
     // retrieve and apply data
+
+    showatoms = atombutton->isChecked();
+
+    showbonds = bondbutton->isChecked();
 
     showbodies = bodybutton->isChecked();
     if (bdiam->hasAcceptableInput()) bodydiam = bdiam->text().toDouble();
@@ -1874,6 +1899,7 @@ void ImageViewer::createImage()
     else
         dumpcmd += blank + settings.value("diameter", "type").toString();
 
+    if (!showatoms) dumpcmd += " atom no";
     if (showbodies && (lammps->extract_setting("body_flag") == 1))
         dumpcmd += QString(" body type %1 %2").arg(bodydiam).arg(bodyflag);
     else if (showlines && (lammps->extract_setting("line_flag") == 1))
@@ -1893,7 +1919,7 @@ void ImageViewer::createImage()
     dumpcmd += QString(" shiny %1 ").arg(shinyfactor);
     dumpcmd += QString(" fsaa %1").arg(antialias ? "yes" : "no");
     if (nbondtypes > 0) {
-        if (do_vdw)
+        if (do_vdw || !showbonds)
             dumpcmd += " bond none none ";
         else
             dumpcmd += " bond atom 0.5 ";

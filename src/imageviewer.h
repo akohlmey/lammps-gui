@@ -170,6 +170,9 @@ private:
     bool showaxes;                               ///< Show coordinate axes flag
     bool antialias;                              ///< Antialiasing enabled flag
     bool usessao;                                ///< SSAO enabled flag
+    bool showatoms;                              ///< Show atoms
+    bool showbonds;                              ///< Show bonds if atom style supports it
+    bool autobond;                               ///< Dynamics bonds from cutoff flag
     bool showbodies;                             ///< Show bodies if atom style supports it
     bool showellipsoids;                         ///< Show ellipsoids if atom style supports it
     bool showlines;                              ///< Show lines if atom style supports it
@@ -177,7 +180,6 @@ private:
     bool useelements;                            ///< Use element properties flag
     bool usediameter;                            ///< Use diameter attribute flag
     bool usesigma;                               ///< Use sigma attribute flag
-    bool autobond;                               ///< Auto-detect bonds flag
     std::map<std::string, ImageInfo *> computes; ///< Compute graphics settings
     std::map<std::string, ImageInfo *> fixes;    ///< Fix graphics settings
     std::map<std::string, RegionInfo *> regions; ///< Region settings
