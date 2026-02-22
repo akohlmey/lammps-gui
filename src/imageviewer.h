@@ -115,6 +115,7 @@ private:
     void adjustWindowSize();                ///< Auto-resize window to fit image
     void update_fixes();                    ///< Update fix graphics information
     void update_regions();                  ///< Update region information
+    void update_peratom();                  ///< Update per-atom information
     bool has_autobonds();                   ///< Check if autobonds are enabled
 
 private:
@@ -134,6 +135,7 @@ private:
 
     QStringList image_computes;                  ///< list of computes supporting dump image
     QStringList image_fixes;                     ///< list of fixes supporting dump image
+    QStringList atom_properties;                 ///< list of per-atom properties for coloring
     LammpsWrapper *lammps;                       ///< LAMMPS interface for image generation
     QString group;                               ///< Current atom group
     QString molecule;                            ///< Current molecule selection

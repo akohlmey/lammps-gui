@@ -260,6 +260,9 @@ ImageViewer::ImageViewer(const QString &fileName, LammpsWrapper *_lammps, QWidge
         image_styles.close();
     }
 
+    // add some basic available dump custom properties
+    atom_properties = {"type", "element"};
+
     QSettings settings;
     settings.beginGroup("snapshot");
     xsize          = settings.value("xsize", "600").toInt();
@@ -1119,40 +1122,84 @@ void ImageViewer::atom_settings()
     auto *layout          = new QGridLayout;
     int idx               = 0;
     int n                 = 0;
-    constexpr int MAXCOLS = 6;
+    constexpr int MAXCOLS = 8;
     layout->addWidget(title, idx++, 0, 1, MAXCOLS, Qt::AlignCenter);
     layout->addWidget(new QHline, idx++, 0, 1, MAXCOLS);
 
-    layout->setColumnStretch(0, 4);
-    layout->setColumnStretch(1, 3);
+    layout->setColumnStretch(0, 12);
+    layout->setColumnStretch(1, 10);
     // need extra space for spinboxes on Windows
 #if defined(Q_OS_WIN32)
-    layout->setColumnStretch(2, 3);
+    layout->setColumnStretch(2, 12);
 #else
-    layout->setColumnStretch(2, 2);
+    layout->setColumnStretch(2, 8);
 #endif
-    layout->setColumnStretch(3, 4);
-    layout->setColumnStretch(4, 4);
-    layout->setColumnStretch(5, 3);
+    layout->setColumnStretch(3, 6);
+    layout->setColumnStretch(4, 8);
+    layout->setColumnStretch(5, 6);
+    layout->setColumnStretch(6, 6);
+    layout->setColumnStretch(7, 8);
 
     n = 0;
 
     auto *atombutton = new QCheckBox("Atoms ", this);
     atombutton->setCheckState(showatoms ? Qt::Checked : Qt::Unchecked);
     layout->addWidget(atombutton, idx, n++, 1, 1);
+    layout->addWidget(new QLabel("Color: "), idx, n++, 1, 1, Qt::AlignVCenter | Qt::AlignRight);
+    auto *acolor = new QComboBox;
+    acolor->setObjectName("acolor");
+    acolor->addItems(atom_properties);
+    layout->addWidget(acolor, idx, n++, 1, 1);
+    layout->addWidget(new QLabel("Size: "), idx, n++, 1, 1, Qt::AlignVCenter | Qt::AlignRight);
+    auto *adiam = new QComboBox;
+    adiam->setObjectName("acolor");
+    adiam->addItems(atom_properties);
+    layout->addWidget(adiam, idx, n++, 1, 1);
+    layout->addWidget(new QLabel("Transparency: "), idx, n++, 1, 2,
+                      Qt::AlignVCenter | Qt::AlignRight);
+    ++n;
+    auto *atrans = new QLineEdit("1.0");
+    atrans->setValidator(new QDoubleValidator(0.0, 1.0, 2, this));
+    layout->addWidget(atrans, idx++, n++, 1, 1);
+
+    n = 0;
+
     auto *vdwbutton = new QCheckBox("VDW style ", this);
     vdwbutton->setCheckState((vdwfactor > VDW_CUT) ? Qt::Checked : Qt::Unchecked);
-    layout->addWidget(vdwbutton, idx++, n++, 1, 1);
+    layout->addWidget(vdwbutton, idx, n++, 1, 1, Qt::AlignCenter);
+    layout->addWidget(new QLabel("Colormap: "), idx, n++, 1, 1, Qt::AlignVCenter | Qt::AlignRight);
+    auto *amap = new QComboBox;
+    amap->setObjectName("amap");
+    amap->addItems({"RWB", "BWR", "Rainbow"});
+    layout->addWidget(amap, idx, n++, 1, 1);
+    layout->addWidget(new QLabel("Min: "), idx, n++, 1, 1, Qt::AlignVCenter | Qt::AlignRight);
+    auto *arangemin = new QLineEdit("auto");
+    layout->addWidget(arangemin, idx, n++, 1, 1);
+    layout->addWidget(new QLabel("Max: "), idx, n++, 1, 2, Qt::AlignVCenter | Qt::AlignRight);
+    ++n;
+    auto *arangemax = new QLineEdit("auto");
+    layout->addWidget(arangemax, idx++, n++, 1, 1);
 
     n = 0;
 
     auto *bondbutton = new QCheckBox("Bonds ", this);
     bondbutton->setCheckState(showbonds ? Qt::Checked : Qt::Unchecked);
     layout->addWidget(bondbutton, idx, n++, 1, 1);
-    auto *autobutton = new QCheckBox("AutoBonds ", this);
+    layout->addWidget(new QLabel("Color: "), idx, n++, 1, 1, Qt::AlignVCenter | Qt::AlignRight);
+    auto *bncolor = new QComboBox;
+    bncolor->setObjectName("bncolor");
+    bncolor->addItems({"atom", "type", "none"});
+    layout->addWidget(bncolor, idx, n++, 1, 1);
+    layout->addWidget(new QLabel("Size: "), idx, n++, 1, 1, Qt::AlignVCenter | Qt::AlignRight);
+    auto *bndiam = new QComboBox;
+    bndiam->setObjectName("bndiam");
+    bndiam->addItems({"atom", "type", "none"});
+    layout->addWidget(bndiam, idx, n++, 1, 1);
+    auto *autobutton = new QCheckBox("AutoBonds:", this);
     autobutton->setCheckState(autobond ? Qt::Checked : Qt::Unchecked);
     autobutton->setEnabled(has_autobonds());
-    layout->addWidget(autobutton, idx, n++, 1, 1);
+    layout->addWidget(autobutton, idx, n++, 1, 2, Qt::AlignVCenter | Qt::AlignRight);
+    ++n;
     auto *bcutoff = new QLineEdit(QString::number(bondcutoff));
     bcutoff->setValidator(new QDoubleValidator(0.001, 10.0, 100, this));
     bcutoff->setEnabled(has_autobonds());
@@ -1168,7 +1215,8 @@ void ImageViewer::atom_settings()
     layout->addWidget(new QLabel("  Shape:"), idx, n++, 1, 1);
     layout->addWidget(new QLabel("Diameter:"), idx, n++, 1, 1, Qt::AlignCenter);
     layout->addWidget(new QLabel("Refine:"), idx, n++, 1, 1, Qt::AlignCenter);
-    layout->addWidget(new QLabel("Style:"), idx++, n++, 1, 3, Qt::AlignCenter);
+    n += 2;
+    layout->addWidget(new QLabel("Style:"), idx++, n++, 1, 2, Qt::AlignCenter);
 
     n = 0;
 
@@ -1184,11 +1232,13 @@ void ImageViewer::atom_settings()
     auto *bcbutton = new QRadioButton("Cylinders", this);
     bcbutton->setChecked(bodyflag == CYLINDERS);
     bgroup->addButton(bcbutton);
-    layout->addWidget(bcbutton, idx, n++, 1, 1, Qt::AlignVCenter | Qt::AlignRight);
+    layout->addWidget(bcbutton, idx, n++, 1, 2, Qt::AlignVCenter | Qt::AlignRight);
+    ++n;
     auto *btbutton = new QRadioButton("Triangles", this);
     btbutton->setChecked(bodyflag == TRIANGLES);
     bgroup->addButton(btbutton);
-    layout->addWidget(btbutton, idx, n++, 1, 1, Qt::AlignCenter);
+    layout->addWidget(btbutton, idx, n++, 1, 2, Qt::AlignCenter);
+    ++n;
     auto *bbbutton = new QRadioButton("Both", this);
     bbbutton->setChecked(bodyflag == BOTH);
     bgroup->addButton(bbbutton);
@@ -1219,15 +1269,18 @@ void ImageViewer::atom_settings()
     auto *ecbutton = new QRadioButton("Cylinders", this);
     ecbutton->setChecked(ellipsoidflag == CYLINDERS);
     egroup->addButton(ecbutton);
-    layout->addWidget(ecbutton, idx, n++, 1, 1, Qt::AlignVCenter | Qt::AlignRight);
+    layout->addWidget(ecbutton, idx, n++, 1, 2, Qt::AlignVCenter | Qt::AlignRight);
+    ++n;
     auto *etbutton = new QRadioButton("Triangles", this);
     etbutton->setChecked(ellipsoidflag == TRIANGLES);
     egroup->addButton(etbutton);
-    layout->addWidget(etbutton, idx, n++, 1, 1, Qt::AlignCenter);
+    layout->addWidget(etbutton, idx, n++, 1, 2, Qt::AlignCenter);
+    ++n;
     auto *ebbutton = new QRadioButton("Both", this);
     ebbutton->setChecked(ellipsoidflag == BOTH);
     egroup->addButton(ebbutton);
     layout->addWidget(ebbutton, idx++, n++, 1, 1, Qt::AlignVCenter | Qt::AlignLeft);
+    ++n;
     if (lammps->extract_setting("ellipsoid_flag") != 1) {
         ellipsoidbutton->setEnabled(false);
         elevel->setEnabled(false);
@@ -1264,15 +1317,18 @@ void ImageViewer::atom_settings()
     auto *tcbutton = new QRadioButton("Cylinders", this);
     tcbutton->setChecked(triflag == CYLINDERS);
     tgroup->addButton(tcbutton);
-    layout->addWidget(tcbutton, idx, n++, 1, 1, Qt::AlignVCenter | Qt::AlignRight);
+    layout->addWidget(tcbutton, idx, n++, 1, 2, Qt::AlignVCenter | Qt::AlignRight);
+    ++n;
     auto *ttbutton = new QRadioButton("Triangles", this);
     ttbutton->setChecked(triflag == TRIANGLES);
     tgroup->addButton(ttbutton);
-    layout->addWidget(ttbutton, idx, n++, 1, 1, Qt::AlignCenter);
+    layout->addWidget(ttbutton, idx, n++, 1, 2, Qt::AlignCenter);
+    ++n;
     auto *tbbutton = new QRadioButton("Both", this);
     tbbutton->setChecked(triflag == BOTH);
     tgroup->addButton(tbbutton);
     layout->addWidget(tbbutton, idx++, n++, 1, 1, Qt::AlignVCenter | Qt::AlignLeft);
+    ++n;
     if (lammps->extract_setting("tri_flag") != 1) {
         tributton->setEnabled(false);
         tdiam->setEnabled(false);
