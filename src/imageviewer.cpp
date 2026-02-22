@@ -260,9 +260,6 @@ ImageViewer::ImageViewer(const QString &fileName, LammpsWrapper *_lammps, QWidge
         image_styles.close();
     }
 
-    // add some basic available dump custom properties
-    atom_properties = {"type", "element"};
-
     QSettings settings;
     settings.beginGroup("snapshot");
     xsize          = settings.value("xsize", "600").toInt();
@@ -1101,6 +1098,7 @@ void ImageViewer::global_settings()
 
 void ImageViewer::atom_settings()
 {
+    update_peratom();
     QDialog setview;
     setview.setWindowTitle(QString("LAMMPS-GUI - Atom and Bond settings for images"));
     setview.setWindowIcon(QIcon(":/icons/lammps-gui-icon-128x128.png"));
@@ -2279,6 +2277,17 @@ void ImageViewer::adjustWindowSize()
     scrollArea->setMinimumSize(desiredWidth, desiredHeight);
     scrollArea->resize(desiredWidth, desiredHeight);
     adjustSize();
+}
+
+void ImageViewer::update_peratom()
+{
+    atom_properties.clear();
+    atom_properties << "type" << "elements";
+
+    if (!lammps) return;
+    // we can query for fixes before 10 December 2025, but there is no support
+    // for fix graphics until after that version. So the check is needed for this date.
+    if (lammps->version() < 20251210) return;
 }
 
 void ImageViewer::update_fixes()
