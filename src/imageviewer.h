@@ -185,6 +185,7 @@ private:
     std::map<std::string, ImageInfo *> computes; ///< Compute graphics settings
     std::map<std::string, ImageInfo *> fixes;    ///< Fix graphics settings
     std::map<std::string, RegionInfo *> regions; ///< Region settings
+    bool shutdown;                               ///< flag if class has entered the destructor
 };
 #endif
 

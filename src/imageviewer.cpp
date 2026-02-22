@@ -224,7 +224,8 @@ ImageViewer::ImageViewer(const QString &fileName, LammpsWrapper *_lammps, QWidge
     QDialog(parent), menuBar(new QMenuBar), imageLabel(new QLabel), scrollArea(new QScrollArea),
     buttonBox(nullptr), atomSize(1.0), saveAsAct(nullptr), copyAct(nullptr), cmdAct(nullptr),
     zoomInAct(nullptr), zoomOutAct(nullptr), normalSizeAct(nullptr), lammps(_lammps), group("all"),
-    molecule("none"), filename(fileName), useelements(false), usediameter(false), usesigma(false)
+    molecule("none"), filename(fileName), useelements(false), usediameter(false), usesigma(false),
+    shutdown(false)
 {
     imageLabel->setBackgroundRole(QPalette::Base);
     imageLabel->setSizePolicy(QSizePolicy::Minimum, QSizePolicy::Minimum);
@@ -575,6 +576,8 @@ ImageViewer::ImageViewer(const QString &fileName, LammpsWrapper *_lammps, QWidge
 
 ImageViewer::~ImageViewer()
 {
+    shutdown = true;
+
     // clear dynamically allocated storage
 
     for (auto &comp : computes)
@@ -676,7 +679,7 @@ void ImageViewer::toggle_anti()
 {
     auto *button = qobject_cast<QPushButton *>(sender());
     if (!button) return;
-    antialias    = !antialias;
+    antialias = !antialias;
     button->setChecked(antialias);
     createImage();
 }
@@ -756,7 +759,7 @@ void ImageViewer::toggle_box()
 {
     auto *button = qobject_cast<QPushButton *>(sender());
     if (!button) return;
-    showbox      = !showbox;
+    showbox = !showbox;
     button->setChecked(showbox);
     createImage();
 }
@@ -765,7 +768,7 @@ void ImageViewer::toggle_axes()
 {
     auto *button = qobject_cast<QPushButton *>(sender());
     if (!button) return;
-    showaxes     = !showaxes;
+    showaxes = !showaxes;
     button->setChecked(showaxes);
     createImage();
 }
@@ -1866,6 +1869,9 @@ bool ImageViewer::eventFilter(QObject *watched, QEvent *event)
 
 void ImageViewer::createImage()
 {
+    // no point in trying to update the image when triggered after the destructor started
+    if (shutdown) return;
+
     auto *renderstatus = findChild<QLabel *>("renderstatus");
     if (renderstatus) renderstatus->setEnabled(true);
     repaint();
