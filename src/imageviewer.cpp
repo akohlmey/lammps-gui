@@ -646,13 +646,15 @@ void ImageViewer::reset_view()
 void ImageViewer::set_atom_size()
 {
     auto *field = qobject_cast<QLineEdit *>(sender());
-    atomSize    = field->text().toDouble();
+    if (!field) return;
+    atomSize = field->text().toDouble();
     createImage();
 }
 
 void ImageViewer::edit_size()
 {
     auto *field = qobject_cast<QSpinBox *>(sender());
+    if (!field) return;
     if (field->objectName() == "xsize") {
         xsize = field->value();
     } else if (field->objectName() == "ysize") {
@@ -664,7 +666,8 @@ void ImageViewer::edit_size()
 void ImageViewer::toggle_ssao()
 {
     auto *button = qobject_cast<QPushButton *>(sender());
-    usessao      = !usessao;
+    if (!button) return;
+    usessao = !usessao;
     button->setChecked(usessao);
     createImage();
 }
@@ -672,6 +675,7 @@ void ImageViewer::toggle_ssao()
 void ImageViewer::toggle_anti()
 {
     auto *button = qobject_cast<QPushButton *>(sender());
+    if (!button) return;
     antialias    = !antialias;
     button->setChecked(antialias);
     createImage();
@@ -680,6 +684,7 @@ void ImageViewer::toggle_anti()
 void ImageViewer::toggle_shiny()
 {
     auto *button = qobject_cast<QPushButton *>(sender());
+    if (!button) return;
     if (shinyfactor > SHINY_CUT)
         shinyfactor = SHINY_OFF;
     else
@@ -691,7 +696,7 @@ void ImageViewer::toggle_shiny()
 void ImageViewer::toggle_vdw()
 {
     auto *button = qobject_cast<QPushButton *>(sender());
-
+    if (!button) return;
     if (button->isChecked())
         vdwfactor = VDW_ON;
     else
@@ -750,6 +755,7 @@ void ImageViewer::set_bondcut()
 void ImageViewer::toggle_box()
 {
     auto *button = qobject_cast<QPushButton *>(sender());
+    if (!button) return;
     showbox      = !showbox;
     button->setChecked(showbox);
     createImage();
@@ -758,6 +764,7 @@ void ImageViewer::toggle_box()
 void ImageViewer::toggle_axes()
 {
     auto *button = qobject_cast<QPushButton *>(sender());
+    if (!button) return;
     showaxes     = !showaxes;
     button->setChecked(showaxes);
     createImage();
