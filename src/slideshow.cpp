@@ -94,12 +94,20 @@ SlideShow::SlideShow(const QString &fileName, QWidget *parent) :
     auto *tomovie = new QPushButton(QIcon(":/icons/export-movie.png"), "");
     tomovie->setToolTip("Export to movie file");
     tomovie->setEnabled(has_exe("ffmpeg") || has_exe("magick") || has_exe("convert"));
+    auto buttonhint = tomovie->minimumSizeHint();
+    buttonhint.setWidth(buttonhint.height()*4/3);
+    tomovie->setMinimumSize(buttonhint);
+    tomovie->setMaximumSize(buttonhint);
 
     auto *toimage = new QPushButton(QIcon(":/icons/document-save-as.png"), "");
     toimage->setToolTip("Export to image file");
+    toimage->setMinimumSize(buttonhint);
+    toimage->setMaximumSize(buttonhint);
 
     auto *totrash = new QPushButton(QIcon(":/icons/trash.png"), "");
     totrash->setToolTip("Delete all image files");
+    totrash->setMinimumSize(buttonhint);
+    totrash->setMaximumSize(buttonhint);
 
     auto dsize = QFontMetrics(QApplication::font()).size(Qt::TextSingleLine, "Delay:  100");
     // need some extra space on Windows
@@ -118,37 +126,63 @@ SlideShow::SlideShow(const QString &fileName, QWidget *parent) :
     gofirst->setToolTip("Go to first Image");
     gofirst->setObjectName("first");
     gofirst->setCheckable(false);
+    gofirst->setMinimumSize(buttonhint);
+    gofirst->setMaximumSize(buttonhint);
     auto *goprev = new QPushButton(QIcon(":/icons/go-previous-2.png"), "");
     goprev->setToolTip("Go to previous Image");
+    goprev->setMinimumSize(buttonhint);
+    goprev->setMaximumSize(buttonhint);
     auto *goplay = new QPushButton(QIcon(":/icons/media-playback-start-2.png"), "");
     goplay->setToolTip("Play animation");
     goplay->setCheckable(true);
     goplay->setChecked(playtimer);
     goplay->setObjectName("play");
+    goplay->setMinimumSize(buttonhint);
+    goplay->setMaximumSize(buttonhint);
     auto *gonext = new QPushButton(QIcon(":/icons/go-next-2.png"), "");
     gonext->setToolTip("Go to next Image");
+    gonext->setMinimumSize(buttonhint);
+    gonext->setMaximumSize(buttonhint);
     auto *golast = new QPushButton(QIcon(":/icons/go-last.png"), "");
     golast->setToolTip("Go to last Image");
+    golast->setMinimumSize(buttonhint);
+    golast->setMaximumSize(buttonhint);
     auto *goloop = new QPushButton(QIcon(":/icons/media-playlist-repeat.png"), "");
     goloop->setToolTip("Loop animation");
     goloop->setCheckable(true);
     goloop->setChecked(do_loop);
+    goloop->setMinimumSize(buttonhint);
+    goloop->setMaximumSize(buttonhint);
 
     auto *zoomin = new QPushButton(QIcon(":/icons/gtk-zoom-in.png"), "");
     zoomin->setToolTip("Zoom in by 10 percent");
+    zoomin->setMinimumSize(buttonhint);
+    zoomin->setMaximumSize(buttonhint);
     auto *zoomout = new QPushButton(QIcon(":/icons/gtk-zoom-out.png"), "");
     zoomout->setToolTip("Zoom out by 10 percent");
+    zoomout->setMinimumSize(buttonhint);
+    zoomout->setMaximumSize(buttonhint);
     auto *normal = new QPushButton(QIcon(":/icons/gtk-zoom-fit.png"), "");
     normal->setToolTip("Reset zoom to normal");
+    normal->setMinimumSize(buttonhint);
+    normal->setMaximumSize(buttonhint);
 
     auto *imgrotcw = new QPushButton(QIcon(":/icons/object-rotate-right.png"), "");
     imgrotcw->setToolTip("Rotate displayed image 90<sup>o</sup> clockwise");
+    imgrotcw->setMinimumSize(buttonhint);
+    imgrotcw->setMaximumSize(buttonhint);
     auto *imgrotccw = new QPushButton(QIcon(":/icons/object-rotate-left.png"), "");
     imgrotccw->setToolTip("Rotate displayed image 90<sup>o</sup> counter-clockwise");
+    imgrotccw->setMinimumSize(buttonhint);
+    imgrotccw->setMaximumSize(buttonhint);
     auto *imgfliph = new QPushButton(QIcon(":/icons/object-flip-horizontal.png"), "");
     imgfliph->setToolTip("Mirror displayed image horizontally");
+    imgfliph->setMinimumSize(buttonhint);
+    imgfliph->setMaximumSize(buttonhint);
     auto *imgflipv = new QPushButton(QIcon(":/icons/object-flip-vertical.png"), "");
     imgflipv->setToolTip("Mirror displayed image vertically");
+    imgflipv->setMinimumSize(buttonhint);
+    imgflipv->setMaximumSize(buttonhint);
 
     connect(tomovie, &QPushButton::released, this, &SlideShow::movie);
     connect(toimage, &QPushButton::released, this, &SlideShow::save_current_image);

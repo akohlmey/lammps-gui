@@ -359,6 +359,16 @@ LammpsGui::LammpsGui(QWidget *parent, const QString &filename, int width, int he
     lammpsrun->setToolTip("Run LAMMPS on input");
     lammpsstop->setToolTip("Stop LAMMPS");
     lammpsimage->setToolTip("Create snapshot image");
+    auto buttonhint = lammpssave->minimumSizeHint();
+    buttonhint.setWidth(buttonhint.height()*4/3);
+    lammpssave->setMinimumSize(buttonhint);
+    lammpssave->setMaximumSize(buttonhint);
+    lammpsrun->setMinimumSize(buttonhint);
+    lammpsrun->setMaximumSize(buttonhint);
+    lammpsstop->setMinimumSize(buttonhint);
+    lammpsstop->setMaximumSize(buttonhint);
+    lammpsimage->setMinimumSize(buttonhint);
+    lammpsimage->setMaximumSize(buttonhint);
     ui->statusbar->addWidget(lammpssave);
     ui->statusbar->addWidget(lammpsrun);
     ui->statusbar->addWidget(lammpsstop);
