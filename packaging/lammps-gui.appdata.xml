@@ -54,13 +54,14 @@
   </provides>
 
   <releases>
-    <release version="1.9.2" timestamp="1771473565">
+    <release version="1.10.0" timestamp="1771473565">
       <description>
         Add dialog to enable and configure atom / particle visualization settings
         Add dialog to enable and configure graphics objects from compute and fixes
         Update layout of Image and SlideShow viewers
         Update docs for changes to Image and SlideShow viewers
         Update help index table
+        Enforce that all "icon buttons" have a 4x3 shape (not 2x1 like on macOS) and consistent size
         Add table for known fixes and computes with graphics data
         Update resource file syntax for better Windows compatibility
         Fix several small glitches and avoid unexpected crashes
