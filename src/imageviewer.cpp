@@ -441,9 +441,8 @@ ImageViewer::ImageViewer(const QString &fileName, LammpsWrapper *_lammps, QWidge
     auto *atomviz = new QPushButton("&Atoms");
     atomviz->setToolTip("Open dialog for Atom and Bond settings");
     atomviz->setObjectName("atoms");
-
-    auto *fixviz = new QPushButton("&Computes\nand Fixes");
-    fixviz->setToolTip("Open dialog for visualizing graphics from computes and fixes");
+    auto *fixviz = new QPushButton("&Extras");
+    fixviz->setToolTip("Open dialog for visualizing extra graphics from computes and fixes");
     fixviz->setObjectName("image_styles");
     fixviz->setEnabled(false);
     auto *regviz = new QPushButton("&Regions");
@@ -521,8 +520,8 @@ ImageViewer::ImageViewer(const QString &fileName, LammpsWrapper *_lammps, QWidge
     settingsLayout->addWidget(new QHline);
     settingsLayout->addWidget(setviz);
     settingsLayout->addWidget(atomviz);
-    settingsLayout->addWidget(fixviz);
     settingsLayout->addWidget(regviz);
+    settingsLayout->addWidget(fixviz);
     settingsLayout->addWidget(new QHline);
     settingsLayout->insertStretch(-1, 10);
     settingsLayout->setSizeConstraint(QLayout::SetMinimumSize);
@@ -1831,6 +1830,8 @@ void ImageViewer::change_molecule(int)
 bool ImageViewer::eventFilter(QObject *watched, QEvent *event)
 {
     if (event->type() == QEvent::KeyPress) {
+        // don't handle any more key press events after entering destructor
+        if (shutdown) return false;
         QKeyEvent *kev = static_cast<QKeyEvent *>(event);
         if ((kev->key() == Qt::Key_G) && (kev->modifiers() == Qt::AltModifier)) {
             auto *box = findChild<QComboBox *>("molecule");
