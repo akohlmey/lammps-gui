@@ -19,11 +19,18 @@
 #include <QSizePolicy>
 #include <QVBoxLayout>
 
+/* ---------------------------------------------------------------------- */
+
+namespace {
+constexpr int LAYOUT_SPACING = 6;
+}
+
 SetVariables::SetVariables(QList<QPair<QString, QString>> &_vars, QWidget *parent) :
     QDialog(parent), vars(_vars), layout(new QVBoxLayout)
 {
     auto *top = new QLabel("Set Variables:");
     layout->addWidget(top, 0, Qt::AlignHCenter);
+    layout->setSpacing(LAYOUT_SPACING);
 
     int i = 1;
     for (const auto &v : vars) {
@@ -38,6 +45,7 @@ SetVariables::SetVariables(QList<QPair<QString, QString>> &_vars, QWidget *paren
         row->addWidget(name);
         row->addWidget(val);
         row->addWidget(del);
+        row->setSpacing(LAYOUT_SPACING);
         layout->addLayout(row);
         ++i;
     }
