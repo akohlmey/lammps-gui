@@ -139,7 +139,9 @@ ChartWindow::ChartWindow(const QString &_filename, QWidget *parent) :
     row1->addWidget(new QLabel("Y-Axis:"));
     row1->addWidget(chartYlabel);
 
-    units = new QLabel("Units:");
+    row2->addWidget(new QLabel("Units:"));
+    units = new QLabel("[lj]");
+    units->setFrameStyle(QFrame::Panel);
     row2->addWidget(units);
     row2->addWidget(new QLabel("Norm:"));
     norm = new QCheckBox("");

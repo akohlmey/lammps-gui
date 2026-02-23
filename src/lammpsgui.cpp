@@ -1534,7 +1534,7 @@ void LammpsGui::do_run(bool use_buffer)
     chartwindow->setWindowIcon(QIcon(":/icons/lammps-gui-icon-128x128.png"));
     chartwindow->setMinimumSize(MINIMUM_WIDTH, MINIMUM_HEIGHT);
     const auto *unitptr = (const char *)lammps.extract_global("units");
-    if (unitptr) chartwindow->set_units(QString("Units: %1").arg(unitptr));
+    if (unitptr) chartwindow->set_units(QString("%1").arg(unitptr));
     auto normflag = lammps.extract_setting("thermo_norm");
     chartwindow->set_norm(normflag != 0);
 
