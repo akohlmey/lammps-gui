@@ -45,6 +45,10 @@
 
 #include <algorithm>
 
+namespace {
+constexpr int LAYOUT_SPACING = 6;
+}
+
 SlideShow::SlideShow(const QString &fileName, QWidget *parent) :
     QDialog(parent), playtimer(nullptr), imageLabel(new QLabel), scrollArea(new QScrollArea),
     scrollBar(new QSlider), imageName(new QLabel("(none)")), timer_delay(100), do_loop(true),
@@ -236,6 +240,7 @@ SlideShow::SlideShow(const QString &fileName, QWidget *parent) :
     navLayout->addWidget(imgflipv, 1);
     navLayout->addSpacerItem(new QSpacerItem(10, 10, QSizePolicy::Expanding, QSizePolicy::Minimum));
     navLayout->setSizeConstraint(QLayout::SetMinimumSize);
+    navLayout->setSpacing(LAYOUT_SPACING);
 
     mainLayout->addLayout(navLayout);
     mainLayout->addWidget(scrollArea, 10);
@@ -244,8 +249,11 @@ SlideShow::SlideShow(const QString &fileName, QWidget *parent) :
     botLayout->addWidget(buttonBox);
     botLayout->setStretch(0, 3);
     botLayout->setSizeConstraint(QLayout::SetMinimumSize);
+    botLayout->setSpacing(LAYOUT_SPACING);
     mainLayout->addLayout(botLayout);
     mainLayout->addWidget(scrollBar, 10);
+    mainLayout->setSpacing(LAYOUT_SPACING);
+    goplay->setFocus();
 
     setWindowIcon(QIcon(":/icons/lammps-gui-icon-128x128.png"));
     setWindowTitle(QString("LAMMPS-GUI - Slide Show: ") + QFileInfo(fileName).fileName());

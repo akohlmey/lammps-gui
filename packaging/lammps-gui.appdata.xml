@@ -62,6 +62,8 @@
         Update docs for changes to Image and SlideShow viewers
         Update help index table
         Enforce that all "icon buttons" have a 4x3 shape (not 2x1 like on macOS) and consistent size
+        Enforce consistent layout spacings across platforms
+        Implement copy-current-image-to-clipboard functionality for image viewer, charts, and slideshow
         Add table for known fixes and computes with graphics data
         Update resource file syntax for better Windows compatibility
         Fix several small glitches and avoid unexpected crashes

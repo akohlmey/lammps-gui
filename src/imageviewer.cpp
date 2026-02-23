@@ -166,6 +166,7 @@ constexpr int DEFAULT_NPOINTS     = 100000;
 constexpr double DEFAULT_DIAMETER = 0.2;
 constexpr double DEFAULT_OPACITY  = 0.5;
 constexpr int TITLE_MARGIN        = 10;
+constexpr int LAYOUT_SPACING      = 6;
 
 enum { FRAME, FILLED, TRANSPARENT, POINTS };
 enum { TYPE, ELEMENT, CONSTANT };
@@ -355,7 +356,7 @@ ImageViewer::ImageViewer(const QString &fileName, LammpsWrapper *_lammps, QWidge
     dossao->setToolTip("Toggle SSAO rendering");
     dossao->setObjectName("ssao");
     auto buttonhint = dossao->minimumSizeHint();
-    buttonhint.setWidth(buttonhint.height()*4/3);
+    buttonhint.setWidth(buttonhint.height() * 4 / 3);
     dossao->setMinimumSize(buttonhint);
     dossao->setMaximumSize(buttonhint);
     auto *doanti = new QPushButton(QIcon(":/icons/antialias.png"), "");
@@ -478,6 +479,7 @@ ImageViewer::ImageViewer(const QString &fileName, LammpsWrapper *_lammps, QWidge
     auto *topLayout    = new QVBoxLayout;
     topLayout->addLayout(menuLayout);
     topLayout->addLayout(buttonLayout);
+    topLayout->setSpacing(LAYOUT_SPACING);
 
     menuLayout->addWidget(menuBar);
     menuLayout->insertStretch(1, 10);
@@ -492,6 +494,7 @@ ImageViewer::ImageViewer(const QString &fileName, LammpsWrapper *_lammps, QWidge
     menuLayout->addWidget(new QLabel(" <u>H</u>eight: "));
     menuLayout->addWidget(yval);
     menuLayout->insertStretch(-1, 50);
+    menuLayout->setSpacing(LAYOUT_SPACING);
 
     buttonLayout->addWidget(dummy2);
     buttonLayout->addWidget(dossao);
@@ -512,6 +515,8 @@ ImageViewer::ImageViewer(const QString &fileName, LammpsWrapper *_lammps, QWidge
     buttonLayout->addWidget(reset);
     buttonLayout->insertStretch(-1, 1);
     buttonLayout->setSizeConstraint(QLayout::SetMinimumSize);
+    buttonLayout->setContentsMargins(0, 0, 0, 0);
+    buttonLayout->setSpacing(LAYOUT_SPACING);
     settingsLayout->addWidget(new QHline);
     settingsLayout->addWidget(new QLabel("<u>G</u>roup:"));
     settingsLayout->addWidget(combo);
@@ -525,6 +530,7 @@ ImageViewer::ImageViewer(const QString &fileName, LammpsWrapper *_lammps, QWidge
     settingsLayout->addWidget(new QHline);
     settingsLayout->insertStretch(-1, 10);
     settingsLayout->setSizeConstraint(QLayout::SetMinimumSize);
+    settingsLayout->setSpacing(LAYOUT_SPACING);
 
     connect(dossao, &QPushButton::released, this, &ImageViewer::toggle_ssao);
     connect(doanti, &QPushButton::released, this, &ImageViewer::toggle_anti);
@@ -552,7 +558,9 @@ ImageViewer::ImageViewer(const QString &fileName, LammpsWrapper *_lammps, QWidge
     mainLayout->addLayout(topLayout);
     imageLayout->addWidget(scrollArea, 10);
     imageLayout->addLayout(settingsLayout, 0);
+    imageLayout->setSpacing(LAYOUT_SPACING);
     mainLayout->addLayout(imageLayout);
+    mainLayout->setSpacing(LAYOUT_SPACING);
     setWindowIcon(QIcon(":/icons/lammps-gui-icon-128x128.png"));
     setWindowTitle(QString("LAMMPS-GUI - Image Viewer - ") + QFileInfo(fileName).fileName());
     createActions();

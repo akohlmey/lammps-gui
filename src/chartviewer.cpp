@@ -52,6 +52,7 @@ namespace {
 // Set RangeSlider resolution to 1000 steps
 constexpr int SLIDER_RANGE       = 1000;
 constexpr double SLIDER_FRACTION = 1.0 / (double)SLIDER_RANGE;
+constexpr int LAYOUT_SPACING     = 6;
 
 // brush color index must be kept in sync with preferences
 
@@ -80,6 +81,9 @@ ChartWindow::ChartWindow(const QString &_filename, QWidget *parent) :
     top->addWidget(new QHline);
     top->addLayout(row2);
     top->addWidget(new QHline);
+    row1->setSpacing(LAYOUT_SPACING);
+    row2->setSpacing(LAYOUT_SPACING);
+    top->setSpacing(LAYOUT_SPACING);
 
     menu->addMenu(file);
     menu->setSizePolicy(QSizePolicy::Minimum, QSizePolicy::Minimum);
@@ -198,6 +202,7 @@ ChartWindow::ChartWindow(const QString &_filename, QWidget *parent) :
     quitAct->setShortcut(QKeySequence(Qt::CTRL | Qt::Key_Q));
     auto *layout = new QVBoxLayout;
     layout->addLayout(top);
+    layout->setSpacing(LAYOUT_SPACING);
     setLayout(layout);
 
     connect(chartTitle, &QLineEdit::editingFinished, this, &ChartWindow::update_tlabel);
