@@ -2224,7 +2224,18 @@ void ImageViewer::saveAs()
     saveFile(fileName);
 }
 
-void ImageViewer::copy() {}
+void ImageViewer::copy() {
+#if QT_CONFIG(clipboard)
+    auto *clip = QGuiApplication::clipboard();
+    if (clip && !image.isNull()) {
+        clip->setImage(image, QClipboard::Clipboard);
+        if (clip->supportsSelection()) clip->setImage(image, QClipboard::Selection);
+    } else
+        fprintf(stderr, "Copy image to clipboard currently not available\n");
+#else
+    fprintf(stderr, "Copy image to clipboard not supported on this platform\n");
+#endif
+}
 
 void ImageViewer::quit()
 {

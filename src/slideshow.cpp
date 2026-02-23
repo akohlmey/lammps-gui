@@ -15,6 +15,7 @@
 #include "lammpsgui.h"
 
 #include <QApplication>
+#include <QClipboard>
 #include <QDialogButtonBox>
 #include <QDir>
 #include <QFile>
@@ -77,6 +78,8 @@ SlideShow::SlideShow(const QString &fileName, QWidget *parent) :
     QObject::connect(shortcut, &QShortcut::activated, this, &SlideShow::stop_run);
     shortcut = new QShortcut(QKeySequence(Qt::CTRL | Qt::Key_Q), this);
     QObject::connect(shortcut, &QShortcut::activated, this, &SlideShow::quit);
+    shortcut = new QShortcut(QKeySequence(Qt::CTRL | Qt::Key_C), this);
+    QObject::connect(shortcut, &QShortcut::activated, this, &SlideShow::copy);
 
     buttonBox = new QDialogButtonBox(QDialogButtonBox::Close);
 
@@ -95,7 +98,7 @@ SlideShow::SlideShow(const QString &fileName, QWidget *parent) :
     tomovie->setToolTip("Export to movie file");
     tomovie->setEnabled(has_exe("ffmpeg") || has_exe("magick") || has_exe("convert"));
     auto buttonhint = tomovie->minimumSizeHint();
-    buttonhint.setWidth(buttonhint.height()*4/3);
+    buttonhint.setWidth(buttonhint.height() * 4 / 3);
     tomovie->setMinimumSize(buttonhint);
     tomovie->setMaximumSize(buttonhint);
 
@@ -103,6 +106,11 @@ SlideShow::SlideShow(const QString &fileName, QWidget *parent) :
     toimage->setToolTip("Export to image file");
     toimage->setMinimumSize(buttonhint);
     toimage->setMaximumSize(buttonhint);
+
+    auto *toclip = new QPushButton(QIcon(":/icons/edit-copy.png"), "");
+    toclip->setToolTip("Copy image to clipboard");
+    toclip->setMinimumSize(buttonhint);
+    toclip->setMaximumSize(buttonhint);
 
     auto *totrash = new QPushButton(QIcon(":/icons/trash.png"), "");
     totrash->setToolTip("Delete all image files");
@@ -186,6 +194,7 @@ SlideShow::SlideShow(const QString &fileName, QWidget *parent) :
 
     connect(tomovie, &QPushButton::released, this, &SlideShow::movie);
     connect(toimage, &QPushButton::released, this, &SlideShow::save_current_image);
+    connect(toclip, &QPushButton::released, this, &SlideShow::copy);
     connect(totrash, &QPushButton::released, this, &SlideShow::delete_images);
     connect(delay, &QAbstractSpinBox::editingFinished, this, &SlideShow::set_delay);
 
@@ -206,8 +215,9 @@ SlideShow::SlideShow(const QString &fileName, QWidget *parent) :
     navLayout->addSpacerItem(new QSpacerItem(10, 10, QSizePolicy::Expanding, QSizePolicy::Minimum));
     navLayout->addWidget(tomovie, 1);
     navLayout->addWidget(toimage, 1);
+    navLayout->addWidget(toclip, 1);
     navLayout->addWidget(totrash, 1);
-    navLayout->addWidget(new QLabel("Delay (ms):"));
+    navLayout->addWidget(new QLabel("Delay:"));
     navLayout->addWidget(delay, 5);
     navLayout->addWidget(dummy);
     navLayout->addWidget(gofirst, 1);
@@ -328,6 +338,20 @@ void SlideShow::loadImage(int idx)
     } while (idx >= 0);
     scrollBar->setValue(idx);
     adjustWindowSize();
+}
+
+void SlideShow::copy()
+{
+#if QT_CONFIG(clipboard)
+    auto *clip = QGuiApplication::clipboard();
+    if (clip && !image.isNull()) {
+        clip->setImage(image, QClipboard::Clipboard);
+        if (clip->supportsSelection()) clip->setImage(image, QClipboard::Selection);
+    } else
+        fprintf(stderr, "Copy image to clipboard currently not available\n");
+#else
+    fprintf(stderr, "Copy image to clipboard not supported on this platform\n");
+#endif
 }
 
 void SlideShow::quit()

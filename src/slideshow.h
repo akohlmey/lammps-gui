@@ -67,6 +67,7 @@ public:
 
 private slots:
     void quit();                ///< Close slideshow window
+    void copy();                ///< Copy image to clipboard
     void delete_images();       ///< Delete all image files in sequence
     void stop_run();            ///< Stop running simulation
     void movie();               ///< Export images as movie file

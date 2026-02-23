@@ -118,6 +118,7 @@ private slots:
     void update_xrange(int low, int high); ///< Update X-axis range
     void update_yrange(int low, int high); ///< Update Y-axis range
 
+    void copy();       ///< Copy image to clipboard
     void saveAs();     ///< Save chart as image
     void exportDat();  ///< Export data in DAT format
     void exportCsv();  ///< Export data in CSV format
@@ -145,14 +146,14 @@ private:
     QMenuBar *menu;         ///< Menu bar
     QMenu *file;            ///< File menu
     QComboBox *columns;     ///< Dropdown for selecting chart
-    QAction *saveAsAct, *exportCsvAct, *exportDatAct, *exportYamlAct; ///< Export actions
-    QAction *closeAct, *stopAct, *quitAct;                            ///< Window control actions
-    QComboBox *smooth;                   ///< Smoothing algorithm selector
-    QSpinBox *window, *order;            ///< Smoothing parameters
-    QLineEdit *chartTitle, *chartYlabel; ///< Chart labels
-    QLabel *units;                       ///< Units display
-    QCheckBox *norm;                     ///< Normalization checkbox
-    RangeSlider *xrange, *yrange;        ///< Range sliders for axes
+    QAction *saveAsAct, *copyAct, *exportCsvAct, *exportDatAct, *exportYamlAct; ///< Export actions
+    QAction *closeAct, *stopAct, *quitAct; ///< Window control actions
+    QComboBox *smooth;                     ///< Smoothing algorithm selector
+    QSpinBox *window, *order;              ///< Smoothing parameters
+    QLineEdit *chartTitle, *chartYlabel;   ///< Chart labels
+    QLabel *units;                         ///< Units display
+    QCheckBox *norm;                       ///< Normalization checkbox
+    RangeSlider *xrange, *yrange;          ///< Range sliders for axes
 
     QString filename;                      ///< Log file path
     QList<QtCharts::ChartViewer *> charts; ///< List of chart viewers
