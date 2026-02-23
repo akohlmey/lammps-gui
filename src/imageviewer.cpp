@@ -224,9 +224,8 @@ public:
 ImageViewer::ImageViewer(const QString &fileName, LammpsWrapper *_lammps, QWidget *parent) :
     QDialog(parent), menuBar(new QMenuBar), imageLabel(new QLabel), scrollArea(new QScrollArea),
     buttonBox(nullptr), atomSize(1.0), saveAsAct(nullptr), copyAct(nullptr), cmdAct(nullptr),
-    zoomInAct(nullptr), zoomOutAct(nullptr), normalSizeAct(nullptr), lammps(_lammps), group("all"),
-    molecule("none"), filename(fileName), useelements(false), usediameter(false), usesigma(false),
-    shutdown(false)
+    lammps(_lammps), group("all"), molecule("none"), filename(fileName), useelements(false),
+    usediameter(false), usesigma(false), shutdown(false)
 {
     imageLabel->setBackgroundRole(QPalette::Base);
     imageLabel->setSizePolicy(QSizePolicy::Minimum, QSizePolicy::Minimum);
@@ -2232,7 +2231,8 @@ void ImageViewer::saveAs()
     saveFile(fileName);
 }
 
-void ImageViewer::copy() {
+void ImageViewer::copy()
+{
 #if QT_CONFIG(clipboard)
     auto *clip = QGuiApplication::clipboard();
     if (clip && !image.isNull()) {

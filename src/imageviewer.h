@@ -129,9 +129,6 @@ private:
     QAction *saveAsAct;     ///< Save As action
     QAction *copyAct;       ///< Copy action
     QAction *cmdAct;        ///< Copy command action
-    QAction *zoomInAct;     ///< Zoom in action
-    QAction *zoomOutAct;    ///< Zoom out action
-    QAction *normalSizeAct; ///< Normal size action
 
     QStringList image_computes;                  ///< list of computes supporting dump image
     QStringList image_fixes;                     ///< list of fixes supporting dump image
