@@ -969,11 +969,11 @@ void ImageViewer::global_settings()
 
     layout->addWidget(new QLabel("Length:"), idx, n++, 1, 1);
     auto *alval = new QLineEdit(QString::number(axeslen));
-    alval->setValidator(new QDoubleValidator(0.000001, 10.0, 100, this));
+    alval->setValidator(new QDoubleValidator(0.000001, 10.0, 5, this));
     layout->addWidget(alval, idx, n++, 1, 1);
     layout->addWidget(new QLabel("Diameter:"), idx, n++, 1, 1);
     auto *adval = new QLineEdit(QString::number(axesdiam));
-    adval->setValidator(new QDoubleValidator(0.000001, 1.0, 100, this));
+    adval->setValidator(new QDoubleValidator(0.000001, 1.0, 5, this));
     layout->addWidget(adval, idx, n++, 1, 1);
     layout->addWidget(new QLabel("Tansparency:"), idx, n++, 1, 1);
     auto *atval = new QLineEdit(QString::number(axestrans));
@@ -1007,7 +1007,7 @@ void ImageViewer::global_settings()
     layout->addWidget(bcolor, idx, n++, 1, 1);
     layout->addWidget(new QLabel("Diameter:"), idx, n++, 1, 1);
     auto *bdiam = new QLineEdit(QString::number(boxdiam));
-    bdiam->setValidator(new QDoubleValidator(0.000001, 1.0, 100, this));
+    bdiam->setValidator(new QDoubleValidator(0.000001, 1.0, 5, this));
     layout->addWidget(bdiam, idx, n++, 1, 1);
     layout->addWidget(new QLabel("Tansparency:"), idx, n++, 1, 1);
     auto *btrans = new QLineEdit(QString::number(boxtrans));
@@ -1024,7 +1024,7 @@ void ImageViewer::global_settings()
     layout->addWidget(subboxbutton, idx, n++, 1, 1);
     layout->addWidget(new QLabel("Diameter:"), idx, n++, 1, 1);
     auto *subdiam = new QLineEdit(QString::number(subboxdiam));
-    subdiam->setValidator(new QDoubleValidator(0.000001, 1.0, 100, this));
+    subdiam->setValidator(new QDoubleValidator(0.000001, 1.0, 5, this));
     layout->addWidget(subdiam, idx++, n++, 1, 1);
 
     n = 0;
@@ -1055,26 +1055,26 @@ void ImageViewer::global_settings()
     layout->addWidget(ssao, idx, n++, 1, 1);
     layout->addWidget(new QLabel("SSAO strength:"), idx, n++, 1, 1);
     auto *aoval = new QLineEdit(QString::number(ssaoval));
-    aoval->setValidator(new QDoubleValidator(0.0, 1.0, 100, this));
+    aoval->setValidator(new QDoubleValidator(0.0, 1.0, 5, this));
     layout->addWidget(aoval, idx, n++, 1, 1);
     layout->addWidget(new QLabel("Shiny:"), idx, n++, 1, 1);
     auto *shiny = new QLineEdit(QString::number(shinyfactor));
-    shiny->setValidator(new QDoubleValidator(0.0, 1.0, 100, this));
+    shiny->setValidator(new QDoubleValidator(0.0, 1.0, 5, this));
     layout->addWidget(shiny, idx++, n++, 1, 1);
 
     n = 0;
     layout->addWidget(new QLabel("Center:"), idx, n++, 1, 1);
     layout->addWidget(new QLabel("X-direction:"), idx, n++, 1, 1);
     auto *xval = new QLineEdit(QString::number(xcenter));
-    xval->setValidator(new QDoubleValidator(0.0, 1.0, 100, this));
+    xval->setValidator(new QDoubleValidator(0.0, 1.0, 10, this));
     layout->addWidget(xval, idx, n++, 1, 1);
     layout->addWidget(new QLabel("Y-direction:"), idx, n++, 1, 1);
     auto *yval = new QLineEdit(QString::number(ycenter));
-    yval->setValidator(new QDoubleValidator(0.0, 1.0, 100, this));
+    yval->setValidator(new QDoubleValidator(0.0, 1.0, 10, this));
     layout->addWidget(yval, idx, n++, 1, 1);
     layout->addWidget(new QLabel("Z-direction:"), idx, n++, 1, 1);
     auto *zval = new QLineEdit(QString::number(zcenter));
-    zval->setValidator(new QDoubleValidator(0.0, 1.0, 100, this));
+    zval->setValidator(new QDoubleValidator(0.0, 1.0, 10, this));
     layout->addWidget(zval, idx++, n++, 1, 1);
 
     n = 0;
