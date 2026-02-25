@@ -30,6 +30,7 @@
 #define dup _dup
 #define dup2 _dup2
 #define fileno _fileno
+#define close _close
 #else
 #include <unistd.h>
 #endif
@@ -253,6 +254,7 @@ void restore_stdout(int fd)
 {
     fflush(stdout);
     dup2(fd, fileno(stdout));
+    close(fd);
 }
 
 // compare black level of foreground and background color
