@@ -73,15 +73,13 @@ extern void purge_directory(const QString &dir);
 
 /**
  * @brief Silence output to stdout
- * @return old file descriptor
  */
-extern int silence_stdout();
+extern void silence_stdout();
 
 /**
  * @brief Restore output to stdout
- * @param fd file descriptor returned by silence_stdout()
  */
-extern void restore_stdout(int fd);
+extern void restore_stdout();
 
 /**
  * @brief Determine if the current Qt theme is light or dark
