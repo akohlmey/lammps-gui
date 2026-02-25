@@ -780,6 +780,22 @@ void ImageViewer::toggle_bond()
     createImage();
 }
 
+void ImageViewer::vdwbond_sync()
+{
+    auto *src    = qobject_cast<QCheckBox *>(sender());
+    auto *dialog = src->parent();
+    auto *vdw    = dialog->findChild<QCheckBox *>("vdwbutton");
+    auto *ab     = dialog->findChild<QCheckBox *>("autobutton");
+
+    if (src == vdw) {
+        if ((vdw->checkState() == Qt::Checked) && (ab->checkState() == Qt::Checked))
+            ab->setCheckState(Qt::Unchecked);
+    } else {
+        if ((vdw->checkState() == Qt::Checked) && (ab->checkState() == Qt::Checked))
+            vdw->setCheckState(Qt::Unchecked);
+    }
+}
+
 void ImageViewer::set_bondcut()
 {
     auto *cutoff = findChild<QLineEdit *>("bondcut");
@@ -1231,6 +1247,7 @@ void ImageViewer::atom_settings()
 
     auto *vdwbutton = new QCheckBox("VDW style ", this);
     vdwbutton->setCheckState((vdwfactor > VDW_CUT) ? Qt::Checked : Qt::Unchecked);
+    vdwbutton->setObjectName("vdwbutton");
     layout->addWidget(vdwbutton, idx, n++, 1, 1, Qt::AlignCenter);
     layout->addWidget(new QLabel("Colormap: "), idx, n++, 1, 1, Qt::AlignVCenter | Qt::AlignRight);
     auto *amap = new QComboBox;
@@ -1263,6 +1280,7 @@ void ImageViewer::atom_settings()
     auto *autobutton = new QCheckBox("AutoBonds:", this);
     autobutton->setCheckState(autobond ? Qt::Checked : Qt::Unchecked);
     autobutton->setEnabled(has_autobonds());
+    autobutton->setObjectName("autobutton");
     layout->addWidget(autobutton, idx, n++, 1, 2, Qt::AlignVCenter | Qt::AlignRight);
     ++n;
     auto *bcutoff = new QLineEdit(QString::number(bondcutoff));
@@ -1273,6 +1291,13 @@ void ImageViewer::atom_settings()
         bondbutton->setEnabled(false);
     }
 
+#if QT_VERSION >= QT_VERSION_CHECK(6, 7, 0)
+    connect(vdwbutton, &QCheckBox::checkStateChanged, this, &ImageViewer::vdwbond_sync);
+    connect(autobutton, &QCheckBox::checkStateChanged, this, &ImageViewer::vdwbond_sync);
+#else
+    connect(vdwbutton, &QCheckBox::stateChanged, this, &ImageViewer::vdwbond_sync);
+    connect(autobutton, &QCheckBox::stateChanged, this, &ImageViewer::vdwbond_sync);
+#endif
     layout->addWidget(new QHline, idx++, 0, 1, MAXCOLS);
 
     n = 0;
@@ -1446,14 +1471,19 @@ void ImageViewer::atom_settings()
 
     atomdiam = adiam->currentText();
 
-    showbonds  = bondbutton->isChecked();
-    autobond   = autobutton->isChecked();
-    bondcutoff = bcutoff->text().toDouble();
+    showbonds = bondbutton->isChecked();
+    if (has_autobonds()) {
+        autobond   = autobutton->isChecked();
+        bondcutoff = bcutoff->text().toDouble();
 
-    button = findChild<QPushButton *>("autobond");
-    if (button) button->setChecked(autobond && has_autobonds());
-    auto *cutoff = findChild<QLineEdit *>("bondcut");
-    if (cutoff) cutoff->setText(QString::number(bondcutoff));
+        button = findChild<QPushButton *>("autobond");
+        if (button) button->setChecked(autobond);
+        auto *cutoff = findChild<QLineEdit *>("bondcut");
+        if (cutoff) {
+            cutoff->setEnabled(autobond);
+            cutoff->setText(QString::number(bondcutoff));
+        }
+    }
 
     showbodies = bodybutton->isChecked();
     if (bdiam->hasAcceptableInput()) bodydiam = bdiam->text().toDouble();

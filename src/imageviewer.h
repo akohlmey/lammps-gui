@@ -78,6 +78,7 @@ private slots:
     void toggle_shiny();       ///< Toggle shiny/specular rendering
     void toggle_vdw();         ///< Toggle Van der Waals radii
     void toggle_bond();        ///< Toggle bond display
+    void vdwbond_sync();       ///< Sync settings of VDW style and autobonds in Atoms dialog
     void set_bondcut();        ///< Set bond cutoff distance
     void toggle_box();         ///< Toggle simulation box display
     void toggle_axes();        ///< Toggle coordinate axes display
