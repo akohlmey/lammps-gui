@@ -25,6 +25,10 @@
  */
 class LammpsWrapper {
 public:
+    enum { EQUAL_STYLE = 0, ATOM_STYLE, VECTOR_STYLE, STRING_STYLE };
+    enum { GLOBAL_STYLE = 0, DUMMY /* = ATOM_STYLE */, LOCAL_STYLE };
+    enum { SCALAR_TYPE = 0, VECTOR_TYPE, ARRAY_TYPE, NUM_ROWS, NUM_COLS };
+
     /**
      * @brief Constructor - initializes wrapper
      */
@@ -159,11 +163,38 @@ public:
     void *extract_atom(const char *keyword);
 
     /**
+     * @brief Extract data from a compute from LAMMPS
+     * @param id compute id to extract
+     * @param style style of data to extract
+     * @param type type of data to extract
+     * @return data cast to a void *.
+     */
+    void *extract_compute(const char *id, int style, int type);
+
+    /**
+     * @brief Extract data from a fix from LAMMPS
+     * @param id fix id to extract
+     * @param style style of data to extract
+     * @param type type of data to extract
+     * @param nrow row index (only for global)
+     * @param ncol column index (only for global)
+     * @return data cast to a void *. Must be freed for global elements
+     */
+    void *extract_fix(const char *id, int style, int type, int nrow, int ncol);
+
+    /**
      * @brief Extract a variable value from LAMMPS
      * @param keyword Variable name to extract
      * @return Value of the variable as double
      */
     double extract_variable(const char *keyword);
+
+    /**
+     * @brief Extract style of a variable from LAMMPS
+     * @param keyword Variable name to extract
+     * @return Value type of variable as integer
+     */
+    int extract_variable_datatype(const char *keyword);
 
     /**
      * @brief Check if a compute/fix/variable ID exists
