@@ -147,7 +147,7 @@ void *LammpsWrapper::extract_compute(const char *id, int style, int type)
         return ((liblammpsplugin_t *)plugin_handle)
             ->extract_compute(lammps_handle, id, mystyle, mytype);
 #else
-        return lammps_extract_compute(lammps_handle, id.mystyle, mytype);
+        return lammps_extract_compute(lammps_handle, id, mystyle, mytype);
 #endif
     }
     return nullptr;
@@ -198,7 +198,7 @@ void *LammpsWrapper::extract_fix(const char *id, int style, int type, int nrow, 
         return ((liblammpsplugin_t *)plugin_handle)
             ->extract_fix(lammps_handle, id, mystyle, mytype, nrow, ncol);
 #else
-        return lammps_extract_fix(lammps_handle, id.mystyle, mytype, nrow, ncol);
+        return lammps_extract_fix(lammps_handle, id, mystyle, mytype, nrow, ncol);
 #endif
     }
     return nullptr;
