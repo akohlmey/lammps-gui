@@ -246,14 +246,14 @@ int silence_stdout()
     int oldfd = fileno(stdout);
     int newfd = dup(oldfd);
     fflush(stdout);
-    freopen(NULL_DEVICE, "ab", stdout);
+    (void) freopen(NULL_DEVICE, "ab", stdout);
     return newfd;
 }
 
 void restore_stdout(int fd)
 {
     fflush(stdout);
-    dup2(fd, fileno(stdout));
+    (void) dup2(fd, fileno(stdout));
     close(fd);
 }
 
