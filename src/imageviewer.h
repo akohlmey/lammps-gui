@@ -126,9 +126,9 @@ private:
     QDialogButtonBox *buttonBox; ///< Dialog buttons
     double atomSize;             ///< Atom display size
 
-    QAction *saveAsAct;     ///< Save As action
-    QAction *copyAct;       ///< Copy action
-    QAction *cmdAct;        ///< Copy command action
+    QAction *saveAsAct; ///< Save As action
+    QAction *copyAct;   ///< Copy action
+    QAction *cmdAct;    ///< Copy command action
 
     QStringList image_computes;                  ///< list of computes supporting dump image
     QStringList image_fixes;                     ///< list of fixes supporting dump image
@@ -163,7 +163,10 @@ private:
     QString boxcolor;                            ///< Color for box and subbox
     QString backcolor;                           ///< (lower) background color
     QString backcolor2;                          ///< (upper) background color
+    QString atomcolor;                           ///< Custom atom color property
+    QString atomdiam;                            ///< Custom atom diameter property
     double xcenter, ycenter, zcenter;            ///< View center coordinates
+    bool atomcustom;                             ///< Use custom atom color settings
     bool showbox;                                ///< Show simulation box flag
     bool showsubbox;                             ///< Show subdomain boxes flag
     bool showaxes;                               ///< Show coordinate axes flag

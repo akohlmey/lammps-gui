@@ -74,9 +74,10 @@ int main(int argc, char *argv[])
 
     parser.addHelpOption();
     parser.addVersionOption();
-    parser.addOptions({{{"x", "width"}, "Override LAMMPS-GUI editor window width", "width"},
-                       {{"y", "height"}, "Override LAMMPS-GUI editor window height", "height"},
-                       {{"s", "style"}, "Override LAMMPS-GUI visual style", "style", "Fusion"}});
+    parser.addOptions(
+        {{{"x", "width"}, "Override LAMMPS-GUI editor window width", "width"},
+         {{"y", "height"}, "Override LAMMPS-GUI editor window height", "height"},
+         {{"s", "style"}, "Set LAMMPS-GUI's visual style (default: Fusion)", "style", "Fusion"}});
     parser.addPositionalArgument("file", "The LAMMPS input file to open (optional).");
     parser.process(app);
 

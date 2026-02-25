@@ -287,6 +287,9 @@ ImageViewer::ImageViewer(const QString &fileName, LammpsWrapper *_lammps, QWidge
     backcolor      = settings.value("backcolor", "black").toString();
     backcolor2     = settings.value("backcolor2", "white").toString();
     ssaoval        = 0.6;
+    atomcustom     = false;
+    atomcolor      = settings.value("color", "type").toString();
+    atomdiam       = settings.value("diameter", "type").toString();
     showatoms      = true;
     showbonds      = true;
     showbodies     = true;
@@ -435,7 +438,7 @@ ImageViewer::ImageViewer(const QString &fileName, LammpsWrapper *_lammps, QWidge
     reset->setMinimumSize(buttonhint);
     reset->setMaximumSize(buttonhint);
 
-    auto *setviz = new QPushButton("&Settings");
+    auto *setviz = new QPushButton("&General");
     setviz->setToolTip("Open dialog for general graphics settings");
     setviz->setObjectName("settings");
     auto *atomviz = new QPushButton("&Atoms");
@@ -519,9 +522,11 @@ ImageViewer::ImageViewer(const QString &fileName, LammpsWrapper *_lammps, QWidge
     settingsLayout->addWidget(new QHline);
     settingsLayout->addWidget(new QLabel("<u>G</u>roup:"));
     settingsLayout->addWidget(combo);
+    settingsLayout->addWidget(new QHline);
     settingsLayout->addWidget(new QLabel("<u>M</u>olecule:"));
     settingsLayout->addWidget(molbox);
     settingsLayout->addWidget(new QHline);
+    settingsLayout->addWidget(new QLabel("Settings:"));
     settingsLayout->addWidget(setviz);
     settingsLayout->addWidget(atomviz);
     settingsLayout->addWidget(regviz);
@@ -918,13 +923,13 @@ void ImageViewer::cmd_to_clipboard()
 void ImageViewer::global_settings()
 {
     QDialog setview;
-    setview.setWindowTitle(QString("LAMMPS-GUI - Global image settings"));
+    setview.setWindowTitle(QString("LAMMPS-GUI - General image settings"));
     setview.setWindowIcon(QIcon(":/icons/lammps-gui-icon-128x128.png"));
     setview.setMinimumSize(100, 100);
     setview.setContentsMargins(5, 5, 5, 5);
     setview.setSizePolicy(QSizePolicy::MinimumExpanding, QSizePolicy::MinimumExpanding);
 
-    auto *title = new QLabel("Global image settings:");
+    auto *title = new QLabel("General image settings:");
     title->setFrameStyle(QFrame::Panel | QFrame::Raised);
     title->setLineWidth(1);
     title->setMargin(TITLE_MARGIN);
@@ -1194,11 +1199,21 @@ void ImageViewer::atom_settings()
     auto *acolor = new QComboBox;
     acolor->setObjectName("acolor");
     acolor->addItems(atom_properties);
+    if (atomcustom) { // select item that was selected the last time
+        for (int idx = 0; idx < acolor->count(); ++idx) {
+            if (acolor->itemText(idx) == atomcolor) acolor->setCurrentIndex(idx);
+        }
+    }
     layout->addWidget(acolor, idx, n++, 1, 1);
     layout->addWidget(new QLabel("Size: "), idx, n++, 1, 1, Qt::AlignVCenter | Qt::AlignRight);
     auto *adiam = new QComboBox;
-    adiam->setObjectName("acolor");
-    adiam->addItems(atom_properties);
+    adiam->setObjectName("adiam");
+    if (useelements || usediameter || usesigma) adiam->addItem("auto");
+    adiam->addItem("type");
+    if (useelements) adiam->addItem("element");
+    if (usediameter) adiam->addItem("diameter");
+    if (usesigma) adiam->addItem("sigma");
+
     layout->addWidget(adiam, idx, n++, 1, 1);
     layout->addWidget(new QLabel("Transparency: "), idx, n++, 1, 2,
                       Qt::AlignVCenter | Qt::AlignRight);
@@ -1414,6 +1429,17 @@ void ImageViewer::atom_settings()
             button->setChecked(false);
         }
     }
+    auto value = acolor->currentText();
+    if (!atomcustom) { // treat "element" property special if not customized
+        if (value != "element") {
+            atomcustom = true;
+            atomcolor  = value;
+        }
+    } else {
+        atomcolor = value;
+    }
+
+    atomdiam = adiam->currentText();
 
     showbonds  = bondbutton->isChecked();
     autobond   = autobutton->isChecked();
@@ -1950,36 +1976,44 @@ void ImageViewer::createImage()
     int hhrot = (hrot > 180) ? 360 - hrot : hrot;
 
     // determine elements from masses and set their covalent radii
-    int ntypes       = lammps->extract_setting("ntypes");
-    int nbondtypes   = lammps->extract_setting("nbondtypes");
-    auto *masses     = (double *)lammps->extract_atom("mass");
-    QString units    = (const char *)lammps->extract_global("units");
-    QString elements = "element ";
-    QString adiams;
-    useelements = false;
-    if (masses && ((units == "real") || (units == "metal"))) {
-        useelements = true;
-        for (int i = 1; i <= ntypes; ++i) {
-            int idx = get_pte_from_mass(masses[i]);
-            if (idx == 0) useelements = false;
-            elements += QString(pte_label[idx]) + blank;
-            adiams += QString("adiam %1 %2 ").arg(i).arg(vdwfactor * pte_vdw_radius[idx]);
-        }
-    }
-    usediameter = lammps->extract_setting("radius_flag") != 0;
-    // use Lennard-Jones sigma for radius, if available
-    usesigma               = false;
+    int ntypes             = lammps->extract_setting("ntypes");
+    int nbondtypes         = lammps->extract_setting("nbondtypes");
+    auto *masses           = (double *)lammps->extract_atom("mass");
     const char *pair_style = (const char *)lammps->extract_global("pair_style");
-    if (!useelements && !usediameter && pair_style && (strncmp(pair_style, "lj/", 3) == 0)) {
-        auto **sigma = (double **)lammps->extract_pair("sigma");
-        if (sigma) {
-            usesigma = true;
+    QString units          = (const char *)lammps->extract_global("units");
+    QString elements;
+    QString adiams;
+    if (!atomcustom || (atomcolor == "element")) {
+        useelements = false;
+        elements    = "element ";
+        if (masses && ((units == "real") || (units == "metal"))) {
+            useelements = true;
+            if (!atomcustom) atomcolor == "element";
             for (int i = 1; i <= ntypes; ++i) {
-                if (sigma[i][i] > 0.0)
-                    adiams += QString("adiam %1 %2 ").arg(i).arg(vdwfactor * sigma[i][i]);
+                int idx = get_pte_from_mass(masses[i]);
+                if (idx == 0) useelements = false;
+                elements += QString(pte_label[idx]) + blank;
+                adiams += QString("adiam %1 %2 ").arg(i).arg(vdwfactor * pte_vdw_radius[idx]);
             }
         }
     }
+    if (!atomcustom || (atomdiam == "auto") || (atomdiam == "element") || (atomdiam == "sigma") ||
+        (atomdiam == "diameter")) {
+        usesigma    = false;
+        usediameter = lammps->extract_setting("radius_flag") != 0;
+        // use Lennard-Jones sigma for radius, if available
+        if (!useelements && !usediameter && pair_style && (strncmp(pair_style, "lj/", 3) == 0)) {
+            auto **sigma = (double **)lammps->extract_pair("sigma");
+            if (sigma) {
+                usesigma = true;
+                for (int i = 1; i <= ntypes; ++i) {
+                    if (sigma[i][i] > 0.0)
+                        adiams += QString("adiam %1 %2 ").arg(i).arg(vdwfactor * sigma[i][i]);
+                }
+            }
+        }
+    }
+
     // adjust pushbutton state and clear adiams string to disable VDW display, if needed
     if (showatoms && (useelements || usediameter || usesigma)) {
         auto *button = findChild<QPushButton *>("vdw");
@@ -2024,17 +2058,24 @@ void ImageViewer::createImage()
     }
 
     // color
-    if (useelements)
+    if (!atomcustom && useelements)
         dumpcmd += blank + "element";
     else
-        dumpcmd += blank + settings.value("color", "type").toString();
+        dumpcmd += blank + atomcolor;
 
     bool do_vdw = vdwfactor > VDW_CUT;
     // diameter
-    if (usediameter && do_vdw)
-        dumpcmd += blank + "diameter";
-    else
-        dumpcmd += blank + settings.value("diameter", "type").toString();
+    if (!atomcustom) {
+        if (usediameter && do_vdw)
+            dumpcmd += blank + "diameter";
+        else
+            dumpcmd += " type";
+    } else {
+        if (((atomdiam == "auto") || (atomdiam == "diameter")) && (usediameter && do_vdw))
+            dumpcmd += blank + "diameter";
+        else
+            dumpcmd += " type";
+    }
 
     if (!showatoms) dumpcmd += " atom no";
     if (showbodies && (lammps->extract_setting("body_flag") == 1))
@@ -2346,12 +2387,86 @@ void ImageViewer::adjustWindowSize()
 void ImageViewer::update_peratom()
 {
     atom_properties.clear();
-    atom_properties << "type" << "elements";
+    if (useelements) atom_properties << "element";
+    atom_properties << "type";
 
-    if (!lammps) return;
-    // we can query for fixes before 10 December 2025, but there is no support
-    // for fix graphics until after that version. So the check is needed for this date.
-    if (lammps->version() < 20251210) return;
+    if (lammps) {
+        if (lammps->extract_setting("molecule_flag")) atom_properties << "mol";
+        if (lammps->extract_setting("q_flag")) atom_properties << "q";
+        if (lammps->extract_setting("radius_flag")) atom_properties << "diameter";
+
+        void *ptr = nullptr;
+        int type  = 0;
+        char name[256];
+
+        // add atom style variables to the list
+        int num = lammps->id_count("variable");
+        for (int idx = 0; idx < num; ++idx) {
+            lammps->id_name("variable", idx, name, 256);
+            type = lammps->extract_variable_datatype(name);
+            if (type == LammpsWrapper::ATOM_STYLE) atom_properties << QString("v_%1").arg(name);
+        }
+
+        // we want to ignore error messages from the extract commands
+        silence_stdout();
+
+        // add compatible computes to the list
+        num = lammps->id_count("compute");
+        for (int idx = 0; idx < num; ++idx) {
+            lammps->id_name("compute", idx, name, 256);
+            ptr = lammps->extract_compute(name, LammpsWrapper::ATOM_STYLE,
+                                          LammpsWrapper::VECTOR_TYPE);
+            if (ptr) {
+                atom_properties << QString("c_%1").arg(name);
+                continue;
+            }
+            ptr =
+                lammps->extract_compute(name, LammpsWrapper::ATOM_STYLE, LammpsWrapper::ARRAY_TYPE);
+            if (ptr) {
+                ptr  = lammps->extract_compute(name, LammpsWrapper::ATOM_STYLE,
+                                               LammpsWrapper::NUM_COLS);
+                type = *(int *)ptr;
+                for (int col = 1; col <= type; ++col) {
+                    atom_properties << QString("c_%1[%2]").arg(name).arg(col);
+                }
+                continue;
+            }
+
+            // clear error status, if needed:
+            lammps->get_last_error_message(nullptr, 0);
+        }
+
+        // add compatible fixes to the list
+        num = lammps->id_count("fix");
+        for (int idx = 0; idx < num; ++idx) {
+            lammps->id_name("fix", idx, name, 256);
+            ptr = lammps->extract_fix(name, LammpsWrapper::ATOM_STYLE, LammpsWrapper::ARRAY_TYPE,
+                                      -1, -1);
+            if (ptr) {
+                ptr  = lammps->extract_fix(name, LammpsWrapper::ATOM_STYLE, LammpsWrapper::NUM_COLS,
+                                           -1, -1);
+                type = *(int *)ptr;
+                if (type == 0) {
+                    atom_properties << QString("f_%1").arg(name);
+                } else {
+                    for (int col = 1; col <= type; ++col) {
+                        atom_properties << QString("f_%1[%2]").arg(name).arg(col);
+                    }
+                }
+                continue;
+            }
+
+            // clear error status, if needed:
+            lammps->get_last_error_message(nullptr, 0);
+        }
+        restore_stdout();
+
+        // we can query for fixes before 10 December 2025, but there is no support
+        // for fix graphics until after that version. So the check is needed for this date.
+        if (lammps->version() < 20251210) return;
+    }
+    // some more general dump custom properties
+    atom_properties << "id" << "mass" << "x" << "y" << "z";
 }
 
 void ImageViewer::update_fixes()
