@@ -1992,11 +1992,14 @@ void ImageViewer::createImage()
             xmid = ymid = zmid = 0.0;
         }
 
+        silence_stdout();
         QString molcreate = "create_atoms 0 single %1 %2 %3 mol %4 312944 group %5 units box";
         group             = "imgviewer_tmp_mol";
         lammps->command(molcreate.arg(xmid).arg(ymid).arg(zmid).arg(molecule).arg(group));
         lammps->command(QString("neigh_modify exclude group all %1").arg(group));
         lammps->command("run 0 post no");
+        restore_stdout();
+        if (lammps->has_error()) lammps->get_last_error_message(nullptr, 0);
     }
 
     QSettings settings;
@@ -2271,8 +2274,13 @@ void ImageViewer::createImage()
         }
     }
 
+    silence_stdout();
     last_dump_cmd = dumpcmd;
     lammps->command(dumpcmd);
+    restore_stdout();
+
+    // clear error buffer
+    if (lammps->has_error()) lammps->get_last_error_message(nullptr, 0);
 
     QImageReader reader(dumpfile.fileName());
     reader.setAutoTransform(true);
