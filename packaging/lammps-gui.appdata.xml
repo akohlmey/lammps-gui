@@ -56,11 +56,14 @@
   <releases>
     <release version="1.10.0" timestamp="1771473565">
       <description>
-        Add dialog to enable and configure atom / particle visualization settings
+        Add dialog to enable and configure atom / particle and bond visualization settings
         Add dialog to enable and configure graphics objects from compute and fixes
         Update layout of Image and SlideShow viewers
         Update docs for changes to Image and SlideShow viewers
         Update help index table
+        Silence output from calls to LAMMPS that are not part of a run (not on Windows, yet)
+        Make animated loop delay in slideshow window configurable
+        Add command line flag to select Qt-style and set to "Fusion" by default
         Enforce that all "icon buttons" have a 4x3 shape (not 2x1 like on macOS) and consistent size
         Enforce consistent layout spacings across platforms
         Implement copy-current-image-to-clipboard functionality for image viewer, charts, and slideshow
