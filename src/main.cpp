@@ -19,6 +19,8 @@
 #include <QSettings>
 #include <QString>
 #include <QStringList>
+#include <QStyle>
+#include <QStyleFactory>
 #include <QtGlobal>
 
 #include <cstdio>
@@ -72,8 +74,10 @@ int main(int argc, char *argv[])
 
     parser.addHelpOption();
     parser.addVersionOption();
-    parser.addOptions({{{"x", "width"}, "Override LAMMPS-GUI editor window width", "width"},
-                       {{"y", "height"}, "Override LAMMPS-GUI editor window height", "height"}});
+    parser.addOptions(
+        {{{"x", "width"}, "Override LAMMPS-GUI editor window width", "width"},
+         {{"y", "height"}, "Override LAMMPS-GUI editor window height", "height"},
+         {{"s", "style"}, "Set LAMMPS-GUI's visual style (default: Fusion)", "style", "Fusion"}});
     parser.addPositionalArgument("file", "The LAMMPS input file to open (optional).");
     parser.process(app);
 
@@ -89,10 +93,13 @@ int main(int argc, char *argv[])
 #endif
 
     QString infile;
-    QStringList flags = parser.optionNames();
-    int width         = parser.value("width").toInt();
-    int height        = parser.value("height").toInt();
-    QStringList args  = parser.positionalArguments();
+    int width  = parser.value("width").toInt();
+    int height = parser.value("height").toInt();
+
+    auto *usestyle = QStyleFactory::create(parser.value("style"));
+    if (usestyle) QApplication::setStyle(usestyle);
+
+    QStringList args = parser.positionalArguments();
     if (!args.empty()) infile = args[0];
 
     Q_INIT_RESOURCE(lammpsgui);

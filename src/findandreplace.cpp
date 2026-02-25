@@ -30,6 +30,10 @@
 
 /* ---------------------------------------------------------------------- */
 
+namespace {
+constexpr int LAYOUT_SPACING = 6;
+}
+
 FindAndReplace::FindAndReplace(CodeEditor *_editor, QWidget *parent) :
     QDialog(parent), editor(_editor), search(nullptr), replace(nullptr), withcase(nullptr),
     wrap(nullptr), whole(nullptr)
@@ -59,7 +63,9 @@ FindAndReplace::FindAndReplace(CodeEditor *_editor, QWidget *parent) :
     buttons->addWidget(replone);
     buttons->addWidget(replall);
     buttons->addWidget(done);
+    buttons->setSpacing(LAYOUT_SPACING);
     layout->addLayout(buttons, 3, 0, 1, 3, Qt::AlignHCenter);
+    layout->setSpacing(LAYOUT_SPACING);
 
     connect(next, &QPushButton::released, this, &FindAndReplace::find_next);
     connect(replone, &QPushButton::released, this, &FindAndReplace::replace_next);

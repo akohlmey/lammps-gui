@@ -227,6 +227,7 @@ compute_efield_atom.html compute efield/atom
 compute_efield_wolf_atom.html compute efield/wolf/atom
 compute_entropy_atom.html compute entropy/atom
 compute_erotate_asphere.html compute erotate/asphere
+compute_erotate_asphere.html compute erotate/asphere/kk
 compute_erotate_rigid.html compute erotate/rigid
 compute_erotate_sphere_atom.html compute erotate/sphere/atom
 compute_erotate_sphere.html compute erotate/sphere
@@ -243,6 +244,7 @@ compute_gyration_chunk.html compute gyration/chunk
 compute_gyration.html compute gyration
 compute_gyration_shape_chunk.html compute gyration/shape/chunk
 compute_gyration_shape.html compute gyration/shape
+compute_hbond_local.html compute hbond/local
 compute_heat_flux.html compute heat/flux
 compute_hexorder_atom.html compute hexorder/atom
 compute_hma.html compute hma
@@ -346,6 +348,7 @@ compute_temp_asphere.html compute temp/asphere
 compute_temp_body.html compute temp/body
 compute_temp_chunk.html compute temp/chunk
 compute_temp_com.html compute temp/com
+compute_temp_com.html compute temp/com/kk
 compute_temp_cs.html compute temp/cs
 compute_temp_deform_eff.html compute temp/deform/eff
 compute_temp_deform.html compute temp/deform
@@ -391,6 +394,7 @@ dihedral_cosine_shift_exp.html dihedral_style cosine/shift/exp/omp
 dihedral_cosine_squared_restricted.html dihedral_style cosine/squared/restricted
 dihedral_fourier.html dihedral_style fourier
 dihedral_fourier.html dihedral_style fourier/intel
+dihedral_fourier.html dihedral_style fourier/kk
 dihedral_fourier.html dihedral_style fourier/omp
 dihedral_harmonic.html dihedral_style harmonic
 dihedral_harmonic.html dihedral_style harmonic/intel
@@ -466,9 +470,12 @@ fix_acks2_reaxff.html fix acks2/reaxff/kk
 fix_adapt_fep.html fix adapt/fep
 fix_adapt.html fix adapt
 fix_addforce.html fix addforce
+fix_addforce.html fix addforce/kk
 fix_add_heat.html fix add/heat
-fix_addtorque.html fix addtorque
+fix_addtorque_atom.html fix addtorque/atom
+fix_addtorque_group.html fix addtorque/group
 fix_alchemy.html fix alchemy
+fix_align_self.html fix align/self
 fix_amoeba_bitorsion.html fix amoeba/bitorsion
 fix_amoeba_pitorsion.html fix amoeba/pitorsion
 fix_append_atoms.html fix append/atoms
@@ -530,6 +537,7 @@ fix_electrode.html fix electrode/thermo
 fix_electrode.html fix electrode/thermo/intel
 fix_electron_stopping.html fix electron/stopping
 fix_electron_stopping.html fix electron/stopping/fit
+fix_electron_stopping.html fix electron/stopping/kk
 fix_enforce2d.html fix enforce2d
 fix_enforce2d.html fix enforce2d/kk
 fix_eos_cv.html fix eos/cv
@@ -538,6 +546,7 @@ fix_eos_table_rx.html fix eos/table/rx
 fix_eos_table_rx.html fix eos/table/rx/kk
 fix_evaporate.html fix evaporate
 fix_external.html fix external
+fix_external.html fix external/kk
 fix_ffl.html fix ffl
 fix_filter_corotate.html fix filter/corotate
 fix_flow_gauss.html fix flow/gauss
@@ -547,6 +556,12 @@ fix_gcmc.html fix gcmc
 fix_gjf.html fix gjf
 fix_gld.html fix gld
 fix_gle.html fix gle
+fix_graphics_arrows.html fix graphics/arrows
+fix_graphics_isosurface.html fix graphics/isosurface
+fix_graphics_labels.html fix graphics/labels
+fix_graphics_lines.html fix graphics/lines
+fix_graphics_objects.html fix graphics/objects
+fix_graphics_periodic.html fix graphics/periodic
 fix_gravity.html fix gravity
 fix_gravity.html fix gravity/kk
 fix_gravity.html fix gravity/omp
@@ -587,6 +602,7 @@ fix_mvv_dpd.html fix mvv/edpd
 fix_mvv_dpd.html fix mvv/tdpd
 fix_neb.html fix neb
 fix_neb_spin.html fix neb/spin
+fix_neighbor_swap.html fix neighbor/swap
 fix_nh_eff.html fix nph/eff
 fix_nh_eff.html fix npt/eff
 fix_nh_eff.html fix nvt/eff
@@ -625,7 +641,7 @@ fix_nve_asphere_noforce.html fix nve/asphere/noforce
 fix_nve_asphere.html fix nve/asphere
 fix_nve_asphere.html fix nve/asphere/gpu
 fix_nve_asphere.html fix nve/asphere/intel
-fix_nve_awpmd.html fix nve/awpmd
+fix_nve_asphere.html fix nve/asphere/kk
 fix_nve_body.html fix nve/body
 fix_nve_bpm_sphere.html fix nve/bpm/sphere
 fix_nve_dotc_langevin.html fix nve/dotc/langevin
@@ -671,7 +687,6 @@ fix_pimd.html fix pimd/nvt
 fix_pimd.html fix pimd/nvt/bosonic
 fix_planeforce.html fix planeforce
 fix_plumed.html fix plumed
-fix_poems.html fix poems
 fix_polarize.html fix polarize/bem/gmres
 fix_polarize.html fix polarize/bem/icc
 fix_polarize.html fix polarize/functional
@@ -739,6 +754,7 @@ fix_setforce.html fix setforce
 fix_setforce.html fix setforce/kk
 fix_setforce.html fix setforce/spin
 fix_set.html fix set
+fix_settorque_atom.html fix settorque/atom
 fix_sgcmc.html fix sgcmc
 fix_shake.html fix rattle
 fix_shake.html fix shake
@@ -762,6 +778,8 @@ fix_spring_self.html fix spring/self/kk
 fix_srd.html fix srd
 fix_store_force.html fix store/force
 fix_store_state.html fix store/state
+fix_surface_global.html fix surface/global
+fix_surface_local.html fix surface/local
 fix_temp_berendsen.html fix temp/berendsen
 fix_temp_berendsen.html fix temp/berendsen/kk
 fix_temp_csvr.html fix temp/csld
@@ -778,6 +796,7 @@ fix_tmd.html fix tmd
 fix_ttm.html fix ttm
 fix_ttm.html fix ttm/grid
 fix_ttm.html fix ttm/mod
+fix_ttm.html fix ttm/thermal
 fix_tune_kspace.html fix tune/kspace
 fix_vector.html fix vector
 fix_viscosity.html fix viscosity
@@ -801,6 +820,7 @@ fix_wall_region.html fix wall/region
 fix_wall_region.html fix wall/region/kk
 fix_wall.html fix wall/colloid
 fix_wall.html fix wall/harmonic
+fix_wall.html fix wall/harmonic/outside
 fix_wall.html fix wall/lepton
 fix_wall.html fix wall/lj1043
 fix_wall.html fix wall/lj126
@@ -825,6 +845,7 @@ improper_cossq.html improper_style cossq
 improper_cossq.html improper_style cossq/omp
 improper_cvff.html improper_style cvff
 improper_cvff.html improper_style cvff/intel
+improper_cvff.html improper_style cvff/kk
 improper_cvff.html improper_style cvff/omp
 improper_distance.html improper_style distance
 improper_distharm.html improper_style distharm
@@ -925,7 +946,6 @@ pair_amoeba.html pair_style amoeba/gpu
 pair_amoeba.html pair_style hippo
 pair_amoeba.html pair_style hippo/gpu
 pair_atm.html pair_style atm
-pair_awpmd.html pair_style awpmd/cut
 pair_beck.html pair_style beck
 pair_beck.html pair_style beck/gpu
 pair_beck.html pair_style beck/omp
@@ -1204,6 +1224,7 @@ pair_hybrid.html pair_style hybrid/overlay
 pair_hybrid.html pair_style hybrid/overlay/kk
 pair_hybrid.html pair_style hybrid/overlay/omp
 pair_hybrid.html pair_style hybrid/scaled
+pair_hybrid.html pair_style hybrid/scaled/kk
 pair_hybrid.html pair_style hybrid/scaled/omp
 pair_ilp_graphene_hbn.html pair_style ilp/graphene/hbn
 pair_ilp_graphene_hbn.html pair_style ilp/graphene/hbn/opt
@@ -1227,6 +1248,7 @@ pair_line_lj.html pair_style line/lj
 pair_list.html pair_style list
 pair_lj96.html pair_style lj96/cut
 pair_lj96.html pair_style lj96/cut/gpu
+pair_lj96.html pair_style lj96/cut/kk
 pair_lj96.html pair_style lj96/cut/omp
 pair_lj_cubic.html pair_style lj/cubic
 pair_lj_cubic.html pair_style lj/cubic/gpu
@@ -1301,6 +1323,7 @@ pair_lubricate.html pair_style lubricate/poly
 pair_lubricate.html pair_style lubricate/poly/omp
 pair_lubricateU.html pair_style lubricateU
 pair_lubricateU.html pair_style lubricateU/poly
+pair_mbx.html pair_style mbx
 pair_mdf.html pair_style buck/mdf
 pair_mdf.html pair_style lennard/mdf
 pair_mdf.html pair_style lj/mdf
@@ -1396,6 +1419,8 @@ pair_rheo.html pair_style rheo
 pair_rheo_solid.html pair_style rheo/solid
 pair_saip_metal.html pair_style saip/metal
 pair_saip_metal.html pair_style saip/metal/opt
+pair_saip_metal.html pair_style saip/metal/tmd
+pair_saip_metal.html pair_style saip/metal/tmd/opt
 pair_sdpd_taitwater_isothermal.html pair_style sdpd/taitwater/isothermal
 pair_smatb.html pair_style smatb
 pair_smatb.html pair_style smatb/single
@@ -1440,6 +1465,7 @@ pair_spin_neel.html pair_style spin/neel
 pair_srp.html pair_style srp
 pair_srp.html pair_style srp/react
 pair_style.html pair_style
+pair_surf_granular.html pair_style surf/granular
 pair_sw_angle_table.html pair_style sw/angle/table
 pair_sw.html pair_style sw
 pair_sw.html pair_style sw/gpu
@@ -1548,4 +1574,5 @@ velocity.html velocity
 write_coeff.html write_coeff
 write_data.html write_data
 write_dump.html write_dump
+write_molecule.html write_molecule
 write_restart.html write_restart

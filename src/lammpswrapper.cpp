@@ -102,13 +102,147 @@ void *LammpsWrapper::extract_atom(const char *keyword)
     return val;
 }
 
+void *LammpsWrapper::extract_compute(const char *id, int style, int type)
+{
+    int mystyle = -1;
+    int mytype  = -1;
+
+    switch (style) {
+        case GLOBAL_STYLE:
+            mystyle = LMP_STYLE_GLOBAL;
+            break;
+        case ATOM_STYLE:
+            mystyle = LMP_STYLE_ATOM;
+            break;
+        case LOCAL_STYLE:
+            mystyle = LMP_STYLE_LOCAL;
+            break;
+        default:
+            mystyle = -1;
+            break;
+    }
+    switch (type) {
+        case SCALAR_TYPE:
+            mytype = LMP_TYPE_SCALAR;
+            break;
+        case VECTOR_TYPE:
+            mytype = LMP_TYPE_VECTOR;
+            break;
+        case ARRAY_TYPE:
+            mytype = LMP_TYPE_ARRAY;
+            break;
+        case NUM_ROWS:
+            mytype = LMP_SIZE_ROWS;
+            break;
+        case NUM_COLS:
+            mytype = LMP_SIZE_COLS;
+            break;
+        default:
+            mytype = -1;
+            break;
+    }
+
+    if (lammps_handle) {
+#if defined(LAMMPS_GUI_USE_PLUGIN)
+        return ((liblammpsplugin_t *)plugin_handle)
+            ->extract_compute(lammps_handle, id, mystyle, mytype);
+#else
+        return lammps_extract_compute(lammps_handle, id, mystyle, mytype);
+#endif
+    }
+    return nullptr;
+}
+
+void *LammpsWrapper::extract_fix(const char *id, int style, int type, int nrow, int ncol)
+{
+    int mystyle = -1;
+    int mytype  = -1;
+
+    switch (style) {
+        case GLOBAL_STYLE:
+            mystyle = LMP_STYLE_GLOBAL;
+            break;
+        case ATOM_STYLE:
+            mystyle = LMP_STYLE_ATOM;
+            break;
+        case LOCAL_STYLE:
+            mystyle = LMP_STYLE_LOCAL;
+            break;
+        default:
+            mystyle = -1;
+            break;
+    }
+    switch (type) {
+        case SCALAR_TYPE:
+            mytype = LMP_TYPE_SCALAR;
+            break;
+        case VECTOR_TYPE:
+            mytype = LMP_TYPE_VECTOR;
+            break;
+        case ARRAY_TYPE:
+            mytype = LMP_TYPE_ARRAY;
+            break;
+        case NUM_ROWS:
+            mytype = LMP_SIZE_ROWS;
+            break;
+        case NUM_COLS:
+            mytype = LMP_SIZE_COLS;
+            break;
+        default:
+            mytype = -1;
+            break;
+    }
+
+    if (lammps_handle) {
+#if defined(LAMMPS_GUI_USE_PLUGIN)
+        return ((liblammpsplugin_t *)plugin_handle)
+            ->extract_fix(lammps_handle, id, mystyle, mytype, nrow, ncol);
+#else
+        return lammps_extract_fix(lammps_handle, id, mystyle, mytype, nrow, ncol);
+#endif
+    }
+    return nullptr;
+}
+
+int LammpsWrapper::extract_variable_datatype(const char *keyword)
+{
+    int type = -1;
+    if (lammps_handle) {
+#if defined(LAMMPS_GUI_USE_PLUGIN)
+        type =
+            ((liblammpsplugin_t *)plugin_handle)->extract_variable_datatype(lammps_handle, keyword);
+#else
+        type = lammps_extract_variable_datatype(lammps_handle, keyword);
+#endif
+    }
+    switch (type) {
+        case LMP_VAR_EQUAL:
+            return EQUAL_STYLE;
+            break;
+        case LMP_VAR_ATOM:
+            return ATOM_STYLE;
+            break;
+        case LMP_VAR_VECTOR:
+            return VECTOR_STYLE;
+            break;
+        case LMP_VAR_STRING:
+            return STRING_STYLE;
+            break;
+        default:
+            type = -1;
+            break;
+    }
+    return type;
+}
+
 // note: equal style and compatible variables only
 double LammpsWrapper::extract_variable(const char *keyword)
 {
     void *ptr = nullptr;
     if (lammps_handle) {
 #if defined(LAMMPS_GUI_USE_PLUGIN)
-        ptr = ((liblammpsplugin_t *)plugin_handle)->extract_variable(lammps_handle, keyword, nullptr);
+        ptr =
+            ((liblammpsplugin_t *)plugin_handle)->extract_variable(lammps_handle, keyword, nullptr);
 #else
         ptr = lammps_extract_variable(lammps_handle, keyword, nullptr);
 #endif

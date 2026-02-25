@@ -1,2 +1,2 @@
-id1 ICON lammps-gui.ico
-id2 ICON lmpfile.ico
+1 ICON "lammps-gui.ico"
+2 ICON "lmpfile.ico"

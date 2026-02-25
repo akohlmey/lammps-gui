@@ -359,6 +359,16 @@ LammpsGui::LammpsGui(QWidget *parent, const QString &filename, int width, int he
     lammpsrun->setToolTip("Run LAMMPS on input");
     lammpsstop->setToolTip("Stop LAMMPS");
     lammpsimage->setToolTip("Create snapshot image");
+    auto buttonhint = lammpssave->minimumSizeHint();
+    buttonhint.setWidth(buttonhint.height()*4/3);
+    lammpssave->setMinimumSize(buttonhint);
+    lammpssave->setMaximumSize(buttonhint);
+    lammpsrun->setMinimumSize(buttonhint);
+    lammpsrun->setMaximumSize(buttonhint);
+    lammpsstop->setMinimumSize(buttonhint);
+    lammpsstop->setMaximumSize(buttonhint);
+    lammpsimage->setMinimumSize(buttonhint);
+    lammpsimage->setMaximumSize(buttonhint);
     ui->statusbar->addWidget(lammpssave);
     ui->statusbar->addWidget(lammpsrun);
     ui->statusbar->addWidget(lammpsstop);
@@ -502,7 +512,7 @@ LammpsGui::LammpsGui(QWidget *parent, const QString &filename, int width, int he
     flags &= ~Qt::Dialog;
     flags |= Qt::CustomizeWindowHint;
     flags |= Qt::WindowMinimizeButtonHint;
-    flags &= ~Qt::WindowMaximizeButtonHint;
+    flags |= Qt::WindowMaximizeButtonHint;
     setWindowFlags(flags);
 }
 
@@ -546,7 +556,9 @@ void LammpsGui::new_document()
     imagewindow = nullptr;
     varwindow   = nullptr;
 
+    silence_stdout();
     lammps.close();
+    restore_stdout();
     lammpsstatus->hide();
     setWindowTitle("LAMMPS-GUI - Editor - *unknown*");
     run_counter = 0;
@@ -628,7 +640,9 @@ void LammpsGui::start_exe()
                     vmdfile.write(".psf}\n");
                     vmdfile.close();
                     args << "-e" << vmdfile.fileName();
+                    silence_stdout();
                     lammps.command(datacmd);
+                    restore_stdout();
                     auto *vmd = new QProcess(this);
                     vmd->start(exe, args);
                 } else {
@@ -640,7 +654,9 @@ void LammpsGui::start_exe()
             if (exe == "ovito") {
                 QStringList args;
                 args << datafile.fileName();
+                silence_stdout();
                 lammps.command(datacmd);
+                restore_stdout();
                 auto *ovito = new QProcess(this);
                 ovito->start(exe, args);
             }
@@ -802,7 +818,9 @@ void LammpsGui::open_file(const QString &fileName)
     slideshow   = nullptr;
     imagewindow = nullptr;
     varwindow   = nullptr;
+    silence_stdout();
     lammps.close();
+    restore_stdout();
 
     purge_inspect_list();
     ui->textEdit->setStyleSheet("");
@@ -844,12 +862,14 @@ void LammpsGui::open_file(const QString &fileName)
                              "Cannot open file " + path.absoluteFilePath() + ":\n " +
                                  file.errorString() +
                                  ".\n\nWill create new file on saving editor buffer.");
+        ui->textEdit->document()->clear();
         ui->textEdit->document()->setPlainText(citeme);
         ui->textEdit->document()->setModified(false);
         ui->textEdit->setStyleSheet(bannerstyle);
     } else {
         QTextStream in(&file);
         QString text = in.readAll();
+        ui->textEdit->document()->clear();
         ui->textEdit->document()->setPlainText(text);
         ui->textEdit->moveCursor(QTextCursor::Start, QTextCursor::MoveAnchor);
         file.close();
@@ -867,7 +887,9 @@ void LammpsGui::open_file(const QString &fileName)
     cpuuse->hide();
 
     update_variables();
+    silence_stdout();
     lammps.close();
+    restore_stdout();
 }
 
 // open file in read-only mode for viewing in separate window
@@ -967,10 +989,12 @@ void LammpsGui::inspect_file(const QString &fileName)
     // LAMMPS is not re-entrant, so we can only query LAMMPS when it is not running a simulation
     if (!lammps.is_running()) {
 
+        silence_stdout();
         start_lammps();
         lammps.command("clear");
         clear_variables();
         lammps.command(QString("read_restart %1").arg(fileName));
+        restore_stdout();
         capturer->BeginCapture();
         lammps.command("info system group compute fix");
         capturer->EndCapture();
@@ -986,7 +1010,9 @@ void LammpsGui::inspect_file(const QString &fileName)
             infoviewer->show();
             ilist->info = infoviewer;
             dumpinfo.remove();
+            silence_stdout();
             lammps.command(QString("write_data %1 pair ij noinit").arg(infodata));
+            restore_stdout();
             auto *dataviewer =
                 new FileViewer(infodata, QString("LAMMPS-GUI: data file for %1").arg(shortName));
             dataviewer->show();
@@ -1056,7 +1082,9 @@ void LammpsGui::quit()
     }
 
     // close LAMMPS instance
+    silence_stdout();
     lammps.close();
+    restore_stdout();
     lammpsstatus->hide();
     lammps.finalize();
 
@@ -1092,6 +1120,12 @@ void LammpsGui::quit()
         settings.setValue("mainy", height());
     }
     settings.sync();
+
+#if QT_CONFIG(clipboard)
+    auto *clip = QGuiApplication::clipboard();
+    if (clip) clip->clear();
+#endif
+
     // quit application
     QCoreApplication::quit();
 }
@@ -1404,7 +1438,9 @@ void LammpsGui::restart_lammps()
                              "Must stop current run before relaunching LAMMPS");
         return;
     }
+    silence_stdout();
     lammps.close();
+    restore_stdout();
 };
 
 void LammpsGui::do_run(bool use_buffer)
@@ -1516,7 +1552,7 @@ void LammpsGui::do_run(bool use_buffer)
     chartwindow->setWindowIcon(QIcon(":/icons/lammps-gui-icon-128x128.png"));
     chartwindow->setMinimumSize(MINIMUM_WIDTH, MINIMUM_HEIGHT);
     const auto *unitptr = (const char *)lammps.extract_global("units");
-    if (unitptr) chartwindow->set_units(QString("Units: %1").arg(unitptr));
+    if (unitptr) chartwindow->set_units(QString("%1").arg(unitptr));
     auto normflag = lammps.extract_setting("thermo_norm");
     chartwindow->set_norm(normflag != 0);
 
@@ -1544,7 +1580,9 @@ void LammpsGui::render_image()
 {
     // LAMMPS is not re-entrant, so we can only query LAMMPS when it is not running
     if (!lammps.is_running()) {
+        silence_stdout();
         start_lammps();
+        restore_stdout();
         if (!lammps.extract_setting("box_exist")) {
             // there is no current system defined yet.
             // so we select the input from the start to the first run or minimize command
@@ -1559,9 +1597,11 @@ void LammpsGui::render_image()
                 auto selection = cursor.selectedText().replace(QChar(0x2029), '\n');
                 selection += "\nrun 0 pre yes post no";
                 ui->textEdit->setTextCursor(saved);
+                silence_stdout();
                 lammps.command("clear");
                 clear_variables();
                 lammps.commands_string(selection);
+                restore_stdout();
                 // clear any possible error status
                 lammps.get_last_error_message(nullptr, 0);
             }
@@ -1723,13 +1763,15 @@ void LammpsGui::about()
         info       = capturer->GetCapture();
         auto start = info.find("LAMMPS version:");
         auto end   = info.find("Info-Info-Info", start);
-        info       = std::string(info, start, end - start);
+        // protect from a failed or incomplete capture
+        if ((start != std::string::npos) && (end != std::string::npos))
+            info = std::string(info, start, end - start);
     }
 
     info += citeme.toStdString();
     to_clipboard += info.c_str();
 #if QT_CONFIG(clipboard)
-    QGuiApplication::clipboard()->setText(to_clipboard);
+    if (auto *clip = QGuiApplication::clipboard()) clip->setText(to_clipboard);
 #endif
 
     QMessageBox msg;
@@ -2111,7 +2153,9 @@ void LammpsGui::edit_variables()
             runner->wait();
             delete runner;
         }
+        silence_stdout();
         lammps.close();
+        restore_stdout();
         lammpsstatus->hide();
     }
 }
@@ -2156,7 +2200,9 @@ void LammpsGui::preferences()
                 runner->wait();
                 delete runner;
             }
+            silence_stdout();
             lammps.close();
+            restore_stdout();
             lammpsstatus->hide();
             // reset nthreads if accelerator does not support threads
             if ((newaccel == AcceleratorTab::Opt) || (newaccel == AcceleratorTab::None))

@@ -15,6 +15,7 @@
 #include "lammpsgui.h"
 
 #include <QApplication>
+#include <QClipboard>
 #include <QDialogButtonBox>
 #include <QDir>
 #include <QFile>
@@ -32,8 +33,11 @@
 #include <QPushButton>
 #include <QScreen>
 #include <QScrollArea>
+#include <QScrollBar>
 #include <QShortcut>
+#include <QSlider>
 #include <QSpacerItem>
+#include <QSpinBox>
 #include <QTemporaryFile>
 #include <QTimer>
 #include <QTransform>
@@ -42,23 +46,29 @@
 #include <algorithm>
 
 namespace {
-constexpr int EXTRA_WIDTH  = 40;
-constexpr int EXTRA_HEIGHT = 100;
-} // namespace
+constexpr int LAYOUT_SPACING = 6;
+}
 
 SlideShow::SlideShow(const QString &fileName, QWidget *parent) :
     QDialog(parent), playtimer(nullptr), imageLabel(new QLabel), scrollArea(new QScrollArea),
-    imageName(new QLabel("(none)")), do_loop(true), imageRotation(0), imageFlipH(false),
-    imageFlipV(false)
+    scrollBar(new QSlider), imageName(new QLabel("(none)")), timer_delay(100), do_loop(true),
+    imageRotation(0), imageFlipH(false), imageFlipV(false)
 {
     imageLabel->setBackgroundRole(QPalette::Base);
-    imageLabel->setSizePolicy(QSizePolicy::Ignored, QSizePolicy::Ignored);
+    imageLabel->setSizePolicy(QSizePolicy::Minimum, QSizePolicy::Minimum);
     imageLabel->setScaledContents(false);
     imageLabel->minimumSizeHint();
 
     scrollArea->setBackgroundRole(QPalette::Dark);
     scrollArea->setWidget(imageLabel);
+    scrollArea->setSizePolicy(QSizePolicy::MinimumExpanding, QSizePolicy::MinimumExpanding);
     scrollArea->setVisible(false);
+
+    scrollBar->setMinimum(0);
+    scrollBar->setMaximum(1);
+    scrollBar->setOrientation(Qt::Horizontal);
+    scrollBar->setToolTip("Select Image to display");
+    connect(scrollBar, &QSlider::valueChanged, this, &SlideShow::loadImage);
 
     imageName->setFrameStyle(QFrame::Raised);
     imageName->setFrameShape(QFrame::Panel);
@@ -72,6 +82,8 @@ SlideShow::SlideShow(const QString &fileName, QWidget *parent) :
     QObject::connect(shortcut, &QShortcut::activated, this, &SlideShow::stop_run);
     shortcut = new QShortcut(QKeySequence(Qt::CTRL | Qt::Key_Q), this);
     QObject::connect(shortcut, &QShortcut::activated, this, &SlideShow::quit);
+    shortcut = new QShortcut(QKeySequence(Qt::CTRL | Qt::Key_C), this);
+    QObject::connect(shortcut, &QShortcut::activated, this, &SlideShow::copy);
 
     buttonBox = new QDialogButtonBox(QDialogButtonBox::Close);
 
@@ -89,50 +101,107 @@ SlideShow::SlideShow(const QString &fileName, QWidget *parent) :
     auto *tomovie = new QPushButton(QIcon(":/icons/export-movie.png"), "");
     tomovie->setToolTip("Export to movie file");
     tomovie->setEnabled(has_exe("ffmpeg") || has_exe("magick") || has_exe("convert"));
+    auto buttonhint = tomovie->minimumSizeHint();
+    buttonhint.setWidth(buttonhint.height() * 4 / 3);
+    tomovie->setMinimumSize(buttonhint);
+    tomovie->setMaximumSize(buttonhint);
 
     auto *toimage = new QPushButton(QIcon(":/icons/document-save-as.png"), "");
     toimage->setToolTip("Export to image file");
+    toimage->setMinimumSize(buttonhint);
+    toimage->setMaximumSize(buttonhint);
+
+    auto *toclip = new QPushButton(QIcon(":/icons/edit-copy.png"), "");
+    toclip->setToolTip("Copy image to clipboard");
+    toclip->setMinimumSize(buttonhint);
+    toclip->setMaximumSize(buttonhint);
 
     auto *totrash = new QPushButton(QIcon(":/icons/trash.png"), "");
     totrash->setToolTip("Delete all image files");
+    totrash->setMinimumSize(buttonhint);
+    totrash->setMaximumSize(buttonhint);
+
+    auto dsize = QFontMetrics(QApplication::font()).size(Qt::TextSingleLine, "Delay:  100");
+    // need some extra space on Windows
+#if defined(Q_OS_WIN32)
+    dsize = dsize * 3 / 2;
+#endif
+    auto *delay = new QSpinBox;
+    delay->setRange(10, 10000);
+    delay->setStepType(QAbstractSpinBox::AdaptiveDecimalStepType);
+    delay->setValue(timer_delay);
+    delay->setObjectName("delay");
+    delay->setToolTip("Set delay between images in milliseconds");
+    delay->setMinimumSize(dsize);
 
     auto *gofirst = new QPushButton(QIcon(":/icons/go-first.png"), "");
     gofirst->setToolTip("Go to first Image");
+    gofirst->setObjectName("first");
+    gofirst->setCheckable(false);
+    gofirst->setMinimumSize(buttonhint);
+    gofirst->setMaximumSize(buttonhint);
     auto *goprev = new QPushButton(QIcon(":/icons/go-previous-2.png"), "");
     goprev->setToolTip("Go to previous Image");
+    goprev->setMinimumSize(buttonhint);
+    goprev->setMaximumSize(buttonhint);
     auto *goplay = new QPushButton(QIcon(":/icons/media-playback-start-2.png"), "");
     goplay->setToolTip("Play animation");
     goplay->setCheckable(true);
     goplay->setChecked(playtimer);
     goplay->setObjectName("play");
+    goplay->setMinimumSize(buttonhint);
+    goplay->setMaximumSize(buttonhint);
     auto *gonext = new QPushButton(QIcon(":/icons/go-next-2.png"), "");
     gonext->setToolTip("Go to next Image");
+    gonext->setMinimumSize(buttonhint);
+    gonext->setMaximumSize(buttonhint);
     auto *golast = new QPushButton(QIcon(":/icons/go-last.png"), "");
     golast->setToolTip("Go to last Image");
+    golast->setMinimumSize(buttonhint);
+    golast->setMaximumSize(buttonhint);
     auto *goloop = new QPushButton(QIcon(":/icons/media-playlist-repeat.png"), "");
     goloop->setToolTip("Loop animation");
     goloop->setCheckable(true);
     goloop->setChecked(do_loop);
+    goloop->setMinimumSize(buttonhint);
+    goloop->setMaximumSize(buttonhint);
 
     auto *zoomin = new QPushButton(QIcon(":/icons/gtk-zoom-in.png"), "");
     zoomin->setToolTip("Zoom in by 10 percent");
+    zoomin->setMinimumSize(buttonhint);
+    zoomin->setMaximumSize(buttonhint);
     auto *zoomout = new QPushButton(QIcon(":/icons/gtk-zoom-out.png"), "");
     zoomout->setToolTip("Zoom out by 10 percent");
+    zoomout->setMinimumSize(buttonhint);
+    zoomout->setMaximumSize(buttonhint);
     auto *normal = new QPushButton(QIcon(":/icons/gtk-zoom-fit.png"), "");
     normal->setToolTip("Reset zoom to normal");
+    normal->setMinimumSize(buttonhint);
+    normal->setMaximumSize(buttonhint);
 
     auto *imgrotcw = new QPushButton(QIcon(":/icons/object-rotate-right.png"), "");
-    imgrotcw->setToolTip("Rotate displayed image 90° clockwise");
+    imgrotcw->setToolTip("Rotate displayed image 90<sup>o</sup> clockwise");
+    imgrotcw->setMinimumSize(buttonhint);
+    imgrotcw->setMaximumSize(buttonhint);
     auto *imgrotccw = new QPushButton(QIcon(":/icons/object-rotate-left.png"), "");
-    imgrotccw->setToolTip("Rotate displayed image 90° counter-clockwise");
+    imgrotccw->setToolTip("Rotate displayed image 90<sup>o</sup> counter-clockwise");
+    imgrotccw->setMinimumSize(buttonhint);
+    imgrotccw->setMaximumSize(buttonhint);
     auto *imgfliph = new QPushButton(QIcon(":/icons/object-flip-horizontal.png"), "");
     imgfliph->setToolTip("Mirror displayed image horizontally");
+    imgfliph->setMinimumSize(buttonhint);
+    imgfliph->setMaximumSize(buttonhint);
     auto *imgflipv = new QPushButton(QIcon(":/icons/object-flip-vertical.png"), "");
     imgflipv->setToolTip("Mirror displayed image vertically");
+    imgflipv->setMinimumSize(buttonhint);
+    imgflipv->setMaximumSize(buttonhint);
 
     connect(tomovie, &QPushButton::released, this, &SlideShow::movie);
     connect(toimage, &QPushButton::released, this, &SlideShow::save_current_image);
+    connect(toclip, &QPushButton::released, this, &SlideShow::copy);
     connect(totrash, &QPushButton::released, this, &SlideShow::delete_images);
+    connect(delay, &QAbstractSpinBox::editingFinished, this, &SlideShow::set_delay);
+
     connect(gofirst, &QPushButton::released, this, &SlideShow::first);
     connect(goprev, &QPushButton::released, this, &SlideShow::prev);
     connect(goplay, &QPushButton::released, this, &SlideShow::play);
@@ -141,7 +210,6 @@ SlideShow::SlideShow(const QString &fileName, QWidget *parent) :
     connect(goloop, &QPushButton::released, this, &SlideShow::loop);
     connect(zoomin, &QPushButton::released, this, &SlideShow::zoomIn);
     connect(zoomout, &QPushButton::released, this, &SlideShow::zoomOut);
-    connect(gofirst, &QPushButton::released, this, &SlideShow::first);
     connect(normal, &QPushButton::released, this, &SlideShow::normalSize);
     connect(imgrotcw, &QPushButton::released, this, &SlideShow::do_image_rotate_cw);
     connect(imgrotccw, &QPushButton::released, this, &SlideShow::do_image_rotate_ccw);
@@ -149,32 +217,43 @@ SlideShow::SlideShow(const QString &fileName, QWidget *parent) :
     connect(imgflipv, &QPushButton::released, this, &SlideShow::do_image_flip_v);
 
     navLayout->addSpacerItem(new QSpacerItem(10, 10, QSizePolicy::Expanding, QSizePolicy::Minimum));
+    navLayout->addWidget(tomovie, 1);
+    navLayout->addWidget(toimage, 1);
+    navLayout->addWidget(toclip, 1);
+    navLayout->addWidget(totrash, 1);
+    navLayout->addWidget(new QLabel("Delay:"));
+    navLayout->addWidget(delay, 5);
     navLayout->addWidget(dummy);
-    navLayout->addWidget(tomovie);
-    navLayout->addWidget(toimage);
-    navLayout->addWidget(totrash);
-    navLayout->addWidget(gofirst);
-    navLayout->addWidget(goprev);
-    navLayout->addWidget(goplay);
-    navLayout->addWidget(gonext);
-    navLayout->addWidget(golast);
-    navLayout->addWidget(goloop);
+    navLayout->addWidget(gofirst, 1);
+    navLayout->addWidget(goprev, 1);
+    navLayout->addWidget(goplay, 1);
+    navLayout->addWidget(gonext, 1);
+    navLayout->addWidget(golast, 1);
+    navLayout->addWidget(goloop, 1);
 
-    navLayout->addWidget(zoomin);
-    navLayout->addWidget(zoomout);
-    navLayout->addWidget(normal);
-    navLayout->addWidget(imgrotcw);
-    navLayout->addWidget(imgrotccw);
-    navLayout->addWidget(imgfliph);
-    navLayout->addWidget(imgflipv);
+    navLayout->addWidget(zoomin, 1);
+    navLayout->addWidget(zoomout, 1);
+    navLayout->addWidget(normal, 1);
+    navLayout->addWidget(imgrotcw, 1);
+    navLayout->addWidget(imgrotccw, 1);
+    navLayout->addWidget(imgfliph, 1);
+    navLayout->addWidget(imgflipv, 1);
+    navLayout->addSpacerItem(new QSpacerItem(10, 10, QSizePolicy::Expanding, QSizePolicy::Minimum));
+    navLayout->setSizeConstraint(QLayout::SetMinimumSize);
+    navLayout->setSpacing(LAYOUT_SPACING);
 
-    mainLayout->addWidget(scrollArea, 10);
     mainLayout->addLayout(navLayout);
+    mainLayout->addWidget(scrollArea, 10);
 
     botLayout->addWidget(imageName);
     botLayout->addWidget(buttonBox);
     botLayout->setStretch(0, 3);
+    botLayout->setSizeConstraint(QLayout::SetMinimumSize);
+    botLayout->setSpacing(LAYOUT_SPACING);
     mainLayout->addLayout(botLayout);
+    mainLayout->addWidget(scrollBar, 10);
+    mainLayout->setSpacing(LAYOUT_SPACING);
+    goplay->setFocus();
 
     setWindowIcon(QIcon(":/icons/lammps-gui-icon-128x128.png"));
     setWindowTitle(QString("LAMMPS-GUI - Slide Show: ") + QFileInfo(fileName).fileName());
@@ -184,15 +263,21 @@ SlideShow::SlideShow(const QString &fileName, QWidget *parent) :
     current     = 0;
 
     scrollArea->setVisible(true);
-    adjustWindowSize();
     setLayout(mainLayout);
+    mainLayout->setSizeConstraint(QLayout::SetMinAndMaxSize);
+    adjustWindowSize();
 
     // set window flags for window manager
     auto flags = windowFlags();
     flags &= ~Qt::Dialog;
     flags |= Qt::CustomizeWindowHint;
     flags |= Qt::WindowMinimizeButtonHint;
+    // must add maximize button for macOS to allow resizing, but remove on other platforms
+#if defined(Q_OS_MACOS)
+    flags |= Qt::WindowMaximizeButtonHint;
+#else
     flags &= ~Qt::WindowMaximizeButtonHint;
+#endif
     setWindowFlags(flags);
 }
 
@@ -202,6 +287,8 @@ void SlideShow::add_image(const QString &filename)
         int lastidx = imagefiles.size();
         imagefiles.append(filename);
         loadImage(lastidx);
+        scrollBar->setMaximum(lastidx);
+        scrollBar->setValue(lastidx);
     }
 }
 
@@ -218,9 +305,20 @@ void SlideShow::clear()
     imagefiles.clear();
     image.fill(Qt::black);
     imageLabel->setPixmap(QPixmap::fromImage(image));
-    imageLabel->adjustSize();
+    imageLabel->setMinimumSize(image.width(), image.height());
+    imageLabel->resize(image.width(), image.height());
     imageName->setText("(none)");
+    scrollBar->setMaximum(1);
+    adjustWindowSize();
     repaint();
+}
+
+void SlideShow::set_delay()
+{
+    auto *field = qobject_cast<QSpinBox *>(sender());
+    if (field && (field->objectName() == "delay")) {
+        timer_delay = field->value();
+    }
 }
 
 void SlideShow::loadImage(int idx)
@@ -242,12 +340,26 @@ void SlideShow::loadImage(int idx)
                                    .arg(idx + 1)
                                    .arg(imagefiles.size())
                                    .arg(imagefiles[idx]));
-            adjustSize();
             current = idx;
             break;
         }
     } while (idx >= 0);
+    scrollBar->setValue(idx);
     adjustWindowSize();
+}
+
+void SlideShow::copy()
+{
+#if QT_CONFIG(clipboard)
+    auto *clip = QGuiApplication::clipboard();
+    if (clip && !image.isNull()) {
+        clip->setImage(image, QClipboard::Clipboard);
+        if (clip->supportsSelection()) clip->setImage(image, QClipboard::Selection);
+    } else
+        fprintf(stderr, "Copy image to clipboard currently not available\n");
+#else
+    fprintf(stderr, "Copy image to clipboard not supported on this platform\n");
+#endif
 }
 
 void SlideShow::quit()
@@ -339,12 +451,12 @@ void SlideShow::movie()
             }
             concatfile.close();
 
+            const auto fps = QString::number(1.0 / ((double)timer_delay / 1000.0));
             QStringList args;
             args << "-y";
             args << "-safe"
                  << "0";
-            args << "-r"
-                 << "10";
+            args << "-r" << fps;
             args << "-f"
                  << "concat";
             args << "-i" << concatfile.fileName();
@@ -366,8 +478,7 @@ void SlideShow::movie()
             }
             args << "-b:v"
                  << "2000k";
-            args << "-r"
-                 << "24";
+            args << "-r" << fps;
             args << fileName;
 
             auto *ffmpeg = new QProcess(this);
@@ -383,7 +494,7 @@ void SlideShow::movie()
         QString cmd = "magick";
         if (!has_exe("magick")) cmd = "convert";
         QStringList args;
-        args << "-delay" << "10";
+        args << "-delay" << QString::number(timer_delay / 10);
         QDir curdir(".");
         for (const auto &img : imagefiles)
             args << curdir.absoluteFilePath(img);
@@ -417,15 +528,18 @@ void SlideShow::play()
 {
     // if we do not loop, start animation from beginning
     if (!do_loop) current = 0;
+    auto *delay = findChild<QSpinBox *>("delay");
 
     if (playtimer) {
         playtimer->stop();
         delete playtimer;
         playtimer = nullptr;
+        if (delay) delay->setEnabled(true);
     } else {
         playtimer = new QTimer(this);
         connect(playtimer, &QTimer::timeout, this, &SlideShow::next);
-        playtimer->start(100);
+        playtimer->start(timer_delay);
+        if (delay) delay->setEnabled(false);
     }
 
     // reset push button state. use findChild() if not triggered from button.
@@ -496,17 +610,21 @@ void SlideShow::scaleImage(double factor)
 void SlideShow::adjustWindowSize()
 {
     if (image.isNull()) return;
+    auto *hbar        = scrollArea->horizontalScrollBar();
+    auto *vbar        = scrollArea->verticalScrollBar();
+    int desiredWidth  = image.width() + 2 + (vbar->isVisible() ? vbar->width() : 0);
+    int desiredHeight = image.height() + 2 + (hbar->isVisible() ? hbar->height() : 0);
 
-    int desiredWidth  = image.width() + EXTRA_WIDTH;
-    int desiredHeight = image.height() + EXTRA_HEIGHT;
-
+    // make sure the scroll area is not resized beyond a certain fraction of the screen
     auto *screen = QGuiApplication::primaryScreen();
     if (screen) {
         auto screenSize = screen->availableSize();
-        desiredWidth    = std::min(desiredWidth, screenSize.width() * 2 / 3);
-        desiredHeight   = std::min(desiredHeight, screenSize.height() * 4 / 5);
+        desiredWidth    = std::min(desiredWidth, screenSize.width() * 3 / 4);
+        desiredHeight   = std::min(desiredHeight, screenSize.height() * 9 / 10);
     }
-    resize(desiredWidth, desiredHeight);
+    scrollArea->setMinimumSize(desiredWidth, desiredHeight);
+    scrollArea->resize(desiredWidth, desiredHeight);
+    adjustSize();
 }
 
 void SlideShow::do_image_rotate_cw()

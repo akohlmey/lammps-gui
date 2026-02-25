@@ -20,6 +20,7 @@
 #include <QApplication>
 #include <QChart>
 #include <QCheckBox>
+#include <QClipboard>
 #include <QCloseEvent>
 #include <QComboBox>
 #include <QEvent>
@@ -51,6 +52,7 @@ namespace {
 // Set RangeSlider resolution to 1000 steps
 constexpr int SLIDER_RANGE       = 1000;
 constexpr double SLIDER_FRACTION = 1.0 / (double)SLIDER_RANGE;
+constexpr int LAYOUT_SPACING     = 6;
 
 // brush color index must be kept in sync with preferences
 
@@ -66,9 +68,10 @@ const QList<QBrush> mybrushes = {
 
 ChartWindow::ChartWindow(const QString &_filename, QWidget *parent) :
     QWidget(parent), menu(new QMenuBar), file(new QMenu("&File")), saveAsAct(nullptr),
-    exportCsvAct(nullptr), exportDatAct(nullptr), exportYamlAct(nullptr), closeAct(nullptr),
-    stopAct(nullptr), quitAct(nullptr), smooth(nullptr), window(nullptr), order(nullptr),
-    chartTitle(nullptr), chartYlabel(nullptr), units(nullptr), norm(nullptr), filename(_filename)
+    copyAct(nullptr), exportCsvAct(nullptr), exportDatAct(nullptr), exportYamlAct(nullptr),
+    closeAct(nullptr), stopAct(nullptr), quitAct(nullptr), smooth(nullptr), window(nullptr),
+    order(nullptr), chartTitle(nullptr), chartYlabel(nullptr), units(nullptr), norm(nullptr),
+    filename(_filename)
 {
     QSettings settings;
     auto *top  = new QVBoxLayout;
@@ -78,6 +81,9 @@ ChartWindow::ChartWindow(const QString &_filename, QWidget *parent) :
     top->addWidget(new QHline);
     top->addLayout(row2);
     top->addWidget(new QHline);
+    row1->setSpacing(LAYOUT_SPACING);
+    row2->setSpacing(LAYOUT_SPACING);
+    top->setSpacing(LAYOUT_SPACING);
 
     menu->addMenu(file);
     menu->setSizePolicy(QSizePolicy::Minimum, QSizePolicy::Minimum);
@@ -137,7 +143,9 @@ ChartWindow::ChartWindow(const QString &_filename, QWidget *parent) :
     row1->addWidget(new QLabel("Y-Axis:"));
     row1->addWidget(chartYlabel);
 
-    units = new QLabel("Units:");
+    row2->addWidget(new QLabel("Units:"));
+    units = new QLabel("[lj]");
+    units->setFrameStyle(QFrame::Panel);
     row2->addWidget(units);
     row2->addWidget(new QLabel("Norm:"));
     norm = new QCheckBox("");
@@ -173,6 +181,9 @@ ChartWindow::ChartWindow(const QString &_filename, QWidget *parent) :
     row1->addWidget(columns);
     saveAsAct = file->addAction("&Save Graph As...", this, &ChartWindow::saveAs);
     saveAsAct->setIcon(QIcon(":/icons/document-save-as.png"));
+    copyAct = file->addAction("Copy &Graph to Clipboard", this, &ChartWindow::copy);
+    copyAct->setIcon(QIcon(":/icons/edit-copy.png"));
+    copyAct->setShortcut(QKeySequence(QKeySequence::Copy));
     exportCsvAct = file->addAction("&Export data to CSV...", this, &ChartWindow::exportCsv);
     exportCsvAct->setIcon(QIcon(":/icons/application-calc.png"));
     exportDatAct = file->addAction("Export data to &Gnuplot...", this, &ChartWindow::exportDat);
@@ -191,6 +202,7 @@ ChartWindow::ChartWindow(const QString &_filename, QWidget *parent) :
     quitAct->setShortcut(QKeySequence(Qt::CTRL | Qt::Key_Q));
     auto *layout = new QVBoxLayout;
     layout->addLayout(top);
+    layout->setSpacing(LAYOUT_SPACING);
     setLayout(layout);
 
     connect(chartTitle, &QLineEdit::editingFinished, this, &ChartWindow::update_tlabel);
@@ -266,6 +278,31 @@ void ChartWindow::set_units(const QString &_units)
 void ChartWindow::set_norm(bool _norm)
 {
     norm->setChecked(_norm);
+}
+
+void ChartWindow::copy()
+{
+#if QT_CONFIG(clipboard)
+    auto *clip = QGuiApplication::clipboard();
+    if (clip) {
+        int choice     = columns->currentData().toInt();
+        QWidget *graph = nullptr;
+        for (auto &c : charts)
+            if (choice == c->get_index()) graph = c;
+
+        if (graph) {
+            auto image = graph->grab().toImage();
+            if (!image.isNull()) {
+                clip->setImage(image, QClipboard::Clipboard);
+                if (clip->supportsSelection()) clip->setImage(image, QClipboard::Selection);
+                return;
+            }
+        }
+    }
+    fprintf(stderr, "Copy graph to clipboard currently not available\n");
+#else
+    fprintf(stderr, "Copy graph to clipboard not supported on this platform\n");
+#endif
 }
 
 void ChartWindow::quit()

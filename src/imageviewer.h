@@ -16,18 +16,20 @@
 #include <QDialog>
 #include <QImage>
 #include <QString>
+#include <QStringList>
 #include <map>
 
 class QAction;
 class QMenuBar;
 class QDialogButtonBox;
+class QEvent;
 class QLabel;
 class QObject;
 class QScrollArea;
 class QStatusBar;
 class LammpsWrapper;
 class QComboBox;
-class FixInfo;
+class ImageInfo;
 class RegionInfo;
 
 /**
@@ -55,7 +57,7 @@ public:
     /**
      * @brief Destructor
      */
-    ~ImageViewer() override = default;
+    ~ImageViewer() override;
 
     ImageViewer()                               = delete;
     ImageViewer(const ImageViewer &)            = delete;
@@ -76,6 +78,7 @@ private slots:
     void toggle_shiny();       ///< Toggle shiny/specular rendering
     void toggle_vdw();         ///< Toggle Van der Waals radii
     void toggle_bond();        ///< Toggle bond display
+    void vdwbond_sync();       ///< Sync settings of VDW style and autobonds in Atoms dialog
     void set_bondcut();        ///< Set bond cutoff distance
     void toggle_box();         ///< Toggle simulation box display
     void toggle_axes();        ///< Toggle coordinate axes display
@@ -103,6 +106,9 @@ public:
      */
     void createImage();
 
+protected:
+    bool eventFilter(QObject *watched, QEvent *event) override;
+
 private:
     void createActions();                   ///< Setup menu actions
     void updateActions();                   ///< Update action states
@@ -110,6 +116,7 @@ private:
     void adjustWindowSize();                ///< Auto-resize window to fit image
     void update_fixes();                    ///< Update fix graphics information
     void update_regions();                  ///< Update region information
+    void update_peratom();                  ///< Update per-atom information
     bool has_autobonds();                   ///< Check if autobonds are enabled
 
 private:
@@ -120,13 +127,13 @@ private:
     QDialogButtonBox *buttonBox; ///< Dialog buttons
     double atomSize;             ///< Atom display size
 
-    QAction *saveAsAct;     ///< Save As action
-    QAction *copyAct;       ///< Copy action
-    QAction *cmdAct;        ///< Copy command action
-    QAction *zoomInAct;     ///< Zoom in action
-    QAction *zoomOutAct;    ///< Zoom out action
-    QAction *normalSizeAct; ///< Normal size action
+    QAction *saveAsAct; ///< Save As action
+    QAction *copyAct;   ///< Copy action
+    QAction *cmdAct;    ///< Copy command action
 
+    QStringList image_computes;                  ///< list of computes supporting dump image
+    QStringList image_fixes;                     ///< list of fixes supporting dump image
+    QStringList atom_properties;                 ///< list of per-atom properties for coloring
     LammpsWrapper *lammps;                       ///< LAMMPS interface for image generation
     QString group;                               ///< Current atom group
     QString molecule;                            ///< Current molecule selection
@@ -134,6 +141,14 @@ private:
     QString last_dump_cmd;                       ///< Last executed dump command
     int xsize, ysize;                            ///< Image dimensions in pixels
     int hrot, vrot;                              ///< Horizontal and vertical rotation angles
+    int bodyflag;                                ///< bflag1 setting (triangle, cylinder or both)
+    int ellipsoidflag;                           ///< eflag1 setting (triangle, cylinder or both)
+    int ellipsoidlevel;                          ///< eflag2 setting (refinement level)
+    int triflag;                                 ///< tflag1 setting (triangle, cylinder or both)
+    double bodydiam;                             ///< bflag2 setting (diameter)
+    double ellipsoiddiam;                        ///< eflag3 setting (diameter)
+    double linediam;                             ///< linewidth setting (diameter)
+    double tridiam;                              ///< tflag2 setting (diameter)
     double zoom;                                 ///< Zoom level
     double vdwfactor;                            ///< Van der Waals radius scaling factor
     double shinyfactor;                          ///< Shininess/specular factor
@@ -149,18 +164,31 @@ private:
     QString boxcolor;                            ///< Color for box and subbox
     QString backcolor;                           ///< (lower) background color
     QString backcolor2;                          ///< (upper) background color
+    QString atomcolor;                           ///< Custom atom color property
+    QString atomdiam;                            ///< Custom atom diameter property
+    QString bondcolor;                           ///< Custom bond color property
+    QString bonddiam;                            ///< Custom bond diameter property
     double xcenter, ycenter, zcenter;            ///< View center coordinates
+    bool atomcustom;                             ///< Use custom atom color settings
     bool showbox;                                ///< Show simulation box flag
     bool showsubbox;                             ///< Show subdomain boxes flag
     bool showaxes;                               ///< Show coordinate axes flag
     bool antialias;                              ///< Antialiasing enabled flag
     bool usessao;                                ///< SSAO enabled flag
+    bool showatoms;                              ///< Show atoms
+    bool showbonds;                              ///< Show bonds if atom style supports it
+    bool autobond;                               ///< Dynamics bonds from cutoff flag
+    bool showbodies;                             ///< Show bodies if atom style supports it
+    bool showellipsoids;                         ///< Show ellipsoids if atom style supports it
+    bool showlines;                              ///< Show lines if atom style supports it
+    bool showtris;                               ///< Show tris if atom style supports it
     bool useelements;                            ///< Use element properties flag
     bool usediameter;                            ///< Use diameter attribute flag
     bool usesigma;                               ///< Use sigma attribute flag
-    bool autobond;                               ///< Auto-detect bonds flag
-    std::map<std::string, FixInfo *> fixes;      ///< Fix graphics definitions
-    std::map<std::string, RegionInfo *> regions; ///< Region definitions
+    std::map<std::string, ImageInfo *> computes; ///< Compute graphics settings
+    std::map<std::string, ImageInfo *> fixes;    ///< Fix graphics settings
+    std::map<std::string, RegionInfo *> regions; ///< Region settings
+    bool shutdown;                               ///< flag if class has entered the destructor
 };
 #endif
 
