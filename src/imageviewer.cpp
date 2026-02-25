@@ -1213,6 +1213,11 @@ void ImageViewer::atom_settings()
     if (useelements) adiam->addItem("element");
     if (usediameter) adiam->addItem("diameter");
     if (usesigma) adiam->addItem("sigma");
+    if (atomcustom) { // select item that was selected the last time
+        for (int idx = 0; idx < adiam->count(); ++idx) {
+            if (adiam->itemText(idx) == atomdiam) adiam->setCurrentIndex(idx);
+        }
+    }
 
     layout->addWidget(adiam, idx, n++, 1, 1);
     layout->addWidget(new QLabel("Transparency: "), idx, n++, 1, 2,
