@@ -1582,6 +1582,7 @@ void LammpsGui::render_image()
     if (!lammps.is_running()) {
         silence_stdout();
         start_lammps();
+        restore_stdout();
         if (!lammps.extract_setting("box_exist")) {
             // there is no current system defined yet.
             // so we select the input from the start to the first run or minimize command
@@ -1596,9 +1597,11 @@ void LammpsGui::render_image()
                 auto selection = cursor.selectedText().replace(QChar(0x2029), '\n');
                 selection += "\nrun 0 pre yes post no";
                 ui->textEdit->setTextCursor(saved);
+                silence_stdout();
                 lammps.command("clear");
                 clear_variables();
                 lammps.commands_string(selection);
+                restore_stdout();
                 // clear any possible error status
                 lammps.get_last_error_message(nullptr, 0);
             }
@@ -1610,7 +1613,6 @@ void LammpsGui::render_image()
             }
             ui->textEdit->setTextCursor(saved);
         }
-        restore_stdout();
         // if configured, delete old image window before opening new one
         if (QSettings().value("imagereplace", true).toBool()) delete imagewindow;
         imagewindow = new ImageViewer(current_file, &lammps);
