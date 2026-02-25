@@ -25,6 +25,15 @@
 
 #include <cstdio>
 
+#ifdef _WIN32
+#include <io.h>
+#define dup _dup
+#define dup2 _dup2
+#define fileno _fileno
+#else
+#include <unistd.h>
+#endif
+
 namespace {
 const QStringList months({"Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct",
                           "Nov", "Dec"});
@@ -231,14 +240,19 @@ void purge_directory(const QString &dir)
     }
 }
 
-void silence_stdout()
+int silence_stdout()
 {
-    freopen(NULL_DEVICE, "w", stdout);
+    int oldfd = fileno(stdout);
+    int newfd = dup(oldfd);
+    fflush(stdout);
+    freopen(NULL_DEVICE, "ab", stdout);
+    return newfd;
 }
 
-void restore_stdout()
+void restore_stdout(int fd)
 {
-    freopen(TTY_DEVICE, "w", stdout);
+    fflush(stdout);
+    dup2(fd, fileno(stdout));
 }
 
 // compare black level of foreground and background color
