@@ -72,6 +72,16 @@ extern bool has_exe(const QString &exe);
 extern void purge_directory(const QString &dir);
 
 /**
+ * @brief Silence output to stdout
+ */
+extern void silence_stdout();
+
+/**
+ * @brief Restore output to stdout
+ */
+extern void restore_stdout();
+
+/**
  * @brief Determine if the current Qt theme is light or dark
  * @return true if light theme, false if dark theme
  */

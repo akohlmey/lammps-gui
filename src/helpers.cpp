@@ -23,10 +23,20 @@
 #include <QStringList>
 #include <QWidget>
 
+#include <cstdio>
+
 namespace {
 const QStringList months({"Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct",
                           "Nov", "Dec"});
-}
+
+#ifdef _WIN32
+constexpr char NULL_DEVICE[] = "NUL:";
+constexpr char TTY_DEVICE[]  = "COM1:";
+#else
+constexpr char NULL_DEVICE[] = "/dev/null";
+constexpr char TTY_DEVICE[]  = "/dev/tty";
+#endif
+} // namespace
 
 // duplicate string, STL version
 char *mystrdup(const std::string &text)
@@ -219,6 +229,16 @@ void purge_directory(const QString &dir)
             directory.cdUp();
         }
     }
+}
+
+void silence_stdout()
+{
+    freopen(NULL_DEVICE, "w", stdout);
+}
+
+void restore_stdout()
+{
+    freopen(TTY_DEVICE, "w", stdout);
 }
 
 // compare black level of foreground and background color
