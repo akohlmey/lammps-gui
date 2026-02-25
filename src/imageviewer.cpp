@@ -47,6 +47,7 @@
 #include <QPushButton>
 #include <QRadioButton>
 #include <QRegularExpression>
+#include <QRegularExpressionValidator>
 #include <QScreen>
 #include <QScrollArea>
 #include <QScrollBar>
@@ -290,6 +291,8 @@ ImageViewer::ImageViewer(const QString &fileName, LammpsWrapper *_lammps, QWidge
     atomcustom     = false;
     atomcolor      = settings.value("color", "type").toString();
     atomdiam       = settings.value("diameter", "type").toString();
+    bondcolor      = settings.value("bondcolor", "atom").toString();
+    bonddiam       = settings.value("bonddiam", "atom").toString();
     showatoms      = true;
     showbonds      = true;
     showbodies     = true;
@@ -655,6 +658,8 @@ void ImageViewer::reset_view()
     settings.endGroup();
 
     // reset state of checkable push buttons and combo box (if accessible)
+    // also flag that atom/bond customizations should be ignored
+    atomcustom = false;
 
     auto *field = findChild<QSpinBox *>("xsize");
     if (field) field->setValue(xsize);
@@ -1270,12 +1275,39 @@ void ImageViewer::atom_settings()
     layout->addWidget(new QLabel("Color: "), idx, n++, 1, 1, Qt::AlignVCenter | Qt::AlignRight);
     auto *bncolor = new QComboBox;
     bncolor->setObjectName("bncolor");
-    bncolor->addItems({"atom", "type", "none"});
+    bncolor->addItems({"atom", "type"});
+    if (atomcustom) { // select item that was selected the last time
+        if (bondcolor == "none") {
+            bondbutton->setCheckState(Qt::Unchecked);
+        } else {
+            for (int idx = 0; idx < bncolor->count(); ++idx) {
+                if (bncolor->itemText(idx) == bondcolor) bncolor->setCurrentIndex(idx);
+            }
+        }
+    }
     layout->addWidget(bncolor, idx, n++, 1, 1);
     layout->addWidget(new QLabel("Size: "), idx, n++, 1, 1, Qt::AlignVCenter | Qt::AlignRight);
     auto *bndiam = new QComboBox;
     bndiam->setObjectName("bndiam");
-    bndiam->addItems({"atom", "type", "none"});
+    bndiam->addItems({"atom", "type"});
+    if (atomcustom) { // select item that was selected the last time
+        if (bonddiam == "none") {
+            bondbutton->setCheckState(Qt::Unchecked);
+        } else if ((bonddiam == "atom") || (bonddiam == "type")) {
+            for (int idx = 0; idx < bndiam->count(); ++idx) {
+                if (bndiam->itemText(idx) == bonddiam) bndiam->setCurrentIndex(idx);
+            }
+        } else {
+            int idx = bndiam->count();
+            bndiam->addItem(bonddiam);
+            bndiam->setCurrentIndex(idx);
+        }
+    }
+    if (bndiam->count() < 3) bndiam->addItem("0.2");
+
+    bndiam->setEditable(true);
+    QRegularExpression validbond(R"((atom|type|none|^\d+\.?\d*|^\d*\.?\d+))");
+    bndiam->setValidator(new QRegularExpressionValidator(validbond, this));
     layout->addWidget(bndiam, idx, n++, 1, 1);
     auto *autobutton = new QCheckBox("AutoBonds:", this);
     autobutton->setCheckState(autobond ? Qt::Checked : Qt::Unchecked);
@@ -1472,6 +1504,25 @@ void ImageViewer::atom_settings()
     atomdiam = adiam->currentText();
 
     showbonds = bondbutton->isChecked();
+    value     = bncolor->currentText();
+    if (!atomcustom) { // treat "atom" property special if not yet customized
+        if (value != "atom") {
+            atomcustom = true;
+            bondcolor  = value;
+        }
+    } else {
+        bondcolor = value;
+    }
+    value = bndiam->currentText();
+    if (!atomcustom) { // treat "atom" property special if not yet customized
+        if (value != "atom") {
+            atomcustom = true;
+            bonddiam   = value;
+        }
+    } else {
+        bonddiam = value;
+    }
+
     if (has_autobonds()) {
         autobond   = autobutton->isChecked();
         bondcutoff = bcutoff->text().toDouble();
@@ -2026,7 +2077,7 @@ void ImageViewer::createImage()
         elements    = "element ";
         if (masses && ((units == "real") || (units == "metal"))) {
             useelements = true;
-            if (!atomcustom) atomcolor == "element";
+            if (!atomcustom) atomcolor = "element";
             for (int i = 1; i <= ntypes; ++i) {
                 int idx = get_pte_from_mass(masses[i]);
                 if (idx == 0) useelements = false;
@@ -2138,7 +2189,7 @@ void ImageViewer::createImage()
         if (do_vdw || !showbonds)
             dumpcmd += " bond none none ";
         else
-            dumpcmd += " bond atom 0.5 ";
+            dumpcmd += QString(" bond %1 %2 ").arg(bondcolor).arg(bonddiam);
     }
     if (lammps->extract_setting("dimension") == 3) {
         dumpcmd += QString(" view %1 %2").arg(hhrot).arg(vrot);
@@ -2158,8 +2209,16 @@ void ImageViewer::createImage()
     else
         dumpcmd += " axes no 0.0 0.0";
 
-    if (autobond && pair_style && (strcmp(pair_style, "none") != 0))
-        dumpcmd += blank + "autobond" + blank + QString::number(bondcutoff) + " 0.5";
+    if (autobond && pair_style && (strcmp(pair_style, "none") != 0)) {
+        // use custom bond diameter value, if present
+        QRegularExpression validnum(R"((^\d+\.?\d*|^\d*\.?\d+))");
+        auto match = validnum.match(bonddiam);
+        if (match.hasMatch()) {
+            dumpcmd += blank + "autobond" + blank + QString::number(bondcutoff) + blank + bonddiam;
+        } else {
+            dumpcmd += blank + "autobond" + blank + QString::number(bondcutoff) + " 0.5";
+        }
+    }
 
     if (regions.size() > 0) {
         for (const auto &reg : regions) {

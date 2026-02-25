@@ -166,6 +166,8 @@ private:
     QString backcolor2;                          ///< (upper) background color
     QString atomcolor;                           ///< Custom atom color property
     QString atomdiam;                            ///< Custom atom diameter property
+    QString bondcolor;                           ///< Custom bond color property
+    QString bonddiam;                            ///< Custom bond diameter property
     double xcenter, ycenter, zcenter;            ///< View center coordinates
     bool atomcustom;                             ///< Use custom atom color settings
     bool showbox;                                ///< Show simulation box flag
