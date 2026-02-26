@@ -117,7 +117,20 @@ adjusted and applied.
 
 .. figure:: JPG/lammps-gui-image-settings.png
 
-   Detailed image settings dialog
+   Detailed global image settings dialog
+
+Atom and bond settings
+----------------------
+
+.. index:: image settings
+
+This dialog offers to make more detailed customizations and allows to
+enable settings for visualizing atoms and bonds, that are not directly
+accessible from the main Image Viewer window.
+
+.. figure:: JPG/lammps-gui-image-atom.png
+
+   Detailed atom and bond settings dialog
 
 Graphics from computes and fixes
 --------------------------------

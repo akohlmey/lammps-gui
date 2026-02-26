@@ -25,9 +25,12 @@
  */
 class LammpsWrapper {
 public:
-    enum { EQUAL_STYLE = 0, ATOM_STYLE, VECTOR_STYLE, STRING_STYLE };
-    enum { GLOBAL_STYLE = 0, DUMMY /* = ATOM_STYLE */, LOCAL_STYLE };
-    enum { SCALAR_TYPE = 0, VECTOR_TYPE, ARRAY_TYPE, NUM_ROWS, NUM_COLS };
+    ///! Constants for variable styles
+    enum StyleConst { EQUAL_STYLE = 0, ATOM_STYLE, VECTOR_STYLE, STRING_STYLE };
+    ///! Constants for data scopes
+    enum ScopeConst { GLOBAL_STYLE = 0, DUMMY /* = ATOM_STYLE */, LOCAL_STYLE };
+    ///! Constants for data types
+    enum TypeConst { SCALAR_TYPE = 0, VECTOR_TYPE, ARRAY_TYPE, NUM_ROWS, NUM_COLS };
 
     /**
      * @brief Constructor - initializes wrapper
@@ -151,14 +154,14 @@ public:
     /**
      * @brief Extract pair style data from LAMMPS
      * @param keyword Name of pair data to extract
-     * @return Pointer to the pair data
+     * @return Pointer to the pair data cast to a void pointer
      */
     void *extract_pair(const char *keyword);
 
     /**
      * @brief Extract atom data from LAMMPS
      * @param keyword Name of atom data to extract
-     * @return Pointer to the atom data
+     * @return Pointer to the atom data cast to void pointer
      */
     void *extract_atom(const char *keyword);
 
@@ -167,7 +170,7 @@ public:
      * @param id compute id to extract
      * @param style style of data to extract
      * @param type type of data to extract
-     * @return data cast to a void *.
+     * @return data cast to a void pointer.
      */
     void *extract_compute(const char *id, int style, int type);
 
@@ -178,7 +181,7 @@ public:
      * @param type type of data to extract
      * @param nrow row index (only for global)
      * @param ncol column index (only for global)
-     * @return data cast to a void *. Must be freed for global elements
+     * @return data cast to a void pointer. Must be freed for global elements
      */
     void *extract_fix(const char *id, int style, int type, int nrow, int ncol);
 

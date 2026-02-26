@@ -289,10 +289,14 @@ ImageViewer::ImageViewer(const QString &fileName, LammpsWrapper *_lammps, QWidge
     backcolor2     = settings.value("backcolor2", "white").toString();
     ssaoval        = 0.6;
     atomcustom     = false;
+    atomtrans      = 1.0;
     atomcolor      = settings.value("color", "type").toString();
     atomdiam       = settings.value("diameter", "type").toString();
     bondcolor      = settings.value("bondcolor", "atom").toString();
     bonddiam       = settings.value("bonddiam", "atom").toString();
+    colormap       = settings.value("colormap", "BWR").toString();
+    mapmin         = "auto";
+    mapmax         = "auto";
     showatoms      = true;
     showbonds      = true;
     showbodies     = true;
@@ -958,7 +962,7 @@ void ImageViewer::global_settings()
 
     auto *colorcompleter = new QColorCompleter;
     auto *colorvalidator = new QColorValidator;
-    auto *transvalidator = new QDoubleValidator(0.0, 1.0, 5);
+    auto *transvalidator = new QDoubleValidator(0.0, 1.0, 2);
     QFontMetrics metrics(setview.fontMetrics());
 
     auto *layout          = new QGridLayout;
@@ -1185,9 +1189,7 @@ void ImageViewer::atom_settings()
     title->setMargin(TITLE_MARGIN);
     title->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Minimum);
 
-    auto *colorcompleter = new QColorCompleter;
-    auto *colorvalidator = new QColorValidator;
-    auto *transvalidator = new QDoubleValidator(0.0, 1.0, 5);
+    auto *transvalidator = new QDoubleValidator(0.0, 1.0, 2);
     QFontMetrics metrics(setview.fontMetrics());
 
     auto *layout          = new QGridLayout;
@@ -1244,8 +1246,8 @@ void ImageViewer::atom_settings()
     layout->addWidget(new QLabel("Transparency: "), idx, n++, 1, 2,
                       Qt::AlignVCenter | Qt::AlignRight);
     ++n;
-    auto *atrans = new QLineEdit("1.0");
-    atrans->setValidator(new QDoubleValidator(0.0, 1.0, 2, this));
+    auto *atrans = new QLineEdit(QString::number(atomtrans));
+    atrans->setValidator(transvalidator);
     layout->addWidget(atrans, idx++, n++, 1, 1);
 
     n = 0;
@@ -1257,15 +1259,25 @@ void ImageViewer::atom_settings()
     layout->addWidget(new QLabel("Colormap: "), idx, n++, 1, 1, Qt::AlignVCenter | Qt::AlignRight);
     auto *amap = new QComboBox;
     amap->setObjectName("amap");
-    amap->addItems({"RWB", "BWR", "Rainbow"});
+    amap->addItems(
+        {"BWR", "RWB", "GWR", "BWG", "Grayscale", "Rainbow", "Contrast", "Heatmap", "Sequential"});
+    for (int idx = 0; idx < amap->count(); ++idx) {
+        if (amap->itemText(idx) == colormap) amap->setCurrentIndex(idx);
+    }
+    QRegularExpression validminmax(
+        R"((auto|min|max|[+-]?\d+\.?\d*|[+-]?\d*\.?\d+)|[+-]?\d+\.?\d*[eE][+-]?\d+|[+-]?\d*\.?\d+[eE][+-]?\d+)");
+    auto *minmaxvalidator = new QRegularExpressionValidator(validminmax, this);
+
     layout->addWidget(amap, idx, n++, 1, 1);
     layout->addWidget(new QLabel("Min: "), idx, n++, 1, 1, Qt::AlignVCenter | Qt::AlignRight);
-    auto *arangemin = new QLineEdit("auto");
-    layout->addWidget(arangemin, idx, n++, 1, 1);
+    auto *amapmin = new QLineEdit(mapmin);
+    amapmin->setValidator(minmaxvalidator);
+    layout->addWidget(amapmin, idx, n++, 1, 1);
     layout->addWidget(new QLabel("Max: "), idx, n++, 1, 2, Qt::AlignVCenter | Qt::AlignRight);
     ++n;
-    auto *arangemax = new QLineEdit("auto");
-    layout->addWidget(arangemax, idx++, n++, 1, 1);
+    auto *amapmax = new QLineEdit(mapmax);
+    amapmax->setValidator(minmaxvalidator);
+    layout->addWidget(amapmax, idx++, n++, 1, 1);
 
     n = 0;
 
@@ -1502,6 +1514,10 @@ void ImageViewer::atom_settings()
     }
 
     atomdiam = adiam->currentText();
+    if (atrans->hasAcceptableInput()) atomtrans = atrans->text().toDouble();
+    colormap = amap->currentText();
+    if (amapmin->hasAcceptableInput()) mapmin = amapmin->text();
+    if (amapmax->hasAcceptableInput()) mapmax = amapmax->text();
 
     showbonds = bondbutton->isChecked();
     value     = bncolor->currentText();
@@ -1592,7 +1608,7 @@ void ImageViewer::fix_settings()
 
     auto *colorcompleter = new QColorCompleter;
     auto *colorvalidator = new QColorValidator;
-    auto *transvalidator = new QDoubleValidator(0.0, 1.0, 5);
+    auto *transvalidator = new QDoubleValidator(0.0, 1.0, 2);
     QFontMetrics metrics(fixview.fontMetrics());
 
     int idx               = 0;
@@ -1827,7 +1843,7 @@ void ImageViewer::region_settings()
     auto *colorcompleter = new QColorCompleter;
     auto *colorvalidator = new QColorValidator;
     auto *framevalidator = new QDoubleValidator(1.0e-10, 1.0e10, 10);
-    auto *transvalidator = new QDoubleValidator(0.0, 1.0, 5);
+    auto *transvalidator = new QDoubleValidator(0.0, 1.0, 2);
     auto *pointvalidator = new QIntValidator(100, 1000000);
     QFontMetrics metrics(regionview.fontMetrics());
 
@@ -2303,11 +2319,67 @@ void ImageViewer::createImage()
         dumpcmd += " backcolor2 " + backcolor2;
         dumpcmd += QString(" axestrans %1").arg(axestrans);
         dumpcmd += QString(" boxtrans %1").arg(boxtrans);
+        dumpcmd += QString(" atrans * %1").arg(atomtrans);
+        if (lammps->extract_setting("bond_flag") == 1)
+            dumpcmd += QString(" btrans * %1").arg(atomtrans);
     }
 
     if (useelements) dumpcmd += blank + elements + blank + adiams + blank;
     if (usesigma) dumpcmd += blank + adiams + blank;
     if (!useelements && !usesigma && (atomSize != 1.0)) dumpcmd += blank + adiams + blank;
+    // apply selected colormap
+    QString mmin = mapmin;
+    if (mmin == "auto") mmin = "min";
+    QString mmax = mapmax;
+    if (mmax == "auto") mmax = "max";
+    if (colormap == "BWR") {
+        dumpcmd += QString(" amap %1 %2 cf 0.0 ").arg(mmin).arg(mmax);
+        dumpcmd += "3 min red 0.5 white max blue";
+    } else if (colormap == "RWB") {
+        dumpcmd += QString(" amap %1 %2 cf 0.0 ").arg(mmin).arg(mmax);
+        dumpcmd += "3 min blue 0.5 white max red";
+    } else if (colormap == "GWR") {
+        dumpcmd += QString(" amap %1 %2 cf 0.0 ").arg(mmin).arg(mmax);
+        dumpcmd += "3 min green 0.5 white max red";
+    } else if (colormap == "BWG") {
+        dumpcmd += QString(" amap %1 %2 cf 0.0 ").arg(mmin).arg(mmax);
+        dumpcmd += "3 min blue 0.5 white max green";
+    } else if (colormap == "Grayscale") {
+        dumpcmd += QString(" amap %1 %2 cf 0.0 ").arg(mmin).arg(mmax);
+        dumpcmd += "2 min darkgray max silver";
+    } else if (colormap == "Rainbow") {
+        dumpcmd += QString(" amap %1 %2 cf 0.0 ").arg(mmin).arg(mmax);
+        dumpcmd += "9 min magenta 0.125 red 0.25 yellow 0.375 green 0.5 cyan 0.625 blue 0.75 blue "
+                   "0.875 purple max magenta";
+    } else if (colormap == "Contrast") {
+        dumpcmd += " color map1 0.808 0.808 0.808";
+        dumpcmd += " color map2 0.647 0.349 0.667";
+        dumpcmd += " color map3 0.349 0.659 0.612";
+        dumpcmd += " color map4 0.941 0.772 0.443";
+        dumpcmd += " color map5 0.878 0.169 0.208";
+        dumpcmd += " color map6 0.031 0.165 0.329";
+        dumpcmd += QString(" amap %1 %2 cf 0.0 ").arg(mmin).arg(mmax);
+        dumpcmd += "6 min map1 0.2 map2 0.4 map3 0.6 map4 0.8 map5 max map6";
+    } else if (colormap == "Heatmap") {
+        dumpcmd += " color map1 0.125 0.400 0.659";
+        dumpcmd += " color map2 0.557 0.757 0.855";
+        dumpcmd += " color map3 0.804 0.882 0.925";
+        dumpcmd += " color map4 0.929 0.929 0.929";
+        dumpcmd += " color map5 0.965 0.839 0.761";
+        dumpcmd += " color map6 0.831 0.447 0.392";
+        dumpcmd += " color map7 0.682 0.157 0.173";
+        dumpcmd += QString(" amap %1 %2 cf 0.0 ").arg(mmin).arg(mmax);
+        dumpcmd += "7 min map1 0.167 map2 0.333 map3 0.5 map4 0.667 map5 0.833 map6 max map7";
+    } else if (colormap == "Sequential") {
+        dumpcmd += " color map1 0.710 0.820 0.682";
+        dumpcmd += " color map2 0.502 0.682 0.576";
+        dumpcmd += " color map3 0.337 0.545 0.529";
+        dumpcmd += " color map4 0.196 0.420 0.467";
+        dumpcmd += " color map5 0.106 0.282 0.369";
+        dumpcmd += " color map6 0.071 0.153 0.251";
+        dumpcmd += QString(" amap %1 %2 cf 0.0 ").arg(mmin).arg(mmax);
+        dumpcmd += "6 min map1 0.2 map2 0.4 map3 0.6 map4 0.8 map5 max map6";
+    }
     settings.endGroup();
 
     if (computes.size() > 0) {
@@ -2338,8 +2410,13 @@ void ImageViewer::createImage()
     lammps->command(dumpcmd);
     restore_stdout();
 
-    // clear error buffer
-    if (lammps->has_error()) lammps->get_last_error_message(nullptr, 0);
+    // display error message
+    if (lammps->has_error()) {
+        char errormesg[DEFAULT_BUFLEN];
+        lammps->get_last_error_message(errormesg, DEFAULT_BUFLEN);
+        QMessageBox::warning(this, "Image File Creation Error", QString(errormesg));
+        return;
+    }
 
     QImageReader reader(dumpfile.fileName());
     reader.setAutoTransform(true);
