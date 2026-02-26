@@ -107,7 +107,7 @@ public:
     void createImage();
 
 protected:
-    bool eventFilter(QObject *watched, QEvent *event) override;
+    bool eventFilter(QObject *watched, QEvent *event) override; ///< Intercept Alt-keystrokes
 
 private:
     void createActions();                   ///< Setup menu actions

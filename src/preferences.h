@@ -87,6 +87,7 @@ class GeneralTab : public QWidget {
     Q_OBJECT
 
 public:
+    ///! Constructor
     explicit GeneralTab(QSettings *settings, LammpsWrapper *lammps, QWidget *parent = nullptr);
 
 private slots:
@@ -107,6 +108,7 @@ class AcceleratorTab : public QWidget {
     Q_OBJECT
 
 public:
+    ///! Constructor
     explicit AcceleratorTab(QSettings *settings, LammpsWrapper *lammps, QWidget *parent = nullptr);
     enum { None, Opt, OpenMP, Intel, Kokkos, Gpu };
     enum { Double, Mixed, Single };
@@ -126,6 +128,7 @@ class SnapshotTab : public QWidget {
     Q_OBJECT
 
 public:
+    ///! Constructor
     explicit SnapshotTab(QSettings *settings, QWidget *parent = nullptr);
 
 private slots:
@@ -143,6 +146,7 @@ class EditorTab : public QWidget {
     Q_OBJECT
 
 public:
+    ///! Constructor
     explicit EditorTab(QSettings *settings, QWidget *parent = nullptr);
 
 private:
@@ -156,6 +160,7 @@ class ChartsTab : public QWidget {
     Q_OBJECT
 
 public:
+    ///! Constructor
     explicit ChartsTab(QSettings *settings, QWidget *parent = nullptr);
 
 private:

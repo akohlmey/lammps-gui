@@ -67,7 +67,7 @@ PROJECT_LOGO           = @CMAKE_SOURCE_DIR@/doc/_images/lammps-gui-banner.png
 # when the HTML document is shown. Doxygen will copy the logo to the output
 # directory.
 
-PROJECT_ICON           = @CMAKE_SOURCE_DIR@/resources/icons/lmpfile.ico
+PROJECT_ICON           = @CMAKE_SOURCE_DIR@/resources/lmpfile.ico
 
 # The OUTPUT_DIRECTORY tag is used to specify the (relative or absolute) path
 # into which the generated documentation will be written. If a relative path is
@@ -979,7 +979,7 @@ WARN_LINE_FORMAT       = "at line $line of file $file"
 # specified the warning and error messages are written to standard output
 # (stdout).
 
-WARN_LOGFILE           =
+WARN_LOGFILE           = "doxygen-warn.log"
 
 #---------------------------------------------------------------------------
 # Configuration options related to the input files

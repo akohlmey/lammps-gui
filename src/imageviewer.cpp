@@ -2320,7 +2320,8 @@ void ImageViewer::createImage()
         dumpcmd += QString(" axestrans %1").arg(axestrans);
         dumpcmd += QString(" boxtrans %1").arg(boxtrans);
         dumpcmd += QString(" atrans * %1").arg(atomtrans);
-        dumpcmd += QString(" btrans * %1").arg(atomtrans);
+        if (lammps->extract_setting("bond_flag") == 1)
+            dumpcmd += QString(" btrans * %1").arg(atomtrans);
     }
 
     if (useelements) dumpcmd += blank + elements + blank + adiams + blank;
@@ -2409,8 +2410,13 @@ void ImageViewer::createImage()
     lammps->command(dumpcmd);
     restore_stdout();
 
-    // clear error buffer
-    if (lammps->has_error()) lammps->get_last_error_message(nullptr, 0);
+    // display error message
+    if (lammps->has_error()) {
+        char errormesg[DEFAULT_BUFLEN];
+        lammps->get_last_error_message(errormesg, DEFAULT_BUFLEN);
+        QMessageBox::warning(this, "Image File Creation Error", QString(errormesg));
+        return;
+    }
 
     QImageReader reader(dumpfile.fileName());
     reader.setAutoTransform(true);
