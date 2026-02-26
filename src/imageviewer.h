@@ -160,12 +160,16 @@ private:
     double axesdiam;                             ///< Axes diameter
     double axestrans;                            ///< Axes transparency
     double ssaoval;                              ///< SSAO strength
+    double atomtrans;                            ///< Atom / Bond transparency
     QString axesloc;                             ///< Axes location
     QString boxcolor;                            ///< Color for box and subbox
     QString backcolor;                           ///< (lower) background color
     QString backcolor2;                          ///< (upper) background color
     QString atomcolor;                           ///< Custom atom color property
     QString atomdiam;                            ///< Custom atom diameter property
+    QString colormap;                            ///< Name of selected color map
+    QString mapmin;                              ///< Choice of minimum value for colormap
+    QString mapmax;                              ///< Choice of maximum value for colormap
     QString bondcolor;                           ///< Custom bond color property
     QString bonddiam;                            ///< Custom bond diameter property
     double xcenter, ycenter, zcenter;            ///< View center coordinates
