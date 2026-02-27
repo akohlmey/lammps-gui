@@ -58,6 +58,8 @@
       <description>
         Tweak some button names to be more suitable and intuitive
         Add help buttons to provide specific online help for compute/fixes, dump image, or the LAMMPS-GUI homepage
+        Make image viewer dialogs more consistent and balanced. Set minimum size.
+        Support by-attribute coloring for body particles, if suitable LAMMPS version is used
       </description>
     </release>
     <release version="1.10.0" timestamp="1771473565">
