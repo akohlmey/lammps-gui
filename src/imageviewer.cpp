@@ -1138,8 +1138,8 @@ void ImageViewer::global_settings()
     layout->addWidget(new QHline, idx++, 0, 1, MAXCOLS);
     auto *bottomlayout = new QHBoxLayout;
     bottomlayout->setSpacing(LAYOUT_SPACING);
-    auto *cancel = new QPushButton("&Cancel");
-    auto *apply  = new QPushButton("&Apply");
+    auto *cancel = new QPushButton(QIcon(":/icons/dialog-cancel.png"), "&Cancel");
+    auto *apply  = new QPushButton(QIcon(":/icons/dialog-ok.png"), "&Apply");
     auto *help   = new QPushButton(QIcon(":/icons/help-browser.png"), "&Help");
     help->setObjectName("dump_image.html");
     cancel->setAutoDefault(false);
@@ -1515,8 +1515,8 @@ void ImageViewer::atom_settings()
 
     auto *bottomlayout = new QHBoxLayout;
     bottomlayout->setSpacing(LAYOUT_SPACING);
-    auto *cancel = new QPushButton("&Cancel");
-    auto *apply  = new QPushButton("&Apply");
+    auto *cancel = new QPushButton(QIcon(":/icons/dialog-cancel.png"), "&Cancel");
+    auto *apply  = new QPushButton(QIcon(":/icons/dialog-ok.png"), "&Apply");
     auto *help   = new QPushButton(QIcon(":/icons/help-browser.png"), "&Help");
     help->setObjectName("dump_image.html");
     cancel->setAutoDefault(false);
@@ -1803,8 +1803,8 @@ void ImageViewer::fix_settings()
         layout->addWidget(new QHline, idx++, 0, 1, MAXCOLS);
     }
 
-    auto *cancel = new QPushButton("&Cancel");
-    auto *apply  = new QPushButton("&Apply");
+    auto *cancel = new QPushButton(QIcon(":/icons/dialog-cancel.png"), "&Cancel");
+    auto *apply  = new QPushButton(QIcon(":/icons/dialog-ok.png"), "&Apply");
     auto *help   = new QPushButton(QIcon(":/icons/help-browser.png"), "&Help");
     help->setObjectName("dump_image.html");
     cancel->setAutoDefault(false);
@@ -1973,8 +1973,8 @@ void ImageViewer::region_settings()
 
     auto *bottomlayout = new QHBoxLayout;
     bottomlayout->setSpacing(LAYOUT_SPACING);
-    auto *cancel = new QPushButton("&Cancel");
-    auto *apply  = new QPushButton("&Apply");
+    auto *cancel = new QPushButton(QIcon(":/icons/dialog-cancel.png"), "&Cancel");
+    auto *apply  = new QPushButton(QIcon(":/icons/dialog-ok.png"), "&Apply");
     auto *help   = new QPushButton(QIcon(":/icons/help-browser.png"), "&Help");
     help->setObjectName("Howto_viz.html#visualizing-regions");
     cancel->setAutoDefault(false);
@@ -2507,7 +2507,14 @@ void ImageViewer::createImage()
     if (lammps->has_error()) {
         char errormesg[DEFAULT_BUFLEN];
         lammps->get_last_error_message(errormesg, DEFAULT_BUFLEN);
-        QMessageBox::warning(this, "Image File Creation Error", QString(errormesg));
+        QMessageBox mb;
+        mb.setText("Image Viewer File Creation Error");
+        mb.setInformativeText(QString("LAMMPS failed to create the image:\n%1").arg(errormesg));
+        mb.setIcon(QMessageBox::Warning);
+        mb.setStandardButtons(QMessageBox::Ok);
+        auto *button = mb.button(QMessageBox::Ok);
+        button->setIcon(QIcon(":/icons/dialog-ok.png"));
+        mb.exec();
         return;
     }
 
@@ -2608,8 +2615,14 @@ void ImageViewer::saveFile(const QString &fileName)
             (void)tmpfile.open();
             (void)tmpfile.close();
             if (!image.save(tmpfile.fileName())) {
-                QMessageBox::warning(this, "Image Viewer Error",
-                                     "Could not save image to file " + fileName);
+                QMessageBox mb;
+                mb.setText("Image Viewer Error");
+                mb.setInformativeText("Could not save image to file " + fileName);
+                mb.setIcon(QMessageBox::Warning);
+                mb.setStandardButtons(QMessageBox::Ok);
+                auto *button = mb.button(QMessageBox::Ok);
+                button->setIcon(QIcon(":/icons/dialog-ok.png"));
+                mb.exec();
                 return;
             }
 
@@ -2626,12 +2639,25 @@ void ImageViewer::saveFile(const QString &fileName)
                 if (!errorOutput.trimmed().isEmpty()) {
                     message += "\n\n" + errorOutput.trimmed();
                 }
-                QMessageBox::warning(this, "Image Viewer Error", message);
+                QMessageBox mb;
+                mb.setText("Image Viewer Error");
+                mb.setInformativeText(message);
+                mb.setIcon(QMessageBox::Warning);
+                mb.setStandardButtons(QMessageBox::Ok);
+                auto *button = mb.button(QMessageBox::Ok);
+                button->setIcon(QIcon(":/icons/dialog-ok.png"));
+                mb.exec();
             }
             delete convert;
         } else {
-            QMessageBox::warning(this, "Image Viewer Error",
-                                 "Could not save image to file " + fileName);
+            QMessageBox mb;
+            mb.setText("Image Viewer Error");
+            mb.setInformativeText("Could not save image to file " + fileName);
+            mb.setIcon(QMessageBox::Warning);
+            mb.setStandardButtons(QMessageBox::Ok);
+            auto *button = mb.button(QMessageBox::Ok);
+            button->setIcon(QIcon(":/icons/dialog-ok.png"));
+            mb.exec();
         }
     }
 }
