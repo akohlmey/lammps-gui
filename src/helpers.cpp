@@ -234,14 +234,14 @@ void purge_directory(const QString &dir)
 void silence_stdout()
 {
 #ifndef _WIN32
-    (void) freopen(NULL_DEVICE, "w", stdout);
+    (void)freopen(NULL_DEVICE, "w", stdout);
 #endif
 }
 
 void restore_stdout()
 {
 #ifndef _WIN32
-    (void) freopen(TTY_DEVICE, "w", stdout);
+    (void)freopen(TTY_DEVICE, "w", stdout);
 #endif
 }
 

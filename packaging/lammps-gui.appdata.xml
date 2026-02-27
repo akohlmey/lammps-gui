@@ -54,6 +54,14 @@
   </provides>
 
   <releases>
+    <release version="1.10.1" timestamp="1772079977">
+      <description>
+        Tweak some button names to be more suitable and intuitive
+        Add help buttons to provide specific online help for compute/fixes, dump image, or the LAMMPS-GUI homepage
+        Make image viewer dialogs more consistent and balanced. Set minimum size.
+        Support by-attribute coloring for body particles, if a suitable LAMMPS version is used
+      </description>
+    </release>
     <release version="1.10.0" timestamp="1771473565">
       <description>
         Add dialog to enable and configure atom / particle and bond visualization settings

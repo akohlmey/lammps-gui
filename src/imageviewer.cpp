@@ -22,6 +22,7 @@
 #include <QButtonGroup>
 #include <QCheckBox>
 #include <QClipboard>
+#include <QDesktopServices>
 #include <QDir>
 #include <QDoubleValidator>
 #include <QFile>
@@ -167,7 +168,10 @@ constexpr int DEFAULT_NPOINTS     = 100000;
 constexpr double DEFAULT_DIAMETER = 0.2;
 constexpr double DEFAULT_OPACITY  = 0.5;
 constexpr int TITLE_MARGIN        = 10;
+constexpr int CONTENT_MARGIN      = 5;
 constexpr int LAYOUT_SPACING      = 6;
+constexpr int MINIMUM_WIDTH       = 400;
+constexpr int MINIMUM_HEIGHT      = 300;
 
 enum { FRAME, FILLED, TRANSPARENT, POINTS };
 enum { TYPE, ELEMENT, CONSTANT };
@@ -261,6 +265,24 @@ ImageViewer::ImageViewer(const QString &fileName, LammpsWrapper *_lammps, QWidge
         image_styles.close();
     }
 
+    // store help URL info for computes and fixes with dump image support
+    QFile help_index(":/help_index.table");
+    if (help_index.open(QIODevice::ReadOnly | QIODevice::Text)) {
+        while (!help_index.atEnd()) {
+            auto line  = QString(help_index.readLine());
+            auto words = line.trimmed().replace('\t', ' ').split(' ');
+            if (words.size() == 3) {
+                if (words.at(1) == "fix") {
+                    if (image_fixes.contains(words.at(2))) fix_map[words.at(2)] = words.at(0);
+                } else if (words.at(1) == "compute") {
+                    if (image_computes.contains(words.at(2)))
+                        compute_map[words.at(2)] = words.at(0);
+                }
+            }
+        }
+        help_index.close();
+    }
+
     QSettings settings;
     settings.beginGroup("snapshot");
     xsize          = settings.value("xsize", "600").toInt();
@@ -294,6 +316,7 @@ ImageViewer::ImageViewer(const QString &fileName, LammpsWrapper *_lammps, QWidge
     atomdiam       = settings.value("diameter", "type").toString();
     bondcolor      = settings.value("bondcolor", "atom").toString();
     bonddiam       = settings.value("bonddiam", "atom").toString();
+    bodycolor      = "type";
     colormap       = settings.value("colormap", "BWR").toString();
     mapmin         = "auto";
     mapmax         = "auto";
@@ -445,13 +468,13 @@ ImageViewer::ImageViewer(const QString &fileName, LammpsWrapper *_lammps, QWidge
     reset->setMinimumSize(buttonhint);
     reset->setMaximumSize(buttonhint);
 
-    auto *setviz = new QPushButton("&General");
-    setviz->setToolTip("Open dialog for general graphics settings");
+    auto *setviz = new QPushButton("G&lobal");
+    setviz->setToolTip("Open dialog for global graphics settings");
     setviz->setObjectName("settings");
-    auto *atomviz = new QPushButton("&Atoms");
-    atomviz->setToolTip("Open dialog for Atom and Bond settings");
+    auto *atomviz = new QPushButton("&Atoms/Bonds");
+    atomviz->setToolTip("Open dialog for atom and bond settings");
     atomviz->setObjectName("atoms");
-    auto *fixviz = new QPushButton("&Extras");
+    auto *fixviz = new QPushButton("&Compute/Fix");
     fixviz->setToolTip("Open dialog for visualizing extra graphics from computes and fixes");
     fixviz->setObjectName("image_styles");
     fixviz->setEnabled(false);
@@ -459,6 +482,9 @@ ImageViewer::ImageViewer(const QString &fileName, LammpsWrapper *_lammps, QWidge
     regviz->setToolTip("Open dialog for visualizing regions");
     regviz->setObjectName("regions");
     regviz->setEnabled(false);
+    auto *help = new QPushButton("Help");
+    help->setToolTip("Open online help");
+    help->setObjectName("visualization.html");
 
     constexpr int BUFLEN = 256;
     char gname[BUFLEN];
@@ -539,6 +565,7 @@ ImageViewer::ImageViewer(const QString &fileName, LammpsWrapper *_lammps, QWidge
     settingsLayout->addWidget(regviz);
     settingsLayout->addWidget(fixviz);
     settingsLayout->addWidget(new QHline);
+    settingsLayout->addWidget(help);
     settingsLayout->insertStretch(-1, 10);
     settingsLayout->setSizeConstraint(QLayout::SetMinimumSize);
     settingsLayout->setSpacing(LAYOUT_SPACING);
@@ -563,6 +590,7 @@ ImageViewer::ImageViewer(const QString &fileName, LammpsWrapper *_lammps, QWidge
     connect(atomviz, &QPushButton::released, this, &ImageViewer::atom_settings);
     connect(fixviz, &QPushButton::released, this, &ImageViewer::fix_settings);
     connect(regviz, &QPushButton::released, this, &ImageViewer::region_settings);
+    connect(help, &QPushButton::released, this, &ImageViewer::get_help);
     connect(combo, SIGNAL(currentIndexChanged(int)), this, SLOT(change_group(int)));
     connect(molbox, SIGNAL(currentIndexChanged(int)), this, SLOT(change_molecule(int)));
 
@@ -948,17 +976,15 @@ void ImageViewer::cmd_to_clipboard()
 void ImageViewer::global_settings()
 {
     QDialog setview;
-    setview.setWindowTitle(QString("LAMMPS-GUI - General image settings"));
+    setview.setWindowTitle(QString("LAMMPS-GUI - Global image settings"));
     setview.setWindowIcon(QIcon(":/icons/lammps-gui-icon-128x128.png"));
-    setview.setMinimumSize(100, 100);
-    setview.setContentsMargins(5, 5, 5, 5);
-    setview.setSizePolicy(QSizePolicy::MinimumExpanding, QSizePolicy::MinimumExpanding);
+    setview.setMinimumSize(MINIMUM_WIDTH, MINIMUM_HEIGHT);
+    setview.setContentsMargins(CONTENT_MARGIN, CONTENT_MARGIN, CONTENT_MARGIN, CONTENT_MARGIN);
 
-    auto *title = new QLabel("General image settings:");
+    auto *title = new QLabel("Global image settings:");
     title->setFrameStyle(QFrame::Panel | QFrame::Raised);
     title->setLineWidth(1);
     title->setMargin(TITLE_MARGIN);
-    title->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Minimum);
 
     auto *colorcompleter = new QColorCompleter;
     auto *colorvalidator = new QColorValidator;
@@ -974,6 +1000,7 @@ void ImageViewer::global_settings()
     for (int i = 0; i < MAXCOLS; ++i)
         layout->setColumnStretch(i, 2);
     layout->setColumnStretch(MAXCOLS - 1, 1);
+    layout->setSizeConstraint(QLayout::SetMinAndMaxSize);
 
     auto *axesbutton = new QCheckBox("Axes ", this);
     axesbutton->setCheckState(showaxes ? Qt::Checked : Qt::Unchecked);
@@ -1109,15 +1136,25 @@ void ImageViewer::global_settings()
 
     n = 0;
     layout->addWidget(new QHline, idx++, 0, 1, MAXCOLS);
-    auto *cancel = new QPushButton("&Cancel");
-    auto *apply  = new QPushButton("&Apply");
+    auto *bottomlayout = new QHBoxLayout;
+    bottomlayout->setSpacing(LAYOUT_SPACING);
+    auto *cancel = new QPushButton(QIcon(":/icons/dialog-cancel.png"), "&Cancel");
+    auto *apply  = new QPushButton(QIcon(":/icons/dialog-ok.png"), "&Apply");
+    auto *help   = new QPushButton(QIcon(":/icons/help-browser.png"), "&Help");
+    help->setObjectName("dump_image.html");
     cancel->setAutoDefault(false);
+    help->setAutoDefault(false);
     apply->setAutoDefault(true);
     apply->setDefault(true);
-    layout->addWidget(cancel, idx, 0, 1, MAXCOLS / 2, Qt::AlignHCenter);
-    layout->addWidget(apply, idx, MAXCOLS / 2, 1, MAXCOLS / 2, Qt::AlignHCenter);
+    apply->setFocus();
     connect(cancel, &QPushButton::released, &setview, &QDialog::reject);
     connect(apply, &QPushButton::released, &setview, &QDialog::accept);
+    connect(help, &QPushButton::released, this, &ImageViewer::get_help);
+
+    bottomlayout->addWidget(cancel, Qt::AlignHCenter);
+    bottomlayout->addWidget(apply, Qt::AlignHCenter);
+    bottomlayout->addWidget(help, Qt::AlignHCenter);
+    layout->addLayout(bottomlayout, idx++, 0, 1, MAXCOLS, Qt::AlignHCenter);
     setview.setLayout(layout);
 
     int rv = setview.exec();
@@ -1164,6 +1201,8 @@ void ImageViewer::global_settings()
     if (button) button->setChecked(usessao);
     if (aoval->hasAcceptableInput()) ssaoval = aoval->text().toDouble();
     if (shiny->hasAcceptableInput()) shinyfactor = shiny->text().toDouble();
+    button = findChild<QPushButton *>("shiny");
+    if (button) button->setChecked(shinyfactor > SHINY_CUT);
 
     if (xval->hasAcceptableInput()) xcenter = xval->text().toDouble();
     if (yval->hasAcceptableInput()) ycenter = yval->text().toDouble();
@@ -1177,17 +1216,15 @@ void ImageViewer::atom_settings()
 {
     update_peratom();
     QDialog setview;
-    setview.setWindowTitle(QString("LAMMPS-GUI - Atom and Bond settings for images"));
+    setview.setWindowTitle(QString("LAMMPS-GUI - Atom and bond settings for images"));
     setview.setWindowIcon(QIcon(":/icons/lammps-gui-icon-128x128.png"));
-    setview.setMinimumSize(100, 100);
-    setview.setContentsMargins(5, 5, 5, 5);
-    setview.setSizePolicy(QSizePolicy::MinimumExpanding, QSizePolicy::MinimumExpanding);
+    setview.setMinimumSize(MINIMUM_WIDTH, MINIMUM_HEIGHT);
+    setview.setContentsMargins(CONTENT_MARGIN, CONTENT_MARGIN, CONTENT_MARGIN, CONTENT_MARGIN);
 
-    auto *title = new QLabel("Atom and Bond settings for images:");
+    auto *title = new QLabel("Atom and bond settings for images:");
     title->setFrameStyle(QFrame::Panel | QFrame::Raised);
     title->setLineWidth(1);
     title->setMargin(TITLE_MARGIN);
-    title->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Minimum);
 
     auto *transvalidator = new QDoubleValidator(0.0, 1.0, 2);
     QFontMetrics metrics(setview.fontMetrics());
@@ -1198,6 +1235,7 @@ void ImageViewer::atom_settings()
     constexpr int MAXCOLS = 8;
     layout->addWidget(title, idx++, 0, 1, MAXCOLS, Qt::AlignCenter);
     layout->addWidget(new QHline, idx++, 0, 1, MAXCOLS);
+    layout->setSizeConstraint(QLayout::SetMinAndMaxSize);
 
     layout->setColumnStretch(0, 12);
     layout->setColumnStretch(1, 10);
@@ -1360,8 +1398,9 @@ void ImageViewer::atom_settings()
     auto *bdiam = new QLineEdit(QString::number(bodydiam));
     bdiam->setValidator(new QDoubleValidator(0.1, 10.0, 100, this));
     layout->addWidget(bdiam, idx, n++, 1, 1);
-    // skip one column
-    ++n;
+    auto *bodyindex = new QCheckBox(" Indexed", this);
+    bodyindex->setCheckState((bodycolor == "index") ? Qt::Checked : Qt::Unchecked);
+    layout->addWidget(bodyindex, idx, n++, 1, 1);
     auto *bgroup   = new QButtonGroup(this);
     auto *bcbutton = new QRadioButton("Cylinders", this);
     bcbutton->setChecked(bodyflag == CYLINDERS);
@@ -1473,15 +1512,26 @@ void ImageViewer::atom_settings()
 
     n = 0;
     layout->addWidget(new QHline, idx++, 0, 1, MAXCOLS);
-    auto *cancel = new QPushButton("&Cancel");
-    auto *apply  = new QPushButton("&Apply");
+
+    auto *bottomlayout = new QHBoxLayout;
+    bottomlayout->setSpacing(LAYOUT_SPACING);
+    auto *cancel = new QPushButton(QIcon(":/icons/dialog-cancel.png"), "&Cancel");
+    auto *apply  = new QPushButton(QIcon(":/icons/dialog-ok.png"), "&Apply");
+    auto *help   = new QPushButton(QIcon(":/icons/help-browser.png"), "&Help");
+    help->setObjectName("dump_image.html");
     cancel->setAutoDefault(false);
+    help->setAutoDefault(false);
     apply->setAutoDefault(true);
     apply->setDefault(true);
-    layout->addWidget(cancel, idx, 0, 1, MAXCOLS / 2, Qt::AlignHCenter);
-    layout->addWidget(apply, idx, MAXCOLS / 2, 1, MAXCOLS / 2, Qt::AlignHCenter);
+    apply->setFocus();
     connect(cancel, &QPushButton::released, &setview, &QDialog::reject);
     connect(apply, &QPushButton::released, &setview, &QDialog::accept);
+    connect(help, &QPushButton::released, this, &ImageViewer::get_help);
+
+    bottomlayout->addWidget(cancel, Qt::AlignHCenter);
+    bottomlayout->addWidget(apply, Qt::AlignHCenter);
+    bottomlayout->addWidget(help, Qt::AlignHCenter);
+    layout->addLayout(bottomlayout, idx, 0, 1, MAXCOLS, Qt::AlignHCenter);
     setview.setLayout(layout);
 
     int rv = setview.exec();
@@ -1553,13 +1603,30 @@ void ImageViewer::atom_settings()
     }
 
     showbodies = bodybutton->isChecked();
+    // using the atom color for bodies was implemented after the 11Feb2026 release
+    // for older LAMMPS versions we *must* force the atom color style to be "type"
+    if (lammps->version() > 20260211) {
+        if (bodyindex->isChecked())
+            bodycolor = "index";
+        else
+            bodycolor = "atom";
+    } else {
+        atomcolor = "type";
+        if (bodyindex->isChecked())
+            bodycolor = "index";
+        else
+            bodycolor = "type";
+    }
     if (bdiam->hasAcceptableInput()) bodydiam = bdiam->text().toDouble();
     if (bcbutton->isChecked()) {
         bodyflag = CYLINDERS;
     } else if (btbutton->isChecked()) {
         bodyflag = TRIANGLES;
     } else if (bbbutton->isChecked()) {
-        bodyflag = BOTH;
+        bodyflag    = BOTH;
+        shinyfactor = 0.0;
+        button      = findChild<QPushButton *>("shiny");
+        if (button) button->setChecked(shinyfactor > SHINY_CUT);
     }
 
     showellipsoids = ellipsoidbutton->isChecked();
@@ -1597,9 +1664,8 @@ void ImageViewer::fix_settings()
     QDialog fixview;
     fixview.setWindowTitle(QString("LAMMPS-GUI - Visualize Compute and Fix Graphics Objects"));
     fixview.setWindowIcon(QIcon(":/icons/lammps-gui-icon-128x128.png"));
-    fixview.setMinimumSize(100, 100);
-    fixview.setContentsMargins(5, 5, 5, 5);
-    fixview.setSizePolicy(QSizePolicy::MinimumExpanding, QSizePolicy::MinimumExpanding);
+    fixview.setMinimumSize(MINIMUM_WIDTH, MINIMUM_HEIGHT);
+    fixview.setContentsMargins(CONTENT_MARGIN, CONTENT_MARGIN, CONTENT_MARGIN, CONTENT_MARGIN);
 
     auto *title = new QLabel("Visualize Compute and Fix Graphics Objects:");
     title->setFrameStyle(QFrame::Panel | QFrame::Raised);
@@ -1613,8 +1679,9 @@ void ImageViewer::fix_settings()
 
     int idx               = 0;
     int n                 = 0;
-    constexpr int MAXCOLS = 8;
+    constexpr int MAXCOLS = 9;
     auto *layout          = new QGridLayout;
+    layout->setSizeConstraint(QLayout::SetMinAndMaxSize);
     layout->addWidget(title, idx++, n, 1, MAXCOLS, Qt::AlignHCenter);
     layout->addWidget(new QHline, idx++, 0, 1, MAXCOLS);
     for (int i = 0; i < MAXCOLS; ++i)
@@ -1630,7 +1697,8 @@ void ImageViewer::fix_settings()
         layout->addWidget(new QLabel("Color:"), idx, n++, Qt::AlignHCenter);
         layout->addWidget(new QLabel("Opacity:"), idx, n++, Qt::AlignHCenter);
         layout->addWidget(new QLabel("Flag #1:"), idx, n++, Qt::AlignHCenter);
-        layout->addWidget(new QLabel("Flag #2:"), idx++, n++, Qt::AlignHCenter);
+        layout->addWidget(new QLabel("Flag #2:"), idx, n++, Qt::AlignHCenter);
+        layout->addWidget(new QLabel("Help:"), idx++, n++, Qt::AlignHCenter);
         layout->addWidget(new QHline, idx++, 0, 1, MAXCOLS);
 
         for (const auto &comp : computes) {
@@ -1668,6 +1736,10 @@ void ImageViewer::fix_settings()
             flag2->setFixedSize(metrics.averageCharWidth() * 8, metrics.height() + 4);
             flag2->setText(QString::number(comp.second->flag2));
             layout->addWidget(flag2, idx, n++);
+            auto *help = new QPushButton(QIcon(":/icons/system-help.png"), "");
+            help->setObjectName(compute_map.value(comp.second->style, QString()));
+            layout->addWidget(help, idx, n++);
+            connect(help, &QPushButton::released, this, &ImageViewer::get_help);
             ++idx;
         }
         layout->addWidget(new QHline, idx++, 0, 1, MAXCOLS);
@@ -1722,20 +1794,28 @@ void ImageViewer::fix_settings()
             flag2->setFixedSize(metrics.averageCharWidth() * 8, metrics.height() + 4);
             flag2->setText(QString::number(fix.second->flag2));
             layout->addWidget(flag2, idx, n++);
+            auto *help = new QPushButton(QIcon(":/icons/system-help.png"), "");
+            help->setObjectName(fix_map.value(fix.second->style, QString()));
+            layout->addWidget(help, idx, n++);
+            connect(help, &QPushButton::released, this, &ImageViewer::get_help);
             ++idx;
         }
         layout->addWidget(new QHline, idx++, 0, 1, MAXCOLS);
     }
 
-    auto *cancel = new QPushButton("&Cancel");
-    auto *apply  = new QPushButton("&Apply");
+    auto *cancel = new QPushButton(QIcon(":/icons/dialog-cancel.png"), "&Cancel");
+    auto *apply  = new QPushButton(QIcon(":/icons/dialog-ok.png"), "&Apply");
+    auto *help   = new QPushButton(QIcon(":/icons/help-browser.png"), "&Help");
+    help->setObjectName("dump_image.html");
     cancel->setAutoDefault(false);
     apply->setAutoDefault(true);
     apply->setDefault(true);
-    layout->addWidget(cancel, idx, 0, 1, 4, Qt::AlignHCenter);
-    layout->addWidget(apply, idx, 4, 1, 4, Qt::AlignHCenter);
+    layout->addWidget(cancel, idx, 0, 1, MAXCOLS / 3, Qt::AlignHCenter);
+    layout->addWidget(apply, idx, MAXCOLS / 3, 1, MAXCOLS / 3, Qt::AlignHCenter);
+    layout->addWidget(help, idx, 2 * (MAXCOLS / 3), 1, MAXCOLS / 3, Qt::AlignHCenter);
     connect(cancel, &QPushButton::released, &fixview, &QDialog::reject);
     connect(apply, &QPushButton::released, &fixview, &QDialog::accept);
+    connect(help, &QPushButton::released, this, &ImageViewer::get_help);
     fixview.setLayout(layout);
 
     int rv = fixview.exec();
@@ -1815,9 +1895,8 @@ void ImageViewer::region_settings()
     QDialog regionview;
     regionview.setWindowTitle(QString("LAMMPS-GUI - Visualize Regions"));
     regionview.setWindowIcon(QIcon(":/icons/lammps-gui-icon-128x128.png"));
-    regionview.setMinimumSize(100, 100);
-    regionview.setContentsMargins(5, 5, 5, 5);
-    regionview.setSizePolicy(QSizePolicy::MinimumExpanding, QSizePolicy::MinimumExpanding);
+    regionview.setMinimumSize(MINIMUM_WIDTH, MINIMUM_HEIGHT);
+    regionview.setContentsMargins(CONTENT_MARGIN, CONTENT_MARGIN, CONTENT_MARGIN, CONTENT_MARGIN);
 
     int idx     = 0;
     int n       = 0;
@@ -1828,6 +1907,8 @@ void ImageViewer::region_settings()
 
     constexpr int MAXCOLS = 7;
     auto *layout          = new QGridLayout;
+    layout->setSizeConstraint(QLayout::SetMinAndMaxSize);
+
     layout->addWidget(title, idx++, 0, 1, MAXCOLS, Qt::AlignHCenter);
     layout->addWidget(new QHline, idx++, 0, 1, MAXCOLS);
 
@@ -1886,17 +1967,29 @@ void ImageViewer::region_settings()
         layout->addWidget(trans, idx, n++);
         ++idx;
     }
+
+    n = 0;
     layout->addWidget(new QHline, idx++, 0, 1, MAXCOLS);
 
-    auto *cancel = new QPushButton("&Cancel");
-    auto *apply  = new QPushButton("&Apply");
+    auto *bottomlayout = new QHBoxLayout;
+    bottomlayout->setSpacing(LAYOUT_SPACING);
+    auto *cancel = new QPushButton(QIcon(":/icons/dialog-cancel.png"), "&Cancel");
+    auto *apply  = new QPushButton(QIcon(":/icons/dialog-ok.png"), "&Apply");
+    auto *help   = new QPushButton(QIcon(":/icons/help-browser.png"), "&Help");
+    help->setObjectName("Howto_viz.html#visualizing-regions");
     cancel->setAutoDefault(false);
+    help->setAutoDefault(false);
     apply->setAutoDefault(true);
     apply->setDefault(true);
-    layout->addWidget(cancel, idx, 0, 1, 3, Qt::AlignHCenter);
-    layout->addWidget(apply, idx, 3, 1, 3, Qt::AlignHCenter);
+    apply->setFocus();
     connect(cancel, &QPushButton::released, &regionview, &QDialog::reject);
     connect(apply, &QPushButton::released, &regionview, &QDialog::accept);
+    connect(help, &QPushButton::released, this, &ImageViewer::get_help);
+
+    bottomlayout->addWidget(cancel, Qt::AlignHCenter);
+    bottomlayout->addWidget(apply, Qt::AlignHCenter);
+    bottomlayout->addWidget(help, Qt::AlignHCenter);
+    layout->addLayout(bottomlayout, idx, 0, 1, MAXCOLS, Qt::AlignHCenter);
     regionview.setLayout(layout);
 
     int rv = regionview.exec();
@@ -2183,9 +2276,9 @@ void ImageViewer::createImage()
     }
 
     if (!showatoms) dumpcmd += " atom no";
-    if (showbodies && (lammps->extract_setting("body_flag") == 1))
-        dumpcmd += QString(" body type %1 %2").arg(bodydiam).arg(bodyflag);
-    else if (showlines && (lammps->extract_setting("line_flag") == 1))
+    if (showbodies && (lammps->extract_setting("body_flag") == 1)) {
+        dumpcmd += QString(" body %1 %2 %3").arg(bodycolor).arg(bodydiam).arg(bodyflag);
+    } else if (showlines && (lammps->extract_setting("line_flag") == 1))
         dumpcmd += QString(" line type %1").arg(linediam);
     else if (showtris && (lammps->extract_setting("tri_flag") == 1))
         dumpcmd += QString(" tri type %1 %2").arg(triflag).arg(tridiam);
@@ -2414,7 +2507,14 @@ void ImageViewer::createImage()
     if (lammps->has_error()) {
         char errormesg[DEFAULT_BUFLEN];
         lammps->get_last_error_message(errormesg, DEFAULT_BUFLEN);
-        QMessageBox::warning(this, "Image File Creation Error", QString(errormesg));
+        QMessageBox mb;
+        mb.setText("Image Viewer File Creation Error");
+        mb.setInformativeText(QString("LAMMPS failed to create the image:\n%1").arg(errormesg));
+        mb.setIcon(QMessageBox::Warning);
+        mb.setStandardButtons(QMessageBox::Ok);
+        auto *button = mb.button(QMessageBox::Ok);
+        button->setIcon(QIcon(":/icons/dialog-ok.png"));
+        mb.exec();
         return;
     }
 
@@ -2471,6 +2571,38 @@ void ImageViewer::quit()
     if (main) main->quit();
 }
 
+void ImageViewer::get_help()
+{
+    auto *src = sender();
+    if (src) {
+        QString page   = src->objectName();
+        QString docver = "/";
+        if (lammps) {
+            QString git_branch = (const char *)lammps->extract_global("git_branch");
+            if ((git_branch == "stable") || (git_branch == "maintenance")) {
+                docver = "/stable/";
+            } else if (git_branch == "release") {
+                docver = "/";
+            } else {
+                docver = "/latest/";
+            }
+        }
+
+        if (page == "visualization.html") {
+            // lammps-gui docs
+            QDesktopServices::openUrl(QUrl(QString("https://lammps-gui.lammps.org/%1").arg(page)));
+        } else if (page.startsWith("compute_") || page.startsWith("fix_")) {
+            // jump to the "Dump image info" section for computes and fixes
+            QDesktopServices::openUrl(
+                QUrl(QString("https://docs.lammps.org%1%2#dump-image-info").arg(docver).arg(page)));
+        } else {
+            // general LAMMPS doc page
+            QDesktopServices::openUrl(
+                QUrl(QString("https://docs.lammps.org%1%2").arg(docver).arg(page)));
+        }
+    }
+}
+
 void ImageViewer::saveFile(const QString &fileName)
 {
     if (fileName.isEmpty()) return;
@@ -2483,8 +2615,14 @@ void ImageViewer::saveFile(const QString &fileName)
             (void)tmpfile.open();
             (void)tmpfile.close();
             if (!image.save(tmpfile.fileName())) {
-                QMessageBox::warning(this, "Image Viewer Error",
-                                     "Could not save image to file " + fileName);
+                QMessageBox mb;
+                mb.setText("Image Viewer Error");
+                mb.setInformativeText("Could not save image to file " + fileName);
+                mb.setIcon(QMessageBox::Warning);
+                mb.setStandardButtons(QMessageBox::Ok);
+                auto *button = mb.button(QMessageBox::Ok);
+                button->setIcon(QIcon(":/icons/dialog-ok.png"));
+                mb.exec();
                 return;
             }
 
@@ -2501,12 +2639,25 @@ void ImageViewer::saveFile(const QString &fileName)
                 if (!errorOutput.trimmed().isEmpty()) {
                     message += "\n\n" + errorOutput.trimmed();
                 }
-                QMessageBox::warning(this, "Image Viewer Error", message);
+                QMessageBox mb;
+                mb.setText("Image Viewer Error");
+                mb.setInformativeText(message);
+                mb.setIcon(QMessageBox::Warning);
+                mb.setStandardButtons(QMessageBox::Ok);
+                auto *button = mb.button(QMessageBox::Ok);
+                button->setIcon(QIcon(":/icons/dialog-ok.png"));
+                mb.exec();
             }
             delete convert;
         } else {
-            QMessageBox::warning(this, "Image Viewer Error",
-                                 "Could not save image to file " + fileName);
+            QMessageBox mb;
+            mb.setText("Image Viewer Error");
+            mb.setInformativeText("Could not save image to file " + fileName);
+            mb.setIcon(QMessageBox::Warning);
+            mb.setStandardButtons(QMessageBox::Ok);
+            auto *button = mb.button(QMessageBox::Ok);
+            button->setIcon(QIcon(":/icons/dialog-ok.png"));
+            mb.exec();
         }
     }
 }

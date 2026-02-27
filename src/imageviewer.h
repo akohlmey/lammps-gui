@@ -15,6 +15,7 @@
 #include <QComboBox>
 #include <QDialog>
 #include <QImage>
+#include <QMap>
 #include <QString>
 #include <QStringList>
 #include <map>
@@ -66,9 +67,10 @@ public:
     ImageViewer &operator=(ImageViewer &&)      = delete;
 
 private slots:
-    void saveAs(); ///< Save image to file
-    void copy();   ///< Copy image to clipboard
-    void quit();   ///< Close dialog
+    void saveAs();   ///< Save image to file
+    void copy();     ///< Copy image to clipboard
+    void quit();     ///< Close dialog
+    void get_help(); ///< Open online help
 
     void set_atom_size();      ///< Set atom display size
     void edit_size();          ///< Edit image dimensions
@@ -131,6 +133,8 @@ private:
     QAction *copyAct;   ///< Copy action
     QAction *cmdAct;    ///< Copy command action
 
+    QMap<QString, QString> fix_map;              ///< Fix style to help page mapping
+    QMap<QString, QString> compute_map;          ///< Compute style to help page mapping
     QStringList image_computes;                  ///< list of computes supporting dump image
     QStringList image_fixes;                     ///< list of fixes supporting dump image
     QStringList atom_properties;                 ///< list of per-atom properties for coloring
@@ -172,6 +176,7 @@ private:
     QString mapmax;                              ///< Choice of maximum value for colormap
     QString bondcolor;                           ///< Custom bond color property
     QString bonddiam;                            ///< Custom bond diameter property
+    QString bodycolor;                           ///< Custom body color property
     double xcenter, ycenter, zcenter;            ///< View center coordinates
     bool atomcustom;                             ///< Use custom atom color settings
     bool showbox;                                ///< Show simulation box flag
