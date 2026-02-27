@@ -1937,13 +1937,17 @@ void ImageViewer::region_settings()
 
     auto *cancel = new QPushButton("&Cancel");
     auto *apply  = new QPushButton("&Apply");
+    auto *help   = new QPushButton(QIcon(":/icons/help-browser.png"), "&Help");
+    help->setObjectName("Howto_viz.html#visualizing-regions");
     cancel->setAutoDefault(false);
     apply->setAutoDefault(true);
     apply->setDefault(true);
-    layout->addWidget(cancel, idx, 0, 1, 3, Qt::AlignHCenter);
-    layout->addWidget(apply, idx, 3, 1, 3, Qt::AlignHCenter);
+    layout->addWidget(cancel, idx, 0, 1, MAXCOLS / 3, Qt::AlignHCenter);
+    layout->addWidget(apply, idx, MAXCOLS / 3, 1, MAXCOLS / 3, Qt::AlignHCenter);
+    layout->addWidget(help, idx, 2 * (MAXCOLS / 3), 1, MAXCOLS / 3, Qt::AlignHCenter);
     connect(cancel, &QPushButton::released, &regionview, &QDialog::reject);
     connect(apply, &QPushButton::released, &regionview, &QDialog::accept);
+    connect(help, &QPushButton::released, this, &ImageViewer::get_help);
     regionview.setLayout(layout);
 
     int rv = regionview.exec();
