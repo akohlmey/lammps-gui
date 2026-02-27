@@ -313,6 +313,7 @@ ImageViewer::ImageViewer(const QString &fileName, LammpsWrapper *_lammps, QWidge
     atomdiam       = settings.value("diameter", "type").toString();
     bondcolor      = settings.value("bondcolor", "atom").toString();
     bonddiam       = settings.value("bonddiam", "atom").toString();
+    bodycolor      = "type";
     colormap       = settings.value("colormap", "BWR").toString();
     mapmin         = "auto";
     mapmax         = "auto";
@@ -1194,6 +1195,8 @@ void ImageViewer::global_settings()
     if (button) button->setChecked(usessao);
     if (aoval->hasAcceptableInput()) ssaoval = aoval->text().toDouble();
     if (shiny->hasAcceptableInput()) shinyfactor = shiny->text().toDouble();
+    button = findChild<QPushButton *>("shiny");
+    if (button) button->setChecked(shinyfactor > SHINY_CUT);
 
     if (xval->hasAcceptableInput()) xcenter = xval->text().toDouble();
     if (yval->hasAcceptableInput()) ycenter = yval->text().toDouble();
@@ -1390,8 +1393,9 @@ void ImageViewer::atom_settings()
     auto *bdiam = new QLineEdit(QString::number(bodydiam));
     bdiam->setValidator(new QDoubleValidator(0.1, 10.0, 100, this));
     layout->addWidget(bdiam, idx, n++, 1, 1);
-    // skip one column
-    ++n;
+    auto *bodyindex = new QCheckBox(" Indexed", this);
+    bodyindex->setCheckState((bodycolor == "index") ? Qt::Checked : Qt::Unchecked);
+    layout->addWidget(bodyindex, idx, n++, 1, 1);
     auto *bgroup   = new QButtonGroup(this);
     auto *bcbutton = new QRadioButton("Cylinders", this);
     bcbutton->setChecked(bodyflag == CYLINDERS);
@@ -1587,6 +1591,20 @@ void ImageViewer::atom_settings()
     }
 
     showbodies = bodybutton->isChecked();
+    // using the atom color for bodies was implemented after the 11Feb2026 release
+    // for older LAMMPS versions we *must* force the atom color style to be "type"
+    if (lammps->version() > 20260211) {
+        if (bodyindex->isChecked())
+            bodycolor = "index";
+        else
+            bodycolor = "atom";
+    } else {
+        atomcolor = "type";
+        if (bodyindex->isChecked())
+            bodycolor = "index";
+        else
+            bodycolor = "type";
+    }
     if (bdiam->hasAcceptableInput()) bodydiam = bdiam->text().toDouble();
     if (bcbutton->isChecked()) {
         bodyflag = CYLINDERS;
@@ -1594,6 +1612,9 @@ void ImageViewer::atom_settings()
         bodyflag = TRIANGLES;
     } else if (bbbutton->isChecked()) {
         bodyflag = BOTH;
+        shinyfactor = 0.0;
+        button = findChild<QPushButton *>("shiny");
+        if (button) button->setChecked(shinyfactor > SHINY_CUT);
     }
 
     showellipsoids = ellipsoidbutton->isChecked();
@@ -2234,9 +2255,9 @@ void ImageViewer::createImage()
     }
 
     if (!showatoms) dumpcmd += " atom no";
-    if (showbodies && (lammps->extract_setting("body_flag") == 1))
-        dumpcmd += QString(" body type %1 %2").arg(bodydiam).arg(bodyflag);
-    else if (showlines && (lammps->extract_setting("line_flag") == 1))
+    if (showbodies && (lammps->extract_setting("body_flag") == 1)) {
+        dumpcmd += QString(" body %1 %2 %3").arg(bodycolor).arg(bodydiam).arg(bodyflag);
+    } else if (showlines && (lammps->extract_setting("line_flag") == 1))
         dumpcmd += QString(" line type %1").arg(linediam);
     else if (showtris && (lammps->extract_setting("tri_flag") == 1))
         dumpcmd += QString(" tri type %1 %2").arg(triflag).arg(tridiam);

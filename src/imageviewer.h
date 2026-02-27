@@ -176,6 +176,7 @@ private:
     QString mapmax;                              ///< Choice of maximum value for colormap
     QString bondcolor;                           ///< Custom bond color property
     QString bonddiam;                            ///< Custom bond diameter property
+    QString bodycolor;                           ///< Custom body color property
     double xcenter, ycenter, zcenter;            ///< View center coordinates
     bool atomcustom;                             ///< Use custom atom color settings
     bool showbox;                                ///< Show simulation box flag
