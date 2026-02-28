@@ -14,53 +14,73 @@ Snapshot Image Viewer
 
 By selecting the *Create Image* entry in the *Run* menu, or by hitting
 the `Ctrl-I` (`Command-I` on macOS) keyboard shortcut, or by clicking on
-the "palette" button in the status bar of the *Editor* window,
-LAMMPS-GUI sends a custom `write_dump image
+the "palette" button in the status bar of the :doc:`Editor window
+<editor>`, LAMMPS-GUI sends a custom `write_dump image
 <https://docs.lammps.org/dump_image.html>`_ command to LAMMPS and reads
 back the resulting snapshot image with the current state of the system
 into an image viewer.  This functionality is *not* available *during* an
 ongoing run.  In case LAMMPS is not yet initialized, LAMMPS-GUI tries to
-identify the line with the first run or minimize command and execute all
-commands from the input buffer up to that line, and then executes a "run
+identify the line with the first `run
+<https://docs.lammps.org/run.html>`_ or `minimize
+<https://docs.lammps.org/minimize.html>`_ command and execute all
+commands in the editor up to that line, and then executes a "run
 0" command.  This initializes the system so an image of the initial
 state of the system can be rendered.  If there was an error in that
-process, the snapshot image viewer does not appear.
+process, a dialog with the error message will appear.
+
+Automatic Settings
+------------------
 
 When possible, LAMMPS-GUI tries to detect which elements the atoms
 correspond to (via their mass) and then colorizes them in the image and
-sets their atom diameters accordingly.  If this is not possible, for
+sets their atom diameters accordingly.  If this is not possible - for
 instance when using reduced (= 'lj') `units
-<https://docs.lammps.org/units.html>`_, then LAMMPS-GUI will check the
+<https://docs.lammps.org/units.html>`_ - then LAMMPS-GUI will check the
 current pair style and if it is a Lennard-Jones type potential, it will
 extract the *sigma* parameter for each atom type and assign atom
-diameters from those numbers.  For cases where atom diameters are not
-auto-detected, the *Atom size* field can be edited and a suitable value
-set manually.  The default value is inferred from the x-direction
-lattice spacing.  It is also possible to visualize regions and have
-bonds computed dynamically for potentials, where the bonds are
-determined implicitly (like `AIREBO
+diameters from those numbers.  When using an atom style where the atom
+diameters are set directly on a per-atom basis, LAMMPS will use that
+value.  For cases where atom diameters are not auto-detected or you want
+to override the choice, you can configure it in the *Atom/Bond* settings
+dialog (see below).  The default value is inferred from the x-direction
+lattice spacing.
+
+For particles that use `atom styles
+<https://docs.lammps.org/atom_style.html>`_ "body", "ellipsoid", "line",
+or "tri" LAMMPS will visualize the particles according to their atom
+style information by default. Other particles types will be visualized
+as sphere. In the *Atom/Bond* settings dialog, this can be further
+customized (or disabled).
+
+.. |gui-image1| image:: JPG/lammps-gui-image-water.png
+   :width: 24%
+
+.. |gui-image2| image:: JPG/lammps-gui-funnel.png
+   :width: 24%
+
+.. |gui-image3| image:: JPG/lammps-gui-image-body.png
+   :width: 24%
+
+.. |gui-image4| image:: JPG/lammps-gui-image-ellipsoid.png
+   :width: 24%
+
+|gui-image1|  |gui-image2|  |gui-image3|  |gui-image4|
+
+It is also possible to visualize regions, graphics from computes and
+fixes, and have bonds computed dynamically for potentials, where the
+bonds are determined implicitly (like `AIREBO
 <https://docs.lammps.org/pair_airebo.html>`_.  Please see the
 documentation of the `dump image command
 <https://docs.lammps.org/dump_image.html>`_ for more details on these
-two features.
+and other features and the `LAMMPS Visualization Howto
+<https::/docs.lammps.org/Howto_viz.html>`_ for more general discussions
+on how to generate advanced visualizations with LAMMPS directly.
 
 If elements cannot be detected the default sequence of colors of the
 `dump image <https://docs.lammps.org/dump_image.html>`_ command is
 assigned to the different atom types.
 
-.. |gui-image1| image:: JPG/lammps-gui-image.png
-   :width: 22.3%
-
-.. |gui-image2| image:: JPG/lammps-gui-funnel.png
-   :width: 25.25%
-
-.. |gui-image3| image:: JPG/lammps-gui-regions.png
-   :width: 25%
-
-.. |gui-image4| image:: JPG/lammps-gui-autobond.png
-   :width: 25%
-
-|gui-image1|  |gui-image2|  |gui-image3|  |gui-image4|
+-----------
 
 Image Viewer controls
 ---------------------
@@ -68,8 +88,8 @@ Image Viewer controls
 .. index:: image viewer controls
 
 The Image Viewer window consists of three main areas: a menu/toolbar
-strip at the top, the rendered image in the center, and a settings
-panel on the right side.
+strip at the top, the rendered image in the center, and a settings panel
+on the right side.
 
 The **menu/toolbar strip** contains the *File* menu, image dimension
 controls, and a row of toggle and action buttons.  The *File* menu
@@ -91,19 +111,28 @@ provides the following actions:
 - **Close** (`Ctrl-W`): Close the Image Viewer window.
 - **Quit** (`Ctrl-Q`): Quit the entire application.
 
-Next to the *File* menu, the **Width** and **Height** spin boxes set
-the pixel dimensions of the rendered image.  The small palette icon
-on the left is colored while LAMMPS is rendering a new image and
-grayed out when rendering is complete.
+.. |palette| image:: JPG/emblem-photos.png
+                     :width: 14px
+.. |inactive| image:: JPG/inactive-photos.png
+                     :width: 14px
+
+Next to the *File* menu, the **Width** and **Height** spin boxes set the
+dimensions of the rendered image in pixel.  The small palette icon on the
+left is colored |palette| while LAMMPS is rendering a new image and
+grayed out |inactive| when rendering is complete.
 
 The **toolbar buttons** below the menu bar provide quick access to
-rendering options and view manipulation.  From left to right:
+several rendering options and view manipulation.  From left to right:
 
-- **SSAO** (toggle): Enable or disable Screen Space Ambient Occlusion
-  rendering for a more spatial, depth-shaded appearance.
+- **SSAO** (toggle): Enable or disable `Screen Space Ambient Occlusion
+  <https://en.wikipedia.org/wiki/Screen_space_ambient_occlusion>`_
+  rendering for a more spatial, depth-shaded appearance images at the
+  expense of more CPU time.
 - **Anti-aliasing** (toggle): Render the image at double resolution and
-  scale down for smoother edges.  This produces higher quality images at
-  the expense of more CPU time.
+  scale down for smoother edges.  `Full Scene Anti-Aliasing (FSAA)
+  <https://en.wikipedia.org/wiki/Spatial_anti-aliasing#Super_sampling_/_full-scene_anti-aliasing>`_
+  produces higher quality images at the expense of more CPU time.  It is
+  particularly recommended in combination with any transparent objects.
 - **Shininess** (toggle): Switch between shiny and matte surface
   rendering of atoms and bonds.
 - **VDW style** (toggle): Switch between space-filling (Van der Waals)
@@ -113,7 +142,7 @@ rendering options and view manipulation.  From left to right:
   enabled, the adjacent text field allows setting the bond cutoff
   distance.
 - **Box** (toggle): Show or hide the simulation box drawn as colored
-  sticks.
+  cylinders.
 - **Axes** (toggle): Show or hide the labeled coordinate axes arrows.
 - **Zoom in** / **Zoom out**: Adjust the zoom level by 10 percent per
   click.
@@ -126,11 +155,11 @@ rendering options and view manipulation.  From left to right:
 - **Reset**: Reset the view to the default orientation and zoom level.
 
 The default image size, some default image quality settings, the view
-style and some colors can be changed in the *Preferences* dialog window.
-From the image viewer window further adjustments can be made: actual
-image size, high-quality (SSAO) rendering, anti-aliasing, view style,
-display of box or axes, zoom factor.  The view of the system can be
-rotated horizontally and vertically.
+style and some colors can be changed in the :doc:`Preferences <dialogs>`
+dialog window.  From the image viewer window further adjustments can be
+made: actual image size, high-quality (SSAO) rendering, anti-aliasing,
+view style, display of box or axes, zoom factor.  The view of the system
+can be rotated horizontally and vertically.
 
 The **settings panel** on the right side of the window provides
 additional controls:
@@ -146,21 +175,26 @@ additional controls:
 - **Global**: Opens the :ref:`Global image settings <global_settings>`
   dialog for fine-grained control of axes, box, background, quality,
   and center settings.
-- **Atoms/Bonds**: Opens the :ref:`Atom and bond settings <atom_settings>`
-  dialog for detailed atom, bond, VDW, and rigid body visualization
-  options.
+- **Atoms/Bonds**: Opens the :ref:`Atom and bond settings
+  <atom_settings>` dialog for detailed atom, bond, VDW, and special atom
+  style visualization options.
 - **Regions**: Opens the :ref:`Region settings <region_settings>` dialog
   to configure visualization of `regions
   <https://docs.lammps.org/region.html>`_ defined in the simulation.
 - **Compute/Fix**: Opens the :ref:`Compute and fix graphics
   <fix_settings>` dialog to enable and configure extra graphics objects
-  provided by compute and fix styles.
-- **Help**: Opens the online documentation for the visualization
-  features.
+  provided by `selected compute and fix styles
+  <https://docs.lammps.org/Howto_viz.html#visualizing-graphics-provided-by-compute-or-fix-commands>`_.
+- **Help**: Opens this online documentation page for the visualization
+  features in LAMMPS-GUI in a web browser.
 
-The image is re-rendered after each change, and when there are many
-atoms to render and high quality images with anti-aliasing are
-requested, re-rendering may take several seconds.
+The image is re-rendered after each change to the buttons, text fields
+or settings dialogs, and when there are many atoms to render and high
+quality images with anti-aliasing are requested, re-rendering may take
+several seconds.  Some time consuming rendering steps are
+multi-threaded, but there is no GPU acceleration.
+
+---------------
 
 .. _global_settings:
 
