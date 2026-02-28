@@ -5,8 +5,6 @@ LAMMPS-GUI TODO list:
 - add a "Colors" menu to the image viewer to adjust color settings for the
   current image (unlike the defaults in the perferences) including assigning
   colors to individual atom types.
-- Support color by property (e.g. scan computes or fixes with per-atom data), define colormaps etc.
-- Add a "Diameters" dialog where diamaters can by specified by atom type
 
 - implement data file manager GUI with the following features:
    - import coordinates and topology via VMD molfile plugins
