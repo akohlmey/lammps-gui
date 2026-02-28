@@ -57,7 +57,11 @@ Visualization Components
 **ImageViewer (imageviewer.h/.cpp)**
   Dialog for viewing single images (PNG, JPEG, etc.). Supports zooming,
   panning, and saving images. Used for viewing simulation snapshots and
-  rendered atomic configurations.
+  rendered atomic configurations. Uses two internal helper classes:
+
+  - **ImageInfo** - Stores settings for displaying graphics from a LAMMPS
+    compute or fix in snapshot images.
+  - **RegionInfo** - Stores settings for displaying a region in snapshot images.
 
 **ChartWindow (chartviewer.h/.cpp)**
   Window for displaying thermodynamic data as charts using Qt Charts.
@@ -87,6 +91,14 @@ Dialog and Utility Components
   Dialog for configuring application settings including accelerator packages,
   editor appearance, snapshot settings, and chart preferences. Settings are
   made persistent across LAMMPS-GUI sessions using the QSettings class.
+  The dialog is organized into five tabs, each implemented as a separate
+  widget class:
+
+  - **GeneralTab** - General settings (LAMMPS library path, fonts, etc.)
+  - **AcceleratorTab** - LAMMPS accelerator package configuration
+  - **SnapshotTab** - Snapshot image viewer defaults
+  - **EditorTab** - Editor appearance and behavior settings
+  - **ChartsTab** - Chart viewer display settings
 
 **SetVariables (setvariables.h/.cpp)**
   Dialog for editing LAMMPS index-style variable definitions. Allows users

@@ -307,6 +307,57 @@ within a virtual frame buffer and validates:
 **Environment**: Virtual frame buffer at 1024x768x24, ``PYTHONUNBUFFERED=1``,
 ``PYTHONDONTWRITEBYTECODE=1``, ``OMP_NUM_THREADS=1``
 
+Framebuffer.GUIEditorChecks (test_gui_edit.py)
+-----------------------------------------------
+
+**Purpose**: Test basic LAMMPS-GUI editor functionality using automated
+GUI interactions
+
+**Test File**: ``test/test_gui_edit.py``
+
+This test validates fundamental editor operations in LAMMPS-GUI by launching
+the application inside a virtual frame buffer and automating user interactions
+with PyAutoGUI. The test uses screenshot comparison to verify visual state.
+
+The test runs:
+
+.. code-block:: bash
+
+   xvfb-run -n 13 -s "-screen 0 1024x768x24" -w 1 python test_gui_edit.py
+
+within a virtual frame buffer and validates:
+
+**GUIEditorChecks.testExitShortcut**
+  - LAMMPS-GUI launches and displays a white editor background
+  - The ``Ctrl-Q`` keyboard shortcut exits the application cleanly
+  - The process exits with status 0
+  - Screenshots confirm the window was displayed and then closed
+
+**GUIEditorChecks.testExitMenu**
+  - The ``Alt-F`` menu shortcut opens the File menu
+  - The ``Q`` key selects the Quit entry
+  - The application exits cleanly with status 0
+  - Screenshots confirm expected visual state
+
+**GUIEditorChecks.testExitModCancelNo**
+  - Text can be typed into the editor buffer
+  - Exiting with a modified buffer shows a confirmation dialog
+  - The ``Cancel`` option returns to the editor without exiting
+  - The ``No`` option exits without saving
+
+**Dependencies**:
+  - PyAutoGUI - for keyboard and mouse automation
+  - Pillow (PIL) - for screenshot validation
+  - A supported screenshooter application
+
+**Setup/Teardown**:
+  - ``setUp()``: Launches LAMMPS-GUI, cleans up leftover test files
+  - ``tearDown()``: Terminates the LAMMPS-GUI process
+
+**Environment**: Virtual frame buffer at 1024x768x24, ``PYTHONUNBUFFERED=1``,
+``PYTHONDONTWRITEBYTECODE=1``, ``OMP_NUM_THREADS=1``,
+``LAMMPS_GUI=<path to executable>``
+
 Test Fixtures and Utilities
 ============================
 
@@ -407,7 +458,7 @@ Add new test cases using GoogleTest macros:
 Dependencies
 ^^^^^^^^^^^^
 
-- **GoogleTest**: Automatically fetched via CMake FetchContent (v1.15.2)
+- **GoogleTest**: Automatically fetched via CMake FetchContent (v1.17.0)
 - **Qt6**: Required for Qt-dependent functions (Widgets component)
 - **CTest**: Part of CMake, used for test execution
 
