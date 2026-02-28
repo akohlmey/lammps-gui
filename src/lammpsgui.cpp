@@ -1633,19 +1633,21 @@ void LammpsGui::render_image()
                 lammps.commands_string(selection);
                 restore_stdout();
 
-                char errormesg[DEFAULT_BUFLEN];
-                lammps.get_last_error_message(errormesg, DEFAULT_BUFLEN);
-                QMessageBox mb;
-                mb.setText("Image Viewer File Creation Error");
-                mb.setInformativeText(
-                    QString("LAMMPS failed to create the image:<br><code>%1</code>")
+                if (lammps.has_error()) {
+                    char errormesg[DEFAULT_BUFLEN];
+                    lammps.get_last_error_message(errormesg, DEFAULT_BUFLEN);
+                    QMessageBox mb;
+                    mb.setText("Image Viewer File Creation Error");
+                    mb.setInformativeText(
+                        QString("LAMMPS failed to create the image:<br><code>%1</code>")
                         .arg(errormesg));
-                mb.setIcon(QMessageBox::Warning);
-                mb.setStandardButtons(QMessageBox::Ok);
-                auto *button = mb.button(QMessageBox::Ok);
-                button->setIcon(QIcon(":/icons/dialog-ok.png"));
-                mb.exec();
-                return;
+                    mb.setIcon(QMessageBox::Warning);
+                    mb.setStandardButtons(QMessageBox::Ok);
+                    auto *button = mb.button(QMessageBox::Ok);
+                    button->setIcon(QIcon(":/icons/dialog-ok.png"));
+                    mb.exec();
+                    return;
+                }
             }
             // still no system box. bail out with a suitable message
             if (!lammps.extract_setting("box_exist")) {
