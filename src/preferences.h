@@ -120,8 +120,8 @@ public:
      * @param parent Parent widget
      */
     explicit AcceleratorTab(QSettings *settings, LammpsWrapper *lammps, QWidget *parent = nullptr);
-    enum { None, Opt, OpenMP, Intel, Kokkos, Gpu };
-    enum { Double, Mixed, Single };
+    enum AccelType { None, Opt, OpenMP, Intel, Kokkos, Gpu };
+    enum AccelPrec { Double, Mixed, Single };
 
 private slots:
     void update_accel();
