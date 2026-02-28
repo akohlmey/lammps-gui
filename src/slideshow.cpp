@@ -84,6 +84,10 @@ SlideShow::SlideShow(const QString &fileName, QWidget *parent) :
     QObject::connect(shortcut, &QShortcut::activated, this, &SlideShow::quit);
     shortcut = new QShortcut(QKeySequence(Qt::CTRL | Qt::Key_C), this);
     QObject::connect(shortcut, &QShortcut::activated, this, &SlideShow::copy);
+    shortcut = new QShortcut(QKeySequence(Qt::CTRL | Qt::Key_E), this);
+    QObject::connect(shortcut, &QShortcut::activated, this, &SlideShow::movie);
+    shortcut = new QShortcut(QKeySequence(Qt::CTRL | Qt::Key_S), this);
+    QObject::connect(shortcut, &QShortcut::activated, this, &SlideShow::save_current_image);
 
     buttonBox = new QDialogButtonBox(QDialogButtonBox::Close);
 
@@ -133,6 +137,7 @@ SlideShow::SlideShow(const QString &fileName, QWidget *parent) :
     delay->setObjectName("delay");
     delay->setToolTip("Set delay between images in milliseconds");
     delay->setMinimumSize(dsize);
+    delay->setMaximumSize(dsize);
 
     auto *gofirst = new QPushButton(QIcon(":/icons/go-first.png"), "");
     gofirst->setToolTip("Go to first Image");
@@ -221,6 +226,7 @@ SlideShow::SlideShow(const QString &fileName, QWidget *parent) :
     navLayout->addWidget(toimage, 1);
     navLayout->addWidget(toclip, 1);
     navLayout->addWidget(totrash, 1);
+    navLayout->addSpacerItem(new QSpacerItem(10, 10, QSizePolicy::Expanding, QSizePolicy::Minimum));
     navLayout->addWidget(new QLabel("Delay:"));
     navLayout->addWidget(delay, 5);
     navLayout->addWidget(dummy);

@@ -444,19 +444,19 @@ ImageViewer::ImageViewer(const QString &fileName, LammpsWrapper *_lammps, QWidge
     zoomout->setMinimumSize(buttonhint);
     zoomout->setMaximumSize(buttonhint);
     auto *rotleft = new QPushButton(QIcon(":/icons/object-rotate-left.png"), "");
-    rotleft->setToolTip("Rotate left by 15 degrees");
+    rotleft->setToolTip("Rotate left by 10 degrees");
     rotleft->setMinimumSize(buttonhint);
     rotleft->setMaximumSize(buttonhint);
     auto *rotright = new QPushButton(QIcon(":/icons/object-rotate-right.png"), "");
-    rotright->setToolTip("Rotate right by 15 degrees");
+    rotright->setToolTip("Rotate right by 10 degrees");
     rotright->setMinimumSize(buttonhint);
     rotright->setMaximumSize(buttonhint);
     auto *rotup = new QPushButton(QIcon(":/icons/gtk-go-up.png"), "");
-    rotup->setToolTip("Rotate up by 15 degrees");
+    rotup->setToolTip("Rotate up by 10 degrees");
     rotup->setMinimumSize(buttonhint);
     rotup->setMaximumSize(buttonhint);
     auto *rotdown = new QPushButton(QIcon(":/icons/gtk-go-down.png"), "");
-    rotdown->setToolTip("Rotate down by 15 degrees");
+    rotdown->setToolTip("Rotate down by 10 degrees");
     rotdown->setMinimumSize(buttonhint);
     rotdown->setMaximumSize(buttonhint);
     auto *recenter = new QPushButton(QIcon(":/icons/move-recenter.png"), "");
@@ -878,7 +878,7 @@ void ImageViewer::do_zoom_in()
 void ImageViewer::do_zoom_out()
 {
     zoom = zoom / 1.1;
-    zoom = std::max(zoom, 0.25);
+    zoom = std::max(zoom, 0.1);
     createImage();
 }
 
@@ -989,6 +989,7 @@ void ImageViewer::global_settings()
     auto *colorcompleter = new QColorCompleter;
     auto *colorvalidator = new QColorValidator;
     auto *transvalidator = new QDoubleValidator(0.0, 1.0, 2);
+    auto *fractionvalidator = new QDoubleValidator(0.00001, 5.0, 5, this);
     QFontMetrics metrics(setview.fontMetrics());
 
     auto *layout          = new QGridLayout;
@@ -1023,14 +1024,13 @@ void ImageViewer::global_settings()
     layout->addWidget(cbutton, idx++, n++, 1, 1);
 
     n = 1;
-
     layout->addWidget(new QLabel("Length:"), idx, n++, 1, 1);
     auto *alval = new QLineEdit(QString::number(axeslen));
-    alval->setValidator(new QDoubleValidator(0.000001, 10.0, 5, this));
+    alval->setValidator(fractionvalidator);
     layout->addWidget(alval, idx, n++, 1, 1);
     layout->addWidget(new QLabel("Diameter:"), idx, n++, 1, 1);
     auto *adval = new QLineEdit(QString::number(axesdiam));
-    adval->setValidator(new QDoubleValidator(0.000001, 1.0, 5, this));
+    adval->setValidator(fractionvalidator);
     layout->addWidget(adval, idx, n++, 1, 1);
     layout->addWidget(new QLabel("Tansparency:"), idx, n++, 1, 1);
     auto *atval = new QLineEdit(QString::number(axestrans));
@@ -1064,7 +1064,7 @@ void ImageViewer::global_settings()
     layout->addWidget(bcolor, idx, n++, 1, 1);
     layout->addWidget(new QLabel("Diameter:"), idx, n++, 1, 1);
     auto *bdiam = new QLineEdit(QString::number(boxdiam));
-    bdiam->setValidator(new QDoubleValidator(0.000001, 1.0, 5, this));
+    bdiam->setValidator(fractionvalidator);
     layout->addWidget(bdiam, idx, n++, 1, 1);
     layout->addWidget(new QLabel("Tansparency:"), idx, n++, 1, 1);
     auto *btrans = new QLineEdit(QString::number(boxtrans));
@@ -1081,7 +1081,7 @@ void ImageViewer::global_settings()
     layout->addWidget(subboxbutton, idx, n++, 1, 1);
     layout->addWidget(new QLabel("Diameter:"), idx, n++, 1, 1);
     auto *subdiam = new QLineEdit(QString::number(subboxdiam));
-    subdiam->setValidator(new QDoubleValidator(0.000001, 1.0, 5, this));
+    subdiam->setValidator(fractionvalidator);
     layout->addWidget(subdiam, idx++, n++, 1, 1);
 
     n = 0;
@@ -2509,7 +2509,8 @@ void ImageViewer::createImage()
         lammps->get_last_error_message(errormesg, DEFAULT_BUFLEN);
         QMessageBox mb;
         mb.setText("Image Viewer File Creation Error");
-        mb.setInformativeText(QString("LAMMPS failed to create the image:\n%1").arg(errormesg));
+        mb.setInformativeText(
+            QString("LAMMPS failed to create the image:<br><code>%1</code>").arg(errormesg));
         mb.setIcon(QMessageBox::Warning);
         mb.setStandardButtons(QMessageBox::Ok);
         auto *button = mb.button(QMessageBox::Ok);
