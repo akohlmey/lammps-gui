@@ -214,9 +214,14 @@ The settings in this dialog correspond to options of the LAMMPS
 `dump image and dump_modify commands
 <https://docs.lammps.org/dump_image.html>`_.
 
-.. figure:: JPG/lammps-gui-image-settings.png
+.. |global|  image:: JPG/lammps-gui-image-settings.png
+                     :width: 51%
 
-   Detailed global image settings dialog
+.. |boxaxes| image:: JPG/lammps-gui-image-box-axes.png
+                     :width: 25%
+
+
+|boxaxes|  |global|
 
 The dialog is organized into the following sections:
 
@@ -291,6 +296,8 @@ or **Cancel** to discard changes.  The **Help** button opens the LAMMPS
    Some options (axes location, axes transparency, box transparency,
    top background color) require LAMMPS version 11 Feb 2026 or later.
    These fields are disabled when an older version of LAMMPS is used.
+
+---------------
 
 .. _atom_settings:
 
@@ -376,6 +383,8 @@ The dialog contains the following sections:
 Press **Apply** to apply the settings and re-render the image, or
 **Cancel** to discard changes.
 
+--------------
+
 .. _region_settings:
 
 Region settings
@@ -404,15 +413,18 @@ For each region, the following settings can be adjusted:
 - **Size**: The diameter of the lines (for frame style) or points (for
   points style).
 - **# Points**: The number of points used to approximate the region
-  surface (range: 100 -- 1,000,000).  Higher values produce smoother
-  surfaces at the cost of longer rendering times.
+  volume (range: 100 -- 1,000,000).  Higher values reproduce the
+  volume better, but may obscure other details of the image.
 - **Opacity**: The opacity of the region rendering (range: 0.0 -- 1.0,
   where 1.0 is fully opaque).
 
 Press **Apply** to apply the settings and re-render the image, or
 **Cancel** to discard changes.  The **Help** button opens the LAMMPS
-`visualization howto <https://docs.lammps.org/Howto_viz.html>`_
-documentation.
+`visualization howto
+<https://docs.lammps.org/Howto_viz.html#visualizing-regions>`_
+documentation and jumps to the section discussing visualizing regions.
+
+--------------
 
 .. _fix_settings:
 
