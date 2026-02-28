@@ -74,6 +74,18 @@ available (On macOS use the Command key instead of Ctrl/Control).
      - Quick Help
      - Ctrl+Shift+G
      - LAMMPS-GUI Docs
+   * - Ctrl+Shift+R
+     - Inspect Restart
+     - Ctrl+Shift+O
+     - View in OVITO
+     - Ctrl+Shift+D
+     - View in VMD
+   * - Ctrl+Shift+L
+     - Output Window
+     - Ctrl+Shift+C
+     - Charts Window
+     - Ctrl+Shift+I
+     - Image Window
    * - Ctrl+Shift+M
      - LAMMPS Manual
      - Ctrl+?
