@@ -832,6 +832,14 @@ void LammpsGui::open_file(const QString &fileName)
         msg.setInformativeText("Do you want to save the file before opening a new file?");
         msg.setIcon(QMessageBox::Question);
         msg.setStandardButtons(QMessageBox::Yes | QMessageBox::No | QMessageBox::Cancel);
+
+        auto *button = msg.button(QMessageBox::Yes);
+        button->setIcon(QIcon(":/icons/dialog-ok.png"));
+        button = msg.button(QMessageBox::No);
+        button->setIcon(QIcon(":/icons/dialog-no.png"));
+        button = msg.button(QMessageBox::Cancel);
+        button->setIcon(QIcon(":/icons/dialog-cancel.png"));
+
         msg.setFont(font());
         int rv = msg.exec();
         switch (rv) {
@@ -958,6 +966,12 @@ void LammpsGui::inspect_file(const QString &fileName)
         msg.setDefaultButton(QMessageBox::No);
         msg.setEscapeButton(QMessageBox::No);
         msg.setFont(font());
+
+        auto *button = msg.button(QMessageBox::Yes);
+        button->setIcon(QIcon(":/icons/dialog-ok.png"));
+        button = msg.button(QMessageBox::No);
+        button->setIcon(QIcon(":/icons/dialog-no.png"));
+
         int rv = msg.exec();
         switch (rv) {
             case QMessageBox::No:
@@ -1097,6 +1111,14 @@ void LammpsGui::quit()
         msg.setInformativeText("Do you want to save the file before exiting?");
         msg.setIcon(QMessageBox::Question);
         msg.setStandardButtons(QMessageBox::Yes | QMessageBox::No | QMessageBox::Cancel);
+
+        auto *button = msg.button(QMessageBox::Yes);
+        button->setIcon(QIcon(":/icons/dialog-ok.png"));
+        button = msg.button(QMessageBox::No);
+        button->setIcon(QIcon(":/icons/dialog-no.png"));
+        button = msg.button(QMessageBox::Cancel);
+        button->setIcon(QIcon(":/icons/dialog-cancel.png"));
+
         msg.setFont(font());
         int rv = msg.exec();
         switch (rv) {
@@ -1461,6 +1483,14 @@ void LammpsGui::do_run(bool use_buffer)
         msg.setInformativeText("Do you want to save the buffer before running LAMMPS?");
         msg.setIcon(QMessageBox::Question);
         msg.setStandardButtons(QMessageBox::Yes | QMessageBox::Cancel);
+
+        auto *button = msg.button(QMessageBox::Yes);
+        button->setIcon(QIcon(":/icons/dialog-ok.png"));
+        button = msg.button(QMessageBox::No);
+        button->setIcon(QIcon(":/icons/dialog-no.png"));
+        button = msg.button(QMessageBox::Cancel);
+        button->setIcon(QIcon(":/icons/dialog-cancel.png"));
+
         msg.setFont(font());
         int rv = msg.exec();
         switch (rv) {
@@ -1602,8 +1632,20 @@ void LammpsGui::render_image()
                 clear_variables();
                 lammps.commands_string(selection);
                 restore_stdout();
-                // clear any possible error status
-                lammps.get_last_error_message(nullptr, 0);
+
+                char errormesg[DEFAULT_BUFLEN];
+                lammps.get_last_error_message(errormesg, DEFAULT_BUFLEN);
+                QMessageBox mb;
+                mb.setText("Image Viewer File Creation Error");
+                mb.setInformativeText(
+                    QString("LAMMPS failed to create the image:<br><code>%1</code>")
+                        .arg(errormesg));
+                mb.setIcon(QMessageBox::Warning);
+                mb.setStandardButtons(QMessageBox::Ok);
+                auto *button = mb.button(QMessageBox::Ok);
+                button->setIcon(QIcon(":/icons/dialog-ok.png"));
+                mb.exec();
+                return;
             }
             // still no system box. bail out with a suitable message
             if (!lammps.extract_setting("box_exist")) {
@@ -1781,6 +1823,8 @@ void LammpsGui::about()
     msg.setInformativeText(info.c_str());
     msg.setIconPixmap(QPixmap(":/icons/lammps-gui-icon-128x128.png").scaled(64, 64));
     msg.setStandardButtons(QMessageBox::Close);
+    auto *button = msg.button(QMessageBox::Close);
+    button->setIcon(QIcon(":/icons/window-close.png"));
     QFont myfont(font());
     myfont.setPointSize(myfont.pointSizeF() * 0.8);
     msg.setFont(myfont);
@@ -1845,6 +1889,8 @@ void LammpsGui::help()
         "LAMMPS-GUI in parallel with MPI.</p>");
     msg.setIconPixmap(QPixmap(":/icons/lammps-gui-icon-128x128.png").scaled(64, 64));
     msg.setStandardButtons(QMessageBox::Close);
+    auto *button = msg.button(QMessageBox::Close);
+    button->setIcon(QIcon(":/icons/window-close.png"));
     msg.setFont(font());
     msg.exec();
 }

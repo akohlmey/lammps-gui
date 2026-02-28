@@ -2509,7 +2509,8 @@ void ImageViewer::createImage()
         lammps->get_last_error_message(errormesg, DEFAULT_BUFLEN);
         QMessageBox mb;
         mb.setText("Image Viewer File Creation Error");
-        mb.setInformativeText(QString("LAMMPS failed to create the image:\n%1").arg(errormesg));
+        mb.setInformativeText(
+            QString("LAMMPS failed to create the image:<br><code>%1</code>").arg(errormesg));
         mb.setIcon(QMessageBox::Warning);
         mb.setStandardButtons(QMessageBox::Ok);
         auto *button = mb.button(QMessageBox::Ok);
