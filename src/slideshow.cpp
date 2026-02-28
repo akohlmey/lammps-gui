@@ -85,7 +85,7 @@ SlideShow::SlideShow(const QString &fileName, QWidget *parent) :
     shortcut = new QShortcut(QKeySequence(Qt::CTRL | Qt::Key_C), this);
     QObject::connect(shortcut, &QShortcut::activated, this, &SlideShow::copy);
     shortcut = new QShortcut(QKeySequence(Qt::CTRL | Qt::Key_E), this);
-    QObject::connect(shortcut, &QShortcut::activated, this, &SlideShow::move);
+    QObject::connect(shortcut, &QShortcut::activated, this, &SlideShow::movie);
     shortcut = new QShortcut(QKeySequence(Qt::CTRL | Qt::Key_S), this);
     QObject::connect(shortcut, &QShortcut::activated, this, &SlideShow::save_current_image);
 
