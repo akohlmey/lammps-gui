@@ -986,9 +986,9 @@ void ImageViewer::global_settings()
     title->setLineWidth(1);
     title->setMargin(TITLE_MARGIN);
 
-    auto *colorcompleter = new QColorCompleter;
-    auto *colorvalidator = new QColorValidator;
-    auto *transvalidator = new QDoubleValidator(0.0, 1.0, 2);
+    auto *colorcompleter    = new QColorCompleter;
+    auto *colorvalidator    = new QColorValidator;
+    auto *transvalidator    = new QDoubleValidator(0.0, 1.0, 2);
     auto *fractionvalidator = new QDoubleValidator(0.00001, 5.0, 5, this);
     QFontMetrics metrics(setview.fontMetrics());
 
@@ -1297,8 +1297,7 @@ void ImageViewer::atom_settings()
     layout->addWidget(new QLabel("Colormap: "), idx, n++, 1, 1, Qt::AlignVCenter | Qt::AlignRight);
     auto *amap = new QComboBox;
     amap->setObjectName("amap");
-    amap->addItems(
-        {"BWR", "RWB", "GWR", "BWG", "Grayscale", "Rainbow", "Contrast", "Heatmap", "Sequential"});
+    amap->addItems({"BWR", "RWB", "GWR", "BWG", "Grayscale", "Rainbow", "Sequential", "Heatmap"});
     for (int idx = 0; idx < amap->count(); ++idx) {
         if (amap->itemText(idx) == colormap) amap->setCurrentIndex(idx);
     }
@@ -1353,7 +1352,10 @@ void ImageViewer::atom_settings()
             bndiam->setCurrentIndex(idx);
         }
     }
-    if (bndiam->count() < 3) bndiam->addItem("0.2");
+    if (bndiam->count() < 3) {
+        bndiam->addItem("0.2");
+        bndiam->addItem("0.4");
+    }
 
     bndiam->setEditable(true);
     QRegularExpression validbond(R"((atom|type|none|^\d+\.?\d*|^\d*\.?\d+))");
@@ -1589,6 +1591,19 @@ void ImageViewer::atom_settings()
         bonddiam = value;
     }
 
+    if (atomcustom) {
+        auto *edit = findChild<QLineEdit *>("atomSize");
+        if (edit) {
+            edit->setEnabled(true);
+            edit->show();
+            edit->setText(QString::number(atomSize));
+        }
+        auto *label = findChild<QLabel *>("AtomLabel");
+        if (label) {
+            label->setEnabled(true);
+            label->show();
+        }
+    }
     if (has_autobonds()) {
         autobond   = autobutton->isChecked();
         bondcutoff = bcutoff->text().toDouble();
@@ -2181,6 +2196,8 @@ void ImageViewer::createImage()
     QString units          = (const char *)lammps->extract_global("units");
     QString elements;
     QString adiams;
+
+    if ((units == "real") || (units == "metal")) atomSize = 1.7; // covalent radius of Carbon
     if (!atomcustom || (atomcolor == "element")) {
         useelements = false;
         elements    = "element ";
@@ -2195,6 +2212,25 @@ void ImageViewer::createImage()
             }
         }
     }
+    if (atomcustom && (atomcolor != "element")) {
+        useelements = false;
+        elements    = "element ";
+        if (masses && ((units == "real") || (units == "metal"))) {
+            useelements = true;
+            for (int i = 1; i <= ntypes; ++i) {
+                int idx = get_pte_from_mass(masses[i]);
+                if (idx == 0) useelements = false;
+                elements += QString(pte_label[idx]) + blank;
+                adiams += QString("adiam %1 %2 ").arg(i).arg(vdwfactor * pte_vdw_radius[idx]);
+            }
+        } else {
+            elements.clear();
+            for (int i = 1; i <= ntypes; ++i) {
+                adiams += QString("adiam %1 %2 ").arg(i).arg(vdwfactor * atomSize);
+            }
+        }
+    }
+
     if (!atomcustom || (atomdiam == "auto") || (atomdiam == "element") || (atomdiam == "sigma") ||
         (atomdiam == "diameter")) {
         usesigma    = false;
@@ -2213,7 +2249,7 @@ void ImageViewer::createImage()
     }
 
     // adjust pushbutton state and clear adiams string to disable VDW display, if needed
-    if (showatoms && (useelements || usediameter || usesigma)) {
+    if (showatoms && (useelements || usediameter || usesigma || atomcustom)) {
         auto *button = findChild<QPushButton *>("vdw");
         if (button) button->setEnabled(true);
         auto *edit = findChild<QLineEdit *>("atomSize");
@@ -2249,9 +2285,9 @@ void ImageViewer::createImage()
             }
             atomSize = edit->text().toDouble();
         }
-        if (atomSize != 1.0) {
+        if ((atomSize != 1.0) && (atomSize != 1.7)) {
             for (int i = 1; i <= ntypes; ++i)
-                adiams += QString("adiam %1 %2 ").arg(i).arg(atomSize);
+                adiams += QString("adiam %1 %2 ").arg(i).arg(vdwfactor * atomSize);
         }
     }
 
@@ -2444,15 +2480,15 @@ void ImageViewer::createImage()
         dumpcmd += QString(" amap %1 %2 cf 0.0 ").arg(mmin).arg(mmax);
         dumpcmd += "9 min magenta 0.125 red 0.25 yellow 0.375 green 0.5 cyan 0.625 blue 0.75 blue "
                    "0.875 purple max magenta";
-    } else if (colormap == "Contrast") {
+    } else if (colormap == "Sequential") {
         dumpcmd += " color map1 0.808 0.808 0.808";
         dumpcmd += " color map2 0.647 0.349 0.667";
         dumpcmd += " color map3 0.349 0.659 0.612";
         dumpcmd += " color map4 0.941 0.772 0.443";
         dumpcmd += " color map5 0.878 0.169 0.208";
         dumpcmd += " color map6 0.031 0.165 0.329";
-        dumpcmd += QString(" amap %1 %2 cf 0.0 ").arg(mmin).arg(mmax);
-        dumpcmd += "6 min map1 0.2 map2 0.4 map3 0.6 map4 0.8 map5 max map6";
+        dumpcmd += QString(" amap %1 %2 sa 1.0 ").arg(mmin).arg(mmax);
+        dumpcmd += "6 map1 map2 map3 map4 map5 map6";
     } else if (colormap == "Heatmap") {
         dumpcmd += " color map1 0.125 0.400 0.659";
         dumpcmd += " color map2 0.557 0.757 0.855";
