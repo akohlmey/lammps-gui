@@ -51,8 +51,9 @@ constexpr int LAYOUT_SPACING = 6;
 
 SlideShow::SlideShow(const QString &fileName, QWidget *parent) :
     QDialog(parent), playtimer(nullptr), imageLabel(new QLabel), scrollArea(new QScrollArea),
-    scrollBar(new QSlider), imageName(new QLabel("(none)")), timer_delay(100), do_loop(true),
-    imageRotation(0), imageFlipH(false), imageFlipV(false)
+    scrollBar(new QSlider), imageCounter(new QLabel("Image   0 /   0 :")),
+    imageName(new QLabel("(none)")), timer_delay(100), do_loop(true), imageRotation(0),
+    imageFlipH(false), imageFlipV(false)
 {
     imageLabel->setBackgroundRole(QPalette::Base);
     imageLabel->setSizePolicy(QSizePolicy::Minimum, QSizePolicy::Minimum);
@@ -70,10 +71,15 @@ SlideShow::SlideShow(const QString &fileName, QWidget *parent) :
     scrollBar->setToolTip("Select Image to display");
     connect(scrollBar, &QSlider::valueChanged, this, &SlideShow::loadImage);
 
+    imageCounter->setFrameStyle(QFrame::Raised);
+    imageCounter->setFrameShape(QFrame::Panel);
+    imageCounter->setAlignment(Qt::AlignRight | Qt::AlignVCenter);
+    imageCounter->setSizePolicy(QSizePolicy::Minimum, QSizePolicy::Fixed);
+
     imageName->setFrameStyle(QFrame::Raised);
     imageName->setFrameShape(QFrame::Panel);
-    imageName->setAlignment(Qt::AlignCenter);
-    imageName->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
+    imageName->setAlignment(Qt::AlignLeft | Qt::AlignVCenter);
+    imageName->setSizePolicy(QSizePolicy::Minimum, QSizePolicy::Fixed);
     imageName->setTextInteractionFlags(Qt::TextSelectableByMouse);
 
     auto *shortcut = new QShortcut(QKeySequence(Qt::CTRL | Qt::Key_W), this);
@@ -89,7 +95,22 @@ SlideShow::SlideShow(const QString &fileName, QWidget *parent) :
     shortcut = new QShortcut(QKeySequence(Qt::CTRL | Qt::Key_S), this);
     QObject::connect(shortcut, &QShortcut::activated, this, &SlideShow::save_current_image);
 
-    buttonBox = new QDialogButtonBox(QDialogButtonBox::Close);
+    buttonBox    = new QDialogButtonBox(QDialogButtonBox::Close);
+    auto *button = buttonBox->button(QDialogButtonBox::Close);
+    button->setIcon(QIcon(":/icons/window-close.png"));
+
+    auto *stoprun = new QPushButton(QIcon(":/icons/process-stop.png"), "");
+    stoprun->setToolTip("Stop running simulation");
+    auto boxhint = buttonBox->minimumSizeHint();
+    boxhint.setWidth(boxhint.height() * 4 / 3);
+    stoprun->setMinimumSize(boxhint);
+    stoprun->setMaximumSize(boxhint);
+    imageCounter->setMinimumHeight(boxhint.height());
+    imageCounter->setMaximumHeight(boxhint.height());
+    imageName->setMinimumHeight(boxhint.height());
+    imageName->setMaximumHeight(boxhint.height());
+
+    QObject::connect(stoprun, &QPushButton::released, this, &SlideShow::stop_run);
 
     connect(buttonBox, &QDialogButtonBox::accepted, this, &QDialog::accept);
     connect(buttonBox, &QDialogButtonBox::rejected, this, &QDialog::reject);
@@ -105,7 +126,7 @@ SlideShow::SlideShow(const QString &fileName, QWidget *parent) :
     auto *tomovie = new QPushButton(QIcon(":/icons/export-movie.png"), "");
     tomovie->setToolTip("Export to movie file");
     tomovie->setEnabled(has_exe("ffmpeg") || has_exe("magick") || has_exe("convert"));
-    auto buttonhint = tomovie->minimumSizeHint();
+    auto buttonhint = stoprun->minimumSizeHint();
     buttonhint.setWidth(buttonhint.height() * 4 / 3);
     tomovie->setMinimumSize(buttonhint);
     tomovie->setMaximumSize(buttonhint);
@@ -136,8 +157,10 @@ SlideShow::SlideShow(const QString &fileName, QWidget *parent) :
     delay->setValue(timer_delay);
     delay->setObjectName("delay");
     delay->setToolTip("Set delay between images in milliseconds");
-    delay->setMinimumSize(dsize);
-    delay->setMaximumSize(dsize);
+    delay->setMinimumWidth(dsize.width());
+    delay->setMaximumWidth(dsize.width());
+    delay->setMinimumHeight(buttonhint.height());
+    delay->setMaximumHeight(buttonhint.height());
 
     auto *gofirst = new QPushButton(QIcon(":/icons/go-first.png"), "");
     gofirst->setToolTip("Go to first Image");
@@ -251,9 +274,14 @@ SlideShow::SlideShow(const QString &fileName, QWidget *parent) :
     mainLayout->addLayout(navLayout);
     mainLayout->addWidget(scrollArea, 10);
 
+    botLayout->addSpacerItem(new QSpacerItem(10, 10, QSizePolicy::Expanding, QSizePolicy::Minimum));
+    botLayout->addWidget(imageCounter);
     botLayout->addWidget(imageName);
+    botLayout->addSpacerItem(new QSpacerItem(10, 10, QSizePolicy::Expanding, QSizePolicy::Minimum));
+    botLayout->addWidget(stoprun);
     botLayout->addWidget(buttonBox);
     botLayout->setStretch(0, 3);
+    botLayout->setStretch(3, 3);
     botLayout->setSizeConstraint(QLayout::SetMinimumSize);
     botLayout->setSpacing(LAYOUT_SPACING);
     mainLayout->addLayout(botLayout);
@@ -313,6 +341,7 @@ void SlideShow::clear()
     imageLabel->setPixmap(QPixmap::fromImage(image));
     imageLabel->setMinimumSize(image.width(), image.height());
     imageLabel->resize(image.width(), image.height());
+    imageCounter->setText("Image   0 /   0 :");
     imageName->setText("(none)");
     scrollBar->setMaximum(1);
     adjustWindowSize();
@@ -342,10 +371,9 @@ void SlideShow::loadImage(int idx)
         } else {
             rawImage = newImage;
             applyImageTransform();
-            imageName->setText(QString(" Image %1 / %2 : %3 ")
-                                   .arg(idx + 1)
-                                   .arg(imagefiles.size())
-                                   .arg(imagefiles[idx]));
+            imageCounter->setText(
+                QString("Image %1 / %2 :").arg(idx + 1, 3).arg(imagefiles.size(), 3));
+            imageName->setText(QString("%1").arg(imagefiles[idx]));
             current = idx;
             break;
         }
