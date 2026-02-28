@@ -89,7 +89,13 @@ Image Viewer controls
 
 The Image Viewer window consists of three main areas: a menu/toolbar
 strip at the top, the rendered image in the center, and a settings panel
-on the right side.
+on the right side.  Following the general theme of LAMMPS-GUI of
+extensive keyboard shortcut support, you can select most text fields by
+using the `Alt` key and the underlined letter. For example the *File*
+menu is opened with `Alt-F` and its entries can be also selected the
+same way or using the cursor keys and `Enter`.  Keyboard shortcuts
+starting with `Ctrl` usually work globally inside the image window, that
+is even when the corresponding menu item is not visible.
 
 The **menu/toolbar strip** contains the *File* menu, image dimension
 controls, and a row of toggle and action buttons.  The *File* menu
@@ -101,13 +107,16 @@ provides the following actions:
   additional file formats beyond those natively supported by the Qt
   library become available.
 - **Copy Image** (`Ctrl-C`): Copy the rendered image to the clipboard
-  for pasting into another application.
+  for pasting into another application.  This requires support from
+  the receiving applications, but many applications like document
+  editors or web browsers are.
 - **Copy dump image command** (`Ctrl-D`): Copy the current `dump image
   <https://docs.lammps.org/dump_image.html>`_ and `dump_modify
   <https://docs.lammps.org/dump_image.html>`_ commands to the clipboard
-  so they can be pasted into a LAMMPS input file.  This allows the
-  current visualization settings to be reproduced during a simulation
-  run, including in the :ref:`slide show viewer <slideshow>`.
+  so they can be pasted into a LAMMPS input file in either the included
+  :doc:`text editor window <editor>` or some other text editor.  This
+  allows the current visualization settings to be reproduced during a
+  simulation run, including in the :ref:`slide show viewer <slideshow>`.
 - **Close** (`Ctrl-W`): Close the Image Viewer window.
 - **Quit** (`Ctrl-Q`): Quit the entire application.
 
@@ -119,7 +128,9 @@ provides the following actions:
 Next to the *File* menu, the **Width** and **Height** spin boxes set the
 dimensions of the rendered image in pixel.  The small palette icon on the
 left is colored |palette| while LAMMPS is rendering a new image and
-grayed out |inactive| when rendering is complete.
+grayed out |inactive| when rendering is complete.  You can set focus to
+the **Width** and **Height** fields by using the `Alt-W` and `Alt-H`
+keyboard shortcuts.
 
 The **toolbar buttons** below the menu bar provide quick access to
 several rendering options and view manipulation.  From left to right:
@@ -134,22 +145,27 @@ several rendering options and view manipulation.  From left to right:
   produces higher quality images at the expense of more CPU time.  It is
   particularly recommended in combination with any transparent objects.
 - **Shininess** (toggle): Switch between shiny and matte surface
-  rendering of atoms and bonds.
+  rendering of graphics objects like atoms and bonds.
 - **VDW style** (toggle): Switch between space-filling (Van der Waals)
-  sphere representation and the smaller ball-and-stick style.
+  sphere representation of atoms and the smaller ball-and-stick style
+  of atoms and bonds.
 - **Dynamic bonds** (toggle): Automatically compute bonds from atom
   distances.  This is useful for force fields with implicit bonds.  When
   enabled, the adjacent text field allows setting the bond cutoff
-  distance.
+  distance. This feature depends on existing neighbor list data and thus
+  may not always work as expected when the system has explicit bonds and
+  thus neighbors may be automatically excluded from neighbor lists due
+  to the `special_bonds settings
+  <https://docs.lammps.org/special_bonds.html>`_
 - **Box** (toggle): Show or hide the simulation box drawn as colored
   cylinders.
 - **Axes** (toggle): Show or hide the labeled coordinate axes arrows.
-- **Zoom in** / **Zoom out**: Adjust the zoom level by 10 percent per
-  click.
+- **Zoom in** / **Zoom out**: Adjust the zoom level between in 10
+  percent increments between 0.1x and 10.0x.
 - **Rotate left** / **Rotate right**: Rotate the view horizontally by
-  15 degrees per click.
+  10 degrees per click.
 - **Rotate up** / **Rotate down**: Rotate the view vertically by
-  15 degrees per click.
+  10 degrees per click.
 - **Recenter**: Recenter the view on the center of mass of the currently
   selected group.
 - **Reset**: Reset the view to the default orientation and zoom level.
@@ -205,21 +221,21 @@ Global image settings
 .. index:: global image settings
 .. index:: dump_modify
 
-While some default settings for the image output can be configured in
-the "Snapshot Image" tab of the :ref:`Preferences dialog <image_preferences>`,
-more fine-grained configuration is possible by opening the "Global
-image settings" dialog.  This dialog is opened by pressing the "Global"
-button in the settings panel or by using the `Alt-L` keyboard mnemonic.
-The settings in this dialog correspond to options of the LAMMPS
-`dump image and dump_modify commands
-<https://docs.lammps.org/dump_image.html>`_.
+While some persistent default settings for the image output can be
+configured in the "Snapshot Image" tab of the :ref:`Preferences dialog
+<image_preferences>`, more fine-grained configuration is possible by
+opening the "Global image settings" dialog.  However, settings not
+stored by the preference are reset when the image viewer window is
+close.  This dialog is opened by pressing the "Global" button in the
+settings panel or by using the `Alt-L` keyboard shortcut.  The settings
+in this dialog correspond to options of the LAMMPS `dump image and
+dump_modify commands <https://docs.lammps.org/dump_image.html>`_.
 
 .. |global|  image:: JPG/lammps-gui-image-settings.png
                      :width: 51%
 
 .. |boxaxes| image:: JPG/lammps-gui-image-box-axes.png
                      :width: 25%
-
 
 |boxaxes|  |global|
 
@@ -232,12 +248,12 @@ The dialog is organized into the following sections:
    - **Location** (radio buttons): Select where the axes are drawn in
      the image -- *Lower Left* (default), *Lower Right*, *Upper Left*,
      *Upper Right*, or *Center*.
-   - **Length**: The length of the axes arrows as a fraction of the image
-     size (range: 0.000001 -- 10.0).
+   - **Length**: The length of the axes arrows as a fraction of the box
+     size (range: 0.00001 -- 5.0).
    - **Diameter**: The diameter of the axes arrows as a fraction of the
-     image size (range: 0.000001 -- 1.0).
-   - **Transparency**: The transparency of the axes (range: 0.0 -- 1.0,
-     where 0.0 is fully opaque).
+     box size (range: 0.00001 -- 5.0).
+   - **Transparency**: The opacity of the axes (range: 0.0 -- 1.0,
+     where 0.0 is fully transparent).
 
 **Box**
    Controls the display of the simulation box.
@@ -245,21 +261,21 @@ The dialog is organized into the following sections:
    - **Box** (checkbox): Enable or disable rendering of the simulation
      box.
    - **Color**: The color used to draw the box edges.  Accepts
-     `named colors <https://docs.lammps.org/dump_image.html>`_ or
-     hex color values.
-   - **Diameter**: The diameter of the box edge sticks (range: 0.000001
-     -- 1.0).
-   - **Transparency**: The transparency of the box edges (range: 0.0 --
-     1.0).
+     `named colors <https://docs.lammps.org/dump_image.html>`_.
+   - **Diameter**: The diameter of the box edge sticks as fraction
+     of the box size (range: 0.000001 -- 5.0).
+   - **Transparency**: The opacity of the box edges (range: 0.0 --
+     1.0, where 0.0 is fully transparent).
 
 **Subbox**
-   Controls the display of the processor sub-domain box (relevant for
-   parallel simulations).
+   Controls the display of the per-processor sub-domain boxes
+   (relevant for MPI parallel simulations, will coincide with the
+   regular box for LAMMPS-GUI runs).
 
    - **Subbox** (checkbox): Enable or disable rendering of the sub-domain
      box.
-   - **Diameter**: The diameter of the sub-domain box edge sticks (range:
-     0.000001 -- 1.0).
+   - **Diameter**: The diameter of the sub-domain box edge sticks as
+     fraction of the box size (range: 0.00001 -- 5.0).
 
 **Background**
    Sets the background color(s) of the rendered image.
@@ -293,9 +309,10 @@ or **Cancel** to discard changes.  The **Help** button opens the LAMMPS
 
 .. note::
 
-   Some options (axes location, axes transparency, box transparency,
-   top background color) require LAMMPS version 11 Feb 2026 or later.
-   These fields are disabled when an older version of LAMMPS is used.
+   Some options (axes location, axes transparency, box transparency, top
+   background color) require that LAMMPS-GUI is interfaced with LAMMPS
+   version 11 Feb 2026 or later.  These fields are grayed out and
+   disabled when an older version of LAMMPS is used.
 
 ---------------
 
@@ -312,11 +329,15 @@ Atom and bond settings
 This dialog offers more detailed customizations for atom and bond
 visualization that are not directly accessible from the main Image
 Viewer toolbar.  It is opened by pressing the "Atoms/Bonds" button in
-the settings panel or by using the `Alt-A` keyboard mnemonic.
+the settings panel or by using the `Alt-A` keyboard shortcut.
 
-.. figure:: JPG/lammps-gui-image-atom.png
+.. |atombond|  image:: JPG/lammps-gui-image-atom.png
+                     :width: 50%
 
-   Detailed atom and bond settings dialog
+.. |autobond| image:: JPG/lammps-gui-autobond.png
+                     :width: 31%
+
+|autobond|  |atombond|
 
 The dialog contains the following sections:
 
@@ -329,11 +350,13 @@ The dialog contains the following sections:
      (charge), *diameter*, *id*, *mass*, *x*/*y*/*z* (coordinates), as
      well as atom-style variables (`v_<name>`), per-atom compute results
      (`c_<name>` or `c_<name>[col]`), and per-atom fix results
-     (`f_<name>` or `f_<name>[col]`).
+     (`f_<name>` or `f_<name>[col]`).  The contents of the list
+     depends on which are available in the current simulation state.
    - **Size**: Select the property used for atom sizing.  Options
      include *auto* (when element, diameter, or sigma data is available),
      *type*, and *element*.
-   - **Transparency**: The transparency of atoms (range: 0.0 -- 1.0).
+   - **Transparency**: The opacity of atoms (range: 0.0 -- 1.0, where
+     0.0 is fully transparent).
 
 **VDW Style**
    Controls the Van der Waals space-filling representation and the
@@ -342,14 +365,18 @@ The dialog contains the following sections:
    - **VDW style** (checkbox): Enable or disable space-filling sphere
      rendering.  When unchecked, the ball-and-stick style is used.
    - **Colormap**: Select the colormap used for coloring by a continuous
-     per-atom property.  Available colormaps are: *BWR* (blue-white-red),
-     *RWB*, *GWR*, *BWG*, *Grayscale*, *Rainbow*, *Contrast*, *Heatmap*,
-     and *Sequential*.  See the LAMMPS `dump_modify colormap documentation
-     <https://docs.lammps.org/dump_image.html>`_ for details.
+     per-atom property.  Available colormaps are: *BWR*
+     (blue-white-red), *RWB* (red-white-blue), *GWR* (green-white-red),
+     *BWG* (blue-white-green), *Grayscale*, *Rainbow*, *Contrast*,
+     *Heatmap*, and *Sequential*.  These are pre-defined colormap
+     settings and cannot be adjusted from LAMMPS-GUI.  For further
+     customizations, the dump image command line has to be copied to the
+     editor and LAMMPS run normally.  Then the map setting can be
+     customized as explained in the `dump_modify colormap documentation
+     <https://docs.lammps.org/dump_image.html>`_.
    - **Min** / **Max**: Set the range of the colormap.  Use *auto* to
-     have LAMMPS determine the range automatically, or *min*/*max* to
-     use the per-atom minimum/maximum, or specify an explicit numeric
-     value.
+     have LAMMPS determine the range automatically or specify an
+     explicit numeric value.
 
 **Bonds**
    Controls bond visualization.
@@ -362,26 +389,90 @@ The dialog contains the following sections:
    - **Size**: Select bond diameter mode -- *atom*, *type*, *none*, or
      a custom numeric value.
    - **AutoBonds** (checkbox): Automatically determine bonds from atom
-     distances, useful for force fields with implicit bonds like
-     `AIREBO <https://docs.lammps.org/pair_airebo.html>`_.
+     distances, useful for many-body force fields with implicit bonds
+     like `AIREBO <https://docs.lammps.org/pair_airebo.html>`_ or
+     `Tersoff <https://docs.lammps.org/pair_tersoff.html>`_.  This
+     feature depends on existing neighbor list data and thus may not
+     always work as expected when the system has explicit bonds and thus
+     neighbors may be automatically excluded from neighbor lists due to
+     the `special_bonds settings
+     <https://docs.lammps.org/special_bonds.html>`_
    - **Cutoff**: The distance cutoff used for automatic bond detection
-     (range: 0.001 -- 10.0).  Only available when auto-bonds are
-     supported.
+     (range: 0.001 -- 10.0 in distance units).  Only available when
+     auto-bonds are enabled.
 
 **Bodies**
-   Controls visualization of rigid bodies (when present in the
+   Controls visualization of `body particles
+   <https://docs.lammps.org/Howto_body.html>`_ (when present in the
    simulation).
 
-   - **Bodies** (checkbox): Enable or disable rendering of rigid body
-     shapes.
-   - **Diameter**: The diameter used for body rendering (range: 0.1 --
-     10.0).
-   - **Indexed** (checkbox): Use indexed coloring for bodies.
+   - **Bodies** (checkbox): Enable or disable rendering of body particle
+     shapes. When disabled, the particles are rendered as spheres like
+     regular atoms.
+   - **Diameter**: The diameter of cylinders when used for body particle
+     rendering (range: 0.1 -- 10.0).
+   - **Indexed** (checkbox): Use coloring by body index instead of the
+     atom type to the body particle.
    - **Style** (radio buttons): Select the body rendering style --
      *Cylinders*, *Triangles*, or *Both*.
 
+**Ellipsoids**
+   Controls visualization of `aspherical particles
+   <https://docs.lammps.org/Packages_details.html#pkg-asphere>`_ (when
+   present in the simulation).  Particles flagged as ellipsoids are
+   represented as a triangle mesh, others as spheres.
+
+   - **Ellipsoids** (checkbox): Enable or disable rendering of ellipsoid
+     particle shapes. When disabled, the particles are rendered as
+     spheres like regular atoms.
+   - **Diameter**: The diameter of cylinders when used for ellipsoid
+     particle rendering (range: 0.1 -- 10.0).
+   - **Refine** (spinbox): Level of triangle mesh refinement.  At level
+     1 the ellipsoids are represented by a deformed octahedron.  With a
+     level increase, each triangle is replaced by 4 triangles following
+     the ellipsoid shape more closely (max: 6).  At the maximum level
+     each ellipsoid is represented by 8192 triangles. At high refinement
+     level, there may be artifacts from rounding due to limitations of
+     the image rasterizer included in LAMMPS.  These can be made less
+     prominent by enabling anti-aliasing.
+   - **Style** (radio buttons): Select the ellipsoid rendering style --
+     *Cylinders*, *Triangles*, or *Both*.
+     
+**Lines**
+   Controls visualization of `line segment particles
+   <https://docs.lammps.org/pair_line_lj.html>`_ (when present in the
+   simulation).
+
+   - **Lines** (checkbox): Enable or disable rendering of line segment
+     particle shapes.  When disabled, the particles are rendered as
+     spheres like regular atoms.
+   - **Diameter**: The diameter of cylinders when used for line segment
+     particle rendering (range: 0.1 -- 10.0).
+   - **Style** (radio buttons): Select the particle rendering style --
+     *Cylinders*, *Triangles*, or *Both*.
+
+**Triangles**
+   Controls visualization of `triangulated particles
+   <https://docs.lammps.org/pair_tri_lj.html>`_ (when present in the
+   simulation).
+
+   - **Triangles** (checkbox): Enable or disable rendering of
+     triangulated particle shapes.  When disabled, the particles are
+     rendered as spheres like regular atoms.
+   - **Diameter**: The diameter of cylinders when used for triangulated
+     particle rendering (range: 0.1 -- 10.0).
+   - **Style** (radio buttons): Select the particle rendering style --
+     *Cylinders*, *Triangles*, or *Both*.
+
 Press **Apply** to apply the settings and re-render the image, or
-**Cancel** to discard changes.
+**Cancel** to discard changes.   The **Help** button opens the LAMMPS
+`dump image <https://docs.lammps.org/dump_image.html>`_ documentation.
+
+.. note::
+
+   Some options are only available when a sufficiently recent LAMMPS
+   version is used and particles or the corresponding atom style are
+   present.  These fields are grayed out and disabled otherwise.
 
 --------------
 

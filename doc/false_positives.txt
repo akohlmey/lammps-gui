@@ -47,6 +47,7 @@ natively
 nsis
 nullptr
 Nullsoft
+octahedron
 pluginpath
 pre
 prev
@@ -59,10 +60,12 @@ QSlider
 QString
 QThread
 rangeslider
+rasterizer
 README
 Savitzky
 screenshooter
 sliderDown
+spinbox
 SSAO
 stderr
 stdout
