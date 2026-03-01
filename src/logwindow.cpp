@@ -155,7 +155,8 @@ void LogWindow::save_as()
     QFile file(path.absoluteFilePath());
 
     if (!file.open(QIODevice::WriteOnly | QFile::Text)) {
-        QMessageBox::warning(this, "Warning", "Cannot save file: " + file.errorString());
+        warning(this, "LogWindow Warning", "Cannot save to file " + logFileName + ": ",
+                file.errorString());
         return;
     }
 
@@ -190,7 +191,8 @@ void LogWindow::extract_yaml()
     QFileInfo path(yamlFileName);
     QFile file(path.absoluteFilePath());
     if (!file.open(QIODevice::WriteOnly | QFile::Text)) {
-        QMessageBox::warning(this, "Warning", "Cannot save file: " + file.errorString());
+        warning(this, "LogWindow Warning", "Cannot save to file " + yamlFileName + ":",
+                file.errorString());
         return;
     }
 

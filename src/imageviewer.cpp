@@ -41,7 +41,6 @@
 #include <QLineEdit>
 #include <QMenu>
 #include <QMenuBar>
-#include <QMessageBox>
 #include <QPalette>
 #include <QPixmap>
 #include <QProcess>
@@ -2543,15 +2542,8 @@ void ImageViewer::createImage()
     if (lammps->has_error()) {
         char errormesg[DEFAULT_BUFLEN];
         lammps->get_last_error_message(errormesg, DEFAULT_BUFLEN);
-        QMessageBox mb;
-        mb.setText("Image Viewer File Creation Error");
-        mb.setInformativeText(
-            QString("LAMMPS failed to create the image:<br><code>%1</code>").arg(errormesg));
-        mb.setIcon(QMessageBox::Warning);
-        mb.setStandardButtons(QMessageBox::Ok);
-        auto *button = mb.button(QMessageBox::Ok);
-        button->setIcon(QIcon(":/icons/dialog-ok.png"));
-        mb.exec();
+        warning(this, "Image Viewer File Creation Error",
+                "LAMMPS failed to create the image:", QString("<code>%1</code>").arg(errormesg));
         return;
     }
 
@@ -2582,10 +2574,7 @@ void ImageViewer::createImage()
 
 void ImageViewer::saveAs()
 {
-    QString fileName = QFileDialog::getSaveFileName(
-        this, "Save Image File As", QString(),
-        "Image Files (*.png *.jpg *.jpeg *.gif *.bmp *.tga *.ppm *.tiff *.pgm *.xpm *.xbm)");
-    saveFile(fileName);
+    export_image(this, &image, "ImageViewer");
 }
 
 void ImageViewer::copy()
@@ -2636,65 +2625,6 @@ void ImageViewer::get_help()
             // general LAMMPS doc page
             QDesktopServices::openUrl(
                 QUrl(QString("https://docs.lammps.org%1%2").arg(docver).arg(page)));
-        }
-    }
-}
-
-void ImageViewer::saveFile(const QString &fileName)
-{
-    if (fileName.isEmpty()) return;
-
-    // try direct save and if it fails write to PNG and then convert with ImageMagick if available
-    if (!image.save(fileName)) {
-        if (has_exe("magick") || has_exe("convert")) {
-            QTemporaryFile tmpfile(QDir::tempPath() + "/LAMMPS_GUI.XXXXXX.png");
-            // open and close to generate temporary file name
-            (void)tmpfile.open();
-            (void)tmpfile.close();
-            if (!image.save(tmpfile.fileName())) {
-                QMessageBox mb;
-                mb.setText("Image Viewer Error");
-                mb.setInformativeText("Could not save image to file " + fileName);
-                mb.setIcon(QMessageBox::Warning);
-                mb.setStandardButtons(QMessageBox::Ok);
-                auto *button = mb.button(QMessageBox::Ok);
-                button->setIcon(QIcon(":/icons/dialog-ok.png"));
-                mb.exec();
-                return;
-            }
-
-            QString cmd = "magick";
-            QStringList args{tmpfile.fileName(), fileName};
-            if (!has_exe("magick")) cmd = "convert";
-            auto *convert = new QProcess(this);
-            convert->start(cmd, args);
-            bool finished = convert->waitForFinished(-1);
-            if (!finished || convert->exitStatus() != QProcess::NormalExit ||
-                convert->exitCode() != 0) {
-                QString errorOutput = QString::fromLocal8Bit(convert->readAllStandardError());
-                QString message     = "ImageMagick failed to convert image to file " + fileName;
-                if (!errorOutput.trimmed().isEmpty()) {
-                    message += "\n\n" + errorOutput.trimmed();
-                }
-                QMessageBox mb;
-                mb.setText("Image Viewer Error");
-                mb.setInformativeText(message);
-                mb.setIcon(QMessageBox::Warning);
-                mb.setStandardButtons(QMessageBox::Ok);
-                auto *button = mb.button(QMessageBox::Ok);
-                button->setIcon(QIcon(":/icons/dialog-ok.png"));
-                mb.exec();
-            }
-            delete convert;
-        } else {
-            QMessageBox mb;
-            mb.setText("Image Viewer Error");
-            mb.setInformativeText("Could not save image to file " + fileName);
-            mb.setIcon(QMessageBox::Warning);
-            mb.setStandardButtons(QMessageBox::Ok);
-            auto *button = mb.button(QMessageBox::Ok);
-            button->setIcon(QIcon(":/icons/dialog-ok.png"));
-            mb.exec();
         }
     }
 }

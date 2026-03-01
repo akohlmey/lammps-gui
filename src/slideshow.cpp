@@ -27,7 +27,6 @@
 #include <QImageReader>
 #include <QKeySequence>
 #include <QLabel>
-#include <QMessageBox>
 #include <QPalette>
 #include <QProcess>
 #include <QPushButton>
@@ -410,68 +409,14 @@ void SlideShow::stop_run()
 
 void SlideShow::save_current_image()
 {
-    QString fileName = QFileDialog::getSaveFileName(
-        this, "Export Current Image to Image File", ".",
-        "Image Files (*.png *.jpg *.jpeg *.gif *.bmp *.tga *.ppm *.tiff *.pgm *.xpm *.xbm)");
-    if (fileName.isEmpty()) return;
-
-    // try direct save and if it fails write to PNG and then convert with ImageMagick if available
-    if (!image.save(fileName)) {
-        if (has_exe("magick") || has_exe("convert")) {
-            QTemporaryFile tmpfile(QDir::tempPath() + "/LAMMPS_GUI.XXXXXX.png");
-            // open and close to generate temporary file name
-            (void)tmpfile.open();
-            (void)tmpfile.close();
-            if (!image.save(tmpfile.fileName())) {
-                QMessageBox::warning(this, "SlideShow Error",
-                                     "Could not save image to file " + fileName);
-                return;
-            }
-
-            QString cmd = "magick";
-            QStringList args{tmpfile.fileName(), fileName};
-            if (!has_exe("magick")) cmd = "convert";
-            auto *convert = new QProcess(this);
-            convert->start(cmd, args);
-            if (!convert->waitForFinished(-1)) {
-                const QString err = convert->errorString();
-                delete convert;
-                QFile::remove(fileName);
-                QMessageBox::warning(this, "SlideShow Error",
-                                     "ImageMagick conversion failed while saving to file " +
-                                         fileName + ":\n" + err);
-                return;
-            }
-            if (convert->exitStatus() != QProcess::NormalExit || convert->exitCode() != 0) {
-                const QString stderrText = QString::fromLocal8Bit(convert->readAllStandardError());
-                delete convert;
-                QFile::remove(fileName);
-                QString msg =
-                    "ImageMagick conversion failed while saving to file " + fileName + ".";
-                if (!stderrText.trimmed().isEmpty()) {
-                    msg += "\n\nDetails:\n" + stderrText.trimmed();
-                }
-                QMessageBox::warning(this, "SlideShow Error", msg);
-                return;
-            }
-            delete convert;
-            if (!QFile::exists(fileName)) {
-                QMessageBox::warning(this, "SlideShow Error",
-                                     "ImageMagick reported success, but the output file " +
-                                         fileName + " was not created.");
-                return;
-            }
-        } else {
-            QMessageBox::warning(this, "SlideShow Error",
-                                 "Could not save image to file " + fileName);
-        }
-    }
+    export_image(this, &image, "SlideShow");
 }
 
 void SlideShow::movie()
 {
-    QString fileName = QFileDialog::getSaveFileName(
-        this, "Export to Movie File", ".", "Movie Files (*.mp4 *.mkv *.avi *.mpg *.mpeg *.gif)");
+    QString fileName =
+        QFileDialog::getSaveFileName(this, "Export to Movie File", ".",
+                                     "Movie Files (*.mp4 *.mkv *.avi *.mpg *.mpeg *.gif *.webm)");
     if (fileName.isEmpty()) return;
 
     if (has_exe("ffmpeg")) {
@@ -520,9 +465,8 @@ void SlideShow::movie()
             ffmpeg->waitForFinished(-1);
             delete ffmpeg;
         } else {
-            QMessageBox::warning(this, "SlideShow Error",
-                                 "Cannot create temporary file for generating movie " +
-                                     concatfile.errorString());
+            warning(this, "SlideShow Error",
+                    "Cannot create temporary file for generating movie:", concatfile.errorString());
         }
     } else {
         QString cmd = "magick";

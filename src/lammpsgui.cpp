@@ -171,11 +171,11 @@ LammpsGui::LammpsGui(QWidget *parent, const QString &filename, int width, int he
         if (plugin_path.isEmpty()) {
             // none of the plugin paths could load, remove key
             settings.remove("plugin_path");
-            QMessageBox::critical(
-                this, "Error",
-                "Cannot open a LAMMPS shared library file or the provided path has an "
-                "incompatible LAMMPS version.\n\nPlease try again and use the -p command line "
-                "flag to specify a path to a suitable LAMMPS shared library file.");
+            critical(this, "LAMMPS-GUI Error",
+                     "Cannot open the LAMMPS shared library file or the provided path has an "
+                     "a file with an incompatible LAMMPS version.",
+                     "Please try again and use the -p command line flag to specify a path to "
+                     "a suitable LAMMPS shared library file.");
             exit(1);
         }
 
@@ -646,9 +646,9 @@ void LammpsGui::start_exe()
                     auto *vmd = new QProcess(this);
                     vmd->start(exe, args);
                 } else {
-                    QMessageBox::warning(this, "LAMMPS-GUI Error",
-                                         "Cannot create temporary file for loading system in VMD " +
-                                             vmdfile.errorString());
+                    warning(this, "LAMMPS-GUI Error",
+                            "Cannot create temporary file for loading system in VMD",
+                            vmdfile.errorString());
                 }
             }
             if (exe == "ovito") {
@@ -866,10 +866,8 @@ void LammpsGui::open_file(const QString &fileName)
 
     QDir::setCurrent(current_dir);
     if (!file.open(QIODevice::ReadOnly | QFile::Text)) {
-        QMessageBox::warning(this, "Warning",
-                             "Cannot open file " + path.absoluteFilePath() + ":\n " +
-                                 file.errorString() +
-                                 ".\n\nWill create new file on saving editor buffer.");
+        warning(this, "LAMMPS-GUI Warning", "Cannot open file " + path.absoluteFilePath() + ":",
+                file.errorString() + ".\n\nWill create new file on saving editor buffer.");
         ui->textEdit->document()->clear();
         ui->textEdit->document()->setPlainText(citeme);
         ui->textEdit->document()->setModified(false);
@@ -905,8 +903,8 @@ void LammpsGui::view_file(const QString &fileName)
 {
     QFile file(fileName);
     if (!file.open(QIODevice::ReadOnly | QFile::Text)) {
-        QMessageBox::warning(this, "Warning",
-                             "Cannot open file " + fileName + ": " + file.errorString() + ".\n");
+        warning(this, "LAMMPS-GUI Warning", "Cannot open file " + fileName + ":",
+                file.errorString());
     } else {
         file.close();
         auto *viewer = new FileViewer(fileName);
@@ -985,8 +983,8 @@ void LammpsGui::inspect_file(const QString &fileName)
     }
 
     if (!file.open(QIODevice::ReadOnly)) {
-        QMessageBox::warning(this, "Warning",
-                             "Cannot open file " + fileName + ": " + file.errorString() + ".\n");
+        warning(this, "LAMMPS-GUI Warning", "Cannot open file " + fileName + ":",
+                file.errorString());
         return;
     }
 
@@ -995,8 +993,7 @@ void LammpsGui::inspect_file(const QString &fileName)
     in.readRawData(magic, 16);
     file.close();
     if (strcmp(magic, LAMMPS_MAGIC) != 0) {
-        QMessageBox::warning(this, "Warning",
-                             "File " + fileName + " is not a LAMMPS restart file.\n");
+        warning(this, "LAMMPS-GUI Warning", "File " + fileName + " is not a LAMMPS restart file.");
         return;
     }
 
@@ -1051,7 +1048,8 @@ void LammpsGui::write_file(const QString &fileName)
     QFile file(path.absoluteFilePath());
 
     if (!file.open(QIODevice::WriteOnly | QFile::Text)) {
-        QMessageBox::warning(this, "Warning", "Cannot save file: " + file.errorString());
+        warning(this, "LAMMPS-GUI Warning", "Cannot save to file " + fileName + ":",
+                file.errorString());
         return;
     }
     setWindowTitle(QString("LAMMPS-GUI - Editor - " + current_file));
@@ -1380,19 +1378,17 @@ void LammpsGui::run_done()
         int update_val     = QSettings().value("updfreq", 100).toInt();
         int update_suggest = std::max(1, update_val / 5);
 
-        QString mesg("<p align=\"justified\">The I/O buffer for capturing the LAMMPS screen output "
-                     "was used by up to %1%.</p> <p align=\"justified\"><b>This can slow down the "
-                     "simulation.</b></p> <p align=\"justified\">Please consider reducing the "
-                     "amount of output to the screen, for example by increasing the thermo "
-                     "interval in the input from %2 to %3, or reducing the data update interval in "
-                     "the preferences from %4 to %5, or something similar.</p>");
+        QString mesg1("<p align=\"justified\">The I/O buffer for capturing the LAMMPS screen "
+                      "output was used by up to %1%.</p>"
+                      "<p align=\"justified\"><b>This can slow down the simulation.</b></p>");
+        QString mesg2("<p align=\"justified\">Please consider reducing the amount of output "
+                      "to the screen, for example by increasing the thermo interval in the "
+                      "input from %1 to %2, or reducing the data update interval in the "
+                      "preferences from %3 to %4, or something similar.</p>");
 
-        QMessageBox::critical(this, " Warning: High I/O Buffer Usage",
-                              mesg.arg((int)(100.0 * bufferuse))
-                                  .arg(thermo_val)
-                                  .arg(thermo_suggest)
-                                  .arg(update_val)
-                                  .arg(update_suggest));
+        critical(this, "LAMMPS-GUI Warning: High I/O Buffer Usage",
+                 mesg1.arg((int)(100.0 * bufferuse)),
+                 mesg2.arg(thermo_val).arg(thermo_suggest).arg(update_val).arg(update_suggest));
     }
 
     if (chartwindow) {
@@ -1442,9 +1438,8 @@ void LammpsGui::run_done()
     } else {
         status->setText("Failed.");
         ui->textEdit->setHighlight(nline, true);
-        QMessageBox::critical(this, "LAMMPS-GUI Error",
-                              QString("<p>Error running LAMMPS:\n\n<pre>") + errorbuf +
-                                  "</pre></p>");
+        critical(this, "LAMMPS-GUI Error", "<p>Error running LAMMPS:</p>",
+                 QString("<p><pre>%1</pre></p>").arg(errorbuf));
     }
     ui->textEdit->setCursor(nline);
     ui->textEdit->setFileList();
@@ -1456,8 +1451,7 @@ void LammpsGui::run_done()
 void LammpsGui::restart_lammps()
 {
     if (lammps.is_running()) {
-        QMessageBox::warning(this, "LAMMPS-GUI Error",
-                             "Must stop current run before relaunching LAMMPS");
+        warning(this, "LAMMPS-GUI Warning", "Must stop current run before relaunching LAMMPS");
         return;
     }
     silence_stdout();
@@ -1468,8 +1462,7 @@ void LammpsGui::restart_lammps()
 void LammpsGui::do_run(bool use_buffer)
 {
     if (lammps.is_running()) {
-        QMessageBox::warning(this, "LAMMPS-GUI Error",
-                             "Must stop current run before starting a new run");
+        warning(this, "LAMMPS-GUI Warning", "Must stop current run before starting a new run");
         return;
     }
 
@@ -1636,23 +1629,16 @@ void LammpsGui::render_image()
                 if (lammps.has_error()) {
                     char errormesg[DEFAULT_BUFLEN];
                     lammps.get_last_error_message(errormesg, DEFAULT_BUFLEN);
-                    QMessageBox mb;
-                    mb.setText("Image Viewer File Creation Error");
-                    mb.setInformativeText(
-                        QString("LAMMPS failed to create the image:<br><code>%1</code>")
-                        .arg(errormesg));
-                    mb.setIcon(QMessageBox::Warning);
-                    mb.setStandardButtons(QMessageBox::Ok);
-                    auto *button = mb.button(QMessageBox::Ok);
-                    button->setIcon(QIcon(":/icons/dialog-ok.png"));
-                    mb.exec();
+                    warning(this, "Image Viewer File Creation Error",
+                            "LAMMPS failed to create the image:",
+                            QString("<br><code>%1</code>").arg(errormesg));
                     return;
                 }
             }
             // still no system box. bail out with a suitable message
             if (!lammps.extract_setting("box_exist")) {
-                QMessageBox::warning(this, "ImageViewer Error",
-                                     "Cannot create snapshot image without a system box");
+                warning(this, "ImageViewer File Creation Error",
+                        "Cannot create snapshot image from an input not creating a system box");
                 return;
             }
             ui->textEdit->setTextCursor(saved);
@@ -1662,8 +1648,8 @@ void LammpsGui::render_image()
         imagewindow = new ImageViewer(current_file, &lammps);
         imagewindow->setMinimumSize(MINIMUM_WIDTH, MINIMUM_HEIGHT);
     } else {
-        QMessageBox::warning(this, "ImageViewer Error",
-                             "Cannot create snapshot image while LAMMPS is running");
+        warning(this, "ImageViewer File Creation Error",
+                "Cannot create snapshot image while LAMMPS is running");
         return;
     }
     imagewindow->show();
@@ -1818,7 +1804,7 @@ void LammpsGui::about()
     if (auto *clip = QGuiApplication::clipboard()) clip->setText(to_clipboard);
 #endif
 
-    QMessageBox msg;
+    QMessageBox msg(this);
     msg.setWindowTitle("About LAMMPS-GUI");
     msg.setWindowIcon(QIcon(":/icons/lammps-gui-icon-128x128.png"));
     msg.setText(version.c_str());
@@ -1840,7 +1826,7 @@ void LammpsGui::about()
 
 void LammpsGui::help()
 {
-    QMessageBox msg;
+    QMessageBox msg(this);
     msg.setWindowTitle("LAMMPS-GUI Quick Help");
     msg.setWindowIcon(QIcon(":/icons/lammps-gui-icon-128x128.png"));
     msg.setText("<div>This is LAMMPS-GUI version " LAMMPS_GUI_VERSION "</div>");
@@ -2383,13 +2369,13 @@ void LammpsGui::start_lammps()
         must update this check before next feature release
     */
     if (lammps.version() < 20250722) {
-        QMessageBox::critical(this, "Incompatible LAMMPS Version",
-                              "LAMMPS-GUI version " LAMMPS_GUI_VERSION " requires\n"
-                              "a LAMMPS version of at least 22 July 2025");
+        critical(this, "LAMMPS-GUI Error", "Incompatible LAMMPS Version:",
+                 "LAMMPS-GUI version " LAMMPS_GUI_VERSION " requires\n"
+                 "a LAMMPS version of at least 22 July 2025 update 2");
         exit(1);
     }
 
-    // delete additional arguments again (3 were there initially
+    // delete additional arguments again (3 were there initially)
     while ((int)lammps_args.size() > initial_narg) {
         delete[] lammps_args.back();
         lammps_args.pop_back();
@@ -2399,8 +2385,7 @@ void LammpsGui::start_lammps()
         char errorbuf[DEFAULT_BUFLEN];
         lammps.get_last_error_message(errorbuf, DEFAULT_BUFLEN);
 
-        QMessageBox::critical(this, "LAMMPS-GUI Error",
-                              QString("Error launching LAMMPS:\n\n") + errorbuf);
+        critical(this, "LAMMPS-GUI Error", "Error launching LAMMPS:", errorbuf);
     }
 }
 
@@ -2425,9 +2410,9 @@ void LammpsGui::setup_tutorial(int tutno, const QString &dir, bool purgedir, boo
     char errorbuf[DEFAULT_BUFLEN];
 
     if (!lammps.config_has_curl_support()) {
-        QMessageBox::critical(this, "LAMMPS-GUI tutorial files download error",
-                              "<p align=\"center\">LAMMPS must be compiled with libcurl to support "
-                              "downloading files</p>");
+        critical(this, "LAMMPS-GUI Error", "Failed to download tutorial files",
+                 "<p align=\"center\">LAMMPS must be compiled with libcurl to support downloading "
+                 "files</p>");
         return;
     }
 
@@ -2485,7 +2470,7 @@ void LammpsGui::setup_tutorial(int tutno, const QString &dir, bool purgedir, boo
     lammps.command(geturl.arg(tutno).arg(".manifest"));
     if (lammps.has_error()) {
         lammps.get_last_error_message(errorbuf, DEFAULT_BUFLEN);
-        QMessageBox::critical(this, "LAMMPS-GUI tutorial download error", QString(errorbuf));
+        critical(this, "LAMMPS-GUI Error", "Tutorial files download error:", QString(errorbuf));
         return;
     }
 
@@ -2544,7 +2529,7 @@ void LammpsGui::setup_tutorial(int tutno, const QString &dir, bool purgedir, boo
             dirstatus->show();
             status->repaint();
             lammps.get_last_error_message(errorbuf, DEFAULT_BUFLEN);
-            QMessageBox::critical(this, "LAMMPS-GUI tutorial download error", QString(errorbuf));
+            critical(this, "LAMMPS-GUI Error", "Tutorial files download error:", QString(errorbuf));
             return;
         }
 
@@ -2604,10 +2589,11 @@ void TutorialWizard::accept()
         QDir directory;
         curdir = dirname->text().trimmed();
         if (!directory.mkpath(curdir)) {
-            QMessageBox::warning(this, "Warning",
-                                 "Cannot create tutorial " + QString::number(_ntutorial) +
-                                     " working directory '" + curdir +
-                                     "'.\n\nGoing back to directory selection.");
+            warning(this, "LAMMPS-GUI Warning",
+                    QString("Cannot create tutorial %1 working directory '%2'.")
+                        .arg(_ntutorial)
+                        .arg(curdir),
+                    "Going back to directory selection.");
             back();
             return;
         }

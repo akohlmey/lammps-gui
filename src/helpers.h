@@ -16,6 +16,9 @@
 #include <string>
 #include <vector>
 
+class QWidget;
+class QImage;
+
 /**
  * @brief Duplicate a string from std::string
  * @param text The string to duplicate
@@ -57,6 +60,34 @@ extern std::vector<std::string> split_line(const std::string &text);
  * @return Pointer to the main widget (used for dialogs)
  */
 extern class QWidget *get_main_widget();
+
+/**
+ * @brief Provide standardized critical error dialog
+ * @param parent  Pointer to parent widget
+ * @param title   Error dialog title
+ * @param text1   Error message summary
+ * @param text2   Detailed error message (optional)
+ */
+extern void critical(QWidget *parent, const QString &title, const QString &text1,
+                     const QString &text2 = QString());
+
+/**
+ * @brief Provide standardized custom warning dialog
+ * @param parent  Pointer to parent widget
+ * @param title   Warning dialog title
+ * @param text1   Warning message summary
+ * @param text2   Detailed warning message (optional)
+ */
+extern void warning(QWidget *parent, const QString &title, const QString &text1,
+                    const QString &text2 = QString());
+
+/**
+ * @brief Save image directly or convert with ImageMagick
+ * @param parent  Pointer to parent widget
+ * @param image   Pointer to image class
+ * @param title   Warning dialog title if failed
+ */
+extern void export_image(QWidget *parent, QImage *image, const QString &title);
 
 /**
  * @brief Check if an executable is in the system PATH
