@@ -199,7 +199,7 @@ void critical(QWidget *parent, const QString &title, const QString &text1, const
     QMessageBox mb(parent);
     mb.setWindowTitle(title);
     mb.setText(text1);
-    mb.setInformativeText(text2);
+    if (!text2.isEmpty()) mb.setInformativeText(QString("<p>%1</p>").arg(text2));
     mb.setIcon(QMessageBox::Critical);
     mb.setStandardButtons(QMessageBox::Close);
     mb.setWindowIcon(QIcon(":/icons/lammps-gui-icon-128x128.png"));
@@ -216,7 +216,7 @@ void warning(QWidget *parent, const QString &title, const QString &text1, const 
     QMessageBox mb(parent);
     mb.setWindowTitle(title);
     mb.setText(text1);
-    mb.setInformativeText(text2);
+    if (!text2.isEmpty()) mb.setInformativeText(QString("<p>%1</p>").arg(text2));
     mb.setIcon(QMessageBox::Warning);
     mb.setStandardButtons(QMessageBox::Close);
     mb.setWindowIcon(QIcon(":/icons/lammps-gui-icon-128x128.png"));

@@ -65,6 +65,11 @@ Preferences::Preferences(LammpsWrapper *_lammps, QWidget *parent) :
     tabWidget->addTab(new EditorTab(settings), "&Editor Settings");
     tabWidget->addTab(new ChartsTab(settings), "Cha&rts Settings");
 
+    auto *button = buttonBox->button(QDialogButtonBox::Ok);
+    button->setIcon(QIcon(":/icons/dialog-ok.png"));
+    button = buttonBox->button(QDialogButtonBox::Cancel);
+    button->setIcon(QIcon(":/icons/dialog-cancel.png"));
+
     connect(buttonBox, &QDialogButtonBox::accepted, this, &Preferences::accept);
     connect(buttonBox, &QDialogButtonBox::rejected, this, &QDialog::reject);
 
@@ -217,11 +222,8 @@ void Preferences::accept()
     if (field) settings->setValue("https_proxy", field->text());
 
     if (need_relaunch) {
-        QMessageBox msg(QMessageBox::Information, QString("Relaunching LAMMPS-GUI"),
-                        QString("LAMMPS library plugin path was changed.\n"
-                                "LAMMPS-GUI must be relaunched."),
-                        QMessageBox::Ok);
-        msg.exec();
+        warning(this, "Relaunching LAMMPS-GUI", "LAMMPS library plugin path was changed.",
+                "LAMMPS-GUI must be relaunched.");
         const char *path = mystrdup(QCoreApplication::applicationFilePath());
         const char *arg0 = mystrdup(QCoreApplication::arguments().at(0));
         execl(path, arg0, (char *)nullptr);
@@ -313,9 +315,9 @@ GeneralTab::GeneralTab(QSettings *_settings, LammpsWrapper *_lammps, QWidget *pa
     settings->endGroup();
 
     auto *getallfont =
-        new QPushButton(QIcon(":/icons/preferences-desktop-font.png"), "Select Default Font...");
+        new QPushButton(QIcon(":/icons/preferences-desktop-font.png"), "Select &Default Font...");
     auto *gettextfont =
-        new QPushButton(QIcon(":/icons/preferences-desktop-font.png"), "Select Text Font...");
+        new QPushButton(QIcon(":/icons/preferences-desktop-font.png"), "Select &Text Font...");
     connect(getallfont, &QPushButton::released, this, &GeneralTab::newallfont);
     connect(gettextfont, &QPushButton::released, this, &GeneralTab::newtextfont);
 
@@ -375,7 +377,7 @@ GeneralTab::GeneralTab(QSettings *_settings, LammpsWrapper *_lammps, QWidget *pa
     auto *pluginlabel = new QLabel("Path to LAMMPS Shared Library File:");
     auto *pluginedit =
         new QLineEdit(settings->value("plugin_path", "liblammpsplugin.so").toString());
-    auto *pluginbrowse = new QPushButton("Browse...");
+    auto *pluginbrowse = new QPushButton("&Browse...");
     auto *pluginlayout = new QHBoxLayout;
     pluginedit->setObjectName("pluginedit");
     pluginlayout->addWidget(pluginedit);
