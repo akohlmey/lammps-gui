@@ -114,7 +114,6 @@ protected:
 private:
     void createActions();                   ///< Setup menu actions
     void updateActions();                   ///< Update action states
-    void saveFile(const QString &fileName); ///< Save image file
     void adjustWindowSize();                ///< Auto-resize window to fit image
     void update_fixes();                    ///< Update fix graphics information
     void update_regions();                  ///< Update region information

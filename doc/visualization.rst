@@ -23,12 +23,12 @@ ongoing run.  In case LAMMPS is not yet initialized, LAMMPS-GUI tries to
 identify the line with the first `run
 <https://docs.lammps.org/run.html>`_ or `minimize
 <https://docs.lammps.org/minimize.html>`_ command and execute all
-commands in the editor up to that line, and then executes a "run
-0" command.  This initializes the system so an image of the initial
-state of the system can be rendered.  If there was an error in that
+commands in the editor up to that line, and then executes a "run 0"
+command.  This initializes the system so an image of the initial state
+of the system that can be rendered.  If there was an error in that
 process, a dialog with the error message will appear.
 
-Automatic Settings
+Automatic settings
 ------------------
 
 When possible, LAMMPS-GUI tries to detect which elements the atoms
@@ -82,8 +82,53 @@ assigned to the different atom types.
 
 -----------
 
-Image Viewer controls
----------------------
+Customizations
+--------------
+
+.. |palette| image:: JPG/emblem-photos.png
+                     :width: 14px
+.. |inactive| image:: JPG/inactive-photos.png
+                     :width: 14px
+
+The Image Viewer controls described below support significant
+customization of the default visualization through the toolbar buttons,
+editable text fields, and additional dialogs.  This covers a wide
+variety of possible customizations.  After each change is applied,
+LAMMPS-GUI will have LAMMPS re-create the displayed image with the
+updated settings.  The resulting image can be saved or copied to the
+clipboard and pasted into a compatible application.
+
+.. admonition:: Delays in updating the image
+   :class: note
+
+   Some visualization settings, especially enabling SSAO and FSAA (see
+   below) or massively enlarging the image size, can significantly
+   increase the time required for LAMMPS to render the image.  While in
+   most cases, the image will be updated in a fraction of a second,
+   complex visualizations may take multiple seconds.  While LAMMPS is
+   active to render an updated image, a small color palette icon in the
+   menu bar is colored |palette| and will be grayed out |inactive| when
+   rendering is complete.
+
+For further customization or making the visualization available when
+running the simulation with LAMMPS directly (e.g. when running on a
+cluster after enlarging the system), you can copy the current `dump
+image <https://docs.lammps.org/dump_image.html>`_ and `dump_modify
+<https://docs.lammps.org/dump_image.html>`_ commands to the clipboard so
+they can be pasted into a LAMMPS input file in either the included
+:doc:`text editor window <editor>` or some other text editor and
+adjusted according to the documentation.
+
+The resulting images will be shown automaticall in the :ref:`slide show
+viewer <slideshow>` when running the simulation with the thus modified
+input from LAMMPS-GUI.  This strategy has been used to great effect to
+create many of the simulation snapshot images shown in this
+documentation and the LAMMPS manual.
+
+-----------
+
+Available controls
+------------------
 
 .. index:: image viewer controls
 
@@ -119,11 +164,6 @@ provides the following actions:
   simulation run, including in the :ref:`slide show viewer <slideshow>`.
 - **Close** (`Ctrl-W`): Close the Image Viewer window.
 - **Quit** (`Ctrl-Q`): Quit the entire application.
-
-.. |palette| image:: JPG/emblem-photos.png
-                     :width: 14px
-.. |inactive| image:: JPG/inactive-photos.png
-                     :width: 14px
 
 Next to the *File* menu, the **Width** and **Height** spin boxes set the
 dimensions of the rendered image in pixel.  The small palette icon on the
@@ -318,8 +358,8 @@ or **Cancel** to discard changes.  The **Help** button opens the LAMMPS
 
 .. _atom_settings:
 
-Atom and bond settings
-----------------------
+Atoms/bonds settings
+--------------------
 
 .. index:: atom settings
 .. index:: bond settings
@@ -332,10 +372,10 @@ Viewer toolbar.  It is opened by pressing the "Atoms/Bonds" button in
 the settings panel or by using the `Alt-A` keyboard shortcut.
 
 .. |atombond|  image:: JPG/lammps-gui-image-atom.png
-                     :width: 50%
+                     :width: 62%
 
 .. |autobond| image:: JPG/lammps-gui-autobond.png
-                     :width: 31%
+                     :width: 30%
 
 |autobond|  |atombond|
 
@@ -364,15 +404,20 @@ The dialog contains the following sections:
 
    - **VDW style** (checkbox): Enable or disable space-filling sphere
      rendering.  When unchecked, the ball-and-stick style is used.
-   - **Colormap**: Select the colormap used for coloring by a continuous
-     per-atom property.  Available colormaps are: *BWR*
-     (blue-white-red), *RWB* (red-white-blue), *GWR* (green-white-red),
-     *BWG* (blue-white-green), *Grayscale*, *Rainbow*, *Contrast*,
-     *Heatmap*, and *Sequential*.  These are pre-defined colormap
-     settings and cannot be adjusted from LAMMPS-GUI.  For further
-     customizations, the dump image command line has to be copied to the
-     editor and LAMMPS run normally.  Then the map setting can be
-     customized as explained in the `dump_modify colormap documentation
+   - **Colormap**: Select the colormap used for coloring by a per-atom
+     property.  Currently available continuous colormaps are: *BWR*
+     (blue-white-red), *RWB* (red-white-blue), *PWT*
+     (purple-white-teal), *BWG* (blue-white-green), *BGR*
+     (blue-green-red), "Viridis" (from matplotlib), "Plasma" (from
+     matplotlib), "Inferno" (from matplotlib), "Teal", "Rainbow", and
+     *Grayscale*.  *Sequential* is a map with discrete colors.  These
+     are pre-defined colormap settings and cannot be adjusted from
+     LAMMPS-GUI.  As for *all* image settings, further customizations
+     can be realized by copying the dump image command line as
+     customized by the Image Viewer to the editor and then run LAMMPS
+     and observe the resuling images in the Slideshow Viewer window.
+     Then the color map setting can be fully customized according to the
+     `dump_modify colormap documentation
      <https://docs.lammps.org/dump_image.html>`_.
    - **Min** / **Max**: Set the range of the colormap.  Use *auto* to
      have LAMMPS determine the range automatically or specify an
@@ -409,12 +454,12 @@ The dialog contains the following sections:
    - **Bodies** (checkbox): Enable or disable rendering of body particle
      shapes. When disabled, the particles are rendered as spheres like
      regular atoms.
-   - **Diameter**: The diameter of cylinders when used for body particle
-     rendering (range: 0.1 -- 10.0).
    - **Indexed** (checkbox): Use coloring by body index instead of the
      atom type to the body particle.
    - **Style** (radio buttons): Select the body rendering style --
-     *Cylinders*, *Triangles*, or *Both*.
+     *Cylinders*, *Triangles*, or *Both*.  For cylinders - when used for
+     body particle rendering - also their diameter can be set (range:
+     0.1 -- 10.0).
 
 **Ellipsoids**
    Controls visualization of `aspherical particles
@@ -425,8 +470,6 @@ The dialog contains the following sections:
    - **Ellipsoids** (checkbox): Enable or disable rendering of ellipsoid
      particle shapes. When disabled, the particles are rendered as
      spheres like regular atoms.
-   - **Diameter**: The diameter of cylinders when used for ellipsoid
-     particle rendering (range: 0.1 -- 10.0).
    - **Refine** (spinbox): Level of triangle mesh refinement.  At level
      1 the ellipsoids are represented by a deformed octahedron.  With a
      level increase, each triangle is replaced by 4 triangles following
@@ -436,7 +479,9 @@ The dialog contains the following sections:
      the image rasterizer included in LAMMPS.  These can be made less
      prominent by enabling anti-aliasing.
    - **Style** (radio buttons): Select the ellipsoid rendering style --
-     *Cylinders*, *Triangles*, or *Both*.
+     *Cylinders*, *Triangles*, or *Both*.  For cylinders - when used for
+     ellipsoid particle rendering - also their diameter can be set (range:
+     0.1 -- 10.0).
      
 **Lines**
    Controls visualization of `line segment particles
@@ -444,12 +489,9 @@ The dialog contains the following sections:
    simulation).
 
    - **Lines** (checkbox): Enable or disable rendering of line segment
-     particle shapes.  When disabled, the particles are rendered as
-     spheres like regular atoms.
-   - **Diameter**: The diameter of cylinders when used for line segment
-     particle rendering (range: 0.1 -- 10.0).
-   - **Style** (radio buttons): Select the particle rendering style --
-     *Cylinders*, *Triangles*, or *Both*.
+     particle shapes as connected cylinders.  When disabled, the
+     particles are rendered as spheres like regular atoms.  Also the
+     cylinder diameter can be set (range: 0.1 -- 10.0).
 
 **Triangles**
    Controls visualization of `triangulated particles
@@ -459,10 +501,10 @@ The dialog contains the following sections:
    - **Triangles** (checkbox): Enable or disable rendering of
      triangulated particle shapes.  When disabled, the particles are
      rendered as spheres like regular atoms.
-   - **Diameter**: The diameter of cylinders when used for triangulated
-     particle rendering (range: 0.1 -- 10.0).
    - **Style** (radio buttons): Select the particle rendering style --
-     *Cylinders*, *Triangles*, or *Both*.
+     *Cylinders*, *Triangles*, or *Both*.  For cylinders - when used for
+     triangle particle rendering - also their diameter can be set
+     (range: 0.1 -- 10.0).
 
 Press **Apply** to apply the settings and re-render the image, or
 **Cancel** to discard changes.   The **Help** button opens the LAMMPS

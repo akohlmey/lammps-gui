@@ -138,6 +138,46 @@ Preferences Class
 
 -----
 
+GeneralTab Class
+----------------
+
+.. doxygenclass:: GeneralTab
+   :members:
+
+-----
+
+AcceleratorTab Class
+--------------------
+
+.. doxygenclass:: AcceleratorTab
+   :members:
+
+-----
+
+SnapshotTab Class
+-----------------
+
+.. doxygenclass:: SnapshotTab
+   :members:
+
+-----
+
+EditorTab Class
+---------------
+
+.. doxygenclass:: EditorTab
+   :members:
+
+-----
+
+ChartsTab Class
+---------------
+
+.. doxygenclass:: ChartsTab
+   :members:
+
+-----
+
 Utility Components
 ==================
 
@@ -165,6 +205,14 @@ FlagWarnings Class
 .. doxygenclass:: FlagWarnings
    :members:
    :protected-members:
+
+-----
+
+ImageInfo Class
+---------------
+
+.. doxygenclass:: ImageInfo
+   :members:
 
 -----
 

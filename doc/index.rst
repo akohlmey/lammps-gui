@@ -41,7 +41,12 @@ LAMMPS-GUI is fully integrated with a `collection of LAMMPS tutorials
 
 Many of the features in LAMMPS-GUI are useful beyond working on
 tutorials.  For instance, it can streamline the process of prototyping
-new simulation projects or debugging misbehaving simulations.
+new simulation projects or debugging misbehaving simulations.  It also
+has been found extremely useful in creating, debugging, and tweaking
+`advanced visualizations with LAMMPS
+<https://docs.lammps.org/Howto_viz.html>`_ using the built-in
+visualization facility of the `dump image command
+<https://docs.lammps.org/dump_image.html>`_.
 
 LAMMPS-GUI is Copyright (c) |copyright|, and distributed under the
 terms of the GNU public license version 2.0 or later (GPL-2.0-or-later).
@@ -170,11 +175,8 @@ the internals of LAMMPS-GUI or contribute to its development.
    :includehidden:
 
    introduction
-   architecture
    api_reference
    guidelines
-   lammps_interface
-   qt_integration
    testing
 
 ----------

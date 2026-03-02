@@ -11,16 +11,22 @@
 
 #include "helpers.h"
 
+#include <QAbstractButton>
 #include <QApplication>
 #include <QBrush>
 #include <QColor>
 #include <QDir>
 #include <QFile>
+#include <QFileDialog>
 #include <QFileInfo>
+#include <QIcon>
+#include <QImage>
+#include <QMessageBox>
 #include <QPalette>
 #include <QProcess>
 #include <QRegularExpression>
 #include <QStringList>
+#include <QTemporaryFile>
 #include <QWidget>
 
 #include <cstdio>
@@ -184,6 +190,98 @@ QWidget *get_main_widget()
     for (QWidget *widget : QApplication::topLevelWidgets())
         if (widget->objectName() == "LammpsGui") return widget;
     return nullptr;
+}
+
+// customized critical error dialog
+
+void critical(QWidget *parent, const QString &title, const QString &text1, const QString &text2)
+{
+    QMessageBox mb(parent);
+    mb.setWindowTitle(title);
+    mb.setText(text1);
+    if (!text2.isEmpty()) mb.setInformativeText(QString("<p>%1</p>").arg(text2));
+    mb.setIcon(QMessageBox::Critical);
+    mb.setStandardButtons(QMessageBox::Close);
+    mb.setWindowIcon(QIcon(":/icons/lammps-gui-icon-128x128.png"));
+    // customize button icon
+    auto *button = mb.button(QMessageBox::Close);
+    button->setIcon(QIcon(":/icons/window-close.png"));
+    mb.exec();
+}
+
+// customized warning dialog
+
+void warning(QWidget *parent, const QString &title, const QString &text1, const QString &text2)
+{
+    QMessageBox mb(parent);
+    mb.setWindowTitle(title);
+    mb.setText(text1);
+    if (!text2.isEmpty()) mb.setInformativeText(QString("<p>%1</p>").arg(text2));
+    mb.setIcon(QMessageBox::Warning);
+    mb.setStandardButtons(QMessageBox::Close);
+    mb.setWindowIcon(QIcon(":/icons/lammps-gui-icon-128x128.png"));
+    // customize button icon
+    auto *button = mb.button(QMessageBox::Close);
+    button->setIcon(QIcon(":/icons/window-close.png"));
+    mb.exec();
+}
+
+// save image directly and if that fails, save to PNG and convert with ImageMagick
+void export_image(QWidget *parent, QImage *image, const QString &title)
+{
+    if (!image) return;
+    QString fileName = QFileDialog::getSaveFileName(
+        parent, "Export Current Image to Image File", ".",
+        "Image Files (*.png *.jpg *.jpeg *.gif *.bmp *.tga *.ppm *.tiff *.webp *.pgm *.xpm *.xbm)");
+    if (fileName.isEmpty()) return;
+
+    // try direct save and if it fails write to PNG and then convert with ImageMagick if available
+    if (!image->save(fileName)) {
+        if (has_exe("magick") || has_exe("convert")) {
+            QTemporaryFile tmpfile(QDir::tempPath() + "/LAMMPS_GUI.XXXXXX.png");
+            // open and close to generate temporary file name
+            (void)tmpfile.open();
+            (void)tmpfile.close();
+            if (!image->save(tmpfile.fileName())) {
+                warning(parent, title + " Error", "Could not save image to file " + fileName);
+                return;
+            }
+
+            QString cmd = "magick";
+            QStringList args{tmpfile.fileName(), fileName};
+            if (!has_exe("magick")) cmd = "convert";
+            auto *convert = new QProcess(parent);
+            convert->start(cmd, args);
+            if (!convert->waitForFinished(-1)) {
+                const QString errmesg = convert->errorString();
+                delete convert;
+                QFile::remove(fileName);
+                warning(parent, title + " Error",
+                        "ImageMagick conversion failed while saving to file " + fileName + ":",
+                        errmesg);
+                return;
+            }
+            if (convert->exitStatus() != QProcess::NormalExit || convert->exitCode() != 0) {
+                const QString stderrText = QString::fromLocal8Bit(convert->readAllStandardError());
+                delete convert;
+                QFile::remove(fileName);
+                warning(parent, title + " Error",
+                        "ImageMagick conversion failed while saving to file " + fileName + ":",
+                        stderrText.trimmed().isEmpty() ? "Details:\n" + stderrText.trimmed() : "");
+
+                return;
+            }
+            delete convert;
+            if (!QFile::exists(fileName)) {
+                warning(parent, title + " Error",
+                        "ImageMagick reported success, but the output file " + fileName +
+                            " was not created.");
+                return;
+            }
+        } else {
+            warning(parent, title + " Error", "Could not save image to file " + fileName);
+        }
+    }
 }
 
 // find if executable is in path

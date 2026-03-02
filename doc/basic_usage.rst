@@ -6,6 +6,49 @@ Basic usage of LAMMPS-GUI
 .. index:: getting started
 .. index:: main window
 
+Command-line options
+^^^^^^^^^^^^^^^^^^^^
+
+.. index:: command-line options
+.. index:: command-line arguments
+.. index:: window size
+.. index:: visual style
+
+LAMMPS-GUI supports the following command-line options:
+
+.. code-block:: bash
+
+   lammps-gui [options] [file]
+
+.. list-table::
+   :header-rows: 1
+   :widths: 30 70
+
+   * - Option
+     - Description
+   * - ``-x <width>``, ``--width <width>``
+     - Override the editor window width in pixels
+   * - ``-y <height>``, ``--height <height>``
+     - Override the editor window height in pixels
+   * - ``-s <style>``, ``--style <style>``
+     - Set the visual style of the application (default: ``Fusion``)
+   * - ``-p <path>``, ``--pluginpath <path>``
+     - Set the path to the LAMMPS shared library (plugin mode only)
+   * - ``-v``, ``--version``
+     - Print version information and exit
+   * - ``-h``, ``--help``
+     - Print usage information and exit
+
+The optional ``file`` argument specifies a LAMMPS input file to open on
+startup.  If no file is provided, LAMMPS-GUI starts with an empty
+editor buffer.  Available choices for the visual style depend on the
+platform and Qt configuration.  On most platforms, there is also the
+option ``Windows`` which is a visual style somewhat resembling
+`Windows 95 <https://en.wikipedia.org/wiki/Windows_95>`_.
+
+Launching LAMMPS-GUI
+^^^^^^^^^^^^^^^^^^^^
+
 When LAMMPS-GUI starts, it shows the main window, labeled *Editor*, with
 either an empty buffer or the contents of the file used as argument. In
 the latter case it may look like the following:
@@ -37,15 +80,16 @@ Opening and saving files
 
 The LAMMPS-GUI application can be launched without command-line
 arguments and then starts with an empty buffer in the *Editor* window.
-If arguments are given LAMMPS will use first command-line argument as
-the file name for the *Editor* buffer and reads its contents into the
-buffer, if the file exists.  All further arguments are *ignored*.  Files
-can also be opened via the *File* menu, the `Ctrl-O` (`Command-O` on
-macOS) keyboard shortcut or by drag-and-drop of a file from a graphical
-file manager into the editor window.  If a file extension
-(e.g. ``.lmp``) has been registered with the graphical environment to
-launch LAMMPS-GUI, an existing input file can be launched with
-LAMMPS-GUI through double clicking.
+
+If a file argument is given, LAMMPS-GUI will use it as the file name for
+the *Editor* buffer and read its contents into the buffer, provided a
+file of that name exists; otherwise the buffer will be empty, but set up
+to save any added content to that file. Files can also be opened via the
+*File* menu, the `Ctrl-O` (`Command-O` on macOS) keyboard shortcut or by
+drag-and-drop of a file from a graphical file manager into the editor
+window.  If a file extension (e.g. ``.lmp``) has been registered with
+the graphical environment to launch LAMMPS-GUI, an existing input file
+can be launched with LAMMPS-GUI through double clicking.
 
 Only one file can be edited at a time, so opening a new file with a file
 already loaded into the buffer closes that buffer.  If the buffer has
