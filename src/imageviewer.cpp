@@ -1338,25 +1338,19 @@ void ImageViewer::atom_settings()
     layout->addWidget(new QLabel("Size: "), idx, n++, 1, 1, Qt::AlignVCenter | Qt::AlignRight);
     auto *bndiam = new QComboBox;
     bndiam->setObjectName("bndiam");
-    bndiam->addItems({"atom", "type"});
+    QStringList bnitems{"atom", "type", "0.2", "0.4"};
+    if (bonddiam != "none") bnitems << bonddiam;
+    bnitems.removeDuplicates();
+    bndiam->addItems(bnitems);
     if (atomcustom) { // select item that was selected the last time
-        if (bonddiam == "none") {
+        if (bonddiam == "none") { // none means bonds are disabled
             bondbutton->setCheckState(Qt::Unchecked);
-        } else if ((bonddiam == "atom") || (bonddiam == "type")) {
+        } else {
             for (int idx = 0; idx < bndiam->count(); ++idx) {
                 if (bndiam->itemText(idx) == bonddiam) bndiam->setCurrentIndex(idx);
             }
-        } else {
-            int idx = bndiam->count();
-            bndiam->addItem(bonddiam);
-            bndiam->setCurrentIndex(idx);
         }
     }
-    if (bndiam->count() < 3) {
-        bndiam->addItem("0.2");
-        bndiam->addItem("0.4");
-    }
-
     bndiam->setEditable(true);
     QRegularExpression validbond(R"((atom|type|none|^\d+\.?\d*|^\d*\.?\d+))");
     bndiam->setValidator(new QRegularExpressionValidator(validbond, this));
