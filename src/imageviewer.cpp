@@ -1266,19 +1266,31 @@ void ImageViewer::atom_settings()
     }
     layout->addWidget(acolor, idx, n++, 1, 1);
     layout->addWidget(new QLabel("Size: "), idx, n++, 1, 1, Qt::AlignVCenter | Qt::AlignRight);
+
+    QRegularExpression validatom(R"((element|diameter|sigma|type|none|^\d+\.?\d*|^\d*\.?\d+))");
+    QStringList aditems;
+    if (useelements) aditems << "element";
+    if (usediameter) aditems << "diameter";
+    if (usesigma) aditems << "sigma";
+    aditems << "type" << "3.5" << "3.0" << "2.0";
+    if ((atomSize > 0.1) && (atomSize < 5.0)) {
+        aditems << QString::number(2.0 * atomSize, 'f', 1);
+    } else {
+        aditems << QString::number(2.0 * atomSize, 'g', 3);
+    }
+    if (atomdiam != "none") aditems << atomdiam;
+    aditems.removeDuplicates();
+
     auto *adiam = new QComboBox;
     adiam->setObjectName("adiam");
-    if (useelements || usediameter || usesigma) adiam->addItem("auto");
-    adiam->addItem("type");
-    if (useelements) adiam->addItem("element");
-    if (usediameter) adiam->addItem("diameter");
-    if (usesigma) adiam->addItem("sigma");
+    adiam->addItems(aditems);
+    adiam->setEditable(true);
+    adiam->setValidator(new QRegularExpressionValidator(validatom, this));
     if (atomcustom) { // select item that was selected the last time
         for (int idx = 0; idx < adiam->count(); ++idx) {
             if (adiam->itemText(idx) == atomdiam) adiam->setCurrentIndex(idx);
         }
     }
-
     layout->addWidget(adiam, idx, n++, 1, 1);
     layout->addWidget(new QLabel("Transparency: "), idx, n++, 1, 2,
                       Qt::AlignVCenter | Qt::AlignRight);
@@ -1336,13 +1348,18 @@ void ImageViewer::atom_settings()
     }
     layout->addWidget(bncolor, idx, n++, 1, 1);
     layout->addWidget(new QLabel("Size: "), idx, n++, 1, 1, Qt::AlignVCenter | Qt::AlignRight);
-    auto *bndiam = new QComboBox;
-    bndiam->setObjectName("bndiam");
+
+    QRegularExpression validbond(R"((atom|type|none|^\d+\.?\d*|^\d*\.?\d+))");
     QStringList bnitems{"atom", "type", "0.2", "0.4"};
     if (bonddiam != "none") bnitems << bonddiam;
     bnitems.removeDuplicates();
+
+    auto *bndiam = new QComboBox;
+    bndiam->setObjectName("bndiam");
     bndiam->addItems(bnitems);
-    if (atomcustom) { // select item that was selected the last time
+    bndiam->setEditable(true);
+    bndiam->setValidator(new QRegularExpressionValidator(validbond, this));
+    if (atomcustom) {             // select item that was selected the last time
         if (bonddiam == "none") { // none means bonds are disabled
             bondbutton->setCheckState(Qt::Unchecked);
         } else {
@@ -1351,9 +1368,6 @@ void ImageViewer::atom_settings()
             }
         }
     }
-    bndiam->setEditable(true);
-    QRegularExpression validbond(R"((atom|type|none|^\d+\.?\d*|^\d*\.?\d+))");
-    bndiam->setValidator(new QRegularExpressionValidator(validbond, this));
     layout->addWidget(bndiam, idx, n++, 1, 1);
     auto *autobutton = new QCheckBox("AutoBonds:", this);
     autobutton->setCheckState(autobond ? Qt::Checked : Qt::Unchecked);
