@@ -1296,7 +1296,8 @@ void ImageViewer::atom_settings()
     layout->addWidget(new QLabel("Colormap: "), idx, n++, 1, 1, Qt::AlignVCenter | Qt::AlignRight);
     auto *amap = new QComboBox;
     amap->setObjectName("amap");
-    amap->addItems({"BWR", "RWB", "GWR", "BWG", "Grayscale", "Rainbow", "Sequential", "Heatmap"});
+    amap->addItems({"BWR", "RWB", "PWT", "BWG", "BGR", "Viridis", "Plasma", "Inferno", "Teal",
+                    "Rainbow", "Sequential", "Grayscale"});
     for (int idx = 0; idx < amap->count(); ++idx) {
         if (amap->itemText(idx) == colormap) amap->setCurrentIndex(idx);
     }
@@ -2460,15 +2461,19 @@ void ImageViewer::createImage()
     if (mmin == "auto") mmin = "min";
     QString mmax = mapmax;
     if (mmax == "auto") mmax = "max";
-    if (colormap == "BWR") {
+    if (colormap == "RWB") {
+        dumpcmd += " color map1 0.459 0.055 0.075";
+        dumpcmd += " color map2 0.000 0.227 0.427";
         dumpcmd += QString(" amap %1 %2 cf 0.0 ").arg(mmin).arg(mmax);
-        dumpcmd += "3 min red 0.5 white max blue";
-    } else if (colormap == "RWB") {
+        dumpcmd += "3 min map1 0.5 white max map2";
+    } else if (colormap == "PWT") {
+        dumpcmd += " color map1 0.286 0.114 0.553";
+        dumpcmd += " color map2 0.000 0.255 0.267";
         dumpcmd += QString(" amap %1 %2 cf 0.0 ").arg(mmin).arg(mmax);
-        dumpcmd += "3 min blue 0.5 white max red";
-    } else if (colormap == "GWR") {
+        dumpcmd += "3 min map1 0.5 white max map2";
+    } else if (colormap == "BGR") {
         dumpcmd += QString(" amap %1 %2 cf 0.0 ").arg(mmin).arg(mmax);
-        dumpcmd += "3 min green 0.5 white max red";
+        dumpcmd += "3 min blue 0.5 green max red";
     } else if (colormap == "BWG") {
         dumpcmd += QString(" amap %1 %2 cf 0.0 ").arg(mmin).arg(mmax);
         dumpcmd += "3 min blue 0.5 white max green";
@@ -2477,8 +2482,7 @@ void ImageViewer::createImage()
         dumpcmd += "2 min darkgray max silver";
     } else if (colormap == "Rainbow") {
         dumpcmd += QString(" amap %1 %2 cf 0.0 ").arg(mmin).arg(mmax);
-        dumpcmd += "9 min magenta 0.125 red 0.25 yellow 0.375 green 0.5 cyan 0.625 blue 0.75 blue "
-                   "0.875 purple max magenta";
+        dumpcmd += "8 min magenta 0.083 red 0.249 yellow 0.416 green 0.6 cyan 0.749 blue 0.916 purple max magenta";
     } else if (colormap == "Sequential") {
         dumpcmd += " color map1 0.808 0.808 0.808";
         dumpcmd += " color map2 0.647 0.349 0.667";
@@ -2488,17 +2492,7 @@ void ImageViewer::createImage()
         dumpcmd += " color map6 0.031 0.165 0.329";
         dumpcmd += QString(" amap %1 %2 sa 1.0 ").arg(mmin).arg(mmax);
         dumpcmd += "6 map1 map2 map3 map4 map5 map6";
-    } else if (colormap == "Heatmap") {
-        dumpcmd += " color map1 0.125 0.400 0.659";
-        dumpcmd += " color map2 0.557 0.757 0.855";
-        dumpcmd += " color map3 0.804 0.882 0.925";
-        dumpcmd += " color map4 0.929 0.929 0.929";
-        dumpcmd += " color map5 0.965 0.839 0.761";
-        dumpcmd += " color map6 0.831 0.447 0.392";
-        dumpcmd += " color map7 0.682 0.157 0.173";
-        dumpcmd += QString(" amap %1 %2 cf 0.0 ").arg(mmin).arg(mmax);
-        dumpcmd += "7 min map1 0.167 map2 0.333 map3 0.5 map4 0.667 map5 0.833 map6 max map7";
-    } else if (colormap == "Sequential") {
+    } else if (colormap == "Teal") {
         dumpcmd += " color map1 0.710 0.820 0.682";
         dumpcmd += " color map2 0.502 0.682 0.576";
         dumpcmd += " color map3 0.337 0.545 0.529";
@@ -2506,7 +2500,34 @@ void ImageViewer::createImage()
         dumpcmd += " color map5 0.106 0.282 0.369";
         dumpcmd += " color map6 0.071 0.153 0.251";
         dumpcmd += QString(" amap %1 %2 cf 0.0 ").arg(mmin).arg(mmax);
-        dumpcmd += "6 min map1 0.2 map2 0.4 map3 0.6 map4 0.8 map5 max map6";
+        dumpcmd += "6 min map6 0.2 map5 0.4 map4 0.6 map3 0.8 map2 max map1";
+    } else if (colormap == "Viridis") {
+        dumpcmd += " color map1 0.282 0.129 0.451";
+        dumpcmd += " color map2 0.435 0.435 0.556";
+        dumpcmd += " color map3 0.161 0.686 0.498";
+        dumpcmd += " color map4 0.741 0.875 0.149";
+        dumpcmd += QString(" amap %1 %2 cf 0.0 ").arg(mmin).arg(mmax);
+        dumpcmd += "4 min map1 0.333 map2 0.667 map3 max map4";
+    } else if (colormap == "Inferno") {
+        dumpcmd += " color map1 0.032 0.032 0.048";
+        dumpcmd += " color map2 0.318 0.071 0.486";
+        dumpcmd += " color map3 0.718 0.216 0.475";
+        dumpcmd += " color map4 0.988 0.537 0.380";
+        dumpcmd += " color map5 0.988 0.992 0.749";
+        dumpcmd += QString(" amap %1 %2 cf 0.0 ").arg(mmin).arg(mmax);
+        dumpcmd += "5 min map1 0.25 map2 0.5 map3 0.75 map4 max map5";
+    } else if (colormap == "Plasma") {
+        dumpcmd += " color map1 0.051 0.031 0.529";
+        dumpcmd += " color map2 0.612 0.090 0.620";
+        dumpcmd += " color map3 0.929 0.475 0.325";
+        dumpcmd += " color map4 0.941 0.976 0.129";
+        dumpcmd += QString(" amap %1 %2 cf 0.0 ").arg(mmin).arg(mmax);
+        dumpcmd += "4 min map1 0.333 map2 0.667 map3 max map4";
+    } else { // default is "BWR"
+        dumpcmd += " color map1 0.000 0.227 0.427";
+        dumpcmd += " color map2 0.459 0.055 0.075";
+        dumpcmd += QString(" amap %1 %2 cf 0.0 ").arg(mmin).arg(mmax);
+        dumpcmd += "3 min map1 0.5 white max map2";
     }
     settings.endGroup();
 
