@@ -334,8 +334,10 @@ ImageViewer::ImageViewer(const QString &fileName, LammpsWrapper *_lammps, QWidge
     tridiam        = 0.2;
     triflag        = CYLINDERS;
     xcenter = ycenter = zcenter = 0.5;
-
     if (lammps->extract_setting("dimension") == 2) zcenter = 0.0;
+    // initialize atomSize with lattice spacing
+    const auto *xlattice = (const double *)lammps->extract_global("xlattice");
+    if (xlattice) atomSize = *xlattice;
     settings.endGroup();
 
     auto pix   = QPixmap(":/icons/emblem-photos.png");
@@ -349,7 +351,7 @@ ImageViewer::ImageViewer(const QString &fileName, LammpsWrapper *_lammps, QWidge
     renderstatus->setEnabled(false);
     renderstatus->setToolTip("Render status");
     renderstatus->setObjectName("renderstatus");
-    auto *asize = new QLineEdit(QString::number(atomSize));
+    auto *asize = new QLineEdit(QString::number(2.0 * atomSize));
     auto *valid = new QDoubleValidator(1.0e-10, 1.0e10, 10, asize);
     asize->setValidator(valid);
     asize->setObjectName("atomSize");
@@ -728,7 +730,8 @@ void ImageViewer::set_atom_size()
 {
     auto *field = qobject_cast<QLineEdit *>(sender());
     if (!field) return;
-    atomSize = field->text().toDouble();
+    atomSize = 0.5 * field->text().toDouble();
+    atomdiam = field->text();
     createImage();
 }
 
@@ -1594,19 +1597,24 @@ void ImageViewer::atom_settings()
         bonddiam = value;
     }
 
+    // enable atom size input field in main window, if not set to symbolic value
     if (atomcustom) {
-        auto *edit = findChild<QLineEdit *>("atomSize");
-        if (edit) {
-            edit->setEnabled(true);
-            edit->show();
-            edit->setText(QString::number(atomSize));
-        }
-        auto *label = findChild<QLabel *>("AtomLabel");
-        if (label) {
-            label->setEnabled(true);
-            label->show();
+        if ((atomdiam != "element") && (atomdiam != "type") && (atomdiam != "diameter") &&
+            (atomdiam != "sigma") && (atomdiam != "none")) {
+            auto *edit = findChild<QLineEdit *>("atomSize");
+            if (edit) {
+                edit->setEnabled(true);
+                edit->show();
+                edit->setText(QString::number(2.0 * atomSize));
+            }
+            auto *label = findChild<QLabel *>("AtomLabel");
+            if (label) {
+                label->setEnabled(true);
+                label->show();
+            }
         }
     }
+
     if (has_autobonds()) {
         autobond   = autobutton->isChecked();
         bondcutoff = bcutoff->text().toDouble();
@@ -1635,6 +1643,7 @@ void ImageViewer::atom_settings()
         else
             bodycolor = "type";
     }
+    // diameter for body cylinders
     if (bdiam->hasAcceptableInput()) bodydiam = bdiam->text().toDouble();
     if (bcbutton->isChecked()) {
         bodyflag = CYLINDERS;
@@ -2197,118 +2206,104 @@ void ImageViewer::createImage()
     auto *masses           = (double *)lammps->extract_atom("mass");
     const char *pair_style = (const char *)lammps->extract_global("pair_style");
     QString units          = (const char *)lammps->extract_global("units");
-    QString elements;
+    QString elements{"element "};
     QString adiams;
 
-    if ((units == "real") || (units == "metal")) atomSize = 1.7; // covalent radius of Carbon
-    if (!atomcustom || (atomcolor == "element")) {
-        useelements = false;
-        elements    = "element ";
-        if (masses && ((units == "real") || (units == "metal"))) {
-            useelements = true;
-            if (!atomcustom) atomcolor = "element";
-            for (int i = 1; i <= ntypes; ++i) {
-                int idx = get_pte_from_mass(masses[i]);
-                if (idx == 0) useelements = false;
-                elements += QString(pte_label[idx]) + blank;
-                adiams += QString("adiam %1 %2 ").arg(i).arg(vdwfactor * pte_vdw_radius[idx]);
-            }
+    // detect if we can use element information, otherwise set atom color to "type" by default
+    useelements = false;
+    if (masses && ((units == "real") || (units == "metal"))) {
+        useelements = true;
+        if (!atomcustom) atomcolor = "element";
+        for (int i = 1; i <= ntypes; ++i) {
+            int idx = get_pte_from_mass(masses[i]);
+            if (idx == 0) useelements = false;
+            elements += QString(pte_label[idx]) + blank;
+            adiams += QString("adiam %1 %2 ").arg(i).arg(vdwfactor * pte_vdw_radius[idx]);
         }
+    } else {
+        if (!atomcustom) atomcolor = "type";
     }
-    if (atomcustom && (atomcolor != "element")) {
-        useelements = false;
-        elements    = "element ";
-        if (masses && ((units == "real") || (units == "metal"))) {
-            useelements = true;
+
+    usediameter = lammps->extract_setting("radius_flag") != 0;
+    usesigma    = false;
+    // if we cannot use element info or diameter data, try to use Lennard-Jones sigma for radius
+    if (!useelements && !usediameter && pair_style && (strncmp(pair_style, "lj/", 3) == 0)) {
+        auto **sigma = (double **)lammps->extract_pair("sigma");
+        if (sigma) {
+            usesigma = true;
             for (int i = 1; i <= ntypes; ++i) {
-                int idx = get_pte_from_mass(masses[i]);
-                if (idx == 0) useelements = false;
-                elements += QString(pte_label[idx]) + blank;
-                adiams += QString("adiam %1 %2 ").arg(i).arg(vdwfactor * pte_vdw_radius[idx]);
-            }
-        } else {
-            elements.clear();
-            for (int i = 1; i <= ntypes; ++i) {
-                adiams += QString("adiam %1 %2 ").arg(i).arg(vdwfactor * atomSize);
+                if (sigma[i][i] > 0.0)
+                    adiams += QString("adiam %1 %2 ").arg(i).arg(vdwfactor * sigma[i][i]);
             }
         }
     }
 
-    if (!atomcustom || (atomdiam == "auto") || (atomdiam == "element") || (atomdiam == "sigma") ||
-        (atomdiam == "diameter")) {
-        usesigma    = false;
-        usediameter = lammps->extract_setting("radius_flag") != 0;
-        // use Lennard-Jones sigma for radius, if available
-        if (!useelements && !usediameter && pair_style && (strncmp(pair_style, "lj/", 3) == 0)) {
-            auto **sigma = (double **)lammps->extract_pair("sigma");
-            if (sigma) {
-                usesigma = true;
-                for (int i = 1; i <= ntypes; ++i) {
-                    if (sigma[i][i] > 0.0)
-                        adiams += QString("adiam %1 %2 ").arg(i).arg(vdwfactor * sigma[i][i]);
+    // adjust atomsize setting and pushbutton state and reset adiams string, if needed
+    if (showatoms) {
+        auto *edit   = findChild<QLineEdit *>("atomSize");
+        auto *label  = findChild<QLabel *>("AtomLabel");
+        auto *button = findChild<QPushButton *>("vdw");
+        if (edit && label && button) {
+            button->setEnabled(true);
+            if (atomcustom) {
+                if ((atomdiam != "element") && (atomdiam != "diameter") && (atomdiam != "sigma")) {
+                    edit->setEnabled(true);
+                    edit->show();
+                    label->setEnabled(true);
+                    label->show();
+                    adiams.clear();
+                    for (int i = 1; i <= ntypes; ++i) {
+                        adiams += QString("adiam %1 %2 ").arg(i).arg(vdwfactor * atomSize);
+                    }
+                } else {
+                    edit->setEnabled(false);
+                    edit->hide();
+                    label->setEnabled(false);
+                    label->hide();
+                }
+            } else {
+                if (useelements || usediameter || usesigma) {
+                    edit->setEnabled(false);
+                    edit->hide();
+                    label->setEnabled(false);
+                    label->hide();
+                } else {
+                    edit->setEnabled(true);
+                    edit->show();
+                    label->setEnabled(true);
+                    label->show();
                 }
             }
         }
-    }
-
-    // adjust pushbutton state and clear adiams string to disable VDW display, if needed
-    if (showatoms && (useelements || usediameter || usesigma || atomcustom)) {
+    } else {
+        adiams.clear();
+        auto *edit   = findChild<QLineEdit *>("atomSize");
+        auto *label  = findChild<QLabel *>("AtomLabel");
         auto *button = findChild<QPushButton *>("vdw");
-        if (button) button->setEnabled(true);
-        auto *edit = findChild<QLineEdit *>("atomSize");
-        if (edit) {
+        if (edit && label && button) {
+            button->setEnabled(true);
             edit->setEnabled(false);
             edit->hide();
-        }
-        auto *label = findChild<QLabel *>("AtomLabel");
-        if (label) {
             label->setEnabled(false);
             label->hide();
         }
-
-    } else {
-        adiams.clear();
-        auto *button = findChild<QPushButton *>("vdw");
-        if (button) button->setEnabled(false);
-
-        auto *label = findChild<QLabel *>("AtomLabel");
-        if (label) {
-            label->setEnabled(true);
-            label->show();
-        }
-        auto *edit = findChild<QLineEdit *>("atomSize");
-        if (edit) {
-            if (!edit->isEnabled()) {
-                edit->setEnabled(true);
-                edit->show();
-                // initialize with lattice spacing
-                const auto *xlattice = (const double *)lammps->extract_global("xlattice");
-                if (xlattice) atomSize = *xlattice;
-                edit->setText(QString::number(atomSize));
-            }
-            atomSize = edit->text().toDouble();
-        }
-        if ((atomSize != 1.0) && (atomSize != 1.7)) {
-            for (int i = 1; i <= ntypes; ++i)
-                adiams += QString("adiam %1 %2 ").arg(i).arg(vdwfactor * atomSize);
-        }
     }
 
-    // color
+    // atom color for dump
     if (!atomcustom && useelements)
         dumpcmd += blank + "element";
     else
         dumpcmd += blank + atomcolor;
 
     bool do_vdw = vdwfactor > VDW_CUT;
-    // diameter
+    // atom diameter for dump
     if (!atomcustom) {
         if (usediameter && do_vdw)
             dumpcmd += blank + "diameter";
         else
             dumpcmd += " type";
     } else {
-        if (((atomdiam == "auto") || (atomdiam == "diameter")) && (usediameter && do_vdw))
+        if ((atomdiam == "diameter") && usediameter && do_vdw)
             dumpcmd += blank + "diameter";
         else
             dumpcmd += " type";
@@ -2485,7 +2480,8 @@ void ImageViewer::createImage()
         dumpcmd += "2 min darkgray max silver";
     } else if (colormap == "Rainbow") {
         dumpcmd += QString(" amap %1 %2 cf 0.0 ").arg(mmin).arg(mmax);
-        dumpcmd += "8 min magenta 0.083 red 0.249 yellow 0.416 green 0.6 cyan 0.749 blue 0.916 purple max magenta";
+        dumpcmd += "8 min magenta 0.083 red 0.249 yellow 0.416 green 0.6 cyan 0.749 blue 0.916 "
+                   "purple max magenta";
     } else if (colormap == "Sequential") {
         dumpcmd += " color map1 0.808 0.808 0.808";
         dumpcmd += " color map2 0.647 0.349 0.667";
@@ -2714,6 +2710,7 @@ void ImageViewer::update_peratom()
     if (lammps) {
         if (lammps->extract_setting("molecule_flag")) atom_properties << "mol";
         if (lammps->extract_setting("q_flag")) atom_properties << "q";
+        if (lammps->extract_setting("mu_flag")) atom_properties << "mu";
         if (lammps->extract_setting("radius_flag")) atom_properties << "diameter";
 
         void *ptr = nullptr;
@@ -2787,7 +2784,8 @@ void ImageViewer::update_peratom()
         if (lammps->version() < 20251210) return;
     }
     // some more general dump custom properties
-    atom_properties << "id" << "mass" << "x" << "y" << "z";
+    atom_properties << "id" << "mass" << "x" << "y" << "z" << "vx" << "vy" << "vz" << "fx" << "fy"
+                    << "fz";
 }
 
 void ImageViewer::update_fixes()
