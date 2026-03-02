@@ -1231,24 +1231,23 @@ void ImageViewer::atom_settings()
     auto *layout          = new QGridLayout;
     int idx               = 0;
     int n                 = 0;
-    constexpr int MAXCOLS = 8;
+    constexpr int MAXCOLS = 7;
     layout->addWidget(title, idx++, 0, 1, MAXCOLS, Qt::AlignCenter);
     layout->addWidget(new QHline, idx++, 0, 1, MAXCOLS);
     layout->setSizeConstraint(QLayout::SetMinAndMaxSize);
 
-    layout->setColumnStretch(0, 12);
-    layout->setColumnStretch(1, 10);
+    layout->setColumnStretch(0, 7);
+    layout->setColumnStretch(1, 4);
     // need extra space for spinboxes on Windows
 #if defined(Q_OS_WIN32)
-    layout->setColumnStretch(2, 12);
-#else
     layout->setColumnStretch(2, 8);
+#else
+    layout->setColumnStretch(2, 6);
 #endif
-    layout->setColumnStretch(3, 6);
-    layout->setColumnStretch(4, 8);
+    layout->setColumnStretch(3, 3);
+    layout->setColumnStretch(4, 7);
     layout->setColumnStretch(5, 6);
-    layout->setColumnStretch(6, 6);
-    layout->setColumnStretch(7, 8);
+    layout->setColumnStretch(6, 5);
 
     n = 0;
 
@@ -1292,9 +1291,8 @@ void ImageViewer::atom_settings()
         }
     }
     layout->addWidget(adiam, idx, n++, 1, 1);
-    layout->addWidget(new QLabel("Transparency: "), idx, n++, 1, 2,
+    layout->addWidget(new QLabel("Transparency: "), idx, n++, 1, 1,
                       Qt::AlignVCenter | Qt::AlignRight);
-    ++n;
     auto *atrans = new QLineEdit(QString::number(atomtrans));
     atrans->setValidator(transvalidator);
     layout->addWidget(atrans, idx++, n++, 1, 1);
@@ -1322,8 +1320,7 @@ void ImageViewer::atom_settings()
     auto *amapmin = new QLineEdit(mapmin);
     amapmin->setValidator(minmaxvalidator);
     layout->addWidget(amapmin, idx, n++, 1, 1);
-    layout->addWidget(new QLabel("Max: "), idx, n++, 1, 2, Qt::AlignVCenter | Qt::AlignRight);
-    ++n;
+    layout->addWidget(new QLabel("Max: "), idx, n++, 1, 1, Qt::AlignVCenter | Qt::AlignRight);
     auto *amapmax = new QLineEdit(mapmax);
     amapmax->setValidator(minmaxvalidator);
     layout->addWidget(amapmax, idx++, n++, 1, 1);
@@ -1373,14 +1370,14 @@ void ImageViewer::atom_settings()
     autobutton->setCheckState(autobond ? Qt::Checked : Qt::Unchecked);
     autobutton->setEnabled(has_autobonds());
     autobutton->setObjectName("autobutton");
-    layout->addWidget(autobutton, idx, n++, 1, 2, Qt::AlignVCenter | Qt::AlignRight);
-    ++n;
+    layout->addWidget(autobutton, idx, n++, 1, 1, Qt::AlignVCenter | Qt::AlignRight);
     auto *bcutoff = new QLineEdit(QString::number(bondcutoff));
     bcutoff->setValidator(new QDoubleValidator(0.001, 10.0, 100, this));
     bcutoff->setEnabled(has_autobonds());
     layout->addWidget(bcutoff, idx++, n++, 1, 1);
     if (lammps->extract_setting("molecule_flag") != 1) {
         bondbutton->setEnabled(false);
+        bondbutton->setCheckState(Qt::Unchecked);
     }
 
 #if QT_VERSION >= QT_VERSION_CHECK(6, 7, 0)
@@ -1395,19 +1392,14 @@ void ImageViewer::atom_settings()
     n = 0;
 
     layout->addWidget(new QLabel("  Shape:"), idx, n++, 1, 1);
-    layout->addWidget(new QLabel("Diameter:"), idx, n++, 1, 1, Qt::AlignCenter);
     layout->addWidget(new QLabel("Refine:"), idx, n++, 1, 1, Qt::AlignCenter);
-    n += 2;
-    layout->addWidget(new QLabel("Style:"), idx++, n++, 1, 2, Qt::AlignCenter);
+    layout->addWidget(new QLabel("Style:"), idx++, n++, 1, 4, Qt::AlignCenter);
 
     n = 0;
 
     auto *bodybutton = new QCheckBox("Bodies ", this);
     bodybutton->setCheckState(showbodies ? Qt::Checked : Qt::Unchecked);
     layout->addWidget(bodybutton, idx, n++, 1, 1);
-    auto *bdiam = new QLineEdit(QString::number(bodydiam));
-    bdiam->setValidator(new QDoubleValidator(0.1, 10.0, 100, this));
-    layout->addWidget(bdiam, idx, n++, 1, 1);
     auto *bodyindex = new QCheckBox(" Indexed", this);
     bodyindex->setCheckState((bodycolor == "index") ? Qt::Checked : Qt::Unchecked);
     layout->addWidget(bodyindex, idx, n++, 1, 1);
@@ -1415,19 +1407,22 @@ void ImageViewer::atom_settings()
     auto *bcbutton = new QRadioButton("Cylinders", this);
     bcbutton->setChecked(bodyflag == CYLINDERS);
     bgroup->addButton(bcbutton);
-    layout->addWidget(bcbutton, idx, n++, 1, 2, Qt::AlignVCenter | Qt::AlignRight);
-    ++n;
+    layout->addWidget(bcbutton, idx, n++, 1, 1, Qt::AlignCenter);
+    auto *bdiam = new QLineEdit(QString::number(bodydiam));
+    bdiam->setValidator(new QDoubleValidator(0.1, 10.0, 100, this));
+    layout->addWidget(bdiam, idx, n++, 1, 1, Qt::AlignVCenter | Qt::AlignLeft);
     auto *btbutton = new QRadioButton("Triangles", this);
     btbutton->setChecked(bodyflag == TRIANGLES);
     bgroup->addButton(btbutton);
-    layout->addWidget(btbutton, idx, n++, 1, 2, Qt::AlignCenter);
-    ++n;
+    layout->addWidget(btbutton, idx, n++, 1, 1, Qt::AlignCenter);
     auto *bbbutton = new QRadioButton("Both", this);
     bbbutton->setChecked(bodyflag == BOTH);
     bgroup->addButton(bbbutton);
-    layout->addWidget(bbbutton, idx++, n++, 1, 1, Qt::AlignVCenter | Qt::AlignLeft);
+    layout->addWidget(bbbutton, idx++, n++, 1, 1, Qt::AlignCenter);
     if (lammps->extract_setting("body_flag") != 1) {
         bodybutton->setEnabled(false);
+        bodybutton->setCheckState(Qt::Unchecked);
+        bodyindex->setEnabled(false);
         bdiam->setEnabled(false);
         bcbutton->setEnabled(false);
         btbutton->setEnabled(false);
@@ -1439,9 +1434,6 @@ void ImageViewer::atom_settings()
     auto *ellipsoidbutton = new QCheckBox("Ellipsoids ", this);
     ellipsoidbutton->setCheckState(showellipsoids ? Qt::Checked : Qt::Unchecked);
     layout->addWidget(ellipsoidbutton, idx, n++, 1, 1);
-    auto *ediam = new QLineEdit(QString::number(ellipsoiddiam));
-    ediam->setValidator(new QDoubleValidator(0.1, 10.0, 100, this));
-    layout->addWidget(ediam, idx, n++, 1, 1);
     auto *elevel = new QSpinBox;
     elevel->setRange(1, 6);
     elevel->setStepType(QAbstractSpinBox::DefaultStepType);
@@ -1452,20 +1444,22 @@ void ImageViewer::atom_settings()
     auto *ecbutton = new QRadioButton("Cylinders", this);
     ecbutton->setChecked(ellipsoidflag == CYLINDERS);
     egroup->addButton(ecbutton);
-    layout->addWidget(ecbutton, idx, n++, 1, 2, Qt::AlignVCenter | Qt::AlignRight);
-    ++n;
+    layout->addWidget(ecbutton, idx, n++, 1, 1, Qt::AlignCenter);
+    auto *ediam = new QLineEdit(QString::number(ellipsoiddiam));
+    ediam->setValidator(new QDoubleValidator(0.1, 10.0, 100, this));
+    layout->addWidget(ediam, idx, n++, 1, 1, Qt::AlignVCenter | Qt::AlignLeft);
     auto *etbutton = new QRadioButton("Triangles", this);
     etbutton->setChecked(ellipsoidflag == TRIANGLES);
     egroup->addButton(etbutton);
-    layout->addWidget(etbutton, idx, n++, 1, 2, Qt::AlignCenter);
-    ++n;
+    layout->addWidget(etbutton, idx, n++, 1, 1, Qt::AlignCenter);
     auto *ebbutton = new QRadioButton("Both", this);
     ebbutton->setChecked(ellipsoidflag == BOTH);
     egroup->addButton(ebbutton);
-    layout->addWidget(ebbutton, idx++, n++, 1, 1, Qt::AlignVCenter | Qt::AlignLeft);
+    layout->addWidget(ebbutton, idx++, n++, 1, 1, Qt::AlignCenter);
     ++n;
     if (lammps->extract_setting("ellipsoid_flag") != 1) {
         ellipsoidbutton->setEnabled(false);
+        ellipsoidbutton->setCheckState(Qt::Unchecked);
         elevel->setEnabled(false);
         ediam->setEnabled(false);
         ecbutton->setEnabled(false);
@@ -1478,11 +1472,13 @@ void ImageViewer::atom_settings()
     auto *linebutton = new QCheckBox("Lines ", this);
     linebutton->setCheckState(showlines ? Qt::Checked : Qt::Unchecked);
     layout->addWidget(linebutton, idx, n++, 1, 1);
+    n += 2;
     auto *ldiam = new QLineEdit(QString::number(linediam));
     ldiam->setValidator(new QDoubleValidator(0.1, 10.0, 100, this));
-    layout->addWidget(ldiam, idx++, n++, 1, 1);
+    layout->addWidget(ldiam, idx++, n++, 1, 1, Qt::AlignVCenter | Qt::AlignLeft);
     if (lammps->extract_setting("line_flag") != 1) {
         linebutton->setEnabled(false);
+        linebutton->setCheckState(Qt::Unchecked);
         ldiam->setEnabled(false);
     }
 
@@ -1491,29 +1487,28 @@ void ImageViewer::atom_settings()
     auto *tributton = new QCheckBox("Triangles ", this);
     tributton->setCheckState(showtris ? Qt::Checked : Qt::Unchecked);
     layout->addWidget(tributton, idx, n++, 1, 1);
-    auto *tdiam = new QLineEdit(QString::number(tridiam));
-    tdiam->setValidator(new QDoubleValidator(0.1, 10.0, 100, this));
-    layout->addWidget(tdiam, idx, n++, 1, 1);
     // skip one column
     ++n;
     auto *tgroup   = new QButtonGroup(this);
     auto *tcbutton = new QRadioButton("Cylinders", this);
     tcbutton->setChecked(triflag == CYLINDERS);
     tgroup->addButton(tcbutton);
-    layout->addWidget(tcbutton, idx, n++, 1, 2, Qt::AlignVCenter | Qt::AlignRight);
-    ++n;
+    layout->addWidget(tcbutton, idx, n++, 1, 1, Qt::AlignCenter);
+    auto *tdiam = new QLineEdit(QString::number(tridiam));
+    tdiam->setValidator(new QDoubleValidator(0.1, 10.0, 100, this));
+    layout->addWidget(tdiam, idx, n++, 1, 1, Qt::AlignVCenter | Qt::AlignLeft);
     auto *ttbutton = new QRadioButton("Triangles", this);
     ttbutton->setChecked(triflag == TRIANGLES);
     tgroup->addButton(ttbutton);
-    layout->addWidget(ttbutton, idx, n++, 1, 2, Qt::AlignCenter);
-    ++n;
+    layout->addWidget(ttbutton, idx, n++, 1, 1, Qt::AlignCenter);
     auto *tbbutton = new QRadioButton("Both", this);
     tbbutton->setChecked(triflag == BOTH);
     tgroup->addButton(tbbutton);
-    layout->addWidget(tbbutton, idx++, n++, 1, 1, Qt::AlignVCenter | Qt::AlignLeft);
+    layout->addWidget(tbbutton, idx++, n++, 1, 1, Qt::AlignCenter);
     ++n;
     if (lammps->extract_setting("tri_flag") != 1) {
         tributton->setEnabled(false);
+        tributton->setCheckState(Qt::Unchecked);
         tdiam->setEnabled(false);
         tcbutton->setEnabled(false);
         ttbutton->setEnabled(false);
@@ -1572,8 +1567,8 @@ void ImageViewer::atom_settings()
     } else {
         atomcolor = value;
     }
-
     atomdiam = adiam->currentText();
+
     if (atrans->hasAcceptableInput()) atomtrans = atrans->text().toDouble();
     colormap = amap->currentText();
     if (amapmin->hasAcceptableInput()) mapmin = amapmin->text();
