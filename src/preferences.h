@@ -87,7 +87,12 @@ class GeneralTab : public QWidget {
     Q_OBJECT
 
 public:
-    ///! Constructor
+    /**
+     * @brief Constructor
+     * @param settings Pointer to QSettings for storing preferences
+     * @param lammps Pointer to LammpsWrapper for querying LAMMPS configuration
+     * @param parent Parent widget
+     */
     explicit GeneralTab(QSettings *settings, LammpsWrapper *lammps, QWidget *parent = nullptr);
 
 private slots:
@@ -108,10 +113,15 @@ class AcceleratorTab : public QWidget {
     Q_OBJECT
 
 public:
-    ///! Constructor
+    /**
+     * @brief Constructor
+     * @param settings Pointer to QSettings for storing preferences
+     * @param lammps Pointer to LammpsWrapper for querying available accelerator packages
+     * @param parent Parent widget
+     */
     explicit AcceleratorTab(QSettings *settings, LammpsWrapper *lammps, QWidget *parent = nullptr);
-    enum { None, Opt, OpenMP, Intel, Kokkos, Gpu };
-    enum { Double, Mixed, Single };
+    enum AccelType { None, Opt, OpenMP, Intel, Kokkos, Gpu };
+    enum AccelPrec { Double, Mixed, Single };
 
 private slots:
     void update_accel();
@@ -128,7 +138,11 @@ class SnapshotTab : public QWidget {
     Q_OBJECT
 
 public:
-    ///! Constructor
+    /**
+     * @brief Constructor
+     * @param settings Pointer to QSettings for storing preferences
+     * @param parent Parent widget
+     */
     explicit SnapshotTab(QSettings *settings, QWidget *parent = nullptr);
 
 private slots:
@@ -146,7 +160,11 @@ class EditorTab : public QWidget {
     Q_OBJECT
 
 public:
-    ///! Constructor
+    /**
+     * @brief Constructor
+     * @param settings Pointer to QSettings for storing preferences
+     * @param parent Parent widget
+     */
     explicit EditorTab(QSettings *settings, QWidget *parent = nullptr);
 
 private:
@@ -160,7 +178,11 @@ class ChartsTab : public QWidget {
     Q_OBJECT
 
 public:
-    ///! Constructor
+    /**
+     * @brief Constructor
+     * @param settings Pointer to QSettings for storing preferences
+     * @param parent Parent widget
+     */
     explicit ChartsTab(QSettings *settings, QWidget *parent = nullptr);
 
 private:

@@ -41,7 +41,6 @@
 #include <QLineEdit>
 #include <QMenu>
 #include <QMenuBar>
-#include <QMessageBox>
 #include <QPalette>
 #include <QPixmap>
 #include <QProcess>
@@ -986,9 +985,9 @@ void ImageViewer::global_settings()
     title->setLineWidth(1);
     title->setMargin(TITLE_MARGIN);
 
-    auto *colorcompleter = new QColorCompleter;
-    auto *colorvalidator = new QColorValidator;
-    auto *transvalidator = new QDoubleValidator(0.0, 1.0, 2);
+    auto *colorcompleter    = new QColorCompleter;
+    auto *colorvalidator    = new QColorValidator;
+    auto *transvalidator    = new QDoubleValidator(0.0, 1.0, 2);
     auto *fractionvalidator = new QDoubleValidator(0.00001, 5.0, 5, this);
     QFontMetrics metrics(setview.fontMetrics());
 
@@ -1232,24 +1231,23 @@ void ImageViewer::atom_settings()
     auto *layout          = new QGridLayout;
     int idx               = 0;
     int n                 = 0;
-    constexpr int MAXCOLS = 8;
+    constexpr int MAXCOLS = 7;
     layout->addWidget(title, idx++, 0, 1, MAXCOLS, Qt::AlignCenter);
     layout->addWidget(new QHline, idx++, 0, 1, MAXCOLS);
     layout->setSizeConstraint(QLayout::SetMinAndMaxSize);
 
-    layout->setColumnStretch(0, 12);
-    layout->setColumnStretch(1, 10);
+    layout->setColumnStretch(0, 7);
+    layout->setColumnStretch(1, 4);
     // need extra space for spinboxes on Windows
 #if defined(Q_OS_WIN32)
-    layout->setColumnStretch(2, 12);
-#else
     layout->setColumnStretch(2, 8);
+#else
+    layout->setColumnStretch(2, 6);
 #endif
-    layout->setColumnStretch(3, 6);
-    layout->setColumnStretch(4, 8);
+    layout->setColumnStretch(3, 3);
+    layout->setColumnStretch(4, 7);
     layout->setColumnStretch(5, 6);
-    layout->setColumnStretch(6, 6);
-    layout->setColumnStretch(7, 8);
+    layout->setColumnStretch(6, 5);
 
     n = 0;
 
@@ -1267,23 +1265,34 @@ void ImageViewer::atom_settings()
     }
     layout->addWidget(acolor, idx, n++, 1, 1);
     layout->addWidget(new QLabel("Size: "), idx, n++, 1, 1, Qt::AlignVCenter | Qt::AlignRight);
+
+    QRegularExpression validatom(R"((element|diameter|sigma|type|none|^\d+\.?\d*|^\d*\.?\d+))");
+    QStringList aditems;
+    if (useelements) aditems << "element";
+    if (usediameter) aditems << "diameter";
+    if (usesigma) aditems << "sigma";
+    aditems << "type" << "3.5" << "3.0" << "2.0";
+    if ((atomSize > 0.1) && (atomSize < 5.0)) {
+        aditems << QString::number(2.0 * atomSize, 'f', 1);
+    } else {
+        aditems << QString::number(2.0 * atomSize, 'g', 3);
+    }
+    if (atomdiam != "none") aditems << atomdiam;
+    aditems.removeDuplicates();
+
     auto *adiam = new QComboBox;
     adiam->setObjectName("adiam");
-    if (useelements || usediameter || usesigma) adiam->addItem("auto");
-    adiam->addItem("type");
-    if (useelements) adiam->addItem("element");
-    if (usediameter) adiam->addItem("diameter");
-    if (usesigma) adiam->addItem("sigma");
+    adiam->addItems(aditems);
+    adiam->setEditable(true);
+    adiam->setValidator(new QRegularExpressionValidator(validatom, this));
     if (atomcustom) { // select item that was selected the last time
         for (int idx = 0; idx < adiam->count(); ++idx) {
             if (adiam->itemText(idx) == atomdiam) adiam->setCurrentIndex(idx);
         }
     }
-
     layout->addWidget(adiam, idx, n++, 1, 1);
-    layout->addWidget(new QLabel("Transparency: "), idx, n++, 1, 2,
+    layout->addWidget(new QLabel("Transparency: "), idx, n++, 1, 1,
                       Qt::AlignVCenter | Qt::AlignRight);
-    ++n;
     auto *atrans = new QLineEdit(QString::number(atomtrans));
     atrans->setValidator(transvalidator);
     layout->addWidget(atrans, idx++, n++, 1, 1);
@@ -1297,8 +1306,8 @@ void ImageViewer::atom_settings()
     layout->addWidget(new QLabel("Colormap: "), idx, n++, 1, 1, Qt::AlignVCenter | Qt::AlignRight);
     auto *amap = new QComboBox;
     amap->setObjectName("amap");
-    amap->addItems(
-        {"BWR", "RWB", "GWR", "BWG", "Grayscale", "Rainbow", "Contrast", "Heatmap", "Sequential"});
+    amap->addItems({"BWR", "RWB", "PWT", "BWG", "BGR", "Viridis", "Plasma", "Inferno", "Teal",
+                    "Rainbow", "Sequential", "Grayscale"});
     for (int idx = 0; idx < amap->count(); ++idx) {
         if (amap->itemText(idx) == colormap) amap->setCurrentIndex(idx);
     }
@@ -1311,8 +1320,7 @@ void ImageViewer::atom_settings()
     auto *amapmin = new QLineEdit(mapmin);
     amapmin->setValidator(minmaxvalidator);
     layout->addWidget(amapmin, idx, n++, 1, 1);
-    layout->addWidget(new QLabel("Max: "), idx, n++, 1, 2, Qt::AlignVCenter | Qt::AlignRight);
-    ++n;
+    layout->addWidget(new QLabel("Max: "), idx, n++, 1, 1, Qt::AlignVCenter | Qt::AlignRight);
     auto *amapmax = new QLineEdit(mapmax);
     amapmax->setValidator(minmaxvalidator);
     layout->addWidget(amapmax, idx++, n++, 1, 1);
@@ -1337,40 +1345,39 @@ void ImageViewer::atom_settings()
     }
     layout->addWidget(bncolor, idx, n++, 1, 1);
     layout->addWidget(new QLabel("Size: "), idx, n++, 1, 1, Qt::AlignVCenter | Qt::AlignRight);
+
+    QRegularExpression validbond(R"((atom|type|none|^\d+\.?\d*|^\d*\.?\d+))");
+    QStringList bnitems{"atom", "type", "0.2", "0.4"};
+    if (bonddiam != "none") bnitems << bonddiam;
+    bnitems.removeDuplicates();
+
     auto *bndiam = new QComboBox;
     bndiam->setObjectName("bndiam");
-    bndiam->addItems({"atom", "type"});
-    if (atomcustom) { // select item that was selected the last time
-        if (bonddiam == "none") {
+    bndiam->addItems(bnitems);
+    bndiam->setEditable(true);
+    bndiam->setValidator(new QRegularExpressionValidator(validbond, this));
+    if (atomcustom) {             // select item that was selected the last time
+        if (bonddiam == "none") { // none means bonds are disabled
             bondbutton->setCheckState(Qt::Unchecked);
-        } else if ((bonddiam == "atom") || (bonddiam == "type")) {
+        } else {
             for (int idx = 0; idx < bndiam->count(); ++idx) {
                 if (bndiam->itemText(idx) == bonddiam) bndiam->setCurrentIndex(idx);
             }
-        } else {
-            int idx = bndiam->count();
-            bndiam->addItem(bonddiam);
-            bndiam->setCurrentIndex(idx);
         }
     }
-    if (bndiam->count() < 3) bndiam->addItem("0.2");
-
-    bndiam->setEditable(true);
-    QRegularExpression validbond(R"((atom|type|none|^\d+\.?\d*|^\d*\.?\d+))");
-    bndiam->setValidator(new QRegularExpressionValidator(validbond, this));
     layout->addWidget(bndiam, idx, n++, 1, 1);
     auto *autobutton = new QCheckBox("AutoBonds:", this);
     autobutton->setCheckState(autobond ? Qt::Checked : Qt::Unchecked);
     autobutton->setEnabled(has_autobonds());
     autobutton->setObjectName("autobutton");
-    layout->addWidget(autobutton, idx, n++, 1, 2, Qt::AlignVCenter | Qt::AlignRight);
-    ++n;
+    layout->addWidget(autobutton, idx, n++, 1, 1, Qt::AlignVCenter | Qt::AlignRight);
     auto *bcutoff = new QLineEdit(QString::number(bondcutoff));
     bcutoff->setValidator(new QDoubleValidator(0.001, 10.0, 100, this));
     bcutoff->setEnabled(has_autobonds());
     layout->addWidget(bcutoff, idx++, n++, 1, 1);
     if (lammps->extract_setting("molecule_flag") != 1) {
         bondbutton->setEnabled(false);
+        bondbutton->setCheckState(Qt::Unchecked);
     }
 
 #if QT_VERSION >= QT_VERSION_CHECK(6, 7, 0)
@@ -1385,19 +1392,14 @@ void ImageViewer::atom_settings()
     n = 0;
 
     layout->addWidget(new QLabel("  Shape:"), idx, n++, 1, 1);
-    layout->addWidget(new QLabel("Diameter:"), idx, n++, 1, 1, Qt::AlignCenter);
     layout->addWidget(new QLabel("Refine:"), idx, n++, 1, 1, Qt::AlignCenter);
-    n += 2;
-    layout->addWidget(new QLabel("Style:"), idx++, n++, 1, 2, Qt::AlignCenter);
+    layout->addWidget(new QLabel("Style:"), idx++, n++, 1, 4, Qt::AlignCenter);
 
     n = 0;
 
     auto *bodybutton = new QCheckBox("Bodies ", this);
     bodybutton->setCheckState(showbodies ? Qt::Checked : Qt::Unchecked);
     layout->addWidget(bodybutton, idx, n++, 1, 1);
-    auto *bdiam = new QLineEdit(QString::number(bodydiam));
-    bdiam->setValidator(new QDoubleValidator(0.1, 10.0, 100, this));
-    layout->addWidget(bdiam, idx, n++, 1, 1);
     auto *bodyindex = new QCheckBox(" Indexed", this);
     bodyindex->setCheckState((bodycolor == "index") ? Qt::Checked : Qt::Unchecked);
     layout->addWidget(bodyindex, idx, n++, 1, 1);
@@ -1405,19 +1407,22 @@ void ImageViewer::atom_settings()
     auto *bcbutton = new QRadioButton("Cylinders", this);
     bcbutton->setChecked(bodyflag == CYLINDERS);
     bgroup->addButton(bcbutton);
-    layout->addWidget(bcbutton, idx, n++, 1, 2, Qt::AlignVCenter | Qt::AlignRight);
-    ++n;
+    layout->addWidget(bcbutton, idx, n++, 1, 1, Qt::AlignCenter);
+    auto *bdiam = new QLineEdit(QString::number(bodydiam));
+    bdiam->setValidator(new QDoubleValidator(0.1, 10.0, 100, this));
+    layout->addWidget(bdiam, idx, n++, 1, 1, Qt::AlignVCenter | Qt::AlignLeft);
     auto *btbutton = new QRadioButton("Triangles", this);
     btbutton->setChecked(bodyflag == TRIANGLES);
     bgroup->addButton(btbutton);
-    layout->addWidget(btbutton, idx, n++, 1, 2, Qt::AlignCenter);
-    ++n;
+    layout->addWidget(btbutton, idx, n++, 1, 1, Qt::AlignCenter);
     auto *bbbutton = new QRadioButton("Both", this);
     bbbutton->setChecked(bodyflag == BOTH);
     bgroup->addButton(bbbutton);
-    layout->addWidget(bbbutton, idx++, n++, 1, 1, Qt::AlignVCenter | Qt::AlignLeft);
+    layout->addWidget(bbbutton, idx++, n++, 1, 1, Qt::AlignCenter);
     if (lammps->extract_setting("body_flag") != 1) {
         bodybutton->setEnabled(false);
+        bodybutton->setCheckState(Qt::Unchecked);
+        bodyindex->setEnabled(false);
         bdiam->setEnabled(false);
         bcbutton->setEnabled(false);
         btbutton->setEnabled(false);
@@ -1429,9 +1434,6 @@ void ImageViewer::atom_settings()
     auto *ellipsoidbutton = new QCheckBox("Ellipsoids ", this);
     ellipsoidbutton->setCheckState(showellipsoids ? Qt::Checked : Qt::Unchecked);
     layout->addWidget(ellipsoidbutton, idx, n++, 1, 1);
-    auto *ediam = new QLineEdit(QString::number(ellipsoiddiam));
-    ediam->setValidator(new QDoubleValidator(0.1, 10.0, 100, this));
-    layout->addWidget(ediam, idx, n++, 1, 1);
     auto *elevel = new QSpinBox;
     elevel->setRange(1, 6);
     elevel->setStepType(QAbstractSpinBox::DefaultStepType);
@@ -1442,20 +1444,22 @@ void ImageViewer::atom_settings()
     auto *ecbutton = new QRadioButton("Cylinders", this);
     ecbutton->setChecked(ellipsoidflag == CYLINDERS);
     egroup->addButton(ecbutton);
-    layout->addWidget(ecbutton, idx, n++, 1, 2, Qt::AlignVCenter | Qt::AlignRight);
-    ++n;
+    layout->addWidget(ecbutton, idx, n++, 1, 1, Qt::AlignCenter);
+    auto *ediam = new QLineEdit(QString::number(ellipsoiddiam));
+    ediam->setValidator(new QDoubleValidator(0.1, 10.0, 100, this));
+    layout->addWidget(ediam, idx, n++, 1, 1, Qt::AlignVCenter | Qt::AlignLeft);
     auto *etbutton = new QRadioButton("Triangles", this);
     etbutton->setChecked(ellipsoidflag == TRIANGLES);
     egroup->addButton(etbutton);
-    layout->addWidget(etbutton, idx, n++, 1, 2, Qt::AlignCenter);
-    ++n;
+    layout->addWidget(etbutton, idx, n++, 1, 1, Qt::AlignCenter);
     auto *ebbutton = new QRadioButton("Both", this);
     ebbutton->setChecked(ellipsoidflag == BOTH);
     egroup->addButton(ebbutton);
-    layout->addWidget(ebbutton, idx++, n++, 1, 1, Qt::AlignVCenter | Qt::AlignLeft);
+    layout->addWidget(ebbutton, idx++, n++, 1, 1, Qt::AlignCenter);
     ++n;
     if (lammps->extract_setting("ellipsoid_flag") != 1) {
         ellipsoidbutton->setEnabled(false);
+        ellipsoidbutton->setCheckState(Qt::Unchecked);
         elevel->setEnabled(false);
         ediam->setEnabled(false);
         ecbutton->setEnabled(false);
@@ -1468,11 +1472,13 @@ void ImageViewer::atom_settings()
     auto *linebutton = new QCheckBox("Lines ", this);
     linebutton->setCheckState(showlines ? Qt::Checked : Qt::Unchecked);
     layout->addWidget(linebutton, idx, n++, 1, 1);
+    n += 2;
     auto *ldiam = new QLineEdit(QString::number(linediam));
     ldiam->setValidator(new QDoubleValidator(0.1, 10.0, 100, this));
-    layout->addWidget(ldiam, idx++, n++, 1, 1);
+    layout->addWidget(ldiam, idx++, n++, 1, 1, Qt::AlignVCenter | Qt::AlignLeft);
     if (lammps->extract_setting("line_flag") != 1) {
         linebutton->setEnabled(false);
+        linebutton->setCheckState(Qt::Unchecked);
         ldiam->setEnabled(false);
     }
 
@@ -1481,29 +1487,28 @@ void ImageViewer::atom_settings()
     auto *tributton = new QCheckBox("Triangles ", this);
     tributton->setCheckState(showtris ? Qt::Checked : Qt::Unchecked);
     layout->addWidget(tributton, idx, n++, 1, 1);
-    auto *tdiam = new QLineEdit(QString::number(tridiam));
-    tdiam->setValidator(new QDoubleValidator(0.1, 10.0, 100, this));
-    layout->addWidget(tdiam, idx, n++, 1, 1);
     // skip one column
     ++n;
     auto *tgroup   = new QButtonGroup(this);
     auto *tcbutton = new QRadioButton("Cylinders", this);
     tcbutton->setChecked(triflag == CYLINDERS);
     tgroup->addButton(tcbutton);
-    layout->addWidget(tcbutton, idx, n++, 1, 2, Qt::AlignVCenter | Qt::AlignRight);
-    ++n;
+    layout->addWidget(tcbutton, idx, n++, 1, 1, Qt::AlignCenter);
+    auto *tdiam = new QLineEdit(QString::number(tridiam));
+    tdiam->setValidator(new QDoubleValidator(0.1, 10.0, 100, this));
+    layout->addWidget(tdiam, idx, n++, 1, 1, Qt::AlignVCenter | Qt::AlignLeft);
     auto *ttbutton = new QRadioButton("Triangles", this);
     ttbutton->setChecked(triflag == TRIANGLES);
     tgroup->addButton(ttbutton);
-    layout->addWidget(ttbutton, idx, n++, 1, 2, Qt::AlignCenter);
-    ++n;
+    layout->addWidget(ttbutton, idx, n++, 1, 1, Qt::AlignCenter);
     auto *tbbutton = new QRadioButton("Both", this);
     tbbutton->setChecked(triflag == BOTH);
     tgroup->addButton(tbbutton);
-    layout->addWidget(tbbutton, idx++, n++, 1, 1, Qt::AlignVCenter | Qt::AlignLeft);
+    layout->addWidget(tbbutton, idx++, n++, 1, 1, Qt::AlignCenter);
     ++n;
     if (lammps->extract_setting("tri_flag") != 1) {
         tributton->setEnabled(false);
+        tributton->setCheckState(Qt::Unchecked);
         tdiam->setEnabled(false);
         tcbutton->setEnabled(false);
         ttbutton->setEnabled(false);
@@ -1562,8 +1567,8 @@ void ImageViewer::atom_settings()
     } else {
         atomcolor = value;
     }
-
     atomdiam = adiam->currentText();
+
     if (atrans->hasAcceptableInput()) atomtrans = atrans->text().toDouble();
     colormap = amap->currentText();
     if (amapmin->hasAcceptableInput()) mapmin = amapmin->text();
@@ -1589,6 +1594,19 @@ void ImageViewer::atom_settings()
         bonddiam = value;
     }
 
+    if (atomcustom) {
+        auto *edit = findChild<QLineEdit *>("atomSize");
+        if (edit) {
+            edit->setEnabled(true);
+            edit->show();
+            edit->setText(QString::number(atomSize));
+        }
+        auto *label = findChild<QLabel *>("AtomLabel");
+        if (label) {
+            label->setEnabled(true);
+            label->show();
+        }
+    }
     if (has_autobonds()) {
         autobond   = autobutton->isChecked();
         bondcutoff = bcutoff->text().toDouble();
@@ -2181,6 +2199,8 @@ void ImageViewer::createImage()
     QString units          = (const char *)lammps->extract_global("units");
     QString elements;
     QString adiams;
+
+    if ((units == "real") || (units == "metal")) atomSize = 1.7; // covalent radius of Carbon
     if (!atomcustom || (atomcolor == "element")) {
         useelements = false;
         elements    = "element ";
@@ -2195,6 +2215,25 @@ void ImageViewer::createImage()
             }
         }
     }
+    if (atomcustom && (atomcolor != "element")) {
+        useelements = false;
+        elements    = "element ";
+        if (masses && ((units == "real") || (units == "metal"))) {
+            useelements = true;
+            for (int i = 1; i <= ntypes; ++i) {
+                int idx = get_pte_from_mass(masses[i]);
+                if (idx == 0) useelements = false;
+                elements += QString(pte_label[idx]) + blank;
+                adiams += QString("adiam %1 %2 ").arg(i).arg(vdwfactor * pte_vdw_radius[idx]);
+            }
+        } else {
+            elements.clear();
+            for (int i = 1; i <= ntypes; ++i) {
+                adiams += QString("adiam %1 %2 ").arg(i).arg(vdwfactor * atomSize);
+            }
+        }
+    }
+
     if (!atomcustom || (atomdiam == "auto") || (atomdiam == "element") || (atomdiam == "sigma") ||
         (atomdiam == "diameter")) {
         usesigma    = false;
@@ -2213,7 +2252,7 @@ void ImageViewer::createImage()
     }
 
     // adjust pushbutton state and clear adiams string to disable VDW display, if needed
-    if (showatoms && (useelements || usediameter || usesigma)) {
+    if (showatoms && (useelements || usediameter || usesigma || atomcustom)) {
         auto *button = findChild<QPushButton *>("vdw");
         if (button) button->setEnabled(true);
         auto *edit = findChild<QLineEdit *>("atomSize");
@@ -2249,9 +2288,9 @@ void ImageViewer::createImage()
             }
             atomSize = edit->text().toDouble();
         }
-        if (atomSize != 1.0) {
+        if ((atomSize != 1.0) && (atomSize != 1.7)) {
             for (int i = 1; i <= ntypes; ++i)
-                adiams += QString("adiam %1 %2 ").arg(i).arg(atomSize);
+                adiams += QString("adiam %1 %2 ").arg(i).arg(vdwfactor * atomSize);
         }
     }
 
@@ -2425,15 +2464,19 @@ void ImageViewer::createImage()
     if (mmin == "auto") mmin = "min";
     QString mmax = mapmax;
     if (mmax == "auto") mmax = "max";
-    if (colormap == "BWR") {
+    if (colormap == "RWB") {
+        dumpcmd += " color map1 0.459 0.055 0.075";
+        dumpcmd += " color map2 0.000 0.227 0.427";
         dumpcmd += QString(" amap %1 %2 cf 0.0 ").arg(mmin).arg(mmax);
-        dumpcmd += "3 min red 0.5 white max blue";
-    } else if (colormap == "RWB") {
+        dumpcmd += "3 min map1 0.5 white max map2";
+    } else if (colormap == "PWT") {
+        dumpcmd += " color map1 0.286 0.114 0.553";
+        dumpcmd += " color map2 0.000 0.255 0.267";
         dumpcmd += QString(" amap %1 %2 cf 0.0 ").arg(mmin).arg(mmax);
-        dumpcmd += "3 min blue 0.5 white max red";
-    } else if (colormap == "GWR") {
+        dumpcmd += "3 min map1 0.5 white max map2";
+    } else if (colormap == "BGR") {
         dumpcmd += QString(" amap %1 %2 cf 0.0 ").arg(mmin).arg(mmax);
-        dumpcmd += "3 min green 0.5 white max red";
+        dumpcmd += "3 min blue 0.5 green max red";
     } else if (colormap == "BWG") {
         dumpcmd += QString(" amap %1 %2 cf 0.0 ").arg(mmin).arg(mmax);
         dumpcmd += "3 min blue 0.5 white max green";
@@ -2442,28 +2485,17 @@ void ImageViewer::createImage()
         dumpcmd += "2 min darkgray max silver";
     } else if (colormap == "Rainbow") {
         dumpcmd += QString(" amap %1 %2 cf 0.0 ").arg(mmin).arg(mmax);
-        dumpcmd += "9 min magenta 0.125 red 0.25 yellow 0.375 green 0.5 cyan 0.625 blue 0.75 blue "
-                   "0.875 purple max magenta";
-    } else if (colormap == "Contrast") {
+        dumpcmd += "8 min magenta 0.083 red 0.249 yellow 0.416 green 0.6 cyan 0.749 blue 0.916 purple max magenta";
+    } else if (colormap == "Sequential") {
         dumpcmd += " color map1 0.808 0.808 0.808";
         dumpcmd += " color map2 0.647 0.349 0.667";
         dumpcmd += " color map3 0.349 0.659 0.612";
         dumpcmd += " color map4 0.941 0.772 0.443";
         dumpcmd += " color map5 0.878 0.169 0.208";
         dumpcmd += " color map6 0.031 0.165 0.329";
-        dumpcmd += QString(" amap %1 %2 cf 0.0 ").arg(mmin).arg(mmax);
-        dumpcmd += "6 min map1 0.2 map2 0.4 map3 0.6 map4 0.8 map5 max map6";
-    } else if (colormap == "Heatmap") {
-        dumpcmd += " color map1 0.125 0.400 0.659";
-        dumpcmd += " color map2 0.557 0.757 0.855";
-        dumpcmd += " color map3 0.804 0.882 0.925";
-        dumpcmd += " color map4 0.929 0.929 0.929";
-        dumpcmd += " color map5 0.965 0.839 0.761";
-        dumpcmd += " color map6 0.831 0.447 0.392";
-        dumpcmd += " color map7 0.682 0.157 0.173";
-        dumpcmd += QString(" amap %1 %2 cf 0.0 ").arg(mmin).arg(mmax);
-        dumpcmd += "7 min map1 0.167 map2 0.333 map3 0.5 map4 0.667 map5 0.833 map6 max map7";
-    } else if (colormap == "Sequential") {
+        dumpcmd += QString(" amap %1 %2 sa 1.0 ").arg(mmin).arg(mmax);
+        dumpcmd += "6 map1 map2 map3 map4 map5 map6";
+    } else if (colormap == "Teal") {
         dumpcmd += " color map1 0.710 0.820 0.682";
         dumpcmd += " color map2 0.502 0.682 0.576";
         dumpcmd += " color map3 0.337 0.545 0.529";
@@ -2471,7 +2503,34 @@ void ImageViewer::createImage()
         dumpcmd += " color map5 0.106 0.282 0.369";
         dumpcmd += " color map6 0.071 0.153 0.251";
         dumpcmd += QString(" amap %1 %2 cf 0.0 ").arg(mmin).arg(mmax);
-        dumpcmd += "6 min map1 0.2 map2 0.4 map3 0.6 map4 0.8 map5 max map6";
+        dumpcmd += "6 min map6 0.2 map5 0.4 map4 0.6 map3 0.8 map2 max map1";
+    } else if (colormap == "Viridis") {
+        dumpcmd += " color map1 0.282 0.129 0.451";
+        dumpcmd += " color map2 0.435 0.435 0.556";
+        dumpcmd += " color map3 0.161 0.686 0.498";
+        dumpcmd += " color map4 0.741 0.875 0.149";
+        dumpcmd += QString(" amap %1 %2 cf 0.0 ").arg(mmin).arg(mmax);
+        dumpcmd += "4 min map1 0.333 map2 0.667 map3 max map4";
+    } else if (colormap == "Inferno") {
+        dumpcmd += " color map1 0.032 0.032 0.048";
+        dumpcmd += " color map2 0.318 0.071 0.486";
+        dumpcmd += " color map3 0.718 0.216 0.475";
+        dumpcmd += " color map4 0.988 0.537 0.380";
+        dumpcmd += " color map5 0.988 0.992 0.749";
+        dumpcmd += QString(" amap %1 %2 cf 0.0 ").arg(mmin).arg(mmax);
+        dumpcmd += "5 min map1 0.25 map2 0.5 map3 0.75 map4 max map5";
+    } else if (colormap == "Plasma") {
+        dumpcmd += " color map1 0.051 0.031 0.529";
+        dumpcmd += " color map2 0.612 0.090 0.620";
+        dumpcmd += " color map3 0.929 0.475 0.325";
+        dumpcmd += " color map4 0.941 0.976 0.129";
+        dumpcmd += QString(" amap %1 %2 cf 0.0 ").arg(mmin).arg(mmax);
+        dumpcmd += "4 min map1 0.333 map2 0.667 map3 max map4";
+    } else { // default is "BWR"
+        dumpcmd += " color map1 0.000 0.227 0.427";
+        dumpcmd += " color map2 0.459 0.055 0.075";
+        dumpcmd += QString(" amap %1 %2 cf 0.0 ").arg(mmin).arg(mmax);
+        dumpcmd += "3 min map1 0.5 white max map2";
     }
     settings.endGroup();
 
@@ -2507,15 +2566,8 @@ void ImageViewer::createImage()
     if (lammps->has_error()) {
         char errormesg[DEFAULT_BUFLEN];
         lammps->get_last_error_message(errormesg, DEFAULT_BUFLEN);
-        QMessageBox mb;
-        mb.setText("Image Viewer File Creation Error");
-        mb.setInformativeText(
-            QString("LAMMPS failed to create the image:<br><code>%1</code>").arg(errormesg));
-        mb.setIcon(QMessageBox::Warning);
-        mb.setStandardButtons(QMessageBox::Ok);
-        auto *button = mb.button(QMessageBox::Ok);
-        button->setIcon(QIcon(":/icons/dialog-ok.png"));
-        mb.exec();
+        warning(this, "Image Viewer File Creation Error",
+                "LAMMPS failed to create the image:", QString("<code>%1</code>").arg(errormesg));
         return;
     }
 
@@ -2546,10 +2598,7 @@ void ImageViewer::createImage()
 
 void ImageViewer::saveAs()
 {
-    QString fileName = QFileDialog::getSaveFileName(
-        this, "Save Image File As", QString(),
-        "Image Files (*.png *.jpg *.jpeg *.gif *.bmp *.tga *.ppm *.tiff *.pgm *.xpm *.xbm)");
-    saveFile(fileName);
+    export_image(this, &image, "ImageViewer");
 }
 
 void ImageViewer::copy()
@@ -2600,65 +2649,6 @@ void ImageViewer::get_help()
             // general LAMMPS doc page
             QDesktopServices::openUrl(
                 QUrl(QString("https://docs.lammps.org%1%2").arg(docver).arg(page)));
-        }
-    }
-}
-
-void ImageViewer::saveFile(const QString &fileName)
-{
-    if (fileName.isEmpty()) return;
-
-    // try direct save and if it fails write to PNG and then convert with ImageMagick if available
-    if (!image.save(fileName)) {
-        if (has_exe("magick") || has_exe("convert")) {
-            QTemporaryFile tmpfile(QDir::tempPath() + "/LAMMPS_GUI.XXXXXX.png");
-            // open and close to generate temporary file name
-            (void)tmpfile.open();
-            (void)tmpfile.close();
-            if (!image.save(tmpfile.fileName())) {
-                QMessageBox mb;
-                mb.setText("Image Viewer Error");
-                mb.setInformativeText("Could not save image to file " + fileName);
-                mb.setIcon(QMessageBox::Warning);
-                mb.setStandardButtons(QMessageBox::Ok);
-                auto *button = mb.button(QMessageBox::Ok);
-                button->setIcon(QIcon(":/icons/dialog-ok.png"));
-                mb.exec();
-                return;
-            }
-
-            QString cmd = "magick";
-            QStringList args{tmpfile.fileName(), fileName};
-            if (!has_exe("magick")) cmd = "convert";
-            auto *convert = new QProcess(this);
-            convert->start(cmd, args);
-            bool finished = convert->waitForFinished(-1);
-            if (!finished || convert->exitStatus() != QProcess::NormalExit ||
-                convert->exitCode() != 0) {
-                QString errorOutput = QString::fromLocal8Bit(convert->readAllStandardError());
-                QString message     = "ImageMagick failed to convert image to file " + fileName;
-                if (!errorOutput.trimmed().isEmpty()) {
-                    message += "\n\n" + errorOutput.trimmed();
-                }
-                QMessageBox mb;
-                mb.setText("Image Viewer Error");
-                mb.setInformativeText(message);
-                mb.setIcon(QMessageBox::Warning);
-                mb.setStandardButtons(QMessageBox::Ok);
-                auto *button = mb.button(QMessageBox::Ok);
-                button->setIcon(QIcon(":/icons/dialog-ok.png"));
-                mb.exec();
-            }
-            delete convert;
-        } else {
-            QMessageBox mb;
-            mb.setText("Image Viewer Error");
-            mb.setInformativeText("Could not save image to file " + fileName);
-            mb.setIcon(QMessageBox::Warning);
-            mb.setStandardButtons(QMessageBox::Ok);
-            auto *button = mb.button(QMessageBox::Ok);
-            button->setIcon(QIcon(":/icons/dialog-ok.png"));
-            mb.exec();
         }
     }
 }

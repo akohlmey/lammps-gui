@@ -74,6 +74,18 @@ available (On macOS use the Command key instead of Ctrl/Control).
      - Quick Help
      - Ctrl+Shift+G
      - LAMMPS-GUI Docs
+   * - Ctrl+Shift+R
+     - Inspect Restart
+     - Ctrl+Shift+O
+     - View in OVITO
+     - Ctrl+Shift+D
+     - View in VMD
+   * - Ctrl+Shift+L
+     - Output Window
+     - Ctrl+Shift+C
+     - Charts Window
+     - Ctrl+Shift+I
+     - Image Window
    * - Ctrl+Shift+M
      - LAMMPS Manual
      - Ctrl+?
@@ -83,7 +95,7 @@ available (On macOS use the Command key instead of Ctrl/Control).
 
 Further keybindings of the editor window `are documented with the Qt
 documentation
-<https://doc.qt.io/qt-5/qplaintextedit.html#editing-key-bindings>`_.  In
+<https://doc.qt.io/qt-6/qplaintextedit.html#editing-key-bindings>`_.  In
 case of conflicts the list above takes precedence.
 
 All other windows only support a subset of keyboard shortcuts listed

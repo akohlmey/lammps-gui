@@ -332,10 +332,10 @@ Viewer toolbar.  It is opened by pressing the "Atoms/Bonds" button in
 the settings panel or by using the `Alt-A` keyboard shortcut.
 
 .. |atombond|  image:: JPG/lammps-gui-image-atom.png
-                     :width: 50%
+                     :width: 62%
 
 .. |autobond| image:: JPG/lammps-gui-autobond.png
-                     :width: 31%
+                     :width: 30%
 
 |autobond|  |atombond|
 
@@ -364,16 +364,18 @@ The dialog contains the following sections:
 
    - **VDW style** (checkbox): Enable or disable space-filling sphere
      rendering.  When unchecked, the ball-and-stick style is used.
-   - **Colormap**: Select the colormap used for coloring by a continuous
-     per-atom property.  Available colormaps are: *BWR*
-     (blue-white-red), *RWB* (red-white-blue), *GWR* (green-white-red),
-     *BWG* (blue-white-green), *Grayscale*, *Rainbow*, *Contrast*,
-     *Heatmap*, and *Sequential*.  These are pre-defined colormap
-     settings and cannot be adjusted from LAMMPS-GUI.  For further
-     customizations, the dump image command line has to be copied to the
-     editor and LAMMPS run normally.  Then the map setting can be
-     customized as explained in the `dump_modify colormap documentation
-     <https://docs.lammps.org/dump_image.html>`_.
+   - **Colormap**: Select the colormap used for coloring by a per-atom
+     property.  Currently available colormaps are: *BWR* (blue-white-red),
+     *RWB* (red-white-blue), *PWT* (purple-white-teal), *BWG*
+     (blue-white-green), *BGR* (blue-green-red), "Viridis" (from
+     matplotlib), "Plasma" (from matplotlib), "Inferno" (from
+     matplotlib), "Teal", "Rainbow", *Grayscale*, and
+     *Sequential* (a map with discrete colors).  These are pre-defined
+     colormap settings and cannot be adjusted from LAMMPS-GUI.  For
+     further customizations, the dump image command line has to be
+     copied to the editor and LAMMPS run normally.  Then the map setting
+     can be customized as explained in the `dump_modify colormap
+     documentation <https://docs.lammps.org/dump_image.html>`_.
    - **Min** / **Max**: Set the range of the colormap.  Use *auto* to
      have LAMMPS determine the range automatically or specify an
      explicit numeric value.
@@ -409,12 +411,12 @@ The dialog contains the following sections:
    - **Bodies** (checkbox): Enable or disable rendering of body particle
      shapes. When disabled, the particles are rendered as spheres like
      regular atoms.
-   - **Diameter**: The diameter of cylinders when used for body particle
-     rendering (range: 0.1 -- 10.0).
    - **Indexed** (checkbox): Use coloring by body index instead of the
      atom type to the body particle.
    - **Style** (radio buttons): Select the body rendering style --
-     *Cylinders*, *Triangles*, or *Both*.
+     *Cylinders*, *Triangles*, or *Both*.  For cylinders - when used for
+     body particle rendering - also their diameter can be set (range:
+     0.1 -- 10.0).
 
 **Ellipsoids**
    Controls visualization of `aspherical particles
@@ -425,8 +427,6 @@ The dialog contains the following sections:
    - **Ellipsoids** (checkbox): Enable or disable rendering of ellipsoid
      particle shapes. When disabled, the particles are rendered as
      spheres like regular atoms.
-   - **Diameter**: The diameter of cylinders when used for ellipsoid
-     particle rendering (range: 0.1 -- 10.0).
    - **Refine** (spinbox): Level of triangle mesh refinement.  At level
      1 the ellipsoids are represented by a deformed octahedron.  With a
      level increase, each triangle is replaced by 4 triangles following
@@ -436,7 +436,9 @@ The dialog contains the following sections:
      the image rasterizer included in LAMMPS.  These can be made less
      prominent by enabling anti-aliasing.
    - **Style** (radio buttons): Select the ellipsoid rendering style --
-     *Cylinders*, *Triangles*, or *Both*.
+     *Cylinders*, *Triangles*, or *Both*.  For cylinders - when used for
+     ellipsoid particle rendering - also their diameter can be set (range:
+     0.1 -- 10.0).
      
 **Lines**
    Controls visualization of `line segment particles
@@ -444,12 +446,9 @@ The dialog contains the following sections:
    simulation).
 
    - **Lines** (checkbox): Enable or disable rendering of line segment
-     particle shapes.  When disabled, the particles are rendered as
-     spheres like regular atoms.
-   - **Diameter**: The diameter of cylinders when used for line segment
-     particle rendering (range: 0.1 -- 10.0).
-   - **Style** (radio buttons): Select the particle rendering style --
-     *Cylinders*, *Triangles*, or *Both*.
+     particle shapes as connected cylinders.  When disabled, the
+     particles are rendered as spheres like regular atoms.  Also the
+     cylinder diameter can be set (range: 0.1 -- 10.0).
 
 **Triangles**
    Controls visualization of `triangulated particles
@@ -459,10 +458,10 @@ The dialog contains the following sections:
    - **Triangles** (checkbox): Enable or disable rendering of
      triangulated particle shapes.  When disabled, the particles are
      rendered as spheres like regular atoms.
-   - **Diameter**: The diameter of cylinders when used for triangulated
-     particle rendering (range: 0.1 -- 10.0).
    - **Style** (radio buttons): Select the particle rendering style --
-     *Cylinders*, *Triangles*, or *Both*.
+     *Cylinders*, *Triangles*, or *Both*.  For cylinders - when used for
+     triangle particle rendering - also their diameter can be set
+     (range: 0.1 -- 10.0).
 
 Press **Apply** to apply the settings and re-render the image, or
 **Cancel** to discard changes.   The **Help** button opens the LAMMPS

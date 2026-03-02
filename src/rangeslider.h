@@ -59,6 +59,11 @@ class RangeSlider : public QSlider {
     Q_OBJECT
 
 public:
+    /**
+     * @brief Constructor
+     * @param ot Slider orientation (default: Horizontal)
+     * @param parent Parent widget
+     */
     RangeSlider(Qt::Orientation ot = Qt::Horizontal, QWidget *parent = nullptr);
 
     /// Return the rangeslider's current low handle value
@@ -85,24 +90,27 @@ signals:
     void sliderMoved(int, int);
 
 protected:
-    int lowLimit;  ///< position of rangeslider's lower handle
-    int highLimit; ///< position of rangeslider's upper handle
-    QStyle::SubControl pressed_control;
-    int tick_interval;
-    QSlider::TickPosition tick_position;
-    QStyle::SubControl hover_control;
-    int click_offset, active_slider;
+    int lowLimit;                        ///< position of rangeslider's lower handle
+    int highLimit;                       ///< position of rangeslider's upper handle
+    QStyle::SubControl pressed_control;  ///< currently pressed sub-control (handle)
+    int tick_interval;                   ///< interval between tick marks
+    QSlider::TickPosition tick_position; ///< position of tick marks relative to slider
+    QStyle::SubControl hover_control;    ///< sub-control currently under the mouse cursor
+    int click_offset;                    ///< offset from handle center to click position
+    int active_slider;                   ///< index of the currently active slider handle
 
     // based on http://qt.gitorious.org/qt/qt/blobs/master/src/gui/widgets/qslider.cpp
 
-    void paintEvent(QPaintEvent *ev) override;
-    void mousePressEvent(QMouseEvent *ev) override;
-    void mouseMoveEvent(QMouseEvent *ev) override;
+    void paintEvent(QPaintEvent *ev) override;      ///< handle paint event
+    void mousePressEvent(QMouseEvent *ev) override; ///< handle mouse press event
+    void mouseMoveEvent(QMouseEvent *ev) override;  ///< handle mouse move event
 
+    /// Extract the relevant coordinate from a point based on slider orientation
     int pick(QPoint const &pt) const
     {
         return this->orientation() == Qt::Horizontal ? pt.x() : pt.y();
     }
+    /// Convert a pixel position along the slider to a range value
     int pixelPosToRangeValue(int pos);
 };
 

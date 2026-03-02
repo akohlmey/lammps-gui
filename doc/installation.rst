@@ -31,21 +31,21 @@ Prerequisites and portability
 
 LAMMPS-GUI is programmed in C++ based on the C++17 standard and using
 the `Qt GUI framework <https://www.qt.io/product/framework>`_.
-Currently, Qt version 5.15LTS or later is required; support for Qt
-version 6.x is available, too.  When compiled With Qt version 6.x,
+Currently, Qt version 5.15LTS or later is required; compiling with Qt
+version 6.x is preferred.  When compiled With Qt version 6.x,
 LAMMPS-GUI can switch between a "light" and a "dark" theme according to
 the settings of the desktop environment.  Otherwise, there are no
 changes in functionality between using either major version of Qt.
 Building LAMMPS-GUI requires CMake version 3.20 or later.
 
-.. admonition:: LAMMPS-GUI 1.9.0 has been successfully compiled and tested on:
+.. admonition:: LAMMPS-GUI 1.10.1 has been successfully compiled and tested on:
 
    - Ubuntu Linux 22.04LTS x86_64 using GCC 11, Qt version 5.15
    - Fedora Linux 41 x86\_64 using GCC 14 and Clang 17, Qt version 5.15
    - Fedora Linux 43 x86\_64 using GCC 15, Qt version 6.10
    - Apple macOS 12 (Monterey) and macOS 13 (Ventura) with Xcode on arm64 and x86\_64, Qt version 5.15
    - Windows 10 and 11 x86_64 with Visual Studio 2022 and Visual C++ 14.36, Qt version 5.15
-   - Windows 10 and 11 x86_64 with Visual Studio 2022 and Visual C++ 14.40, Qt version 6.7
+   - Windows 10 and 11 x86_64 with Visual Studio 2026 and Visual C++ 14.40, Qt version 6.7
    - Windows 10 and 11 x86_64 with MinGW / GCC 15.2 cross-compiler on Fedora 43, Qt version 6.10
 
 Pre-compiled executables
@@ -390,12 +390,12 @@ Linux
 
 *Binary tarball package*
 
-Version 5.15 or later of the Qt library is required. Those are provided
-by, e.g., Ubuntu 22.04LTS or later.  Thus older Linux distributions are
-not likely to be supported, while more recent ones will work, even for
-pre-compiled executables (see above).  After compiling with
-``cmake --build <build folder>``, use ``cmake --build <build
-folder> --target tgz`` or ``make tgz`` to build a
+Version 5.15LTS or later of the Qt library is required. Those are
+provided by, e.g., Ubuntu 22.04LTS or later.  Thus older Linux
+distributions are not likely to be supported, while more recent ones
+will work, even for pre-compiled executables (see above).  After
+compiling with ``cmake --build <build folder>``, use ``cmake --build
+<build folder> --target tgz`` or ``make tgz`` to build a
 ``LAMMPS-Linux-amd64.tar.gz`` file with the executables and their
 support libraries.
 
