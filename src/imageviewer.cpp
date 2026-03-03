@@ -1605,7 +1605,8 @@ void ImageViewer::atom_settings()
             if (edit) {
                 edit->setEnabled(true);
                 edit->show();
-                edit->setText(QString::number(2.0 * atomSize));
+                atomSize = 0.5 * atomdiam.toDouble();
+                edit->setText(atomdiam);
             }
             auto *label = findChild<QLabel *>("AtomLabel");
             if (label) {
