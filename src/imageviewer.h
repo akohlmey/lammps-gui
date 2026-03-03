@@ -72,7 +72,8 @@ private slots:
     void quit();     ///< Close dialog
     void get_help(); ///< Open online help
 
-    void set_atom_size();      ///< Set atom display size
+    void set_atom_size();      ///< Set explicit atom display size
+    void set_bond_size();      ///< Set explicit bond display size
     void edit_size();          ///< Edit image dimensions
     void reset_view();         ///< Reset view to defaults
     void toggle_ssao();        ///< Toggle screen-space ambient occlusion
@@ -126,7 +127,8 @@ private:
     QLabel *imageLabel;          ///< Label displaying the image
     QScrollArea *scrollArea;     ///< Scrollable area for image
     QDialogButtonBox *buttonBox; ///< Dialog buttons
-    double atomSize;             ///< Atom display size
+    double atomSize;             ///< Explicit atom display size (as radius)
+    double bondSize;             ///< Explicit bond display size (as diameter)
 
     QAction *saveAsAct; ///< Save As action
     QAction *copyAct;   ///< Copy action
