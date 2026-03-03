@@ -341,9 +341,9 @@ ImageViewer::ImageViewer(const QString &fileName, LammpsWrapper *_lammps, QWidge
     settings.endGroup();
 
     auto pix   = QPixmap(":/icons/emblem-photos.png");
-    auto bsize = QFontMetrics(QApplication::font()).size(Qt::TextSingleLine, "Height: 200");
+    auto fsize = QFontMetrics(QApplication::font()).size(Qt::TextSingleLine, "Height: 200");
 #if defined(Q_OS_WIN32)
-    bsize = bsize * 3 / 2;
+    fsize = fsize * 3 / 2;
 #endif
 
     auto *renderstatus = new QLabel(QString());
@@ -356,8 +356,18 @@ ImageViewer::ImageViewer(const QString &fileName, LammpsWrapper *_lammps, QWidge
     asize->setValidator(valid);
     asize->setObjectName("atomSize");
     asize->setToolTip("Set Atom size");
+    asize->setMinimumWidth(fsize.width()/4);
+    asize->setMaximumWidth(fsize.width()/2);
     asize->setEnabled(false);
     asize->hide();
+    auto *bsize = new QLineEdit(QString::number(2.0 * atomSize));
+    bsize->setValidator(valid);
+    bsize->setObjectName("bondSize");
+    bsize->setToolTip("Set Bond size");
+    bsize->setMinimumWidth(fsize.width()/4);
+    bsize->setMaximumWidth(fsize.width()/2);
+    bsize->setEnabled(false);
+    bsize->hide();
 
     auto *xval = new QSpinBox;
     xval->setRange(100, 10000);
@@ -365,16 +375,17 @@ ImageViewer::ImageViewer(const QString &fileName, LammpsWrapper *_lammps, QWidge
     xval->setValue(xsize);
     xval->setObjectName("xsize");
     xval->setToolTip("Set rendered image width");
-    xval->setMinimumSize(bsize);
+    xval->setMinimumSize(fsize);
     auto *yval = new QSpinBox;
     yval->setRange(100, 10000);
     yval->setStepType(QAbstractSpinBox::AdaptiveDecimalStepType);
     yval->setValue(ysize);
     yval->setObjectName("ysize");
     yval->setToolTip("Set rendered image height");
-    yval->setMinimumSize(bsize);
+    yval->setMinimumSize(fsize);
 
     connect(asize, &QLineEdit::editingFinished, this, &ImageViewer::set_atom_size);
+    connect(bsize, &QLineEdit::editingFinished, this, &ImageViewer::set_bond_size);
     connect(xval, &QAbstractSpinBox::editingFinished, this, &ImageViewer::edit_size);
     connect(yval, &QAbstractSpinBox::editingFinished, this, &ImageViewer::edit_size);
 
@@ -521,10 +532,15 @@ ImageViewer::ImageViewer(const QString &fileName, LammpsWrapper *_lammps, QWidge
     menuLayout->insertStretch(1, 10);
     menuLayout->addWidget(renderstatus);
     menuLayout->addWidget(new QLabel(" Atom Size: "));
-    menuLayout->addWidget(asize);
     // hide item initially
     menuLayout->itemAt(3)->widget()->setObjectName("AtomLabel");
     menuLayout->itemAt(3)->widget()->hide();
+    menuLayout->addWidget(asize);
+    menuLayout->addWidget(new QLabel(" Bond Size: "));
+    // hide item initially
+    menuLayout->itemAt(5)->widget()->setObjectName("BondLabel");
+    menuLayout->itemAt(5)->widget()->hide();
+    menuLayout->addWidget(bsize);
     menuLayout->addWidget(new QLabel(" <u>W</u>idth: "));
     menuLayout->addWidget(xval);
     menuLayout->addWidget(new QLabel(" <u>H</u>eight: "));
@@ -732,6 +748,15 @@ void ImageViewer::set_atom_size()
     if (!field) return;
     atomSize = 0.5 * field->text().toDouble();
     atomdiam = field->text();
+    createImage();
+}
+
+void ImageViewer::set_bond_size()
+{
+    auto *field = qobject_cast<QLineEdit *>(sender());
+    if (!field) return;
+    bondSize = field->text().toDouble();
+    bonddiam = field->text();
     createImage();
 }
 
@@ -1614,6 +1639,21 @@ void ImageViewer::atom_settings()
                 label->show();
             }
         }
+        if ((bonddiam != "type") && (bonddiam != "type") && (bonddiam != "none") &&
+            (bonddiam != "none")) {
+            auto *edit = findChild<QLineEdit *>("bondSize");
+            if (edit) {
+                edit->setEnabled(true);
+                edit->show();
+                bondSize = bonddiam.toDouble();
+                edit->setText(bonddiam);
+            }
+            auto *label = findChild<QLabel *>("BondLabel");
+            if (label) {
+                label->setEnabled(true);
+                label->show();
+            }
+        }
     }
 
     if (has_autobonds()) {
@@ -2283,6 +2323,40 @@ void ImageViewer::createImage()
         auto *button = findChild<QPushButton *>("vdw");
         if (edit && label && button) {
             button->setEnabled(true);
+            edit->setEnabled(false);
+            edit->hide();
+            label->setEnabled(false);
+            label->hide();
+        }
+    }
+
+    if (showbonds) {
+        auto *edit   = findChild<QLineEdit *>("bondSize");
+        auto *label  = findChild<QLabel *>("BondLabel");
+        if (edit && label) {
+            if (atomcustom) {
+                if ((bonddiam != "type") && (atomdiam != "atom") && (atomdiam != "none")) {
+                    edit->setEnabled(true);
+                    edit->show();
+                    label->setEnabled(true);
+                    label->show();
+                } else {
+                    edit->setEnabled(false);
+                    edit->hide();
+                    label->setEnabled(false);
+                    label->hide();
+                }
+            } else {
+                edit->setEnabled(false);
+                edit->hide();
+                label->setEnabled(false);
+                label->hide();
+            }
+        }
+    } else {
+        auto *edit   = findChild<QLineEdit *>("bondSize");
+        auto *label  = findChild<QLabel *>("BondLabel");
+        if (edit && label) {
             edit->setEnabled(false);
             edit->hide();
             label->setEnabled(false);
