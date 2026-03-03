@@ -314,7 +314,7 @@ ImageViewer::ImageViewer(const QString &fileName, LammpsWrapper *_lammps, QWidge
     atomcolor      = settings.value("color", "type").toString();
     atomdiam       = settings.value("diameter", "type").toString();
     bondcolor      = settings.value("bondcolor", "atom").toString();
-    bonddiam       = settings.value("bonddiam", "atom").toString();
+    bonddiam       = settings.value("bonddiam", "type").toString();
     bodycolor      = "type";
     colormap       = settings.value("colormap", "BWR").toString();
     mapmin         = "auto";
@@ -1350,7 +1350,7 @@ void ImageViewer::atom_settings()
     layout->addWidget(new QLabel("Size: "), idx, n++, 1, 1, Qt::AlignVCenter | Qt::AlignRight);
 
     QRegularExpression validbond(R"((atom|type|none|^\d+\.?\d*|^\d*\.?\d+))");
-    QStringList bnitems{"atom", "type", "0.2", "0.4"};
+    QStringList bnitems{"type", "atom", "0.2", "0.4"};
     if (bonddiam != "none") bnitems << bonddiam;
     bnitems.removeDuplicates();
 
