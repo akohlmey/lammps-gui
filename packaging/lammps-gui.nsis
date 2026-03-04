@@ -114,11 +114,11 @@ Section "${LAMMPSGUI}" SecLammps
   SetOutPath "$INSTDIR"
   CreateDirectory "$INSTDIR\bin"
   CreateDirectory "$INSTDIR\Doc"
-  CreateDirectory "$INSTDIR\qt5plugins"
-  CreateDirectory "$INSTDIR\qt5plugins\imageformats"
-  CreateDirectory "$INSTDIR\qt5plugins\platforms"
-  CreateDirectory "$INSTDIR\qt5plugins\styles"
-  CreateDirectory "$INSTDIR\qt5plugins"
+  CreateDirectory "$INSTDIR\qt6plugins"
+  CreateDirectory "$INSTDIR\qt6plugins\imageformats"
+  CreateDirectory "$INSTDIR\qt6plugins\platforms"
+  CreateDirectory "$INSTDIR\qt6plugins\styles"
+  CreateDirectory "$INSTDIR\qt6plugins"
 
   File License.txt
   File lammps-gui.ico

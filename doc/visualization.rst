@@ -119,7 +119,7 @@ they can be pasted into a LAMMPS input file in either the included
 :doc:`text editor window <editor>` or some other text editor and
 adjusted according to the documentation.
 
-The resulting images will be shown automaticall in the :ref:`slide show
+The resulting images will be shown automatically in the :ref:`slide show
 viewer <slideshow>` when running the simulation with the thus modified
 input from LAMMPS-GUI.  This strategy has been used to great effect to
 create many of the simulation snapshot images shown in this
@@ -142,38 +142,56 @@ same way or using the cursor keys and `Enter`.  Keyboard shortcuts
 starting with `Ctrl` usually work globally inside the image window, that
 is even when the corresponding menu item is not visible.
 
-The **menu/toolbar strip** contains the *File* menu, image dimension
-controls, and a row of toggle and action buttons.  The *File* menu
-provides the following actions:
+.. note::
 
-- **Save As...** (`Ctrl-S`): Save the rendered image to a file.  The
-  file format is inferred from the file name extension.  When the
-  `ImageMagick software <https://imagemagick.org/>`_ is installed,
-  additional file formats beyond those natively supported by the Qt
-  library become available.
-- **Copy Image** (`Ctrl-C`): Copy the rendered image to the clipboard
-  for pasting into another application.  This requires support from
-  the receiving applications, but many applications like document
-  editors or web browsers are.
-- **Copy dump image command** (`Ctrl-D`): Copy the current `dump image
-  <https://docs.lammps.org/dump_image.html>`_ and `dump_modify
-  <https://docs.lammps.org/dump_image.html>`_ commands to the clipboard
-  so they can be pasted into a LAMMPS input file in either the included
-  :doc:`text editor window <editor>` or some other text editor.  This
-  allows the current visualization settings to be reproduced during a
-  simulation run, including in the :ref:`slide show viewer <slideshow>`.
-- **Close** (`Ctrl-W`): Close the Image Viewer window.
-- **Quit** (`Ctrl-Q`): Quit the entire application.
+   Some options (for example, axes location, transparency, , top
+   background color, enabling visualizations of regions or computes and
+   fixes) require that LAMMPS-GUI is interfaced with LAMMPS version 10
+   December 2025 or 11 February 2026 or later.  These fields are grayed
+   out and disabled when an older version of LAMMPS is used.
 
-Next to the *File* menu, the **Width** and **Height** spin boxes set the
-dimensions of the rendered image in pixel.  The small palette icon on the
-left is colored |palette| while LAMMPS is rendering a new image and
-grayed out |inactive| when rendering is complete.  You can set focus to
-the **Width** and **Height** fields by using the `Alt-W` and `Alt-H`
-keyboard shortcuts.
+The **menu/toolbar strip** consists of two rows: the first row with the
+*File* menu, atom and bond size controls, image dimension controls, and
+a second row of toggle and action buttons.
 
-The **toolbar buttons** below the menu bar provide quick access to
-several rendering options and view manipulation.  From left to right:
+The **menu bar row** has:
+
+- The **File** menu with the following entries:
+   - **Save As...** (`Ctrl-S`): Save the rendered image to a file.  The
+     file format is inferred from the file name extension.  When the
+     `ImageMagick software <https://imagemagick.org/>`_ is installed,
+     additional file formats beyond those natively supported by the Qt
+     library become available.
+   - **Copy Image** (`Ctrl-C`): Copy the rendered image to the clipboard
+     for pasting into another application.  This requires support from
+     the receiving applications, but many applications like document
+     editors or web browsers are.
+   - **Copy dump image command** (`Ctrl-D`): Copy the current `dump image
+     <https://docs.lammps.org/dump_image.html>`_ and `dump_modify
+     <https://docs.lammps.org/dump_image.html>`_ commands to the clipboard
+     so they can be pasted into a LAMMPS input file in either the included
+     :doc:`text editor window <editor>` or some other text editor.  This
+     allows the current visualization settings to be reproduced during a
+     simulation run, including in the :ref:`slide show viewer <slideshow>`.
+   - **Close** (`Ctrl-W`): Close the Image Viewer window.
+   - **Quit** (`Ctrl-Q`): Quit the entire application.
+- The **busy indicator**, a small palette icon that is colored |palette|
+  while LAMMPS is rendering a new image and grayed out |inactive| when
+  rendering is complete.
+- The **Atom size** text field, where the atom diameter can be
+  adjusted. This field is only visible when the atom diameter is not
+  automatically set.
+- The **Bond size** text field, where the bond diameter can be
+  adjusted. This field is only visible when the bond diameter is not
+  automatically set.
+- The **Width** spin box where the image width can be set. It can be
+  accessed using the `Alt-W` keyboard shortcut.
+- The **Height** spin box, where set the image height can be set. It can
+  be accessed using the `Alt-H` keyboard shortcut.
+
+The **toolbar buttons** row below the menu bar provide quick access to
+several rendering options and view manipulations.  From left to right
+there are:
 
 - **SSAO** (toggle): Enable or disable `Screen Space Ambient Occlusion
   <https://en.wikipedia.org/wiki/Screen_space_ambient_occlusion>`_
@@ -218,7 +236,7 @@ view style, display of box or axes, zoom factor.  The view of the system
 can be rotated horizontally and vertically.
 
 The **settings panel** on the right side of the window provides
-additional controls:
+additional controls (most are explained in detail below):
 
 - **Group**: A drop-down list to select which `group
   <https://docs.lammps.org/group.html>`_ of atoms to display (default
@@ -272,10 +290,10 @@ in this dialog correspond to options of the LAMMPS `dump image and
 dump_modify commands <https://docs.lammps.org/dump_image.html>`_.
 
 .. |global|  image:: JPG/lammps-gui-image-settings.png
-                     :width: 51%
+                     :width: 61%
 
 .. |boxaxes| image:: JPG/lammps-gui-image-box-axes.png
-                     :width: 25%
+                     :width: 29%
 
 |boxaxes|  |global|
 
@@ -286,14 +304,16 @@ The dialog is organized into the following sections:
 
    - **Axes** (checkbox): Enable or disable rendering of coordinate axes.
    - **Location** (radio buttons): Select where the axes are drawn in
-     the image -- *Lower Left* (default), *Lower Right*, *Upper Left*,
-     *Upper Right*, or *Center*.
+     the image (only available for LAMMPS versions that support this
+     feature). Possible choices are: *Lower Left* (default), *Lower
+     Right*, *Upper Left*, *Upper Right*, or *Center*.
    - **Length**: The length of the axes arrows as a fraction of the box
      size (range: 0.00001 -- 5.0).
    - **Diameter**: The diameter of the axes arrows as a fraction of the
      box size (range: 0.00001 -- 5.0).
-   - **Transparency**: The opacity of the axes (range: 0.0 -- 1.0,
-     where 0.0 is fully transparent).
+   - **Opacity**: The transparency of the axes (range: 0.0 -- 1.0, where
+     1.0 is fully opaque and 0.0 is fully transparent; only available for
+     LAMMPS versions that support this feature).
 
 **Box**
    Controls the display of the simulation box.
@@ -304,8 +324,9 @@ The dialog is organized into the following sections:
      `named colors <https://docs.lammps.org/dump_image.html>`_.
    - **Diameter**: The diameter of the box edge sticks as fraction
      of the box size (range: 0.000001 -- 5.0).
-   - **Transparency**: The opacity of the box edges (range: 0.0 --
-     1.0, where 0.0 is fully transparent).
+   - **Opacity**: The transparency of the box edges (range: 0.0 -- 1.0,
+     where 1.0 is fully opaque and 0.0 is fully transparent; only
+     available for LAMMPS versions that support this feature).
 
 **Subbox**
    Controls the display of the per-processor sub-domain boxes
@@ -321,7 +342,8 @@ The dialog is organized into the following sections:
    Sets the background color(s) of the rendered image.
 
    - **Bottomcolor**: The background color at the bottom of the image.
-   - **Topcolor**: The background color at the top of the image.  If the
+   - **Topcolor**: The background color at the top of the image (Only
+     available for LAMMPS versions that support this feature).  If the
      two colors differ, a vertical gradient is applied from bottom to
      top.
 
@@ -346,13 +368,6 @@ The dialog is organized into the following sections:
 Press **Apply** to apply the current settings and re-render the image,
 or **Cancel** to discard changes.  The **Help** button opens the LAMMPS
 `dump image <https://docs.lammps.org/dump_image.html>`_ documentation.
-
-.. note::
-
-   Some options (axes location, axes transparency, box transparency, top
-   background color) require that LAMMPS-GUI is interfaced with LAMMPS
-   version 11 Feb 2026 or later.  These fields are grayed out and
-   disabled when an older version of LAMMPS is used.
 
 ---------------
 
@@ -395,13 +410,9 @@ The dialog contains the following sections:
    - **Size**: Select the property used for atom sizing.  Options
      include *auto* (when element, diameter, or sigma data is available),
      *type*, and *element*.
-   - **Transparency**: The opacity of atoms (range: 0.0 -- 1.0, where
-     0.0 is fully transparent).
-
-**VDW Style**
-   Controls the Van der Waals space-filling representation and the
-   associated colormap.
-
+   - **Opacity**: The transparency of atoms *and* bonds (range: 0.0 --
+     1.0, where 1.0 is fully opaque and 0.0 is fully transparent; only
+     available for LAMMPS versions supporting this feature).
    - **VDW style** (checkbox): Enable or disable space-filling sphere
      rendering.  When unchecked, the ball-and-stick style is used.
    - **Colormap**: Select the colormap used for coloring by a per-atom
@@ -415,7 +426,7 @@ The dialog contains the following sections:
      LAMMPS-GUI.  As for *all* image settings, further customizations
      can be realized by copying the dump image command line as
      customized by the Image Viewer to the editor and then run LAMMPS
-     and observe the resuling images in the Slideshow Viewer window.
+     and observe the resulting images in the Slideshow Viewer window.
      Then the color map setting can be fully customized according to the
      `dump_modify colormap documentation
      <https://docs.lammps.org/dump_image.html>`_.
@@ -556,8 +567,8 @@ For each region, the following settings can be adjusted:
 - **# Points**: The number of points used to approximate the region
   volume (range: 100 -- 1,000,000).  Higher values reproduce the
   volume better, but may obscure other details of the image.
-- **Opacity**: The opacity of the region rendering (range: 0.0 -- 1.0,
-  where 1.0 is fully opaque).
+- **Opacity**: The transparency of the region rendering (range: 0.0 --
+  1.0, where 1.0 is fully opaque and 0.0 fully transparent).
 
 Press **Apply** to apply the settings and re-render the image, or
 **Cancel** to discard changes.  The **Help** button opens the LAMMPS
