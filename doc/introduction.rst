@@ -90,7 +90,7 @@ Editor Components
   features including syntax highlighting, auto-completion, line numbers,
   and context-sensitive help. The main editing surface for LAMMPS input scripts.
 
-**LineNumberArea (linenumberarea.h/.cpp)**
+**LineNumberArea (linenumberarea.h)**
   Widget that displays line numbers in the left margin of the CodeEditor.
   Updates dynamically as text is added or removed.
 

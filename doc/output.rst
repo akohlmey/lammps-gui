@@ -162,7 +162,7 @@ default chart graph size.
       and the overhead of too frequently polling LAMMPS for new data
       cannot be optimized away, though.  If necessary, the command
       line LAMMPS executable needs to be used and the output accumulated
-      of a very fast disk (e.g. a high-performance SSD).
+      on a very fast disk (e.g. a high-performance SSD).
 
 Variable Info
 ^^^^^^^^^^^^^

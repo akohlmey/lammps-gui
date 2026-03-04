@@ -34,7 +34,7 @@ The primary motivation for implementing LAMMPS-GUI is to facilitate
 teaching LAMMPS to beginners using only LAMMPS-GUI and to have a
 consistent behavior across major platforms like Linux, macOS, and
 Windows.  This way one can focus on teaching LAMMPS and avoid having to
-spent time explaining different tools (for editing inputs, plotting
+spend time explaining different tools (for editing inputs, plotting
 graphs, visualizing systems) on the different platforms.  Also,
 LAMMPS-GUI is fully integrated with a `collection of LAMMPS tutorials
 <https://lammpstutorials.github.io>`_.
@@ -59,11 +59,11 @@ About this document
 
 This document contains the documentation of LAMMPS-GUI and how to
 compile, install, use, configure, and modify it.  Suggestions for new
-features and reports of bugs are always welcome.  You can use the `the
-same channels as for LAMMPS itself
+features and reports of bugs are always welcome.  You can use the `same
+channels as for LAMMPS itself
 <https://docs.lammps.org/Errors_bugs.html>`_ for that purpose or submit
 bug reports or pull requests in the `LAMMPS-GUI GitHub repository
-<https://github.com/akohlmey/lammps-gui>`_
+<https://github.com/akohlmey/lammps-gui>`_.
 
 ------------------
 

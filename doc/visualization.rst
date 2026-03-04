@@ -73,7 +73,7 @@ bonds are determined implicitly (like `AIREBO
 documentation of the `dump image command
 <https://docs.lammps.org/dump_image.html>`_ for more details on these
 and other features and the `LAMMPS Visualization Howto
-<https::/docs.lammps.org/Howto_viz.html>`_ for more general discussions
+<https://docs.lammps.org/Howto_viz.html>`_ for more general discussions
 on how to generate advanced visualizations with LAMMPS directly.
 
 If elements cannot be detected the default sequence of colors of the
@@ -144,7 +144,7 @@ is even when the corresponding menu item is not visible.
 
 .. note::
 
-   Some options (for example, axes location, transparency, , top
+   Some options (for example, axes location, transparency, top
    background color, enabling visualizations of regions or computes and
    fixes) require that LAMMPS-GUI is interfaced with LAMMPS version 10
    December 2025 or 11 February 2026 or later.  These fields are grayed

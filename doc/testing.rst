@@ -42,7 +42,7 @@ Disable Tests
 =============
 
 Tests are disabled by default.  If they have been enabled during CMake configuration
-they can be disabled at a later point with:To build without tests:
+they can be disabled at a later point with:
 
 .. code-block:: text
 
