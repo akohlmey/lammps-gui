@@ -110,15 +110,15 @@ private:
     void adjustWindowSize();
 
 private:
-    QImage image;                ///< Currently displayed image
-    QImage rawImage;             ///< Raw image before transformations
-    QTimer *playtimer;           ///< Timer for automatic playback
-    QLabel *imageLabel;          ///< Label displaying the image
-    QScrollArea *scrollArea;     ///< Scrollable area for image display
-    QSlider *scrollBar;          ///< Scroll bar for selecting images
-    QLabel *imageCounter;        ///< Label showing image count
-    QLabel *imageName;           ///< Label showing image filename
-    double scaleFactor = 1.0;    ///< Current zoom scale factor
+    QImage image;             ///< Currently displayed image
+    QImage rawImage;          ///< Raw image before transformations
+    QTimer *playtimer;        ///< Timer for automatic playback
+    QLabel *imageLabel;       ///< Label displaying the image
+    QScrollArea *scrollArea;  ///< Scrollable area for image display
+    QSlider *scrollBar;       ///< Scroll bar for selecting images
+    QLabel *imageCounter;     ///< Label showing image count
+    QLabel *imageName;        ///< Label showing image filename
+    double scaleFactor = 1.0; ///< Current zoom scale factor
 
     int current;             ///< Index of current image
     int maxwidth, maxheight; ///< Maximum image dimensions
