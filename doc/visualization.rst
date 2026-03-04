@@ -163,9 +163,9 @@ The **menu bar row** has:
      additional file formats beyond those natively supported by the Qt
      library become available.
    - **Copy Image** (`Ctrl-C`): Copy the rendered image to the clipboard
-     for pasting into another application.  This requires support from
-     the receiving applications, but many applications like document
-     editors or web browsers are.
+     for pasting it into another application.  This requires support
+     from the receiving applications, but many applications like
+     document editors or web browsers are.
    - **Copy dump image command** (`Ctrl-D`): Copy the current `dump image
      <https://docs.lammps.org/dump_image.html>`_ and `dump_modify
      <https://docs.lammps.org/dump_image.html>`_ commands to the clipboard
@@ -648,15 +648,18 @@ Image Slide Show
 .. index:: movie export
 .. index:: image export
 
-By default, if the LAMMPS input contains a `dump image
-<https://docs.lammps.org/dump_image.html>`_ command, a "Slide Show"
-window opens which loads and displays the images created by LAMMPS as
-they are written.  This is a convenient way to visually monitor the
-progress of the simulation.  From the slide show window the following
-global keyboard shortcuts are supported: `Ctrl-W`: close window,
-`Ctrl-Q`: quit application, `Ctrl-/`: stop running simulation.  Other
-shortcuts are connected to some of the controls and listed in their
-documentation below.
+When running a LAMMPS input containing a `dump image
+<https://docs.lammps.org/dump_image.html>`_ command with LAMMPS-GUI, the
+"Slide Show" window opens to load and display the images created by
+LAMMPS as they are written.  This is a convenient way to visually
+monitor the progress of the simulation.  It also can be used as an
+effective way to refine visualizations created with the :ref:`Snapshot
+Image Viewer <snapshot_viewer>`.
+
+From the slide show window the following global keyboard shortcuts are
+supported: `Ctrl-W`: close window, `Ctrl-Q`: quit application, `Ctrl-/`:
+stop running simulation.  Other keyboard shortcuts are connected to some
+of the controls and listed in their documentation below.
 
 .. image:: JPG/lammps-gui-slideshow.png
    :align: center
@@ -666,54 +669,46 @@ Slide show controls
 
 .. index:: slideshow controls
 
-The toolbar at the bottom of the Slide Show window provides the
-following controls, organized from left to right:
+There are controls and displays above and below the image.  If you are
+uncertain about the function of a specific button, you can place the
+cursor on top of it and a descriptive tooltip will appear.
 
-**Export and file operations** (left group):
+The **toolbar** at the top of the Slide Show window provides the
+following controls, organized from left to right:
 
 - **Export to movie** (`Ctrl-E`): Export the entire image sequence to a
   movie file or `animated GIF file
   <https://en.wikipedia.org/wiki/GIF#Animated_GIF>`_.  This requires
-  either the `FFmpeg program <https://ffmpeg.org/>`_ or the `ImageMagick
-  software <https://imagemagick.org/>`_ to be installed.  Supported
-  output formats include MP4, MKV, AVI, MPG, MPEG, and animated GIF.
-  The file format is determined by the file name extension.  Any active
-  image transformations (rotation, mirroring) are applied to the
-  exported movie.
-- **Save current image** (`Ctrl-S`): Save the currently displayed image to a file,
-  including any applied transformations (rotation, mirroring).
-  The file format is inferred from the file name extension.  When the
-  `ImageMagick software <https://imagemagick.org/>`_ is installed,
-  additional file formats beyond those natively supported by the Qt
-  library become available.
-- **Copy to clipboard** (`Ctrl-C`): Copy the current image to the system clipboard.
+  that either the `FFmpeg program <https://ffmpeg.org/>`_ or the
+  `ImageMagick software <https://imagemagick.org/>`_ are installed.
+  Supported output formats include MP4, MKV, AVI, MPG, MPEG, WEBM, and
+  animated GIF.  The file format is determined by the file name
+  extension.  Any active image transformations (rotation, mirroring, see
+  below) are applied to the exported movie.
+- **Save current image** (`Ctrl-S`): Save the currently displayed image
+  to a file, including any applied transformations (rotation, mirroring,
+  see below).  The file format is inferred from the file name extension.
+  When the `ImageMagick software <https://imagemagick.org/>`_ is
+  installed, additional file formats beyond those natively supported by
+  the `Qt library <https://doc.qt.io/qt-6/qtimageformats-index.html>`_
+  become available.
+- **Copy to clipboard** (`Ctrl-C`): Copy the current image to the system
+  clipboard for pasting it into another application.  This requires
+  support from the receiving applications, but many applications like
+  document editors or web browsers are.
 - **Delete all images**: Remove all image files associated with the
   slide show.  Since the number of image files can be large for long
   simulations, this provides a safe way to clean up the working
-  directory without risk of accidentally deleting other files.
+  directory without risk of accidentally deleting other files.  This
+  will, however, only delete the images of the last run.  If that was
+  stopped before completion or the output filename has changed, older
+  images created by previous runs will not be deleted.
 
-**Playback controls** (right group):
-
-- **Delay**: Set the delay in milliseconds between frames
-  during animation playback.
-
-- **First**: Jump to the first image in the sequence.
-- **Previous**: Step back to the previous image.
-- **Play**: Start playing the animation from the current frame to the
-  last frame.
-- **Next**: Step forward to the next image.
-- **Last**: Jump to the last image in the sequence.
-- **Loop**: Toggle continuous looping of the animation.  When enabled,
-  playback wraps around from the last image back to the first.
-
-**Zoom controls**:
-
-- **Zoom in**: Increase the displayed image size by 10 percent.
-- **Zoom out**: Decrease the displayed image size by 10 percent.
-- **Reset zoom**: Reset the display to the original image size.
-
-**Image transformation controls** (right group):
-
+- **Zoom in**: Increase the displayed image size by scaling it up. Every
+  click on the button increases the zoom factor by 10 percent.
+- **Zoom out**: Decrease the displayed image size by scaling it
+  down. Every click on the button decreases the zoom factor by 10
+  percent until a minimum zoom factor of 0.1.
 - **Rotate clockwise**: Rotate the displayed image 90 degrees clockwise.
 - **Rotate counter-clockwise**: Rotate the displayed image 90 degrees
   counter-clockwise.
@@ -721,12 +716,28 @@ following controls, organized from left to right:
   axis.
 - **Mirror vertically**: Flip the displayed image along the horizontal
   axis.
+- **Reset image**: Reset the displayed image to the original image. This
+  reverts all zoom, rotate, and mirror operations.
+
+- **Stop Simulation** (`Ctrl-/`): Stop a running simulation.
 
 These image transformations are useful when the simulation images need
-to be adjusted for presentation purposes.  Transformations are also
-applied when exporting images or movies.
+to be adjusted for presentation purposes.  The same transformations are
+also applied when exporting images or movies.
 
-A **scroll bar** below the image area allows selecting any individual
-frame in the sequence by position.  If you are uncertain about the
-function of a specific button, you can place the cursor on top of it and
-a descriptive tooltip will appear.
+The **playback controls** below the image allow to select the displayed
+image and control the slideshow settings:
+
+- **Play**: Start playing the animation from the current frame to the
+  last frame.
+- **Loop**: Toggle continuous looping of the animation.  When enabled,
+  playback wraps around from the last image back to the first.
+- **Delay**: Set the delay in milliseconds between frames
+  during animation playback.
+
+- **First**: Jump to the first image in the sequence.
+- **Previous**: Step back to the previous image.
+- The **slider control** allows selecting a frame in the image sequence
+  by by moving the slider position.
+- **Next**: Step forward to the next image.
+- **Last**: Jump to the last image in the sequence.

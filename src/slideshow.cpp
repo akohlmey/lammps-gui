@@ -82,7 +82,7 @@ SlideShow::SlideShow(const QString &fileName, QWidget *parent) :
     imageName->setTextInteractionFlags(Qt::TextSelectableByMouse);
 
     auto buttonhint = imageName->minimumSizeHint();
-    auto *stoprun = new QPushButton(QIcon(":/icons/process-stop.png"), "");
+    auto *stoprun   = new QPushButton(QIcon(":/icons/process-stop.png"), "");
     stoprun->setToolTip("Stop running simulation");
     buttonhint.setHeight(buttonhint.height() + LAYOUT_SPACING);
     buttonhint.setWidth(buttonhint.height() * 4 / 3);
@@ -140,6 +140,10 @@ SlideShow::SlideShow(const QString &fileName, QWidget *parent) :
     totrash->setMinimumSize(buttonhint);
     totrash->setMaximumSize(buttonhint);
 
+    auto *empty = new QLabel("");
+    empty->setMinimumSize(buttonhint);
+    empty->setMaximumSize(buttonhint);
+
     auto dsize = QFontMetrics(QApplication::font()).size(Qt::TextSingleLine, "Delay:100");
     // need some extra space on Windows
 #if defined(Q_OS_WIN32)
@@ -196,11 +200,6 @@ SlideShow::SlideShow(const QString &fileName, QWidget *parent) :
     zoomout->setToolTip("Zoom out by 10 percent");
     zoomout->setMinimumSize(buttonhint);
     zoomout->setMaximumSize(buttonhint);
-    auto *normal = new QPushButton(QIcon(":/icons/gtk-zoom-fit.png"), "");
-    normal->setToolTip("Reset zoom to normal");
-    normal->setMinimumSize(buttonhint);
-    normal->setMaximumSize(buttonhint);
-
     auto *imgrotcw = new QPushButton(QIcon(":/icons/object-rotate-right.png"), "");
     imgrotcw->setToolTip("Rotate displayed image 90<sup>o</sup> clockwise");
     imgrotcw->setMinimumSize(buttonhint);
@@ -217,6 +216,10 @@ SlideShow::SlideShow(const QString &fileName, QWidget *parent) :
     imgflipv->setToolTip("Mirror displayed image vertically");
     imgflipv->setMinimumSize(buttonhint);
     imgflipv->setMaximumSize(buttonhint);
+    auto *normal = new QPushButton(QIcon(":/icons/gtk-zoom-fit.png"), "");
+    normal->setToolTip("Reset zoom to normal");
+    normal->setMinimumSize(buttonhint);
+    normal->setMaximumSize(buttonhint);
 
     connect(tomovie, &QPushButton::released, this, &SlideShow::movie);
     connect(toimage, &QPushButton::released, this, &SlideShow::save_current_image);
@@ -232,24 +235,25 @@ SlideShow::SlideShow(const QString &fileName, QWidget *parent) :
     connect(goloop, &QPushButton::released, this, &SlideShow::loop);
     connect(zoomin, &QPushButton::released, this, &SlideShow::zoomIn);
     connect(zoomout, &QPushButton::released, this, &SlideShow::zoomOut);
-    connect(normal, &QPushButton::released, this, &SlideShow::normalSize);
     connect(imgrotcw, &QPushButton::released, this, &SlideShow::do_image_rotate_cw);
     connect(imgrotccw, &QPushButton::released, this, &SlideShow::do_image_rotate_ccw);
     connect(imgfliph, &QPushButton::released, this, &SlideShow::do_image_flip_h);
     connect(imgflipv, &QPushButton::released, this, &SlideShow::do_image_flip_v);
+    connect(normal, &QPushButton::released, this, &SlideShow::normalSize);
 
     toolsLayout->addWidget(tomovie, 1);
     toolsLayout->addWidget(toimage, 1);
     toolsLayout->addWidget(toclip, 1);
     toolsLayout->addWidget(totrash, 1);
+    toolsLayout->addWidget(empty);
     toolsLayout->addWidget(dummy);
     toolsLayout->addWidget(zoomin, 1);
     toolsLayout->addWidget(zoomout, 1);
-    toolsLayout->addWidget(normal, 1);
     toolsLayout->addWidget(imgrotcw, 1);
     toolsLayout->addWidget(imgrotccw, 1);
     toolsLayout->addWidget(imgfliph, 1);
     toolsLayout->addWidget(imgflipv, 1);
+    toolsLayout->addWidget(normal, 1);
     toolsLayout->addSpacerItem(
         new QSpacerItem(10, 10, QSizePolicy::Expanding, QSizePolicy::Minimum));
     toolsLayout->addWidget(stoprun);
@@ -568,8 +572,11 @@ void SlideShow::zoomOut()
 
 void SlideShow::normalSize()
 {
-    scaleFactor = 1.0;
-    scaleImage(1.0);
+    scaleFactor   = 1.0;
+    imageRotation = 0;
+    imageFlipH    = false;
+    imageFlipV    = false;
+    loadImage(current);
 }
 
 void SlideShow::scaleImage(double factor)
@@ -605,24 +612,28 @@ void SlideShow::do_image_rotate_cw()
 {
     imageRotation = (imageRotation + 90) % 360;
     applyImageTransform();
+    adjustWindowSize();
 }
 
 void SlideShow::do_image_rotate_ccw()
 {
     imageRotation = (imageRotation + 270) % 360;
     applyImageTransform();
+    adjustWindowSize();
 }
 
 void SlideShow::do_image_flip_h()
 {
     imageFlipH = !imageFlipH;
     applyImageTransform();
+    adjustWindowSize();
 }
 
 void SlideShow::do_image_flip_v()
 {
     imageFlipV = !imageFlipV;
     applyImageTransform();
+    adjustWindowSize();
 }
 
 void SlideShow::applyImageTransform()
