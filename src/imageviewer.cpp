@@ -356,16 +356,16 @@ ImageViewer::ImageViewer(const QString &fileName, LammpsWrapper *_lammps, QWidge
     asize->setValidator(valid);
     asize->setObjectName("atomSize");
     asize->setToolTip("Set Atom size");
-    asize->setMinimumWidth(fsize.width()/4);
-    asize->setMaximumWidth(fsize.width()/2);
+    asize->setMinimumWidth(fsize.width() / 4);
+    asize->setMaximumWidth(fsize.width() / 2);
     asize->setEnabled(false);
     asize->hide();
     auto *bsize = new QLineEdit(QString::number(2.0 * atomSize));
     bsize->setValidator(valid);
     bsize->setObjectName("bondSize");
     bsize->setToolTip("Set Bond size");
-    bsize->setMinimumWidth(fsize.width()/4);
-    bsize->setMaximumWidth(fsize.width()/2);
+    bsize->setMinimumWidth(fsize.width() / 4);
+    bsize->setMaximumWidth(fsize.width() / 2);
     bsize->setEnabled(false);
     bsize->hide();
 
@@ -1017,7 +1017,7 @@ void ImageViewer::global_settings()
     auto *colorvalidator    = new QColorValidator;
     auto *transvalidator    = new QDoubleValidator(0.0, 1.0, 2);
     auto *fractionvalidator = new QDoubleValidator(0.00001, 5.0, 5, this);
-    QFontMetrics metrics(setview.fontMetrics());
+    auto fwidth             = setview.fontMetrics().size(Qt::TextSingleLine, "0.00000000").width();
 
     auto *layout          = new QGridLayout;
     int idx               = 0;
@@ -1026,42 +1026,48 @@ void ImageViewer::global_settings()
     layout->addWidget(title, idx++, 0, 1, MAXCOLS, Qt::AlignCenter);
     layout->addWidget(new QHline, idx++, 0, 1, MAXCOLS);
     for (int i = 0; i < MAXCOLS; ++i)
-        layout->setColumnStretch(i, 2);
-    layout->setColumnStretch(MAXCOLS - 1, 1);
+        layout->setColumnStretch(i, 5);
+    layout->setColumnStretch(0, 4);
+    layout->setColumnStretch(1, 4);
+    layout->setColumnStretch(MAXCOLS - 1, 3);
     layout->setSizeConstraint(QLayout::SetMinAndMaxSize);
 
     auto *axesbutton = new QCheckBox("Axes ", this);
     axesbutton->setCheckState(showaxes ? Qt::Checked : Qt::Unchecked);
+    axesbutton->setMaximumWidth(fwidth);
     layout->addWidget(axesbutton, idx, n++, 1, 1);
-    layout->addWidget(new QLabel("Location:"), idx, n++, 1, 1);
+    layout->addWidget(new QLabel("Location: "), idx, n++, 1, 1, Qt::AlignVCenter | Qt::AlignRight);
     auto *llbutton = new QRadioButton("Lower Left", this);
     llbutton->setChecked(axesloc == "yes");
-    layout->addWidget(llbutton, idx, n++, 1, 1);
-    auto *lrbutton = new QRadioButton("Lower Right", this);
-    lrbutton->setChecked(axesloc == "lowerright");
-    layout->addWidget(lrbutton, idx, n++, 1, 1);
+    layout->addWidget(llbutton, idx, n++, 1, 1, Qt::AlignCenter);
     auto *ulbutton = new QRadioButton("Upper Left", this);
     ulbutton->setChecked(axesloc == "upperleft");
-    layout->addWidget(ulbutton, idx, n++, 1, 1);
+    layout->addWidget(ulbutton, idx, n++, 1, 1, Qt::AlignCenter);
+    auto *lrbutton = new QRadioButton("Lower Right", this);
+    lrbutton->setChecked(axesloc == "lowerright");
+    layout->addWidget(lrbutton, idx, n++, 1, 1, Qt::AlignCenter);
     auto *urbutton = new QRadioButton("Upper Right", this);
     urbutton->setChecked(axesloc == "upperright");
-    layout->addWidget(urbutton, idx, n++, 1, 1);
+    layout->addWidget(urbutton, idx, n++, 1, 1, Qt::AlignCenter);
     auto *cbutton = new QRadioButton("Center", this);
     cbutton->setChecked(axesloc == "center");
     layout->addWidget(cbutton, idx++, n++, 1, 1);
 
     n = 1;
-    layout->addWidget(new QLabel("Length:"), idx, n++, 1, 1);
+    layout->addWidget(new QLabel("Length: "), idx, n++, 1, 1, Qt::AlignVCenter | Qt::AlignRight);
     auto *alval = new QLineEdit(QString::number(axeslen));
     alval->setValidator(fractionvalidator);
+    alval->setMaximumWidth(fwidth);
     layout->addWidget(alval, idx, n++, 1, 1);
-    layout->addWidget(new QLabel("Diameter:"), idx, n++, 1, 1);
+    layout->addWidget(new QLabel("Diameter: "), idx, n++, 1, 1, Qt::AlignVCenter | Qt::AlignRight);
     auto *adval = new QLineEdit(QString::number(axesdiam));
     adval->setValidator(fractionvalidator);
+    adval->setMaximumWidth(fwidth);
     layout->addWidget(adval, idx, n++, 1, 1);
-    layout->addWidget(new QLabel("Tansparency:"), idx, n++, 1, 1);
+    layout->addWidget(new QLabel("Opacity: "), idx, n++, 1, 1, Qt::AlignVCenter | Qt::AlignRight);
     auto *atval = new QLineEdit(QString::number(axestrans));
     atval->setValidator(transvalidator);
+    atval->setMaximumWidth(fwidth * 3 / 2);
     layout->addWidget(atval, idx++, n++, 1, 1);
     // disable and uncheck unsupported fields for older LAMMPS versions
     if (lammps->version() < 20260211) {
@@ -1083,19 +1089,23 @@ void ImageViewer::global_settings()
 
     auto *boxbutton = new QCheckBox("Box ", this);
     boxbutton->setCheckState(showbox ? Qt::Checked : Qt::Unchecked);
+    boxbutton->setMaximumWidth(fwidth);
     layout->addWidget(boxbutton, idx, n++, 1, 1);
-    layout->addWidget(new QLabel("Color:"), idx, n++, 1, 1);
+    layout->addWidget(new QLabel("Color: "), idx, n++, 1, 1, Qt::AlignVCenter | Qt::AlignRight);
     auto *bcolor = new QLineEdit(boxcolor);
     bcolor->setCompleter(colorcompleter);
     bcolor->setValidator(colorvalidator);
+    bcolor->setMaximumWidth(fwidth);
     layout->addWidget(bcolor, idx, n++, 1, 1);
-    layout->addWidget(new QLabel("Diameter:"), idx, n++, 1, 1);
+    layout->addWidget(new QLabel("Diameter: "), idx, n++, 1, 1, Qt::AlignVCenter | Qt::AlignRight);
     auto *bdiam = new QLineEdit(QString::number(boxdiam));
     bdiam->setValidator(fractionvalidator);
+    bdiam->setMaximumWidth(fwidth);
     layout->addWidget(bdiam, idx, n++, 1, 1);
-    layout->addWidget(new QLabel("Tansparency:"), idx, n++, 1, 1);
+    layout->addWidget(new QLabel("Opacity: "), idx, n++, 1, 1, Qt::AlignVCenter | Qt::AlignRight);
     auto *btrans = new QLineEdit(QString::number(boxtrans));
     btrans->setValidator(transvalidator);
+    btrans->setMaximumWidth(fwidth * 3 / 2);
     layout->addWidget(btrans, idx++, n++, 1, 1);
     if (lammps->version() < 20260211) {
         btrans->setEnabled(false);
@@ -1105,24 +1115,29 @@ void ImageViewer::global_settings()
 
     auto *subboxbutton = new QCheckBox("Subbox ", this);
     subboxbutton->setCheckState(showsubbox ? Qt::Checked : Qt::Unchecked);
+    subboxbutton->setMaximumWidth(fwidth);
     layout->addWidget(subboxbutton, idx, n++, 1, 1);
-    layout->addWidget(new QLabel("Diameter:"), idx, n++, 1, 1);
+    layout->addWidget(new QLabel("Diameter: "), idx, n++, 1, 1, Qt::AlignVCenter | Qt::AlignRight);
     auto *subdiam = new QLineEdit(QString::number(subboxdiam));
     subdiam->setValidator(fractionvalidator);
+    subdiam->setMaximumWidth(fwidth);
     layout->addWidget(subdiam, idx++, n++, 1, 1);
+    layout->addWidget(new QHline, idx++, 0, 1, MAXCOLS);
 
     n = 0;
 
     layout->addWidget(new QLabel("Background:"), idx, n++, 1, 1);
-    layout->addWidget(new QLabel("Bottomcolor:"), idx, n++, 1, 1);
+    layout->addWidget(new QLabel("Bottom: "), idx, n++, 1, 1, Qt::AlignVCenter | Qt::AlignRight);
     auto *bgcolor = new QLineEdit(backcolor);
     bgcolor->setCompleter(colorcompleter);
     bgcolor->setValidator(colorvalidator);
+    bgcolor->setMaximumWidth(fwidth);
     layout->addWidget(bgcolor, idx, n++, 1, 1);
-    layout->addWidget(new QLabel("Topcolor:"), idx, n++, 1, 1);
+    layout->addWidget(new QLabel("Topcolor: "), idx, n++, 1, 1, Qt::AlignVCenter | Qt::AlignRight);
     auto *b2color = new QLineEdit(backcolor2);
     b2color->setCompleter(colorcompleter);
     b2color->setValidator(colorvalidator);
+    b2color->setMaximumWidth(fwidth);
     layout->addWidget(b2color, idx++, n++, 1, 1);
     if (lammps->version() < 20260211) {
         b2color->setEnabled(false);
@@ -1131,34 +1146,42 @@ void ImageViewer::global_settings()
 
     n = 0;
     layout->addWidget(new QLabel("Quality:"), idx, n++, 1, 1);
-    auto *fsaa = new QCheckBox("FSAA ", this);
+    n++;
+    auto *fsaa = new QCheckBox("FSAA  ", this);
     fsaa->setCheckState(antialias ? Qt::Checked : Qt::Unchecked);
-    layout->addWidget(fsaa, idx, n++, 1, 1);
-    auto *ssao = new QCheckBox("SSAO ", this);
+    layout->addWidget(fsaa, idx, n++, 1, 1, Qt::AlignVCenter | Qt::AlignLeft);
+    auto *ssao = new QCheckBox("SSAO: ", this);
     ssao->setCheckState(usessao ? Qt::Checked : Qt::Unchecked);
-    layout->addWidget(ssao, idx, n++, 1, 1);
-    layout->addWidget(new QLabel("SSAO strength:"), idx, n++, 1, 1);
+    layout->addWidget(ssao, idx, n++, 1, 1, Qt::AlignVCenter | Qt::AlignRight);
     auto *aoval = new QLineEdit(QString::number(ssaoval));
     aoval->setValidator(new QDoubleValidator(0.0, 1.0, 5, this));
+    aoval->setMaximumWidth(fwidth);
     layout->addWidget(aoval, idx, n++, 1, 1);
-    layout->addWidget(new QLabel("Shiny:"), idx, n++, 1, 1);
+    layout->addWidget(new QLabel("Shiny: "), idx, n++, 1, 1, Qt::AlignVCenter | Qt::AlignRight);
     auto *shiny = new QLineEdit(QString::number(shinyfactor));
     shiny->setValidator(new QDoubleValidator(0.0, 1.0, 5, this));
+    shiny->setMaximumWidth(fwidth);
     layout->addWidget(shiny, idx++, n++, 1, 1);
 
     n = 0;
     layout->addWidget(new QLabel("Center:"), idx, n++, 1, 1);
-    layout->addWidget(new QLabel("X-direction:"), idx, n++, 1, 1);
+    layout->addWidget(new QLabel("X-direction: "), idx, n++, 1, 1,
+                      Qt::AlignVCenter | Qt::AlignRight);
     auto *xval = new QLineEdit(QString::number(xcenter));
     xval->setValidator(new QDoubleValidator(0.0, 1.0, 10, this));
+    xval->setMaximumWidth(fwidth);
     layout->addWidget(xval, idx, n++, 1, 1);
-    layout->addWidget(new QLabel("Y-direction:"), idx, n++, 1, 1);
+    layout->addWidget(new QLabel("Y-direction: "), idx, n++, 1, 1,
+                      Qt::AlignVCenter | Qt::AlignRight);
     auto *yval = new QLineEdit(QString::number(ycenter));
     yval->setValidator(new QDoubleValidator(0.0, 1.0, 10, this));
+    yval->setMaximumWidth(fwidth);
     layout->addWidget(yval, idx, n++, 1, 1);
-    layout->addWidget(new QLabel("Z-direction:"), idx, n++, 1, 1);
+    layout->addWidget(new QLabel("Z-direction: "), idx, n++, 1, 1,
+                      Qt::AlignVCenter | Qt::AlignRight);
     auto *zval = new QLineEdit(QString::number(zcenter));
     zval->setValidator(new QDoubleValidator(0.0, 1.0, 10, this));
+    zval->setMaximumWidth(fwidth);
     layout->addWidget(zval, idx++, n++, 1, 1);
 
     n = 0;
@@ -1253,9 +1276,7 @@ void ImageViewer::atom_settings()
     title->setLineWidth(1);
     title->setMargin(TITLE_MARGIN);
 
-    auto *transvalidator = new QDoubleValidator(0.0, 1.0, 2);
-    QFontMetrics metrics(setview.fontMetrics());
-
+    auto *transvalidator  = new QDoubleValidator(0.0, 1.0, 2);
     auto *layout          = new QGridLayout;
     int idx               = 0;
     int n                 = 0;
@@ -1319,11 +1340,11 @@ void ImageViewer::atom_settings()
         }
     }
     layout->addWidget(adiam, idx, n++, 1, 1);
-    layout->addWidget(new QLabel("Transparency: "), idx, n++, 1, 1,
-                      Qt::AlignVCenter | Qt::AlignRight);
+    layout->addWidget(new QLabel("Opacity: "), idx, n++, 1, 1, Qt::AlignVCenter | Qt::AlignRight);
     auto *atrans = new QLineEdit(QString::number(atomtrans));
     atrans->setValidator(transvalidator);
     layout->addWidget(atrans, idx++, n++, 1, 1);
+    if (lammps->version() < 20260211) atrans->setEnabled(false);
 
     n = 0;
 
@@ -2331,8 +2352,8 @@ void ImageViewer::createImage()
     }
 
     if (showbonds) {
-        auto *edit   = findChild<QLineEdit *>("bondSize");
-        auto *label  = findChild<QLabel *>("BondLabel");
+        auto *edit  = findChild<QLineEdit *>("bondSize");
+        auto *label = findChild<QLabel *>("BondLabel");
         if (edit && label) {
             if (atomcustom) {
                 if ((bonddiam != "type") && (atomdiam != "atom") && (atomdiam != "none")) {
@@ -2354,8 +2375,8 @@ void ImageViewer::createImage()
             }
         }
     } else {
-        auto *edit   = findChild<QLineEdit *>("bondSize");
-        auto *label  = findChild<QLabel *>("BondLabel");
+        auto *edit  = findChild<QLineEdit *>("bondSize");
+        auto *label = findChild<QLabel *>("BondLabel");
         if (edit && label) {
             edit->setEnabled(false);
             edit->hide();

@@ -41,6 +41,7 @@ licensors
 lj
 macOS
 makefile
+matplotlib
 MBytes
 Mutex
 mystrdup
@@ -83,6 +84,7 @@ ui
 Validator
 varname
 Ventura
+Viridis
 Waals
 webpage
 whitespace
