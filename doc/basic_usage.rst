@@ -160,7 +160,7 @@ the current `run <https://docs.lammps.org/run.html>`_ or `minimize
    running as a separate thread, the CPU utilization *may* be higher,
    for example when the GUI needs to work hard to keep up with the
    output produced by the simulation; for example when there is frequent
-   thermo output or the simulation run very fast.  In the *Preferences*
+   thermo output or the simulation runs very fast.  In the *Preferences*
    dialog, the polling interval for updating the *Output* and *Charts*
    windows can be adjusted. The intervals may need to be lowered to not
    miss data between *Charts* data updates or to avoid stalling when the

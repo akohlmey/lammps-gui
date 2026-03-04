@@ -36,6 +36,7 @@ GUIEditorChecks
 Hoyoung
 http
 kspace
+lammps
 Lennard
 licensors
 lj
