@@ -98,10 +98,12 @@ SlideShow::SlideShow(const QString &fileName, QWidget *parent) :
     buttonBox    = new QDialogButtonBox(QDialogButtonBox::Close);
     auto *button = buttonBox->button(QDialogButtonBox::Close);
     button->setIcon(QIcon(":/icons/window-close.png"));
+    auto boxhint = buttonBox->minimumSizeHint();
+    buttonBox->setMinimumSize(boxhint);
+    buttonBox->setMaximumSize(boxhint);
 
     auto *stoprun = new QPushButton(QIcon(":/icons/process-stop.png"), "");
     stoprun->setToolTip("Stop running simulation");
-    auto boxhint = buttonBox->minimumSizeHint();
     boxhint.setWidth(boxhint.height() * 4 / 3);
     stoprun->setMinimumSize(boxhint);
     stoprun->setMaximumSize(boxhint);
@@ -123,6 +125,8 @@ SlideShow::SlideShow(const QString &fileName, QWidget *parent) :
     // workaround for incorrect highlight bug on macOS
     auto *dummy = new QPushButton(QIcon(), "");
     dummy->hide();
+    dummy->setMinimumSize(QSize(0, 0));
+    dummy->setMaximumSize(QSize(0, 0));
 
     auto *tomovie = new QPushButton(QIcon(":/icons/export-movie.png"), "");
     tomovie->setToolTip("Export to movie file");
@@ -246,14 +250,10 @@ SlideShow::SlideShow(const QString &fileName, QWidget *parent) :
     connect(imgfliph, &QPushButton::released, this, &SlideShow::do_image_flip_h);
     connect(imgflipv, &QPushButton::released, this, &SlideShow::do_image_flip_v);
 
-    toolsLayout->addSpacerItem(
-        new QSpacerItem(10, 10, QSizePolicy::Expanding, QSizePolicy::Minimum));
     toolsLayout->addWidget(tomovie, 1);
     toolsLayout->addWidget(toimage, 1);
     toolsLayout->addWidget(toclip, 1);
     toolsLayout->addWidget(totrash, 1);
-    toolsLayout->addSpacerItem(
-        new QSpacerItem(10, 10, QSizePolicy::Expanding, QSizePolicy::Minimum));
     toolsLayout->addWidget(dummy);
     toolsLayout->addWidget(zoomin, 1);
     toolsLayout->addWidget(zoomout, 1);
@@ -270,6 +270,7 @@ SlideShow::SlideShow(const QString &fileName, QWidget *parent) :
     toolsLayout->setSpacing(LAYOUT_SPACING);
 
     mainLayout->addLayout(toolsLayout);
+    mainLayout->addWidget(new QHline);
     mainLayout->addWidget(scrollArea, 10);
 
     botLayout->addWidget(goplay, 1);
