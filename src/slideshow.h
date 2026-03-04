@@ -17,7 +17,6 @@
 #include <QString>
 #include <QStringList>
 
-class QDialogButtonBox;
 class QLabel;
 class QScrollArea;
 class QSlider;
@@ -119,7 +118,6 @@ private:
     QSlider *scrollBar;          ///< Scroll bar for selecting images
     QLabel *imageCounter;        ///< Label showing image count
     QLabel *imageName;           ///< Label showing image filename
-    QDialogButtonBox *buttonBox; ///< Dialog control buttons
     double scaleFactor = 1.0;    ///< Current zoom scale factor
 
     int current;             ///< Index of current image

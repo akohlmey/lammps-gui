@@ -68,14 +68,14 @@ CodeEditor::CodeEditor(QWidget *parent) :
     connect(help_action, &QShortcut::activated, this, &CodeEditor::get_help);
 
     // set up completer class (without a model currently)
-#define COMPLETER_SETUP(completer)                                                            \
-    completer->setCompletionMode(QCompleter::UnfilteredPopupCompletion);                      \
-    completer->setModelSorting(QCompleter::CaseInsensitivelySortedModel);                     \
-    completer->setWidget(this);                                                               \
-    completer->setMaxVisibleItems(16);                                                        \
-    completer->setWrapAround(false);                                                          \
-    QObject::connect(completer, QOverload<const QString &>::of(&QCompleter::activated), this, \
-                     &CodeEditor::insertCompletedCommand)
+#define COMPLETER_SETUP(completer)                                                   \
+    completer->setCompletionMode(QCompleter::UnfilteredPopupCompletion);             \
+    completer->setModelSorting(QCompleter::CaseInsensitivelySortedModel);            \
+    completer->setWidget(this);                                                      \
+    completer->setMaxVisibleItems(16);                                               \
+    completer->setWrapAround(false);                                                 \
+    connect(completer, QOverload<const QString &>::of(&QCompleter::activated), this, \
+            &CodeEditor::insertCompletedCommand)
 
     COMPLETER_SETUP(command_comp);
     COMPLETER_SETUP(fix_comp);
@@ -655,14 +655,17 @@ void CodeEditor::contextMenuEvent(QContextMenuEvent *event)
     if (lammps->is_running()) {
         auto *action1 = menu->addAction("Stop LAMMPS");
         action1->setIcon(QIcon(":/icons/process-stop.png"));
-        connect(action1, &QAction::triggered, qobject_cast<LammpsGui *>(parent()), &LammpsGui::stop_run);
+        connect(action1, &QAction::triggered, qobject_cast<LammpsGui *>(parent()),
+                &LammpsGui::stop_run);
     } else {
         auto *action1 = menu->addAction("Run LAMMPS from Editor Buffer");
         action1->setIcon(QIcon(":/icons/system-run.png"));
-        connect(action1, &QAction::triggered, qobject_cast<LammpsGui *>(parent()), &LammpsGui::run_buffer);
+        connect(action1, &QAction::triggered, qobject_cast<LammpsGui *>(parent()),
+                &LammpsGui::run_buffer);
         auto *action2 = menu->addAction("Run LAMMPS from File");
         action2->setIcon(QIcon(":/icons/run-file.png"));
-        connect(action2, &QAction::triggered, qobject_cast<LammpsGui *>(parent()), &LammpsGui::run_file);
+        connect(action2, &QAction::triggered, qobject_cast<LammpsGui *>(parent()),
+                &LammpsGui::run_file);
     }
     menu->addSeparator();
 

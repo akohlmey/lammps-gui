@@ -17,7 +17,6 @@
 
 #include <QApplication>
 #include <QClipboard>
-#include <QDialogButtonBox>
 #include <QDir>
 #include <QFile>
 #include <QFileDialog>
@@ -82,40 +81,32 @@ SlideShow::SlideShow(const QString &fileName, QWidget *parent) :
     imageName->setSizePolicy(QSizePolicy::Minimum, QSizePolicy::Fixed);
     imageName->setTextInteractionFlags(Qt::TextSelectableByMouse);
 
-    auto *shortcut = new QShortcut(QKeySequence(Qt::CTRL | Qt::Key_W), this);
-    QObject::connect(shortcut, &QShortcut::activated, this, &QWidget::close);
-    shortcut = new QShortcut(QKeySequence(Qt::CTRL | Qt::Key_Slash), this);
-    QObject::connect(shortcut, &QShortcut::activated, this, &SlideShow::stop_run);
-    shortcut = new QShortcut(QKeySequence(Qt::CTRL | Qt::Key_Q), this);
-    QObject::connect(shortcut, &QShortcut::activated, this, &SlideShow::quit);
-    shortcut = new QShortcut(QKeySequence(Qt::CTRL | Qt::Key_C), this);
-    QObject::connect(shortcut, &QShortcut::activated, this, &SlideShow::copy);
-    shortcut = new QShortcut(QKeySequence(Qt::CTRL | Qt::Key_E), this);
-    QObject::connect(shortcut, &QShortcut::activated, this, &SlideShow::movie);
-    shortcut = new QShortcut(QKeySequence(Qt::CTRL | Qt::Key_S), this);
-    QObject::connect(shortcut, &QShortcut::activated, this, &SlideShow::save_current_image);
-
-    buttonBox    = new QDialogButtonBox(QDialogButtonBox::Close);
-    auto *button = buttonBox->button(QDialogButtonBox::Close);
-    button->setIcon(QIcon(":/icons/window-close.png"));
-    auto boxhint = buttonBox->minimumSizeHint();
-    buttonBox->setMinimumSize(boxhint);
-    buttonBox->setMaximumSize(boxhint);
-
+    auto buttonhint = imageName->minimumSizeHint();
     auto *stoprun = new QPushButton(QIcon(":/icons/process-stop.png"), "");
     stoprun->setToolTip("Stop running simulation");
-    boxhint.setWidth(boxhint.height() * 4 / 3);
-    stoprun->setMinimumSize(boxhint);
-    stoprun->setMaximumSize(boxhint);
-    imageCounter->setMinimumHeight(boxhint.height());
-    imageCounter->setMaximumHeight(boxhint.height());
-    imageName->setMinimumHeight(boxhint.height());
-    imageName->setMaximumHeight(boxhint.height());
+    buttonhint.setHeight(buttonhint.height() + LAYOUT_SPACING);
+    buttonhint.setWidth(buttonhint.height() * 4 / 3);
+    stoprun->setMinimumSize(buttonhint);
+    stoprun->setMaximumSize(buttonhint);
+    connect(stoprun, &QPushButton::released, this, &SlideShow::stop_run);
 
-    QObject::connect(stoprun, &QPushButton::released, this, &SlideShow::stop_run);
+    imageCounter->setMinimumHeight(buttonhint.height());
+    imageCounter->setMaximumHeight(buttonhint.height());
+    imageName->setMinimumHeight(buttonhint.height());
+    imageName->setMaximumHeight(buttonhint.height());
 
-    connect(buttonBox, &QDialogButtonBox::accepted, this, &QDialog::accept);
-    connect(buttonBox, &QDialogButtonBox::rejected, this, &QDialog::reject);
+    auto *shortcut = new QShortcut(QKeySequence(Qt::CTRL | Qt::Key_W), this);
+    connect(shortcut, &QShortcut::activated, this, &QWidget::close);
+    shortcut = new QShortcut(QKeySequence(Qt::CTRL | Qt::Key_Slash), this);
+    connect(shortcut, &QShortcut::activated, this, &SlideShow::stop_run);
+    shortcut = new QShortcut(QKeySequence(Qt::CTRL | Qt::Key_Q), this);
+    connect(shortcut, &QShortcut::activated, this, &SlideShow::quit);
+    shortcut = new QShortcut(QKeySequence(Qt::CTRL | Qt::Key_C), this);
+    connect(shortcut, &QShortcut::activated, this, &SlideShow::copy);
+    shortcut = new QShortcut(QKeySequence(Qt::CTRL | Qt::Key_E), this);
+    connect(shortcut, &QShortcut::activated, this, &SlideShow::movie);
+    shortcut = new QShortcut(QKeySequence(Qt::CTRL | Qt::Key_S), this);
+    connect(shortcut, &QShortcut::activated, this, &SlideShow::save_current_image);
 
     auto *mainLayout  = new QVBoxLayout;
     auto *toolsLayout = new QHBoxLayout;
@@ -131,9 +122,6 @@ SlideShow::SlideShow(const QString &fileName, QWidget *parent) :
     auto *tomovie = new QPushButton(QIcon(":/icons/export-movie.png"), "");
     tomovie->setToolTip("Export to movie file");
     tomovie->setEnabled(has_exe("ffmpeg") || has_exe("magick") || has_exe("convert"));
-    auto buttonhint = stoprun->minimumSizeHint();
-    buttonhint.setHeight(boxhint.height());
-    buttonhint.setWidth(boxhint.height() * 4 / 3);
     tomovie->setMinimumSize(buttonhint);
     tomovie->setMaximumSize(buttonhint);
 
@@ -265,7 +253,6 @@ SlideShow::SlideShow(const QString &fileName, QWidget *parent) :
     toolsLayout->addSpacerItem(
         new QSpacerItem(10, 10, QSizePolicy::Expanding, QSizePolicy::Minimum));
     toolsLayout->addWidget(stoprun);
-    toolsLayout->addWidget(buttonBox);
     toolsLayout->setSizeConstraint(QLayout::SetMinimumSize);
     toolsLayout->setSpacing(LAYOUT_SPACING);
 
