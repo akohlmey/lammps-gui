@@ -22,7 +22,6 @@
 
 class QAction;
 class QMenuBar;
-class QDialogButtonBox;
 class QEvent;
 class QLabel;
 class QObject;
@@ -113,22 +112,21 @@ protected:
     bool eventFilter(QObject *watched, QEvent *event) override; ///< Intercept Alt-keystrokes
 
 private:
-    void createActions();                   ///< Setup menu actions
-    void updateActions();                   ///< Update action states
-    void adjustWindowSize();                ///< Auto-resize window to fit image
-    void update_fixes();                    ///< Update fix graphics information
-    void update_regions();                  ///< Update region information
-    void update_peratom();                  ///< Update per-atom information
-    bool has_autobonds();                   ///< Check if autobonds are enabled
+    void createActions();    ///< Setup menu actions
+    void updateActions();    ///< Update action states
+    void adjustWindowSize(); ///< Auto-resize window to fit image
+    void update_fixes();     ///< Update fix graphics information
+    void update_regions();   ///< Update region information
+    void update_peratom();   ///< Update per-atom information
+    bool has_autobonds();    ///< Check if autobonds are enabled
 
 private:
-    QImage image;                ///< Currently displayed image
-    QMenuBar *menuBar;           ///< Menu bar
-    QLabel *imageLabel;          ///< Label displaying the image
-    QScrollArea *scrollArea;     ///< Scrollable area for image
-    QDialogButtonBox *buttonBox; ///< Dialog buttons
-    double atomSize;             ///< Explicit atom display size (as radius)
-    double bondSize;             ///< Explicit bond display size (as diameter)
+    QImage image;            ///< Currently displayed image
+    QMenuBar *menuBar;       ///< Menu bar
+    QLabel *imageLabel;      ///< Label displaying the image
+    QScrollArea *scrollArea; ///< Scrollable area for image
+    double atomSize;         ///< Explicit atom display size (as radius)
+    double bondSize;         ///< Explicit bond display size (as diameter)
 
     QAction *saveAsAct; ///< Save As action
     QAction *copyAct;   ///< Copy action

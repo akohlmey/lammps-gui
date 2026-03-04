@@ -1559,9 +1559,9 @@ void LammpsGui::do_run(bool use_buffer)
     logwindow->setLineWrapMode(LogWindow::NoWrap);
     logwindow->setMinimumSize(MINIMUM_WIDTH, MINIMUM_HEIGHT);
     auto *shortcut = new QShortcut(QKeySequence(Qt::CTRL | Qt::Key_W), logwindow);
-    QObject::connect(shortcut, &QShortcut::activated, logwindow, &LogWindow::close);
+    connect(shortcut, &QShortcut::activated, logwindow, &LogWindow::close);
     shortcut = new QShortcut(QKeySequence(Qt::CTRL | Qt::Key_Slash), logwindow);
-    QObject::connect(shortcut, &QShortcut::activated, this, &LammpsGui::stop_run);
+    connect(shortcut, &QShortcut::activated, this, &LammpsGui::stop_run);
     if (settings.value("viewlog", true).toBool())
         logwindow->show();
     else
@@ -1580,9 +1580,9 @@ void LammpsGui::do_run(bool use_buffer)
     chartwindow->set_norm(normflag != 0);
 
     shortcut = new QShortcut(QKeySequence(Qt::CTRL | Qt::Key_W), chartwindow);
-    QObject::connect(shortcut, &QShortcut::activated, chartwindow, &ChartWindow::close);
+    connect(shortcut, &QShortcut::activated, chartwindow, &ChartWindow::close);
     shortcut = new QShortcut(QKeySequence(Qt::CTRL | Qt::Key_Slash), chartwindow);
-    QObject::connect(shortcut, &QShortcut::activated, this, &LammpsGui::stop_run);
+    connect(shortcut, &QShortcut::activated, this, &LammpsGui::stop_run);
     if (settings.value("viewchart", true).toBool())
         chartwindow->show();
     else

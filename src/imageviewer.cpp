@@ -227,9 +227,9 @@ public:
 
 ImageViewer::ImageViewer(const QString &fileName, LammpsWrapper *_lammps, QWidget *parent) :
     QDialog(parent), menuBar(new QMenuBar), imageLabel(new QLabel), scrollArea(new QScrollArea),
-    buttonBox(nullptr), atomSize(1.0), saveAsAct(nullptr), copyAct(nullptr), cmdAct(nullptr),
-    lammps(_lammps), group("all"), molecule("none"), filename(fileName), useelements(false),
-    usediameter(false), usesigma(false), shutdown(false)
+    atomSize(1.0), saveAsAct(nullptr), copyAct(nullptr), cmdAct(nullptr), lammps(_lammps),
+    group("all"), molecule("none"), filename(fileName), useelements(false), usediameter(false),
+    usesigma(false), shutdown(false)
 {
     imageLabel->setBackgroundRole(QPalette::Base);
     imageLabel->setSizePolicy(QSizePolicy::Minimum, QSizePolicy::Minimum);

@@ -13,10 +13,10 @@
 
 #include "helpers.h"
 #include "lammpsgui.h"
+#include "qaddon.h"
 
 #include <QApplication>
 #include <QClipboard>
-#include <QDialogButtonBox>
 #include <QDir>
 #include <QFile>
 #include <QFileDialog>
@@ -81,52 +81,47 @@ SlideShow::SlideShow(const QString &fileName, QWidget *parent) :
     imageName->setSizePolicy(QSizePolicy::Minimum, QSizePolicy::Fixed);
     imageName->setTextInteractionFlags(Qt::TextSelectableByMouse);
 
-    auto *shortcut = new QShortcut(QKeySequence(Qt::CTRL | Qt::Key_W), this);
-    QObject::connect(shortcut, &QShortcut::activated, this, &QWidget::close);
-    shortcut = new QShortcut(QKeySequence(Qt::CTRL | Qt::Key_Slash), this);
-    QObject::connect(shortcut, &QShortcut::activated, this, &SlideShow::stop_run);
-    shortcut = new QShortcut(QKeySequence(Qt::CTRL | Qt::Key_Q), this);
-    QObject::connect(shortcut, &QShortcut::activated, this, &SlideShow::quit);
-    shortcut = new QShortcut(QKeySequence(Qt::CTRL | Qt::Key_C), this);
-    QObject::connect(shortcut, &QShortcut::activated, this, &SlideShow::copy);
-    shortcut = new QShortcut(QKeySequence(Qt::CTRL | Qt::Key_E), this);
-    QObject::connect(shortcut, &QShortcut::activated, this, &SlideShow::movie);
-    shortcut = new QShortcut(QKeySequence(Qt::CTRL | Qt::Key_S), this);
-    QObject::connect(shortcut, &QShortcut::activated, this, &SlideShow::save_current_image);
-
-    buttonBox    = new QDialogButtonBox(QDialogButtonBox::Close);
-    auto *button = buttonBox->button(QDialogButtonBox::Close);
-    button->setIcon(QIcon(":/icons/window-close.png"));
-
-    auto *stoprun = new QPushButton(QIcon(":/icons/process-stop.png"), "");
+    auto buttonhint = imageName->minimumSizeHint();
+    auto *stoprun   = new QPushButton(QIcon(":/icons/process-stop.png"), "");
     stoprun->setToolTip("Stop running simulation");
-    auto boxhint = buttonBox->minimumSizeHint();
-    boxhint.setWidth(boxhint.height() * 4 / 3);
-    stoprun->setMinimumSize(boxhint);
-    stoprun->setMaximumSize(boxhint);
-    imageCounter->setMinimumHeight(boxhint.height());
-    imageCounter->setMaximumHeight(boxhint.height());
-    imageName->setMinimumHeight(boxhint.height());
-    imageName->setMaximumHeight(boxhint.height());
+    buttonhint.setHeight(buttonhint.height() + LAYOUT_SPACING);
+    buttonhint.setWidth(buttonhint.height() * 4 / 3);
+    stoprun->setMinimumSize(buttonhint);
+    stoprun->setMaximumSize(buttonhint);
+    connect(stoprun, &QPushButton::released, this, &SlideShow::stop_run);
 
-    QObject::connect(stoprun, &QPushButton::released, this, &SlideShow::stop_run);
+    imageCounter->setMinimumHeight(buttonhint.height());
+    imageCounter->setMaximumHeight(buttonhint.height());
+    imageName->setMinimumHeight(buttonhint.height());
+    imageName->setMaximumHeight(buttonhint.height());
 
-    connect(buttonBox, &QDialogButtonBox::accepted, this, &QDialog::accept);
-    connect(buttonBox, &QDialogButtonBox::rejected, this, &QDialog::reject);
+    auto *shortcut = new QShortcut(QKeySequence(Qt::CTRL | Qt::Key_W), this);
+    connect(shortcut, &QShortcut::activated, this, &QWidget::close);
+    shortcut = new QShortcut(QKeySequence(Qt::CTRL | Qt::Key_Slash), this);
+    connect(shortcut, &QShortcut::activated, this, &SlideShow::stop_run);
+    shortcut = new QShortcut(QKeySequence(Qt::CTRL | Qt::Key_Q), this);
+    connect(shortcut, &QShortcut::activated, this, &SlideShow::quit);
+    shortcut = new QShortcut(QKeySequence(Qt::CTRL | Qt::Key_C), this);
+    connect(shortcut, &QShortcut::activated, this, &SlideShow::copy);
+    shortcut = new QShortcut(QKeySequence(Qt::CTRL | Qt::Key_E), this);
+    connect(shortcut, &QShortcut::activated, this, &SlideShow::movie);
+    shortcut = new QShortcut(QKeySequence(Qt::CTRL | Qt::Key_S), this);
+    connect(shortcut, &QShortcut::activated, this, &SlideShow::save_current_image);
 
-    auto *mainLayout = new QVBoxLayout;
-    auto *navLayout  = new QHBoxLayout;
-    auto *botLayout  = new QHBoxLayout;
+    auto *mainLayout  = new QVBoxLayout;
+    auto *toolsLayout = new QHBoxLayout;
+    auto *botLayout   = new QHBoxLayout;
+    auto *navLayout   = new QHBoxLayout;
 
     // workaround for incorrect highlight bug on macOS
     auto *dummy = new QPushButton(QIcon(), "");
     dummy->hide();
+    dummy->setMinimumSize(QSize(0, 0));
+    dummy->setMaximumSize(QSize(0, 0));
 
     auto *tomovie = new QPushButton(QIcon(":/icons/export-movie.png"), "");
     tomovie->setToolTip("Export to movie file");
     tomovie->setEnabled(has_exe("ffmpeg") || has_exe("magick") || has_exe("convert"));
-    auto buttonhint = stoprun->minimumSizeHint();
-    buttonhint.setWidth(buttonhint.height() * 4 / 3);
     tomovie->setMinimumSize(buttonhint);
     tomovie->setMaximumSize(buttonhint);
 
@@ -145,7 +140,11 @@ SlideShow::SlideShow(const QString &fileName, QWidget *parent) :
     totrash->setMinimumSize(buttonhint);
     totrash->setMaximumSize(buttonhint);
 
-    auto dsize = QFontMetrics(QApplication::font()).size(Qt::TextSingleLine, "Delay:  100");
+    auto *empty = new QLabel("");
+    empty->setMinimumSize(buttonhint);
+    empty->setMaximumSize(buttonhint);
+
+    auto dsize = QFontMetrics(QApplication::font()).size(Qt::TextSingleLine, "Delay:100");
     // need some extra space on Windows
 #if defined(Q_OS_WIN32)
     dsize = dsize * 3 / 2;
@@ -201,11 +200,6 @@ SlideShow::SlideShow(const QString &fileName, QWidget *parent) :
     zoomout->setToolTip("Zoom out by 10 percent");
     zoomout->setMinimumSize(buttonhint);
     zoomout->setMaximumSize(buttonhint);
-    auto *normal = new QPushButton(QIcon(":/icons/gtk-zoom-fit.png"), "");
-    normal->setToolTip("Reset zoom to normal");
-    normal->setMinimumSize(buttonhint);
-    normal->setMaximumSize(buttonhint);
-
     auto *imgrotcw = new QPushButton(QIcon(":/icons/object-rotate-right.png"), "");
     imgrotcw->setToolTip("Rotate displayed image 90<sup>o</sup> clockwise");
     imgrotcw->setMinimumSize(buttonhint);
@@ -222,6 +216,10 @@ SlideShow::SlideShow(const QString &fileName, QWidget *parent) :
     imgflipv->setToolTip("Mirror displayed image vertically");
     imgflipv->setMinimumSize(buttonhint);
     imgflipv->setMaximumSize(buttonhint);
+    auto *normal = new QPushButton(QIcon(":/icons/gtk-zoom-fit.png"), "");
+    normal->setToolTip("Reset zoom to normal");
+    normal->setMinimumSize(buttonhint);
+    normal->setMaximumSize(buttonhint);
 
     connect(tomovie, &QPushButton::released, this, &SlideShow::movie);
     connect(toimage, &QPushButton::released, this, &SlideShow::save_current_image);
@@ -237,54 +235,56 @@ SlideShow::SlideShow(const QString &fileName, QWidget *parent) :
     connect(goloop, &QPushButton::released, this, &SlideShow::loop);
     connect(zoomin, &QPushButton::released, this, &SlideShow::zoomIn);
     connect(zoomout, &QPushButton::released, this, &SlideShow::zoomOut);
-    connect(normal, &QPushButton::released, this, &SlideShow::normalSize);
     connect(imgrotcw, &QPushButton::released, this, &SlideShow::do_image_rotate_cw);
     connect(imgrotccw, &QPushButton::released, this, &SlideShow::do_image_rotate_ccw);
     connect(imgfliph, &QPushButton::released, this, &SlideShow::do_image_flip_h);
     connect(imgflipv, &QPushButton::released, this, &SlideShow::do_image_flip_v);
+    connect(normal, &QPushButton::released, this, &SlideShow::normalSize);
 
-    navLayout->addSpacerItem(new QSpacerItem(10, 10, QSizePolicy::Expanding, QSizePolicy::Minimum));
-    navLayout->addWidget(tomovie, 1);
-    navLayout->addWidget(toimage, 1);
-    navLayout->addWidget(toclip, 1);
-    navLayout->addWidget(totrash, 1);
-    navLayout->addSpacerItem(new QSpacerItem(10, 10, QSizePolicy::Expanding, QSizePolicy::Minimum));
-    navLayout->addWidget(new QLabel("Delay:"));
-    navLayout->addWidget(delay, 5);
-    navLayout->addWidget(dummy);
-    navLayout->addWidget(gofirst, 1);
-    navLayout->addWidget(goprev, 1);
-    navLayout->addWidget(goplay, 1);
-    navLayout->addWidget(gonext, 1);
-    navLayout->addWidget(golast, 1);
-    navLayout->addWidget(goloop, 1);
+    toolsLayout->addWidget(tomovie, 1);
+    toolsLayout->addWidget(toimage, 1);
+    toolsLayout->addWidget(toclip, 1);
+    toolsLayout->addWidget(totrash, 1);
+    toolsLayout->addWidget(empty);
+    toolsLayout->addWidget(dummy);
+    toolsLayout->addWidget(zoomin, 1);
+    toolsLayout->addWidget(zoomout, 1);
+    toolsLayout->addWidget(imgrotcw, 1);
+    toolsLayout->addWidget(imgrotccw, 1);
+    toolsLayout->addWidget(imgfliph, 1);
+    toolsLayout->addWidget(imgflipv, 1);
+    toolsLayout->addWidget(normal, 1);
+    toolsLayout->addSpacerItem(
+        new QSpacerItem(10, 10, QSizePolicy::Expanding, QSizePolicy::Minimum));
+    toolsLayout->addWidget(stoprun);
+    toolsLayout->setSizeConstraint(QLayout::SetMinimumSize);
+    toolsLayout->setSpacing(LAYOUT_SPACING);
 
-    navLayout->addWidget(zoomin, 1);
-    navLayout->addWidget(zoomout, 1);
-    navLayout->addWidget(normal, 1);
-    navLayout->addWidget(imgrotcw, 1);
-    navLayout->addWidget(imgrotccw, 1);
-    navLayout->addWidget(imgfliph, 1);
-    navLayout->addWidget(imgflipv, 1);
-    navLayout->addSpacerItem(new QSpacerItem(10, 10, QSizePolicy::Expanding, QSizePolicy::Minimum));
-    navLayout->setSizeConstraint(QLayout::SetMinimumSize);
-    navLayout->setSpacing(LAYOUT_SPACING);
-
-    mainLayout->addLayout(navLayout);
+    mainLayout->addLayout(toolsLayout);
+    mainLayout->addWidget(new QHline);
     mainLayout->addWidget(scrollArea, 10);
 
+    botLayout->addWidget(goplay, 1);
+    botLayout->addWidget(goloop, 1);
+    botLayout->addWidget(new QLabel("Delay:"));
+    botLayout->addWidget(delay, 5);
     botLayout->addSpacerItem(new QSpacerItem(10, 10, QSizePolicy::Expanding, QSizePolicy::Minimum));
     botLayout->addWidget(imageCounter);
     botLayout->addWidget(imageName);
-    botLayout->addSpacerItem(new QSpacerItem(10, 10, QSizePolicy::Expanding, QSizePolicy::Minimum));
-    botLayout->addWidget(stoprun);
-    botLayout->addWidget(buttonBox);
-    botLayout->setStretch(0, 3);
-    botLayout->setStretch(3, 3);
+    botLayout->setStretch(4, 3);
     botLayout->setSizeConstraint(QLayout::SetMinimumSize);
     botLayout->setSpacing(LAYOUT_SPACING);
+
+    navLayout->addWidget(gofirst, 1);
+    navLayout->addWidget(goprev, 1);
+    navLayout->addWidget(scrollBar, 10);
+    navLayout->addWidget(gonext, 1);
+    navLayout->addWidget(golast, 1);
+    navLayout->setSpacing(LAYOUT_SPACING);
+
+    mainLayout->addWidget(new QHline);
     mainLayout->addLayout(botLayout);
-    mainLayout->addWidget(scrollBar, 10);
+    mainLayout->addLayout(navLayout);
     mainLayout->setSpacing(LAYOUT_SPACING);
     goplay->setFocus();
 
@@ -572,8 +572,11 @@ void SlideShow::zoomOut()
 
 void SlideShow::normalSize()
 {
-    scaleFactor = 1.0;
-    scaleImage(1.0);
+    scaleFactor   = 1.0;
+    imageRotation = 0;
+    imageFlipH    = false;
+    imageFlipV    = false;
+    loadImage(current);
 }
 
 void SlideShow::scaleImage(double factor)
@@ -609,24 +612,28 @@ void SlideShow::do_image_rotate_cw()
 {
     imageRotation = (imageRotation + 90) % 360;
     applyImageTransform();
+    adjustWindowSize();
 }
 
 void SlideShow::do_image_rotate_ccw()
 {
     imageRotation = (imageRotation + 270) % 360;
     applyImageTransform();
+    adjustWindowSize();
 }
 
 void SlideShow::do_image_flip_h()
 {
     imageFlipH = !imageFlipH;
     applyImageTransform();
+    adjustWindowSize();
 }
 
 void SlideShow::do_image_flip_v()
 {
     imageFlipV = !imageFlipV;
     applyImageTransform();
+    adjustWindowSize();
 }
 
 void SlideShow::applyImageTransform()
