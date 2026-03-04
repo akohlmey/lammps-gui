@@ -22,7 +22,6 @@
 
 class QAction;
 class QMenuBar;
-class QDialogButtonBox;
 class QEvent;
 class QLabel;
 class QObject;
@@ -126,7 +125,6 @@ private:
     QMenuBar *menuBar;           ///< Menu bar
     QLabel *imageLabel;          ///< Label displaying the image
     QScrollArea *scrollArea;     ///< Scrollable area for image
-    QDialogButtonBox *buttonBox; ///< Dialog buttons
     double atomSize;             ///< Explicit atom display size (as radius)
     double bondSize;             ///< Explicit bond display size (as diameter)
 
