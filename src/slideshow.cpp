@@ -46,7 +46,8 @@
 
 namespace {
 constexpr int LAYOUT_SPACING = 6;
-}
+constexpr int EXTRA_HEIGHT   = 130;
+} // namespace
 
 SlideShow::SlideShow(const QString &fileName, QWidget *parent) :
     QDialog(parent), playtimer(nullptr), imageLabel(new QLabel), scrollArea(new QScrollArea),
@@ -601,7 +602,7 @@ void SlideShow::adjustWindowSize()
     if (screen) {
         auto screenSize = screen->availableSize();
         desiredWidth    = std::min(desiredWidth, screenSize.width() * 3 / 4);
-        desiredHeight   = std::min(desiredHeight, screenSize.height() * 9 / 10);
+        desiredHeight   = std::min(desiredHeight, (screenSize.height() * 9 / 10) - EXTRA_HEIGHT);
     }
     scrollArea->setMinimumSize(desiredWidth, desiredHeight);
     scrollArea->resize(desiredWidth, desiredHeight);

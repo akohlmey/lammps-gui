@@ -171,6 +171,8 @@ constexpr int CONTENT_MARGIN      = 5;
 constexpr int LAYOUT_SPACING      = 6;
 constexpr int MINIMUM_WIDTH       = 400;
 constexpr int MINIMUM_HEIGHT      = 300;
+constexpr int EXTRA_WIDTH         = 150;
+constexpr int EXTRA_HEIGHT        = 100;
 
 enum { FRAME, FILLED, TRANSPARENT, POINTS };
 enum { TYPE, ELEMENT, CONSTANT };
@@ -2679,6 +2681,7 @@ void ImageViewer::createImage()
     adjustWindowSize();
     if (renderstatus) renderstatus->setEnabled(false);
     repaint();
+    adjustWindowSize();
 
     if (molecule != "none") {
         lammps->command("neigh_modify exclude none");
@@ -2789,8 +2792,8 @@ void ImageViewer::adjustWindowSize()
     auto *screen = QGuiApplication::primaryScreen();
     if (screen) {
         auto screenSize = screen->availableSize();
-        desiredWidth    = std::min(desiredWidth, screenSize.width() * 3 / 4);
-        desiredHeight   = std::min(desiredHeight, screenSize.height() * 9 / 10);
+        desiredWidth    = std::min(desiredWidth, (screenSize.width() * 4 / 5) - EXTRA_WIDTH);
+        desiredHeight   = std::min(desiredHeight, (screenSize.height() * 9 / 10) - EXTRA_HEIGHT);
     }
     scrollArea->setMinimumSize(desiredWidth, desiredHeight);
     scrollArea->resize(desiredWidth, desiredHeight);
