@@ -874,8 +874,9 @@ void ImageViewer::vdwbond_sync()
 
 void ImageViewer::acolor_sync()
 {
-    auto *src    = qobject_cast<QComboBox *>(sender());
-    auto *dialog = src->parent();
+    auto *src = qobject_cast<QComboBox *>(sender());
+    if (!src) return;
+    auto *dialog = qobject_cast<QWidget *>(src->parent());
     auto *acolor = dialog->findChild<QComboBox *>("acolor");
     auto *bcolor = dialog->findChild<QComboBox *>("bcolor");
     auto *ecolor = dialog->findChild<QComboBox *>("ecolor");
