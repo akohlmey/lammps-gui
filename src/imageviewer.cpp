@@ -229,9 +229,9 @@ public:
 
 ImageViewer::ImageViewer(const QString &fileName, LammpsWrapper *_lammps, QWidget *parent) :
     QDialog(parent), menuBar(new QMenuBar), imageLabel(new QLabel), scrollArea(new QScrollArea),
-    atomSize(1.0), saveAsAct(nullptr), copyAct(nullptr), cmdAct(nullptr), lammps(_lammps),
-    group("all"), molecule("none"), filename(fileName), useelements(false), usediameter(false),
-    usesigma(false), shutdown(false)
+    atomSize(1.0), bondSize(0.4), saveAsAct(nullptr), copyAct(nullptr), cmdAct(nullptr),
+    lammps(_lammps), group("all"), molecule("none"), filename(fileName), useelements(false),
+    usediameter(false), usesigma(false), shutdown(false)
 {
     imageLabel->setBackgroundRole(QPalette::Base);
     imageLabel->setSizePolicy(QSizePolicy::Minimum, QSizePolicy::Minimum);
@@ -286,38 +286,48 @@ ImageViewer::ImageViewer(const QString &fileName, LammpsWrapper *_lammps, QWidge
 
     QSettings settings;
     settings.beginGroup("snapshot");
-    xsize          = settings.value("xsize", "600").toInt();
-    ysize          = settings.value("ysize", "600").toInt();
-    zoom           = settings.value("zoom", 1.0).toDouble();
-    hrot           = settings.value("hrot", 60).toInt();
-    vrot           = settings.value("vrot", 30).toInt();
-    shinyfactor    = settings.value("shinystyle", true).toBool() ? SHINY_ON : SHINY_OFF;
-    vdwfactor      = settings.value("vdwstyle", false).toBool() ? VDW_ON : VDW_OFF;
-    autobond       = settings.value("autobond", false).toBool();
-    bondcutoff     = settings.value("bondcutoff", 1.6).toDouble();
-    showbox        = settings.value("box", true).toBool();
-    showsubbox     = false;
-    boxdiam        = settings.value("boxdiam", 0.025).toDouble();
-    subboxdiam     = boxdiam;
-    boxcolor       = settings.value("boxcolor", "yellow").toString();
-    showaxes       = settings.value("axes", false).toBool();
-    usessao        = settings.value("ssao", false).toBool();
-    antialias      = settings.value("antialias", false).toBool();
-    axeslen        = settings.value("axeslen", 0.5).toDouble();
-    axesdiam       = settings.value("axesdiam", 0.05).toDouble();
-    axestrans      = 1.0;
-    axesloc        = "yes"; // = "lowerleft"
-    boxtrans       = 1.0;
-    backcolor      = settings.value("backcolor", "black").toString();
-    backcolor2     = settings.value("backcolor2", "white").toString();
-    ssaoval        = 0.6;
-    atomcustom     = false;
-    atomtrans      = 1.0;
-    atomcolor      = settings.value("color", "type").toString();
-    atomdiam       = settings.value("diameter", "type").toString();
-    bondcolor      = settings.value("bondcolor", "atom").toString();
-    bonddiam       = settings.value("bonddiam", "type").toString();
-    bodycolor      = "type";
+    xsize       = settings.value("xsize", "600").toInt();
+    ysize       = settings.value("ysize", "600").toInt();
+    zoom        = settings.value("zoom", 1.0).toDouble();
+    hrot        = settings.value("hrot", 60).toInt();
+    vrot        = settings.value("vrot", 30).toInt();
+    shinyfactor = settings.value("shinystyle", true).toBool() ? SHINY_ON : SHINY_OFF;
+    vdwfactor   = settings.value("vdwstyle", false).toBool() ? VDW_ON : VDW_OFF;
+    autobond    = settings.value("autobond", false).toBool();
+    bondcutoff  = settings.value("bondcutoff", 1.6).toDouble();
+    showbox     = settings.value("box", true).toBool();
+    showsubbox  = false;
+    boxdiam     = settings.value("boxdiam", 0.025).toDouble();
+    subboxdiam  = boxdiam;
+    boxcolor    = settings.value("boxcolor", "yellow").toString();
+    showaxes    = settings.value("axes", false).toBool();
+    usessao     = settings.value("ssao", false).toBool();
+    antialias   = settings.value("antialias", false).toBool();
+    axeslen     = settings.value("axeslen", 0.5).toDouble();
+    axesdiam    = settings.value("axesdiam", 0.05).toDouble();
+    axestrans   = 1.0;
+    axesloc     = "yes"; // = "lowerleft"
+    boxtrans    = 1.0;
+    backcolor   = settings.value("backcolor", "black").toString();
+    backcolor2  = settings.value("backcolor2", "white").toString();
+    ssaoval     = 0.6;
+    atomcustom  = false;
+    atomtrans   = 1.0;
+    atomcolor   = settings.value("color", "type").toString();
+    atomdiam    = settings.value("diameter", "type").toString();
+    bondcolor   = settings.value("bondcolor", "atom").toString();
+    bonddiam    = settings.value("bonddiam", "type").toString();
+    if (lammps->version() < 20260212) {
+        bodycolor      = "type";
+        ellipsoidcolor = "type";
+        linecolor      = "type";
+        tricolor       = "type";
+    } else {
+        bodycolor      = "atom";
+        ellipsoidcolor = "atom";
+        linecolor      = "atom";
+        tricolor       = "atom";
+    }
     colormap       = settings.value("colormap", "BWR").toString();
     mapmin         = "auto";
     mapmax         = "auto";
@@ -353,8 +363,8 @@ ImageViewer::ImageViewer(const QString &fileName, LammpsWrapper *_lammps, QWidge
     renderstatus->setEnabled(false);
     renderstatus->setToolTip("Render status");
     renderstatus->setObjectName("renderstatus");
-    auto *asize = new QLineEdit(QString::number(2.0 * atomSize));
-    auto *valid = new QDoubleValidator(1.0e-10, 1.0e10, 10, asize);
+    auto *asize = new QLineEdit(QString::number(2.0 * atomSize, 'f', 3));
+    auto *valid = new QDoubleValidator(1.0e-10, 1.0e10, 3, asize);
     asize->setValidator(valid);
     asize->setObjectName("atomSize");
     asize->setToolTip("Set Atom size");
@@ -362,7 +372,7 @@ ImageViewer::ImageViewer(const QString &fileName, LammpsWrapper *_lammps, QWidge
     asize->setMaximumWidth(fsize.width() / 2);
     asize->setEnabled(false);
     asize->hide();
-    auto *bsize = new QLineEdit(QString::number(2.0 * atomSize));
+    auto *bsize = new QLineEdit(QString::number(bondSize, 'f', 3));
     bsize->setValidator(valid);
     bsize->setObjectName("bondSize");
     bsize->setToolTip("Set Bond size");
@@ -862,6 +872,37 @@ void ImageViewer::vdwbond_sync()
     }
 }
 
+void ImageViewer::acolor_sync()
+{
+    auto *src    = qobject_cast<QComboBox *>(sender());
+    auto *dialog = src->parent();
+    auto *acolor = dialog->findChild<QComboBox *>("acolor");
+    auto *bcolor = dialog->findChild<QComboBox *>("bcolor");
+    auto *ecolor = dialog->findChild<QComboBox *>("ecolor");
+    auto *lcolor = dialog->findChild<QComboBox *>("lcolor");
+    auto *tcolor = dialog->findChild<QComboBox *>("tcolor");
+
+    if (src && acolor && bcolor && ecolor && lcolor && tcolor) {
+        if (src == acolor) {
+            if (lammps->version() > 20260211) {
+                if (src->currentText() != "type") {
+                    for (auto *box : {bcolor, ecolor, lcolor, tcolor}) {
+                        for (int idx = 0; idx < box->count(); ++idx)
+                            if (box->itemText(idx) == "atom") box->setCurrentIndex(idx);
+                    }
+                }
+            } else {
+                bodycolor = ellipsoidcolor = linecolor = tricolor = "type";
+            }
+        } else {
+            if (src->currentText() != "atom") {
+                for (int idx = 0; idx < acolor->count(); ++idx)
+                    if (acolor->itemText(idx) == "type") acolor->setCurrentIndex(idx);
+            }
+        }
+    }
+}
+
 void ImageViewer::set_bondcut()
 {
     auto *cutoff = findChild<QLineEdit *>("bondcut");
@@ -1289,16 +1330,11 @@ void ImageViewer::atom_settings()
 
     layout->setColumnStretch(0, 7);
     layout->setColumnStretch(1, 4);
-    // need extra space for spinboxes on Windows
-#if defined(Q_OS_WIN32)
-    layout->setColumnStretch(2, 8);
-#else
-    layout->setColumnStretch(2, 6);
-#endif
+    layout->setColumnStretch(2, 7);
     layout->setColumnStretch(3, 3);
     layout->setColumnStretch(4, 7);
-    layout->setColumnStretch(5, 6);
-    layout->setColumnStretch(6, 5);
+    layout->setColumnStretch(5, 7);
+    layout->setColumnStretch(6, 4);
 
     n = 0;
 
@@ -1314,6 +1350,7 @@ void ImageViewer::atom_settings()
             if (acolor->itemText(idx) == atomcolor) acolor->setCurrentIndex(idx);
         }
     }
+    connect(acolor, &QComboBox::currentIndexChanged, this, &ImageViewer::acolor_sync);
     layout->addWidget(acolor, idx, n++, 1, 1);
     layout->addWidget(new QLabel("Size: "), idx, n++, 1, 1, Qt::AlignVCenter | Qt::AlignRight);
 
@@ -1324,7 +1361,7 @@ void ImageViewer::atom_settings()
     if (usesigma) aditems << "sigma";
     aditems << "type" << "3.5" << "3.0" << "2.0";
     if ((atomSize > 0.1) && (atomSize < 5.0)) {
-        aditems << QString::number(2.0 * atomSize, 'f', 1);
+        aditems << QString::number(2.0 * atomSize, 'f', 2);
     } else {
         aditems << QString::number(2.0 * atomSize, 'g', 3);
     }
@@ -1354,7 +1391,7 @@ void ImageViewer::atom_settings()
     vdwbutton->setCheckState((vdwfactor > VDW_CUT) ? Qt::Checked : Qt::Unchecked);
     vdwbutton->setObjectName("vdwbutton");
     layout->addWidget(vdwbutton, idx, n++, 1, 1, Qt::AlignCenter);
-    layout->addWidget(new QLabel("Colormap: "), idx, n++, 1, 1, Qt::AlignVCenter | Qt::AlignRight);
+    layout->addWidget(new QLabel("Map: "), idx, n++, 1, 1, Qt::AlignVCenter | Qt::AlignRight);
     auto *amap = new QComboBox;
     amap->setObjectName("amap");
     amap->addItems({"BWR", "RWB", "PWT", "BWG", "BGR", "Viridis", "Plasma", "Inferno", "Teal",
@@ -1442,18 +1479,25 @@ void ImageViewer::atom_settings()
 
     n = 0;
 
-    layout->addWidget(new QLabel("  Shape:"), idx, n++, 1, 1);
-    layout->addWidget(new QLabel("Refine:"), idx, n++, 1, 1, Qt::AlignCenter);
-    layout->addWidget(new QLabel("Style:"), idx++, n++, 1, 4, Qt::AlignCenter);
+    layout->addWidget(new QLabel("Shape:"), idx, n++, 1, 1, Qt::AlignCenter);
+    layout->addWidget(new QLabel("Color:"), idx, n++, 1, 1, Qt::AlignCenter);
+    layout->addWidget(new QLabel("Style:"), idx, n++, 1, 4, Qt::AlignCenter);
+    n += 3;
+    layout->addWidget(new QLabel("Refine:"), idx++, n++, 1, 1, Qt::AlignCenter);
 
     n = 0;
 
     auto *bodybutton = new QCheckBox("Bodies ", this);
     bodybutton->setCheckState(showbodies ? Qt::Checked : Qt::Unchecked);
     layout->addWidget(bodybutton, idx, n++, 1, 1);
-    auto *bodyindex = new QCheckBox(" Indexed", this);
-    bodyindex->setCheckState((bodycolor == "index") ? Qt::Checked : Qt::Unchecked);
-    layout->addWidget(bodyindex, idx, n++, 1, 1);
+    auto *bcolor = new QComboBox;
+    bcolor->addItems({"atom", "type", "index"});
+    for (int idx = 0; idx < bcolor->count(); ++idx) {
+        if (bcolor->itemText(idx) == bodycolor) bcolor->setCurrentIndex(idx);
+    }
+    bcolor->setObjectName("bcolor");
+    connect(bcolor, &QComboBox::currentIndexChanged, this, &ImageViewer::acolor_sync);
+    layout->addWidget(bcolor, idx, n++, 1, 1);
     auto *bgroup   = new QButtonGroup(this);
     auto *bcbutton = new QRadioButton("Cylinders", this);
     bcbutton->setChecked(bodyflag == CYLINDERS);
@@ -1473,7 +1517,10 @@ void ImageViewer::atom_settings()
     if (lammps->extract_setting("body_flag") != 1) {
         bodybutton->setEnabled(false);
         bodybutton->setCheckState(Qt::Unchecked);
-        bodyindex->setEnabled(false);
+        bcolor->setEnabled(false);
+        if (lammps->version() < 20260212) {
+            bcolor->setCurrentIndex(1); // = "type"
+        }
         bdiam->setEnabled(false);
         bcbutton->setEnabled(false);
         btbutton->setEnabled(false);
@@ -1485,12 +1532,14 @@ void ImageViewer::atom_settings()
     auto *ellipsoidbutton = new QCheckBox("Ellipsoids ", this);
     ellipsoidbutton->setCheckState(showellipsoids ? Qt::Checked : Qt::Unchecked);
     layout->addWidget(ellipsoidbutton, idx, n++, 1, 1);
-    auto *elevel = new QSpinBox;
-    elevel->setRange(1, 6);
-    elevel->setStepType(QAbstractSpinBox::DefaultStepType);
-    elevel->setValue(ellipsoidlevel);
-    elevel->setWrapping(false);
-    layout->addWidget(elevel, idx, n++, 1, 1);
+    auto *ecolor = new QComboBox;
+    ecolor->addItems({"atom", "type", "index"});
+    for (int idx = 0; idx < ecolor->count(); ++idx) {
+        if (ecolor->itemText(idx) == ellipsoidcolor) ecolor->setCurrentIndex(idx);
+    }
+    ecolor->setObjectName("ecolor");
+    connect(ecolor, &QComboBox::currentIndexChanged, this, &ImageViewer::acolor_sync);
+    layout->addWidget(ecolor, idx, n++, 1, 1);
     auto *egroup   = new QButtonGroup(this);
     auto *ecbutton = new QRadioButton("Cylinders", this);
     ecbutton->setChecked(ellipsoidflag == CYLINDERS);
@@ -1506,11 +1555,21 @@ void ImageViewer::atom_settings()
     auto *ebbutton = new QRadioButton("Both", this);
     ebbutton->setChecked(ellipsoidflag == BOTH);
     egroup->addButton(ebbutton);
-    layout->addWidget(ebbutton, idx++, n++, 1, 1, Qt::AlignCenter);
+    layout->addWidget(ebbutton, idx, n++, 1, 1, Qt::AlignCenter);
+    auto *elevel = new QSpinBox;
+    elevel->setRange(1, 6);
+    elevel->setStepType(QAbstractSpinBox::DefaultStepType);
+    elevel->setValue(ellipsoidlevel);
+    elevel->setWrapping(false);
+    layout->addWidget(elevel, idx++, n++, 1, 1);
     ++n;
-    if (lammps->extract_setting("ellipsoid_flag") != 1) {
+    if ((lammps->extract_setting("ellipsoid_flag") != 1) || (lammps->version() < 20251210)) {
         ellipsoidbutton->setEnabled(false);
         ellipsoidbutton->setCheckState(Qt::Unchecked);
+        ecolor->setEnabled(false);
+        if (lammps->version() < 20260212) {
+            ecolor->setCurrentIndex(1); // = "type"
+        }
         elevel->setEnabled(false);
         ediam->setEnabled(false);
         ecbutton->setEnabled(false);
@@ -1523,13 +1582,25 @@ void ImageViewer::atom_settings()
     auto *linebutton = new QCheckBox("Lines ", this);
     linebutton->setCheckState(showlines ? Qt::Checked : Qt::Unchecked);
     layout->addWidget(linebutton, idx, n++, 1, 1);
-    n += 2;
+    auto *lcolor = new QComboBox;
+    lcolor->addItems({"atom", "type", "index"});
+    for (int idx = 0; idx < lcolor->count(); ++idx) {
+        if (lcolor->itemText(idx) == linecolor) lcolor->setCurrentIndex(idx);
+    }
+    lcolor->setObjectName("lcolor");
+    connect(lcolor, &QComboBox::currentIndexChanged, this, &ImageViewer::acolor_sync);
+    layout->addWidget(lcolor, idx, n++, 1, 1);
+    ++n;
     auto *ldiam = new QLineEdit(QString::number(linediam));
     ldiam->setValidator(new QDoubleValidator(0.1, 10.0, 100, this));
     layout->addWidget(ldiam, idx++, n++, 1, 1, Qt::AlignVCenter | Qt::AlignLeft);
     if (lammps->extract_setting("line_flag") != 1) {
         linebutton->setEnabled(false);
         linebutton->setCheckState(Qt::Unchecked);
+        lcolor->setEnabled(false);
+        if (lammps->version() < 20260212) {
+            lcolor->setCurrentIndex(1); // = "type"
+        }
         ldiam->setEnabled(false);
     }
 
@@ -1538,8 +1609,14 @@ void ImageViewer::atom_settings()
     auto *tributton = new QCheckBox("Triangles ", this);
     tributton->setCheckState(showtris ? Qt::Checked : Qt::Unchecked);
     layout->addWidget(tributton, idx, n++, 1, 1);
-    // skip one column
-    ++n;
+    auto *tcolor = new QComboBox;
+    tcolor->addItems({"atom", "type", "index"});
+    for (int idx = 0; idx < tcolor->count(); ++idx) {
+        if (tcolor->itemText(idx) == tricolor) tcolor->setCurrentIndex(idx);
+    }
+    tcolor->setObjectName("tcolor");
+    connect(tcolor, &QComboBox::currentIndexChanged, this, &ImageViewer::acolor_sync);
+    layout->addWidget(tcolor, idx, n++, 1, 1);
     auto *tgroup   = new QButtonGroup(this);
     auto *tcbutton = new QRadioButton("Cylinders", this);
     tcbutton->setChecked(triflag == CYLINDERS);
@@ -1560,6 +1637,10 @@ void ImageViewer::atom_settings()
     if (lammps->extract_setting("tri_flag") != 1) {
         tributton->setEnabled(false);
         tributton->setCheckState(Qt::Unchecked);
+        tcolor->setEnabled(false);
+        if (lammps->version() < 20260212) {
+            tcolor->setCurrentIndex(1); // = "type"
+        }
         tdiam->setEnabled(false);
         tcbutton->setEnabled(false);
         ttbutton->setEnabled(false);
@@ -1693,19 +1774,11 @@ void ImageViewer::atom_settings()
     }
 
     showbodies = bodybutton->isChecked();
-    // using the atom color for bodies was implemented after the 11Feb2026 release
-    // for older LAMMPS versions we *must* force the atom color style to be "type"
+    // using the colors other than type for bodies was implemented after the 11Feb2026 release.
     if (lammps->version() > 20260211) {
-        if (bodyindex->isChecked())
-            bodycolor = "index";
-        else
-            bodycolor = "atom";
+        bodycolor = bcolor->currentText();
     } else {
-        atomcolor = "type";
-        if (bodyindex->isChecked())
-            bodycolor = "index";
-        else
-            bodycolor = "type";
+        bodycolor = "type";
     }
     // diameter for body cylinders
     if (bdiam->hasAcceptableInput()) bodydiam = bdiam->text().toDouble();
@@ -1730,9 +1803,21 @@ void ImageViewer::atom_settings()
     } else if (ebbutton->isChecked()) {
         ellipsoidflag = BOTH;
     }
+    // using the colors other than type for ellipsoids was implemented after the 11Feb2026 release.
+    if (lammps->version() > 20260211) {
+        ellipsoidcolor = ecolor->currentText();
+    } else {
+        ellipsoidcolor = "type";
+    }
 
     showlines = linebutton->isChecked();
     if (ldiam->hasAcceptableInput()) linediam = ldiam->text().toDouble();
+    // using the colors other than type for lines was implemented after the 11Feb2026 release.
+    if (lammps->version() > 20260211) {
+        linecolor = lcolor->currentText();
+    } else {
+        linecolor = "type";
+    }
 
     showtris = tributton->isChecked();
     if (tdiam->hasAcceptableInput()) tridiam = tdiam->text().toDouble();
@@ -1742,6 +1827,12 @@ void ImageViewer::atom_settings()
         triflag = TRIANGLES;
     } else if (tbbutton->isChecked()) {
         triflag = BOTH;
+    }
+    // using the colors other than type for tris was implemented after the 11Feb2026 release.
+    if (lammps->version() > 20260211) {
+        tricolor = tcolor->currentText();
+    } else {
+        tricolor = "type";
     }
 
     // update image with new settings
@@ -2228,9 +2319,7 @@ void ImageViewer::createImage()
     repaint();
 
     QString oldgroup = group;
-
     if (molecule != "none") {
-
         // get center of box
         double *boxlo, *boxhi, xmid, ymid, zmid;
         boxlo = (double *)lammps->extract_global("boxlo");
@@ -2411,13 +2500,13 @@ void ImageViewer::createImage()
     if (showbodies && (lammps->extract_setting("body_flag") == 1)) {
         dumpcmd += QString(" body %1 %2 %3").arg(bodycolor).arg(bodydiam).arg(bodyflag);
     } else if (showlines && (lammps->extract_setting("line_flag") == 1))
-        dumpcmd += QString(" line type %1").arg(linediam);
+        dumpcmd += QString(" line %1 %2").arg(linecolor).arg(linediam);
     else if (showtris && (lammps->extract_setting("tri_flag") == 1))
-        dumpcmd += QString(" tri type %1 %2").arg(triflag).arg(tridiam);
+        dumpcmd += QString(" tri %1 %2 %3").arg(tricolor).arg(triflag).arg(tridiam);
     else if (showellipsoids && (lammps->extract_setting("ellipsoid_flag") == 1) &&
              (lammps->version() > 20260210)) {
-        // available since 11 February 2026 release
-        dumpcmd += QString(" ellipsoid type %1 %2 %3")
+        dumpcmd += QString(" ellipsoid %1 %2 %3 %4")
+                       .arg(ellipsoidcolor)
                        .arg(ellipsoidflag)
                        .arg(ellipsoidlevel)
                        .arg(ellipsoiddiam);
