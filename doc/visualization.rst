@@ -482,7 +482,7 @@ The dialog contains the following sections:
      particle shapes. When disabled, the particles are rendered as
      spheres like regular atoms.
    - **Color** (selection): Use coloring by the *atom* color choice, the
-     body *index*, or the atom *type* of the ellipsoid particles.
+     ellipsoid *index*, or the atom *type* of the ellipsoid particles.
    - **Style** (radio buttons): Select the ellipsoid rendering style --
      *Cylinders*, *Triangles*, or *Both*.  For cylinders - when used for
      ellipsoid particle rendering - also their diameter can be set (range:
@@ -506,7 +506,7 @@ The dialog contains the following sections:
      particles are rendered as spheres like regular atoms.  Also the
      cylinder diameter can be set (range: 0.1 -- 10.0).
    - **Color** (selection): Use coloring by the *atom* color choice, the
-     body *index*, or the atom *type* of the line particles.
+     line *index*, or the atom *type* of the line particles.
 
 **Triangles**
    Controls visualization of `triangulated particles
@@ -517,7 +517,8 @@ The dialog contains the following sections:
      triangulated particle shapes.  When disabled, the particles are
      rendered as spheres like regular atoms.
    - **Color** (selection): Use coloring by the *atom* color choice, the
-     body *index*, or the atom *type* of the triangulated particles.
+     triangulated particle *index*, or the atom *type* of the
+     triangulated particles.
    - **Style** (radio buttons): Select the particle rendering style --
      *Cylinders*, *Triangles*, or *Both*.  For cylinders - when used for
      triangle particle rendering - also their diameter can be set
