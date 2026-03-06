@@ -620,8 +620,10 @@ ImageViewer::ImageViewer(const QString &fileName, LammpsWrapper *_lammps, QWidge
     connect(fixviz, &QPushButton::released, this, &ImageViewer::fix_settings);
     connect(regviz, &QPushButton::released, this, &ImageViewer::region_settings);
     connect(help, &QPushButton::released, this, &ImageViewer::get_help);
-    connect(combo, SIGNAL(currentIndexChanged(int)), this, SLOT(change_group(int)));
-    connect(molbox, SIGNAL(currentIndexChanged(int)), this, SLOT(change_molecule(int)));
+    connect(combo, QOverload<int>::of(&QComboBox::currentIndexChanged), this,
+            &ImageViewer::change_group);
+    connect(molbox, QOverload<int>::of(&QComboBox::currentIndexChanged), this,
+            &ImageViewer::change_molecule);
 
     mainLayout->addLayout(topLayout);
     imageLayout->addWidget(scrollArea, 10);
@@ -1351,7 +1353,8 @@ void ImageViewer::atom_settings()
             if (acolor->itemText(idx) == atomcolor) acolor->setCurrentIndex(idx);
         }
     }
-    connect(acolor, &QComboBox::currentIndexChanged, this, &ImageViewer::acolor_sync);
+    connect(acolor, QOverload<int>::of(&QComboBox::currentIndexChanged), this,
+            &ImageViewer::acolor_sync);
     layout->addWidget(acolor, idx, n++, 1, 1);
     layout->addWidget(new QLabel("Size: "), idx, n++, 1, 1, Qt::AlignVCenter | Qt::AlignRight);
 
@@ -1497,7 +1500,8 @@ void ImageViewer::atom_settings()
         if (bcolor->itemText(idx) == bodycolor) bcolor->setCurrentIndex(idx);
     }
     bcolor->setObjectName("bcolor");
-    connect(bcolor, &QComboBox::currentIndexChanged, this, &ImageViewer::acolor_sync);
+    connect(bcolor, QOverload<int>::of(&QComboBox::currentIndexChanged), this,
+            &ImageViewer::acolor_sync);
     layout->addWidget(bcolor, idx, n++, 1, 1);
     auto *bgroup   = new QButtonGroup(this);
     auto *bcbutton = new QRadioButton("Cylinders", this);
@@ -1539,7 +1543,8 @@ void ImageViewer::atom_settings()
         if (ecolor->itemText(idx) == ellipsoidcolor) ecolor->setCurrentIndex(idx);
     }
     ecolor->setObjectName("ecolor");
-    connect(ecolor, &QComboBox::currentIndexChanged, this, &ImageViewer::acolor_sync);
+    connect(ecolor, QOverload<int>::of(&QComboBox::currentIndexChanged), this,
+            &ImageViewer::acolor_sync);
     layout->addWidget(ecolor, idx, n++, 1, 1);
     auto *egroup   = new QButtonGroup(this);
     auto *ecbutton = new QRadioButton("Cylinders", this);
@@ -1589,7 +1594,8 @@ void ImageViewer::atom_settings()
         if (lcolor->itemText(idx) == linecolor) lcolor->setCurrentIndex(idx);
     }
     lcolor->setObjectName("lcolor");
-    connect(lcolor, &QComboBox::currentIndexChanged, this, &ImageViewer::acolor_sync);
+    connect(lcolor, QOverload<int>::of(&QComboBox::currentIndexChanged), this,
+            &ImageViewer::acolor_sync);
     layout->addWidget(lcolor, idx, n++, 1, 1);
     ++n;
     auto *ldiam = new QLineEdit(QString::number(linediam));
@@ -1616,7 +1622,8 @@ void ImageViewer::atom_settings()
         if (tcolor->itemText(idx) == tricolor) tcolor->setCurrentIndex(idx);
     }
     tcolor->setObjectName("tcolor");
-    connect(tcolor, &QComboBox::currentIndexChanged, this, &ImageViewer::acolor_sync);
+    connect(tcolor, QOverload<int>::of(&QComboBox::currentIndexChanged), this,
+            &ImageViewer::acolor_sync);
     layout->addWidget(tcolor, idx, n++, 1, 1);
     auto *tgroup   = new QButtonGroup(this);
     auto *tcbutton = new QRadioButton("Cylinders", this);
