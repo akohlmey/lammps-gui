@@ -363,7 +363,7 @@ ImageViewer::ImageViewer(const QString &fileName, LammpsWrapper *_lammps, QWidge
     renderstatus->setEnabled(false);
     renderstatus->setToolTip("Render status");
     renderstatus->setObjectName("renderstatus");
-    auto *asize = new QLineEdit(QString::number(2.0 * atomSize, 'f', 3));
+    auto *asize = new QLineEdit(QString::number(2.0 * atomSize, 'f', 2));
     auto *valid = new QDoubleValidator(1.0e-10, 1.0e10, 3, asize);
     asize->setValidator(valid);
     asize->setObjectName("atomSize");
@@ -372,7 +372,7 @@ ImageViewer::ImageViewer(const QString &fileName, LammpsWrapper *_lammps, QWidge
     asize->setMaximumWidth(fsize.width() / 2);
     asize->setEnabled(false);
     asize->hide();
-    auto *bsize = new QLineEdit(QString::number(bondSize, 'f', 3));
+    auto *bsize = new QLineEdit(QString::number(bondSize, 'f', 2));
     bsize->setValidator(valid);
     bsize->setObjectName("bondSize");
     bsize->setToolTip("Set Bond size");
