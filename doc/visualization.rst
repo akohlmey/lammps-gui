@@ -390,7 +390,7 @@ the settings panel or by using the `Alt-A` keyboard shortcut.
                      :width: 62%
 
 .. |autobond| image:: JPG/lammps-gui-autobond.png
-                     :width: 30%
+                     :width: 31%
 
 |autobond|  |atombond|
 
@@ -465,8 +465,8 @@ The dialog contains the following sections:
    - **Bodies** (checkbox): Enable or disable rendering of body particle
      shapes. When disabled, the particles are rendered as spheres like
      regular atoms.
-   - **Indexed** (checkbox): Use coloring by body index instead of the
-     atom type to the body particle.
+   - **Color** (selection): Use coloring by the *atom* color choice, the
+     body *index*, or the atom *type* of the body particles.
    - **Style** (radio buttons): Select the body rendering style --
      *Cylinders*, *Triangles*, or *Both*.  For cylinders - when used for
      body particle rendering - also their diameter can be set (range:
@@ -481,6 +481,12 @@ The dialog contains the following sections:
    - **Ellipsoids** (checkbox): Enable or disable rendering of ellipsoid
      particle shapes. When disabled, the particles are rendered as
      spheres like regular atoms.
+   - **Color** (selection): Use coloring by the *atom* color choice, the
+     body *index*, or the atom *type* of the ellipsoid particles.
+   - **Style** (radio buttons): Select the ellipsoid rendering style --
+     *Cylinders*, *Triangles*, or *Both*.  For cylinders - when used for
+     ellipsoid particle rendering - also their diameter can be set (range:
+     0.1 -- 10.0).
    - **Refine** (spinbox): Level of triangle mesh refinement.  At level
      1 the ellipsoids are represented by a deformed octahedron.  With a
      level increase, each triangle is replaced by 4 triangles following
@@ -489,10 +495,6 @@ The dialog contains the following sections:
      level, there may be artifacts from rounding due to limitations of
      the image rasterizer included in LAMMPS.  These can be made less
      prominent by enabling anti-aliasing.
-   - **Style** (radio buttons): Select the ellipsoid rendering style --
-     *Cylinders*, *Triangles*, or *Both*.  For cylinders - when used for
-     ellipsoid particle rendering - also their diameter can be set (range:
-     0.1 -- 10.0).
      
 **Lines**
    Controls visualization of `line segment particles
@@ -503,6 +505,8 @@ The dialog contains the following sections:
      particle shapes as connected cylinders.  When disabled, the
      particles are rendered as spheres like regular atoms.  Also the
      cylinder diameter can be set (range: 0.1 -- 10.0).
+   - **Color** (selection): Use coloring by the *atom* color choice, the
+     body *index*, or the atom *type* of the line particles.
 
 **Triangles**
    Controls visualization of `triangulated particles
@@ -512,6 +516,8 @@ The dialog contains the following sections:
    - **Triangles** (checkbox): Enable or disable rendering of
      triangulated particle shapes.  When disabled, the particles are
      rendered as spheres like regular atoms.
+   - **Color** (selection): Use coloring by the *atom* color choice, the
+     body *index*, or the atom *type* of the triangulated particles.
    - **Style** (radio buttons): Select the particle rendering style --
      *Cylinders*, *Triangles*, or *Both*.  For cylinders - when used for
      triangle particle rendering - also their diameter can be set
