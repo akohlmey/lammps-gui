@@ -186,19 +186,19 @@ QIcon gradient_icon(const QList<QColor> &colors)
 // 3) create a color sequence icon
 QIcon sequence_icon(const QList<QColor> &colors)
 {
-    if (colors.isEmpty()) return QIcon();
+    // if no colors or too many colors return empty icon
+    if (colors.isEmpty() || (colors.size() * 2 > ICON_SIZE)) return QIcon();
 
-    // define pixmap and horizontal gradient
+    // define pixmap
     QPixmap pixmap(ICON_SIZE, ICON_SIZE);
     pixmap.fill(Qt::transparent);
     QPainter painter(&pixmap);
 
-    // distribute colors across icon in even chunks
+    // distribute colors across icon in evenly sized chunks
     const int chunk = ICON_SIZE / colors.size();
-    for (int i = 0; i < colors.size(); ++i) {
-        painter.fillRect(QRect(i * chunk, 0, qMin((i + 1) * chunk, ICON_SIZE), ICON_SIZE),
-                         colors[i]);
-    }
+    for (int i = 0; i < colors.size(); ++i)
+        painter.fillRect(QRect(i * chunk, 0, chunk, ICON_SIZE), colors[i]);
+
     painter.end();
 
     return QIcon(pixmap);
