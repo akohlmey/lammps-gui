@@ -22,6 +22,7 @@
 #include <QButtonGroup>
 #include <QCheckBox>
 #include <QClipboard>
+#include <QColor>
 #include <QDesktopServices>
 #include <QDir>
 #include <QDoubleValidator>
@@ -39,13 +40,16 @@
 #include <QKeySequence>
 #include <QLabel>
 #include <QLineEdit>
+#include <QLinearGradient>
 #include <QMenu>
 #include <QMenuBar>
+#include <QPainter>
 #include <QPalette>
 #include <QPixmap>
 #include <QProcess>
 #include <QPushButton>
 #include <QRadioButton>
+#include <QRect>
 #include <QRegularExpression>
 #include <QRegularExpressionValidator>
 #include <QScreen>
@@ -140,6 +144,9 @@ constexpr double pte_vdw_radius[] = {
 
 // clang-format on
 
+// helper functions:
+
+// 1) find element in periodic table from their mass
 int get_pte_from_mass(double mass)
 {
     int idx = 0;
@@ -149,6 +156,52 @@ int get_pte_from_mass(double mass)
     // discriminate between Cobalt and Nickel. The loop will detect Nickel
     if ((mass < 61.24) && (mass > 58.8133)) idx = 27;
     return idx;
+}
+
+constexpr int ICON_SIZE = 48;
+
+// 2) create a color gradient icon
+QIcon gradient_icon(const QList<QColor> &colors)
+{
+    if (colors.isEmpty()) return QIcon();
+
+    // define pixmap and horizontal gradient
+    QPixmap pixmap(ICON_SIZE, ICON_SIZE);
+    pixmap.fill(Qt::transparent);
+    QPainter painter(&pixmap);
+    QLinearGradient gradient(0, 0, ICON_SIZE, 0);
+
+    // distribute colors across gradient
+    for (int i = 0; i < colors.size(); ++i) {
+        qreal pos = static_cast<qreal>(i) / qMax(1, colors.size() - 1);
+        gradient.setColorAt(pos, colors[i]);
+    }
+
+    painter.fillRect(pixmap.rect(), gradient);
+    painter.end();
+
+    return QIcon(pixmap);
+}
+
+// 3) create a color sequence icon
+QIcon sequence_icon(const QList<QColor> &colors)
+{
+    // if no colors or too many colors return empty icon
+    if (colors.isEmpty() || (colors.size() * 2 > ICON_SIZE)) return QIcon();
+
+    // define pixmap
+    QPixmap pixmap(ICON_SIZE, ICON_SIZE);
+    pixmap.fill(Qt::transparent);
+    QPainter painter(&pixmap);
+
+    // distribute colors across icon in evenly sized chunks
+    const int chunk = ICON_SIZE / colors.size();
+    for (int i = 0; i < colors.size(); ++i)
+        painter.fillRect(QRect(i * chunk, 0, chunk, ICON_SIZE), colors[i]);
+
+    painter.end();
+
+    return QIcon(pixmap);
 }
 
 QStringList defaultcolors = {"white", "gray",  "magenta", "cyan",   "yellow",
@@ -1398,8 +1451,26 @@ void ImageViewer::atom_settings()
     layout->addWidget(new QLabel("Map: "), idx, n++, 1, 1, Qt::AlignVCenter | Qt::AlignRight);
     auto *amap = new QComboBox;
     amap->setObjectName("amap");
-    amap->addItems({"BWR", "RWB", "PWT", "BWG", "BGR", "Viridis", "Plasma", "Inferno", "Teal",
-                    "Rainbow", "Sequential", "Grayscale"});
+    amap->addItem(gradient_icon({QColor(0, 57, 109), "white", QColor(117, 14, 19)}), "BWR");
+    amap->addItem(gradient_icon({QColor(117, 14, 19), "white", QColor(0, 57, 109)}), "RWB");
+    amap->addItem(gradient_icon({QColor(73, 29, 141), "white", QColor(0, 65, 68)}), "PWT");
+    amap->addItem(gradient_icon({"blue", "white", "green"}), "BWG");
+    amap->addItem(gradient_icon({"blue", "green", "red"}), "BGR");
+    // clang-format off
+    amap->addItem(gradient_icon({QColor(72, 33, 115), QColor(111, 111, 142), QColor(41, 175, 127),
+                                 QColor(189, 223, 174)}), "Viridis");
+    amap->addItem(gradient_icon({QColor(13, 8, 135), QColor(156, 23, 150), QColor(237, 121, 83),
+                                 QColor(240, 249, 33)}), "Plasma");
+    amap->addItem(gradient_icon({QColor(8, 8, 12), QColor(81, 18, 124), QColor(183, 55, 121),
+                                 QColor(252, 137, 97), QColor(252, 253, 191)}), "Inferno");
+    amap->addItem(gradient_icon({QColor(18, 39, 64), QColor(27, 72, 94), QColor(86, 139, 135),
+                                 QColor(181, 209, 174)}), "Teal");
+    // clang-format on
+    amap->addItem(gradient_icon({"red", "yellow", "green", "cyan", "blue", "purple"}), "Rainbow");
+    amap->addItem(sequence_icon({QColor(206, 206, 206), QColor(165, 89, 170), QColor(81, 168, 156),
+                                 QColor(240, 197, 113), QColor(224, 43, 53), QColor(8, 42, 84)}),
+                  "Sequential");
+    amap->addItem(gradient_icon({"black", "white"}), "Grayscale");
     for (int idx = 0; idx < amap->count(); ++idx) {
         if (amap->itemText(idx) == colormap) amap->setCurrentIndex(idx);
     }
@@ -2658,25 +2729,24 @@ void ImageViewer::createImage()
         dumpcmd += " color map1 0.459 0.055 0.075";
         dumpcmd += " color map2 0.000 0.227 0.427";
         dumpcmd += QString(" amap %1 %2 cf 0.0 ").arg(mmin).arg(mmax);
-        dumpcmd += "3 min map1 0.5 white max map2";
+        dumpcmd += "5 min map1 0.1 map1 0.5 white 0.9 map2 max map2";
     } else if (colormap == "PWT") {
         dumpcmd += " color map1 0.286 0.114 0.553";
         dumpcmd += " color map2 0.000 0.255 0.267";
         dumpcmd += QString(" amap %1 %2 cf 0.0 ").arg(mmin).arg(mmax);
-        dumpcmd += "3 min map1 0.5 white max map2";
+        dumpcmd += "5 min map1 0.1 map1 0.5 white 0.9 map2 max map2";
     } else if (colormap == "BGR") {
         dumpcmd += QString(" amap %1 %2 cf 0.0 ").arg(mmin).arg(mmax);
-        dumpcmd += "3 min blue 0.5 green max red";
+        dumpcmd += "5 min blue 0.05 blue 0.5 green 0.95 red max red";
     } else if (colormap == "BWG") {
         dumpcmd += QString(" amap %1 %2 cf 0.0 ").arg(mmin).arg(mmax);
-        dumpcmd += "3 min blue 0.5 white max green";
+        dumpcmd += "5 min blue 0.1 blue 0.5 white 0.9 green max green";
     } else if (colormap == "Grayscale") {
         dumpcmd += QString(" amap %1 %2 cf 0.0 ").arg(mmin).arg(mmax);
-        dumpcmd += "2 min darkgray max silver";
+        dumpcmd += "2 min black max white";
     } else if (colormap == "Rainbow") {
         dumpcmd += QString(" amap %1 %2 cf 0.0 ").arg(mmin).arg(mmax);
-        dumpcmd += "8 min magenta 0.083 red 0.249 yellow 0.416 green 0.6 cyan 0.749 blue 0.916 "
-                   "purple max magenta";
+        dumpcmd += "6 min red 0.25 yellow 0.45 green 0.65 cyan 0.85 blue max purple";
     } else if (colormap == "Sequential") {
         dumpcmd += " color map1 0.808 0.808 0.808";
         dumpcmd += " color map2 0.647 0.349 0.667";
@@ -2687,14 +2757,12 @@ void ImageViewer::createImage()
         dumpcmd += QString(" amap %1 %2 sa 1.0 ").arg(mmin).arg(mmax);
         dumpcmd += "6 map1 map2 map3 map4 map5 map6";
     } else if (colormap == "Teal") {
-        dumpcmd += " color map1 0.710 0.820 0.682";
-        dumpcmd += " color map2 0.502 0.682 0.576";
+        dumpcmd += " color map1 0.071 0.153 0.251";
+        dumpcmd += " color map2 0.106 0.282 0.369";
         dumpcmd += " color map3 0.337 0.545 0.529";
-        dumpcmd += " color map4 0.196 0.420 0.467";
-        dumpcmd += " color map5 0.106 0.282 0.369";
-        dumpcmd += " color map6 0.071 0.153 0.251";
+        dumpcmd += " color map4 0.710 0.820 0.682";
         dumpcmd += QString(" amap %1 %2 cf 0.0 ").arg(mmin).arg(mmax);
-        dumpcmd += "6 min map6 0.2 map5 0.4 map4 0.6 map3 0.8 map2 max map1";
+        dumpcmd += "4 min map1 0.25 map2 0.5 map3 max map4";
     } else if (colormap == "Viridis") {
         dumpcmd += " color map1 0.282 0.129 0.451";
         dumpcmd += " color map2 0.435 0.435 0.556";

@@ -387,7 +387,7 @@ Viewer toolbar.  It is opened by pressing the "Atoms/Bonds" button in
 the settings panel or by using the `Alt-A` keyboard shortcut.
 
 .. |atombond|  image:: JPG/lammps-gui-image-atom.png
-                     :width: 62%
+                     :width: 63%
 
 .. |autobond| image:: JPG/lammps-gui-autobond.png
                      :width: 31%
