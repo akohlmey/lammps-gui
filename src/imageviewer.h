@@ -81,6 +81,7 @@ private slots:
     void toggle_vdw();         ///< Toggle Van der Waals radii
     void toggle_bond();        ///< Toggle bond display
     void vdwbond_sync();       ///< Sync settings of VDW style and autobonds in Atoms dialog
+    void acolor_sync();        ///< Sync settings of atom color based on shaped object color
     void set_bondcut();        ///< Set bond cutoff distance
     void toggle_box();         ///< Toggle simulation box display
     void toggle_axes();        ///< Toggle coordinate axes display
@@ -176,6 +177,9 @@ private:
     QString bondcolor;                           ///< Custom bond color property
     QString bonddiam;                            ///< Custom bond diameter property
     QString bodycolor;                           ///< Custom body color property
+    QString ellipsoidcolor;                      ///< Custom ellipsoid color property
+    QString linecolor;                           ///< Custom line color property
+    QString tricolor;                            ///< Custom triangle color property
     double xcenter, ycenter, zcenter;            ///< View center coordinates
     bool atomcustom;                             ///< Use custom atom color settings
     bool showbox;                                ///< Show simulation box flag
