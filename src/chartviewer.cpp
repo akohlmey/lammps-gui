@@ -121,7 +121,6 @@ ChartWindow::ChartWindow(const QString &_filename, QWidget *parent) :
     smooth->addItem("Smooth");
     smooth->addItem("Both");
     smooth->setCurrentIndex(smoothchoice);
-    smooth->show();
     window = new QSpinBox;
     window->setRange(5, 999);
     window->setValue(settings.value("smoothwindow", 10).toInt());
