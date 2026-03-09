@@ -1114,7 +1114,7 @@ void ImageViewer::global_settings()
 
     auto *colorcompleter    = new QColorCompleter;
     auto *colorvalidator    = new QColorValidator;
-    auto *transvalidator    = new QDoubleValidator(0.0, 1.0, 2);
+    auto *transvalidator    = new QDoubleValidator(0.0, 1.0, 3);
     auto *fractionvalidator = new QDoubleValidator(0.00001, 5.0, 5, this);
     auto fwidth             = setview.fontMetrics().size(Qt::TextSingleLine, "0.00000000").width();
 
@@ -1375,7 +1375,7 @@ void ImageViewer::atom_settings()
     title->setLineWidth(1);
     title->setMargin(TITLE_MARGIN);
 
-    auto *transvalidator  = new QDoubleValidator(0.0, 1.0, 2);
+    auto *transvalidator  = new QDoubleValidator(0.0, 1.0, 3);
     auto *layout          = new QGridLayout;
     int idx               = 0;
     int n                 = 0;
@@ -1935,7 +1935,7 @@ void ImageViewer::fix_settings()
 
     auto *colorcompleter = new QColorCompleter;
     auto *colorvalidator = new QColorValidator;
-    auto *transvalidator = new QDoubleValidator(0.0, 1.0, 2);
+    auto *transvalidator = new QDoubleValidator(0.0, 1.0, 3);
     QFontMetrics metrics(fixview.fontMetrics());
 
     int idx               = 0;
@@ -2185,7 +2185,7 @@ void ImageViewer::region_settings()
     auto *colorcompleter = new QColorCompleter;
     auto *colorvalidator = new QColorValidator;
     auto *framevalidator = new QDoubleValidator(1.0e-10, 1.0e10, 10);
-    auto *transvalidator = new QDoubleValidator(0.0, 1.0, 2);
+    auto *transvalidator = new QDoubleValidator(0.0, 1.0, 3);
     auto *pointvalidator = new QIntValidator(100, 1000000);
     QFontMetrics metrics(regionview.fontMetrics());
 
