@@ -2825,8 +2825,10 @@ void ImageViewer::createImage()
     if (lammps->has_error()) {
         char errormesg[DEFAULT_BUFLEN];
         lammps->get_last_error_message(errormesg, DEFAULT_BUFLEN);
-        warning(this, "Image Viewer File Creation Error",
-                "LAMMPS failed to create the image:", QString("<code>%1</code>").arg(errormesg));
+        // ignore "Invalid LAMMPS handle", but report other errors
+        if (!strstr(errormesg, "Invalid LAMMPS handle"))
+            warning(this, "Image Viewer File Creation Error", "LAMMPS failed to create the image:",
+                    QString("<code>%1</code>").arg(errormesg));
         return;
     }
 

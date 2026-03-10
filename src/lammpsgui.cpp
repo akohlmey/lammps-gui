@@ -1421,16 +1421,24 @@ void LammpsGui::run_done()
     }
 
     bool success = true;
+    bool valid = true;
     char errorbuf[DEFAULT_BUFLEN];
 
     if (lammps.has_error()) {
         lammps.get_last_error_message(errorbuf, DEFAULT_BUFLEN);
-        success = false;
+        // ignore "Invalid LAMMPS handle", but report other errors
+        if (!strstr(errorbuf, "Invalid LAMMPS handle")) {
+            success = false;
+        } else {
+            valid = false;
+        }
     }
 
     int nline = CodeEditor::NO_HIGHLIGHT;
-    void *ptr = lammps.last_thermo("line", 0);
-    if (ptr) nline = *((int *)ptr);
+    if (valid) {
+        void *ptr = lammps.last_thermo("line", 0);
+        if (ptr) nline = *((int *)ptr);
+    }
 
     if (success) {
         status->setText("Ready.");
@@ -1629,10 +1637,13 @@ void LammpsGui::render_image()
                 if (lammps.has_error()) {
                     char errormesg[DEFAULT_BUFLEN];
                     lammps.get_last_error_message(errormesg, DEFAULT_BUFLEN);
-                    warning(this, "Image Viewer File Creation Error",
-                            "LAMMPS failed to create the image:",
-                            QString("<br><code>%1</code>").arg(errormesg));
-                    return;
+                    // ignore "Invalid LAMMPS handle", but report other errors
+                    if (!strstr(errormesg, "Invalid LAMMPS handle")) {
+                        warning(this, "Image Viewer File Creation Error",
+                                "LAMMPS failed to create the image:",
+                                QString("<br><code>%1</code>").arg(errormesg));
+                        return;
+                    }
                 }
             }
             // still no system box. bail out with a suitable message
