@@ -140,18 +140,17 @@ void AboutDialog::setupAutoScroll(QScrollArea *area)
     connect(scrollTimer, &QTimer::timeout, this, [vbar, scrollTimer, this]() {
         if (vbar->value() >= vbar->maximum()) {
             scrollTimer->stop();
-            // Wait 3 seconds, then reset to top and start scrolling again
-            QTimer::singleShot(3000, this, [vbar, scrollTimer]() {
+            // Wait 5 seconds, then reset to top
+            QTimer::singleShot(5000, this, [vbar, scrollTimer]() {
                 vbar->setValue(0);
-                scrollTimer->start();
             });
         } else {
             vbar->setValue(vbar->value() + 1);
         }
     });
 
-    // Start scrolling after 2 seconds
-    QTimer::singleShot(2000, this, [scrollTimer]() {
+    // Start scrolling after 3 seconds
+    QTimer::singleShot(3000, this, [scrollTimer]() {
         scrollTimer->start();
     });
 }
