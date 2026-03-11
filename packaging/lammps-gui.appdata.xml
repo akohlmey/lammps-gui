@@ -54,6 +54,12 @@
   </provides>
 
   <releases>
+    <release version="1.11.1" timestamp="1773263770">
+      <description>
+        Remove hack to silence and restore stdout for non-run calls to LAMMPS
+        Refactor about dialog to include more info and use scrollable text fields with auto-scroll
+      </description>
+    </release>
     <release version="1.11.0" timestamp="1772079977">
       <description>
         Tweak some button names to be more suitable and intuitive
