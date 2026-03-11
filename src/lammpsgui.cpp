@@ -1799,10 +1799,20 @@ void LammpsGui::about()
                 details.replace(loc, 4, "\n\n");
                 loc = details.find("\n\n\n\n");
             }
+            loc = details.find("\r\n\r\n\r\n\r\n");
+            while (loc != std::string::npos) {
+                details.replace(loc, 8, "\r\n\r\n");
+                loc = details.find("\r\n\r\n\r\n\r\n");
+            }
             loc = details.find("les:\n\n");
             while (loc != std::string::npos) {
                 details.replace(loc, 6, "les:\n");
                 loc = details.find("les:\n\n");
+            }
+            loc = details.find("les:\r\n\r\n");
+            while (loc != std::string::npos) {
+                details.replace(loc, 8, "les:\r\n");
+                loc = details.find("les:\r\n\r\n");
             }
         }
     }
