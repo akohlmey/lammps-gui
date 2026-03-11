@@ -11,6 +11,7 @@
 
 #include "lammpsgui.h"
 
+#include "aboutdialog.h"
 #include "chartviewer.h"
 #include "fileviewer.h"
 #include "findandreplace.h"
@@ -1823,27 +1824,9 @@ void LammpsGui::about()
     if (auto *clip = QGuiApplication::clipboard()) clip->setText(to_clipboard);
 #endif
 
-    QMessageBox msg(this);
-    msg.setWindowTitle("About LAMMPS-GUI");
-    msg.setWindowIcon(QIcon(":/icons/lammps-gui-icon-128x128.png"));
-    msg.setText(version.c_str());
-    msg.setInformativeText(info.c_str());
-    msg.setDetailedText(details.c_str());
-    msg.setIconPixmap(QPixmap(":/icons/lammps-gui-icon-128x128.png").scaled(64, 64));
-    msg.setStandardButtons(QMessageBox::Close);
-    auto *button = msg.button(QMessageBox::Close);
-    button->setIcon(QIcon(":/icons/window-close.png"));
-    QFont myfont(font());
-    myfont.setPointSize(myfont.pointSizeF() * 0.8);
-    msg.setFont(myfont);
-    auto fsize = QFontMetrics(myfont)
-                     .size(Qt::TextSingleLine, "EXTRA-DUMP EXTRA-FIX EXTRA-MOLECULE FEP")
-                     .width();
-
-    auto *width  = new QSpacerItem(2 * fsize + 100, 0, QSizePolicy::Fixed, QSizePolicy::Expanding);
-    auto *layout = dynamic_cast<QGridLayout *>(msg.layout());
-    if (layout) layout->addItem(width, layout->rowCount(), 0, 1, layout->columnCount());
-    msg.exec();
+    AboutDialog dialog(QString::fromStdString(version), QString::fromStdString(info),
+                       QString::fromStdString(details), this);
+    dialog.exec();
 }
 
 void LammpsGui::help()

@@ -1,0 +1,132 @@
+// -*- c++ -*- /////////////////////////////////////////////////////////////////////////
+// LAMMPS-GUI - A Graphical Tool to Learn and Explore the LAMMPS MD Simulation Software
+//
+// Copyright (c) 2023, 2024, 2025, 2026  Axel Kohlmeyer
+//
+// Documentation: https://lammps-gui.lammps.org/
+// Contact: akohlmey@gmail.com
+//
+// This software is distributed under the GNU General Public License version 2 or later.
+////////////////////////////////////////////////////////////////////////////////////////
+
+#include "aboutdialog.h"
+
+#include <QFont>
+#include <QGuiApplication>
+#include <QHBoxLayout>
+#include <QIcon>
+#include <QLabel>
+#include <QPixmap>
+#include <QPushButton>
+#include <QScreen>
+#include <QScrollBar>
+#include <QSettings>
+#include <QTimer>
+#include <QVBoxLayout>
+
+AboutDialog::AboutDialog(const QString &version, const QString &info, const QString &details,
+                         QWidget *parent) :
+    QDialog(parent), infoScrollArea(nullptr), detailsScrollArea(nullptr)
+{
+    setWindowTitle("About LAMMPS-GUI");
+    setWindowIcon(QIcon(":/icons/lammps-gui-icon-128x128.png"));
+
+    auto *mainLayout = new QVBoxLayout(this);
+
+    // Top section: icon + version text
+    auto *topLayout = new QHBoxLayout();
+    auto *iconLabel = new QLabel(this);
+    iconLabel->setPixmap(QPixmap(":/icons/lammps-gui-icon-128x128.png").scaled(64, 64));
+    iconLabel->setFixedSize(64, 64);
+    topLayout->addWidget(iconLabel);
+    auto *versionLabel = new QLabel(version, this);
+    topLayout->addWidget(versionLabel, 1);
+    mainLayout->addLayout(topLayout);
+
+    // Info scroll area
+    infoScrollArea = new QScrollArea(this);
+    infoScrollArea->setWidgetResizable(true);
+    auto *infoLabel = new QLabel(info, this);
+    infoLabel->setWordWrap(true);
+    infoLabel->setTextFormat(Qt::PlainText);
+    infoScrollArea->setWidget(infoLabel);
+    mainLayout->addWidget(infoScrollArea, details.isEmpty() ? 1 : 2);
+
+    // Details scroll area (only if details available)
+    if (!details.isEmpty()) {
+        detailsScrollArea = new QScrollArea(this);
+        detailsScrollArea->setWidgetResizable(true);
+        auto *detailsLabel = new QLabel(details, this);
+        detailsLabel->setWordWrap(true);
+        detailsLabel->setTextFormat(Qt::PlainText);
+
+        // Use fixed-width font from QSettings
+        QSettings settings;
+        QFont textFont;
+        textFont.fromString(settings.value("textfont", QFont("Monospace", -1).toString()).toString());
+        textFont.setStyleHint(QFont::Monospace, QFont::PreferOutline);
+        textFont.setFixedPitch(true);
+        detailsLabel->setFont(textFont);
+
+        detailsScrollArea->setWidget(detailsLabel);
+        mainLayout->addWidget(detailsScrollArea, 1);
+    }
+
+    // Close button
+    auto *buttonLayout = new QHBoxLayout();
+    buttonLayout->addStretch();
+    auto *closeButton = new QPushButton("Close", this);
+    closeButton->setIcon(QIcon(":/icons/window-close.png"));
+    connect(closeButton, &QPushButton::clicked, this, &QDialog::close);
+    buttonLayout->addWidget(closeButton);
+    mainLayout->addLayout(buttonLayout);
+
+    // Size constraints based on screen
+    auto *screen = QGuiApplication::primaryScreen();
+    if (screen) {
+        auto screenSize = screen->availableSize();
+        int maxWidth    = screenSize.width() * 3 / 4;
+        int maxHeight   = screenSize.height() * 9 / 10;
+        setMaximumSize(maxWidth, maxHeight);
+        resize(maxWidth, maxHeight);
+    }
+}
+
+void AboutDialog::showEvent(QShowEvent *event)
+{
+    QDialog::showEvent(event);
+    // Defer auto-scroll setup to ensure layout is finalized
+    QTimer::singleShot(0, this, [this]() {
+        setupAutoScroll(infoScrollArea);
+        if (detailsScrollArea) setupAutoScroll(detailsScrollArea);
+    });
+}
+
+void AboutDialog::setupAutoScroll(QScrollArea *area)
+{
+    if (!area) return;
+    auto *vbar = area->verticalScrollBar();
+    if (!vbar || vbar->maximum() <= 0) return;
+
+    auto *scrollTimer = new QTimer(this);
+    scrollTimer->setInterval(50);
+
+    connect(scrollTimer, &QTimer::timeout, this, [vbar, scrollTimer, this]() {
+        if (vbar->value() >= vbar->maximum()) {
+            scrollTimer->stop();
+            // Wait 3 seconds, then reset to top and start scrolling again
+            QTimer::singleShot(3000, this, [vbar, scrollTimer]() {
+                vbar->setValue(0);
+                scrollTimer->start();
+            });
+        } else {
+            vbar->setValue(vbar->value() + 1);
+        }
+    });
+
+    // Start scrolling after 2 seconds
+    QTimer::singleShot(2000, this, [scrollTimer]() { scrollTimer->start(); });
+}
+// Local Variables:
+// c-basic-offset: 4
+// End:
