@@ -32,7 +32,7 @@ constexpr int LABEL_MARGIN = 6;
 }
 
 AboutDialog::AboutDialog(const QString &version, const QString &info, const QString &details,
-                         QWidget *parent) :
+                         int minwidth, QWidget *parent) :
     QDialog(parent), infoScrollArea(nullptr), detailsScrollArea(nullptr)
 {
     setWindowTitle("About LAMMPS-GUI");
@@ -92,7 +92,7 @@ AboutDialog::AboutDialog(const QString &version, const QString &info, const QStr
     buttonLayout->addWidget(closeButton);
     mainLayout->addLayout(buttonLayout);
 
-    int desiredWidth  = QFontMetrics(infoLabel->font()).size(0, info).width();
+    int desiredWidth  = minwidth + 4 * LABEL_MARGIN;
     auto fsize        = QFontMetrics(infoLabel->font()).size(Qt::TextSingleLine, "LAMMPS");
     int desiredHeight = fsize.height() * (info.count('\n') + 4);
 

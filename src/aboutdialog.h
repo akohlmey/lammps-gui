@@ -33,21 +33,22 @@ class AboutDialog : public QDialog {
 public:
     /**
      * @brief Constructor
-     * @param version Version information text displayed at the top
-     * @param info LAMMPS configuration info displayed in a scroll area
-     * @param details Style information displayed in a scroll area with fixed-width font
+     * @param version   Version information text displayed at the top
+     * @param info      LAMMPS configuration info displayed in a scroll area
+     * @param details   Style information displayed in a scroll area with fixed-width font
+     * @param minwidth  minimum width of dialog
      * @param parent Parent widget
      */
-    AboutDialog(const QString &version, const QString &info, const QString &details,
+    AboutDialog(const QString &version, const QString &info, const QString &details, int minwidth,
                 QWidget *parent = nullptr);
 
     ~AboutDialog() override = default;
 
-    AboutDialog()                                 = delete;
-    AboutDialog(const AboutDialog &)              = delete;
-    AboutDialog(AboutDialog &&)                   = delete;
-    AboutDialog &operator=(const AboutDialog &)   = delete;
-    AboutDialog &operator=(AboutDialog &&)        = delete;
+    AboutDialog()                               = delete;
+    AboutDialog(const AboutDialog &)            = delete;
+    AboutDialog(AboutDialog &&)                 = delete;
+    AboutDialog &operator=(const AboutDialog &) = delete;
+    AboutDialog &operator=(AboutDialog &&)      = delete;
 
 protected:
     void showEvent(QShowEvent *event) override;

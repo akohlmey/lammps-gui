@@ -1825,9 +1825,10 @@ void LammpsGui::about()
     if (auto *clip = QGuiApplication::clipboard()) clip->setText(to_clipboard);
 #endif
 
-    AboutDialog dialog(
-        QString::fromStdString(version).trimmed(), QString::fromStdString(info).trimmed(),
-        QString::fromStdString(details).trimmed(), this);
+    auto fsize = QFontMetrics(QApplication::font()).size(Qt::TextSingleLine, citeme);
+    AboutDialog dialog(QString::fromStdString(version).trimmed(),
+                       QString::fromStdString(info).trimmed(),
+                       QString::fromStdString(details).trimmed(), fsize.width(), this);
     dialog.exec();
 }
 
