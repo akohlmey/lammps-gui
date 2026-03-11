@@ -48,6 +48,7 @@ AboutDialog::AboutDialog(const QString &version, const QString &info, const QStr
     topLayout->addWidget(iconLabel);
     auto *versionLabel = new QLabel(version, this);
     versionLabel->setMargin(LABEL_MARGIN);
+    versionLabel->setTextInteractionFlags(Qt::TextSelectableByMouse);
     topLayout->addWidget(versionLabel, 1);
     mainLayout->addLayout(topLayout);
 
@@ -58,6 +59,7 @@ AboutDialog::AboutDialog(const QString &version, const QString &info, const QStr
     infoLabel->setWordWrap(false);
     infoLabel->setTextFormat(Qt::PlainText);
     infoLabel->setMargin(LABEL_MARGIN);
+    infoLabel->setTextInteractionFlags(Qt::TextSelectableByMouse);
     infoScrollArea->setWidget(infoLabel);
     mainLayout->addWidget(infoScrollArea, details.isEmpty() ? 1 : 2);
     auto *detailsLabel = new QLabel(details, this);
@@ -69,6 +71,7 @@ AboutDialog::AboutDialog(const QString &version, const QString &info, const QStr
         detailsLabel->setWordWrap(false);
         detailsLabel->setTextFormat(Qt::PlainText);
         detailsLabel->setMargin(LABEL_MARGIN);
+        detailsLabel->setTextInteractionFlags(Qt::TextSelectableByMouse);
 
         // Use fixed-width font from QSettings
         QSettings settings;
