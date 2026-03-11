@@ -1421,7 +1421,7 @@ void LammpsGui::run_done()
     }
 
     bool success = true;
-    bool valid = true;
+    bool valid   = true;
     char errorbuf[DEFAULT_BUFLEN];
 
     if (lammps.has_error()) {
@@ -1950,6 +1950,9 @@ QWizardPage *LammpsGui::tutorial_directory(const int ntutorial)
             .arg(ntutorial));
     label->setWordWrap(true);
 
+    auto *layout = new QVBoxLayout(frame);
+    layout->addWidget(label);
+
     auto *dirlayout = new QHBoxLayout;
     auto *directory = new QLineEdit;
 
@@ -1980,46 +1983,35 @@ QWizardPage *LammpsGui::tutorial_directory(const int ntutorial)
     dirlayout->addWidget(dirbutton);
     directory->setObjectName("t_directory");
     connect(dirbutton, &QPushButton::released, this, &LammpsGui::get_directory);
+    layout->addLayout(dirlayout);
 
-    auto *grid       = new QGridLayout;
-    auto *purgeval   = new QCheckBox;
-    auto *solval     = new QCheckBox;
-    auto *purgelabel = new QLabel("Remove existing files from directory");
-    auto *sollabel   = new QLabel("Download solutions");
+    auto *purgeval = new QCheckBox("&Remove existing files from directory");
+    auto *solval   = new QCheckBox("&Download solutions");
 
     purgeval->setCheckState(Qt::Unchecked);
     purgeval->setObjectName("t_dirpurge");
+    layout->addWidget(purgeval, Qt::AlignVCenter | Qt::AlignLeft);
+
     solval->setCheckState(settings.value("solution", false).toBool() ? Qt::Checked : Qt::Unchecked);
     solval->setObjectName("t_getsolution");
-    grid->addWidget(purgeval, 0, 0, Qt::AlignVCenter);
-    grid->addWidget(purgelabel, 0, 1, Qt::AlignVCenter);
-    grid->addWidget(solval, 1, 0, Qt::AlignVCenter);
-    grid->addWidget(sollabel, 1, 1, Qt::AlignVCenter);
-    grid->setColumnStretch(0, 0);
-    grid->setColumnStretch(1, 100);
+    layout->addWidget(solval, Qt::AlignVCenter | Qt::AlignLeft);
 
     // we have tutorials 1 to 8 currently available online
 
     QCheckBox *webval = nullptr;
     if ((ntutorial > 0) && (ntutorial < 9)) {
-        grid->addWidget(new QLabel, 2, 0, 1, 2, Qt::AlignVCenter);
-        webval = new QCheckBox;
+        webval = new QCheckBox("&Open tutorial webpage in web browser");
         webval->setCheckState(settings.value("webpage", true).toBool() ? Qt::Checked
                                                                        : Qt::Unchecked);
         webval->setObjectName("t_webopen");
-        grid->addWidget(webval, 3, 0, Qt::AlignVCenter);
-        grid->addWidget(new QLabel("Open tutorial webpage in web browser"), 3, 1, Qt::AlignVCenter);
+        layout->addWidget(webval, Qt::AlignVCenter | Qt::AlignLeft);
     }
 
     auto *label2 = new QLabel(
         QString("<hr width=\"33%\">\n<p align=\"center\">Click on "
                 "the \"Finish\" button to complete the setup and start the download.</p>"));
-    label->setWordWrap(true);
+    label2->setWordWrap(false);
 
-    auto *layout = new QVBoxLayout(frame);
-    layout->addWidget(label);
-    layout->addLayout(dirlayout);
-    layout->addLayout(grid);
     layout->addWidget(label2);
     settings.endGroup();
 
