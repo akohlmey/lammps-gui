@@ -416,7 +416,7 @@ void GeneralTab::newallfont()
     QSettings settings;
     QFont all, text;
     all.fromString(settings.value("allfont", QFont("Arial", -1).toString()).toString());
-    text.fromString(settings.value("textfont", QFont("Monospace", -1).toString()).toString());
+    text.fromString(settings.value("textfont", GUI_MONOFONT).toString());
 
     bool ok    = false;
     QFont font = QFontDialog::getFont(&ok, all, this, QString("Select Default Font"));
@@ -430,7 +430,7 @@ void GeneralTab::newtextfont()
     QSettings settings;
     QFont all, text;
     all.fromString(settings.value("allfont", QFont("Arial", -1).toString()).toString());
-    text.fromString(settings.value("textfont", QFont("Monospace", -1).toString()).toString());
+    text.fromString(settings.value("textfont", GUI_MONOFONT).toString());
 
     bool ok    = false;
     QFont font = QFontDialog::getFont(&ok, text, this, QString("Select Text Font"));

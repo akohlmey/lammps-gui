@@ -10,6 +10,7 @@
 ////////////////////////////////////////////////////////////////////////////////////////
 
 #include "aboutdialog.h"
+#include "helpers.h"
 
 #include <QFont>
 #include <QGuiApplication>
@@ -74,9 +75,7 @@ AboutDialog::AboutDialog(const QString &version, const QString &info, const QStr
         detailsLabel->setTextInteractionFlags(Qt::TextSelectableByMouse);
 
         // Use fixed-width font from QSettings
-        QFont textFont;
-        textFont.fromString(
-            QSettings().value("textfont", QFont("Monospace", -1).toString()).toString());
+        QFont textFont(QSettings().value("textfont", GUI_MONOFONT).toString());
         textFont.setStyleHint(QFont::Monospace, QFont::PreferOutline);
         textFont.setFixedPitch(true);
         detailsLabel->setFont(textFont);

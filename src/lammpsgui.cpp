@@ -252,21 +252,19 @@ LammpsGui::LammpsGui(QWidget *parent, const QString &filename, int width, int he
 
     setWindowIcon(QIcon(":/icons/lammps-gui-icon-128x128.png"));
 
-    QFont all_font;
-    all_font.fromString(settings.value("allfont", QFont("Arial", -1).toString()).toString());
+    QFont all_font(settings.value("allfont", QFont("Arial", -1).toString()).toString());
     all_font.setStyleHint(QFont::SansSerif, QFont::PreferOutline);
     settings.setValue("allfont", all_font.toString());
     setFont(all_font);
 
-    QFont text_font;
-    text_font.fromString(settings.value("textfont", QFont("Monospace", -1).toString()).toString());
+    QFont text_font(settings.value("textfont", GUI_MONOFONT).toString());
     text_font.setStyleHint(QFont::Monospace, QFont::PreferOutline);
     text_font.setFixedPitch(true);
-
     settings.setValue("textfont", text_font.toString());
     ui->textEdit->setFont(text_font);
     ui->textEdit->document()->setDefaultFont(text_font);
     ui->textEdit->setMinimumSize(MINIMUM_WIDTH, MINIMUM_HEIGHT);
+    settings.sync();
 
     varwindow = new QLabel(QString());
     varwindow->setWindowTitle(QString("LAMMPS-GUI - Current Variables"));
