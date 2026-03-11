@@ -408,7 +408,7 @@ if (LAMMPS_GUI_USE_PLUGIN AND NOT BUILD_DOC_ONLY)
   elseif((CMAKE_SYSTEM_NAME STREQUAL "Windows") AND CMAKE_CROSSCOMPILING)
     install(TARGETS lammps-gui DESTINATION ${CMAKE_INSTALL_BINDIR})
     add_custom_target(nsis
-      COMMAND sh -vx ${CMAKE_SOURCE_DIR}/packaging/build_windows_cross_nsis.sh ${CMAKE_INSTALL_PREFIX} ${PROJECT_VERSION} ${CMAKE_SOURCE_DIR}
+      COMMAND ${CMAKE_SOURCE_DIR}/packaging/build_windows_cross_nsis.sh ${CMAKE_INSTALL_PREFIX} ${PROJECT_VERSION} ${CMAKE_SOURCE_DIR}
       DEPENDS lammps-gui html pdf
       COMMENT "Create nsis installer with windows binaries"
       BYPRODUCT LAMMPS-GUI-Win10-x86_64-${PROJECT_VERSION}.exe
