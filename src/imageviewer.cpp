@@ -2411,13 +2411,11 @@ void ImageViewer::createImage()
             xmid = ymid = zmid = 0.0;
         }
 
-        silence_stdout();
         QString molcreate = "create_atoms 0 single %1 %2 %3 mol %4 312944 group %5 units box";
         group             = "imgviewer_tmp_mol";
         lammps->command(molcreate.arg(xmid).arg(ymid).arg(zmid).arg(molecule).arg(group));
         lammps->command(QString("neigh_modify exclude group all %1").arg(group));
         lammps->command("run 0 post no");
-        restore_stdout();
         if (lammps->has_error()) lammps->get_last_error_message(nullptr, 0);
     }
 
@@ -2816,10 +2814,8 @@ void ImageViewer::createImage()
         }
     }
 
-    silence_stdout();
     last_dump_cmd = dumpcmd;
     lammps->command(dumpcmd);
-    restore_stdout();
 
     // display error message
     if (lammps->has_error()) {
@@ -2991,9 +2987,6 @@ void ImageViewer::update_peratom()
             if (type == LammpsWrapper::ATOM_STYLE) atom_properties << QString("v_%1").arg(name);
         }
 
-        // we want to ignore error messages from the extract commands
-        silence_stdout();
-
         // add compatible computes to the list
         num = lammps->id_count("compute");
         for (int idx = 0; idx < num; ++idx) {
@@ -3043,7 +3036,6 @@ void ImageViewer::update_peratom()
             // clear error status, if needed:
             lammps->get_last_error_message(nullptr, 0);
         }
-        restore_stdout();
 
         // we can query for fixes before 10 December 2025, but there is no support
         // for fix graphics until after that version. So the check is needed for this date.

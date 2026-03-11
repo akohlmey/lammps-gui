@@ -329,20 +329,6 @@ void purge_directory(const QString &dir)
     }
 }
 
-void silence_stdout()
-{
-#ifndef _WIN32
-    (void)freopen(NULL_DEVICE, "w", stdout);
-#endif
-}
-
-void restore_stdout()
-{
-#ifndef _WIN32
-    (void)freopen(TTY_DEVICE, "w", stdout);
-#endif
-}
-
 // compare black level of foreground and background color
 bool is_light_theme()
 {
