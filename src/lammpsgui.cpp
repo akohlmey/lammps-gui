@@ -1940,7 +1940,6 @@ QWizardPage *LammpsGui::tutorial_directory(const int ntutorial)
     page->setPixmap(QWizard::WatermarkPixmap,
                     QPixmap(QString(":/icons/tutorial%1-logo.png").arg(ntutorial)));
 
-    auto *frame = new QFrame;
     auto *label = new QLabel(
         QString("<p>Select a directory to store the files for tutorial %1.  The directory will be "
                 "created if necessary and LAMMPS-GUI will download the files required for the "
@@ -1950,7 +1949,7 @@ QWizardPage *LammpsGui::tutorial_directory(const int ntutorial)
             .arg(ntutorial));
     label->setWordWrap(true);
 
-    auto *layout = new QVBoxLayout(frame);
+    auto *layout = new QVBoxLayout;
     layout->addWidget(label);
 
     auto *dirlayout = new QHBoxLayout;
