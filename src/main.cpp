@@ -101,6 +101,10 @@ int main(int argc, char *argv[])
 
     QStringList args = parser.positionalArguments();
     if (!args.empty()) infile = args[0];
+#if Q_OS_WIN32
+    // special hack for Windows which sometimes uses the executable name
+    if (infile.endsWith(".exe")) infile = "";
+#endif
 
     Q_INIT_RESOURCE(lammpsgui);
     LammpsGui w(nullptr, infile, width, height);
