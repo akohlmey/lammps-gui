@@ -11,6 +11,7 @@
 
 #include "lammpsgui.h"
 
+#include "aboutdialog.h"
 #include "chartviewer.h"
 #include "fileviewer.h"
 #include "findandreplace.h"
@@ -1774,12 +1775,13 @@ void LammpsGui::setFont(const QFont &newfont)
 
 void LammpsGui::about()
 {
-    std::string version = "This is LAMMPS-GUI version " LAMMPS_GUI_VERSION;
+    std::string version = "<b>This is LAMMPS-GUI version " LAMMPS_GUI_VERSION;
     version += " using Qt version " QT_VERSION_STR;
     if (is_light_theme())
-        version += " using light theme\n";
+        version += " using light theme";
     else
-        version += " using dark theme\n";
+        version += " using dark theme";
+    version += "</b><br><br>\n";
     if (lammps.has_plugin()) {
         version += "LAMMPS library loaded as plugin";
         if (!plugin_path.isEmpty()) {
@@ -1793,46 +1795,52 @@ void LammpsGui::about()
     QString to_clipboard(version.c_str());
     to_clipboard += "\n\n";
 
-    std::string info = "LAMMPS is currently running. LAMMPS config info not available.\n";
+    std::string info    = "LAMMPS is currently running. LAMMPS config info not available.\n";
+    std::string details = "";
 
     // LAMMPS is not re-entrant, so we can only query LAMMPS when it is not running
     if (!lammps.is_running()) {
         start_lammps();
         capturer->BeginCapture();
-        lammps.command("info config");
+        lammps.command("info config styles");
         capturer->EndCapture();
         info       = capturer->GetCapture();
         auto start = info.find("LAMMPS version:");
+        auto mid   = info.find("Styles information:", start);
         auto end   = info.find("Info-Info-Info", start);
+
         // protect from a failed or incomplete capture
-        if ((start != std::string::npos) && (end != std::string::npos))
-            info = std::string(info, start, end - start);
+        if ((start != std::string::npos) && (mid != std::string::npos) &&
+            (end != std::string::npos)) {
+            details = std::string(info, mid, end - mid);
+            info    = std::string(info, start, mid - start);
+
+            // condense newlines in detailed styles info string
+            auto loc = details.find("\n\n\n\n");
+            while (loc != std::string::npos) {
+                details.replace(loc, 4, "\n\n");
+                loc = details.find("\n\n\n\n");
+            }
+            loc = details.find("les:\n\n");
+            while (loc != std::string::npos) {
+                details.replace(loc, 6, "les:\n");
+                loc = details.find("les:\n\n");
+            }
+        }
     }
 
     info += citeme.toStdString();
     to_clipboard += info.c_str();
+    to_clipboard += details.c_str();
+
 #if QT_CONFIG(clipboard)
     if (auto *clip = QGuiApplication::clipboard()) clip->setText(to_clipboard);
 #endif
 
-    QMessageBox msg(this);
-    msg.setWindowTitle("About LAMMPS-GUI");
-    msg.setWindowIcon(QIcon(":/icons/lammps-gui-icon-128x128.png"));
-    msg.setText(version.c_str());
-    msg.setInformativeText(info.c_str());
-    msg.setIconPixmap(QPixmap(":/icons/lammps-gui-icon-128x128.png").scaled(64, 64));
-    msg.setStandardButtons(QMessageBox::Close);
-    auto *button = msg.button(QMessageBox::Close);
-    button->setIcon(QIcon(":/icons/window-close.png"));
-    QFont myfont(font());
-    myfont.setPointSize(myfont.pointSizeF() * 0.8);
-    msg.setFont(myfont);
-
-    auto *minwidth = new QSpacerItem(700, 0, QSizePolicy::Minimum, QSizePolicy::Expanding);
-    auto *layout   = dynamic_cast<QGridLayout *>(msg.layout());
-    if (layout) layout->addItem(minwidth, layout->rowCount(), 0, 1, layout->columnCount());
-
-    msg.exec();
+    AboutDialog dialog(
+        QString::fromStdString(version).trimmed(), QString::fromStdString(info).trimmed(),
+        QString::fromStdString(details).trimmed(), this);
+    dialog.exec();
 }
 
 void LammpsGui::help()
