@@ -54,20 +54,20 @@
   </provides>
 
   <releases>
-    <release version="1.10.1" timestamp="1772079977">
+    <release version="1.11.0" timestamp="1772079977">
       <description>
         Tweak some button names to be more suitable and intuitive
         Add help buttons to provide specific online help for compute/fixes, dump image, or the LAMMPS-GUI homepage
         Expand documentation of the snapshot image and slide show viewers
         Update several screenshot images and add new ones
-        Add more color maps
+        Add more color maps, add icons to selection list
         Make image viewer dialogs more consistent and balanced. Set minimum size.
-        Reword special particle type selection dialogs
+        Rework special particle type selection dialogs
         Implement customized dialogs for warnings and critical errors
         Implement helper function for uniform export of images either directly or through ImageMagick
         Small tweaks to dialog layouts, especially buttons and text field sizes
         Add a couple more keyboard shortcuts and a stop button to slideshow viewer
-        Support by-attribute coloring for body particles, if a suitable LAMMPS version is used
+        Support by-attribute coloring for body, ellipsoid, line, and tri particles, if a suitable LAMMPS version is used
       </description>
     </release>
     <release version="1.10.0" timestamp="1771473565">

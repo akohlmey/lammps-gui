@@ -417,7 +417,7 @@ ImageViewer::ImageViewer(const QString &fileName, LammpsWrapper *_lammps, QWidge
     renderstatus->setToolTip("Render status");
     renderstatus->setObjectName("renderstatus");
     auto *asize = new QLineEdit(QString::number(2.0 * atomSize, 'f', 2));
-    auto *valid = new QDoubleValidator(1.0e-10, 1.0e10, 3, asize);
+    auto *valid = new QDoubleValidator(1.0e-10, 1.0e10, 3, this);
     asize->setValidator(valid);
     asize->setObjectName("atomSize");
     asize->setToolTip("Set Atom size");
@@ -1112,9 +1112,9 @@ void ImageViewer::global_settings()
     title->setLineWidth(1);
     title->setMargin(TITLE_MARGIN);
 
-    auto *colorcompleter    = new QColorCompleter;
-    auto *colorvalidator    = new QColorValidator;
-    auto *transvalidator    = new QDoubleValidator(0.0, 1.0, 2);
+    auto *colorcompleter    = new QColorCompleter(this);
+    auto *colorvalidator    = new QColorValidator(this);
+    auto *transvalidator    = new QDoubleValidator(0.0, 1.0, 3, this);
     auto *fractionvalidator = new QDoubleValidator(0.00001, 5.0, 5, this);
     auto fwidth             = setview.fontMetrics().size(Qt::TextSingleLine, "0.00000000").width();
 
@@ -1375,7 +1375,7 @@ void ImageViewer::atom_settings()
     title->setLineWidth(1);
     title->setMargin(TITLE_MARGIN);
 
-    auto *transvalidator  = new QDoubleValidator(0.0, 1.0, 2);
+    auto *transvalidator  = new QDoubleValidator(0.0, 1.0, 3, this);
     auto *layout          = new QGridLayout;
     int idx               = 0;
     int n                 = 0;
@@ -1933,9 +1933,9 @@ void ImageViewer::fix_settings()
     title->setLineWidth(1);
     title->setMargin(TITLE_MARGIN);
 
-    auto *colorcompleter = new QColorCompleter;
-    auto *colorvalidator = new QColorValidator;
-    auto *transvalidator = new QDoubleValidator(0.0, 1.0, 2);
+    auto *colorcompleter = new QColorCompleter(this);
+    auto *colorvalidator = new QColorValidator(this);
+    auto *transvalidator = new QDoubleValidator(0.0, 1.0, 3, this);
     QFontMetrics metrics(fixview.fontMetrics());
 
     int idx               = 0;
@@ -2182,11 +2182,11 @@ void ImageViewer::region_settings()
     layout->addWidget(new QLabel("Opacity:"), idx++, n++, Qt::AlignHCenter);
     layout->addWidget(new QHline, idx++, 0, 1, MAXCOLS);
 
-    auto *colorcompleter = new QColorCompleter;
-    auto *colorvalidator = new QColorValidator;
-    auto *framevalidator = new QDoubleValidator(1.0e-10, 1.0e10, 10);
-    auto *transvalidator = new QDoubleValidator(0.0, 1.0, 2);
-    auto *pointvalidator = new QIntValidator(100, 1000000);
+    auto *colorcompleter = new QColorCompleter(this);
+    auto *colorvalidator = new QColorValidator(this);
+    auto *framevalidator = new QDoubleValidator(1.0e-10, 1.0e10, 10, this);
+    auto *transvalidator = new QDoubleValidator(0.0, 1.0, 3, this);
+    auto *pointvalidator = new QIntValidator(100, 1000000, this);
     QFontMetrics metrics(regionview.fontMetrics());
 
     for (const auto &reg : regions) {
@@ -2825,8 +2825,10 @@ void ImageViewer::createImage()
     if (lammps->has_error()) {
         char errormesg[DEFAULT_BUFLEN];
         lammps->get_last_error_message(errormesg, DEFAULT_BUFLEN);
-        warning(this, "Image Viewer File Creation Error",
-                "LAMMPS failed to create the image:", QString("<code>%1</code>").arg(errormesg));
+        // ignore "Invalid LAMMPS handle", but report other errors
+        if (!strstr(errormesg, "Invalid LAMMPS handle"))
+            warning(this, "Image Viewer File Creation Error", "LAMMPS failed to create the image:",
+                    QString("<code>%1</code>").arg(errormesg));
         return;
     }
 
