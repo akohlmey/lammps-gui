@@ -74,10 +74,9 @@ AboutDialog::AboutDialog(const QString &version, const QString &info, const QStr
         detailsLabel->setTextInteractionFlags(Qt::TextSelectableByMouse);
 
         // Use fixed-width font from QSettings
-        QSettings settings;
         QFont textFont;
         textFont.fromString(
-            settings.value("textfont", QFont("Monospace", -1).toString()).toString());
+            QSettings().value("textfont", QFont("Monospace", -1).toString()).toString());
         textFont.setStyleHint(QFont::Monospace, QFont::PreferOutline);
         textFont.setFixedPitch(true);
         detailsLabel->setFont(textFont);
