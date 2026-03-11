@@ -394,7 +394,7 @@ LammpsGui::LammpsGui(QWidget *parent, const QString &filename, int width, int he
     dirstatus->show();
     ui->statusbar->addWidget(progress);
 
-    if (filename.size() > 0) {
+    if ((filename.size() > 0) && !filename.endsWith("lammps-gui.exe")) {
         open_file(filename);
     } else {
         setWindowTitle("LAMMPS-GUI - Editor - *unknown*");
@@ -858,7 +858,7 @@ void LammpsGui::open_file(const QString &fileName)
     QDir::setCurrent(current_dir);
     if (!file.open(QIODevice::ReadOnly | QFile::Text)) {
         warning(this, "LAMMPS-GUI Warning", "Cannot open file " + path.absoluteFilePath() + ":",
-                file.errorString() + ".\n\nWill create new file on saving editor buffer.");
+                file.errorString() + "\n\nWill create new file on saving editor buffer.");
         ui->textEdit->document()->clear();
         ui->textEdit->document()->setPlainText(citeme);
         ui->textEdit->document()->setModified(false);
