@@ -1793,24 +1793,32 @@ void LammpsGui::about()
     QString to_clipboard(version.c_str());
     to_clipboard += "\n\n";
 
-    std::string info = "LAMMPS is currently running. LAMMPS config info not available.\n";
+    std::string info    = "LAMMPS is currently running. LAMMPS config info not available.\n";
+    std::string details = "";
 
     // LAMMPS is not re-entrant, so we can only query LAMMPS when it is not running
     if (!lammps.is_running()) {
         start_lammps();
         capturer->BeginCapture();
-        lammps.command("info config");
+        lammps.command("info config styles");
         capturer->EndCapture();
         info       = capturer->GetCapture();
         auto start = info.find("LAMMPS version:");
+        auto mid   = info.find("Styles information:", start);
         auto end   = info.find("Info-Info-Info", start);
+
         // protect from a failed or incomplete capture
-        if ((start != std::string::npos) && (end != std::string::npos))
-            info = std::string(info, start, end - start);
+        if ((start != std::string::npos) && (mid != std::string::npos) &&
+            (end != std::string::npos)) {
+            details = std::string(info, mid, end - mid);
+            info    = std::string(info, start, mid - start);
+        }
     }
 
     info += citeme.toStdString();
     to_clipboard += info.c_str();
+    to_clipboard += details.c_str();
+
 #if QT_CONFIG(clipboard)
     if (auto *clip = QGuiApplication::clipboard()) clip->setText(to_clipboard);
 #endif
@@ -1820,6 +1828,7 @@ void LammpsGui::about()
     msg.setWindowIcon(QIcon(":/icons/lammps-gui-icon-128x128.png"));
     msg.setText(version.c_str());
     msg.setInformativeText(info.c_str());
+    msg.setDetailedText(details.c_str());
     msg.setIconPixmap(QPixmap(":/icons/lammps-gui-icon-128x128.png").scaled(64, 64));
     msg.setStandardButtons(QMessageBox::Close);
     auto *button = msg.button(QMessageBox::Close);
@@ -1827,11 +1836,13 @@ void LammpsGui::about()
     QFont myfont(font());
     myfont.setPointSize(myfont.pointSizeF() * 0.8);
     msg.setFont(myfont);
+    auto fsize = QFontMetrics(myfont)
+                     .size(Qt::TextSingleLine, "EXTRA-DUMP EXTRA-FIX EXTRA-MOLECULE FEP")
+                     .width();
 
-    auto *minwidth = new QSpacerItem(700, 0, QSizePolicy::Minimum, QSizePolicy::Expanding);
-    auto *layout   = dynamic_cast<QGridLayout *>(msg.layout());
-    if (layout) layout->addItem(minwidth, layout->rowCount(), 0, 1, layout->columnCount());
-
+    auto *width  = new QSpacerItem(2 * fsize + 100, 0, QSizePolicy::Fixed, QSizePolicy::Expanding);
+    auto *layout = dynamic_cast<QGridLayout *>(msg.layout());
+    if (layout) layout->addItem(width, layout->rowCount(), 0, 1, layout->columnCount());
     msg.exec();
 }
 
