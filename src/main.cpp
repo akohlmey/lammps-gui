@@ -9,6 +9,7 @@
 // This software is distributed under the GNU General Public License version 2 or later.
 ////////////////////////////////////////////////////////////////////////////////////////
 
+#include "helpers.h"
 #include "lammpsgui.h"
 
 #include <QApplication>
@@ -28,8 +29,6 @@
 
 #define stringify(x) myxstr(x)
 #define myxstr(x) #x
-
-extern QString GUI_MONOFONT;
 
 int main(int argc, char *argv[])
 {
@@ -103,10 +102,13 @@ int main(int argc, char *argv[])
 
 #if defined(Q_OS_MACOS)
     GUI_MONOFONT = QFont("Menlo", -1).toString();
+    GUI_ALLFONT  = QFont("Arial", -1).toString();
 #elif defined(Q_OS_WIN32)
     GUI_MONOFONT = QFont("Consolas", -1).toString();
+    GUI_ALLFONT  = QFont("Arial", -1).toString();
 #else
     GUI_MONOFONT = QFont("Monospace", -1).toString();
+    GUI_ALLFONT  = QFont("Arial", -1).toString();
 #endif
 
     QStringList args = parser.positionalArguments();

@@ -415,7 +415,7 @@ void GeneralTab::newallfont()
 {
     QSettings settings;
     QFont all, text;
-    all.fromString(settings.value("allfont", QFont("Arial", -1).toString()).toString());
+    all.fromString(settings.value("allfont", GUI_ALLFONT).toString());
     text.fromString(settings.value("textfont", GUI_MONOFONT).toString());
 
     bool ok    = false;
@@ -429,7 +429,7 @@ void GeneralTab::newtextfont()
 {
     QSettings settings;
     QFont all, text;
-    all.fromString(settings.value("allfont", QFont("Arial", -1).toString()).toString());
+    all.fromString(settings.value("allfont", GUI_ALLFONT).toString());
     text.fromString(settings.value("textfont", GUI_MONOFONT).toString());
 
     bool ok    = false;

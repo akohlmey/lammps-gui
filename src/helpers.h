@@ -21,6 +21,7 @@ class QImage;
 
 // OS specific default monospace font
 extern QString GUI_MONOFONT;
+extern QString GUI_ALLFONT;
 
 /**
  * @brief Duplicate a string from std::string

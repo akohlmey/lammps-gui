@@ -252,7 +252,7 @@ LammpsGui::LammpsGui(QWidget *parent, const QString &filename, int width, int he
 
     setWindowIcon(QIcon(":/icons/lammps-gui-icon-128x128.png"));
 
-    QFont all_font(settings.value("allfont", QFont("Arial", -1).toString()).toString());
+    QFont all_font(settings.value("allfont", GUI_ALLFONT).toString());
     all_font.setStyleHint(QFont::SansSerif, QFont::PreferOutline);
     settings.setValue("allfont", all_font.toString());
     setFont(all_font);

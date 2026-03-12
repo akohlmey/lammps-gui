@@ -47,6 +47,7 @@ constexpr char TTY_DEVICE[]  = "/dev/tty";
 
 // default will be overridden in main()
 QString GUI_MONOFONT("Monospace,-1");
+QString GUI_ALLFONT("Arial,-1");
 
 // duplicate string, STL version
 char *mystrdup(const std::string &text)
