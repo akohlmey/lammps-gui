@@ -252,18 +252,27 @@ LammpsGui::LammpsGui(QWidget *parent, const QString &filename, int width, int he
 
     setWindowIcon(QIcon(":/icons/lammps-gui-icon-128x128.png"));
 
-    QFont all_font(settings.value("allfont", GUI_ALLFONT).toString());
-    all_font.setStyleHint(QFont::SansSerif, QFont::PreferOutline);
-    settings.setValue("allfont", all_font.toString());
+    QFont all_font;
+    QFontInfo all_info(GUI_ALLFONT);
+    all_font.setFamily(settings.value("allfamily", all_info.family()).toString());
+    all_font.setPointSize(settings.value("allsize", all_info.pointSize()).toInt());
+    all_font.setStyleHint(GUI_ALLFONT.styleHint());
+    settings.setValue("allfamily", all_font.family());
+    settings.setValue("allsize", all_font.pointSize());
     setFont(all_font);
+    fprintf(stderr, "set all font to: %s\n", all_font.toString().toStdString().c_str());
 
-    QFont text_font(settings.value("textfont", GUI_MONOFONT).toString());
-    text_font.setStyleHint(QFont::Monospace, QFont::PreferOutline);
-    text_font.setFixedPitch(true);
-    settings.setValue("textfont", text_font.toString());
-    ui->textEdit->setFont(text_font);
-    ui->textEdit->document()->setDefaultFont(text_font);
+    QFont mono_font;
+    QFontInfo mono_info(GUI_MONOFONT);
+    mono_font.setFamily(settings.value("monofamily", mono_info.family()).toString());
+    mono_font.setPointSize(settings.value("monosize", mono_info.pointSize()).toInt());
+    mono_font.setStyleHint(GUI_MONOFONT.styleHint());
+    settings.setValue("monofamily", mono_font.family());
+    settings.setValue("monosize", mono_font.pointSize());
+    ui->textEdit->setFont(mono_font);
+    ui->textEdit->document()->setDefaultFont(mono_font);
     ui->textEdit->setMinimumSize(MINIMUM_WIDTH, MINIMUM_HEIGHT);
+    fprintf(stderr, "set mono font to: %s\n", mono_font.toString().toStdString().c_str());
     settings.sync();
 
     varwindow = new QLabel(QString());
@@ -271,7 +280,7 @@ LammpsGui::LammpsGui(QWidget *parent, const QString &filename, int width, int he
     varwindow->setWindowIcon(QIcon(":/icons/lammps-gui-icon-128x128.png"));
     varwindow->setMinimumSize(100, 50);
     varwindow->setText("(none)");
-    varwindow->setFont(text_font);
+    varwindow->setFont(mono_font);
     varwindow->setFrameStyle(QFrame::Sunken);
     varwindow->setFrameShape(QFrame::Panel);
     varwindow->setAlignment(Qt::AlignVCenter);

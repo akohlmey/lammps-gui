@@ -101,15 +101,17 @@ int main(int argc, char *argv[])
     if (usestyle) QApplication::setStyle(usestyle);
 
 #if defined(Q_OS_MACOS)
-    GUI_MONOFONT = QFont("Menlo", -1).toString();
-    GUI_ALLFONT  = QFont("Arial", -1).toString();
+    GUI_MONOFONT = QFont("Menlo", -1, QFont::Normal);
+    GUI_ALLFONT  = QFont("Arial", -1, QFont::Normal);
 #elif defined(Q_OS_WIN32)
-    GUI_MONOFONT = QFont("Consolas", -1).toString();
-    GUI_ALLFONT  = QFont("Arial", -1).toString();
+    GUI_MONOFONT = QFont("Consolas", -1, QFont::Normal);
+    GUI_ALLFONT  = QFont("Arial", -1, QFont::Normal);
 #else
-    GUI_MONOFONT = QFont("Monospace", -1).toString();
-    GUI_ALLFONT  = QFont("Arial", -1).toString();
+    GUI_MONOFONT = QFont("Monospace", -1, QFont::Normal);
+    GUI_ALLFONT  = QFont("Arial", -1, QFont::Normal);
 #endif
+    GUI_MONOFONT.setStyleHint(QFont::Monospace, QFont::PreferQuality);
+    GUI_ALLFONT.setStyleHint(QFont::SansSerif, QFont::PreferQuality);
 
     QStringList args = parser.positionalArguments();
     if (!args.empty()) infile = args[0];
