@@ -414,20 +414,21 @@ void GeneralTab::updatefonts(const QFont &all, const QFont &text)
 void GeneralTab::newallfont()
 {
     QFont all_font;
-    QFontInfo all_info(GUI_ALLFONT);
+    QFontInfo all_info(*GUI_ALLFONT);
     all_font.setFamily(settings->value("allfamily", all_info.family()).toString());
     all_font.setPointSize(settings->value("allsize", all_info.pointSize()).toInt());
-    all_font.setStyleHint(GUI_ALLFONT.styleHint());
+    all_font.setStyleHint(GUI_ALLFONT->styleHint());
 
     QFont mono_font;
-    QFontInfo mono_info(GUI_MONOFONT);
+    QFontInfo mono_info(*GUI_MONOFONT);
     mono_font.setFamily(settings->value("monofamily", mono_info.family()).toString());
     mono_font.setPointSize(settings->value("monosize", mono_info.pointSize()).toInt());
-    mono_font.setStyleHint(GUI_MONOFONT.styleHint());
+    mono_font.setStyleHint(GUI_MONOFONT->styleHint());
+    mono_font.setFixedPitch(true);
 
-    bool ok    = false;
-    QFont new_font = QFontDialog::getFont(&ok, all_font, this, QString("Select Default Font"));
-    if (ok) updatefonts(new_font, mono_font);
+    bool font_ok   = false;
+    QFont new_font = QFontDialog::getFont(&font_ok, all_font, this, QString("Select Default Font"));
+    if (font_ok) updatefonts(new_font, mono_font);
 
     settings->setValue("allfamily", new_font.family());
     settings->setValue("allsize", new_font.pointSize());
@@ -437,20 +438,21 @@ void GeneralTab::newallfont()
 void GeneralTab::newtextfont()
 {
     QFont all_font;
-    QFontInfo all_info(GUI_ALLFONT);
+    QFontInfo all_info(*GUI_ALLFONT);
     all_font.setFamily(settings->value("allfamily", all_info.family()).toString());
     all_font.setPointSize(settings->value("allsize", all_info.pointSize()).toInt());
-    all_font.setStyleHint(GUI_ALLFONT.styleHint());
+    all_font.setStyleHint(GUI_ALLFONT->styleHint());
 
     QFont mono_font;
-    QFontInfo mono_info(GUI_MONOFONT);
+    QFontInfo mono_info(*GUI_MONOFONT);
     mono_font.setFamily(settings->value("monofamily", mono_info.family()).toString());
     mono_font.setPointSize(settings->value("monosize", mono_info.pointSize()).toInt());
-    mono_font.setStyleHint(GUI_MONOFONT.styleHint());
+    mono_font.setStyleHint(GUI_MONOFONT->styleHint());
+    mono_font.setFixedPitch(true);
 
-    bool ok    = false;
-    QFont new_font = QFontDialog::getFont(&ok, mono_font, this, QString("Select Text Font"));
-    if (ok) updatefonts(all_font, new_font);
+    bool font_ok   = false;
+    QFont new_font = QFontDialog::getFont(&font_ok, mono_font, this, QString("Select Text Font"));
+    if (font_ok) updatefonts(all_font, new_font);
 
     settings->setValue("monofamily", new_font.family());
     settings->setValue("monosize", new_font.pointSize());

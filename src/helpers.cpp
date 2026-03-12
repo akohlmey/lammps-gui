@@ -19,7 +19,6 @@
 #include <QFile>
 #include <QFileDialog>
 #include <QFileInfo>
-#include <QFont>
 #include <QIcon>
 #include <QImage>
 #include <QMessageBox>
@@ -45,9 +44,9 @@ constexpr char TTY_DEVICE[]  = "/dev/tty";
 #endif
 } // namespace
 
-// default will be overridden in main()
-QFont GUI_MONOFONT("Monospace,-1", QFont::Normal);
-QFont GUI_ALLFONT("Arial,-1", QFont::Normal);
+// will be allocated and initialized in main() to avoid segfault on macOS
+QFont *GUI_MONOFONT = nullptr;
+QFont *GUI_ALLFONT = nullptr;
 
 // duplicate string, STL version
 char *mystrdup(const std::string &text)

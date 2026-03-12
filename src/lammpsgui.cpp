@@ -253,26 +253,25 @@ LammpsGui::LammpsGui(QWidget *parent, const QString &filename, int width, int he
     setWindowIcon(QIcon(":/icons/lammps-gui-icon-128x128.png"));
 
     QFont all_font;
-    QFontInfo all_info(GUI_ALLFONT);
+    QFontInfo all_info(*GUI_ALLFONT);
     all_font.setFamily(settings.value("allfamily", all_info.family()).toString());
     all_font.setPointSize(settings.value("allsize", all_info.pointSize()).toInt());
-    all_font.setStyleHint(GUI_ALLFONT.styleHint());
+    all_font.setStyleHint(GUI_ALLFONT->styleHint());
     settings.setValue("allfamily", all_font.family());
     settings.setValue("allsize", all_font.pointSize());
     setFont(all_font);
-    fprintf(stderr, "set all font to: %s\n", all_font.toString().toStdString().c_str());
 
     QFont mono_font;
-    QFontInfo mono_info(GUI_MONOFONT);
+    QFontInfo mono_info(*GUI_MONOFONT);
     mono_font.setFamily(settings.value("monofamily", mono_info.family()).toString());
     mono_font.setPointSize(settings.value("monosize", mono_info.pointSize()).toInt());
-    mono_font.setStyleHint(GUI_MONOFONT.styleHint());
+    mono_font.setStyleHint(GUI_MONOFONT->styleHint());
+    mono_font.setFixedPitch(true);
     settings.setValue("monofamily", mono_font.family());
     settings.setValue("monosize", mono_font.pointSize());
     ui->textEdit->setFont(mono_font);
     ui->textEdit->document()->setDefaultFont(mono_font);
     ui->textEdit->setMinimumSize(MINIMUM_WIDTH, MINIMUM_HEIGHT);
-    fprintf(stderr, "set mono font to: %s\n", mono_font.toString().toStdString().c_str());
     settings.sync();
 
     varwindow = new QLabel(QString());

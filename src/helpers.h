@@ -12,17 +12,17 @@
 #ifndef HELPERS_H
 #define HELPERS_H
 
-#include <QFont>
 #include <QString>
 #include <string>
 #include <vector>
 
 class QWidget;
 class QImage;
+class QFont;
 
 // OS specific default fonts
-extern QFont GUI_MONOFONT;
-extern QFont GUI_ALLFONT;
+extern QFont *GUI_MONOFONT;
+extern QFont *GUI_ALLFONT;
 
 /**
  * @brief Duplicate a string from std::string
