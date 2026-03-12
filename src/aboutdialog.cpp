@@ -116,7 +116,7 @@ AboutDialog::AboutDialog(const QString &version, const QString &info, const QStr
         int maxWidth    = std::min(desiredWidth, screenSize.width() * 3 / 4);
         int maxHeight   = std::min(desiredHeight, screenSize.height() * 9 / 10);
         setMaximumSize(maxWidth, maxHeight);
-        setMinimumHeight(std::min(400, maxHeight));
+        setMinimumSize(maxWidth, std::min(400, maxHeight));
         resize(maxWidth, maxHeight);
     }
 }
