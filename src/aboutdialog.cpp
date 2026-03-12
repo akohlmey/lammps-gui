@@ -102,10 +102,8 @@ AboutDialog::AboutDialog(const QString &version, const QString &info, const QStr
     int desiredHeight = fsize.height() * (info.count('\n') + 4);
 
     // add space for detail display
-    if (!details.isEmpty()) {
-        desiredWidth  = std::min(desiredWidth, detailsLabel->minimumWidth());
-        desiredHeight = desiredHeight * 3 / 2;
-    }
+    if (!details.isEmpty()) desiredHeight = desiredHeight * 3 / 2;
+
     // add space for icon and title line
     desiredWidth = std::max(desiredWidth, iconLabel->minimumWidth());
     // add space icon and for close button
