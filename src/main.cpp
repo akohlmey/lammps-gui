@@ -29,6 +29,8 @@
 #define stringify(x) myxstr(x)
 #define myxstr(x) #x
 
+extern QString GUI_MONOFONT;
+
 int main(int argc, char *argv[])
 {
 #if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
@@ -99,12 +101,21 @@ int main(int argc, char *argv[])
     auto *usestyle = QStyleFactory::create(parser.value("style"));
     if (usestyle) QApplication::setStyle(usestyle);
 
+#if defined(Q_OS_MACOS)
+    GUI_MONOFONT = QFont("Menlo", -1).toString();
+#elif defined(Q_OS_WIN32)
+    GUI_MONOFONT = QFont("Consolas", -1).toString();
+#else
+    GUI_MONOFONT = QFont("Monospace", -1).toString();
+#endif
+
     QStringList args = parser.positionalArguments();
     if (!args.empty()) infile = args[0];
 
     Q_INIT_RESOURCE(lammpsgui);
     LammpsGui w(nullptr, infile, width, height);
     w.show();
+
     return app.exec();
 }
 

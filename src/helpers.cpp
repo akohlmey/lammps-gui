@@ -45,13 +45,8 @@ constexpr char TTY_DEVICE[]  = "/dev/tty";
 #endif
 } // namespace
 
-#if defined(Q_OS_MACOS)
-const QString GUI_MONOFONT{QFont("Menlo", -1).toString()};
-#elif defined(Q_OS_WIN32)
-const QString GUI_MONOFONT{QFont("Consolas", -1).toString()};
-#else
-const QString GUI_MONOFONT{QFont("Monospace", -1).toString()};
-#endif
+// default will be overridden in main()
+QString GUI_MONOFONT("Monospace,-1");
 
 // duplicate string, STL version
 char *mystrdup(const std::string &text)

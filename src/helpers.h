@@ -20,7 +20,7 @@ class QWidget;
 class QImage;
 
 // OS specific default monospace font
-extern const QString GUI_MONOFONT;
+extern QString GUI_MONOFONT;
 
 /**
  * @brief Duplicate a string from std::string
