@@ -97,7 +97,7 @@ AboutDialog::AboutDialog(const QString &version, const QString &info, const QStr
     buttonLayout->addWidget(closeButton);
     mainLayout->addLayout(buttonLayout);
 
-    int desiredWidth  = minwidth + 4 * LABEL_MARGIN;
+    int desiredWidth  = minwidth + 4 * LABEL_MARGIN + 100;
     auto fsize        = QFontMetrics(infoLabel->font()).size(Qt::TextSingleLine, "LAMMPS");
     int desiredHeight = fsize.height() * (info.count('\n') + 4);
 
