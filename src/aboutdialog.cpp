@@ -13,13 +13,13 @@
 #include "helpers.h"
 
 #include <QFont>
+#include <QFontInfo>
 #include <QGuiApplication>
 #include <QHBoxLayout>
 #include <QIcon>
 #include <QLabel>
 #include <QPixmap>
 #include <QPushButton>
-#include <QRegularExpression>
 #include <QScreen>
 #include <QScrollBar>
 #include <QSettings>

@@ -36,6 +36,7 @@
 #include <QFileDialog>
 #include <QFileInfo>
 #include <QFont>
+#include <QFontInfo>
 #include <QGridLayout>
 #include <QGuiApplication>
 #include <QLabel>

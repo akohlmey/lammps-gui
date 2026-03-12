@@ -16,6 +16,7 @@
 #include <QCommandLineOption>
 #include <QCommandLineParser>
 #include <QFileInfo>
+#include <QFont>
 #include <QLocale>
 #include <QSettings>
 #include <QString>

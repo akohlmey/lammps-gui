@@ -24,7 +24,9 @@
 #include <QDialogButtonBox>
 #include <QDoubleValidator>
 #include <QFileDialog>
+#include <QFont>
 #include <QFontDialog>
+#include <QFontInfo>
 #include <QFrame>
 #include <QGroupBox>
 #include <QHBoxLayout>
