@@ -50,7 +50,8 @@ LAMMPS-GUI makes extensive use of Qt features:
   components and background threads.
 
 **Qt Designer Forms**
-  Main window and dialogs use ``.ui`` files edited in Qt Designer.
+  The main window layout uses a ``.ui`` file edited in Qt Designer.
+  Dialogs are created programmatically in C++.
 
 **Qt Resource System**
   Icons and resources embedded via ``resources/lammpsgui.qrc``.
@@ -101,7 +102,7 @@ Editor Components
 
 **FindAndReplace (findandreplace.h/.cpp)**
   Dialog for searching and replacing text in the editor. Supports
-  regular expressions, case sensitivity, and whole word matching.
+  case sensitivity and whole word matching options.
 
 LAMMPS Interface
 ----------------
@@ -120,9 +121,12 @@ Visualization Components
 ------------------------
 
 **ImageViewer (imageviewer.h/.cpp)**
-  Dialog for viewing single images (PNG, JPEG, etc.). Supports zooming,
-  panning, and saving images. Used for viewing simulation snapshots and
-  rendered atomic configurations. Uses two internal helper classes:
+  Dialog for viewing and manipulating LAMMPS snapshot images created by
+  the ``dump image`` command.  Supports interactive control of
+  visualization parameters such as zoom, rotation, atom size, coloring,
+  and rendering options.  Changes can be applied to regenerate the
+  image using the LAMMPS library interface.  Uses two internal helper
+  classes:
 
   - **ImageInfo** - Stores settings for displaying graphics from a LAMMPS
     compute or fix in snapshot images.
@@ -139,18 +143,19 @@ Visualization Components
 **SlideShow (slideshow.h/.cpp)**
   Dialog for viewing multiple images as a slideshow or animation
   with navigation controls.  Supports converting an animation to
-  a movie file when FFMpeg is available.
+  a movie file when FFmpeg or ImageMagick is available.
 
 **RangeSlider (rangeslider.h/.cpp)**
   Custom slider widget with two handles for selecting a range of values.
-  Used in ChartViewer for selecting x- and y-direction plot ranges.
+  Used in ChartWindow for selecting x- and y-direction plot ranges.
 
 Dialog and Utility Components
 -----------------------------
 
 **LogWindow (logwindow.h/.cpp)**
-  Window displaying captured output from LAMMPS simulations. Updates
-  in real-time as the simulation progresses and provides search functionality.
+  Window displaying captured output from LAMMPS simulations.  Updates
+  in real-time as the simulation progresses and highlights warning
+  and error messages.  Provides navigation to jump between warnings.
 
 **Preferences (preferences.h/.cpp)**
   Dialog for configuring application settings including accelerator packages,
@@ -188,8 +193,10 @@ Support Components
   the LAMMPS library.
 
 **FlagWarnings (flagwarnings.h/.cpp)**
-  Syntax highlighter that validates LAMMPS command flags and highlights
-  potential errors or deprecated usage patterns.
+  Syntax highlighter for LAMMPS warning and error messages in log
+  output.  Detects and highlights WARNING/ERROR lines and URLs for
+  documentation links.  Maintains a count of warnings and updates a
+  summary label.
 
 **QHline (qaddon.h/.cpp)**
   Simple horizontal line widget for visual separation in dialogs and forms.
@@ -239,11 +246,12 @@ The application uses Qt's QSettings mechanism to persist:
 - LAMMPS plugin path
 - Tutorial preferences
 
-Settings are stored in platform-specific locations:
+Settings are stored in platform-specific locations (the application name
+includes the Qt major version, e.g. ``LAMMPS-GUI (QT6)``):
 
-- Linux: ``~/.config/LAMMPS-GUI/LAMMPS-GUI.conf``
-- macOS: ``~/Library/Preferences/org.lammps.LAMMPS-GUI.plist``
-- Windows: Registry under ``HKEY_CURRENT_USER\Software\LAMMPS-GUI\LAMMPS-GUI``
+- Linux: ``~/.config/The LAMMPS Developers/LAMMPS-GUI (QT6).conf``
+- macOS: ``~/Library/Preferences/org.lammps.LAMMPS-GUI (QT6).plist``
+- Windows: Registry under ``HKEY_CURRENT_USER\Software\The LAMMPS Developers\LAMMPS-GUI (QT6)``
 
 =================
  Threading Model
@@ -253,7 +261,6 @@ The application uses Qt's event-driven architecture with careful threading:
 
 - **Main Thread**: Handles all UI operations and user interactions
 - **LAMMPS Thread**: LammpsRunner executes LAMMPS in a separate QThread
-- **Communication**: Signals/slots for thread-safe communication
-- **Synchronization**: Mutex protection for shared state access
+- **Communication**: Signals/slots for thread-safe communication between threads
 
 This design keeps the UI responsive even during long-running simulations.

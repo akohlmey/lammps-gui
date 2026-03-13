@@ -12,8 +12,9 @@ The project follows these coding conventions:
 - **Formatting**: Enforced by ``.clang-format`` configuration (LLVM-based)
 - **Comments**: Use Doxygen-style documentation comments
 - **Naming**: 
-  - Classes: CamelCase (e.g., ``CodeEditor``)
-  - Functions: camelCase (e.g., ``reformatLine``)
+  - Classes: CamelCase (e.g., ``CodeEditor``, ``ChartWindow``)
+  - Qt overrides: camelCase (e.g., ``setFont``, ``eventFilter``)
+  - Custom methods/slots: snake_case (e.g., ``stop_run``, ``save_as``)
   - Members: snake_case (e.g., ``reformat_on_return``)
 
 Documentation
