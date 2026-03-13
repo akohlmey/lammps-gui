@@ -45,6 +45,8 @@ macOS
 makefile
 matplotlib
 MBytes
+monofamily
+monosize
 Mutex
 mystrdup
 natively
@@ -55,6 +57,7 @@ octahedron
 pluginpath
 pre
 prev
+programmatically
 py
 QFrame
 QObject
@@ -68,6 +71,7 @@ rasterizer
 README
 Savitzky
 screenshooter
+scrollable
 sliderDown
 spinbox
 SSAO
