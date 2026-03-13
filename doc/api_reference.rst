@@ -178,6 +178,15 @@ ChartsTab Class
 
 -----
 
+AboutDialog Class
+-----------------
+
+.. doxygenclass:: AboutDialog
+   :members:
+   :protected-members:
+
+-----
+
 Utility Components
 ==================
 

@@ -184,6 +184,12 @@ Dialog and Utility Components
   setting up tutorial directories and files, providing a structured
   learning experience.
 
+**AboutDialog (aboutdialog.h/.cpp)**
+  Custom About dialog that displays version information, LAMMPS
+  configuration details, and available styles in scrollable text areas.
+  The dialog automatically scrolls down when the content exceeds the
+  visible area, pauses at the bottom, and then returns back to the top.
+
 Support Components
 ------------------
 
