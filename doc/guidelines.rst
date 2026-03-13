@@ -20,7 +20,23 @@ The project follows these coding conventions:
 Documentation
 =============
 
-All public classes and functions should have Doxygen documentation:
+Added functionality should be documented both in the User's Guide and
+the Programmer's Guide section of the documentation.  The documentation
+should have suitable ``.. index::`` directives to populate the index
+with suitable keywords.  The documentation is written in
+`reStructuredText
+<https://www.sphinx-doc.org/en/master/usage/restructuredtext/index.html>`_
+and imports documentation of the source code from `Doxygen
+<https://doxygen.nl/>`_ using the `Breathe Sphinx plugin
+<breathe-doc.org>`_.  The documentation should translate cleanly to
+`HTML <https://en.wikipedia.org/wiki/HTML>`_ and `PDF
+<https://en.wikipedia.org/wiki/PDF>`_ using the ``html`` or ``pdf``
+build targets.  Additionally the build targets ``spelling`` and
+``linkcheck`` are available to run a spell checker on the documentation
+and validate external links.
+
+All public classes and functions should have Doxygen documentation as
+demonstrated below:
 
 .. code-block:: cpp
 
