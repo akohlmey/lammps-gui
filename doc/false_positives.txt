@@ -1,10 +1,11 @@
+AboutDialog
 accessors
 Alvares
 camelCase
 cecill
 CheckSize
-cmake
 CMake
+cmake
 colormap
 colormaps
 cpp
@@ -22,8 +23,8 @@ dlopen
 dmg
 Doxygen
 dylib
-executables
 exe
+executables
 flatpak
 Framebuffer
 Gissinger
