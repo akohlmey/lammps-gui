@@ -24,6 +24,7 @@ TutorialWizard Class
 
 .. doxygenclass:: TutorialWizard
    :members:
+   :protected-members:
 
 -----
 
@@ -44,6 +45,7 @@ LineNumberArea Class
 
 .. doxygenclass:: LineNumberArea
    :members:
+   :protected-members:
 
 -----
 
@@ -64,6 +66,7 @@ LammpsWrapper Class
 
 .. doxygenclass:: LammpsWrapper
    :members:
+   :protected-members:
 
 -----
 
@@ -72,6 +75,7 @@ LammpsRunner Class
 
 .. doxygenclass:: LammpsRunner
    :members:
+   :protected-members:
 
 -----
 
@@ -92,6 +96,7 @@ ChartViewer Class
 
 .. doxygenclass:: QtCharts::ChartViewer
    :members:
+   :protected-members:
 
 -----
 
@@ -100,6 +105,7 @@ ImageViewer Class
 
 .. doxygenclass:: ImageViewer
    :members:
+   :protected-members:
 
 -----
 
@@ -108,6 +114,7 @@ SlideShow Class
 
 .. doxygenclass:: SlideShow
    :members:
+   :protected-members:
 
 -----
 
@@ -119,6 +126,7 @@ FindAndReplace Class
 
 .. doxygenclass:: FindAndReplace
    :members:
+   :protected-members:
 
 -----
 
@@ -127,6 +135,7 @@ SetVariables Class
 
 .. doxygenclass:: SetVariables
    :members:
+   :protected-members:
 
 -----
 
@@ -135,6 +144,7 @@ Preferences Class
 
 .. doxygenclass:: Preferences
    :members:
+   :protected-members:
 
 -----
 
@@ -143,6 +153,7 @@ GeneralTab Class
 
 .. doxygenclass:: GeneralTab
    :members:
+   :protected-members:
 
 -----
 
@@ -151,6 +162,7 @@ AcceleratorTab Class
 
 .. doxygenclass:: AcceleratorTab
    :members:
+   :protected-members:
 
 -----
 
@@ -159,6 +171,7 @@ SnapshotTab Class
 
 .. doxygenclass:: SnapshotTab
    :members:
+   :protected-members:
 
 -----
 
@@ -167,6 +180,7 @@ EditorTab Class
 
 .. doxygenclass:: EditorTab
    :members:
+   :protected-members:
 
 -----
 
@@ -175,6 +189,7 @@ ChartsTab Class
 
 .. doxygenclass:: ChartsTab
    :members:
+   :protected-members:
 
 -----
 
@@ -222,6 +237,7 @@ ImageInfo Class
 
 .. doxygenclass:: ImageInfo
    :members:
+   :protected-members:
 
 -----
 
@@ -230,6 +246,7 @@ RegionInfo Class
 
 .. doxygenclass:: RegionInfo
    :members:
+   :protected-members:
 
 -----
 
@@ -238,6 +255,7 @@ StdCapture Class
 
 .. doxygenclass:: StdCapture
    :members:
+   :protected-members:
 
 -----
 
@@ -246,23 +264,29 @@ Qt Helper Widgets
 
 .. doxygenclass:: QHline
    :members:
+   :protected-members:
 
 -----
 
 .. doxygenclass:: QColorCompleter
    :members:
+   :protected-members:
 
 -----
 
 .. doxygenclass:: QColorValidator
    :members:
+   :protected-members:
 
 -----
 
 .. doxygenclass:: RangeSlider
    :members:
+   :protected-members:
 
 -----
+
+.. _helper_functions:
 
 Helper Functions
 ----------------

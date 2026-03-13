@@ -59,6 +59,7 @@
         Remove hack to silence and restore stdout for non-run calls to LAMMPS
         Refactor about dialog to include more info and use scrollable text fields with auto-scroll
         Refactor font initialization to be more consistent across platforms and to avoid crashes
+        Update Programmer's Guide documentation
       </description>
     </release>
     <release version="1.11.0" timestamp="1772079977">
