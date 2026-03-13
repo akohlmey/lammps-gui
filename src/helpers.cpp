@@ -44,6 +44,10 @@ constexpr char TTY_DEVICE[]  = "/dev/tty";
 #endif
 } // namespace
 
+// will be allocated and initialized in main() to avoid segfault on macOS
+QFont *GUI_MONOFONT = nullptr;
+QFont *GUI_ALLFONT = nullptr;
+
 // duplicate string, STL version
 char *mystrdup(const std::string &text)
 {
@@ -327,20 +331,6 @@ void purge_directory(const QString &dir)
             directory.cdUp();
         }
     }
-}
-
-void silence_stdout()
-{
-#ifndef _WIN32
-    (void)freopen(NULL_DEVICE, "w", stdout);
-#endif
-}
-
-void restore_stdout()
-{
-#ifndef _WIN32
-    (void)freopen(TTY_DEVICE, "w", stdout);
-#endif
 }
 
 // compare black level of foreground and background color

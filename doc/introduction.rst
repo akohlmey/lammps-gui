@@ -2,9 +2,9 @@
 Overview
 ********
 
-LAMMPS-GUI is built using C++17 and the Qt framework (Qt 5.15+ or Qt 6.2+).
-The application follows object-oriented design principles with clear separation
-of concerns between different components:
+LAMMPS-GUI is built using C++17 and the Qt framework (Qt 5.15+ or Qt
+6.2+).  The application follows object-oriented design principles with
+separation of concerns between different components:
 
 - **Editor Components**: Handle text editing, syntax highlighting, and auto-completion
 - **LAMMPS Interface**: Wraps the LAMMPS C library API
@@ -50,7 +50,8 @@ LAMMPS-GUI makes extensive use of Qt features:
   components and background threads.
 
 **Qt Designer Forms**
-  Main window and dialogs use ``.ui`` files edited in Qt Designer.
+  The main window layout uses a ``.ui`` file edited in Qt Designer.
+  Dialogs are created programmatically in C++.
 
 **Qt Resource System**
   Icons and resources embedded via ``resources/lammpsgui.qrc``.
@@ -77,52 +78,62 @@ Main Window
 -----------
 
 **LammpsGui (lammpsgui.h/.cpp)**
-  The main window class that coordinates all other components. It manages
-  the editor, handles file operations, controls LAMMPS execution, and
-  manages the overall application state. This is the central hub of the
-  application that integrates all other components.
+  The main window class that coordinates all other components. It
+  manages the editor, handles file operations, controls LAMMPS
+  execution, and manages the overall application state. This is the
+  central hub of the application that integrates all other components.
+  See :cpp:class:`LammpsGui`
 
 Editor Components
 -----------------
 
 **CodeEditor (codeeditor.h/.cpp)**
-  Custom text editor widget based on QPlainTextEdit, providing LAMMPS-specific
-  features including syntax highlighting, auto-completion, line numbers,
-  and context-sensitive help. The main editing surface for LAMMPS input scripts.
+  Custom text editor widget based on `QPlainTextEdit
+  <https://doc.qt.io/qt-6/qplaintextedit.html>`_, providing
+  LAMMPS-specific features including syntax highlighting,
+  auto-completion, line numbers, and context-sensitive help. The main
+  editing surface for LAMMPS input scripts.  See :cpp:class:`CodeEditor`
 
 **LineNumberArea (linenumberarea.h)**
-  Widget that displays line numbers in the left margin of the CodeEditor.
-  Updates dynamically as text is added or removed.
+  Widget that displays line numbers in the left margin of the
+  CodeEditor.  Updates dynamically as text is added or removed.  See
+  :cpp:class:`LineNumberArea`
 
 **Highlighter (highlighter.h/.cpp)**
   Syntax highlighter for LAMMPS input scripts. Categorizes and colors
   different types of commands, keywords, variables, and comments using
-  Qt's QSyntaxHighlighter framework.
+  Qt's QSyntaxHighlighter framework.  See :cpp:class:`Highlighter`
 
 **FindAndReplace (findandreplace.h/.cpp)**
-  Dialog for searching and replacing text in the editor. Supports
-  regular expressions, case sensitivity, and whole word matching.
+  Dialog for searching and replacing text in the editor. Supports case
+  sensitivity and whole word matching options.  See
+  :cpp:class:`FindAndReplace`
 
 LAMMPS Interface
 ----------------
 
 **LammpsWrapper (lammpswrapper.h/.cpp)**
-  C++ wrapper around the LAMMPS C library interface. Provides a clean C++
-  API and handles dynamic library loading in plugin mode. Manages LAMMPS
-  initialization, command execution, and error handling.
+  C++ wrapper around the LAMMPS C library interface. Provides a clean
+  C++ API and handles dynamic library loading in plugin mode. Manages
+  LAMMPS initialization, command execution, and error handling.  See
+  :cpp:class:`LammpsWrapper`
 
 **LammpsRunner (lammpsrunner.h)**
-  Worker thread for executing LAMMPS simulations without blocking the GUI.
-  Uses Qt's threading facilities to run simulations in the background,
-  allowing the UI to remain responsive during long calculations.
+  Worker thread for executing LAMMPS simulations without blocking the
+  GUI.  Uses Qt's threading facilities to run simulations in the
+  background, allowing the UI to remain responsive during long
+  calculations.  See :cpp:class:`LammpsRunner`
 
 Visualization Components
 ------------------------
 
 **ImageViewer (imageviewer.h/.cpp)**
-  Dialog for viewing single images (PNG, JPEG, etc.). Supports zooming,
-  panning, and saving images. Used for viewing simulation snapshots and
-  rendered atomic configurations. Uses two internal helper classes:
+  Dialog for viewing and manipulating LAMMPS snapshot images created by
+  the ``dump image`` command.  Supports interactive control of
+  visualization parameters such as zoom, rotation, atom size, coloring,
+  and rendering options.  Changes can be applied to regenerate the image
+  using the LAMMPS library interface.  See :cpp:class:`ImageViewer`.
+  This uses two internal helper classes:
 
   - **ImageInfo** - Stores settings for displaying graphics from a LAMMPS
     compute or fix in snapshot images.
@@ -130,54 +141,72 @@ Visualization Components
 
 **ChartWindow (chartviewer.h/.cpp)**
   Window for displaying thermodynamic data as charts using Qt Charts.
-  Supports line plots and multiple data series.
+  Supports line plots and multiple data series.  See
+  :cpp:class:`ChartWindow`
 
 **ChartViewer (chartviewer.h/.cpp)**
-  Custom chart view widget based on QChartView that provides interactive
-  features like zooming, smoothing, and panning for data visualization.
+  Custom chart view widget based on `QChartView
+  <https://doc.qt.io/qt-6/qchartview-qtcharts.html>`_ that provides
+  interactive features like zooming, smoothing, and panning for data
+  visualization.  See :cpp:class:`ChartViewer`
 
 **SlideShow (slideshow.h/.cpp)**
-  Dialog for viewing multiple images as a slideshow or animation
-  with navigation controls.  Supports converting an animation to
-  a movie file when FFMpeg is available.
+  Dialog for viewing multiple images as a slideshow or animation with
+  navigation controls.  Supports converting an animation to a movie file
+  when `FFmpeg <https://ffmpeg.org/>`_ or `ImageMagick
+  <https://imagemagick.org/>`_ is available.  See :cpp:class:`SlideShow`
 
 **RangeSlider (rangeslider.h/.cpp)**
-  Custom slider widget with two handles for selecting a range of values.
-  Used in ChartViewer for selecting x- and y-direction plot ranges.
+  Custom slider widget with two handles for selecting a range of
+  values. This is code written by Hoyoung Lee and distributed under the
+  CeCILL-A license as circulated by CEA, CNRS and INRIA at the following
+  URL: "http://www.cecill.info".  Used in :cpp:class:`ChartWindow` for
+  selecting x- and y-direction plot ranges.  See :cpp:class:`RangeSlider`
 
 Dialog and Utility Components
 -----------------------------
 
 **LogWindow (logwindow.h/.cpp)**
-  Window displaying captured output from LAMMPS simulations. Updates
-  in real-time as the simulation progresses and provides search functionality.
+  Window displaying captured output from LAMMPS simulations.  Updates in
+  real-time as the simulation progresses and highlights warning and
+  error messages.  Provides navigation to jump between warnings.  See
+  :cpp:class:`LogWindow`
 
 **Preferences (preferences.h/.cpp)**
-  Dialog for configuring application settings including accelerator packages,
-  editor appearance, snapshot settings, and chart preferences. Settings are
-  made persistent across LAMMPS-GUI sessions using the QSettings class.
-  The dialog is organized into five tabs, each implemented as a separate
-  widget class:
+  Dialog for configuring application settings including accelerator
+  packages, editor appearance, snapshot settings, and chart
+  preferences. Settings are made persistent across LAMMPS-GUI sessions
+  using the `QSettings class <https://doc.qt.io/qt-6/qsettings.html>`_.
+  See :cpp:class:`Preferences`.  The dialog is organized into five tabs,
+  each implemented as a separate widget class:
 
-  - **GeneralTab** - General settings (LAMMPS library path, fonts, etc.)
-  - **AcceleratorTab** - LAMMPS accelerator package configuration
-  - **SnapshotTab** - Snapshot image viewer defaults
-  - **EditorTab** - Editor appearance and behavior settings
-  - **ChartsTab** - Chart viewer display settings
+  - :cpp:class:`GeneralTab` - General settings (LAMMPS library path, fonts, etc.)
+  - :cpp:class:`AcceleratorTab` - LAMMPS accelerator package configuration
+  - :cpp:class:`SnapshotTab` - Snapshot image viewer defaults
+  - :cpp:class:`EditorTab` - Editor appearance and behavior settings
+  - :cpp:class:`ChartsTab` - Chart viewer display settings
 
 **SetVariables (setvariables.h/.cpp)**
-  Dialog for editing LAMMPS index-style variable definitions. Allows users
-  to define name-value pairs that are substituted in input scripts using
-  ${varname} syntax.
+  Dialog for editing LAMMPS index-style variable definitions. Allows
+  users to define name-value pairs that are substituted in input scripts
+  using ``${varname}`` syntax.  See :cpp:class:`SetVariables`
 
 **FileViewer (fileviewer.h/.cpp)**
   Read-only text viewer dialog for displaying file contents. Used for
-  viewing auxiliary files without allowing modifications.
+  viewing auxiliary files without allowing modifications.  See
+  :cpp:class:`FileViewer`
 
 **TutorialWizard (lammpsgui.h/.cpp)**
   Wizard dialog for interactive LAMMPS tutorials. Guides users through
   setting up tutorial directories and files, providing a structured
-  learning experience.
+  learning experience.  See :cpp:class:`TutorialWizard`
+
+**AboutDialog (aboutdialog.h/.cpp)**
+  Custom About dialog that displays version information, LAMMPS
+  configuration details, and available styles in two scrollable text
+  areas.  The dialog automatically scrolls down when the content exceeds
+  the visible area, pauses at the bottom, and then returns back to the
+  top.  See :cpp:class:`AboutDialog`
 
 Support Components
 ------------------
@@ -185,27 +214,31 @@ Support Components
 **StdCapture (stdcapture.h/.cpp)**
   Utility class that captures stdout and stderr output from LAMMPS.
   Redirects C-level file descriptors to allow capturing output from
-  the LAMMPS library.
+  the LAMMPS library.  See :cpp:class:`StdCapture`
 
 **FlagWarnings (flagwarnings.h/.cpp)**
-  Syntax highlighter that validates LAMMPS command flags and highlights
-  potential errors or deprecated usage patterns.
+  Syntax highlighter for LAMMPS warning and error messages in log
+  output.  Detects and highlights WARNING/ERROR lines and URLs for
+  documentation links.  Maintains a count of warnings and updates a
+  summary label.  See :cpp:class:`FlagWarnings`
 
 **QHline (qaddon.h/.cpp)**
-  Simple horizontal line widget for visual separation in dialogs and forms.
+  Simple horizontal line widget for visual separation in dialogs and
+  forms.  See :cpp:class:`QHline`
 
 **QColorCompleter (qaddon.h/.cpp)**
   Auto-completer for color name inputs, suggesting valid Qt color names
-  as the user types.
+  as the user types.  See :cpp:class:`QColorCompleter`
 
 **QColorValidator (qaddon.h/.cpp)**
   Validator for color input fields, ensuring they contain valid color
-  names or hex color codes.
+  names or hex color codes.  See :cpp:class:`QColorValidator`
 
 Helper Functions
 ----------------
 
-The helpers module provides utility functions used throughout the application:
+The :ref:`helpers module <helper_functions>` provides utility functions
+used throughout the application:
 
 - String manipulation (mystrdup variants for different string types)
 - Date comparison (date_compare for version comparisons)
@@ -239,21 +272,21 @@ The application uses Qt's QSettings mechanism to persist:
 - LAMMPS plugin path
 - Tutorial preferences
 
-Settings are stored in platform-specific locations:
+Settings are stored in platform-specific locations (the application name
+includes the Qt major version, e.g. ``LAMMPS-GUI (QT6)``):
 
-- Linux: ``~/.config/LAMMPS-GUI/LAMMPS-GUI.conf``
-- macOS: ``~/Library/Preferences/org.lammps.LAMMPS-GUI.plist``
-- Windows: Registry under ``HKEY_CURRENT_USER\Software\LAMMPS-GUI\LAMMPS-GUI``
+- Linux: ``~/.config/The LAMMPS Developers/LAMMPS-GUI (QT6).conf``
+- macOS: ``~/Library/Preferences/org.lammps.LAMMPS-GUI (QT6).plist``
+- Windows: Registry under ``HKEY_CURRENT_USER\Software\The LAMMPS Developers\LAMMPS-GUI (QT6)``
 
 =================
  Threading Model
 =================
 
-The application uses Qt's event-driven architecture with careful threading:
+The application uses Qt's event-driven architecture with threading:
 
 - **Main Thread**: Handles all UI operations and user interactions
 - **LAMMPS Thread**: LammpsRunner executes LAMMPS in a separate QThread
-- **Communication**: Signals/slots for thread-safe communication
-- **Synchronization**: Mutex protection for shared state access
+- **Communication**: Signals/slots for thread-safe communication between threads
 
 This design keeps the UI responsive even during long-running simulations.

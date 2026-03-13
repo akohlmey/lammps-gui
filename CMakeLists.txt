@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.20)
 
 project(lammps-gui
-  VERSION 1.11.0
+  VERSION 1.11.1
   LANGUAGES CXX
   DESCRIPTION "The LAMMPS GUI"
   HOMEPAGE_URL "https://lammps-gui.lammps.org/")
@@ -85,6 +85,8 @@ if (NOT BUILD_DOC_ONLY)
     ${CMAKE_SOURCE_DIR}/src/lammpsgui.cpp
     ${CMAKE_SOURCE_DIR}/src/lammpsgui.h
     ${CMAKE_SOURCE_DIR}/src/lammpsgui.ui
+    ${CMAKE_SOURCE_DIR}/src/aboutdialog.cpp
+    ${CMAKE_SOURCE_DIR}/src/aboutdialog.h
     ${CMAKE_SOURCE_DIR}/src/chartviewer.cpp
     ${CMAKE_SOURCE_DIR}/src/chartviewer.h
     ${CMAKE_SOURCE_DIR}/src/codeeditor.cpp
@@ -300,6 +302,12 @@ if(BUILD_DOC OR BUILD_DOC_ONLY)
   )
 
   add_custom_target(
+    linkcheck
+    DEPENDS docenv/bin ${DOC_SOURCES} ${DOCENV_DEPS} ${SPHINX_CONFIG_FILE_TEMPLATE} ${SPHINX_DIR}/_static/style.css
+    COMMAND Sphinx::sphinx-build ${SPHINX_EXTRA_OPTS} -b linkcheck -c ${DOC_BUILD_DIR} -d ${DOC_BUILD_DIR}/doctrees ${CMAKE_SOURCE_DIR}/doc ${DOC_BUILD_DIR}/linkcheck ${DOC_SOURCES}
+  )
+
+  add_custom_target(
     latex
     DEPENDS docenv/bin ${DOC_SOURCES} ${DOCENV_DEPS} ${SPHINX_CONFIG_FILE_TEMPLATE} ${SPHINX_DIR}/_static/style.css
     COMMAND Sphinx::sphinx-build ${SPHINX_EXTRA_OPTS} -b latex -c ${DOC_BUILD_DIR} -d ${DOC_BUILD_DIR}/doctrees ${CMAKE_SOURCE_DIR}/doc ${DOC_BUILD_DIR}/latex ${DOC_SOURCES}
@@ -406,7 +414,7 @@ if (LAMMPS_GUI_USE_PLUGIN AND NOT BUILD_DOC_ONLY)
   elseif((CMAKE_SYSTEM_NAME STREQUAL "Windows") AND CMAKE_CROSSCOMPILING)
     install(TARGETS lammps-gui DESTINATION ${CMAKE_INSTALL_BINDIR})
     add_custom_target(nsis
-      COMMAND sh -vx ${CMAKE_SOURCE_DIR}/packaging/build_windows_cross_nsis.sh ${CMAKE_INSTALL_PREFIX} ${PROJECT_VERSION} ${CMAKE_SOURCE_DIR}
+      COMMAND ${CMAKE_SOURCE_DIR}/packaging/build_windows_cross_nsis.sh ${CMAKE_INSTALL_PREFIX} ${PROJECT_VERSION} ${CMAKE_SOURCE_DIR}
       DEPENDS lammps-gui html pdf
       COMMENT "Create nsis installer with windows binaries"
       BYPRODUCT LAMMPS-GUI-Win10-x86_64-${PROJECT_VERSION}.exe

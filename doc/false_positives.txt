@@ -1,10 +1,11 @@
+AboutDialog
 accessors
 Alvares
 camelCase
 cecill
 CheckSize
-cmake
 CMake
+cmake
 colormap
 colormaps
 cpp
@@ -22,8 +23,8 @@ dlopen
 dmg
 Doxygen
 dylib
-executables
 exe
+executables
 flatpak
 Framebuffer
 Gissinger
@@ -44,6 +45,8 @@ macOS
 makefile
 matplotlib
 MBytes
+monofamily
+monosize
 Mutex
 mystrdup
 natively
@@ -54,6 +57,7 @@ octahedron
 pluginpath
 pre
 prev
+programmatically
 py
 QFrame
 QObject
@@ -67,6 +71,7 @@ rasterizer
 README
 Savitzky
 screenshooter
+scrollable
 sliderDown
 spinbox
 SSAO

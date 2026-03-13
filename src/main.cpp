@@ -9,12 +9,14 @@
 // This software is distributed under the GNU General Public License version 2 or later.
 ////////////////////////////////////////////////////////////////////////////////////////
 
+#include "helpers.h"
 #include "lammpsgui.h"
 
 #include <QApplication>
 #include <QCommandLineOption>
 #include <QCommandLineParser>
 #include <QFileInfo>
+#include <QFont>
 #include <QLocale>
 #include <QSettings>
 #include <QString>
@@ -99,12 +101,27 @@ int main(int argc, char *argv[])
     auto *usestyle = QStyleFactory::create(parser.value("style"));
     if (usestyle) QApplication::setStyle(usestyle);
 
+#if defined(Q_OS_MACOS)
+    GUI_MONOFONT = new QFont("Menlo", -1, QFont::Normal);
+    GUI_ALLFONT  = new QFont("Arial", -1, QFont::Normal);
+#elif defined(Q_OS_WIN32)
+    GUI_MONOFONT = new QFont("Consolas", -1, QFont::Normal);
+    GUI_ALLFONT  = new QFont("Arial", -1, QFont::Normal);
+#else
+    GUI_MONOFONT = new QFont("Monospace", -1, QFont::Normal);
+    GUI_ALLFONT  = new QFont("Arial", -1, QFont::Normal);
+#endif
+    GUI_MONOFONT->setStyleHint(QFont::Monospace, QFont::PreferQuality);
+    GUI_MONOFONT->setFixedPitch(true);
+    GUI_ALLFONT->setStyleHint(QFont::SansSerif, QFont::PreferQuality);
+
     QStringList args = parser.positionalArguments();
     if (!args.empty()) infile = args[0];
 
     Q_INIT_RESOURCE(lammpsgui);
     LammpsGui w(nullptr, infile, width, height);
     w.show();
+
     return app.exec();
 }
 
