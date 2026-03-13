@@ -18,6 +18,11 @@
 
 class QWidget;
 class QImage;
+class QFont;
+
+// OS specific default fonts
+extern QFont *GUI_MONOFONT;
+extern QFont *GUI_ALLFONT;
 
 /**
  * @brief Duplicate a string from std::string
@@ -101,16 +106,6 @@ extern bool has_exe(const QString &exe);
  * @param dir The directory to purge
  */
 extern void purge_directory(const QString &dir);
-
-/**
- * @brief Silence output to stdout
- */
-extern void silence_stdout();
-
-/**
- * @brief Restore output to stdout
- */
-extern void restore_stdout();
 
 /**
  * @brief Determine if the current Qt theme is light or dark
