@@ -97,7 +97,7 @@ AboutDialog::AboutDialog(const QString &version, const QString &info, const QStr
     buttonLayout->addWidget(closeButton);
     mainLayout->addLayout(buttonLayout);
 
-    int desiredWidth  = minwidth + 4 * LABEL_MARGIN + 100;
+    int desiredWidth  = minwidth + 100;
     auto fsize        = QFontMetrics(infoLabel->font()).size(Qt::TextSingleLine, "LAMMPS");
     int desiredHeight = fsize.height() * (info.count('\n') + 4);
 
@@ -105,9 +105,12 @@ AboutDialog::AboutDialog(const QString &version, const QString &info, const QStr
     if (!details.isEmpty()) desiredHeight = desiredHeight * 3 / 2;
 
     // add space for icon and title line
-    desiredWidth = std::max(desiredWidth, iconLabel->minimumWidth());
+    desiredWidth = std::max(desiredWidth, iconLabel->width());
+    desiredWidth = std::max(desiredWidth, infoLabel->width());
+    desiredWidth += 4 * LABEL_MARGIN;
+
     // add space icon and for close button
-    desiredHeight += iconLabel->minimumHeight() + closeButton->height();
+    desiredHeight += iconLabel->height() + closeButton->height();
 
     // Apply size constraints based on screen dimensions
     auto *screen = QGuiApplication::primaryScreen();
