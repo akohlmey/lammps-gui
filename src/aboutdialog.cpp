@@ -63,10 +63,10 @@ AboutDialog::AboutDialog(const QString &version, const QString &info, const QStr
     infoLabel->setTextInteractionFlags(Qt::TextSelectableByMouse);
     infoScrollArea->setWidget(infoLabel);
     mainLayout->addWidget(infoScrollArea, details.isEmpty() ? 1 : 2);
-    auto *detailsLabel = new QLabel(details, this);
 
     // Details scroll area (only if details available)
     if (!details.isEmpty()) {
+        auto *detailsLabel = new QLabel(details, this);
         detailsScrollArea = new QScrollArea(this);
         detailsScrollArea->setWidgetResizable(true);
         detailsLabel->setWordWrap(false);
