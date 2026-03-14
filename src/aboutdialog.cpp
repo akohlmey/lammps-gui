@@ -67,7 +67,7 @@ AboutDialog::AboutDialog(const QString &version, const QString &info, const QStr
     // Details scroll area (only if details available)
     if (!details.isEmpty()) {
         auto *detailsLabel = new QLabel(details, this);
-        detailsScrollArea = new QScrollArea(this);
+        detailsScrollArea  = new QScrollArea(this);
         detailsScrollArea->setWidgetResizable(true);
         detailsLabel->setWordWrap(false);
         detailsLabel->setTextFormat(Qt::PlainText);
@@ -108,6 +108,7 @@ AboutDialog::AboutDialog(const QString &version, const QString &info, const QStr
     desiredWidth = std::max(desiredWidth, iconLabel->sizeHint().width());
     desiredWidth = std::max(desiredWidth, infoLabel->sizeHint().width());
     desiredWidth += 4 * LABEL_MARGIN;
+    desiredWidth += infoScrollArea->verticalScrollBar()->sizeHint().width();
 
     // add space icon and for close button
     desiredHeight += iconLabel->height() + closeButton->height();

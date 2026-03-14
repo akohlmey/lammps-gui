@@ -193,4 +193,5 @@ https://lammpstutorials.github.io/ in a web browser window.
 
 .. _Gravelle1:
 
-**(Gravelle1)** Gravelle, Alvares, Gissinger, Kohlmeyer, `arXiv:2503.14020 \[physics.comp-ph\] <https://doi.org/10.48550/arXiv.2503.14020>`_ (2025)
+**(Gravelle1)** Gravelle, Alvares, Gissinger, Kohlmeyer,
+`Living Journal of Computational Molecular Science, 6(1), 3027. https://doi.org/10.33011/livecoms.6.1.3037 <https://doi.org/10.33011/livecoms.6.1.3037>`_ (2025)

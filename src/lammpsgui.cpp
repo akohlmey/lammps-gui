@@ -1800,7 +1800,7 @@ void LammpsGui::about()
             details = std::string(info, mid, end - mid);
             info    = std::string(info, start, mid - start);
 
-            // condense newlines in detailed styles info string
+            // condense newlines and trailing whitespace in detailed styles info string
             auto loc = details.find("\n\n\n\n");
             while (loc != std::string::npos) {
                 details.replace(loc, 4, "\n\n");
@@ -1820,6 +1820,16 @@ void LammpsGui::about()
             while (loc != std::string::npos) {
                 details.replace(loc, 8, "les:\r\n");
                 loc = details.find("les:\r\n\r\n");
+            }
+            loc = details.find(" \n");
+            while (loc != std::string::npos) {
+                details.replace(loc, 2, "\n");
+                loc = details.find(" \n");
+            }
+            loc = details.find(" \r\n");
+            while (loc != std::string::npos) {
+                details.replace(loc, 3, "\r\n");
+                loc = details.find(" \r\n");
             }
         }
     }
