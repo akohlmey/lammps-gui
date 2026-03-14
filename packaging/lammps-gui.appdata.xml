@@ -57,6 +57,7 @@
     <release version="1.11.2" timestamp="1773462703">
       <description>
         Update citation of LAMMPS tutorial paper in menu description
+        Tweak width estimates and string data for "About LAMMPS-GUI" dialog some more
       </description>
     </release>
     <release version="1.11.1" timestamp="1773263770">
