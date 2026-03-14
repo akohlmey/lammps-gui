@@ -54,6 +54,11 @@
   </provides>
 
   <releases>
+    <release version="1.11.2" timestamp="1773462703">
+      <description>
+        Update citation of LAMMPS tutorial paper in menu description
+      </description>
+    </release>
     <release version="1.11.1" timestamp="1773263770">
       <description>
         Remove hack to silence and restore stdout for non-run calls to LAMMPS
