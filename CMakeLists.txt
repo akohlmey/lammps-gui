@@ -74,7 +74,7 @@ if (NOT BUILD_DOC_ONLY)
   # Qt 6.10 and later: use QtGraphs (the QtCharts replacement) for chart display.
   if(NOT LAMMPS_GUI_USE_QT5)
     set(LAMMPS_GUI_USE_QTGRAPHS OFF)
-    if (NOT LAMMPS_GUI_USE_QCHARTS)
+    if (NOT LAMMPS_GUI_USE_QTCHARTS)
       find_package(Qt6 6.10 QUIET COMPONENTS Gui Widgets Graphs Quick QuickWidgets)
       if(Qt6_FOUND)
         set(LAMMPS_GUI_USE_QTGRAPHS ON)
