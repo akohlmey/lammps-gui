@@ -565,8 +565,9 @@ bool ChartWindow::eventFilter(QObject *watched, QEvent *event)
 
 ChartViewer::ChartViewer(const QString &title, int _index, QWidget *parent) :
     QWidget(parent), last_step(-1), index(_index), window(10), order(4), quickWidget(nullptr),
-    graphsView(nullptr), ylabelWidget(nullptr), xlabelWidget(nullptr), series(new QLineSeries),
-    smooth(nullptr), xaxis(new QValueAxis), yaxis(new QValueAxis), do_raw(true), do_smooth(false)
+    graphsView(nullptr), ylabelWidget(nullptr), xlabelWidget(nullptr), titleWidget(nullptr),
+    series(new QLineSeries), smooth(nullptr), xaxis(new QValueAxis), yaxis(new QValueAxis),
+    do_raw(true), do_smooth(false)
 {
     xaxis->setTitleText("Time step");
     xaxis->setLabelFormat("%.0f");
@@ -629,6 +630,16 @@ ChartViewer::ChartViewer(const QString &title, int _index, QWidget *parent) :
     pal.setColor(QPalette::WindowText, Qt::black);
     xlabelWidget->setPalette(pal);
 
+    titleWidget = new QLabel("Temp", this);
+    titleWidget->setAlignment(Qt::AlignCenter);
+    titleWidget->setFont(titleFont);
+    titleWidget->setAutoFillBackground(true);
+    titleWidget->setContentsMargins(0, 10, 0, 0);
+    pal = titleWidget->palette();
+    pal.setColor(QPalette::Window, Qt::white);
+    pal.setColor(QPalette::WindowText, Qt::black);
+    titleWidget->setPalette(pal);
+
     auto *hlayout = new QHBoxLayout;
     hlayout->setContentsMargins(0, 0, 0, 0);
     hlayout->setSpacing(0);
@@ -638,6 +649,7 @@ ChartViewer::ChartViewer(const QString &title, int _index, QWidget *parent) :
     auto *vlayout = new QVBoxLayout(this);
     vlayout->setContentsMargins(0, 0, 0, 0);
     vlayout->setSpacing(0);
+    vlayout->addWidget(titleWidget);
     vlayout->addLayout(hlayout, 1);
     vlayout->addWidget(xlabelWidget);
 
@@ -840,7 +852,7 @@ void ChartViewer::smooth_param(bool _do_raw, bool _do_smooth, int _window, int _
 void ChartViewer::set_tlabel(const QString &tlabel)
 {
 #ifdef LAMMPS_GUI_USE_QTGRAPHS
-    m_title = tlabel;
+    titleWidget->setText(tlabel);
 #else
     chart->setTitle(tlabel);
 #endif

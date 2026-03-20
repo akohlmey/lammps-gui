@@ -14,6 +14,7 @@
 
 #include <QComboBox>
 #include <QLineEdit>
+#include <QLabel>
 #include <QList>
 #include <QRectF>
 #include <QString>
@@ -24,7 +25,6 @@ class QAction;
 class QCheckBox;
 class QCloseEvent;
 class QEvent;
-class QLabel;
 class QMenuBar;
 class QMenu;
 class QSpinBox;
@@ -307,7 +307,7 @@ public:
      * @return Chart title
      */
 #ifdef LAMMPS_GUI_USE_QTGRAPHS
-    QString get_tlabel() const { return m_title; }
+    QString get_tlabel() const { return titleWidget->text(); }
 #else
     QString get_tlabel() const { return chart->title(); }
 #endif
@@ -330,9 +330,9 @@ private:
 #ifdef LAMMPS_GUI_USE_QTGRAPHS
     QQuickWidget *quickWidget;    ///< Widget hosting the QGraphsView QML item
     QQuickItem *graphsView;       ///< Root QGraphsView QML item
-    QString m_title;              ///< Chart title (stored locally, not on the view)
     VerticalLabel *ylabelWidget;  ///< External y-axis title label (avoids overlap)
     QLabel *xlabelWidget;         ///< External x-axis title label (with spacing)
+    QLabel *titleWidget;          ///< Chart title (with spacing)
 #else
     QChart *chart;                ///< The chart object
 #endif
