@@ -18,6 +18,8 @@
 #include <QEvent>
 #include <QFile>
 #include <QFileInfo>
+#include <QFont>
+#include <QFontInfo>
 #include <QIcon>
 #include <QKeySequence>
 #include <QProcess>
@@ -87,10 +89,14 @@ FileViewer::FileViewer(const QString &_filename, const QString &title, QWidget *
         file.close();
     }
 
-    QFont text_font;
     QSettings settings;
-    text_font.fromString(settings.value("textfont", text_font.toString()).toString());
-    document()->setDefaultFont(text_font);
+    QFont mono_font;
+    QFontInfo mono_info(*GUI_MONOFONT);
+    mono_font.setFamily(settings.value("monofamily", mono_info.family()).toString());
+    mono_font.setPointSize(settings.value("monosize", mono_info.pointSize()).toInt());
+    mono_font.setStyleHint(GUI_MONOFONT->styleHint());
+    mono_font.setFixedPitch(true);
+    document()->setDefaultFont(mono_font);
 
     document()->setPlainText(content);
     moveCursor(QTextCursor::Start, QTextCursor::MoveAnchor);
