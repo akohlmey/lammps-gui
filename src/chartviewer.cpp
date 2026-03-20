@@ -582,6 +582,7 @@ ChartViewer::ChartViewer(const QString &title, int _index, QWidget *parent) :
     });
     quickWidget->loadFromModule("QtGraphs", "GraphsView");
     graphsView = quickWidget->rootObject();
+    if (!graphsView) fprintf(stderr, "Failed to load QtGraphs GraphsView QML component\n");
 
     auto *vlayout = new QVBoxLayout(this);
     vlayout->setContentsMargins(0, 0, 0, 0);
