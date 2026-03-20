@@ -154,7 +154,7 @@ ChartWindow::ChartWindow(const QString &_filename, QWidget *parent) :
 
     row2->addWidget(new QLabel("Units:"));
     units = new QLabel("[lj]");
-    units->setFrameStyle(QFrame::Panel);
+    units->setFrameStyle(QFrame::Panel | QFrame::Raised);
     row2->addWidget(units);
     row2->addWidget(new QLabel("Norm:"));
     norm = new QCheckBox("");
