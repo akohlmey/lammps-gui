@@ -44,6 +44,7 @@
 #include <QMetaObject>
 #include <QQuickItem>
 #include <QQuickWidget>
+#include <QtGraphs/QGraphsTheme>
 #include <QtGraphs/QLineSeries>
 #include <QtGraphs/QValueAxis>
 #else
@@ -568,17 +569,38 @@ ChartViewer::ChartViewer(const QString &title, int _index, QWidget *parent) :
     yaxis(new QValueAxis), do_raw(true), do_smooth(false)
 {
     xaxis->setTitleText("Time step");
-    xaxis->setLabelFormat("%d");
-    xaxis->setSubTickCount(5);
-    yaxis->setSubTickCount(5);
+    xaxis->setLabelFormat("%.0f");
+    xaxis->setSubTickCount(2);
+    yaxis->setSubTickCount(2);
     yaxis->setTitleText(title);
     series->setName(title);
+
+    // configure axis title appearance: black color and bold font
+    QFont titleFont;
+    titleFont.setBold(true);
+    xaxis->setTitleFont(titleFont);
+    xaxis->setTitleColor(Qt::black);
+    yaxis->setTitleFont(titleFont);
+    yaxis->setTitleColor(Qt::black);
+
+    // configure theme for grid appearance
+    auto *theme = new QGraphsTheme;
+    theme->setPlotAreaBackgroundVisible(true);
+    theme->setPlotAreaBackgroundColor(Qt::white);
+    QGraphsLine gridLine;
+    gridLine.setMainColor(QColor(192, 192, 192));
+    gridLine.setMainWidth(0.5);
+    gridLine.setSubColor(QColor(224, 224, 224));
+    gridLine.setSubWidth(0.3);
+    theme->setGrid(gridLine);
 
     quickWidget = new QQuickWidget(this);
     quickWidget->setResizeMode(QQuickWidget::SizeRootObjectToView);
     quickWidget->setInitialProperties({
+        {"theme", QVariant::fromValue(theme)},
         {"axisX", QVariant::fromValue(static_cast<QObject *>(xaxis))},
         {"axisY", QVariant::fromValue(static_cast<QObject *>(yaxis))},
+        {"marginLeft", 50},
     });
     quickWidget->loadFromModule("QtGraphs", "GraphsView");
     graphsView = quickWidget->rootObject();
@@ -722,6 +744,31 @@ void ChartViewer::reset_zoom()
     auto ranges = get_minmax();
     xaxis->setRange(ranges.left(), ranges.right());
     yaxis->setRange(ranges.bottom(), ranges.top());
+#ifdef LAMMPS_GUI_USE_QTGRAPHS
+    // compute "nice" tick intervals targeting about 5 major ticks per axis
+    auto niceInterval = [](double range) -> double {
+        if (range <= 0) return 1.0;
+        double rough = range / 4.0;
+        double p     = pow(10.0, floor(log10(rough)));
+        double frac  = rough / p;
+        double nice;
+        if (frac < 1.5)
+            nice = 1.0;
+        else if (frac < 3.0)
+            nice = 2.0;
+        else if (frac < 7.0)
+            nice = 5.0;
+        else
+            nice = 10.0;
+        return nice * p;
+    };
+    double xspan = ranges.right() - ranges.left();
+    double yspan = ranges.top() - ranges.bottom();
+    xaxis->setTickAnchor(0.0);
+    yaxis->setTickAnchor(0.0);
+    xaxis->setTickInterval(niceInterval(xspan));
+    yaxis->setTickInterval(niceInterval(yspan));
+#endif
 }
 
 /* -------------------------------------------------------------------- */
