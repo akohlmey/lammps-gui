@@ -11,6 +11,7 @@
 
 #include "qaddon.h"
 
+#include <QPainter>
 #include <QString>
 #include <QStringList>
 #include <QWidget>
@@ -85,6 +86,47 @@ QColorCompleter::QColorCompleter(QWidget *parent) : QCompleter(imagecolors, pare
     setCompletionMode(QCompleter::InlineCompletion);
     setModelSorting(QCompleter::CaseInsensitivelySortedModel);
 };
+
+/* -------------------------------------------------------------------- */
+
+VerticalLabel::VerticalLabel(const QString &text, QWidget *parent) : QWidget(parent), m_text(text)
+{
+    setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Expanding);
+}
+
+void VerticalLabel::setText(const QString &text)
+{
+    m_text = text;
+    updateGeometry();
+    update();
+}
+
+QString VerticalLabel::text() const
+{
+    return m_text;
+}
+
+void VerticalLabel::paintEvent(QPaintEvent *)
+{
+    QPainter painter(this);
+    painter.setRenderHint(QPainter::TextAntialiasing);
+    painter.setPen(palette().color(QPalette::WindowText));
+    painter.setFont(font());
+    painter.translate(0, height());
+    painter.rotate(-90);
+    painter.drawText(QRect(0, 0, height(), width()), Qt::AlignCenter, m_text);
+}
+
+QSize VerticalLabel::sizeHint() const
+{
+    QFontMetrics fm(font());
+    return QSize(fm.height() + 4, fm.horizontalAdvance(m_text) + 4);
+}
+
+QSize VerticalLabel::minimumSizeHint() const
+{
+    return sizeHint();
+}
 
 // Local Variables:
 // c-basic-offset: 4

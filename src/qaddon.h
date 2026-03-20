@@ -15,6 +15,9 @@
 #include <QCompleter>
 #include <QFrame>
 #include <QValidator>
+#include <QWidget>
+
+class QPaintEvent;
 
 /**
  * @brief Horizontal line widget for visual separation in dialogs
@@ -76,6 +79,43 @@ public:
      * @return Validation state (Invalid, Intermediate, Acceptable)
      */
     QValidator::State validate(QString &input, int &pos) const override;
+};
+
+/**
+ * @brief Widget that displays text rotated 90 degrees counter-clockwise
+ *
+ * VerticalLabel renders text vertically, suitable for use as a y-axis
+ * title in chart views where the built-in axis title positioning may
+ * cause overlap with tick labels.
+ */
+class VerticalLabel : public QWidget {
+public:
+    /**
+     * @brief Constructor
+     * @param text Text to display
+     * @param parent Parent widget
+     */
+    explicit VerticalLabel(const QString &text, QWidget *parent = nullptr);
+
+    /**
+     * @brief Update the displayed text
+     * @param text New text to display
+     */
+    void setText(const QString &text);
+
+    /**
+     * @brief Get the displayed text
+     * @return Current text
+     */
+    QString text() const;
+
+protected:
+    void paintEvent(QPaintEvent *event) override;
+    QSize sizeHint() const override;
+    QSize minimumSizeHint() const override;
+
+private:
+    QString m_text; ///< Text to display
 };
 
 #endif

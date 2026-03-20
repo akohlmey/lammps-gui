@@ -166,8 +166,10 @@ private:
 #include <QtGraphs/QAbstractAxis>
 #include <QtGraphs/QLineSeries>
 #include <QtGraphs/QValueAxis>
+class QLabel;
 class QQuickWidget;
 class QQuickItem;
+class VerticalLabel;
 
 #else
 
@@ -329,6 +331,8 @@ private:
     QQuickWidget *quickWidget;    ///< Widget hosting the QGraphsView QML item
     QQuickItem *graphsView;       ///< Root QGraphsView QML item
     QString m_title;              ///< Chart title (stored locally, not on the view)
+    VerticalLabel *ylabelWidget;  ///< External y-axis title label (avoids overlap)
+    QLabel *xlabelWidget;         ///< External x-axis title label (with spacing)
 #else
     QChart *chart;                ///< The chart object
 #endif

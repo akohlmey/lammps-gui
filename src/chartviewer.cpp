@@ -565,36 +565,32 @@ bool ChartWindow::eventFilter(QObject *watched, QEvent *event)
 
 ChartViewer::ChartViewer(const QString &title, int _index, QWidget *parent) :
     QWidget(parent), last_step(-1), index(_index), window(10), order(4), quickWidget(nullptr),
-    graphsView(nullptr), series(new QLineSeries), smooth(nullptr), xaxis(new QValueAxis),
-    yaxis(new QValueAxis), do_raw(true), do_smooth(false)
+    graphsView(nullptr), ylabelWidget(nullptr), xlabelWidget(nullptr), series(new QLineSeries),
+    smooth(nullptr), xaxis(new QValueAxis), yaxis(new QValueAxis), do_raw(true), do_smooth(false)
 {
     xaxis->setTitleText("Time step");
     xaxis->setLabelFormat("%.0f");
-    xaxis->setSubTickCount(2);
-    yaxis->setSubTickCount(2);
+    xaxis->setSubTickCount(4);
+    yaxis->setSubTickCount(4);
     yaxis->setTitleText(title);
     series->setName(title);
 
-    // configure axis title appearance: black color and bold font
-    QFont titleFont;
-    titleFont.setBold(true);
-    xaxis->setTitleFont(titleFont);
-    xaxis->setTitleColor(Qt::black);
-    yaxis->setTitleFont(titleFont);
-    yaxis->setTitleColor(Qt::black);
+    // hide built-in axis titles; external labels provide proper spacing
+    xaxis->setTitleVisible(false);
+    yaxis->setTitleVisible(false);
 
-    // configure theme for grid appearance: thin medium-gray major lines, light sub-grid
+    // configure theme for grid appearance
     auto *theme = new QGraphsTheme;
     theme->setPlotAreaBackgroundVisible(true);
     theme->setPlotAreaBackgroundColor(Qt::white);
     QGraphsLine gridLine;
     gridLine.setMainColor(QColor(192, 192, 192));
-    gridLine.setMainWidth(0.5);
+    gridLine.setMainWidth(1.0);
     gridLine.setSubColor(QColor(224, 224, 224));
-    gridLine.setSubWidth(0.3);
+    gridLine.setSubWidth(0.5);
     theme->setGrid(gridLine);
 
-    // embed QtGraphs QML GraphsView via QQuickWidget; marginLeft prevents y-axis label/title overlap
+    // embed QtGraphs QML GraphsView via QQuickWidget
     quickWidget = new QQuickWidget(this);
     quickWidget->setResizeMode(QQuickWidget::SizeRootObjectToView);
     theme->setParent(quickWidget);
@@ -602,15 +598,39 @@ ChartViewer::ChartViewer(const QString &title, int _index, QWidget *parent) :
         {"theme", QVariant::fromValue(theme)},
         {"axisX", QVariant::fromValue(static_cast<QObject *>(xaxis))},
         {"axisY", QVariant::fromValue(static_cast<QObject *>(yaxis))},
-        {"marginLeft", 50},
     });
     quickWidget->loadFromModule("QtGraphs", "GraphsView");
     graphsView = quickWidget->rootObject();
     if (!graphsView) fprintf(stderr, "Failed to load QtGraphs GraphsView QML component\n");
 
+    // external axis title labels: bold black, positioned outside the chart for clean spacing
+    QFont titleFont;
+    titleFont.setBold(true);
+
+    ylabelWidget = new VerticalLabel(title, this);
+    ylabelWidget->setFont(titleFont);
+    QPalette pal = ylabelWidget->palette();
+    pal.setColor(QPalette::WindowText, Qt::black);
+    ylabelWidget->setPalette(pal);
+
+    xlabelWidget = new QLabel("Time step", this);
+    xlabelWidget->setAlignment(Qt::AlignCenter);
+    xlabelWidget->setFont(titleFont);
+    pal = xlabelWidget->palette();
+    pal.setColor(QPalette::WindowText, Qt::black);
+    xlabelWidget->setPalette(pal);
+
+    auto *hlayout = new QHBoxLayout;
+    hlayout->setContentsMargins(0, 0, 0, 0);
+    hlayout->setSpacing(2);
+    hlayout->addWidget(ylabelWidget);
+    hlayout->addWidget(quickWidget, 1);
+
     auto *vlayout = new QVBoxLayout(this);
     vlayout->setContentsMargins(0, 0, 0, 0);
-    vlayout->addWidget(quickWidget);
+    vlayout->setSpacing(6);
+    vlayout->addLayout(hlayout, 1);
+    vlayout->addWidget(xlabelWidget);
 
     last_update = QTime::currentTime();
     update_smooth();
@@ -822,6 +842,9 @@ void ChartViewer::set_tlabel(const QString &tlabel)
 void ChartViewer::set_ylabel(const QString &ylabel)
 {
     yaxis->setTitleText(ylabel);
+#ifdef LAMMPS_GUI_USE_QTGRAPHS
+    ylabelWidget->setText(ylabel);
+#endif
 }
 
 // local implementation of Savitzky-Golay filter
