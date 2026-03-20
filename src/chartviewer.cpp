@@ -359,8 +359,10 @@ void ChartWindow::update_smooth()
 
 void ChartWindow::update_tlabel()
 {
-    for (auto &c : charts)
-        c->set_tlabel(chartTitle->text());
+    if (chartTitle) {
+        for (auto &c : charts)
+            c->set_tlabel(chartTitle->text());
+    }
 }
 
 void ChartWindow::update_ylabel()
@@ -852,9 +854,9 @@ void ChartViewer::smooth_param(bool _do_raw, bool _do_smooth, int _window, int _
 void ChartViewer::set_tlabel(const QString &tlabel)
 {
 #ifdef LAMMPS_GUI_USE_QTGRAPHS
-    titleWidget->setText(tlabel);
+    if (titleWidget) titleWidget->setText(tlabel);
 #else
-    chart->setTitle(tlabel);
+    if (chart) chart->setTitle(tlabel);
 #endif
 }
 
