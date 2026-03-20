@@ -18,7 +18,6 @@
 
 #include <QAction>
 #include <QApplication>
-#include <QChart>
 #include <QCheckBox>
 #include <QClipboard>
 #include <QCloseEvent>
@@ -29,7 +28,6 @@
 #include <QKeySequence>
 #include <QLabel>
 #include <QLayout>
-#include <QLineSeries>
 #include <QList>
 #include <QMenu>
 #include <QMenuBar>
@@ -40,8 +38,19 @@
 #include <QTextStream>
 #include <QTime>
 #include <QVBoxLayout>
-#include <QValueAxis>
 #include <QVariant>
+
+#ifdef LAMMPS_GUI_USE_QTGRAPHS
+#include <QMetaObject>
+#include <QQuickItem>
+#include <QQuickWidget>
+#include <QtGraphs/QLineSeries>
+#include <QtGraphs/QValueAxis>
+#else
+#include <QChart>
+#include <QLineSeries>
+#include <QValueAxis>
+#endif
 
 #include <cmath>
 
@@ -551,6 +560,49 @@ bool ChartWindow::eventFilter(QObject *watched, QEvent *event)
 
 /* -------------------------------------------------------------------- */
 
+#ifdef LAMMPS_GUI_USE_QTGRAPHS
+
+ChartViewer::ChartViewer(const QString &title, int _index, QWidget *parent) :
+    QWidget(parent), last_step(-1), index(_index), window(10), order(4), quickWidget(nullptr),
+    graphsView(nullptr), series(new QLineSeries), smooth(nullptr), xaxis(new QValueAxis),
+    yaxis(new QValueAxis), do_raw(true), do_smooth(false)
+{
+    xaxis->setTitleText("Time step");
+    xaxis->setLabelFormat("%d");
+    xaxis->setSubTickCount(5);
+    yaxis->setSubTickCount(5);
+    yaxis->setTitleText(title);
+    series->setName(title);
+
+    quickWidget = new QQuickWidget(this);
+    quickWidget->setResizeMode(QQuickWidget::SizeRootObjectToView);
+    quickWidget->setInitialProperties({
+        {"axisX", QVariant::fromValue(static_cast<QObject *>(xaxis))},
+        {"axisY", QVariant::fromValue(static_cast<QObject *>(yaxis))},
+    });
+    quickWidget->loadFromModule("QtGraphs", "GraphsView");
+    graphsView = quickWidget->rootObject();
+
+    auto *vlayout = new QVBoxLayout(this);
+    vlayout->setContentsMargins(0, 0, 0, 0);
+    vlayout->addWidget(quickWidget);
+
+    last_update = QTime::currentTime();
+    update_smooth();
+}
+
+/* -------------------------------------------------------------------- */
+
+ChartViewer::~ChartViewer()
+{
+    delete smooth;
+    delete series;
+    delete xaxis;
+    delete yaxis;
+}
+
+#else
+
 ChartViewer::ChartViewer(const QString &title, int _index, QWidget *parent) :
     QChartView(parent), last_step(-1), index(_index), window(10), order(4), chart(new QChart),
     series(new QLineSeries), smooth(nullptr), xaxis(new QValueAxis), yaxis(new QValueAxis),
@@ -586,6 +638,8 @@ ChartViewer::~ChartViewer()
     delete series;
     delete chart;
 }
+
+#endif
 
 /* -------------------------------------------------------------------- */
 
@@ -675,12 +729,22 @@ void ChartViewer::smooth_param(bool _do_raw, bool _do_smooth, int _window, int _
 {
     // turn off raw plot
     if (!_do_raw) {
+#ifdef LAMMPS_GUI_USE_QTGRAPHS
+        if (do_raw && graphsView)
+            QMetaObject::invokeMethod(graphsView, "removeSeries", Q_ARG(QObject *, series));
+#else
         if (do_raw) chart->removeSeries(series);
+#endif
     }
     // turn off smooth plot
     if (!_do_smooth) {
         if (smooth) {
+#ifdef LAMMPS_GUI_USE_QTGRAPHS
+            if (graphsView)
+                QMetaObject::invokeMethod(graphsView, "removeSeries", Q_ARG(QObject *, smooth));
+#else
             chart->removeSeries(smooth);
+#endif
             delete smooth;
             smooth = nullptr;
         }
@@ -696,7 +760,11 @@ void ChartViewer::smooth_param(bool _do_raw, bool _do_smooth, int _window, int _
 
 void ChartViewer::set_tlabel(const QString &tlabel)
 {
+#ifdef LAMMPS_GUI_USE_QTGRAPHS
+    m_title = tlabel;
+#else
     chart->setTitle(tlabel);
+#endif
 }
 
 /* -------------------------------------------------------------------- */
@@ -1126,6 +1194,36 @@ void ChartViewer::update_smooth()
     if ((smoothidx < 0) || (smoothidx >= mybrushes.size())) smoothidx = 0;
     settings.endGroup();
 
+#ifdef LAMMPS_GUI_USE_QTGRAPHS
+    if (do_raw) {
+        // add raw data if not in view
+        bool hasSeries = false;
+        if (graphsView)
+            QMetaObject::invokeMethod(graphsView, "hasSeries", Q_RETURN_ARG(bool, hasSeries),
+                                      Q_ARG(QObject *, series));
+        if (!hasSeries) {
+            series->setColor(mybrushes[rawidx].color());
+            series->setWidth(3.0);
+            series->setCapStyle(Qt::RoundCap);
+            if (graphsView)
+                QMetaObject::invokeMethod(graphsView, "addSeries", Q_ARG(QObject *, series));
+        }
+    }
+
+    if (do_smooth) {
+        if (series->count() > (2 * window)) {
+            if (!smooth) {
+                smooth = new QLineSeries;
+                smooth->setColor(mybrushes[smoothidx].color());
+                smooth->setWidth(3.0);
+                smooth->setCapStyle(Qt::RoundCap);
+                if (graphsView)
+                    QMetaObject::invokeMethod(graphsView, "addSeries", Q_ARG(QObject *, smooth));
+            }
+            smooth->replace(calc_sgsmooth(series->points(), window, order));
+        }
+    }
+#else
     auto allseries = chart->series();
     if (do_raw) {
         // add raw data if not in chart
@@ -1149,6 +1247,7 @@ void ChartViewer::update_smooth()
             smooth->replace(calc_sgsmooth(series->points(), window, order));
         }
     }
+#endif
 }
 
 // Local Variables:
