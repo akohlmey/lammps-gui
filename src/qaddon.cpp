@@ -115,6 +115,8 @@ void VerticalLabel::paintEvent(QPaintEvent *)
     painter.translate(0, height());
     painter.rotate(-90);
     QMargins m = contentsMargins();
+    // In rotated coords (after translate+rotate-90): painter_x = widget_bottom-to-top,
+    // painter_y = widget_left-to-right. So margins map: bottom→x_origin, left→y_origin.
     painter.drawText(QRect(m.bottom(), m.left(), height() - m.top() - m.bottom(),
                            width() - m.left() - m.right()),
                      Qt::AlignCenter, m_text);
