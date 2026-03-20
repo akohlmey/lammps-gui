@@ -583,7 +583,7 @@ ChartViewer::ChartViewer(const QString &title, int _index, QWidget *parent) :
     yaxis->setTitleFont(titleFont);
     yaxis->setTitleColor(Qt::black);
 
-    // configure theme for grid appearance
+    // configure theme for grid appearance: thin medium-gray major lines, light sub-grid
     auto *theme = new QGraphsTheme;
     theme->setPlotAreaBackgroundVisible(true);
     theme->setPlotAreaBackgroundColor(Qt::white);
@@ -594,8 +594,10 @@ ChartViewer::ChartViewer(const QString &title, int _index, QWidget *parent) :
     gridLine.setSubWidth(0.3);
     theme->setGrid(gridLine);
 
+    // embed QtGraphs QML GraphsView via QQuickWidget; marginLeft prevents y-axis label/title overlap
     quickWidget = new QQuickWidget(this);
     quickWidget->setResizeMode(QQuickWidget::SizeRootObjectToView);
+    theme->setParent(quickWidget);
     quickWidget->setInitialProperties({
         {"theme", QVariant::fromValue(theme)},
         {"axisX", QVariant::fromValue(static_cast<QObject *>(xaxis))},
