@@ -579,8 +579,10 @@ ChartViewer::ChartViewer(const QString &title, int _index, QWidget *parent) :
     xaxis->setTitleVisible(false);
     yaxis->setTitleVisible(false);
 
-    // configure theme for grid appearance
+    // configure theme: white background for axis/tick area and plot area, grid appearance
     auto *theme = new QGraphsTheme;
+    theme->setBackgroundVisible(true);
+    theme->setBackgroundColor(Qt::white);
     theme->setPlotAreaBackgroundVisible(true);
     theme->setPlotAreaBackgroundColor(Qt::white);
     QGraphsLine gridLine;
@@ -609,14 +611,18 @@ ChartViewer::ChartViewer(const QString &title, int _index, QWidget *parent) :
 
     ylabelWidget = new VerticalLabel(title, this);
     ylabelWidget->setFont(titleFont);
+    ylabelWidget->setAutoFillBackground(true);
     QPalette pal = ylabelWidget->palette();
+    pal.setColor(QPalette::Window, Qt::white);
     pal.setColor(QPalette::WindowText, Qt::black);
     ylabelWidget->setPalette(pal);
 
     xlabelWidget = new QLabel("Time step", this);
     xlabelWidget->setAlignment(Qt::AlignCenter);
     xlabelWidget->setFont(titleFont);
+    xlabelWidget->setAutoFillBackground(true);
     pal = xlabelWidget->palette();
+    pal.setColor(QPalette::Window, Qt::white);
     pal.setColor(QPalette::WindowText, Qt::black);
     xlabelWidget->setPalette(pal);
 
