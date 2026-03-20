@@ -605,9 +605,9 @@ ChartViewer::ChartViewer(const QString &title, int _index, QWidget *parent) :
     quickWidget->loadFromModule("QtGraphs", "GraphsView");
     quickWidget->setContentsMargins(0, 0, 0, 0);
     graphsView = quickWidget->rootObject();
-    if (!graphsView) fprintf(stderr, "Failed to load QtGraphs GraphsView QML component\n");
+    if (!graphsView) return;
 
-    // external axis title labels: bold black, positioned outside the chart for clean spacing
+    // external axis and plot title labels: bold black, positioned outside the chart
     QFont titleFont;
     titleFont.setBold(true);
 
@@ -630,7 +630,7 @@ ChartViewer::ChartViewer(const QString &title, int _index, QWidget *parent) :
     pal.setColor(QPalette::WindowText, Qt::black);
     xlabelWidget->setPalette(pal);
 
-    titleWidget = new QLabel("Temp", this);
+    titleWidget = new QLabel("", this);
     titleWidget->setAlignment(Qt::AlignCenter);
     titleWidget->setFont(titleFont);
     titleWidget->setAutoFillBackground(true);
