@@ -114,13 +114,18 @@ void VerticalLabel::paintEvent(QPaintEvent *)
     painter.setFont(font());
     painter.translate(0, height());
     painter.rotate(-90);
-    painter.drawText(QRect(0, 0, height(), width()), Qt::AlignCenter, m_text);
+    QMargins m = contentsMargins();
+    painter.drawText(QRect(m.bottom(), m.left(), height() - m.top() - m.bottom(),
+                           width() - m.left() - m.right()),
+                     Qt::AlignCenter, m_text);
 }
 
 QSize VerticalLabel::sizeHint() const
 {
     QFontMetrics fm(font());
-    return QSize(fm.height() + 4, fm.horizontalAdvance(m_text) + 4);
+    QMargins m = contentsMargins();
+    return QSize(fm.height() + 4 + m.left() + m.right(),
+                 fm.horizontalAdvance(m_text) + 4 + m.top() + m.bottom());
 }
 
 QSize VerticalLabel::minimumSizeHint() const

@@ -118,3 +118,4 @@ Thumbs.db
 # binary and source packages
 /LAMMPS-GUI*
 /lammps-gui-src-*
+build-qt*
