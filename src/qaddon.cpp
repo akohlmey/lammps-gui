@@ -11,6 +11,7 @@
 
 #include "qaddon.h"
 
+#include <QPainter>
 #include <QString>
 #include <QStringList>
 #include <QWidget>
@@ -85,6 +86,54 @@ QColorCompleter::QColorCompleter(QWidget *parent) : QCompleter(imagecolors, pare
     setCompletionMode(QCompleter::InlineCompletion);
     setModelSorting(QCompleter::CaseInsensitivelySortedModel);
 };
+
+/* -------------------------------------------------------------------- */
+
+VerticalLabel::VerticalLabel(const QString &text, QWidget *parent) : QWidget(parent), m_text(text)
+{
+    setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Expanding);
+}
+
+void VerticalLabel::setText(const QString &text)
+{
+    m_text = text;
+    updateGeometry();
+    update();
+}
+
+QString VerticalLabel::text() const
+{
+    return m_text;
+}
+
+void VerticalLabel::paintEvent(QPaintEvent *)
+{
+    QPainter painter(this);
+    painter.setRenderHint(QPainter::TextAntialiasing);
+    painter.setPen(palette().color(QPalette::WindowText));
+    painter.setFont(font());
+    painter.translate(0, height());
+    painter.rotate(-90);
+    QMargins m = contentsMargins();
+    // In rotated coords (after translate+rotate-90): painter_x = widget_bottom-to-top,
+    // painter_y = widget_left-to-right. So margins map: bottom→x_origin, left→y_origin.
+    painter.drawText(QRect(m.bottom(), m.left(), height() - m.top() - m.bottom(),
+                           width() - m.left() - m.right()),
+                     Qt::AlignCenter, m_text);
+}
+
+QSize VerticalLabel::sizeHint() const
+{
+    QFontMetrics fm(font());
+    QMargins m = contentsMargins();
+    return QSize(fm.height() + 4 + m.left() + m.right(),
+                 fm.horizontalAdvance(m_text) + 4 + m.top() + m.bottom());
+}
+
+QSize VerticalLabel::minimumSizeHint() const
+{
+    return sizeHint();
+}
 
 // Local Variables:
 // c-basic-offset: 4
