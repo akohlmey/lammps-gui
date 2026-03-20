@@ -54,6 +54,12 @@
   </provides>
 
   <releases>
+    <release version="1.11.3" timestamp="1773985377">
+      <description>
+        Small ChartWindow tweaks
+        Port ChartWindow to use QtGraphs API instead of QtCharts when compiling for Qt 6.10+
+      </description>
+    </release>
     <release version="1.11.2" timestamp="1773462703">
       <description>
         Update citation of LAMMPS tutorial paper in menu description
