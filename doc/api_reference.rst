@@ -286,6 +286,11 @@ Qt Helper Widgets
 
 -----
 
+.. doxygenclass:: VerticalLabel
+   :members:
+
+-----
+
 .. _helper_functions:
 
 Helper Functions
