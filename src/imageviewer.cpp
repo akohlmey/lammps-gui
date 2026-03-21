@@ -390,7 +390,7 @@ ImageViewer::ImageViewer(const QString &fileName, LammpsWrapper *_lammps, QWidge
     bodydiam       = 0.2;
     bodyflag       = TRIANGLES;
     showellipsoids = true;
-    ellipsoidflag  = BOTH;
+    ellipsoidflag  = TRIANGLES;
     ellipsoidlevel = 3;
     ellipsoiddiam  = 0.2;
     showlines      = true;
