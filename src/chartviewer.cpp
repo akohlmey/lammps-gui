@@ -151,16 +151,18 @@ ChartWindow::ChartWindow(const QString &_filename, QWidget *parent) :
     row1->addWidget(chartTitle);
     row1->addWidget(new QLabel("Y-Axis:"));
     row1->addWidget(chartYlabel);
-
-    row2->addWidget(new QLabel("Units:"));
+    row1->addWidget(new QLabel("Units:"));
     units = new QLabel("[lj]");
     units->setFrameStyle(QFrame::Panel | QFrame::Raised);
-    row2->addWidget(units);
-    row2->addWidget(new QLabel("Norm:"));
+    row1->addWidget(units);
+    row1->addWidget(new QLabel("Norm:"));
     norm = new QCheckBox("");
     norm->setCheckState(Qt::Unchecked);
     norm->setEnabled(false);
-    row2->addWidget(norm);
+    row1->addWidget(norm);
+    row1->addWidget(new QLabel(" Data:"));
+    row1->addWidget(columns);
+
     xrange = new RangeSlider;
     xrange->setMinimum(0);
     xrange->setMaximum(SLIDER_RANGE);
@@ -186,8 +188,6 @@ ChartWindow::ChartWindow(const QString &_filename, QWidget *parent) :
     row2->addWidget(new QLabel(" Smooth:"));
     row2->addWidget(window);
     row2->addWidget(order);
-    row1->addWidget(new QLabel(" Data:"));
-    row1->addWidget(columns);
     saveAsAct = file->addAction("&Save Graph As...", this, &ChartWindow::saveAs);
     saveAsAct->setIcon(QIcon(":/icons/document-save-as.png"));
     copyAct = file->addAction("Copy &Graph to Clipboard", this, &ChartWindow::copy);
@@ -590,7 +590,7 @@ ChartViewer::ChartViewer(const QString &title, int _index, QWidget *parent) :
     theme->setPlotAreaBackgroundColor(Qt::white);
     QGraphsLine gridLine;
     gridLine.setMainColor(QColor(160, 160, 160));
-    gridLine.setMainWidth(2.0);
+    gridLine.setMainWidth(1.5);
     gridLine.setSubColor(QColor(192, 192, 192));
     gridLine.setSubWidth(1.0);
     theme->setGrid(gridLine);
