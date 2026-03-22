@@ -1630,10 +1630,8 @@ void ImageViewer::atom_settings()
     etbutton->setChecked(ellipsoidflag == TRIANGLES);
     egroup->addButton(etbutton);
     layout->addWidget(etbutton, idx, n++, 1, 1, Qt::AlignCenter);
-    auto *ebbutton = new QRadioButton("Both", this);
-    ebbutton->setChecked(ellipsoidflag == BOTH);
-    egroup->addButton(ebbutton);
-    layout->addWidget(ebbutton, idx, n++, 1, 1, Qt::AlignCenter);
+    // skip location for "Both" since ellipsoids don't need it
+    ++n;
     auto *elevel = new QSpinBox;
     elevel->setRange(1, 6);
     elevel->setStepType(QAbstractSpinBox::DefaultStepType);
@@ -1652,7 +1650,6 @@ void ImageViewer::atom_settings()
         ediam->setEnabled(false);
         ecbutton->setEnabled(false);
         etbutton->setEnabled(false);
-        ebbutton->setEnabled(false);
     }
 
     n = 0;
@@ -1878,10 +1875,8 @@ void ImageViewer::atom_settings()
     if (elevel->hasAcceptableInput()) ellipsoidlevel = elevel->text().toInt();
     if (ecbutton->isChecked()) {
         ellipsoidflag = CYLINDERS;
-    } else if (etbutton->isChecked()) {
+    } else {
         ellipsoidflag = TRIANGLES;
-    } else if (ebbutton->isChecked()) {
-        ellipsoidflag = BOTH;
     }
     // using the colors other than type for ellipsoids was implemented after the 11Feb2026 release.
     if (lammps->version() > 20260211) {
