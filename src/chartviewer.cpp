@@ -104,9 +104,9 @@ ChartWindow::ChartWindow(const QString &_filename, QWidget *parent) :
 
     // plot title and axis labels
     settings.beginGroup("charts");
-    chartTitle =
-        new QLineEdit(settings.value("title", "Thermo: %f").toString().replace("%f", filename));
-    chartYlabel = new QLineEdit("");
+    auto mytitle = settings.value("title", "Thermo: %f").toString().replace("%f", filename);
+    chartTitle   = new QLineEdit(mytitle);
+    chartYlabel  = new QLineEdit("");
 
     // plot smoothing
     int smoothchoice = settings.value("smoothchoice", 0).toInt();
@@ -148,9 +148,9 @@ ChartWindow::ChartWindow(const QString &_filename, QWidget *parent) :
     row1->addWidget(dummy);
     row2->addWidget(dummy);
     row1->addWidget(new QLabel("Title:"));
-    row1->addWidget(chartTitle);
+    row1->addWidget(chartTitle, 2);
     row1->addWidget(new QLabel("Y-Axis:"));
-    row1->addWidget(chartYlabel);
+    row1->addWidget(chartYlabel, 1);
     row1->addWidget(new QLabel("Units:"));
     units = new QLabel("[lj]");
     units->setFrameStyle(QFrame::Panel | QFrame::Raised);
@@ -161,7 +161,7 @@ ChartWindow::ChartWindow(const QString &_filename, QWidget *parent) :
     norm->setEnabled(false);
     row1->addWidget(norm);
     row1->addWidget(new QLabel(" Data:"));
-    row1->addWidget(columns);
+    row1->addWidget(columns, 1);
 
     xrange = new RangeSlider;
     xrange->setMinimum(0);
