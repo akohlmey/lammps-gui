@@ -14,6 +14,7 @@
 
 #include <QComboBox>
 #include <QLineEdit>
+#include <QLabel>
 #include <QList>
 #include <QRectF>
 #include <QString>
@@ -24,7 +25,6 @@ class QAction;
 class QCheckBox;
 class QCloseEvent;
 class QEvent;
-class QLabel;
 class QMenuBar;
 class QMenu;
 class QSpinBox;
@@ -161,21 +161,39 @@ private:
 
 /* -------------------------------------------------------------------- */
 
+#ifdef LAMMPS_GUI_USE_QTGRAPHS
+
+#include <QtGraphs/QAbstractAxis>
+#include <QtGraphs/QLineSeries>
+#include <QtGraphs/QValueAxis>
+class QLabel;
+class QQuickWidget;
+class QQuickItem;
+class VerticalLabel;
+
+#else
+
 #include <QChartView>
 #include <QLineSeries>
 #include <QValueAxis>
 class QChart;
 
+#endif
+
 namespace QtCharts {
 /**
  * @brief Individual chart viewer for displaying a single time-series
  *
- * ChartViewer extends QChartView to display a single thermodynamic
- * property as a function of simulation time. It supports both raw
- * and smoothed data display, interactive zoom/pan, and provides
- * accessors for data export.
+ * ChartViewer extends QChartView (or wraps a QGraphsView with Qt 6.10+)
+ * to display a single thermodynamic property as a function of simulation
+ * time. It supports both raw and smoothed data display, interactive
+ * zoom/pan, and provides accessors for data export.
  */
+#ifdef LAMMPS_GUI_USE_QTGRAPHS
+class ChartViewer : public QWidget {
+#else
 class ChartViewer : public QChartView {
+#endif
     Q_OBJECT
 
 public:
@@ -215,7 +233,11 @@ public:
      * @brief Get list of chart axes
      * @return List of axes (X and Y)
      */
+#ifdef LAMMPS_GUI_USE_QTGRAPHS
+    QList<QAbstractAxis *> get_axes() const { return {xaxis, yaxis}; }
+#else
     QList<QAbstractAxis *> get_axes() const { return chart->axes(); }
+#endif
 
     /**
      * @brief Reset zoom to show all data
@@ -284,7 +306,11 @@ public:
      * @brief Get current chart title
      * @return Chart title
      */
+#ifdef LAMMPS_GUI_USE_QTGRAPHS
+    QString get_tlabel() const { return titleWidget->text(); }
+#else
     QString get_tlabel() const { return chart->title(); }
+#endif
 
     /**
      * @brief Get X-axis label
@@ -301,7 +327,15 @@ public:
 private:
     int last_step, index;         ///< Last step processed, chart index
     int window, order;            ///< Smoothing window and polynomial order
+#ifdef LAMMPS_GUI_USE_QTGRAPHS
+    QQuickWidget *quickWidget;    ///< Widget hosting the QGraphsView QML item
+    QQuickItem *graphsView;       ///< Root QGraphsView QML item
+    VerticalLabel *ylabelWidget;  ///< External y-axis title label (avoids overlap)
+    QLabel *xlabelWidget;         ///< External x-axis title label (with spacing)
+    QLabel *titleWidget;          ///< Chart title (with spacing)
+#else
     QChart *chart;                ///< The chart object
+#endif
     QLineSeries *series, *smooth; ///< Raw and smoothed data series
     QValueAxis *xaxis;            ///< X-axis (time/step)
     QValueAxis *yaxis;            ///< Y-axis (property value)

@@ -390,7 +390,7 @@ ImageViewer::ImageViewer(const QString &fileName, LammpsWrapper *_lammps, QWidge
     bodydiam       = 0.2;
     bodyflag       = TRIANGLES;
     showellipsoids = true;
-    ellipsoidflag  = BOTH;
+    ellipsoidflag  = TRIANGLES;
     ellipsoidlevel = 3;
     ellipsoiddiam  = 0.2;
     showlines      = true;
@@ -1376,6 +1376,7 @@ void ImageViewer::atom_settings()
     title->setMargin(TITLE_MARGIN);
 
     auto *transvalidator  = new QDoubleValidator(0.0, 1.0, 3, this);
+    auto *diamvalidator   = new QDoubleValidator(0.001, 5.0, 4, this);
     auto *layout          = new QGridLayout;
     int idx               = 0;
     int n                 = 0;
@@ -1580,7 +1581,7 @@ void ImageViewer::atom_settings()
     bgroup->addButton(bcbutton);
     layout->addWidget(bcbutton, idx, n++, 1, 1, Qt::AlignCenter);
     auto *bdiam = new QLineEdit(QString::number(bodydiam));
-    bdiam->setValidator(new QDoubleValidator(0.1, 10.0, 100, this));
+    bdiam->setValidator(diamvalidator);
     layout->addWidget(bdiam, idx, n++, 1, 1, Qt::AlignVCenter | Qt::AlignLeft);
     auto *btbutton = new QRadioButton("Triangles", this);
     btbutton->setChecked(bodyflag == TRIANGLES);
@@ -1623,16 +1624,14 @@ void ImageViewer::atom_settings()
     egroup->addButton(ecbutton);
     layout->addWidget(ecbutton, idx, n++, 1, 1, Qt::AlignCenter);
     auto *ediam = new QLineEdit(QString::number(ellipsoiddiam));
-    ediam->setValidator(new QDoubleValidator(0.1, 10.0, 100, this));
+    ediam->setValidator(diamvalidator);
     layout->addWidget(ediam, idx, n++, 1, 1, Qt::AlignVCenter | Qt::AlignLeft);
     auto *etbutton = new QRadioButton("Triangles", this);
     etbutton->setChecked(ellipsoidflag == TRIANGLES);
     egroup->addButton(etbutton);
     layout->addWidget(etbutton, idx, n++, 1, 1, Qt::AlignCenter);
-    auto *ebbutton = new QRadioButton("Both", this);
-    ebbutton->setChecked(ellipsoidflag == BOTH);
-    egroup->addButton(ebbutton);
-    layout->addWidget(ebbutton, idx, n++, 1, 1, Qt::AlignCenter);
+    // skip location for "Both" since ellipsoids don't need it
+    ++n;
     auto *elevel = new QSpinBox;
     elevel->setRange(1, 6);
     elevel->setStepType(QAbstractSpinBox::DefaultStepType);
@@ -1651,7 +1650,6 @@ void ImageViewer::atom_settings()
         ediam->setEnabled(false);
         ecbutton->setEnabled(false);
         etbutton->setEnabled(false);
-        ebbutton->setEnabled(false);
     }
 
     n = 0;
@@ -1670,7 +1668,7 @@ void ImageViewer::atom_settings()
     layout->addWidget(lcolor, idx, n++, 1, 1);
     ++n;
     auto *ldiam = new QLineEdit(QString::number(linediam));
-    ldiam->setValidator(new QDoubleValidator(0.1, 10.0, 100, this));
+    ldiam->setValidator(diamvalidator);
     layout->addWidget(ldiam, idx++, n++, 1, 1, Qt::AlignVCenter | Qt::AlignLeft);
     if (lammps->extract_setting("line_flag") != 1) {
         linebutton->setEnabled(false);
@@ -1702,7 +1700,7 @@ void ImageViewer::atom_settings()
     tgroup->addButton(tcbutton);
     layout->addWidget(tcbutton, idx, n++, 1, 1, Qt::AlignCenter);
     auto *tdiam = new QLineEdit(QString::number(tridiam));
-    tdiam->setValidator(new QDoubleValidator(0.1, 10.0, 100, this));
+    tdiam->setValidator(diamvalidator);
     layout->addWidget(tdiam, idx, n++, 1, 1, Qt::AlignVCenter | Qt::AlignLeft);
     auto *ttbutton = new QRadioButton("Triangles", this);
     ttbutton->setChecked(triflag == TRIANGLES);
@@ -1877,10 +1875,8 @@ void ImageViewer::atom_settings()
     if (elevel->hasAcceptableInput()) ellipsoidlevel = elevel->text().toInt();
     if (ecbutton->isChecked()) {
         ellipsoidflag = CYLINDERS;
-    } else if (etbutton->isChecked()) {
+    } else {
         ellipsoidflag = TRIANGLES;
-    } else if (ebbutton->isChecked()) {
-        ellipsoidflag = BOTH;
     }
     // using the colors other than type for ellipsoids was implemented after the 11Feb2026 release.
     if (lammps->version() > 20260211) {

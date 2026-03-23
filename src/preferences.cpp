@@ -14,6 +14,7 @@
 #include "helpers.h"
 #include "lammpsgui.h"
 #include "lammpswrapper.h"
+#include "logwindow.h"
 #include "qaddon.h"
 #include "ui_lammpsgui.h"
 
@@ -405,6 +406,8 @@ void GeneralTab::updatefonts(const QFont &all, const QFont &text)
         mainwidget->setFont(all);
         mainwidget->ui->textEdit->document()->setDefaultFont(text);
         if (mainwidget->wizard) mainwidget->wizard->setFont(all);
+        if (mainwidget->logwindow) mainwidget->logwindow->document()->setDefaultFont(text);
+        if (mainwidget->varwindow) mainwidget->varwindow->setFont(text);
     }
 
     Preferences *prefs = nullptr;

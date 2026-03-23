@@ -54,6 +54,18 @@
   </provides>
 
   <releases>
+    <release version="1.11.3" timestamp="1773985377">
+      <description>
+        Small ChartWindow layout tweaks
+        Port ChartWindow to use QtGraphs API instead of QtCharts when compiling for Qt 6.10+
+        Remove "both" options for ellipsoid particles since it is no longer needed
+        Default settings for ellipsoids is now "triangles"
+        Use consistent validator instance for all diameter values in the atoms/bond dialog
+        Avoid accessing expired pointers when shutting down app
+        Updated documentation
+        Downloaded precompiled libraries now contain updated LAMMPS code with bugfixes
+      </description>
+    </release>
     <release version="1.11.2" timestamp="1773462703">
       <description>
         Update citation of LAMMPS tutorial paper in menu description

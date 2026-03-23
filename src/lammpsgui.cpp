@@ -1551,9 +1551,6 @@ void LammpsGui::do_run(bool use_buffer)
     logwindow->setWindowTitle(
         QString("LAMMPS-GUI - Output - %1 - Run %2").arg(current_file).arg(run_counter));
     logwindow->setWindowIcon(QIcon(":/icons/lammps-gui-icon-128x128.png"));
-    QFont text_font;
-    text_font.fromString(settings.value("textfont", text_font.toString()).toString());
-    logwindow->document()->setDefaultFont(text_font);
     logwindow->setLineWrapMode(LogWindow::NoWrap);
     logwindow->setMinimumSize(MINIMUM_WIDTH, MINIMUM_HEIGHT);
     auto *shortcut = new QShortcut(QKeySequence(Qt::CTRL | Qt::Key_W), logwindow);

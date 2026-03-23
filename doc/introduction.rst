@@ -59,7 +59,15 @@ LAMMPS-GUI makes extensive use of Qt features:
 **Qt Models**
   Used for data display in various viewers and inspectors.
 
-For more details on Qt usage, see the `Qt Documentation <https://doc.qt.io/>`_.
+LAMMPS-GUI is compatible with Qt version 5.15 or Qt 6.2 and later.  If a
+Qt 6.x version is available it is preferred unless the CMake setting
+``-D LAMMPS_GUI_USE_QT5=yes`` is used.  For Qt versions 6.10 and later
+the QtGraphs module is used for creating charts instead of the QtCharts
+module.  Using QtCharts can be enforced by setting ``-D
+LAMMPS_GUI_USE_QTCHARTS=yes``.
+
+For more details on Qt in general, see the `Qt Documentation
+<https://doc.qt.io/>`_.
 
 ------------------
 
@@ -144,11 +152,17 @@ Visualization Components
   Supports line plots and multiple data series.  See
   :cpp:class:`ChartWindow`
 
-**ChartViewer (chartviewer.h/.cpp)**
-  Custom chart view widget based on `QChartView
-  <https://doc.qt.io/qt-6/qchartview-qtcharts.html>`_ that provides
-  interactive features like zooming, smoothing, and panning for data
-  visualization.  See :cpp:class:`ChartViewer`
+**ChartViewer (chartviewer.h/.cpp)** Custom chart view widget that
+  provides interactive features like zooming, smoothing, and panning for
+  data visualization.  See :cpp:class:`ChartViewer`.
+
+  Two implementations exist: The older is based on the `QChartView
+  widget <https://doc.qt.io/qt-6/qchartview-qtcharts.html>`_ from the
+  QtCharts module and the newer implementation is based on `QQuickWidget
+  <https://doc.qt.io/qt-6/qquickwidget.html>`_ and the QtGraphs module.
+  For Qt versions 6.10 and later the QtGraphs module variant is used and
+  for older versions the QtGraphs module variant.  Using the QtCharts
+  can be enforced by setting ``-D LAMMPS_GUI_USE_QTCHARTS=yes``.
 
 **SlideShow (slideshow.h/.cpp)**
   Dialog for viewing multiple images as a slideshow or animation with

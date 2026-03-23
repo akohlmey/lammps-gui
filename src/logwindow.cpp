@@ -20,6 +20,8 @@
 #include <QDesktopServices>
 #include <QFile>
 #include <QFileDialog>
+#include <QFont>
+#include <QFontInfo>
 #include <QGridLayout>
 #include <QHBoxLayout>
 #include <QIcon>
@@ -44,6 +46,14 @@ LogWindow::LogWindow(const QString &_filename, QWidget *parent) :
 {
     QSettings settings;
     resize(settings.value("logx", 500).toInt(), settings.value("logy", 320).toInt());
+
+    QFont mono_font;
+    QFontInfo mono_info(*GUI_MONOFONT);
+    mono_font.setFamily(settings.value("monofamily", mono_info.family()).toString());
+    mono_font.setPointSize(settings.value("monosize", mono_info.pointSize()).toInt());
+    mono_font.setStyleHint(GUI_MONOFONT->styleHint());
+    mono_font.setFixedPitch(true);
+    document()->setDefaultFont(mono_font);
 
     summary = new QLabel("0 Warnings / Errors  -  0 Lines");
     summary->setMargin(1);

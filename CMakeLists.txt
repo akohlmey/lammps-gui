@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.20)
 
 project(lammps-gui
-  VERSION 1.11.2
+  VERSION 1.11.3
   LANGUAGES CXX
   DESCRIPTION "The LAMMPS GUI"
   HOMEPAGE_URL "https://lammps-gui.lammps.org/")
@@ -13,6 +13,8 @@ include(GNUInstallDirs)
 option(LAMMPS_GUI_USE_PLUGIN "Load LAMMPS library dynamically at runtime" ON)
 # prefer Qt6 by default now that Qt5 is no longer officially supported
 option(LAMMPS_GUI_USE_QT5 "Prefer using Qt5 over Qt6" OFF)
+# prefer QtCharts even if deprecated
+option(LAMMPS_GUI_USE_QTCHARTS "Prefer using QtCharts over QtGraphs" OFF)
 # build html documentation by default
 option(BUILD_DOC "Build LAMMPS-GUI HTML documentation" ON)
 ##################################################################################
@@ -69,8 +71,18 @@ if (NOT BUILD_DOC_ONLY)
   endif()
 
   # we require at least Qt version 5.15, but prefer Qt 6.2 or later.
+  # Qt 6.10 and later: use QtGraphs (the QtCharts replacement) for chart display.
   if(NOT LAMMPS_GUI_USE_QT5)
-    find_package(Qt6 6.2 QUIET COMPONENTS Gui Widgets Charts)
+    set(LAMMPS_GUI_USE_QTGRAPHS OFF)
+    if (NOT LAMMPS_GUI_USE_QTCHARTS)
+      find_package(Qt6 6.10 QUIET COMPONENTS Gui Widgets Graphs Quick QuickWidgets)
+      if(Qt6_FOUND)
+        set(LAMMPS_GUI_USE_QTGRAPHS ON)
+      endif()
+    endif()
+    if (NOT LAMMPS_GUI_USE_QTGRAPHS)
+      find_package(Qt6 6.2 QUIET COMPONENTS Gui Widgets Charts)
+    endif()
   endif()
   if(NOT Qt6_FOUND)
     find_package(Qt5 5.15 REQUIRED COMPONENTS Gui Widgets Charts)
@@ -185,7 +197,12 @@ if (NOT BUILD_DOC_ONLY)
   endif()
   target_include_directories(lammps-gui PRIVATE ${CMAKE_SOURCE_DIR}/src)
   target_compile_definitions(lammps-gui PRIVATE LAMMPS_GUI_VERSION="${PROJECT_VERSION}")
-  target_link_libraries(lammps-gui PRIVATE Qt${QT_VERSION_MAJOR}::Gui Qt${QT_VERSION_MAJOR}::Widgets Qt${QT_VERSION_MAJOR}::Charts)
+  if(LAMMPS_GUI_USE_QTGRAPHS)
+    target_compile_definitions(lammps-gui PRIVATE LAMMPS_GUI_USE_QTGRAPHS)
+    target_link_libraries(lammps-gui PRIVATE Qt6::Gui Qt6::Widgets Qt6::Graphs Qt6::Quick Qt6::QuickWidgets)
+  else()
+    target_link_libraries(lammps-gui PRIVATE Qt${QT_VERSION_MAJOR}::Gui Qt${QT_VERSION_MAJOR}::Widgets Qt${QT_VERSION_MAJOR}::Charts)
+  endif()
 
   ###################
   # unit tests, only enabled on Linux
