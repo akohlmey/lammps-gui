@@ -276,7 +276,7 @@ if(BUILD_DOC OR BUILD_DOC_ONLY)
   # configure virtual environment for sphinx-build and related
   set(DOCENV_BINARY_DIR ${CMAKE_BINARY_DIR}/docenv/bin)
   set(DOCENV_REQUIREMENTS_FILE ${SPHINX_DIR}/requirements.txt)
-  set(DOCENV_DEPS docenv ${DOCENV_REQUIREMENTS_FILE} ${SPHINX_DIR}/_templates/page.html)
+  set(DOCENV_DEPS ${DOCENV_REQUIREMENTS_FILE} ${SPHINX_DIR}/_templates/page.html)
   add_custom_command(
     OUTPUT docenv/bin
     COMMAND ${VIRTUALENV} docenv
