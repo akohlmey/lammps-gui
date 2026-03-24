@@ -119,6 +119,8 @@ extern bool is_light_theme();
  * Redirects stdout to /dev/null (Unix) or NUL: (Windows) to suppress
  * all output.  Does nothing if StdCapture is currently active or if
  * stdout is already silenced.
+ *
+ * @note Not thread-safe.  Must only be called from the main thread.
  */
 extern void silence_stdout();
 
@@ -127,6 +129,8 @@ extern void silence_stdout();
  *
  * Restores the original stdout file descriptor that was saved by
  * silence_stdout().  Does nothing if stdout is not currently silenced.
+ *
+ * @note Not thread-safe.  Must only be called from the main thread.
  */
 extern void restore_stdout();
 
