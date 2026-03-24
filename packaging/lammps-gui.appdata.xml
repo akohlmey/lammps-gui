@@ -56,11 +56,10 @@
   <releases>
     <release version="1.11.4" timestamp="1774314764">
       <description>
-        Consistently use QCheckButton::isChecked() and QCheckButton::setChecked()
+        Consistently use QCheckBox::isChecked() and QCheckBox::setChecked()
         Add preferences settings to enable/disable major/minor grid lines in charts
       </description>
     </release>
-  <releases>
     <release version="1.11.3" timestamp="1773985377">
       <description>
         Small ChartWindow layout tweaks
