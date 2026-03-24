@@ -29,7 +29,19 @@
 #include <QTemporaryFile>
 #include <QWidget>
 
+#ifdef _WIN32
+#include <io.h>
+#define dup _dup
+#define dup2 _dup2
+#define fileno _fileno
+#define close _close
+#define open _open
+#else
+#include <unistd.h>
+#endif
+
 #include <cstdio>
+#include <fcntl.h>
 
 namespace {
 const QStringList months({"Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct",
@@ -42,6 +54,10 @@ constexpr char TTY_DEVICE[]  = "COM1:";
 constexpr char NULL_DEVICE[] = "/dev/null";
 constexpr char TTY_DEVICE[]  = "/dev/tty";
 #endif
+
+int saved_stdout_fd     = -1;
+bool stdout_silenced    = false;
+bool capture_is_active  = false;
 } // namespace
 
 // will be allocated and initialized in main() to avoid segfault on macOS
@@ -341,6 +357,52 @@ bool is_light_theme()
     int bg = p.brush(QPalette::Active, QPalette::Window).color().black();
 
     return (fg > bg);
+}
+
+// silence stdout by redirecting to the null device
+
+void silence_stdout()
+{
+    if (capture_is_active || stdout_silenced) return;
+
+    saved_stdout_fd = dup(fileno(stdout));
+    if (saved_stdout_fd == -1) return;
+
+    int devnull = open(NULL_DEVICE, O_WRONLY);
+    if (devnull == -1) {
+        close(saved_stdout_fd);
+        saved_stdout_fd = -1;
+        return;
+    }
+    dup2(devnull, fileno(stdout));
+    close(devnull);
+    stdout_silenced = true;
+}
+
+// restore stdout after silencing
+
+void restore_stdout()
+{
+    if (!stdout_silenced || saved_stdout_fd == -1) return;
+
+    dup2(saved_stdout_fd, fileno(stdout));
+    close(saved_stdout_fd);
+    saved_stdout_fd = -1;
+    stdout_silenced = false;
+}
+
+// check if stdout is currently silenced
+
+bool is_stdout_silenced()
+{
+    return stdout_silenced;
+}
+
+// notify silence/restore system about StdCapture state changes
+
+void notify_capture_state(bool active)
+{
+    capture_is_active = active;
 }
 
 // Local Variables:

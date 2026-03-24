@@ -10,6 +10,7 @@
 ////////////////////////////////////////////////////////////////////////////////////////
 
 #include "helpers.h"
+#include "stdcapture.h"
 
 #include <gtest/gtest.h>
 
@@ -300,4 +301,96 @@ TEST_F(HelpersTest, IsLightThemeReturnsBoolean)
     bool result = is_light_theme();
     // Should be either true or false, test passes if it doesn't crash
     EXPECT_TRUE(result == true || result == false);
+}
+
+// Tests for silence_stdout / restore_stdout functions
+
+TEST_F(HelpersTest, SilenceStdoutSilencesOutput)
+{
+    // stdout should not be silenced initially
+    EXPECT_FALSE(is_stdout_silenced());
+
+    silence_stdout();
+    EXPECT_TRUE(is_stdout_silenced());
+
+    // Write something to stdout (should go to /dev/null)
+    printf("this should be silenced");
+    fflush(stdout);
+
+    restore_stdout();
+    EXPECT_FALSE(is_stdout_silenced());
+}
+
+TEST_F(HelpersTest, RestoreStdoutWhenNotSilenced)
+{
+    // Restoring when not silenced should be a no-op
+    EXPECT_FALSE(is_stdout_silenced());
+    restore_stdout();
+    EXPECT_FALSE(is_stdout_silenced());
+}
+
+TEST_F(HelpersTest, SilenceStdoutIdempotent)
+{
+    // Silencing twice should not cause issues
+    silence_stdout();
+    EXPECT_TRUE(is_stdout_silenced());
+    silence_stdout(); // second call should be a no-op
+    EXPECT_TRUE(is_stdout_silenced());
+
+    restore_stdout();
+    EXPECT_FALSE(is_stdout_silenced());
+}
+
+TEST_F(HelpersTest, SilenceStdoutSkippedDuringCapture)
+{
+    // When StdCapture is active, silence_stdout should be a no-op
+    StdCapture capturer;
+    capturer.BeginCapture();
+
+    silence_stdout();
+    EXPECT_FALSE(is_stdout_silenced()); // should NOT have silenced
+
+    capturer.EndCapture();
+}
+
+TEST_F(HelpersTest, CaptureRestoresSilencedStdout)
+{
+    // StdCapture is typically created before silence_stdout is called
+    StdCapture capturer;
+
+    // When stdout is silenced and StdCapture starts, it should restore first
+    silence_stdout();
+    EXPECT_TRUE(is_stdout_silenced());
+
+    capturer.BeginCapture();
+    // BeginCapture should have restored (un-silenced) stdout
+    EXPECT_FALSE(is_stdout_silenced());
+
+    printf("captured output");
+    fflush(stdout);
+
+    capturer.EndCapture();
+    auto output = capturer.GetCapture();
+    EXPECT_NE(output.find("captured output"), std::string::npos);
+}
+
+TEST_F(HelpersTest, SilenceAndRestorePreservesStdout)
+{
+    // After silence + restore, stdout should work normally
+    StdCapture capturer;
+
+    silence_stdout();
+    printf("silenced text");
+    fflush(stdout);
+    restore_stdout();
+
+    // Now capture to verify stdout is functional
+    capturer.BeginCapture();
+    printf("visible text");
+    fflush(stdout);
+    capturer.EndCapture();
+
+    auto output = capturer.GetCapture();
+    EXPECT_NE(output.find("visible text"), std::string::npos);
+    EXPECT_EQ(output.find("silenced text"), std::string::npos);
 }
