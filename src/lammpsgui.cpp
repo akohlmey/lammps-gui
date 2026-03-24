@@ -1998,11 +1998,11 @@ QWizardPage *LammpsGui::tutorial_directory(const int ntutorial)
     auto *purgeval = new QCheckBox("&Remove existing files from directory");
     auto *solval   = new QCheckBox("&Download solutions");
 
-    purgeval->setCheckState(Qt::Unchecked);
+    purgeval->setChecked(false);
     purgeval->setObjectName("t_dirpurge");
     layout->addWidget(purgeval, Qt::AlignVCenter | Qt::AlignLeft);
 
-    solval->setCheckState(settings.value("solution", false).toBool() ? Qt::Checked : Qt::Unchecked);
+    solval->setChecked(settings.value("solution", false).toBool());
     solval->setObjectName("t_getsolution");
     layout->addWidget(solval, Qt::AlignVCenter | Qt::AlignLeft);
 
@@ -2011,8 +2011,7 @@ QWizardPage *LammpsGui::tutorial_directory(const int ntutorial)
     QCheckBox *webval = nullptr;
     if ((ntutorial > 0) && (ntutorial < 9)) {
         webval = new QCheckBox("&Open tutorial webpage in web browser");
-        webval->setCheckState(settings.value("webpage", true).toBool() ? Qt::Checked
-                                                                       : Qt::Unchecked);
+        webval->setChecked(settings.value("webpage", true).toBool());
         webval->setObjectName("t_webopen");
         layout->addWidget(webval, Qt::AlignVCenter | Qt::AlignLeft);
     }
@@ -2591,7 +2590,7 @@ void TutorialWizard::accept()
     bool openwebpage = false;
     QString curdir;
 
-    if (webopen) openwebpage = (webopen->checkState() == Qt::Checked);
+    if (webopen) openwebpage = webopen->isChecked();
 
     // create and populate directory.
     if (dirname) {
@@ -2607,8 +2606,8 @@ void TutorialWizard::accept()
             return;
         }
 
-        purgedir    = dirpurge && (dirpurge->checkState() == Qt::Checked);
-        getsolution = getsol && (getsol->checkState() == Qt::Checked);
+        purgedir    = dirpurge && dirpurge->isChecked();
+        getsolution = getsol && getsol->isChecked();
     }
     QDialog::accept();
 

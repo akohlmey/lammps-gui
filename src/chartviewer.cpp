@@ -157,7 +157,7 @@ ChartWindow::ChartWindow(const QString &_filename, QWidget *parent) :
     row1->addWidget(units);
     row1->addWidget(new QLabel("Norm:"));
     norm = new QCheckBox("");
-    norm->setCheckState(Qt::Unchecked);
+    norm->setChecked(false);
     norm->setEnabled(false);
     row1->addWidget(norm);
     row1->addWidget(new QLabel(" Data:"));
