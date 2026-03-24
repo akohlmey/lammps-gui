@@ -82,6 +82,7 @@ endif()
 add_executable(test_helpers
   test_helpers.cpp
   ${CMAKE_SOURCE_DIR}/src/helpers.cpp
+  ${CMAKE_SOURCE_DIR}/src/stdcapture.cpp
 )
 
 target_include_directories(test_helpers PRIVATE

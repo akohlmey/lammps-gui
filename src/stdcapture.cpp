@@ -12,6 +12,7 @@
 // adapted from: https://stackoverflow.com/questions/5419356/redirect-stdout-stderr-to-a-string
 
 #include "stdcapture.h"
+#include "helpers.h"
 
 #ifdef _WIN32
 #include <io.h>
@@ -80,14 +81,17 @@ StdCapture::~StdCapture()
 void StdCapture::BeginCapture()
 {
     if (m_capturing) EndCapture();
+    if (is_stdout_silenced()) restore_stdout();
     dup2(m_pipe[WRITE], fileno(stdout));
     m_capturing = true;
     maxread     = 0;
+    notify_capture_state(true);
 }
 
 bool StdCapture::EndCapture()
 {
     if (!m_capturing) return false;
+    notify_capture_state(false);
     dup2(m_oldStdOut, fileno(stdout));
     m_captured.clear();
 
