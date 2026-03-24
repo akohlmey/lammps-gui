@@ -137,7 +137,7 @@ std::string StdCapture::GetChunk()
     if (bytesRead > 0) {
         buf[bytesRead] = '\0';
     }
-    maxread = std::max(maxread, bytesRead);
+    maxread = (maxread > bytesRead) ? maxread : bytesRead;
     return {buf};
 }
 
