@@ -96,6 +96,22 @@ target_link_libraries(test_helpers
 # Discover tests for test executables
 gtest_discover_tests(test_helpers)
 
+# Test executable for StdCapture
+add_executable(test_stdcapture
+  test_stdcapture.cpp
+  ${CMAKE_SOURCE_DIR}/src/stdcapture.cpp
+)
+
+target_include_directories(test_stdcapture PRIVATE
+  ${CMAKE_SOURCE_DIR}/src
+)
+
+target_link_libraries(test_stdcapture
+  GTest::gtest_main
+)
+
+gtest_discover_tests(test_stdcapture)
+
 ########################################################################
 # Tests that check the GUI environment and the GUI
 # IMPORTANT NOTE: we must use a different display number for the -n flag
