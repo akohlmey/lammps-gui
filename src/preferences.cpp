@@ -266,6 +266,10 @@ void Preferences::accept()
     if (spin) settings->setValue("smoothwindow", spin->value());
     spin = tabWidget->findChild<QSpinBox *>("smoothorder");
     if (spin) settings->setValue("smoothorder", spin->value());
+    auto *check = tabWidget->findChild<QCheckBox *>("grid");
+    if (check) settings->setValue("grid", check->isChecked());
+    check = tabWidget->findChild<QCheckBox *>("minorgrid");
+    if (check) settings->setValue("minorgrid", check->isChecked());
     settings->endGroup();
     spin = tabWidget->findChild<QSpinBox *>("chartx");
     if (spin) settings->setValue("chartx", spin->value());
@@ -1023,6 +1027,15 @@ ChartsTab::ChartsTab(QSettings *_settings, QWidget *parent) : QWidget(parent), s
     smordrval->setRange(1, 20);
     smordrval->setValue(settings->value("smoothorder", 4).toInt());
     smordrval->setObjectName("smoothorder");
+
+    auto *gridlbl = new QLabel("Draw major grid:");
+    auto *usegrid = new QCheckBox;
+    usegrid->setChecked(settings->value("grid", true).toBool());
+    usegrid->setObjectName("grid");
+    auto *minorlbl = new QLabel("Draw minor grid:");
+    auto *useminor = new QCheckBox;
+    useminor->setChecked(settings->value("minorgrid", true).toBool());
+    useminor->setObjectName("minorgrid");
     settings->endGroup();
 
     auto *chartxlbl = new QLabel("Chart default width:");
@@ -1055,6 +1068,10 @@ ChartsTab::ChartsTab(QSettings *_settings, QWidget *parent) : QWidget(parent), s
     grid->addWidget(chartxval, i++, 1, Qt::AlignVCenter);
     grid->addWidget(chartylbl, i, 0, Qt::AlignTop);
     grid->addWidget(chartyval, i++, 1, Qt::AlignVCenter);
+    grid->addWidget(gridlbl, i, 0, Qt::AlignTop);
+    grid->addWidget(usegrid, i++, 1, Qt::AlignTop | Qt::AlignLeft);
+    grid->addWidget(minorlbl, i, 0, Qt::AlignTop);
+    grid->addWidget(useminor, i++, 1, Qt::AlignTop | Qt::AlignLeft);
     grid->addItem(new QSpacerItem(100, 100, QSizePolicy::Minimum, QSizePolicy::Expanding), i, 0);
     grid->addItem(new QSpacerItem(100, 100, QSizePolicy::Minimum, QSizePolicy::Expanding), i, 1);
     grid->addItem(new QSpacerItem(100, 100, QSizePolicy::Expanding, QSizePolicy::Expanding), i, 2);
