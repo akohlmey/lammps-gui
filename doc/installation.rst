@@ -44,7 +44,7 @@ LAMMPS-GUI requires CMake version 3.20 or later.
    - Fedora Linux 43 x86\_64 using GCC 14 and Clang 17, Qt version 5.15
    - Fedora Linux 43 x86\_64 using GCC 15, Qt version 6.10
    - Apple macOS 12 (Monterey) with Xcode on arm64 and x86\_64, Qt version 5.15
-   - Windows 11 x86_64 with Visual Studio 2026 and Visual C++ 14.40, Qt version 6.10
+   - Windows 11 x86_64 with Visual Studio 2026 and Visual C++ 14.50, Qt version 6.10
    - Windows 11 x86_64 with MinGW / GCC 15.2 cross-compiler on Fedora 43, Qt version 6.10
 
 Pre-compiled executables
