@@ -2397,11 +2397,7 @@ void LammpsGui::start_lammps()
     lammps.open(narg, args);
     lammpsstatus->show();
 
-    // Must have a LAMMPS version that was released after the 22 July 2025 version
-    /*
-     .. versionchanged:: TBD
-        must update this check before next feature release
-    */
+    // Must have a LAMMPS version that was released after the 22 July 2025 stable version
     if (lammps.version() < 20250722) {
         critical(this, "LAMMPS-GUI Error", "Incompatible LAMMPS Version:",
                  "LAMMPS-GUI version " LAMMPS_GUI_VERSION " requires\n"

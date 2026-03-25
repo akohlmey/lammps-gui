@@ -370,6 +370,7 @@ ImageViewer::ImageViewer(const QString &fileName, LammpsWrapper *_lammps, QWidge
     atomdiam    = settings.value("diameter", "type").toString();
     bondcolor   = settings.value("bondcolor", "atom").toString();
     bonddiam    = settings.value("bonddiam", "type").toString();
+    // support for bodies colored by atom property was added after LAMMPS version 11 Feb 2026
     if (lammps->version() < 20260212) {
         bodycolor      = "type";
         ellipsoidcolor = "type";
@@ -938,6 +939,7 @@ void ImageViewer::acolor_sync()
 
     if (src && acolor && bcolor && ecolor && lcolor && tcolor) {
         if (src == acolor) {
+            // support coloring by atom property was added after LAMMPS version 11 Feb 2026
             if (lammps->version() > 20260211) {
                 if (src->currentText() != "type") {
                     for (auto *box : {bcolor, ecolor, lcolor, tcolor}) {
@@ -1204,6 +1206,7 @@ void ImageViewer::global_settings()
     btrans->setValidator(transvalidator);
     btrans->setMaximumWidth(fwidth * 3 / 2);
     layout->addWidget(btrans, idx++, n++, 1, 1);
+    // disable and uncheck unsupported fields for older LAMMPS versions
     if (lammps->version() < 20260211) {
         btrans->setEnabled(false);
     }
@@ -1236,6 +1239,7 @@ void ImageViewer::global_settings()
     b2color->setValidator(colorvalidator);
     b2color->setMaximumWidth(fwidth);
     layout->addWidget(b2color, idx++, n++, 1, 1);
+    // disable and uncheck unsupported fields for older LAMMPS versions
     if (lammps->version() < 20260211) {
         b2color->setEnabled(false);
         b2color->setText(backcolor);
@@ -1439,6 +1443,7 @@ void ImageViewer::atom_settings()
     auto *atrans = new QLineEdit(QString::number(atomtrans));
     atrans->setValidator(transvalidator);
     layout->addWidget(atrans, idx++, n++, 1, 1);
+    // disable and uncheck unsupported fields for older LAMMPS versions
     if (lammps->version() < 20260211) atrans->setEnabled(false);
 
     n = 0;
@@ -2702,6 +2707,7 @@ void ImageViewer::createImage()
     if (!dofixes) dumpcmd += " noinit";
     dumpcmd += " modify boxcolor " + boxcolor;
     dumpcmd += " backcolor " + backcolor;
+    // support for background gradient was added in LAMMPS version 11 February 2026
     if (lammps->version() > 20260210) {
         dumpcmd += " backcolor2 " + backcolor2;
         dumpcmd += QString(" axestrans %1").arg(axestrans);
@@ -3046,8 +3052,8 @@ void ImageViewer::update_peratom()
 void ImageViewer::update_fixes()
 {
     if (!lammps) return;
-    // we can query for fixes before 10 December 2025, but there is no support
-    // for fix graphics until after that version. So the check is needed for this date.
+    // we can query for fixes and computes before 10 December 2025, but there is no support
+    // for dump image graphics until after that version. So the check is needed for this date.
     if (lammps->version() < 20251210) return;
 
     // remove any fixes that no longer exist. to avoid inconsistencies while looping
@@ -3115,6 +3121,7 @@ void ImageViewer::update_fixes()
 void ImageViewer::update_regions()
 {
     if (!lammps) return;
+    // support for visualizing regions became available in LAMMPS version 10 September 2025
     if (lammps->version() < 20250910) return;
 
     // remove any regions that no longer exist. to avoid inconsistencies while looping
@@ -3150,6 +3157,7 @@ void ImageViewer::update_regions()
 bool ImageViewer::has_autobonds()
 {
     if (!lammps) return false;
+    // support for dynamic bond visualization became available in LAMMPS version 10 September 2025
     if (lammps->version() < 20250910) return false;
     const auto *pair_style = (const char *)lammps->extract_global("pair_style");
     if (!pair_style) return false;
