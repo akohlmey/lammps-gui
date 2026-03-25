@@ -777,10 +777,10 @@ void LammpsGui::update_variables()
 {
     const auto doc = ui->textEdit->toPlainText().replace('\t', ' ').split('\n');
     QStringList known;
-    QRegularExpression indexvar("^\\s*variable\\s+(\\w+)\\s+index\\s+(.*)");
-    QRegularExpression anyvar("^\\s*variable\\s+(\\w+)\\s+(\\w+)\\s+(.*)");
-    QRegularExpression usevar("(\\$(\\w)|\\${(\\w+)})");
-    QRegularExpression refvar("v_(\\w+)");
+    QRegularExpression indexvar(R"(^\s*variable\s+(\w+)\s+index\s+(.*))");
+    QRegularExpression anyvar(R"(^\s*variable\s+(\w+)\s+(\w+)\s+(.*))");
+    QRegularExpression usevar(R"((\$(\w)|\${(\w+)}))");
+    QRegularExpression refvar(R"(v_(\\w+))");
 
     // forget previously listed variables
     variables.clear();
@@ -1648,7 +1648,8 @@ void LammpsGui::render_image()
             // add a run 0 and thus create the state of the initial system without running.
             // this will allow us to create a snapshot image.
             auto saved = ui->textEdit->textCursor();
-            if (ui->textEdit->find(QRegularExpression(QStringLiteral("^\\s*(run|minimize)\\s+")))) {
+            if (ui->textEdit->find(
+                    QRegularExpression(QStringLiteral(R"(^\s*(run|minimize)\s+)")))) {
                 auto cursor = ui->textEdit->textCursor();
                 cursor.movePosition(QTextCursor::PreviousBlock);
                 cursor.movePosition(QTextCursor::EndOfLine);

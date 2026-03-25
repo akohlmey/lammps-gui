@@ -3082,7 +3082,7 @@ void ImageViewer::update_fixes()
     capturer.EndCapture();
     QString styleinfo(capturer.GetCapture().c_str());
     QRegularExpression infoline(
-        QStringLiteral("^(Compute|Fix)\\[.*\\]: *([^,]+), *style = ([^,]+).*"));
+        QStringLiteral(R"(^(Compute|Fix)\[.*\]: *([^,]+), *style = ([^,]+).*)"));
     QRegularExpression newline(QStringLiteral("[\r\n]+"));
     int i = 0;
     for (const auto &line : styleinfo.split(newline, Qt::SkipEmptyParts)) {
