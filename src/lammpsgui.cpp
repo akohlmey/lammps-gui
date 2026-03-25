@@ -1007,9 +1007,8 @@ void LammpsGui::inspect_file(const QString &fileName)
 
     // LAMMPS is not re-entrant, so we can only query LAMMPS when it is not running a simulation
     if (!lammps.is_running()) {
-
-        silence_stdout();
         start_lammps();
+        silence_stdout();
         lammps.command("clear");
         clear_variables();
         lammps.command(QString("read_restart %1").arg(fileName));
@@ -1616,9 +1615,7 @@ void LammpsGui::render_image()
 {
     // LAMMPS is not re-entrant, so we can only query LAMMPS when it is not running
     if (!lammps.is_running()) {
-        silence_stdout();
         start_lammps();
-        restore_stdout();
         if (!lammps.extract_setting("box_exist")) {
             // there is no current system defined yet.
             // so we select the input from the start to the first run or minimize command
