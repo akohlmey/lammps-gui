@@ -375,7 +375,7 @@ void silence_stdout()
     saved_stdout_fd = mydup(fileno(stdout));
     if (saved_stdout_fd == -1) return;
 
-    int devnull = myopen(NULL_DEVICE, O_WRONLY);
+    int devnull = myopen(NULL_DEVICE, O_WRONLY, 0);
     if (devnull == -1) {
         myclose(saved_stdout_fd);
         saved_stdout_fd = -1;
