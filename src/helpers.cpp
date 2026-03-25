@@ -29,15 +29,22 @@
 #include <QTemporaryFile>
 #include <QWidget>
 
+// define consistent function aliases to avoid complications from pre-processing
 #ifdef _WIN32
 #include <io.h>
-#define dup _dup
-#define dup2 _dup2
-#define fileno _fileno
-#define close _close
-#define open _open
+const auto &mydup    = _dup;
+const auto &mydup2   = _dup2;
+const auto &myfileno = _fileno;
+const auto &myclose  = _close;
+const auto &myopen   = _open;
 #else
+#include <fcntl.h>
 #include <unistd.h>
+const auto &mydup    = dup;
+const auto &mydup2   = dup2;
+const auto &myfileno = fileno;
+const auto &myclose  = close;
+const auto &myopen   = open;
 #endif
 
 #include <cstdio>
@@ -55,14 +62,14 @@ constexpr char NULL_DEVICE[] = "/dev/null";
 constexpr char TTY_DEVICE[]  = "/dev/tty";
 #endif
 
-int saved_stdout_fd     = -1;
-bool stdout_silenced    = false;
-bool capture_is_active  = false;
+int saved_stdout_fd    = -1;
+bool stdout_silenced   = false;
+bool capture_is_active = false;
 } // namespace
 
 // will be allocated and initialized in main() to avoid segfault on macOS
 QFont *GUI_MONOFONT = nullptr;
-QFont *GUI_ALLFONT = nullptr;
+QFont *GUI_ALLFONT  = nullptr;
 
 // duplicate string, STL version
 char *mystrdup(const std::string &text)
@@ -365,17 +372,17 @@ void silence_stdout()
 {
     if (capture_is_active || stdout_silenced) return;
 
-    saved_stdout_fd = dup(fileno(stdout));
+    saved_stdout_fd = mydup(fileno(stdout));
     if (saved_stdout_fd == -1) return;
 
-    int devnull = open(NULL_DEVICE, O_WRONLY);
+    int devnull = myopen(NULL_DEVICE, O_WRONLY);
     if (devnull == -1) {
-        close(saved_stdout_fd);
+        myclose(saved_stdout_fd);
         saved_stdout_fd = -1;
         return;
     }
-    dup2(devnull, fileno(stdout));
-    close(devnull);
+    mydup2(devnull, myfileno(stdout));
+    myclose(devnull);
     stdout_silenced = true;
 }
 
@@ -385,8 +392,8 @@ void restore_stdout()
 {
     if (!stdout_silenced || saved_stdout_fd == -1) return;
 
-    dup2(saved_stdout_fd, fileno(stdout));
-    close(saved_stdout_fd);
+    mydup2(saved_stdout_fd, myfileno(stdout));
+    myclose(saved_stdout_fd);
     saved_stdout_fd = -1;
     stdout_silenced = false;
 }
