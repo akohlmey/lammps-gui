@@ -564,7 +564,9 @@ void LammpsGui::new_document()
     imagewindow = nullptr;
     varwindow   = nullptr;
 
+    silence_stdout();
     lammps.close();
+    restore_stdout();
     lammpsstatus->hide();
     setWindowTitle("LAMMPS-GUI - Editor - *unknown*");
     run_counter = 0;
@@ -646,7 +648,9 @@ void LammpsGui::start_exe()
                     vmdfile.write(".psf}\n");
                     vmdfile.close();
                     args << "-e" << vmdfile.fileName();
+                    silence_stdout();
                     lammps.command(datacmd);
+                    restore_stdout();
                     auto *vmd = new QProcess(this);
                     vmd->start(exe, args);
                 } else {
@@ -658,7 +662,9 @@ void LammpsGui::start_exe()
             if (exe == "ovito") {
                 QStringList args;
                 args << datafile.fileName();
+                silence_stdout();
                 lammps.command(datacmd);
+                restore_stdout();
                 auto *ovito = new QProcess(this);
                 ovito->start(exe, args);
             }
@@ -820,7 +826,9 @@ void LammpsGui::open_file(const QString &fileName)
     slideshow   = nullptr;
     imagewindow = nullptr;
     varwindow   = nullptr;
+    silence_stdout();
     lammps.close();
+    restore_stdout();
 
     purge_inspect_list();
     ui->textEdit->setStyleSheet("");
@@ -893,7 +901,9 @@ void LammpsGui::open_file(const QString &fileName)
     cpuuse->hide();
 
     update_variables();
+    silence_stdout();
     lammps.close();
+    restore_stdout();
 }
 
 // open file in read-only mode for viewing in separate window
@@ -998,10 +1008,12 @@ void LammpsGui::inspect_file(const QString &fileName)
     // LAMMPS is not re-entrant, so we can only query LAMMPS when it is not running a simulation
     if (!lammps.is_running()) {
 
+        silence_stdout();
         start_lammps();
         lammps.command("clear");
         clear_variables();
         lammps.command(QString("read_restart %1").arg(fileName));
+        restore_stdout();
         capturer->BeginCapture();
         lammps.command("info system group compute fix");
         capturer->EndCapture();
@@ -1017,7 +1029,9 @@ void LammpsGui::inspect_file(const QString &fileName)
             infoviewer->show();
             ilist->info = infoviewer;
             dumpinfo.remove();
+            silence_stdout();
             lammps.command(QString("write_data %1 pair ij noinit").arg(infodata));
+            restore_stdout();
             auto *dataviewer =
                 new FileViewer(infodata, QString("LAMMPS-GUI: data file for %1").arg(shortName));
             dataviewer->show();
@@ -1088,7 +1102,9 @@ void LammpsGui::quit()
     }
 
     // close LAMMPS instance
+    silence_stdout();
     lammps.close();
+    restore_stdout();
     lammpsstatus->hide();
     lammps.finalize();
 
@@ -1454,7 +1470,9 @@ void LammpsGui::restart_lammps()
         warning(this, "LAMMPS-GUI Warning", "Must stop current run before relaunching LAMMPS");
         return;
     }
+    silence_stdout();
     lammps.close();
+    restore_stdout();
 };
 
 void LammpsGui::do_run(bool use_buffer)
@@ -1598,7 +1616,9 @@ void LammpsGui::render_image()
 {
     // LAMMPS is not re-entrant, so we can only query LAMMPS when it is not running
     if (!lammps.is_running()) {
+        silence_stdout();
         start_lammps();
+        restore_stdout();
         if (!lammps.extract_setting("box_exist")) {
             // there is no current system defined yet.
             // so we select the input from the start to the first run or minimize command
@@ -1613,9 +1633,11 @@ void LammpsGui::render_image()
                 auto selection = cursor.selectedText().replace(QChar(0x2029), '\n');
                 selection += "\nrun 0 pre yes post no";
                 ui->textEdit->setTextCursor(saved);
+                silence_stdout();
                 lammps.command("clear");
                 clear_variables();
                 lammps.commands_string(selection);
+                restore_stdout();
 
                 if (lammps.has_error()) {
                     char errormesg[DEFAULT_BUFLEN];
@@ -2199,7 +2221,9 @@ void LammpsGui::edit_variables()
             runner->wait();
             delete runner;
         }
+        silence_stdout();
         lammps.close();
+        restore_stdout();
         lammpsstatus->hide();
     }
 }
@@ -2244,7 +2268,9 @@ void LammpsGui::preferences()
                 runner->wait();
                 delete runner;
             }
+            silence_stdout();
             lammps.close();
+            restore_stdout();
             lammpsstatus->hide();
             // reset nthreads if accelerator does not support threads
             if ((newaccel == AcceleratorTab::Opt) || (newaccel == AcceleratorTab::None))
