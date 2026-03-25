@@ -29,6 +29,9 @@
 #include <QTemporaryFile>
 #include <QWidget>
 
+#include <cstdio>
+#include <fcntl.h>
+
 // define consistent function aliases to avoid complications from pre-processing
 #ifdef _WIN32
 #include <io.h>
@@ -38,7 +41,6 @@ const auto &myfileno = _fileno;
 const auto &myclose  = _close;
 const auto &myopen   = _open;
 #else
-#include <fcntl.h>
 #include <unistd.h>
 const auto &mydup    = dup;
 const auto &mydup2   = dup2;
@@ -46,9 +48,6 @@ const auto &myfileno = fileno;
 const auto &myclose  = close;
 const auto &myopen   = open;
 #endif
-
-#include <cstdio>
-#include <fcntl.h>
 
 namespace {
 const QStringList months({"Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct",
@@ -63,6 +62,7 @@ constexpr char TTY_DEVICE[]  = "/dev/tty";
 #endif
 
 int saved_stdout_fd    = -1;
+int silenced_counter   = 0;
 bool stdout_silenced   = false;
 bool capture_is_active = false;
 } // namespace
@@ -370,9 +370,11 @@ bool is_light_theme()
 
 void silence_stdout()
 {
+    ++silenced_counter;
     if (capture_is_active || stdout_silenced) return;
 
-    saved_stdout_fd = mydup(fileno(stdout));
+    fflush(stdout);
+    saved_stdout_fd = mydup(myfileno(stdout));
     if (saved_stdout_fd == -1) return;
 
     int devnull = myopen(NULL_DEVICE, O_WRONLY, 0);
@@ -390,8 +392,10 @@ void silence_stdout()
 
 void restore_stdout()
 {
-    if (!stdout_silenced || saved_stdout_fd == -1) return;
+    --silenced_counter;
+    if (!stdout_silenced || (saved_stdout_fd == -1) || (silenced_counter > 0)) return;
 
+    fflush(stdout);
     mydup2(saved_stdout_fd, myfileno(stdout));
     myclose(saved_stdout_fd);
     saved_stdout_fd = -1;
