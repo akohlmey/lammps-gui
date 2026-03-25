@@ -72,6 +72,7 @@ StdCapture::StdCapture() : m_oldStdOut(0), m_capturing(false), maxread(0), buf(n
 
 StdCapture::~StdCapture()
 {
+    notify_capture_state(false);
     delete[] buf;
     if (m_oldStdOut > 0) close(m_oldStdOut);
     if (m_pipe[READ] > 0) close(m_pipe[READ]);
