@@ -17,6 +17,7 @@
 #include <QCoreApplication>
 #include <QString>
 
+#include <cstdio>
 #include <cstring>
 #include <string>
 #include <vector>
