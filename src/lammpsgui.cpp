@@ -120,31 +120,35 @@ LammpsGui::LammpsGui(QWidget *parent, const QString &filename, int width, int he
     QSettings settings;
 
 #if defined(LAMMPS_GUI_USE_PLUGIN)
+    // first try to load from existing setting
     plugin_path = settings.value("plugin_path", "").toString();
     if (!plugin_path.isEmpty()) {
         // make canonical and try loading; reset to empty string if loading failed
         plugin_path = QFileInfo(plugin_path).canonicalFilePath();
-        if (!lammps.load_lib(plugin_path)) plugin_path.clear();
+        if (!lammps.load_lib(plugin_path)) {
+            plugin_path.clear();
+            // could not load successfully -> remove any existing setting.
+            settings.remove("plugin_path");
+        }
     }
 
     if (plugin_path.isEmpty()) {
-        // no plugin configured or could not load successfully: remove any setting, if present
-        settings.remove("plugin_path");
-
-        // construct list of possible standard choices for the shared library file:
-        // we prefer the current directory, then the dynamic library path, then system folders
-
+        // construct list of possible standard choices for the shared library file
+        // we prefer the current directory, then the dynamic library path, then some system folders
+        // adapt file pattern and paths to the different operating systems
         QStringList dirlist{"."};
 #if defined(Q_OS_MACOS)
         QStringList filter("liblammps*.dylib");
         dirlist.append(
             QString::fromLocal8Bit(qgetenv("DYLD_LIBRARY_PATH")).split(":", Qt::SkipEmptyParts));
-        dirlist.append({"/Applications/LAMMPS.app/Contents/Frameworks",
-                        "/Applications/LAMMPS-GUI.app/Contents/Frameworks"});
+        // library may be included in an application bundle:
+        dirlist.append({"/Applications/LAMMPS-GUI.app/Contents/Frameworks",
+                        "/Applications/LAMMPS.app/Contents/Frameworks"});
 #elif defined(Q_OS_WIN32)
         QStringList filter("liblammps*.dll");
         dirlist.append(QString::fromLocal8Bit(qgetenv("PATH")).split(";", Qt::SkipEmptyParts));
 #else
+        // for Linux and other unix-like systems
         QStringList filter("liblammps*.so*");
         dirlist.append(
             QString::fromLocal8Bit(qgetenv("LD_LIBRARY_PATH")).split(":", Qt::SkipEmptyParts));
@@ -170,23 +174,45 @@ LammpsGui::LammpsGui(QWidget *parent, const QString &filename, int width, int he
             }
         }
 
+        // plugin path has been reset. Open file browser to select one a file interactively.
         if (plugin_path.isEmpty()) {
-            // none of the plugin paths could load, remove key
-            settings.remove("plugin_path");
-            critical(this, "LAMMPS-GUI Error",
-                     "Cannot open the LAMMPS shared library file or the provided path has an "
-                     "a file with an incompatible LAMMPS version.",
-                     "Please try again and use the -p command line flag to specify a path to "
-                     "a suitable LAMMPS shared library file.");
-            exit(1);
+#if defined(Q_OS_MACOS)
+            const QString pattern = "LAMMPS shared library (liblammps*.dylib)";
+#elif defined(Q_OS_WIN32)
+            const QString pattern = "LAMMPS shared library (liblammps*.dll)";
+#else
+            const QString pattern = "LAMMPS shared library (liblammps*.so*)";
+#endif
+            QString pluginfile = QFileDialog::getOpenFileName(
+                this, "Select LAMMPS shared library to use", ".", pattern, nullptr,
+                QFileDialog::DontResolveSymlinks | QFileDialog::ReadOnly);
+            if (!pluginfile.isEmpty() && pluginfile.contains("liblammps", Qt::CaseSensitive)) {
+                auto canonical = QFileInfo(pluginfile).canonicalFilePath();
+                settings.setValue("plugin_path", canonical);
+                settings.sync();
+                // must re-launch LAMMPS-GUI to cleanly load the selected new plugin
+                // without overlaps from other load attempts
+                const char *path = mystrdup(QCoreApplication::applicationFilePath());
+                const char *arg0 = mystrdup(QCoreApplication::arguments().at(0));
+                execl(path, arg0, (char *)nullptr);
+            }
         }
 
-        // must re-launch LAMMPS-GUI to cleanly load the new plugin without overlaps from others.
-        const char *path = mystrdup(QCoreApplication::applicationFilePath());
-        const char *arg0 = mystrdup(QCoreApplication::arguments().at(0));
-        execl(path, arg0, (char *)nullptr);
-        // cannot continue without a path to the LAMMPS library
-        if (plugin_path.isEmpty()) exit(1);
+        // plugin_path was not changed interactively and not suitable plugin exists.
+        // print warning dialog and exit.
+        if (plugin_path.isEmpty()) {
+            // remove key so we won't get stuck in a loop reading a bad file
+            settings.remove("plugin_path");
+            critical(this, "LAMMPS-GUI Error", "No suitable LAMMPS shared library file loaded.",
+                     "<p align=\"justify\">Either no LAMMPS shared library file has been "
+                     "selected, or no compatible LAMMPS shared library file path has been "
+                     "provided, or the provided path has a file with an incompatible LAMMPS "
+                     "version, or some depended shared library files are not found.</p>"
+                     "<p align=\"justify\">Please try again and either use the -p command line "
+                     "flag to specify a path to a suitable LAMMPS shared library file or select "
+                     "one from the file browser dialog.");
+            exit(1);
+        }
     }
 #endif
 

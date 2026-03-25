@@ -86,10 +86,13 @@ int main(int argc, char *argv[])
 #if defined(LAMMPS_GUI_USE_PLUGIN)
     if (parser.isSet(plugindir)) {
         QStringList pluginpath = parser.values(plugindir);
+        QSettings settings;
         if (pluginpath.length() > 0) {
-            QSettings settings;
             settings.setValue("plugin_path", QFileInfo(pluginpath.at(0)).canonicalFilePath());
             settings.sync();
+        } else {
+            // empty string provided -> delete any old setting
+            settings.remove("plugin_path");
         }
     }
 #endif
