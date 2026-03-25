@@ -3,7 +3,7 @@
 Thank you for considering to contribute to the LAMMPS-GUI software.
 
 The following is a set of guidelines as well as explanations of policies
-and work flows for contributing to the LAMMPS molecular dynamics
+and workflows for contributing to the LAMMPS molecular dynamics
 software project. These guidelines focus on submitting issues or pull
 requests on the LAMMPS-GUI GitHub project.
 
@@ -16,10 +16,6 @@ requests on the LAMMPS-GUI GitHub project.
 * [Reporting Bugs](#reporting-bugs)
 * [Suggesting Enhancements](#suggesting-enhancements)
 * [Contributing Code](#contributing-code)
-
-[GitHub Work flows](#github-workflows)
-* [Issues](#issues)
-* [Pull Requests](#pull-requests)
 
 __
 

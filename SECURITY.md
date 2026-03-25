@@ -12,7 +12,7 @@ in the most reasonable manner and avoiding unexpected behavior, but
 given the flexibility of LAMMPS, there is always a risk (as with any
 graphical application). 
 
-Thus is is quite easy to crash LAMMPS and LAMMPS-GUI through malicious
+Thus it is quite easy to crash LAMMPS and LAMMPS-GUI through malicious
 input and do all kinds of file system manipulations.  And because of
 that LAMMPS should **NEVER** be compiled or **run** as superuser, either
 from a "root" or "administrator" account directly or indirectly via
@@ -31,9 +31,9 @@ always fully functional and employ a variety of automatic testing
 procedures to detect failures of existing functionality from adding or
 modifying features.  Since advanced functionality in LAMMPS-GUI depends
 on features in LAMMPS, there is only a limited window of compatibility.
-Modern verisions of LAMMPS-GUI will check which LAMMPS version is
-used and will refuse to work with too old versions and disable
-functionality depending on more recent LAMMPS versions.
+Modern versions of LAMMPS-GUI will check which LAMMPS version is used
+and will refuse to work with too old versions and disable functionality
+depending on more recent LAMMPS versions.
 
 
 # Integrity of Downloaded Archives
@@ -41,10 +41,10 @@ functionality depending on more recent LAMMPS versions.
 For *all* files that can be downloaded from the "lammps.org" web server
 we provide SHA-256 checksum data in files named SHA256SUM.  These
 checksums can be used to validate the integrity of the downloaded
-archives.  Please note that we also use symbolic links to point to
-the latest or stable releases and the checksums for those files
- *will* change (and so their checksums) because the symbolic links
-will be updated for new releases.
+archives.  Please note that we also use symbolic links to point to the
+latest or stable releases and the checksums for those files *will*
+change (and so their checksums) because the symbolic links will be
+updated for new releases.
 
 # Immutable GitHub Releases
 
