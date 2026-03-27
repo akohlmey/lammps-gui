@@ -254,6 +254,11 @@ void ChartWindow::reset_charts()
     columns->clear();
 }
 
+void ChartWindow::reset_zoom() {
+    for (auto &c : charts)
+        c->reset_zoom();
+}
+
 void ChartWindow::add_chart(const QString &title, int index)
 {
     auto *chart = new ChartViewer(title, index);

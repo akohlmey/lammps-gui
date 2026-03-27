@@ -1451,6 +1451,7 @@ void LammpsGui::run_done()
                 chartwindow->add_data(step, data, i);
             }
         }
+        chartwindow->reset_zoom();
     }
 
     bool success = true;

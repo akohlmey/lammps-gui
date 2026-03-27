@@ -82,6 +82,14 @@ public:
     void reset_charts();
 
     /**
+     * @brief Manually update chart display zoom status
+     *
+     * This is needed at an end of a run when the run finishes too quickly
+     * and the regular chart update has not yet triggered.
+     */
+    void reset_zoom();
+
+    /**
      * @brief Add a new chart to the window
      * @param title Chart title (thermodynamic property name)
      * @param index Chart index
