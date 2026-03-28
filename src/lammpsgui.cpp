@@ -120,31 +120,35 @@ LammpsGui::LammpsGui(QWidget *parent, const QString &filename, int width, int he
     QSettings settings;
 
 #if defined(LAMMPS_GUI_USE_PLUGIN)
+    // first try to load from existing setting
     plugin_path = settings.value("plugin_path", "").toString();
     if (!plugin_path.isEmpty()) {
         // make canonical and try loading; reset to empty string if loading failed
         plugin_path = QFileInfo(plugin_path).canonicalFilePath();
-        if (!lammps.load_lib(plugin_path)) plugin_path.clear();
+        if (!lammps.load_lib(plugin_path)) {
+            plugin_path.clear();
+            // could not load successfully -> remove any existing setting.
+            settings.remove("plugin_path");
+        }
     }
 
     if (plugin_path.isEmpty()) {
-        // no plugin configured or could not load successfully: remove any setting, if present
-        settings.remove("plugin_path");
-
-        // construct list of possible standard choices for the shared library file:
-        // we prefer the current directory, then the dynamic library path, then system folders
-
+        // construct list of possible standard choices for the shared library file
+        // we prefer the current directory, then the dynamic library path, then some system folders
+        // adapt file pattern and paths to the different operating systems
         QStringList dirlist{"."};
 #if defined(Q_OS_MACOS)
         QStringList filter("liblammps*.dylib");
         dirlist.append(
             QString::fromLocal8Bit(qgetenv("DYLD_LIBRARY_PATH")).split(":", Qt::SkipEmptyParts));
-        dirlist.append({"/Applications/LAMMPS.app/Contents/Frameworks",
-                        "/Applications/LAMMPS-GUI.app/Contents/Frameworks"});
+        // library may be included in an application bundle:
+        dirlist.append({"/Applications/LAMMPS-GUI.app/Contents/Frameworks",
+                        "/Applications/LAMMPS.app/Contents/Frameworks"});
 #elif defined(Q_OS_WIN32)
         QStringList filter("liblammps*.dll");
         dirlist.append(QString::fromLocal8Bit(qgetenv("PATH")).split(";", Qt::SkipEmptyParts));
 #else
+        // for Linux and other unix-like systems
         QStringList filter("liblammps*.so*");
         dirlist.append(
             QString::fromLocal8Bit(qgetenv("LD_LIBRARY_PATH")).split(":", Qt::SkipEmptyParts));
@@ -170,23 +174,49 @@ LammpsGui::LammpsGui(QWidget *parent, const QString &filename, int width, int he
             }
         }
 
+        // plugin path has been reset. Open file browser to select a file interactively.
         if (plugin_path.isEmpty()) {
-            // none of the plugin paths could load, remove key
-            settings.remove("plugin_path");
-            critical(this, "LAMMPS-GUI Error",
-                     "Cannot open the LAMMPS shared library file or the provided path has an "
-                     "a file with an incompatible LAMMPS version.",
-                     "Please try again and use the -p command line flag to specify a path to "
-                     "a suitable LAMMPS shared library file.");
-            exit(1);
+#if defined(Q_OS_MACOS)
+            const QString pattern = "LAMMPS shared library (liblammps*.dylib)";
+#elif defined(Q_OS_WIN32)
+            const QString pattern = "LAMMPS shared library (liblammps*.dll)";
+#else
+            const QString pattern = "LAMMPS shared library (liblammps*.so*)";
+#endif
+            QString pluginfile = QFileDialog::getOpenFileName(
+                this, "Select LAMMPS shared library to use", ".", pattern, nullptr,
+                QFileDialog::DontResolveSymlinks | QFileDialog::ReadOnly);
+            if (!pluginfile.isEmpty() && pluginfile.contains("liblammps", Qt::CaseSensitive)) {
+                auto canonical = QFileInfo(pluginfile).canonicalFilePath();
+                settings.setValue("plugin_path", canonical);
+                settings.sync();
+                // must re-launch LAMMPS-GUI to cleanly load the selected new plugin
+                // without overlaps from other load attempts
+                const char *path = mystrdup(QCoreApplication::applicationFilePath());
+                const char *arg0 = mystrdup(QCoreApplication::arguments().at(0));
+                execl(path, arg0, (char *)nullptr);
+                critical(this, "LAMMPS-GUI Error", "Relaunching LAMMPS-GUI failed.",
+                         "LAMMPS-GUI must be restarted to correctly load the selected "
+                         "LAMMPS shared library. Click on 'Close' to exit.");
+                exit(1);
+            }
         }
 
-        // must re-launch LAMMPS-GUI to cleanly load the new plugin without overlaps from others.
-        const char *path = mystrdup(QCoreApplication::applicationFilePath());
-        const char *arg0 = mystrdup(QCoreApplication::arguments().at(0));
-        execl(path, arg0, (char *)nullptr);
-        // cannot continue without a path to the LAMMPS library
-        if (plugin_path.isEmpty()) exit(1);
+        // plugin_path was not changed interactively and not suitable plugin exists.
+        // print warning dialog and exit.
+        if (plugin_path.isEmpty()) {
+            // remove key so we won't get stuck in a loop reading a bad file
+            settings.remove("plugin_path");
+            critical(this, "LAMMPS-GUI Error", "No suitable LAMMPS shared library file loaded.",
+                     "<p align=\"justify\">Either no LAMMPS shared library file has been "
+                     "selected, or no compatible LAMMPS shared library file path has been "
+                     "provided, or the provided path has a file with an incompatible LAMMPS "
+                     "version, or some dependent shared library files are not found.</p>"
+                     "<p align=\"justify\">Please try again and either use the -p command line "
+                     "flag to specify a path to a suitable LAMMPS shared library file or select "
+                     "one from the file browser dialog.");
+            exit(1);
+        }
     }
 #endif
 
@@ -564,7 +594,9 @@ void LammpsGui::new_document()
     imagewindow = nullptr;
     varwindow   = nullptr;
 
+    silence_stdout();
     lammps.close();
+    restore_stdout();
     lammpsstatus->hide();
     setWindowTitle("LAMMPS-GUI - Editor - *unknown*");
     run_counter = 0;
@@ -646,7 +678,9 @@ void LammpsGui::start_exe()
                     vmdfile.write(".psf}\n");
                     vmdfile.close();
                     args << "-e" << vmdfile.fileName();
+                    silence_stdout();
                     lammps.command(datacmd);
+                    restore_stdout();
                     auto *vmd = new QProcess(this);
                     vmd->start(exe, args);
                 } else {
@@ -658,7 +692,9 @@ void LammpsGui::start_exe()
             if (exe == "ovito") {
                 QStringList args;
                 args << datafile.fileName();
+                silence_stdout();
                 lammps.command(datacmd);
+                restore_stdout();
                 auto *ovito = new QProcess(this);
                 ovito->start(exe, args);
             }
@@ -745,10 +781,10 @@ void LammpsGui::update_variables()
 {
     const auto doc = ui->textEdit->toPlainText().replace('\t', ' ').split('\n');
     QStringList known;
-    QRegularExpression indexvar("^\\s*variable\\s+(\\w+)\\s+index\\s+(.*)");
-    QRegularExpression anyvar("^\\s*variable\\s+(\\w+)\\s+(\\w+)\\s+(.*)");
-    QRegularExpression usevar("(\\$(\\w)|\\${(\\w+)})");
-    QRegularExpression refvar("v_(\\w+)");
+    QRegularExpression indexvar(R"(^\s*variable\s+(\w+)\s+index\s+(.*))");
+    QRegularExpression anyvar(R"(^\s*variable\s+(\w+)\s+(\w+)\s+(.*))");
+    QRegularExpression usevar(R"((\$(\w)|\${(\w+)}))");
+    QRegularExpression refvar(R"(v_(\w+))");
 
     // forget previously listed variables
     variables.clear();
@@ -820,7 +856,9 @@ void LammpsGui::open_file(const QString &fileName)
     slideshow   = nullptr;
     imagewindow = nullptr;
     varwindow   = nullptr;
+    silence_stdout();
     lammps.close();
+    restore_stdout();
 
     purge_inspect_list();
     ui->textEdit->setStyleSheet("");
@@ -893,7 +931,9 @@ void LammpsGui::open_file(const QString &fileName)
     cpuuse->hide();
 
     update_variables();
+    silence_stdout();
     lammps.close();
+    restore_stdout();
 }
 
 // open file in read-only mode for viewing in separate window
@@ -997,11 +1037,12 @@ void LammpsGui::inspect_file(const QString &fileName)
 
     // LAMMPS is not re-entrant, so we can only query LAMMPS when it is not running a simulation
     if (!lammps.is_running()) {
-
         start_lammps();
+        silence_stdout();
         lammps.command("clear");
         clear_variables();
         lammps.command(QString("read_restart %1").arg(fileName));
+        restore_stdout();
         capturer->BeginCapture();
         lammps.command("info system group compute fix");
         capturer->EndCapture();
@@ -1017,7 +1058,9 @@ void LammpsGui::inspect_file(const QString &fileName)
             infoviewer->show();
             ilist->info = infoviewer;
             dumpinfo.remove();
+            silence_stdout();
             lammps.command(QString("write_data %1 pair ij noinit").arg(infodata));
+            restore_stdout();
             auto *dataviewer =
                 new FileViewer(infodata, QString("LAMMPS-GUI: data file for %1").arg(shortName));
             dataviewer->show();
@@ -1088,7 +1131,9 @@ void LammpsGui::quit()
     }
 
     // close LAMMPS instance
+    silence_stdout();
     lammps.close();
+    restore_stdout();
     lammpsstatus->hide();
     lammps.finalize();
 
@@ -1410,6 +1455,7 @@ void LammpsGui::run_done()
                 chartwindow->add_data(step, data, i);
             }
         }
+        chartwindow->reset_zoom();
     }
 
     bool success = true;
@@ -1454,7 +1500,9 @@ void LammpsGui::restart_lammps()
         warning(this, "LAMMPS-GUI Warning", "Must stop current run before relaunching LAMMPS");
         return;
     }
+    silence_stdout();
     lammps.close();
+    restore_stdout();
 };
 
 void LammpsGui::do_run(bool use_buffer)
@@ -1605,7 +1653,8 @@ void LammpsGui::render_image()
             // add a run 0 and thus create the state of the initial system without running.
             // this will allow us to create a snapshot image.
             auto saved = ui->textEdit->textCursor();
-            if (ui->textEdit->find(QRegularExpression(QStringLiteral("^\\s*(run|minimize)\\s+")))) {
+            if (ui->textEdit->find(
+                    QRegularExpression(QStringLiteral(R"(^\s*(run|minimize)\s+)")))) {
                 auto cursor = ui->textEdit->textCursor();
                 cursor.movePosition(QTextCursor::PreviousBlock);
                 cursor.movePosition(QTextCursor::EndOfLine);
@@ -1613,9 +1662,11 @@ void LammpsGui::render_image()
                 auto selection = cursor.selectedText().replace(QChar(0x2029), '\n');
                 selection += "\nrun 0 pre yes post no";
                 ui->textEdit->setTextCursor(saved);
+                silence_stdout();
                 lammps.command("clear");
                 clear_variables();
                 lammps.commands_string(selection);
+                restore_stdout();
 
                 if (lammps.has_error()) {
                     char errormesg[DEFAULT_BUFLEN];
@@ -1998,11 +2049,11 @@ QWizardPage *LammpsGui::tutorial_directory(const int ntutorial)
     auto *purgeval = new QCheckBox("&Remove existing files from directory");
     auto *solval   = new QCheckBox("&Download solutions");
 
-    purgeval->setCheckState(Qt::Unchecked);
+    purgeval->setChecked(false);
     purgeval->setObjectName("t_dirpurge");
     layout->addWidget(purgeval, Qt::AlignVCenter | Qt::AlignLeft);
 
-    solval->setCheckState(settings.value("solution", false).toBool() ? Qt::Checked : Qt::Unchecked);
+    solval->setChecked(settings.value("solution", false).toBool());
     solval->setObjectName("t_getsolution");
     layout->addWidget(solval, Qt::AlignVCenter | Qt::AlignLeft);
 
@@ -2011,8 +2062,7 @@ QWizardPage *LammpsGui::tutorial_directory(const int ntutorial)
     QCheckBox *webval = nullptr;
     if ((ntutorial > 0) && (ntutorial < 9)) {
         webval = new QCheckBox("&Open tutorial webpage in web browser");
-        webval->setCheckState(settings.value("webpage", true).toBool() ? Qt::Checked
-                                                                       : Qt::Unchecked);
+        webval->setChecked(settings.value("webpage", true).toBool());
         webval->setObjectName("t_webopen");
         layout->addWidget(webval, Qt::AlignVCenter | Qt::AlignLeft);
     }
@@ -2200,7 +2250,9 @@ void LammpsGui::edit_variables()
             runner->wait();
             delete runner;
         }
+        silence_stdout();
         lammps.close();
+        restore_stdout();
         lammpsstatus->hide();
     }
 }
@@ -2245,7 +2297,9 @@ void LammpsGui::preferences()
                 runner->wait();
                 delete runner;
             }
+            silence_stdout();
             lammps.close();
+            restore_stdout();
             lammpsstatus->hide();
             // reset nthreads if accelerator does not support threads
             if ((newaccel == AcceleratorTab::Opt) || (newaccel == AcceleratorTab::None))
@@ -2372,11 +2426,7 @@ void LammpsGui::start_lammps()
     lammps.open(narg, args);
     lammpsstatus->show();
 
-    // Must have a LAMMPS version that was released after the 22 July 2025 version
-    /*
-     .. versionchanged:: TBD
-        must update this check before next feature release
-    */
+    // Must have a LAMMPS version that was released after the 22 July 2025 stable version
     if (lammps.version() < 20250722) {
         critical(this, "LAMMPS-GUI Error", "Incompatible LAMMPS Version:",
                  "LAMMPS-GUI version " LAMMPS_GUI_VERSION " requires\n"
@@ -2591,7 +2641,7 @@ void TutorialWizard::accept()
     bool openwebpage = false;
     QString curdir;
 
-    if (webopen) openwebpage = (webopen->checkState() == Qt::Checked);
+    if (webopen) openwebpage = webopen->isChecked();
 
     // create and populate directory.
     if (dirname) {
@@ -2607,8 +2657,8 @@ void TutorialWizard::accept()
             return;
         }
 
-        purgedir    = dirpurge && (dirpurge->checkState() == Qt::Checked);
-        getsolution = getsol && (getsol->checkState() == Qt::Checked);
+        purgedir    = dirpurge && dirpurge->isChecked();
+        getsolution = getsol && getsol->isChecked();
     }
     QDialog::accept();
 

@@ -328,7 +328,7 @@ COMPLETER_INIT_FUNC(extra, Extra)
 void CodeEditor::setGroupList()
 {
     QStringList groups;
-    QRegularExpression groupcmd(QStringLiteral("^\\s*group\\s+(\\S+)(\\s+|$)"));
+    QRegularExpression groupcmd(QStringLiteral(R"(^\s*group\s+(\S+)(\s+|$))"));
 
     auto saved = textCursor();
     // reposition cursor to beginning of text and search for group commands
@@ -367,7 +367,7 @@ void CodeEditor::setVarNameList()
         }
     }
 
-    QRegularExpression varcmd(QStringLiteral("^\\s*variable\\s+(\\S+)(\\s+|$)"));
+    QRegularExpression varcmd(QStringLiteral(R"(^\s*variable\s+(\S+)(\s+|$))"));
     auto saved = textCursor();
     // reposition cursor to beginning of text and search for group commands
     auto cursor = textCursor();
@@ -393,7 +393,7 @@ void CodeEditor::setVarNameList()
 void CodeEditor::setComputeIDList()
 {
     QStringList compid;
-    QRegularExpression compcmd(QStringLiteral("^\\s*compute\\s+(\\S+)\\s+"));
+    QRegularExpression compcmd(QStringLiteral(R"(^\s*compute\s+(\S+)\s+)"));
 
     auto saved = textCursor();
     // reposition cursor to beginning of text and search for group commands
@@ -418,7 +418,7 @@ void CodeEditor::setComputeIDList()
 void CodeEditor::setFixIDList()
 {
     QStringList fixid;
-    QRegularExpression fixcmd(QStringLiteral("^\\s*fix\\s+(\\S+)\\s+"));
+    QRegularExpression fixcmd(QStringLiteral(R"(^\s*fix\s+(\S+)\s+)"));
 
     auto saved = textCursor();
     // reposition cursor to beginning of text and search for group commands
@@ -1152,7 +1152,7 @@ void CodeEditor::find_help(QString &page, QString &help)
     // process line of text where the cursor is
     auto text = textCursor().block().text().replace('\t', ' ').trimmed();
     auto style =
-        QRegularExpression("^(pair|bond|angle|dihedral|improper)_style\\s+(\\S+)").match(text);
+        QRegularExpression(R"(^(pair|bond|angle|dihedral|improper)_style\s+(\S+))").match(text);
     help.clear();
     page.clear();
     if (style.hasMatch()) {
@@ -1174,7 +1174,7 @@ void CodeEditor::find_help(QString &page, QString &help)
         }
     }
 
-    style = QRegularExpression("^(fix|compute)\\s+\\w+\\s+\\w+\\s+(\\S+)").match(text);
+    style = QRegularExpression(R"(^(fix|compute)\s+\w+\s+\w+\s+(\S+))").match(text);
     if (style.hasMatch()) {
         help = QString("%1 %2").arg(style.captured(1), style.captured(2));
         if (style.captured(1) == "fix") {

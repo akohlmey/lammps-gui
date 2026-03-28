@@ -113,6 +113,44 @@ extern void purge_directory(const QString &dir);
  */
 extern bool is_light_theme();
 
+/**
+ * @brief Silence stdout by redirecting it to the null device
+ *
+ * Redirects stdout to /dev/null (Unix) or NUL: (Windows) to suppress
+ * all output.  Does nothing if StdCapture is currently active or if
+ * stdout is already silenced.
+ *
+ * @note Not thread-safe.  Must only be called from the main thread.
+ */
+extern void silence_stdout();
+
+/**
+ * @brief Restore stdout after it was silenced
+ *
+ * Restores the original stdout file descriptor that was saved by
+ * silence_stdout().  Does nothing if stdout is not currently silenced.
+ *
+ * @note Not thread-safe.  Must only be called from the main thread.
+ */
+extern void restore_stdout();
+
+/**
+ * @brief Check if stdout is currently silenced
+ * @return true if silence_stdout() is active, false otherwise
+ */
+extern bool is_stdout_silenced();
+
+/**
+ * @brief Notify the silence/restore system about StdCapture state changes
+ *
+ * Called by StdCapture to indicate whether it is actively capturing output.
+ * While capture is active, silence_stdout() becomes a no-op to avoid
+ * interfering with the capture pipe.
+ *
+ * @param active true when StdCapture starts capturing, false when it stops
+ */
+extern void notify_capture_state(bool active);
+
 #endif
 // Local Variables:
 // c-basic-offset: 4

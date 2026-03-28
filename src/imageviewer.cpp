@@ -370,6 +370,7 @@ ImageViewer::ImageViewer(const QString &fileName, LammpsWrapper *_lammps, QWidge
     atomdiam    = settings.value("diameter", "type").toString();
     bondcolor   = settings.value("bondcolor", "atom").toString();
     bonddiam    = settings.value("bonddiam", "type").toString();
+    // support for bodies colored by atom property was added after LAMMPS version 11 Feb 2026
     if (lammps->version() < 20260212) {
         bodycolor      = "type";
         ellipsoidcolor = "type";
@@ -919,11 +920,9 @@ void ImageViewer::vdwbond_sync()
     auto *ab     = dialog->findChild<QCheckBox *>("autobutton");
 
     if (src == vdw) {
-        if ((vdw->checkState() == Qt::Checked) && (ab->checkState() == Qt::Checked))
-            ab->setCheckState(Qt::Unchecked);
+        if (vdw->isChecked() && ab->isChecked()) ab->setChecked(false);
     } else {
-        if ((vdw->checkState() == Qt::Checked) && (ab->checkState() == Qt::Checked))
-            vdw->setCheckState(Qt::Unchecked);
+        if (vdw->isChecked() && ab->isChecked()) vdw->setChecked(false);
     }
 }
 
@@ -940,6 +939,7 @@ void ImageViewer::acolor_sync()
 
     if (src && acolor && bcolor && ecolor && lcolor && tcolor) {
         if (src == acolor) {
+            // support coloring by atom property was added after LAMMPS version 11 Feb 2026
             if (lammps->version() > 20260211) {
                 if (src->currentText() != "type") {
                     for (auto *box : {bcolor, ecolor, lcolor, tcolor}) {
@@ -1132,7 +1132,7 @@ void ImageViewer::global_settings()
     layout->setSizeConstraint(QLayout::SetMinAndMaxSize);
 
     auto *axesbutton = new QCheckBox("Axes ", this);
-    axesbutton->setCheckState(showaxes ? Qt::Checked : Qt::Unchecked);
+    axesbutton->setChecked(showaxes);
     axesbutton->setMaximumWidth(fwidth);
     layout->addWidget(axesbutton, idx, n++, 1, 1);
     layout->addWidget(new QLabel("Location: "), idx, n++, 1, 1, Qt::AlignVCenter | Qt::AlignRight);
@@ -1187,7 +1187,7 @@ void ImageViewer::global_settings()
     n = 0;
 
     auto *boxbutton = new QCheckBox("Box ", this);
-    boxbutton->setCheckState(showbox ? Qt::Checked : Qt::Unchecked);
+    boxbutton->setChecked(showbox);
     boxbutton->setMaximumWidth(fwidth);
     layout->addWidget(boxbutton, idx, n++, 1, 1);
     layout->addWidget(new QLabel("Color: "), idx, n++, 1, 1, Qt::AlignVCenter | Qt::AlignRight);
@@ -1206,6 +1206,7 @@ void ImageViewer::global_settings()
     btrans->setValidator(transvalidator);
     btrans->setMaximumWidth(fwidth * 3 / 2);
     layout->addWidget(btrans, idx++, n++, 1, 1);
+    // disable and uncheck unsupported fields for older LAMMPS versions
     if (lammps->version() < 20260211) {
         btrans->setEnabled(false);
     }
@@ -1213,7 +1214,7 @@ void ImageViewer::global_settings()
     n = 0;
 
     auto *subboxbutton = new QCheckBox("Subbox ", this);
-    subboxbutton->setCheckState(showsubbox ? Qt::Checked : Qt::Unchecked);
+    subboxbutton->setChecked(showsubbox);
     subboxbutton->setMaximumWidth(fwidth);
     layout->addWidget(subboxbutton, idx, n++, 1, 1);
     layout->addWidget(new QLabel("Diameter: "), idx, n++, 1, 1, Qt::AlignVCenter | Qt::AlignRight);
@@ -1238,6 +1239,7 @@ void ImageViewer::global_settings()
     b2color->setValidator(colorvalidator);
     b2color->setMaximumWidth(fwidth);
     layout->addWidget(b2color, idx++, n++, 1, 1);
+    // disable and uncheck unsupported fields for older LAMMPS versions
     if (lammps->version() < 20260211) {
         b2color->setEnabled(false);
         b2color->setText(backcolor);
@@ -1247,10 +1249,10 @@ void ImageViewer::global_settings()
     layout->addWidget(new QLabel("Quality:"), idx, n++, 1, 1);
     n++;
     auto *fsaa = new QCheckBox("FSAA  ", this);
-    fsaa->setCheckState(antialias ? Qt::Checked : Qt::Unchecked);
+    fsaa->setChecked(antialias);
     layout->addWidget(fsaa, idx, n++, 1, 1, Qt::AlignVCenter | Qt::AlignLeft);
     auto *ssao = new QCheckBox("SSAO: ", this);
-    ssao->setCheckState(usessao ? Qt::Checked : Qt::Unchecked);
+    ssao->setChecked(usessao);
     layout->addWidget(ssao, idx, n++, 1, 1, Qt::AlignVCenter | Qt::AlignRight);
     auto *aoval = new QLineEdit(QString::number(ssaoval));
     aoval->setValidator(new QDoubleValidator(0.0, 1.0, 5, this));
@@ -1396,7 +1398,7 @@ void ImageViewer::atom_settings()
     n = 0;
 
     auto *atombutton = new QCheckBox("Atoms ", this);
-    atombutton->setCheckState(showatoms ? Qt::Checked : Qt::Unchecked);
+    atombutton->setChecked(showatoms);
     layout->addWidget(atombutton, idx, n++, 1, 1);
     layout->addWidget(new QLabel("Color: "), idx, n++, 1, 1, Qt::AlignVCenter | Qt::AlignRight);
     auto *acolor = new QComboBox;
@@ -1441,12 +1443,13 @@ void ImageViewer::atom_settings()
     auto *atrans = new QLineEdit(QString::number(atomtrans));
     atrans->setValidator(transvalidator);
     layout->addWidget(atrans, idx++, n++, 1, 1);
+    // disable and uncheck unsupported fields for older LAMMPS versions
     if (lammps->version() < 20260211) atrans->setEnabled(false);
 
     n = 0;
 
     auto *vdwbutton = new QCheckBox("VDW style ", this);
-    vdwbutton->setCheckState((vdwfactor > VDW_CUT) ? Qt::Checked : Qt::Unchecked);
+    vdwbutton->setChecked(vdwfactor > VDW_CUT);
     vdwbutton->setObjectName("vdwbutton");
     layout->addWidget(vdwbutton, idx, n++, 1, 1, Qt::AlignCenter);
     layout->addWidget(new QLabel("Map: "), idx, n++, 1, 1, Qt::AlignVCenter | Qt::AlignRight);
@@ -1492,7 +1495,7 @@ void ImageViewer::atom_settings()
     n = 0;
 
     auto *bondbutton = new QCheckBox("Bonds ", this);
-    bondbutton->setCheckState(showbonds ? Qt::Checked : Qt::Unchecked);
+    bondbutton->setChecked(showbonds);
     layout->addWidget(bondbutton, idx, n++, 1, 1);
     layout->addWidget(new QLabel("Color: "), idx, n++, 1, 1, Qt::AlignVCenter | Qt::AlignRight);
     auto *bncolor = new QComboBox;
@@ -1500,7 +1503,7 @@ void ImageViewer::atom_settings()
     bncolor->addItems({"atom", "type"});
     if (atomcustom) { // select item that was selected the last time
         if (bondcolor == "none") {
-            bondbutton->setCheckState(Qt::Unchecked);
+            bondbutton->setChecked(false);
         } else {
             for (int idx = 0; idx < bncolor->count(); ++idx) {
                 if (bncolor->itemText(idx) == bondcolor) bncolor->setCurrentIndex(idx);
@@ -1522,7 +1525,7 @@ void ImageViewer::atom_settings()
     bndiam->setValidator(new QRegularExpressionValidator(validbond, this));
     if (atomcustom) {             // select item that was selected the last time
         if (bonddiam == "none") { // none means bonds are disabled
-            bondbutton->setCheckState(Qt::Unchecked);
+            bondbutton->setChecked(false);
         } else {
             for (int idx = 0; idx < bndiam->count(); ++idx) {
                 if (bndiam->itemText(idx) == bonddiam) bndiam->setCurrentIndex(idx);
@@ -1531,7 +1534,7 @@ void ImageViewer::atom_settings()
     }
     layout->addWidget(bndiam, idx, n++, 1, 1);
     auto *autobutton = new QCheckBox("AutoBonds:", this);
-    autobutton->setCheckState(autobond ? Qt::Checked : Qt::Unchecked);
+    autobutton->setChecked(autobond);
     autobutton->setEnabled(has_autobonds());
     autobutton->setObjectName("autobutton");
     layout->addWidget(autobutton, idx, n++, 1, 1, Qt::AlignVCenter | Qt::AlignRight);
@@ -1541,7 +1544,7 @@ void ImageViewer::atom_settings()
     layout->addWidget(bcutoff, idx++, n++, 1, 1);
     if (lammps->extract_setting("molecule_flag") != 1) {
         bondbutton->setEnabled(false);
-        bondbutton->setCheckState(Qt::Unchecked);
+        bondbutton->setChecked(false);
     }
 
 #if QT_VERSION >= QT_VERSION_CHECK(6, 7, 0)
@@ -1564,7 +1567,7 @@ void ImageViewer::atom_settings()
     n = 0;
 
     auto *bodybutton = new QCheckBox("Bodies ", this);
-    bodybutton->setCheckState(showbodies ? Qt::Checked : Qt::Unchecked);
+    bodybutton->setChecked(showbodies);
     layout->addWidget(bodybutton, idx, n++, 1, 1);
     auto *bcolor = new QComboBox;
     bcolor->addItems({"atom", "type", "index"});
@@ -1593,7 +1596,7 @@ void ImageViewer::atom_settings()
     layout->addWidget(bbbutton, idx++, n++, 1, 1, Qt::AlignCenter);
     if (lammps->extract_setting("body_flag") != 1) {
         bodybutton->setEnabled(false);
-        bodybutton->setCheckState(Qt::Unchecked);
+        bodybutton->setChecked(false);
         bcolor->setEnabled(false);
         if (lammps->version() < 20260212) {
             bcolor->setCurrentIndex(1); // = "type"
@@ -1607,7 +1610,7 @@ void ImageViewer::atom_settings()
     n = 0;
 
     auto *ellipsoidbutton = new QCheckBox("Ellipsoids ", this);
-    ellipsoidbutton->setCheckState(showellipsoids ? Qt::Checked : Qt::Unchecked);
+    ellipsoidbutton->setChecked(showellipsoids);
     layout->addWidget(ellipsoidbutton, idx, n++, 1, 1);
     auto *ecolor = new QComboBox;
     ecolor->addItems({"atom", "type", "index"});
@@ -1641,7 +1644,7 @@ void ImageViewer::atom_settings()
     ++n;
     if ((lammps->extract_setting("ellipsoid_flag") != 1) || (lammps->version() < 20251210)) {
         ellipsoidbutton->setEnabled(false);
-        ellipsoidbutton->setCheckState(Qt::Unchecked);
+        ellipsoidbutton->setChecked(false);
         ecolor->setEnabled(false);
         if (lammps->version() < 20260212) {
             ecolor->setCurrentIndex(1); // = "type"
@@ -1655,7 +1658,7 @@ void ImageViewer::atom_settings()
     n = 0;
 
     auto *linebutton = new QCheckBox("Lines ", this);
-    linebutton->setCheckState(showlines ? Qt::Checked : Qt::Unchecked);
+    linebutton->setChecked(showlines);
     layout->addWidget(linebutton, idx, n++, 1, 1);
     auto *lcolor = new QComboBox;
     lcolor->addItems({"atom", "type", "index"});
@@ -1672,7 +1675,7 @@ void ImageViewer::atom_settings()
     layout->addWidget(ldiam, idx++, n++, 1, 1, Qt::AlignVCenter | Qt::AlignLeft);
     if (lammps->extract_setting("line_flag") != 1) {
         linebutton->setEnabled(false);
-        linebutton->setCheckState(Qt::Unchecked);
+        linebutton->setChecked(false);
         lcolor->setEnabled(false);
         if (lammps->version() < 20260212) {
             lcolor->setCurrentIndex(1); // = "type"
@@ -1683,7 +1686,7 @@ void ImageViewer::atom_settings()
     n = 0;
 
     auto *tributton = new QCheckBox("Triangles ", this);
-    tributton->setCheckState(showtris ? Qt::Checked : Qt::Unchecked);
+    tributton->setChecked(showtris);
     layout->addWidget(tributton, idx, n++, 1, 1);
     auto *tcolor = new QComboBox;
     tcolor->addItems({"atom", "type", "index"});
@@ -1713,7 +1716,7 @@ void ImageViewer::atom_settings()
     ++n;
     if (lammps->extract_setting("tri_flag") != 1) {
         tributton->setEnabled(false);
-        tributton->setCheckState(Qt::Unchecked);
+        tributton->setChecked(false);
         tcolor->setEnabled(false);
         if (lammps->version() < 20260212) {
             tcolor->setCurrentIndex(1); // = "type"
@@ -1965,7 +1968,7 @@ void ImageViewer::fix_settings()
             layout->addWidget(label, idx, n++);
             layout->addWidget(new QLabel(comp.second->style), idx, n++);
             auto *check = new QCheckBox("");
-            check->setCheckState(comp.second->enabled ? Qt::Checked : Qt::Unchecked);
+            check->setChecked(comp.second->enabled);
             layout->addWidget(check, idx, n++, Qt::AlignHCenter);
             auto *cstyle = new QComboBox;
             cstyle->setEditable(false);
@@ -2023,7 +2026,7 @@ void ImageViewer::fix_settings()
             layout->addWidget(label, idx, n++);
             layout->addWidget(new QLabel(fix.second->style), idx, n++);
             auto *check = new QCheckBox("");
-            check->setCheckState(fix.second->enabled ? Qt::Checked : Qt::Unchecked);
+            check->setChecked(fix.second->enabled);
             layout->addWidget(check, idx, n++, Qt::AlignHCenter);
             auto *cstyle = new QComboBox;
             cstyle->setEditable(false);
@@ -2094,7 +2097,7 @@ void ImageViewer::fix_settings()
         ++n; // nothing to do with label for style name
         item                     = layout->itemAtPosition(idx, n++);
         auto *box                = qobject_cast<QCheckBox *>(item->widget());
-        computes[id]->enabled    = (box->checkState() == Qt::Checked);
+        computes[id]->enabled    = (box->isChecked());
         item                     = layout->itemAtPosition(idx, n++);
         auto *combo              = qobject_cast<QComboBox *>(item->widget());
         computes[id]->colorstyle = combo->currentIndex();
@@ -2125,7 +2128,7 @@ void ImageViewer::fix_settings()
 
         item                  = layout->itemAtPosition(idx, n++);
         auto *box             = qobject_cast<QCheckBox *>(item->widget());
-        fixes[id]->enabled    = (box->checkState() == Qt::Checked);
+        fixes[id]->enabled    = (box->isChecked());
         item                  = layout->itemAtPosition(idx, n++);
         auto *combo           = qobject_cast<QComboBox *>(item->widget());
         fixes[id]->colorstyle = combo->currentIndex();
@@ -2191,7 +2194,7 @@ void ImageViewer::region_settings()
         layout->setObjectName(QString(reg.first.c_str()));
 
         auto *check = new QCheckBox("");
-        check->setCheckState(reg.second->enabled ? Qt::Checked : Qt::Unchecked);
+        check->setChecked(reg.second->enabled);
         layout->addWidget(check, idx, n++, Qt::AlignHCenter);
         auto *style = new QComboBox;
         style->setEditable(false);
@@ -2262,7 +2265,7 @@ void ImageViewer::region_settings()
         auto id              = label->text().toStdString();
         item                 = layout->itemAtPosition(idx, n++);
         auto *box            = qobject_cast<QCheckBox *>(item->widget());
-        regions[id]->enabled = (box->checkState() == Qt::Checked);
+        regions[id]->enabled = box->isChecked();
         item                 = layout->itemAtPosition(idx, n++);
         auto *combo          = qobject_cast<QComboBox *>(item->widget());
         regions[id]->style   = combo->currentIndex();
@@ -2407,11 +2410,13 @@ void ImageViewer::createImage()
             xmid = ymid = zmid = 0.0;
         }
 
+        silence_stdout();
         QString molcreate = "create_atoms 0 single %1 %2 %3 mol %4 312944 group %5 units box";
         group             = "imgviewer_tmp_mol";
         lammps->command(molcreate.arg(xmid).arg(ymid).arg(zmid).arg(molecule).arg(group));
         lammps->command(QString("neigh_modify exclude group all %1").arg(group));
         lammps->command("run 0 post no");
+        restore_stdout();
         if (lammps->has_error()) lammps->get_last_error_message(nullptr, 0);
     }
 
@@ -2702,6 +2707,7 @@ void ImageViewer::createImage()
     if (!dofixes) dumpcmd += " noinit";
     dumpcmd += " modify boxcolor " + boxcolor;
     dumpcmd += " backcolor " + backcolor;
+    // support for background gradient was added in LAMMPS version 11 February 2026
     if (lammps->version() > 20260210) {
         dumpcmd += " backcolor2 " + backcolor2;
         dumpcmd += QString(" axestrans %1").arg(axestrans);
@@ -2810,8 +2816,10 @@ void ImageViewer::createImage()
         }
     }
 
+    silence_stdout();
     last_dump_cmd = dumpcmd;
     lammps->command(dumpcmd);
+    restore_stdout();
 
     // display error message
     if (lammps->has_error()) {
@@ -2966,6 +2974,8 @@ void ImageViewer::update_peratom()
     atom_properties << "type";
 
     if (lammps) {
+        silence_stdout();
+
         if (lammps->extract_setting("molecule_flag")) atom_properties << "mol";
         if (lammps->extract_setting("q_flag")) atom_properties << "q";
         if (lammps->extract_setting("mu_flag")) atom_properties << "mu";
@@ -3032,10 +3042,7 @@ void ImageViewer::update_peratom()
             // clear error status, if needed:
             lammps->get_last_error_message(nullptr, 0);
         }
-
-        // we can query for fixes before 10 December 2025, but there is no support
-        // for fix graphics until after that version. So the check is needed for this date.
-        if (lammps->version() < 20251210) return;
+        restore_stdout();
     }
     // some more general dump custom properties
     atom_properties << "id" << "mass" << "x" << "y" << "z" << "vx" << "vy" << "vz" << "fx" << "fy"
@@ -3045,8 +3052,8 @@ void ImageViewer::update_peratom()
 void ImageViewer::update_fixes()
 {
     if (!lammps) return;
-    // we can query for fixes before 10 December 2025, but there is no support
-    // for fix graphics until after that version. So the check is needed for this date.
+    // we can query for fixes and computes before 10 December 2025, but there is no support
+    // for dump image graphics until after that version. So the check is needed for this date.
     if (lammps->version() < 20251210) return;
 
     // remove any fixes that no longer exist. to avoid inconsistencies while looping
@@ -3075,7 +3082,7 @@ void ImageViewer::update_fixes()
     capturer.EndCapture();
     QString styleinfo(capturer.GetCapture().c_str());
     QRegularExpression infoline(
-        QStringLiteral("^(Compute|Fix)\\[.*\\]: *([^,]+), *style = ([^,]+).*"));
+        QStringLiteral(R"(^(Compute|Fix)\[.*\]: *([^,]+), *style = ([^,]+).*)"));
     QRegularExpression newline(QStringLiteral("[\r\n]+"));
     int i = 0;
     for (const auto &line : styleinfo.split(newline, Qt::SkipEmptyParts)) {
@@ -3114,6 +3121,7 @@ void ImageViewer::update_fixes()
 void ImageViewer::update_regions()
 {
     if (!lammps) return;
+    // support for visualizing regions became available in LAMMPS version 10 September 2025
     if (lammps->version() < 20250910) return;
 
     // remove any regions that no longer exist. to avoid inconsistencies while looping
@@ -3149,6 +3157,7 @@ void ImageViewer::update_regions()
 bool ImageViewer::has_autobonds()
 {
     if (!lammps) return false;
+    // support for dynamic bond visualization became available in LAMMPS version 10 September 2025
     if (lammps->version() < 20250910) return false;
     const auto *pair_style = (const char *)lammps->extract_global("pair_style");
     if (!pair_style) return false;

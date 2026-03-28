@@ -30,6 +30,24 @@
 #include <QWidget>
 
 #include <cstdio>
+#include <fcntl.h>
+
+// define consistent function aliases to avoid complications from pre-processing
+#ifdef _WIN32
+#include <io.h>
+const auto &mydup    = _dup;
+const auto &mydup2   = _dup2;
+const auto &myfileno = _fileno;
+const auto &myclose  = _close;
+const auto &myopen   = _open;
+#else
+#include <unistd.h>
+const auto &mydup    = dup;
+const auto &mydup2   = dup2;
+const auto &myfileno = fileno;
+const auto &myclose  = close;
+const auto &myopen   = open;
+#endif
 
 namespace {
 const QStringList months({"Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct",
@@ -42,11 +60,16 @@ constexpr char TTY_DEVICE[]  = "COM1:";
 constexpr char NULL_DEVICE[] = "/dev/null";
 constexpr char TTY_DEVICE[]  = "/dev/tty";
 #endif
+
+int saved_stdout_fd    = -1;
+int silenced_counter   = 0;
+bool stdout_silenced   = false;
+bool capture_is_active = false;
 } // namespace
 
 // will be allocated and initialized in main() to avoid segfault on macOS
 QFont *GUI_MONOFONT = nullptr;
-QFont *GUI_ALLFONT = nullptr;
+QFont *GUI_ALLFONT  = nullptr;
 
 // duplicate string, STL version
 char *mystrdup(const std::string &text)
@@ -341,6 +364,56 @@ bool is_light_theme()
     int bg = p.brush(QPalette::Active, QPalette::Window).color().black();
 
     return (fg > bg);
+}
+
+// silence stdout by redirecting to the null device
+
+void silence_stdout()
+{
+    if (capture_is_active || stdout_silenced) return;
+
+    ++silenced_counter;
+    fflush(stdout);
+    saved_stdout_fd = mydup(myfileno(stdout));
+    if (saved_stdout_fd == -1) return;
+
+    int devnull = myopen(NULL_DEVICE, O_WRONLY, 0);
+    if (devnull == -1) {
+        myclose(saved_stdout_fd);
+        saved_stdout_fd = -1;
+        return;
+    }
+    mydup2(devnull, myfileno(stdout));
+    myclose(devnull);
+    stdout_silenced = true;
+}
+
+// restore stdout after silencing
+
+void restore_stdout()
+{
+    if (silenced_counter > 0) --silenced_counter;
+    if (!stdout_silenced || (saved_stdout_fd == -1) || (silenced_counter > 0)) return;
+
+    fflush(stdout);
+    mydup2(saved_stdout_fd, myfileno(stdout));
+    myclose(saved_stdout_fd);
+    saved_stdout_fd = -1;
+    stdout_silenced = false;
+}
+
+// check if stdout is currently silenced
+
+bool is_stdout_silenced()
+{
+    return stdout_silenced;
+}
+
+// notify silence/restore system about StdCapture state changes
+
+void notify_capture_state(bool active)
+{
+    capture_is_active = active;
 }
 
 // Local Variables:

@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.20)
 
 project(lammps-gui
-  VERSION 1.11.3
+  VERSION 1.11.4
   LANGUAGES CXX
   DESCRIPTION "The LAMMPS GUI"
   HOMEPAGE_URL "https://lammps-gui.lammps.org/")
@@ -54,6 +54,9 @@ if (NOT BUILD_DOC_ONLY)
       add_compile_options(/wd4250)
       add_compile_options(/EHsc)
       add_compile_options(/utf-8)
+      add_compile_options(/nologo)
+      add_link_options(/nologo)
+      add_link_options(/release)
     endif()
     add_compile_definitions(_CRT_SECURE_NO_WARNINGS)
   endif()
@@ -70,8 +73,10 @@ if (NOT BUILD_DOC_ONLY)
     set(ICON_RC_FILE ${CMAKE_SOURCE_DIR}/resources/lmpicons.rc)
   endif()
 
-  # we require at least Qt version 5.15, but prefer Qt 6.2 or later.
-  # Qt 6.10 and later: use QtGraphs (the QtCharts replacement) for chart display.
+  # we require at least Qt version 5.15, which is deprecated and no longer supported.
+  # thus we prefer Qt 6.2 or later. but Qt 5.15 is the only usable option on Ubuntu 22.04LTS.
+  # for Qt 6.10 and later we use QtGraphs (the QtCharts replacement) for chart display.
+  # this choice can be overridden with -D LAMMPS_GUI_USE_QTGRAPHS=OFF
   if(NOT LAMMPS_GUI_USE_QT5)
     set(LAMMPS_GUI_USE_QTGRAPHS OFF)
     if (NOT LAMMPS_GUI_USE_QTCHARTS)
@@ -85,6 +90,7 @@ if (NOT BUILD_DOC_ONLY)
     endif()
   endif()
   if(NOT Qt6_FOUND)
+    message(STATUS "No usable Qt 6.2 or later installation found. Falling back to Qt 5.15")
     find_package(Qt5 5.15 REQUIRED COMPONENTS Gui Widgets Charts)
     set(QT_VERSION_MAJOR 5)
   else()
@@ -199,7 +205,7 @@ if (NOT BUILD_DOC_ONLY)
   target_compile_definitions(lammps-gui PRIVATE LAMMPS_GUI_VERSION="${PROJECT_VERSION}")
   if(LAMMPS_GUI_USE_QTGRAPHS)
     target_compile_definitions(lammps-gui PRIVATE LAMMPS_GUI_USE_QTGRAPHS)
-    target_link_libraries(lammps-gui PRIVATE Qt6::Gui Qt6::Widgets Qt6::Graphs Qt6::Quick Qt6::QuickWidgets)
+    target_link_libraries(lammps-gui PRIVATE Qt${QT_VERSION_MAJOR}::Gui Qt${QT_VERSION_MAJOR}::Widgets Qt${QT_VERSION_MAJOR}::Graphs Qt${QT_VERSION_MAJOR}::Quick Qt${QT_VERSION_MAJOR}::QuickWidgets)
   else()
     target_link_libraries(lammps-gui PRIVATE Qt${QT_VERSION_MAJOR}::Gui Qt${QT_VERSION_MAJOR}::Widgets Qt${QT_VERSION_MAJOR}::Charts)
   endif()
@@ -276,7 +282,7 @@ if(BUILD_DOC OR BUILD_DOC_ONLY)
   # configure virtual environment for sphinx-build and related
   set(DOCENV_BINARY_DIR ${CMAKE_BINARY_DIR}/docenv/bin)
   set(DOCENV_REQUIREMENTS_FILE ${SPHINX_DIR}/requirements.txt)
-  set(DOCENV_DEPS docenv ${DOCENV_REQUIREMENTS_FILE} ${SPHINX_DIR}/_templates/page.html)
+  set(DOCENV_DEPS ${DOCENV_REQUIREMENTS_FILE} ${SPHINX_DIR}/_templates/page.html)
   add_custom_command(
     OUTPUT docenv/bin
     COMMAND ${VIRTUALENV} docenv
@@ -425,8 +431,9 @@ if (LAMMPS_GUI_USE_PLUGIN AND NOT BUILD_DOC_ONLY)
     get_filename_component(VC_BASE_DIR "${VC_COMPILER_DIR}/../../../../../.." ABSOLUTE)
     set(VC_INIT "${VC_BASE_DIR}/Auxiliary/Build/vcvarsall.bat")
     get_filename_component(QT5_BIN_DIR "${Qt5Core_DIR}/../../../bin" ABSOLUTE)
+    get_filename_component(QT6_BIN_DIR "${Qt6Core_DIR}/../../../bin" ABSOLUTE)
     get_filename_component(INSTNAME ${CMAKE_INSTALL_PREFIX} NAME)
-    install(CODE "execute_process(COMMAND \"${CMAKE_COMMAND}\" -D INSTNAME=${INSTNAME} -D VC_INIT=\"${VC_INIT}\" -D QT5_BIN_DIR=\"${QT5_BIN_DIR}\" -P \"${CMAKE_SOURCE_DIR}/packaging/build_windows_vs.cmake\" WORKING_DIRECTORY \"${CMAKE_INSTALL_PREFIX}/..\" COMMAND_ECHO STDOUT)")
+    install(CODE "execute_process(COMMAND \"${CMAKE_COMMAND}\" -D INSTNAME=${INSTNAME} -D VC_INIT=\"${VC_INIT}\" -D QT5_BIN_DIR=\"${QT5_BIN_DIR}\" -D QT6_BIN_DIR=\"${QT6_BIN_DIR}\" -P \"${CMAKE_SOURCE_DIR}/packaging/build_windows_vs.cmake\" WORKING_DIRECTORY \"${CMAKE_INSTALL_PREFIX}/..\" COMMAND_ECHO STDOUT)")
   # settings for packaging Windows NSIS installer on Linux with MinGW cross-compiler
   elseif((CMAKE_SYSTEM_NAME STREQUAL "Windows") AND CMAKE_CROSSCOMPILING)
     install(TARGETS lammps-gui DESTINATION ${CMAKE_INSTALL_BINDIR})

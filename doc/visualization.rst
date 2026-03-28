@@ -53,18 +53,21 @@ as sphere. In the *Atom/Bond* settings dialog, this can be further
 customized (or disabled).
 
 .. |gui-image1| image:: JPG/lammps-gui-image-water.png
-   :width: 24%
+   :width: 19%
 
 .. |gui-image2| image:: JPG/lammps-gui-funnel.png
-   :width: 24%
+   :width: 19%
 
 .. |gui-image3| image:: JPG/lammps-gui-image-body.png
-   :width: 24%
+   :width: 19%
 
 .. |gui-image4| image:: JPG/lammps-gui-image-ellipsoid.png
-   :width: 24%
+   :width: 19%
 
-|gui-image1|  |gui-image2|  |gui-image3|  |gui-image4|
+.. |gui-image5| image:: JPG/lammps-gui-image-superellipsoid.png
+   :width: 19%
+
+|gui-image1|  |gui-image2|  |gui-image3|  |gui-image4|  |gui-image5|
 
 It is also possible to visualize regions, graphics from computes and
 fixes, and have bonds computed dynamically for potentials, where the

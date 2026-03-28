@@ -243,4 +243,5 @@ Specifically, one can set the default chart title (if the title contains
 '%f' it will be replaced with the name of the current input file), one
 can select whether by default the raw data, the smoothed data, or both
 will be plotted, one can set the colors for the two lines, the default
-smoothing parameters, and the default size of the chart graph in pixels.
+smoothing parameters, the default size of the chart graph in pixels, and
+whether you want to display major and minor grid lines.

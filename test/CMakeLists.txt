@@ -82,19 +82,29 @@ endif()
 add_executable(test_helpers
   test_helpers.cpp
   ${CMAKE_SOURCE_DIR}/src/helpers.cpp
+  ${CMAKE_SOURCE_DIR}/src/stdcapture.cpp
 )
 
 target_include_directories(test_helpers PRIVATE
   ${CMAKE_SOURCE_DIR}/src
 )
 
-target_link_libraries(test_helpers
-  GTest::gtest_main
-  Qt${QT_VERSION_MAJOR}::Widgets
-)
+target_link_libraries(test_helpers PRIVATE GTest::gtest_main Qt${QT_VERSION_MAJOR}::Widgets)
 
 # Discover tests for test executables
 gtest_discover_tests(test_helpers)
+
+# Test executable for StdCapture
+add_executable(test_stdcapture
+  test_stdcapture.cpp
+  ${CMAKE_SOURCE_DIR}/src/helpers.cpp
+  ${CMAKE_SOURCE_DIR}/src/stdcapture.cpp
+)
+
+target_include_directories(test_stdcapture PRIVATE  ${CMAKE_SOURCE_DIR}/src)
+target_link_libraries(test_stdcapture PRIVATE GTest::gtest_main Qt${QT_VERSION_MAJOR}::Widgets)
+
+gtest_discover_tests(test_stdcapture)
 
 ########################################################################
 # Tests that check the GUI environment and the GUI

@@ -157,7 +157,7 @@ ChartWindow::ChartWindow(const QString &_filename, QWidget *parent) :
     row1->addWidget(units);
     row1->addWidget(new QLabel("Norm:"));
     norm = new QCheckBox("");
-    norm->setCheckState(Qt::Unchecked);
+    norm->setChecked(false);
     norm->setEnabled(false);
     row1->addWidget(norm);
     row1->addWidget(new QLabel(" Data:"));
@@ -252,6 +252,11 @@ void ChartWindow::reset_charts()
     }
     charts.clear();
     columns->clear();
+}
+
+void ChartWindow::reset_zoom() {
+    for (auto &c : charts)
+        c->reset_zoom();
 }
 
 void ChartWindow::add_chart(const QString &title, int index)
@@ -571,8 +576,11 @@ ChartViewer::ChartViewer(const QString &title, int _index, QWidget *parent) :
     series(new QLineSeries), smooth(nullptr), xaxis(new QValueAxis), yaxis(new QValueAxis),
     do_raw(true), do_smooth(false)
 {
+    QSettings settings;
+    settings.beginGroup("charts");
     xaxis->setTitleText("Time step");
     xaxis->setLabelFormat("%.0f");
+
     xaxis->setSubTickCount(4);
     yaxis->setSubTickCount(4);
     yaxis->setTitleText(title);
@@ -589,10 +597,20 @@ ChartViewer::ChartViewer(const QString &title, int _index, QWidget *parent) :
     theme->setPlotAreaBackgroundVisible(true);
     theme->setPlotAreaBackgroundColor(Qt::white);
     QGraphsLine gridLine;
-    gridLine.setMainColor(QColor(160, 160, 160));
-    gridLine.setMainWidth(1.5);
-    gridLine.setSubColor(QColor(192, 192, 192));
-    gridLine.setSubWidth(1.0);
+    if (settings.value("grid", true).toBool()) {
+        gridLine.setMainColor(QColor(160, 160, 160));
+        gridLine.setMainWidth(1.5);
+    } else {
+        gridLine.setMainColor(Qt::white);
+        gridLine.setMainWidth(0.0);
+    }
+    if (settings.value("minorgrid", true).toBool()) {
+        gridLine.setSubColor(QColor(192, 192, 192));
+        gridLine.setSubWidth(1.0);
+    } else {
+        gridLine.setSubColor(Qt::white);
+        gridLine.setSubWidth(0.0);
+    }
     theme->setGrid(gridLine);
 
     // embed QtGraphs QML GraphsView via QQuickWidget
@@ -654,6 +672,7 @@ ChartViewer::ChartViewer(const QString &title, int _index, QWidget *parent) :
     vlayout->addWidget(titleWidget);
     vlayout->addLayout(hlayout, 1);
     vlayout->addWidget(xlabelWidget);
+    settings.endGroup();
 
     last_update = QTime::currentTime();
     update_smooth();
@@ -676,6 +695,8 @@ ChartViewer::ChartViewer(const QString &title, int _index, QWidget *parent) :
     series(new QLineSeries), smooth(nullptr), xaxis(new QValueAxis), yaxis(new QValueAxis),
     do_raw(true), do_smooth(false)
 {
+    QSettings settings;
+    settings.beginGroup("charts");
     chart->legend()->hide();
     chart->addAxis(xaxis, Qt::AlignBottom);
     chart->addAxis(yaxis, Qt::AlignLeft);
@@ -684,10 +705,16 @@ ChartViewer::ChartViewer(const QString &title, int _index, QWidget *parent) :
     xaxis->setTickCount(5);
     xaxis->setLabelFormat("%d");
     yaxis->setTickCount(5);
+    xaxis->setGridLineVisible(settings.value("grid", true).toBool());
+    xaxis->setMinorGridLineVisible(settings.value("minorgrid", true).toBool());
     xaxis->setMinorTickCount(4);
     yaxis->setMinorTickCount(4);
     yaxis->setTitleText(title);
+    yaxis->setGridLineVisible(settings.value("grid", true).toBool());
+    yaxis->setMinorGridLineVisible(settings.value("minorgrid", true).toBool());
+
     series->setName(title);
+    settings.endGroup();
 
     setRenderHint(QPainter::Antialiasing);
     setChart(chart);

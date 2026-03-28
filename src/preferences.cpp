@@ -266,6 +266,10 @@ void Preferences::accept()
     if (spin) settings->setValue("smoothwindow", spin->value());
     spin = tabWidget->findChild<QSpinBox *>("smoothorder");
     if (spin) settings->setValue("smoothorder", spin->value());
+    auto *check = tabWidget->findChild<QCheckBox *>("grid");
+    if (check) settings->setValue("grid", check->isChecked());
+    check = tabWidget->findChild<QCheckBox *>("minorgrid");
+    if (check) settings->setValue("minorgrid", check->isChecked());
     settings->endGroup();
     spin = tabWidget->findChild<QSpinBox *>("chartx");
     if (spin) settings->setValue("chartx", spin->value());
@@ -282,39 +286,36 @@ GeneralTab::GeneralTab(QSettings *_settings, LammpsWrapper *_lammps, QWidget *pa
 
     auto *echo = new QCheckBox("Echo input to output buffer");
     echo->setObjectName("echo");
-    echo->setCheckState(settings->value("echo", false).toBool() ? Qt::Checked : Qt::Unchecked);
+    echo->setChecked(settings->value("echo", false).toBool());
     auto *cite = new QCheckBox("Include citation details");
     cite->setObjectName("cite");
-    cite->setCheckState(settings->value("cite", false).toBool() ? Qt::Checked : Qt::Unchecked);
+    cite->setChecked(settings->value("cite", false).toBool());
     auto *logv = new QCheckBox("Show Output window by default");
     logv->setObjectName("viewlog");
-    logv->setCheckState(settings->value("viewlog", true).toBool() ? Qt::Checked : Qt::Unchecked);
+    logv->setChecked(settings->value("viewlog", true).toBool());
     auto *pltv = new QCheckBox("Show Charts window by default");
     pltv->setObjectName("viewchart");
-    pltv->setCheckState(settings->value("viewchart", true).toBool() ? Qt::Checked : Qt::Unchecked);
+    pltv->setChecked(settings->value("viewchart", true).toBool());
     auto *sldv = new QCheckBox("Show Slide Show window by default");
     sldv->setObjectName("viewslide");
-    sldv->setCheckState(settings->value("viewslide", true).toBool() ? Qt::Checked : Qt::Unchecked);
+    sldv->setChecked(settings->value("viewslide", true).toBool());
     auto *logr = new QCheckBox("Replace Output window on new run");
     logr->setObjectName("logreplace");
-    logr->setCheckState(settings->value("logreplace", true).toBool() ? Qt::Checked : Qt::Unchecked);
+    logr->setChecked(settings->value("logreplace", true).toBool());
     auto *imgr = new QCheckBox("Replace Image window on new render");
     imgr->setObjectName("imagereplace");
-    imgr->setCheckState(settings->value("imagereplace", true).toBool() ? Qt::Checked
-                                                                       : Qt::Unchecked);
+    imgr->setChecked(settings->value("imagereplace", true).toBool());
     auto *pltr = new QCheckBox("Replace Charts window on new run");
     pltr->setObjectName("chartreplace");
-    pltr->setCheckState(settings->value("chartreplace", true).toBool() ? Qt::Checked
-                                                                       : Qt::Unchecked);
+    pltr->setChecked(settings->value("chartreplace", true).toBool());
 
     settings->beginGroup("tutorial");
     auto *solution = new QCheckBox("Download tutorial solutions enabled");
     solution->setObjectName("solution");
-    solution->setCheckState(settings->value("solution", false).toBool() ? Qt::Checked
-                                                                        : Qt::Unchecked);
+    solution->setChecked(settings->value("solution", false).toBool());
     auto *webpage = new QCheckBox("Open tutorial webpage enabled");
     webpage->setObjectName("webpage");
-    webpage->setCheckState(settings->value("webpage", true).toBool() ? Qt::Checked : Qt::Unchecked);
+    webpage->setChecked(settings->value("webpage", true).toBool());
     settings->endGroup();
 
     auto *getallfont =
@@ -599,12 +600,10 @@ AcceleratorTab::AcceleratorTab(QSettings *_settings, LammpsWrapper *_lammps, QWi
     auto *gpupaironly = new QCheckBox("Pair st&yles only");
     gpuLayout->addWidget(gpuneigh);
     gpuneigh->setObjectName("gpuneigh");
-    gpuneigh->setCheckState(settings->value("gpuneigh", true).toBool() ? Qt::Checked
-                                                                       : Qt::Unchecked);
+    gpuneigh->setChecked(settings->value("gpuneigh", true).toBool());
     gpuLayout->addWidget(gpupaironly);
     gpupaironly->setObjectName("gpupaironly");
-    gpupaironly->setCheckState(settings->value("gpupaironly", false).toBool() ? Qt::Checked
-                                                                              : Qt::Unchecked);
+    gpupaironly->setChecked(settings->value("gpupaironly", false).toBool());
     gpuchoice->setLayout(gpuLayout);
     gpuchoice->setObjectName("gpuchoice");
     gpuchoice->setEnabled(false);
@@ -754,11 +753,11 @@ SnapshotTab::SnapshotTab(QSettings *_settings, QWidget *parent) :
     auto *sval  = new QCheckBox;
     auto *hval  = new QCheckBox;
 
-    aval->setCheckState(settings->value("antialias", false).toBool() ? Qt::Checked : Qt::Unchecked);
+    aval->setChecked(settings->value("antialias", false).toBool());
     aval->setObjectName("anti");
-    sval->setCheckState(settings->value("ssao", false).toBool() ? Qt::Checked : Qt::Unchecked);
+    sval->setChecked(settings->value("ssao", false).toBool());
     sval->setObjectName("ssao");
-    hval->setCheckState(settings->value("shinystyle", true).toBool() ? Qt::Checked : Qt::Unchecked);
+    hval->setChecked(settings->value("shinystyle", true).toBool());
     hval->setObjectName("shiny");
 
     auto *intval = new QIntValidator(100, 100000, this);
@@ -791,7 +790,7 @@ SnapshotTab::SnapshotTab(QSettings *_settings, QWidget *parent) :
 
     // right column values
     auto *bval = new QCheckBox;
-    bval->setCheckState(settings->value("box", true).toBool() ? Qt::Checked : Qt::Unchecked);
+    bval->setChecked(settings->value("box", true).toBool());
     bval->setObjectName("box");
 
     auto *bdval = new QLineEdit(settings->value("boxdiam", "0.025").toString());
@@ -805,7 +804,7 @@ SnapshotTab::SnapshotTab(QSettings *_settings, QWidget *parent) :
     boxcolor->setFixedSize(metrics.averageCharWidth() * 12, metrics.height() + 4);
 
     auto *eval = new QCheckBox;
-    eval->setCheckState(settings->value("axes", false).toBool() ? Qt::Checked : Qt::Unchecked);
+    eval->setChecked(settings->value("axes", false).toBool());
     eval->setObjectName("axes");
 
     auto *alval = new QLineEdit(settings->value("axeslen", "0.5").toString());
@@ -817,11 +816,11 @@ SnapshotTab::SnapshotTab(QSettings *_settings, QWidget *parent) :
     adval->setObjectName("axesdiam");
 
     auto *vval = new QCheckBox;
-    vval->setCheckState(settings->value("vdwstyle", false).toBool() ? Qt::Checked : Qt::Unchecked);
+    vval->setChecked(settings->value("vdwstyle", false).toBool());
     vval->setObjectName("vdwstyle");
 
     auto *uval = new QCheckBox;
-    uval->setCheckState(settings->value("autobond", false).toBool() ? Qt::Checked : Qt::Unchecked);
+    uval->setChecked(settings->value("autobond", false).toBool());
     uval->setObjectName("autobond");
 
     auto *bcut = new QLineEdit(settings->value("bondcut", "1.6").toString());
@@ -902,7 +901,7 @@ void SnapshotTab::choose_vdw()
     auto *vdw = findChild<QCheckBox *>("vdwstyle");
     auto *bnd = findChild<QCheckBox *>("autobond");
     if (vdw && bnd) {
-        if (vdw->isChecked()) bnd->setCheckState(Qt::Unchecked);
+        if (vdw->isChecked()) bnd->setChecked(false);
     }
 }
 
@@ -911,7 +910,7 @@ void SnapshotTab::choose_bond()
     auto *vdw = findChild<QCheckBox *>("vdwstyle");
     auto *bnd = findChild<QCheckBox *>("autobond");
     if (vdw && bnd) {
-        if (bnd->isChecked()) vdw->setCheckState(Qt::Unchecked);
+        if (bnd->isChecked()) vdw->setChecked(false);
     }
 }
 
@@ -947,13 +946,11 @@ EditorTab::EditorTab(QSettings *_settings, QWidget *parent) : QWidget(parent), s
     nameval->setRange(1, 32);
     nameval->setValue(settings->value("name", "8").toInt());
     retval->setObjectName("retval");
-    retval->setCheckState(settings->value("return", false).toBool() ? Qt::Checked : Qt::Unchecked);
+    retval->setChecked(settings->value("return", false).toBool());
     autoval->setObjectName("autoval");
-    autoval->setCheckState(settings->value("automatic", true).toBool() ? Qt::Checked
-                                                                       : Qt::Unchecked);
+    autoval->setChecked(settings->value("automatic", true).toBool());
     savval->setObjectName("savval");
-    savval->setCheckState(settings->value("autosave", false).toBool() ? Qt::Checked
-                                                                      : Qt::Unchecked);
+    savval->setChecked(settings->value("autosave", false).toBool());
     settings->endGroup();
 
     int i = 0;
@@ -1030,6 +1027,15 @@ ChartsTab::ChartsTab(QSettings *_settings, QWidget *parent) : QWidget(parent), s
     smordrval->setRange(1, 20);
     smordrval->setValue(settings->value("smoothorder", 4).toInt());
     smordrval->setObjectName("smoothorder");
+
+    auto *gridlbl = new QLabel("Draw major grid:");
+    auto *usegrid = new QCheckBox;
+    usegrid->setChecked(settings->value("grid", true).toBool());
+    usegrid->setObjectName("grid");
+    auto *minorlbl = new QLabel("Draw minor grid:");
+    auto *useminor = new QCheckBox;
+    useminor->setChecked(settings->value("minorgrid", true).toBool());
+    useminor->setObjectName("minorgrid");
     settings->endGroup();
 
     auto *chartxlbl = new QLabel("Chart default width:");
@@ -1062,6 +1068,10 @@ ChartsTab::ChartsTab(QSettings *_settings, QWidget *parent) : QWidget(parent), s
     grid->addWidget(chartxval, i++, 1, Qt::AlignVCenter);
     grid->addWidget(chartylbl, i, 0, Qt::AlignTop);
     grid->addWidget(chartyval, i++, 1, Qt::AlignVCenter);
+    grid->addWidget(gridlbl, i, 0, Qt::AlignTop);
+    grid->addWidget(usegrid, i++, 1, Qt::AlignTop | Qt::AlignLeft);
+    grid->addWidget(minorlbl, i, 0, Qt::AlignTop);
+    grid->addWidget(useminor, i++, 1, Qt::AlignTop | Qt::AlignLeft);
     grid->addItem(new QSpacerItem(100, 100, QSizePolicy::Minimum, QSizePolicy::Expanding), i, 0);
     grid->addItem(new QSpacerItem(100, 100, QSizePolicy::Minimum, QSizePolicy::Expanding), i, 1);
     grid->addItem(new QSpacerItem(100, 100, QSizePolicy::Expanding, QSizePolicy::Expanding), i, 2);

@@ -12,18 +12,17 @@
 // adapted from: https://stackoverflow.com/questions/5419356/redirect-stdout-stderr-to-a-string
 
 #include "stdcapture.h"
+#include "helpers.h"
 
 #ifdef _WIN32
 #include <io.h>
-#define popen _popen
-#define pclose _pclose
-#define stat _stat
+#define WIN32_LEAN_AND_MEAN
+#include <windows.h>
 #define dup _dup
 #define dup2 _dup2
 #define fileno _fileno
 #define close _close
 #define read _read
-#define eof _eof
 #else
 #include <unistd.h>
 #endif
@@ -32,6 +31,23 @@
 #include <cstdio>
 #include <fcntl.h>
 #include <thread>
+
+#ifdef _WIN32
+// Check if a pipe has data available for reading without blocking.
+// Uses PeekNamedPipe() instead of _eof() because _eof() relies on _lseek()
+// internally to check the file position.  Since pipes are not seekable,
+// _eof() returns -1 (error) on pipe file descriptors under the MSVC C runtime,
+// which causes the caller to skip reading entirely and capture nothing.
+// PeekNamedPipe() is the proper Win32 API for non-blocking pipe inspection.
+static bool pipe_has_data(int fd)
+{
+    HANDLE h = (HANDLE)_get_osfhandle(fd);
+    if (h == INVALID_HANDLE_VALUE) return false;
+    DWORD available = 0;
+    if (!PeekNamedPipe(h, nullptr, 0, nullptr, &available, nullptr)) return false;
+    return available > 0;
+}
+#endif
 
 namespace {
 constexpr int bufSize = (1 << 16) + 1;
@@ -56,6 +72,7 @@ StdCapture::StdCapture() : m_oldStdOut(0), m_capturing(false), maxread(0), buf(n
 
 StdCapture::~StdCapture()
 {
+    notify_capture_state(false);
     delete[] buf;
     if (m_oldStdOut > 0) close(m_oldStdOut);
     if (m_pipe[READ] > 0) close(m_pipe[READ]);
@@ -65,14 +82,17 @@ StdCapture::~StdCapture()
 void StdCapture::BeginCapture()
 {
     if (m_capturing) EndCapture();
+    if (is_stdout_silenced()) restore_stdout();
     dup2(m_pipe[WRITE], fileno(stdout));
     m_capturing = true;
     maxread     = 0;
+    notify_capture_state(true);
 }
 
 bool StdCapture::EndCapture()
 {
     if (!m_capturing) return false;
+    notify_capture_state(false);
     dup2(m_oldStdOut, fileno(stdout));
     m_captured.clear();
 
@@ -85,7 +105,7 @@ bool StdCapture::EndCapture()
         fd_blocked = false;
 
 #ifdef _WIN32
-        if (!eof(m_pipe[READ])) {
+        if (pipe_has_data(m_pipe[READ])) {
             bytesRead = read(m_pipe[READ], buf, bufSize - 1);
         }
 #else
@@ -113,7 +133,7 @@ std::string StdCapture::GetChunk()
     buf[0]        = '\0';
 
 #ifdef _WIN32
-    if (!eof(m_pipe[READ])) {
+    if (pipe_has_data(m_pipe[READ])) {
         bytesRead = read(m_pipe[READ], buf, bufSize - 1);
     }
 #else
@@ -122,7 +142,7 @@ std::string StdCapture::GetChunk()
     if (bytesRead > 0) {
         buf[bytesRead] = '\0';
     }
-    maxread = std::max(maxread, bytesRead);
+    maxread = (maxread > bytesRead) ? maxread : bytesRead;
     return {buf};
 }
 
