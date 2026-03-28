@@ -38,7 +38,7 @@ settings of the desktop environment.  Otherwise, there are no changes in
 functionality between using either major version of Qt.  Building
 LAMMPS-GUI requires CMake version 3.20 or later.
 
-.. admonition:: LAMMPS-GUI 1.11.4 has been successfully compiled and tested on:
+.. admonition:: LAMMPS-GUI 1.12.0 has been successfully compiled and tested on:
 
    - Ubuntu Linux 22.04LTS x86_64 using GCC 11, Qt version 5.15
    - Fedora Linux 43 x86\_64 using GCC 14 and Clang 17, Qt version 5.15
