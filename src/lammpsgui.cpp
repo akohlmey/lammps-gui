@@ -174,7 +174,7 @@ LammpsGui::LammpsGui(QWidget *parent, const QString &filename, int width, int he
             }
         }
 
-        // plugin path has been reset. Open file browser to select one a file interactively.
+        // plugin path has been reset. Open file browser to select a file interactively.
         if (plugin_path.isEmpty()) {
 #if defined(Q_OS_MACOS)
             const QString pattern = "LAMMPS shared library (liblammps*.dylib)";
@@ -195,6 +195,10 @@ LammpsGui::LammpsGui(QWidget *parent, const QString &filename, int width, int he
                 const char *path = mystrdup(QCoreApplication::applicationFilePath());
                 const char *arg0 = mystrdup(QCoreApplication::arguments().at(0));
                 execl(path, arg0, (char *)nullptr);
+                critical(this, "LAMMPS-GUI Error", "Relaunching LAMMPS-GUI failed.",
+                         "LAMMPS-GUI must be restarted to correctly load the selected "
+                         "LAMMPS shared library. Click on 'Close' to exit.");
+                exit(1);
             }
         }
 
@@ -207,7 +211,7 @@ LammpsGui::LammpsGui(QWidget *parent, const QString &filename, int width, int he
                      "<p align=\"justify\">Either no LAMMPS shared library file has been "
                      "selected, or no compatible LAMMPS shared library file path has been "
                      "provided, or the provided path has a file with an incompatible LAMMPS "
-                     "version, or some depended shared library files are not found.</p>"
+                     "version, or some dependent shared library files are not found.</p>"
                      "<p align=\"justify\">Please try again and either use the -p command line "
                      "flag to specify a path to a suitable LAMMPS shared library file or select "
                      "one from the file browser dialog.");
@@ -780,7 +784,7 @@ void LammpsGui::update_variables()
     QRegularExpression indexvar(R"(^\s*variable\s+(\w+)\s+index\s+(.*))");
     QRegularExpression anyvar(R"(^\s*variable\s+(\w+)\s+(\w+)\s+(.*))");
     QRegularExpression usevar(R"((\$(\w)|\${(\w+)}))");
-    QRegularExpression refvar(R"(v_(\\w+))");
+    QRegularExpression refvar(R"(v_(\w+))");
 
     // forget previously listed variables
     variables.clear();
