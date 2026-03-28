@@ -370,9 +370,9 @@ bool is_light_theme()
 
 void silence_stdout()
 {
-    ++silenced_counter;
     if (capture_is_active || stdout_silenced) return;
 
+    ++silenced_counter;
     fflush(stdout);
     saved_stdout_fd = mydup(myfileno(stdout));
     if (saved_stdout_fd == -1) return;
@@ -392,7 +392,7 @@ void silence_stdout()
 
 void restore_stdout()
 {
-    --silenced_counter;
+    if (silenced_counter > 0) --silenced_counter;
     if (!stdout_silenced || (saved_stdout_fd == -1) || (silenced_counter > 0)) return;
 
     fflush(stdout);

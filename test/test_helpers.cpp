@@ -338,9 +338,9 @@ TEST_F(HelpersTest, SilenceStdoutIdempotent)
     silence_stdout(); // second call should be a no-op
     EXPECT_TRUE(is_stdout_silenced());
 
-    // but it will be restored only on the second call to support nesting
     restore_stdout();
-    EXPECT_TRUE(is_stdout_silenced());
+    EXPECT_FALSE(is_stdout_silenced());
+    // restoring a second time should not make a difference
     restore_stdout();
     EXPECT_FALSE(is_stdout_silenced());
 }
