@@ -189,7 +189,7 @@ The **menu bar row** has:
   automatically set and display of explicit or implicit bonds is enabled
 - The **Width** spin box where the image width can be set.  It can be
   accessed using the `Alt-W` keyboard shortcut.
-- The **Height** spin box, where set the image height can be set.  It can
+- The **Height** spin box, where the image height can be set.  It can
   be accessed using the `Alt-H` keyboard shortcut.
 
 The **toolbar buttons** row below the menu bar provide quick access to

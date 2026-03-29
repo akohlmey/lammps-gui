@@ -910,7 +910,8 @@ void ImageViewer::toggle_bond()
 
     auto *edit  = findChild<QLineEdit *>("bondSize");
     auto *label = findChild<QLabel *>("BondLabel");
-    if ((showbonds || autobond) && (bonddiam != "type") && (bonddiam != "atom")) {
+    if ((showbonds || autobond) && (bonddiam != "type") && (bonddiam != "atom") &&
+        (bonddiam != "none")) {
         if (edit) {
             edit->setEnabled(true);
             edit->show();
@@ -1888,7 +1889,8 @@ void ImageViewer::atom_settings()
         }
     }
 
-    if ((showbonds || autobond) && (bonddiam != "type") && (bonddiam != "atom")) {
+    if ((showbonds || autobond) && (bonddiam != "type") && (bonddiam != "atom") &&
+        (bonddiam != "none")) {
         auto *edit  = findChild<QLineEdit *>("bondSize");
         auto *label = findChild<QLabel *>("BondLabel");
         if (edit) {
