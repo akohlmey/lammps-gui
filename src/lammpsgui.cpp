@@ -1236,6 +1236,9 @@ void LammpsGui::logupdate()
         completed = t_elapsed / t_total * 1000.0;
         // update cpu usage
         int percent_cpu = (int)lammps.get_thermo("cpuuse");
+        // clear any pending error messages from polling those thermo keywords
+        lammps.get_last_error_message(nullptr, 0);
+
         cpuuse->setText(QString("%1%CPU").arg(percent_cpu, 4));
         if (percent_cpu < 25.0 * nthreads) {
             cpuuse->setStyleSheet("QLabel {background-color: black; color: white;}");
