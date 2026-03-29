@@ -48,8 +48,8 @@ lattice spacing.
 For particles that use `atom styles
 <https://docs.lammps.org/atom_style.html>`_ "body", "ellipsoid", "line",
 or "tri" LAMMPS will visualize the particles according to their atom
-style information by default. Other particles types will be visualized
-as sphere. In the *Atom/Bond* settings dialog, this can be further
+style information by default.  Other particles types will be visualized
+as sphere.  In the *Atom/Bond* settings dialog, this can be further
 customized (or disabled).
 
 .. |gui-image1| image:: JPG/lammps-gui-image-water.png
@@ -139,7 +139,7 @@ The Image Viewer window consists of three main areas: a menu/toolbar
 strip at the top, the rendered image in the center, and a settings panel
 on the right side.  Following the general theme of LAMMPS-GUI of
 extensive keyboard shortcut support, you can select most text fields by
-using the `Alt` key and the underlined letter. For example the *File*
+using the `Alt` key and the underlined letter.  For example the *File*
 menu is opened with `Alt-F` and its entries can be also selected the
 same way or using the cursor keys and `Enter`.  Keyboard shortcuts
 starting with `Ctrl` usually work globally inside the image window, that
@@ -182,14 +182,14 @@ The **menu bar row** has:
   while LAMMPS is rendering a new image and grayed out |inactive| when
   rendering is complete.
 - The **Atom size** text field, where the atom diameter can be
-  adjusted. This field is only visible when the atom diameter is not
+  adjusted.  This field is only visible when the atom diameter is not
   automatically set.
 - The **Bond size** text field, where the bond diameter can be
-  adjusted. This field is only visible when the bond diameter is not
-  automatically set.
-- The **Width** spin box where the image width can be set. It can be
+  adjusted.  This field is only visible when the bond diameter is not
+  automatically set and display of explicit or implicit bonds is enabled
+- The **Width** spin box where the image width can be set.  It can be
   accessed using the `Alt-W` keyboard shortcut.
-- The **Height** spin box, where set the image height can be set. It can
+- The **Height** spin box, where set the image height can be set.  It can
   be accessed using the `Alt-H` keyboard shortcut.
 
 The **toolbar buttons** row below the menu bar provide quick access to
@@ -213,7 +213,7 @@ there are:
 - **Dynamic bonds** (toggle): Automatically compute bonds from atom
   distances.  This is useful for force fields with implicit bonds.  When
   enabled, the adjacent text field allows setting the bond cutoff
-  distance. This feature depends on existing neighbor list data and thus
+  distance.  This feature depends on existing neighbor list data and thus
   may not always work as expected when the system has explicit bonds and
   thus neighbors may be automatically excluded from neighbor lists due
   to the `special_bonds settings
@@ -308,7 +308,7 @@ The dialog is organized into the following sections:
    - **Axes** (checkbox): Enable or disable rendering of coordinate axes.
    - **Location** (radio buttons): Select where the axes are drawn in
      the image (only available for LAMMPS versions that support this
-     feature). Possible choices are: *Lower Left* (default), *Lower
+     feature).  Possible choices are: *Lower Left* (default), *Lower
      Right*, *Upper Left*, *Upper Right*, or *Center*.
    - **Length**: The length of the axes arrows as a fraction of the box
      size (range: 0.00001 -- 5.0).
@@ -416,8 +416,10 @@ The dialog contains the following sections:
      Otherwise, the colors are determined by the colormap selection
      described below.
    - **Size**: Select the property used for atom sizing.  Options
-     include *auto* (when element, diameter, or sigma data is available),
-     *type*, and *element*.
+     include *auto* (when element, diameter, or sigma data is
+     available), *type*, *element*, and a few pre-defined choices for
+     custom atom diameters.  The text field can be edited and a
+     different custom diameter entered.
    - **Opacity**: The transparency of atoms *and* bonds (range: 0.0 --
      1.0, where 1.0 is fully opaque and 0.0 is fully transparent; only
      available for LAMMPS versions supporting this feature).
@@ -451,8 +453,10 @@ The dialog contains the following sections:
      bonds.
    - **Color**: Select bond coloring mode -- *atom* (colored by the
      atom type at each end) or *type* (uniform color per bond type).
-   - **Size**: Select bond diameter mode -- *atom*, *type*, *none*, or
-     a custom numeric value.
+   - **Size**: Select bond diameter mode.  Options include *atom*,
+     *type*, and a few pre-defined choices for custom bond diameters.
+     The text field can be edited and a different custom diameter
+     entered.
    - **AutoBonds** (checkbox): Automatically determine bonds from atom
      distances, useful for many-body force fields with implicit bonds
      like `AIREBO <https://docs.lammps.org/pair_airebo.html>`_ or
