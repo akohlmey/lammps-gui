@@ -1428,7 +1428,7 @@ void ImageViewer::atom_settings()
     if (useelements) aditems << "element";
     if (usediameter) aditems << "diameter";
     if (usesigma) aditems << "sigma";
-    aditems << "type" << "3.5" << "3.0" << "2.0";
+    aditems << "type" << "3.50" << "5.00" << "3.00" << "2.00";
     if ((atomSize > 0.1) && (atomSize < 5.0)) {
         aditems << QString::number(2.0 * atomSize, 'f', 2);
     } else {
@@ -1524,8 +1524,14 @@ void ImageViewer::atom_settings()
     layout->addWidget(new QLabel("Size: "), idx, n++, 1, 1, Qt::AlignVCenter | Qt::AlignRight);
 
     QRegularExpression validbond(R"((atom|type|none|^\d+\.?\d*|^\d*\.?\d+))");
-    QStringList bnitems{"type", "atom", "0.2", "0.4"};
-    if (bonddiam != "none") bnitems << bonddiam;
+    QStringList bnitems{"type", "atom", "0.10", "0.20", "0.40", "0.75"};
+    if (bonddiam != "none") {
+        if ((bondSize > 0.1) && (bondSize < 5.0)) {
+            bnitems << QString::number(bondSize, 'f', 2);
+        } else {
+            bnitems << QString::number(bondSize, 'g', 3);
+        }
+    }
     bnitems.removeDuplicates();
 
     auto *bndiam = new QComboBox;
