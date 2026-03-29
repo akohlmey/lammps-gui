@@ -408,8 +408,13 @@ The dialog contains the following sections:
      (charge), *diameter*, *id*, *mass*, *x*/*y*/*z* (coordinates), as
      well as atom-style variables (`v_<name>`), per-atom compute results
      (`c_<name>` or `c_<name>[col]`), and per-atom fix results
-     (`f_<name>` or `f_<name>[col]`).  The contents of the list
-     depends on which are available in the current simulation state.
+     (`f_<name>` or `f_<name>[col]`).  The contents of the list depends
+     on which are available in the current simulation state.  When
+     selecting *type* or *element* the colors are fixed and can be only
+     changed manually for ``dump_image`` output in the input using
+     ``dump_modify acolor`` or ``dump_modify element``, respectively.
+     Otherwise, the colors are determined by the colormap selection
+     described below.
    - **Size**: Select the property used for atom sizing.  Options
      include *auto* (when element, diameter, or sigma data is available),
      *type*, and *element*.
@@ -419,9 +424,10 @@ The dialog contains the following sections:
    - **VDW style** (checkbox): Enable or disable space-filling sphere
      rendering.  When unchecked, the ball-and-stick style is used.
    - **Colormap**: Select the colormap used for coloring by a per-atom
-     property.  Currently available continuous colormaps are: *BWR*
-     (blue-white-red), *RWB* (red-white-blue), *PWT*
-     (purple-white-teal), *BWG* (blue-white-green), *BGR*
+     property.  This option is *not* available for atom color
+     selections *type* and *element*\ .  Currently available continuous
+     colormaps are: *BWR* (blue-white-red), *RWB* (red-white-blue),
+     *PWT* (purple-white-teal), *BWG* (blue-white-green), *BGR*
      (blue-green-red), "Viridis" (from matplotlib), "Plasma" (from
      matplotlib), "Inferno" (from matplotlib), "Teal", "Rainbow", and
      *Grayscale*.  *Sequential* is a map with discrete colors.  These

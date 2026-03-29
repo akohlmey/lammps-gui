@@ -931,6 +931,15 @@ void ImageViewer::acolor_sync()
     auto *src = qobject_cast<QComboBox *>(sender());
     if (!src) return;
     auto *dialog = qobject_cast<QWidget *>(src->parent());
+
+    // enable/disable colormap selector depending on atom coloring selection
+    auto *amap = dialog->findChild<QComboBox *>("amap");
+    if (amap) {
+        if ((src->currentText() == "type") || (src->currentText() == "element"))
+            amap->setEnabled(false);
+        else
+            amap->setEnabled(true);
+    }
     auto *acolor = dialog->findChild<QComboBox *>("acolor");
     auto *bcolor = dialog->findChild<QComboBox *>("bcolor");
     auto *ecolor = dialog->findChild<QComboBox *>("ecolor");
@@ -1478,6 +1487,7 @@ void ImageViewer::atom_settings()
     for (int idx = 0; idx < amap->count(); ++idx) {
         if (amap->itemText(idx) == colormap) amap->setCurrentIndex(idx);
     }
+    if ((atomcolor == "type") || (atomcolor == "element")) amap->setEnabled(false);
     QRegularExpression validminmax(
         R"((auto|min|max|[+-]?\d+\.?\d*|[+-]?\d*\.?\d+)|[+-]?\d+\.?\d*[eE][+-]?\d+|[+-]?\d*\.?\d+[eE][+-]?\d+)");
     auto *minmaxvalidator = new QRegularExpressionValidator(validminmax, this);
