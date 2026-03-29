@@ -11,9 +11,6 @@ LAMMPS-GUI Documentation
       :align: center
       :scale: 75%
 
-.. raw:: latex
-
-   \clearpage
 
 ****************
 About LAMMPS-GUI

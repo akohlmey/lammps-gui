@@ -54,6 +54,11 @@
   </provides>
 
   <releases>
+    <release version="1.12.0" timestamp="1774663229">
+      <description>
+        Final fixes for next LAMMPS-GUI major release and LAMMPS feature release
+      </description>
+    </release>
     <release version="1.11.4" timestamp="1774314764">
       <description>
         Consistently use QCheckBox::isChecked() and QCheckBox::setChecked()
