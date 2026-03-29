@@ -386,7 +386,7 @@ ImageViewer::ImageViewer(const QString &fileName, LammpsWrapper *_lammps, QWidge
     mapmin         = "auto";
     mapmax         = "auto";
     showatoms      = true;
-    showbonds      = true;
+    showbonds      = lammps->extract_setting("molecule_flag") == 1;
     showbodies     = true;
     bodydiam       = 0.2;
     bodyflag       = TRIANGLES;
@@ -906,6 +906,30 @@ void ImageViewer::toggle_bond()
         vdwfactor = VDW_OFF;
         auto *vdw = findChild<QPushButton *>("vdw");
         if (vdw) vdw->setChecked(false);
+    }
+
+    auto *edit  = findChild<QLineEdit *>("bondSize");
+    auto *label = findChild<QLabel *>("BondLabel");
+    if ((showbonds || autobond) && (bonddiam != "type") && (bonddiam != "atom")) {
+        if (edit) {
+            edit->setEnabled(true);
+            edit->show();
+            bondSize = bonddiam.toDouble();
+            edit->setText(bonddiam);
+        }
+        if (label) {
+            label->setEnabled(true);
+            label->show();
+        }
+    } else {
+        if (edit) {
+            edit->setEnabled(false);
+            edit->hide();
+        }
+        if (label) {
+            label->setEnabled(false);
+            label->hide();
+        }
     }
 
     button->setChecked(autobond);
@@ -1561,6 +1585,7 @@ void ImageViewer::atom_settings()
     if (lammps->extract_setting("molecule_flag") != 1) {
         bondbutton->setEnabled(false);
         bondbutton->setChecked(false);
+        showbonds = false;
     }
 
 #if QT_VERSION >= QT_VERSION_CHECK(6, 7, 0)
@@ -1824,34 +1849,28 @@ void ImageViewer::atom_settings()
 
     // enable atom size input field in main window, if not set to symbolic value
     if (atomcustom) {
+        auto *edit  = findChild<QLineEdit *>("atomSize");
+        auto *label = findChild<QLabel *>("AtomLabel");
         if ((atomdiam != "element") && (atomdiam != "type") && (atomdiam != "diameter") &&
             (atomdiam != "sigma") && (atomdiam != "none")) {
-            auto *edit = findChild<QLineEdit *>("atomSize");
             if (edit) {
                 edit->setEnabled(true);
                 edit->show();
                 atomSize = 0.5 * atomdiam.toDouble();
                 edit->setText(atomdiam);
             }
-            auto *label = findChild<QLabel *>("AtomLabel");
             if (label) {
                 label->setEnabled(true);
                 label->show();
             }
-        }
-        if ((bonddiam != "type") && (bonddiam != "type") && (bonddiam != "none") &&
-            (bonddiam != "none")) {
-            auto *edit = findChild<QLineEdit *>("bondSize");
+        } else {
             if (edit) {
-                edit->setEnabled(true);
-                edit->show();
-                bondSize = bonddiam.toDouble();
-                edit->setText(bonddiam);
+                edit->setEnabled(false);
+                edit->hide();
             }
-            auto *label = findChild<QLabel *>("BondLabel");
             if (label) {
-                label->setEnabled(true);
-                label->show();
+                label->setEnabled(false);
+                label->hide();
             }
         }
     }
@@ -1869,8 +1888,34 @@ void ImageViewer::atom_settings()
         }
     }
 
+    if ((showbonds || autobond) && (bonddiam != "type") && (bonddiam != "atom")) {
+        auto *edit  = findChild<QLineEdit *>("bondSize");
+        auto *label = findChild<QLabel *>("BondLabel");
+        if (edit) {
+            edit->setEnabled(true);
+            edit->show();
+            bondSize = bonddiam.toDouble();
+            edit->setText(bonddiam);
+        }
+        if (label) {
+            label->setEnabled(true);
+            label->show();
+        }
+    } else {
+        auto *edit  = findChild<QLineEdit *>("bondSize");
+        auto *label = findChild<QLabel *>("BondLabel");
+        if (edit) {
+            edit->setEnabled(false);
+            edit->hide();
+        }
+        if (label) {
+            label->setEnabled(false);
+            label->hide();
+        }
+    }
+
     showbodies = bodybutton->isChecked();
-    // using the colors other than type for bodies was implemented after the 11Feb2026 release.
+    // using the body colors other than type was implemented after the 11Feb2026 release.
     if (lammps->version() > 20260211) {
         bodycolor = bcolor->currentText();
     } else {
@@ -2529,40 +2574,6 @@ void ImageViewer::createImage()
         auto *button = findChild<QPushButton *>("vdw");
         if (edit && label && button) {
             button->setEnabled(true);
-            edit->setEnabled(false);
-            edit->hide();
-            label->setEnabled(false);
-            label->hide();
-        }
-    }
-
-    if (showbonds) {
-        auto *edit  = findChild<QLineEdit *>("bondSize");
-        auto *label = findChild<QLabel *>("BondLabel");
-        if (edit && label) {
-            if (atomcustom) {
-                if ((bonddiam != "type") && (atomdiam != "atom") && (atomdiam != "none")) {
-                    edit->setEnabled(true);
-                    edit->show();
-                    label->setEnabled(true);
-                    label->show();
-                } else {
-                    edit->setEnabled(false);
-                    edit->hide();
-                    label->setEnabled(false);
-                    label->hide();
-                }
-            } else {
-                edit->setEnabled(false);
-                edit->hide();
-                label->setEnabled(false);
-                label->hide();
-            }
-        }
-    } else {
-        auto *edit  = findChild<QLineEdit *>("bondSize");
-        auto *label = findChild<QLabel *>("BondLabel");
-        if (edit && label) {
             edit->setEnabled(false);
             edit->hide();
             label->setEnabled(false);
