@@ -1100,6 +1100,8 @@ void LammpsGui::write_file(const QString &fileName)
     if (text.back().toLatin1() != '\n') out << "\n"; // add final newline if missing
     file.close();
     dirstatus->setText(QString(" Directory: ") + current_dir);
+    // update list of files for completion since we may have changed the working directory
+    ui->textEdit->setFileList();
     ui->textEdit->document()->setModified(false);
 }
 
@@ -1236,6 +1238,9 @@ void LammpsGui::logupdate()
         completed = t_elapsed / t_total * 1000.0;
         // update cpu usage
         int percent_cpu = (int)lammps.get_thermo("cpuuse");
+        // clear any pending error messages from polling those thermo keywords
+        lammps.get_last_error_message(nullptr, 0);
+
         cpuuse->setText(QString("%1%CPU").arg(percent_cpu, 4));
         if (percent_cpu < 25.0 * nthreads) {
             cpuuse->setStyleSheet("QLabel {background-color: black; color: white;}");
