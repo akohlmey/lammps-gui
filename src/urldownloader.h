@@ -78,6 +78,8 @@ public:
 
 private:
     void configureProxy();
+    QByteArray fetchRawContent(const QString &url);
+    bool verifyChecksum(const QString &url, const QString &file);
 
     QNetworkAccessManager *manager; ///< Qt network access manager
     QWidget *parentWidget;          ///< Parent widget for dialogs

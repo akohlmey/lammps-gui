@@ -205,6 +205,15 @@ AboutDialog Class
 Utility Components
 ==================
 
+URLDownloader Class
+-------------------
+
+.. doxygenclass:: URLDownloader
+   :members:
+   :protected-members:
+
+-----
+
 FileViewer Class
 ----------------
 

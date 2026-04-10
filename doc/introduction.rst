@@ -211,6 +211,15 @@ Dialog and Utility Components
 Support Components
 ------------------
 
+**URLDownloader (urldownloader.h/.cpp)**
+  Utility class for downloading files over HTTPS.  Provides a
+  synchronous download interface using ``QNetworkAccessManager`` with
+  ``QEventLoop``.  Respects the ``https_proxy`` preference setting and
+  the ``https_proxy`` environment variable.  After downloading a file,
+  it checks for a ``SHA256SUMS`` file in the same remote directory and
+  verifies the SHA-256 checksum if available.
+  See :cpp:class:`URLDownloader`
+
 **StdCapture (stdcapture.h/.cpp)**
   Utility class that captures stdout and stderr output from LAMMPS.
   Redirects C-level file descriptors to allow capturing output from

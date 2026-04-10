@@ -38,10 +38,10 @@ version 3.20 or later.
 
 .. admonition:: LAMMPS-GUI 2.0.0 has been successfully compiled and tested on:
 
-   - Ubuntu Linux 22.04LTS x86_64 using GCC 11, Qt version 5.15
-   - Fedora Linux 43 x86\_64 using GCC 14 and Clang 17, Qt version 5.15
+   - Ubuntu Linux 22.04LTS x86_64 using GCC 11, Qt version 6.4
+   - Fedora Linux 43 x86\_64 using GCC 14 and Clang 17, Qt version 6.8
    - Fedora Linux 43 x86\_64 using GCC 15, Qt version 6.10
-   - Apple macOS 12 (Monterey) with Xcode on arm64 and x86\_64, Qt version 5.15
+   - Apple macOS 12 (Monterey) with Xcode on arm64 and x86\_64, Qt version 6.8
    - Windows 11 x86_64 with Visual Studio 2026 and Visual C++ 14.50, Qt version 6.10
    - Windows 11 x86_64 with MinGW / GCC 15.2 cross-compiler on Fedora 43, Qt version 6.10
 

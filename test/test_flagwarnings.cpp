@@ -116,12 +116,11 @@ TEST_F(FlagWarningsTest, WarningAtStartOfLine)
 TEST_F(FlagWarningsTest, MultipleWarnings)
 {
     QTextDocument doc;
-    doc.setPlainText(
-        "WARNING: first warning\n"
-        "WARNING: second warning\n"
-        "ERROR: an error\n"
-        "Normal line\n"
-        "ERROR: another error");
+    doc.setPlainText("WARNING: first warning\n"
+                     "WARNING: second warning\n"
+                     "ERROR: an error\n"
+                     "Normal line\n"
+                     "ERROR: another error");
 
     FlagWarnings fw(nullptr, &doc);
     fw.rehighlight();
