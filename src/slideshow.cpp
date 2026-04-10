@@ -659,20 +659,12 @@ void SlideShow::applyImageTransform()
 
     // Apply horizontal flip
     if (imageFlipH) {
-#if QT_VERSION >= QT_VERSION_CHECK(6, 9, 0)
         transformedImage = transformedImage.flipped(Qt::Horizontal);
-#else
-        transformedImage = transformedImage.mirrored(true, false);
-#endif
     }
 
     // Apply vertical flip
     if (imageFlipV) {
-#if QT_VERSION >= QT_VERSION_CHECK(6, 9, 0)
         transformedImage = transformedImage.flipped(Qt::Vertical);
-#else
-        transformedImage = transformedImage.mirrored(false, true);
-#endif
     }
 
     // Scale the transformed image

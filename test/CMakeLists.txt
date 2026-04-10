@@ -16,16 +16,9 @@ FetchContent_MakeAvailable(googletest)
 enable_testing()
 include(GoogleTest)
 
-# Find Qt (use same logic as parent)
-if(NOT LAMMPS_GUI_USE_QT5)
-  find_package(Qt6 6.2 QUIET COMPONENTS Widgets)
-endif()
-if(NOT Qt6_FOUND)
-  find_package(Qt5 5.15 REQUIRED COMPONENTS Widgets)
-  set(QT_VERSION_MAJOR 5)
-else()
-  set(QT_VERSION_MAJOR 6)
-endif()
+# Find Qt6 (Qt5 is no longer supported)
+find_package(Qt6 6.10 REQUIRED COMPONENTS Widgets)
+set(QT_VERSION_MAJOR 6)
 
 # check that the Xvfb runner and a supported screenshooter are present
 find_program(XVFB_RUNNER

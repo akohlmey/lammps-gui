@@ -40,18 +40,12 @@
 #include <QVBoxLayout>
 #include <QVariant>
 
-#ifdef LAMMPS_GUI_USE_QTGRAPHS
 #include <QMetaObject>
 #include <QQuickItem>
 #include <QQuickWidget>
 #include <QtGraphs/QGraphsTheme>
 #include <QtGraphs/QLineSeries>
 #include <QtGraphs/QValueAxis>
-#else
-#include <QChart>
-#include <QLineSeries>
-#include <QValueAxis>
-#endif
 
 #include <cmath>
 
@@ -568,8 +562,6 @@ bool ChartWindow::eventFilter(QObject *watched, QEvent *event)
 
 /* -------------------------------------------------------------------- */
 
-#ifdef LAMMPS_GUI_USE_QTGRAPHS
-
 ChartViewer::ChartViewer(const QString &title, int _index, QWidget *parent) :
     QWidget(parent), last_step(-1), index(_index), window(10), order(4), quickWidget(nullptr),
     graphsView(nullptr), ylabelWidget(nullptr), xlabelWidget(nullptr), titleWidget(nullptr),
@@ -688,54 +680,6 @@ ChartViewer::~ChartViewer()
     delete yaxis;
 }
 
-#else
-
-ChartViewer::ChartViewer(const QString &title, int _index, QWidget *parent) :
-    QChartView(parent), last_step(-1), index(_index), window(10), order(4), chart(new QChart),
-    series(new QLineSeries), smooth(nullptr), xaxis(new QValueAxis), yaxis(new QValueAxis),
-    do_raw(true), do_smooth(false)
-{
-    QSettings settings;
-    settings.beginGroup("charts");
-    chart->legend()->hide();
-    chart->addAxis(xaxis, Qt::AlignBottom);
-    chart->addAxis(yaxis, Qt::AlignLeft);
-    chart->setTitle("");
-    xaxis->setTitleText("Time step");
-    xaxis->setTickCount(5);
-    xaxis->setLabelFormat("%d");
-    yaxis->setTickCount(5);
-    xaxis->setGridLineVisible(settings.value("grid", true).toBool());
-    xaxis->setMinorGridLineVisible(settings.value("minorgrid", true).toBool());
-    xaxis->setMinorTickCount(4);
-    yaxis->setMinorTickCount(4);
-    yaxis->setTitleText(title);
-    yaxis->setGridLineVisible(settings.value("grid", true).toBool());
-    yaxis->setMinorGridLineVisible(settings.value("minorgrid", true).toBool());
-
-    series->setName(title);
-    settings.endGroup();
-
-    setRenderHint(QPainter::Antialiasing);
-    setChart(chart);
-    setRubberBand(QChartView::NoRubberBand);
-    last_update = QTime::currentTime();
-    update_smooth();
-}
-
-/* -------------------------------------------------------------------- */
-
-ChartViewer::~ChartViewer()
-{
-    delete xaxis;
-    delete yaxis;
-    delete smooth;
-    delete series;
-    delete chart;
-}
-
-#endif
-
 /* -------------------------------------------------------------------- */
 
 void ChartViewer::add_data(int step, double data)
@@ -816,7 +760,6 @@ void ChartViewer::reset_zoom()
     auto ranges = get_minmax();
     xaxis->setRange(ranges.left(), ranges.right());
     yaxis->setRange(ranges.bottom(), ranges.top());
-#ifdef LAMMPS_GUI_USE_QTGRAPHS
     // compute "nice" tick intervals targeting about 5 major ticks per axis
     auto niceInterval = [](double range) -> double {
         if (range <= 0) return 1.0;
@@ -840,7 +783,6 @@ void ChartViewer::reset_zoom()
     yaxis->setTickAnchor(0.0);
     xaxis->setTickInterval(niceInterval(xspan));
     yaxis->setTickInterval(niceInterval(yspan));
-#endif
 }
 
 /* -------------------------------------------------------------------- */
@@ -849,22 +791,14 @@ void ChartViewer::smooth_param(bool _do_raw, bool _do_smooth, int _window, int _
 {
     // turn off raw plot
     if (!_do_raw) {
-#ifdef LAMMPS_GUI_USE_QTGRAPHS
         if (do_raw && graphsView)
             QMetaObject::invokeMethod(graphsView, "removeSeries", Q_ARG(QObject *, series));
-#else
-        if (do_raw) chart->removeSeries(series);
-#endif
     }
     // turn off smooth plot
     if (!_do_smooth) {
         if (smooth) {
-#ifdef LAMMPS_GUI_USE_QTGRAPHS
             if (graphsView)
                 QMetaObject::invokeMethod(graphsView, "removeSeries", Q_ARG(QObject *, smooth));
-#else
-            chart->removeSeries(smooth);
-#endif
             delete smooth;
             smooth = nullptr;
         }
@@ -880,11 +814,7 @@ void ChartViewer::smooth_param(bool _do_raw, bool _do_smooth, int _window, int _
 
 void ChartViewer::set_tlabel(const QString &tlabel)
 {
-#ifdef LAMMPS_GUI_USE_QTGRAPHS
     if (titleWidget) titleWidget->setText(tlabel);
-#else
-    if (chart) chart->setTitle(tlabel);
-#endif
 }
 
 /* -------------------------------------------------------------------- */
@@ -892,9 +822,7 @@ void ChartViewer::set_tlabel(const QString &tlabel)
 void ChartViewer::set_ylabel(const QString &ylabel)
 {
     yaxis->setTitleText(ylabel);
-#ifdef LAMMPS_GUI_USE_QTGRAPHS
     ylabelWidget->setText(ylabel);
-#endif
 }
 
 // local implementation of Savitzky-Golay filter
@@ -1317,7 +1245,6 @@ void ChartViewer::update_smooth()
     if ((smoothidx < 0) || (smoothidx >= mybrushes.size())) smoothidx = 0;
     settings.endGroup();
 
-#ifdef LAMMPS_GUI_USE_QTGRAPHS
     if (do_raw) {
         // add raw data if not in view
         bool hasSeries = false;
@@ -1346,31 +1273,6 @@ void ChartViewer::update_smooth()
             smooth->replace(calc_sgsmooth(series->points(), window, order));
         }
     }
-#else
-    auto allseries = chart->series();
-    if (do_raw) {
-        // add raw data if not in chart
-        if (!allseries.contains(series)) {
-            series->setPen(QPen(mybrushes[rawidx], 3, Qt::SolidLine, Qt::RoundCap));
-            chart->addSeries(series);
-            series->attachAxis(xaxis);
-            series->attachAxis(yaxis);
-        }
-    }
-
-    if (do_smooth) {
-        if (series->count() > (2 * window)) {
-            if (!smooth) {
-                smooth = new QLineSeries;
-                smooth->setPen(QPen(mybrushes[smoothidx], 3, Qt::SolidLine, Qt::RoundCap));
-                chart->addSeries(smooth);
-                smooth->attachAxis(xaxis);
-                smooth->attachAxis(yaxis);
-            }
-            smooth->replace(calc_sgsmooth(series->points(), window, order));
-        }
-    }
-#endif
 }
 
 // Local Variables:

@@ -568,11 +568,7 @@ void CodeEditor::dropEvent(QDropEvent *event)
         // cut selected text to clipboard before we reposition
         // the cursor and re-insert the text with drag-n-drop
         cut();
-#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
-        cursorForPosition(event->pos()).insertText(event->mimeData()->text());
-#else
         cursorForPosition(event->position().toPoint()).insertText(event->mimeData()->text());
-#endif
         // properly handle drop event in base class, but set editor
         // buffer readonly to prevent undesired changes
         setReadOnly(true);

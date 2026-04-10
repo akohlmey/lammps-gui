@@ -33,11 +33,6 @@
 
 int main(int argc, char *argv[])
 {
-#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
-    // register QList<QString> only needed for Qt5
-    qRegisterMetaTypeStreamOperators<QList<QString>>("QList<QString>");
-#endif
-
 #if defined(Q_OS_MACOS)
     // macOS does not support the "C" locale with UTF-8 encoding,
     // Since Qt requires UTF-8 we use "en_US" instead.
