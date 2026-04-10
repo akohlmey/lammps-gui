@@ -598,7 +598,7 @@ ChartViewer::ChartViewer(const QString &title, int _index, QWidget *parent) :
     QGraphsLine gridLine;
     if (settings.value("grid", true).toBool()) {
         gridLine.setMainColor(QColor(160, 160, 160));
-        gridLine.setMainWidth(1.5);
+        gridLine.setMainWidth(2.0);
     } else {
         gridLine.setMainColor(Qt::white);
         gridLine.setMainWidth(0.0);

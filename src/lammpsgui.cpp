@@ -1974,18 +1974,18 @@ void LammpsGui::autoSave()
     if (autosave) writeFile(fileName);
 }
 
-void LammpsGui::setFont(const QFont &newfont)
+void LammpsGui::setFont(const QFont &newFont)
 {
-    QMainWindow::setFont(newfont);
+    QMainWindow::setFont(newFont);
     if (textEdit) {
-        textEdit->setFont(newfont);
-        menubar->setFont(newfont);
-        menuFile->setFont(newfont);
-        menuEdit->setFont(newfont);
-        menuRun->setFont(newfont);
-        menuTutorial->setFont(newfont);
-        menuAbout->setFont(newfont);
-        menuView->setFont(newfont);
+        textEdit->setFont(newFont);
+        menubar->setFont(newFont);
+        menuFile->setFont(newFont);
+        menuEdit->setFont(newFont);
+        menuRun->setFont(newFont);
+        menuTutorial->setFont(newFont);
+        menuAbout->setFont(newFont);
+        menuView->setFont(newFont);
     }
 }
 
@@ -1993,6 +1993,11 @@ void LammpsGui::about()
 {
     std::string version = "<b>This is LAMMPS-GUI version " LAMMPS_GUI_VERSION;
     version += " using Qt version " QT_VERSION_STR;
+#ifdef LAMMPS_GUI_USE_QTGRAPHS
+    version += " with QtGraphs";
+#else
+    version += " with QtCharts";
+#endif
     if (isLightTheme())
         version += " using light theme";
     else
