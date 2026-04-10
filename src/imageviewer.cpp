@@ -370,18 +370,10 @@ ImageViewer::ImageViewer(const QString &fileName, LammpsWrapper *_lammps, QWidge
     atomdiam    = settings.value("diameter", "type").toString();
     bondcolor   = settings.value("bondcolor", "atom").toString();
     bonddiam    = settings.value("bonddiam", "type").toString();
-    // support for bodies colored by atom property was added after LAMMPS version 11 Feb 2026
-    if (lammps->version() < 20260212) {
-        bodycolor      = "type";
-        ellipsoidcolor = "type";
-        linecolor      = "type";
-        tricolor       = "type";
-    } else {
-        bodycolor      = "atom";
-        ellipsoidcolor = "atom";
-        linecolor      = "atom";
-        tricolor       = "atom";
-    }
+    bodycolor      = "atom";
+    ellipsoidcolor = "atom";
+    linecolor      = "atom";
+    tricolor       = "atom";
     colormap       = settings.value("colormap", "BWR").toString();
     mapmin         = "auto";
     mapmax         = "auto";
@@ -973,16 +965,11 @@ void ImageViewer::acolorSync()
 
     if (src && acolor && bcolor && ecolor && lcolor && tcolor) {
         if (src == acolor) {
-            // support coloring by atom property was added after LAMMPS version 11 Feb 2026
-            if (lammps->version() > 20260211) {
-                if (src->currentText() != "type") {
-                    for (auto *box : {bcolor, ecolor, lcolor, tcolor}) {
-                        for (int idx = 0; idx < box->count(); ++idx)
-                            if (box->itemText(idx) == "atom") box->setCurrentIndex(idx);
-                    }
+            if (src->currentText() != "type") {
+                for (auto *box : {bcolor, ecolor, lcolor, tcolor}) {
+                    for (int idx = 0; idx < box->count(); ++idx)
+                        if (box->itemText(idx) == "atom") box->setCurrentIndex(idx);
                 }
-            } else {
-                bodycolor = ellipsoidcolor = linecolor = tricolor = "type";
             }
         } else {
             if (src->currentText() != "atom") {
@@ -1202,21 +1189,6 @@ void ImageViewer::globalSettings()
     atval->setValidator(transvalidator);
     atval->setMaximumWidth(fwidth * 3 / 2);
     layout->addWidget(atval, idx++, n++, 1, 1);
-    // disable and uncheck unsupported fields for older LAMMPS versions
-    if (lammps->version() < 20260211) {
-        llbutton->setChecked(true);
-        axesloc = "yes";
-        lrbutton->setEnabled(false);
-        lrbutton->setChecked(false);
-        ulbutton->setEnabled(false);
-        ulbutton->setChecked(false);
-        urbutton->setEnabled(false);
-        urbutton->setChecked(false);
-        cbutton->setEnabled(false);
-        cbutton->setChecked(false);
-        atval->setEnabled(false);
-        atval->setText("1.0");
-    }
 
     n = 0;
 
@@ -1240,10 +1212,6 @@ void ImageViewer::globalSettings()
     btrans->setValidator(transvalidator);
     btrans->setMaximumWidth(fwidth * 3 / 2);
     layout->addWidget(btrans, idx++, n++, 1, 1);
-    // disable and uncheck unsupported fields for older LAMMPS versions
-    if (lammps->version() < 20260211) {
-        btrans->setEnabled(false);
-    }
 
     n = 0;
 
@@ -1273,11 +1241,6 @@ void ImageViewer::globalSettings()
     b2color->setValidator(colorvalidator);
     b2color->setMaximumWidth(fwidth);
     layout->addWidget(b2color, idx++, n++, 1, 1);
-    // disable and uncheck unsupported fields for older LAMMPS versions
-    if (lammps->version() < 20260211) {
-        b2color->setEnabled(false);
-        b2color->setText(backcolor);
-    }
 
     n = 0;
     layout->addWidget(new QLabel("Quality:"), idx, n++, 1, 1);
@@ -1477,8 +1440,6 @@ void ImageViewer::atomSettings()
     auto *atrans = new QLineEdit(QString::number(atomtrans));
     atrans->setValidator(transvalidator);
     layout->addWidget(atrans, idx++, n++, 1, 1);
-    // disable and uncheck unsupported fields for older LAMMPS versions
-    if (lammps->version() < 20260211) atrans->setEnabled(false);
 
     n = 0;
 
@@ -1640,9 +1601,6 @@ void ImageViewer::atomSettings()
         bodybutton->setEnabled(false);
         bodybutton->setChecked(false);
         bcolor->setEnabled(false);
-        if (lammps->version() < 20260212) {
-            bcolor->setCurrentIndex(1); // = "type"
-        }
         bdiam->setEnabled(false);
         bcbutton->setEnabled(false);
         btbutton->setEnabled(false);
@@ -1684,13 +1642,10 @@ void ImageViewer::atomSettings()
     elevel->setWrapping(false);
     layout->addWidget(elevel, idx++, n++, 1, 1);
     ++n;
-    if ((lammps->extractSetting("ellipsoid_flag") != 1) || (lammps->version() < 20251210)) {
+    if (lammps->extractSetting("ellipsoid_flag") != 1) {
         ellipsoidbutton->setEnabled(false);
         ellipsoidbutton->setChecked(false);
         ecolor->setEnabled(false);
-        if (lammps->version() < 20260212) {
-            ecolor->setCurrentIndex(1); // = "type"
-        }
         elevel->setEnabled(false);
         ediam->setEnabled(false);
         ecbutton->setEnabled(false);
@@ -1719,9 +1674,6 @@ void ImageViewer::atomSettings()
         linebutton->setEnabled(false);
         linebutton->setChecked(false);
         lcolor->setEnabled(false);
-        if (lammps->version() < 20260212) {
-            lcolor->setCurrentIndex(1); // = "type"
-        }
         ldiam->setEnabled(false);
     }
 
@@ -1760,9 +1712,6 @@ void ImageViewer::atomSettings()
         tributton->setEnabled(false);
         tributton->setChecked(false);
         tcolor->setEnabled(false);
-        if (lammps->version() < 20260212) {
-            tcolor->setCurrentIndex(1); // = "type"
-        }
         tdiam->setEnabled(false);
         tcbutton->setEnabled(false);
         ttbutton->setEnabled(false);
@@ -1917,12 +1866,7 @@ void ImageViewer::atomSettings()
     }
 
     showbodies = bodybutton->isChecked();
-    // using the body colors other than type was implemented after the 11Feb2026 release.
-    if (lammps->version() > 20260211) {
-        bodycolor = bcolor->currentText();
-    } else {
-        bodycolor = "type";
-    }
+    bodycolor = bcolor->currentText();
     // diameter for body cylinders
     if (bdiam->hasAcceptableInput()) bodydiam = bdiam->text().toDouble();
     if (bcbutton->isChecked()) {
@@ -1944,21 +1888,11 @@ void ImageViewer::atomSettings()
     } else {
         ellipsoidflag = TRIANGLES;
     }
-    // using the colors other than type for ellipsoids was implemented after the 11Feb2026 release.
-    if (lammps->version() > 20260211) {
-        ellipsoidcolor = ecolor->currentText();
-    } else {
-        ellipsoidcolor = "type";
-    }
+    ellipsoidcolor = ecolor->currentText();
 
     showlines = linebutton->isChecked();
     if (ldiam->hasAcceptableInput()) linediam = ldiam->text().toDouble();
-    // using the colors other than type for lines was implemented after the 11Feb2026 release.
-    if (lammps->version() > 20260211) {
-        linecolor = lcolor->currentText();
-    } else {
-        linecolor = "type";
-    }
+    linecolor = lcolor->currentText();
 
     showtris = tributton->isChecked();
     if (tdiam->hasAcceptableInput()) tridiam = tdiam->text().toDouble();
@@ -1969,12 +1903,7 @@ void ImageViewer::atomSettings()
     } else if (tbbutton->isChecked()) {
         triflag = BOTH;
     }
-    // using the colors other than type for tris was implemented after the 11Feb2026 release.
-    if (lammps->version() > 20260211) {
-        tricolor = tcolor->currentText();
-    } else {
-        tricolor = "type";
-    }
+    tricolor = tcolor->currentText();
 
     // update image with new settings
     createImage();
@@ -2610,8 +2539,7 @@ void ImageViewer::createImage()
         dumpcmd += QString(" line %1 %2").arg(linecolor).arg(linediam);
     else if (showtris && (lammps->extractSetting("tri_flag") == 1))
         dumpcmd += QString(" tri %1 %2 %3").arg(tricolor).arg(triflag).arg(tridiam);
-    else if (showellipsoids && (lammps->extractSetting("ellipsoid_flag") == 1) &&
-             (lammps->version() > 20260210)) {
+    else if (showellipsoids && (lammps->extractSetting("ellipsoid_flag") == 1)) {
         dumpcmd += QString(" ellipsoid %1 %2 %3 %4")
                        .arg(ellipsoidcolor)
                        .arg(ellipsoidflag)
@@ -2736,15 +2664,12 @@ void ImageViewer::createImage()
     if (!dofixes) dumpcmd += " noinit";
     dumpcmd += " modify boxcolor " + boxcolor;
     dumpcmd += " backcolor " + backcolor;
-    // support for background gradient was added in LAMMPS version 11 February 2026
-    if (lammps->version() > 20260210) {
-        dumpcmd += " backcolor2 " + backcolor2;
-        dumpcmd += QString(" axestrans %1").arg(axestrans);
-        dumpcmd += QString(" boxtrans %1").arg(boxtrans);
-        dumpcmd += QString(" atrans * %1").arg(atomtrans);
-        if (lammps->extractSetting("bond_flag") == 1)
-            dumpcmd += QString(" btrans * %1").arg(atomtrans);
-    }
+    dumpcmd += " backcolor2 " + backcolor2;
+    dumpcmd += QString(" axestrans %1").arg(axestrans);
+    dumpcmd += QString(" boxtrans %1").arg(boxtrans);
+    dumpcmd += QString(" atrans * %1").arg(atomtrans);
+    if (lammps->extractSetting("bond_flag") == 1)
+        dumpcmd += QString(" btrans * %1").arg(atomtrans);
 
     if (useelements) dumpcmd += blank + elements + blank + adiams + blank;
     if (usesigma) dumpcmd += blank + adiams + blank;
@@ -3081,9 +3006,6 @@ void ImageViewer::updatePeratom()
 void ImageViewer::updateFixes()
 {
     if (!lammps) return;
-    // we can query for fixes and computes before 10 December 2025, but there is no support
-    // for dump image graphics until after that version. So the check is needed for this date.
-    if (lammps->version() < 20251210) return;
 
     // remove any fixes that no longer exist. to avoid inconsistencies while looping
     // over the fixes, we first collect the list of missing ids and then apply it.
@@ -3150,8 +3072,6 @@ void ImageViewer::updateFixes()
 void ImageViewer::updateRegions()
 {
     if (!lammps) return;
-    // support for visualizing regions became available in LAMMPS version 10 September 2025
-    if (lammps->version() < 20250910) return;
 
     // remove any regions that no longer exist. to avoid inconsistencies while looping
     // over the regions, we first collect the list of missing ids and then apply it.
@@ -3186,8 +3106,6 @@ void ImageViewer::updateRegions()
 bool ImageViewer::hasAutobonds()
 {
     if (!lammps) return false;
-    // support for dynamic bond visualization became available in LAMMPS version 10 September 2025
-    if (lammps->version() < 20250910) return false;
     const auto *pair_style = (const char *)lammps->extractGlobal("pair_style");
     if (!pair_style) return false;
     return strcmp(pair_style, "none") != 0;
