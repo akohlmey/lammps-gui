@@ -330,10 +330,10 @@ Use Javadoc-style comments for C++ code documentation:
 ```cpp
 /**
  * @brief Brief one-line description
- * 
+ *
  * Detailed description paragraph. Can span multiple lines.
  * List features and responsibilities.
- * 
+ *
  * @see RelatedClass for related functionality
  */
 class MyClass {
@@ -495,9 +495,9 @@ The project now includes comprehensive developer documentation:
 - **Architecture**: `doc/introduction.rst` - Architecture overview of all classes
 - **Testing Guide**: `doc/testing.rst` - Test infrastructure and examples
 
-**Note**: The initial version of the Programmer's Guide was created by a GitHub Copilot 
-Coding Agent. While comprehensive, not everything has been carefully verified yet. If you 
-spot errors or inconsistencies in the architecture or API documentation, please submit 
+**Note**: The initial version of the Programmer's Guide was created by a GitHub Copilot
+Coding Agent. While comprehensive, not everything has been carefully verified yet. If you
+spot errors or inconsistencies in the architecture or API documentation, please submit
 a bug report.
 
 ## Trust These Instructions

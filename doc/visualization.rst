@@ -495,7 +495,7 @@ The dialog contains the following sections:
      level, there may be artifacts from rounding due to limitations of
      the image rasterizer included in LAMMPS.  These can be made less
      prominent by enabling anti-aliasing.
-     
+
 **Lines**
    Controls visualization of `line segment particles
    <https://docs.lammps.org/pair_line_lj.html>`_ (when present in the

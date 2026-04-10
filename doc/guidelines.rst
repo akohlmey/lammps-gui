@@ -11,7 +11,7 @@ The project follows these coding conventions:
 - **Line length**: Maximum 100 characters
 - **Formatting**: Enforced by ``.clang-format`` configuration (LLVM-based)
 - **Comments**: Use Doxygen-style documentation comments
-- **Naming**: 
+- **Naming**:
   - Classes: CamelCase (e.g., ``CodeEditor``, ``ChartWindow``)
   - Qt overrides: camelCase (e.g., ``setFont``, ``eventFilter``)
   - Custom methods/slots: camelCase (e.g., ``stopRun``, ``saveAs``)
@@ -42,9 +42,9 @@ demonstrated below:
 
    /**
     * @brief Brief description
-    * 
+    *
     * Detailed description if needed
-    * 
+    *
     * @param param1 Description of parameter
     * @return Description of return value
     */

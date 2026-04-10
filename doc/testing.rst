@@ -123,13 +123,13 @@ the application.
 **String Duplication (mystrdup)**
   Tests for the three overloaded mystrdup functions that create heap-allocated
   C-style strings from different input types:
-  
+
   - ``mystrdup(const std::string&)`` - From std::string
   - ``mystrdup(const char*)`` - From C string (handles nullptr)
   - ``mystrdup(const QString&)`` - From Qt QString
-  
+
   Coverage includes:
-  
+
   - Normal strings with content
   - Empty strings
   - Null pointers (C string variant)
@@ -139,7 +139,7 @@ the application.
 **Date Comparison (dateCompare)**
   Tests for the dateCompare function that compares version date strings
   in LAMMPS date format (e.g., "22 Jul 2025"):
-  
+
   - Same dates (returns 0)
   - Different years (returns positive/negative)
   - Different months (returns positive/negative)
@@ -154,7 +154,7 @@ the application.
 **Line Splitting (splitLine)**
   Tests for the splitLine function that parses command-line style input
   with proper quote handling:
-  
+
   - Simple whitespace-separated tokens
   - Single-quoted strings
   - Double-quoted strings
@@ -170,7 +170,7 @@ the application.
 
 **Executable Detection (hasExe)**
   Tests for the hasExe function that checks if an executable exists in PATH:
-  
+
   - Common system commands (sh, ls on Unix; cmd on Windows)
   - Non-existent commands
   - Empty string input
@@ -180,7 +180,7 @@ the application.
 **Theme Detection (isLightTheme)**
   Tests for the isLightTheme function that determines if the current
   Qt theme is light or dark:
-  
+
   - Boolean return value validation
   - Consistency across calls
   - No crashes on theme query
@@ -188,7 +188,7 @@ the application.
 **Stdout Silencing (silenceStdout/restoreStdout)**
   Tests for the stdout silencing functions that redirect stdout to suppress
   LAMMPS library output:
-  
+
   - Silencing actually suppresses stdout
   - Restoring when not silenced is a no-op
   - Idempotent silencing (calling multiple times)
@@ -199,7 +199,7 @@ the application.
 **Directory Purging (purgeDirectory)**
   Tests for the purgeDirectory function that recursively removes directory
   contents:
-  
+
   - Purging directory with files
   - Non-existent directory (no crash)
   - Empty directory
@@ -395,7 +395,7 @@ Test Fixtures and Utilities
 **Platform-Specific Testing**
   Tests use conditional compilation (``#ifdef _WIN32``) to adapt to
   platform differences in:
-  
+
   - Path separators
   - Line endings
   - Available system executables
