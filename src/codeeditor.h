@@ -99,13 +99,13 @@ public:
      * @brief Enable/disable automatic reformatting on Enter key
      * @param flag true to enable, false to disable
      */
-    void setReformatOnReturn(bool flag) { reformat_on_return = flag; }
+    void setReformatOnReturn(bool flag) { reformatOnReturn = flag; }
 
     /**
      * @brief Enable/disable automatic completion popup
      * @param flag true to enable, false to disable
      */
-    void setAutoComplete(bool flag) { automatic_completion = flag; }
+    void setAutoComplete(bool flag) { automaticCompletion = flag; }
 
     /**
      * @brief Reformat a line with proper indentation
@@ -379,29 +379,29 @@ private slots:
 
 private:
     QWidget *lineNumberArea; ///< Widget for displaying line numbers
-    QShortcut *help_action;  ///< Keyboard shortcut for help
+    QShortcut *helpAction;   ///< Keyboard shortcut for help
 
     /// @brief Auto-completion objects for different LAMMPS command contexts
-    QCompleter *current_comp, *command_comp, *fix_comp, *compute_comp, *dump_comp, *atom_comp,
-        *pair_comp, *bond_comp, *angle_comp, *dihedral_comp, *improper_comp, *kspace_comp,
-        *region_comp, *integrate_comp, *minimize_comp, *variable_comp, *units_comp, *group_comp,
-        *varname_comp, *fixid_comp, *compid_comp, *file_comp, *extra_comp;
+    QCompleter *currentComp, *commandComp, *fixComp, *computeComp, *dumpComp, *atomComp, *pairComp,
+        *bondComp, *angleComp, *dihedralComp, *improperComp, *kspaceComp, *regionComp,
+        *integrateComp, *minimizeComp, *variableComp, *unitsComp, *groupComp, *varnameComp,
+        *fixidComp, *compidComp, *fileComp, *extraComp;
 
-    int highlight;             ///< Current highlighted line number
-    bool reformat_on_return;   ///< Enable auto-reformatting on Enter
-    bool automatic_completion; ///< Enable auto-completion popup
-    QString docver;            ///< LAMMPS documentation version string
+    int highlight;            ///< Current highlighted line number
+    bool reformatOnReturn;    ///< Enable auto-reformatting on Enter
+    bool automaticCompletion; ///< Enable auto-completion popup
+    QString docver;           ///< LAMMPS documentation version string
 
     /// @brief Maps for LAMMPS command help pages
-    QMap<QString, QString> cmd_map;      ///< Command to help page mapping
-    QMap<QString, QString> fix_map;      ///< Fix style to help page mapping
-    QMap<QString, QString> compute_map;  ///< Compute style to help page mapping
-    QMap<QString, QString> pair_map;     ///< Pair style to help page mapping
-    QMap<QString, QString> bond_map;     ///< Bond style to help page mapping
-    QMap<QString, QString> angle_map;    ///< Angle style to help page mapping
-    QMap<QString, QString> dihedral_map; ///< Dihedral style to help page mapping
-    QMap<QString, QString> improper_map; ///< Improper style to help page mapping
-    QMap<QString, QString> dump_map;     ///< Dump style to help page mapping
+    QMap<QString, QString> cmdMap;      ///< Command to help page mapping
+    QMap<QString, QString> fixMap;      ///< Fix style to help page mapping
+    QMap<QString, QString> computeMap;  ///< Compute style to help page mapping
+    QMap<QString, QString> pairMap;     ///< Pair style to help page mapping
+    QMap<QString, QString> bondMap;     ///< Bond style to help page mapping
+    QMap<QString, QString> angleMap;    ///< Angle style to help page mapping
+    QMap<QString, QString> dihedralMap; ///< Dihedral style to help page mapping
+    QMap<QString, QString> improperMap; ///< Improper style to help page mapping
+    QMap<QString, QString> dumpMap;     ///< Dump style to help page mapping
 };
 
 #endif

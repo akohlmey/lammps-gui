@@ -253,12 +253,12 @@ public:
 
     /**
      * @brief Set smoothing parameters
-     * @param _do_raw Show raw data series
-     * @param _do_smooth Show smoothed data series
+     * @param _doRaw Show raw data series
+     * @param _doSmooth Show smoothed data series
      * @param _window Smoothing window size
      * @param _order Polynomial order for Savitzky-Golay
      */
-    void smoothParam(bool _do_raw, bool _do_smooth, int _window, int _order);
+    void smoothParam(bool _doRaw, bool _doSmooth, int _window, int _order);
 
     /**
      * @brief Recalculate and update smoothed data

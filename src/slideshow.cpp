@@ -52,7 +52,7 @@ constexpr int EXTRA_HEIGHT   = 130;
 SlideShow::SlideShow(const QString &fileName, QWidget *parent) :
     QDialog(parent), playtimer(nullptr), imageLabel(new QLabel), scrollArea(new QScrollArea),
     scrollBar(new QSlider), imageCounter(new QLabel("Image   0 /   0 :")),
-    imageName(new QLabel("(none)")), timer_delay(100), do_loop(true), imageRotation(0),
+    imageName(new QLabel("(none)")), timerDelay(100), doLoop(true), imageRotation(0),
     imageFlipH(false), imageFlipV(false)
 {
     imageLabel->setBackgroundRole(QPalette::Base);
@@ -153,7 +153,7 @@ SlideShow::SlideShow(const QString &fileName, QWidget *parent) :
     auto *delay = new QSpinBox;
     delay->setRange(10, 10000);
     delay->setStepType(QAbstractSpinBox::AdaptiveDecimalStepType);
-    delay->setValue(timer_delay);
+    delay->setValue(timerDelay);
     delay->setObjectName("delay");
     delay->setToolTip("Set delay between images in milliseconds");
     delay->setMinimumWidth(dsize.width());
@@ -189,7 +189,7 @@ SlideShow::SlideShow(const QString &fileName, QWidget *parent) :
     auto *goloop = new QPushButton(QIcon(":/icons/media-playlist-repeat.png"), "");
     goloop->setToolTip("Loop animation");
     goloop->setCheckable(true);
-    goloop->setChecked(do_loop);
+    goloop->setChecked(doLoop);
     goloop->setMinimumSize(buttonhint);
     goloop->setMaximumSize(buttonhint);
 
@@ -352,7 +352,7 @@ void SlideShow::setDelay()
 {
     auto *field = qobject_cast<QSpinBox *>(sender());
     if (field && (field->objectName() == "delay")) {
-        timer_delay = field->value();
+        timerDelay = field->value();
     }
 }
 
@@ -431,7 +431,7 @@ void SlideShow::movie()
             }
             concatfile.close();
 
-            const auto fps = QString::number(1.0 / ((double)timer_delay / 1000.0));
+            const auto fps = QString::number(1.0 / ((double)timerDelay / 1000.0));
             QStringList args;
             args << "-y";
             args << "-safe"
@@ -473,7 +473,7 @@ void SlideShow::movie()
         QString cmd = "magick";
         if (!hasExe("magick")) cmd = "convert";
         QStringList args;
-        args << "-delay" << QString::number(timer_delay / 10);
+        args << "-delay" << QString::number(timerDelay / 10);
         QDir curdir(".");
         for (const auto &img : imagefiles)
             args << curdir.absoluteFilePath(img);
@@ -506,7 +506,7 @@ void SlideShow::last()
 void SlideShow::play()
 {
     // if we do not loop, start animation from beginning
-    if (!do_loop) current = 0;
+    if (!doLoop) current = 0;
     auto *delay = findChild<QSpinBox *>("delay");
 
     if (playtimer) {
@@ -517,7 +517,7 @@ void SlideShow::play()
     } else {
         playtimer = new QTimer(this);
         connect(playtimer, &QTimer::timeout, this, &SlideShow::next);
-        playtimer->start(timer_delay);
+        playtimer->start(timerDelay);
         if (delay) delay->setEnabled(false);
     }
 
@@ -531,7 +531,7 @@ void SlideShow::next()
 {
     ++current;
     if (current >= imagefiles.size()) {
-        if (do_loop) {
+        if (doLoop) {
             current = 0;
         } else {
             // stop animation
@@ -546,7 +546,7 @@ void SlideShow::prev()
 {
     --current;
     if (current < 0) {
-        if (do_loop)
+        if (doLoop)
             current = imagefiles.size() - 1;
         else
             current = 0;
@@ -557,8 +557,8 @@ void SlideShow::prev()
 void SlideShow::loop()
 {
     auto *button = qobject_cast<QPushButton *>(sender());
-    do_loop      = !do_loop;
-    button->setChecked(do_loop);
+    doLoop      = !doLoop;
+    button->setChecked(doLoop);
 }
 
 void SlideShow::zoomIn()
