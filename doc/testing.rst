@@ -117,7 +117,7 @@ test_helpers.cpp
 ----------------
 
 Comprehensive tests for functions in ``src/helpers.h`` and ``src/helpers.cpp``.
-This module contains 28 test cases covering utility functions used throughout
+This module contains 45 test cases covering utility functions used throughout
 the application.
 
 **String Duplication (mystrdup)**
@@ -136,8 +136,8 @@ the application.
   - UTF-8 and special characters
   - Long strings
 
-**Date Comparison (date_compare)**
-  Tests for the date_compare function that compares version date strings
+**Date Comparison (dateCompare)**
+  Tests for the dateCompare function that compares version date strings
   in LAMMPS date format (e.g., "22 Jul 2025"):
   
   - Same dates (returns 0)
@@ -147,9 +147,12 @@ the application.
   - Full month names vs. abbreviations
   - Invalid date formats
   - Edge cases (year boundaries, month boundaries)
+  - December month ordering
+  - Both dates invalid
+  - Dates with "- Update" suffix
 
-**Line Splitting (split_line)**
-  Tests for the split_line function that parses command-line style input
+**Line Splitting (splitLine)**
+  Tests for the splitLine function that parses command-line style input
   with proper quote handling:
   
   - Simple whitespace-separated tokens
@@ -161,22 +164,45 @@ the application.
   - Multiple consecutive whitespace characters
   - Empty input
   - Quotes at string boundaries
+  - Single word without spaces
+  - Hash comment handling
+  - Special characters
 
-**Executable Detection (has_exe)**
-  Tests for the has_exe function that checks if an executable exists in PATH:
+**Executable Detection (hasExe)**
+  Tests for the hasExe function that checks if an executable exists in PATH:
   
   - Common system commands (sh, ls on Unix; cmd on Windows)
   - Non-existent commands
-  - Commands with spaces in paths
+  - Empty string input
+  - bash executable
   - Platform-specific behavior (conditional compilation)
 
-**Theme Detection (is_light_theme)**
-  Tests for the is_light_theme function that determines if the current
+**Theme Detection (isLightTheme)**
+  Tests for the isLightTheme function that determines if the current
   Qt theme is light or dark:
   
   - Boolean return value validation
   - Consistency across calls
   - No crashes on theme query
+
+**Stdout Silencing (silenceStdout/restoreStdout)**
+  Tests for the stdout silencing functions that redirect stdout to suppress
+  LAMMPS library output:
+  
+  - Silencing actually suppresses stdout
+  - Restoring when not silenced is a no-op
+  - Idempotent silencing (calling multiple times)
+  - Silencing skipped during active StdCapture
+  - Capture restores silenced stdout state
+  - Silence and restore preserves stdout
+
+**Directory Purging (purgeDirectory)**
+  Tests for the purgeDirectory function that recursively removes directory
+  contents:
+  
+  - Purging directory with files
+  - Non-existent directory (no crash)
+  - Empty directory
 
 Command-Line Tests
 ==================

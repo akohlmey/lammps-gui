@@ -18,7 +18,7 @@
 - **Language**: C++ (C++17 standard)
 - **Framework**: Qt (requires Qt 6.2+)
 - **Build System**: CMake 3.20+
-- **Codebase Size**: ~11k lines across 38 source files in `src/`
+- **Codebase Size**: ~17k lines across 43 source files in `src/`
 - **Total Files**: ~11,290 files (includes docs, resources)
 - **Disk Size**: ~263 MB
 
@@ -26,7 +26,7 @@
 
 ### Root Directory Structure
 ```
-├── CMakeLists.txt          # Main build configuration (415 lines)
+├── CMakeLists.txt          # Main build configuration (466 lines)
 ├── README.md               # Brief overview with CI badges
 ├── TODO.md                 # Feature roadmap
 ├── LICENSE                 # GPL v2 license
@@ -43,7 +43,7 @@
 ### Source Code Organization (`src/`)
 **Main application files**:
 - `main.cpp` - Application entry point, command-line parsing
-- `lammpsgui.{cpp,h,ui}` - Main window and central GUI logic
+- `lammpsgui.{cpp,h}` - Main window and central GUI logic (UI created programmatically in `setupUi()`)
 - `lammpswrapper.{cpp,h}` - C++ interface to LAMMPS C library
 
 **Editor components**:
@@ -54,29 +54,35 @@
 
 **Visualization components**:
 - `imageviewer.{cpp,h}` - Image display with zoom/pan
-- `chartviewer.{cpp,h}` - Qt Charts or Qt Graphs integration for plotting
+- `chartviewer.{cpp,h}` - QtCharts or QtGraphs integration for plotting
 - `slideshow.{cpp,h}` - Multi-image slideshow
 - `rangeslider.{cpp,h}` - Custom slider widget for image sequences
 
 **Dialogs & helpers**:
+- `aboutdialog.{cpp,h}` - Custom About dialog with auto-scroll
 - `preferences.{cpp,h}` - Settings dialog
 - `setvariables.{cpp,h}` - Variable substitution dialog
+- `tutorialwizard.{cpp,h}` - Tutorial setup wizard dialog
 - `fileviewer.{cpp,h}` - File content viewer
 - `logwindow.{cpp,h}` - Log output viewer
-- `helpers.cpp` - Utility functions
-- `stdcapture.cpp` - stdout/stderr capture
+- `helpers.{cpp,h}` - Utility functions
+- `stdcapture.{cpp,h}` - stdout/stderr capture
 - `flagwarnings.{cpp,h}` - LAMMPS flag validation
+- `qaddon.{cpp,h}` - Qt helper widgets (QHline, QColorCompleter, QColorValidator, VerticalLabel)
+
+**Networking**:
+- `urldownloader.{cpp,h}` - HTTPS file download with SHA-256 checksum verification
 
 **Runner**:
 - `lammpsrunner.h` - Thread-based LAMMPS execution
 
-**Note**: All classes are documented in `doc/architecture.rst` with detailed descriptions organized into:
+**Note**: All classes are documented in the Architecture section of `doc/introduction.rst` with detailed descriptions organized into:
 - Main Window and Application Control (LammpsGui, TutorialWizard)
 - Editor Components (CodeEditor, LineNumberArea, Highlighter, FindAndReplace)
 - LAMMPS Interface (LammpsWrapper, LammpsRunner)
 - Visualization Components (ImageViewer, ChartWindow, ChartViewer, SlideShow, RangeSlider)
-- Dialog Components (Preferences, SetVariables, FileViewer, LogWindow)
-- Support Components (StdCapture, FlagWarnings, Qt helper widgets)
+- Dialog Components (Preferences, SetVariables, FileViewer, LogWindow, AboutDialog)
+- Support Components (URLDownloader, StdCapture, FlagWarnings, Qt helper widgets)
 
 ### Documentation (`doc/`)
 - **Format**: reStructuredText (Sphinx) + Doxygen
@@ -86,8 +92,7 @@
 - **Key Files**:
   - `index.rst` - Main documentation index with programmer's guide
   - `api_reference.rst` - Doxygen-generated API documentation
-  - `architecture.rst` - Comprehensive architecture overview of all 26+ classes
-  - `lammps_interface.rst` - LAMMPS integration documentation
+  - `introduction.rst` - Architecture overview of all classes
   - `testing.rst` - Testing infrastructure and test case documentation
   - `installation.rst`, `basic_usage.rst` - User-facing documentation
 
@@ -107,8 +112,10 @@
 ### Test Infrastructure (`test/`)
 - **Framework**: GoogleTest v1.17.0 (auto-fetched via CMake FetchContent)
 - **CMakeLists.txt**: Test configuration and executable definitions
-- **test_helpers.cpp**: Unit tests for utility functions (28 test cases)
-- **EXAMPLES.md**: Documentation for writing new tests
+- **test_helpers.cpp**: Unit tests for utility functions (45 test cases)
+- **test_flagwarnings.cpp**: Unit tests for FlagWarnings syntax highlighter (7 test cases)
+- **test_stdcapture.cpp**: Unit tests for StdCapture output capture (11 test cases)
+- **test_shooter.py, test_xvfbsize.py, test_gui_edit.py**: Python-based GUI tests using PyAutoGUI and Xvfb
 - **Enable**: Use `-D ENABLE_TESTING=ON` (OFF by default to speed up builds)
 
 ## Build System & Configuration
@@ -147,7 +154,7 @@ cmake --build build-doc --target doc
 
 ### Important CMake Options
 - `LAMMPS_GUI_USE_PLUGIN` - ON (default) for plugin mode, OFF for linked mode
-- `LAMMPS_GUI_USE_CHARTS` - ON to use QtCharts even if QtGraphs is available, OFF (default) use QtGraphs when available
+- `LAMMPS_GUI_USE_QTCHARTS` - ON to use QtCharts even if QtGraphs is available, OFF (default) use QtGraphs when available
 - `BUILD_DOC` - ON (default) builds docs with app, OFF skips docs
 - `BUILD_DOC_ONLY` - ON builds only docs (no app), OFF (default) builds app
 - `ENABLE_TESTING` - ON enables GoogleTest unit tests, OFF (default) disables tests
@@ -295,23 +302,23 @@ cmake --build build --parallel 2
 5. **Test with QtGraphs and QtCharts** if possible (QtCharts and QtGraphs use some different code paths)
 6. **Update docs** if changing user-facing features (files in `doc/` directory)
 7. **Add Doxygen comments** for new classes/methods using `/** @brief */` style
-8. **Update architecture.rst** when adding new classes or major components
+8. **Update introduction.rst** when adding new classes or major components
 
 ### Adding New Source Files
-1. Add to `PROJECT_SOURCES` list in `CMakeLists.txt` (lines 88-127)
-2. If using Qt signals/slots, ensure `CMAKE_AUTOMOC=ON` is set (line 24)
+1. Add to `PROJECT_SOURCES` list in `CMakeLists.txt` (lines 86-130)
+2. If using Qt signals/slots, ensure `CMAKE_AUTOMOC=ON` is set (line 22)
 3. Include file in `#include` directives in relevant source files
 
 ### Modifying Resources
 - Icons: Add to `resources/icons/` and reference in `resources/lammpsgui.qrc`
 - Help text: Update `resources/lammps_internal_commands.txt`
-- After changes: Qt resource system auto-compiles via `qt6_add_resources()` (line 129)
+- After changes: Qt resource system auto-compiles via `qt6_add_resources()` (line 131)
 
 ### Documentation Updates
 - **Format**: reStructuredText (`.rst` files in `doc/`) + Doxygen comments in C++ headers
 - **Doxygen**: Add `/** @brief */` style comments to classes and methods in header files
 - **API Reference**: Classes documented with Doxygen appear in `doc/api_reference.rst`
-- **Architecture**: Update `doc/architecture.rst` when adding new classes or components
+- **Architecture**: Update `doc/introduction.rst` when adding new classes or components
 - **Spell check**: Run `cmake --build build-doc --target spelling`
 - **Preview locally**: Open `build-doc/doc/html/index.html` in browser
 - **CI validates**: Every PR builds docs automatically (including Doxygen → Breathe → Sphinx)
@@ -347,7 +354,7 @@ void myMethod(int paramName);
 QString current_file;  ///< Brief description of member variable
 ```
 
-**Example**: See `src/lammpsgui.h` for comprehensive Doxygen documentation of the main LammpsGui class with 69+ documented methods.
+**Example**: See `src/lammpsgui.h` for comprehensive Doxygen documentation of the main LammpsGui class with 60+ documented methods.
 
 ## Dependency Management
 
@@ -367,20 +374,26 @@ QString current_file;  ///< Brief description of member variable
 
 ## Testing & Validation
 
-### Automated Unit Tests (NEW)
-The project now includes a growing test suite using GoogleTest:
+### Automated Unit Tests
+The project includes a test suite using GoogleTest:
 
 - **Test Directory**: `test/` contains test files and CMakeLists.txt
 - **Test Framework**: GoogleTest v1.17.0 (fetched automatically via CMake)
-- **Current Coverage**: 28 test cases in `test_helpers.cpp` covering:
-  - String duplication functions (`mystrdup` - 3 overloads)
-  - Date comparison (`date_compare`)
-  - Line splitting with quote handling (`split_line`)
-  - Executable detection (`has_exe`)
-  - Theme detection (`is_light_theme`)
+- **Current Coverage**:
+  - 45 test cases in `test_helpers.cpp` covering:
+    - String duplication functions (`mystrdup` - 3 overloads)
+    - Date comparison (`dateCompare`)
+    - Line splitting with quote handling (`splitLine`)
+    - Executable detection (`hasExe`)
+    - Theme detection (`isLightTheme`)
+    - Stdout silencing (`silenceStdout`/`restoreStdout`)
+    - Directory purging (`purgeDirectory`)
+  - 7 test cases in `test_flagwarnings.cpp` covering FlagWarnings syntax highlighter
+  - 11 test cases in `test_stdcapture.cpp` covering StdCapture output capture
 - **Command-line Tests**: Two CTest tests validate executable behavior:
   - `CommandLine.GetVersion` - Version string validation
   - `CommandLine.HasPlugin` - Build configuration verification
+- **GUI Tests**: Python-based tests using PyAutoGUI and Xvfb virtual frame buffer
 - **Enable Testing**: Use `-D ENABLE_TESTING=ON` during CMake configuration (OFF by default)
 
 ### Running Tests
@@ -479,8 +492,7 @@ The project now includes comprehensive developer documentation:
 
 - **Programmer's Guide**: `doc/index.rst` includes a dedicated section for developers
 - **API Reference**: `doc/api_reference.rst` - Doxygen-generated class documentation
-- **Architecture**: `doc/architecture.rst` - Complete overview of all 26+ classes
-- **LAMMPS Interface**: `doc/lammps_interface.rst` - Integration documentation
+- **Architecture**: `doc/introduction.rst` - Architecture overview of all classes
 - **Testing Guide**: `doc/testing.rst` - Test infrastructure and examples
 
 **Note**: The initial version of the Programmer's Guide was created by a GitHub Copilot 
@@ -503,4 +515,4 @@ These instructions have been thoroughly researched by examining:
 - The information appears outdated or incorrect
 - You need details about specific source files not covered
 
-For implementation details of specific features, refer to the source files in `src/`. For user-facing behavior, check the documentation in `doc/`. For build system internals, study `CMakeLists.txt` (well-commented, 415 lines). For API documentation, see `doc/api_reference.rst`.
+For implementation details of specific features, refer to the source files in `src/`. For user-facing behavior, check the documentation in `doc/`. For build system internals, study `CMakeLists.txt` (well-commented, 466 lines). For API documentation, see `doc/api_reference.rst`.
