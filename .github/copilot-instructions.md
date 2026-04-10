@@ -11,12 +11,12 @@
 
 **Repository**: https://github.com/akohlmey/lammps-gui
 **Documentation**: https://lammps-gui.lammps.org/
-**Version**: 1.8.3.2 (see CMakeLists.txt line 4)
+**Version**: 2.0.0 (see CMakeLists.txt line 4)
 **License**: GNU GPL v2
 
 ### Key Statistics
 - **Language**: C++ (C++17 standard)
-- **Framework**: Qt (supports both Qt 5.15+ and Qt 6.2+)
+- **Framework**: Qt (requires Qt 6.2+)
 - **Build System**: CMake 3.20+
 - **Codebase Size**: ~11k lines across 38 source files in `src/`
 - **Total Files**: ~11,290 files (includes docs, resources)
@@ -54,7 +54,7 @@
 
 **Visualization components**:
 - `imageviewer.{cpp,h}` - Image display with zoom/pan
-- `chartviewer.{cpp,h}` - Qt Charts integration for plotting
+- `chartviewer.{cpp,h}` - Qt Charts or Qt Graphs integration for plotting
 - `slideshow.{cpp,h}` - Multi-image slideshow
 - `rangeslider.{cpp,h}` - Custom slider widget for image sequences
 
@@ -147,7 +147,7 @@ cmake --build build-doc --target doc
 
 ### Important CMake Options
 - `LAMMPS_GUI_USE_PLUGIN` - ON (default) for plugin mode, OFF for linked mode
-- `LAMMPS_GUI_USE_QT5` - ON to prefer Qt5, OFF (default) prefers Qt6
+- `LAMMPS_GUI_USE_CHARTS` - ON to use QtCharts even if QtGraphs is available, OFF (default) use QtGraphs when available
 - `BUILD_DOC` - ON (default) builds docs with app, OFF skips docs
 - `BUILD_DOC_ONLY` - ON builds only docs (no app), OFF (default) builds app
 - `ENABLE_TESTING` - ON enables GoogleTest unit tests, OFF (default) disables tests
@@ -167,8 +167,6 @@ sudo apt-get install -y \
     libglu1-mesa-dev \
     libomp-dev \
     mesa-common-dev \
-    qtbase5-dev libqt5charts5-dev    # For Qt5
-    # OR
     qt6-base-dev qt6-charts-dev      # For Qt6
 
 # For documentation building (optional)
@@ -211,21 +209,14 @@ sudo apt-get install -y doxygen
 - **Validation**: Runs `lammps-gui --platform offscreen -v`
 - **Duration**: ~2-5 minutes
 
-**2. `compile-linux-qt5.yml`** - Qt 5.15LTS Build
-- **Runs on**: Push/PR to `develop` branch
-- **Platform**: ubuntu-22.04 (Qt 5.15)
-- **Config**: Release build, C++17, Ninja generator
-- **Validation**: Runs `lammps-gui --platform offscreen -v`
-- **Duration**: ~2-5 minutes
-
-**3. `build-html-docs.yml`** - Documentation Build
+**2. `build-html-docs.yml`** - Documentation Build
 - **Runs on**: Push/PR to `develop` branch
 - **Platform**: ubuntu-latest
 - **Build**: `cmake -S . -B build-doc -D BUILD_DOC_ONLY=yes`
 - **Target**: `cmake --build build-doc --target doc`
 - **Duration**: ~3-5 minutes (includes pip install)
 
-**4. `codeql-analysis.yml`** - Static Analysis
+**3. `codeql-analysis.yml`** - Static Analysis
 - **Runs on**: Push to `develop` (NOT on PRs)
 - **Platform**: ubuntu-latest (Qt 6.x)
 - **Tool**: GitHub CodeQL for C++
@@ -234,7 +225,7 @@ sudo apt-get install -y doxygen
 
 ### Pre-Commit Validation Checklist
 Before submitting a PR, ensure:
-1. **Code compiles** with both Qt5 and Qt6 (if possible, or at least one)
+1. **Code compiles** with Qt6 and both QtGraphs (if available) and QtCharts
 2. **Documentation builds** without errors (`cmake --build build-doc --target doc`)
 3. **Application runs** (`./build/lammps-gui --platform offscreen -v` shows version)
 4. **Code follows style**: Use `.clang-format` (LLVM-based, 100 char limit)
@@ -252,7 +243,7 @@ cmake -S . -B build-doc -D BUILD_DOC_ONLY=yes
 cmake --build build-doc --target doc
 # Output: build-doc/doc/html/index.html
 ```
-**Time**: 3-5 minutes (includes virtualenv setup and pip install)  
+**Time**: 3-5 minutes (includes virtualenv setup and pip install)
 **Pitfall**: None, very reliable
 
 ### Pattern 2: Quick Application Build (No Docs, Plugin Mode)
@@ -262,8 +253,8 @@ cmake -S . -B build -D LAMMPS_GUI_USE_PLUGIN=yes -D BUILD_DOC=no
 cmake --build build --parallel 2
 ./build/lammps-gui --platform offscreen -v
 ```
-**Time**: 1-3 minutes (after Qt installed)  
-**Pitfall**: Requires Qt5 or Qt6 development packages installed
+**Time**: 1-3 minutes (after Qt installed)
+**Pitfall**: Requires Qt6 development packages installed
 
 ### Pattern 3: Full Build with Documentation
 ```bash
@@ -271,12 +262,12 @@ mkdir -p build
 cmake -S . -B build -D LAMMPS_GUI_USE_PLUGIN=yes -D BUILD_DOC=yes
 cmake --build build --parallel 2
 ```
-**Time**: 5-8 minutes  
+**Time**: 5-8 minutes
 **Pitfall**: Longer due to virtualenv + Sphinx installation
 
 ### Common Build Errors & Solutions
 
-**Error**: `Could NOT find Qt6` and `Could NOT find Qt5`
+**Error**: `Could NOT find Qt6`
 - **Cause**: Qt development packages not installed
 - **Solution**: Install Qt dev packages (see platform-specific notes above)
 - **Alternative**: For docs only, use `-D BUILD_DOC_ONLY=yes`
@@ -301,7 +292,7 @@ cmake --build build --parallel 2
 2. **Check for compiler warnings**: Build with `-D CMAKE_BUILD_TYPE=Debug` and `-Wall -Wextra`
 3. **Format before commit**: Use `clang-format` with project's `.clang-format` config
 4. **GPG sign commits**: All git commits must be GPG signed with a verifiable signature
-5. **Test both Qt versions** if possible (Qt5 and Qt6 have subtle differences)
+5. **Test with QtGraphs and QtCharts** if possible (QtCharts and QtGraphs use some different code paths)
 6. **Update docs** if changing user-facing features (files in `doc/` directory)
 7. **Add Doxygen comments** for new classes/methods using `/** @brief */` style
 8. **Update architecture.rst** when adding new classes or major components
@@ -309,8 +300,7 @@ cmake --build build --parallel 2
 ### Adding New Source Files
 1. Add to `PROJECT_SOURCES` list in `CMakeLists.txt` (lines 88-127)
 2. If using Qt signals/slots, ensure `CMAKE_AUTOMOC=ON` is set (line 24)
-3. If using `.ui` files, ensure `CMAKE_AUTOUIC=ON` is set (line 23)
-4. Include file in `#include` directives in relevant source files
+3. Include file in `#include` directives in relevant source files
 
 ### Modifying Resources
 - Icons: Add to `resources/icons/` and reference in `resources/lammpsgui.qrc`
@@ -411,7 +401,7 @@ ctest --test-dir build/test -R MyStrdup
 
 ### Manual Testing Checklist
 When making changes:
-1. Build succeeds on Linux with Qt5 and Qt6
+1. Build succeeds on Linux with Qt6 using QtGraphs and QtCharts
 2. Application launches: `./build/lammps-gui`
 3. Can open/edit LAMMPS input files
 4. Syntax highlighting works
@@ -427,8 +417,7 @@ When making changes:
 2. **Always use absolute paths** starting with `/home/runner/work/lammps-gui/lammps-gui/`
 3. **Document build must complete in <300s** - It's a real constraint (virtualenv setup takes time)
 4. **Plugin mode doesn't work on Windows** - This is a known limitation (see CMakeLists.txt:46-48)
-5. **Qt version auto-detection** - Qt6 preferred over Qt5 unless `LAMMPS_GUI_USE_QT5=ON`
-6. **C++17 minimum** - Can use C++23 for Qt6 builds, but C++17 for Qt5 compatibility
+6. **C++17 minimum** - Can use C++23 for Qt6 builds, but C++17 for LAMMPS compatibility
 7. **Work around deprecated Qt features** - If an API is deprecated in a recent version of Qt, implement a version check and use the deprecated feature only with older versions of Qt and the new API where available
 
 ### Known Issues & Workarounds
@@ -438,9 +427,9 @@ When making changes:
 
 ### Version Compatibility
 - **CMake**: 3.20+ required (check: `cmake --version`)
-- **Qt**: 5.15+ or 6.2+ required
+- **Qt**: 6.2+ required
 - **Python**: 3.8+ required (for documentation build)
-- **LAMMPS library**: Minimum version "22 July 2025 update 2" (see `doc/installation.rst:82`)
+- **LAMMPS library**: Minimum version "30 March 2026" (see `doc/installation.rst:82`)
 
 ## Quick Reference Commands
 
