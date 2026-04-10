@@ -38,8 +38,8 @@
 #include <QTextStream>
 
 namespace {
-constexpr auto yaml_regex = R"(^(keywords:.*$|data:$|---$|\.\.\.$|  - \[.*\]$))";
-constexpr auto url_regex  = "^.*(https://docs.lammps.org/err[0-9]+).*$";
+constexpr auto YAML_REGEX = R"(^(keywords:.*$|data:$|---$|\.\.\.$|  - \[.*\]$))";
+constexpr auto URL_REGEX  = "^.*(https://docs.lammps.org/err[0-9]+).*$";
 } // namespace
 
 LogWindow::LogWindow(const QString &_filename, QWidget *parent) :
@@ -180,7 +180,7 @@ void LogWindow::saveAs()
 
 bool LogWindow::checkYaml()
 {
-    QRegularExpression is_yaml(yaml_regex);
+    QRegularExpression is_yaml(YAML_REGEX);
     QStringList lines = toPlainText().split('\n');
     for (const auto &line : lines)
         if (is_yaml.match(line).hasMatch()) return true;
@@ -207,7 +207,7 @@ void LogWindow::extractYaml()
         return;
     }
 
-    QRegularExpression is_yaml(yaml_regex);
+    QRegularExpression is_yaml(YAML_REGEX);
     QTextStream out(&file);
     QStringList lines = toPlainText().split('\n');
     for (const auto &line : lines) {
@@ -245,7 +245,7 @@ void LogWindow::mouseDoubleClickEvent(QMouseEvent *event)
         cursor.movePosition(QTextCursor::NextCharacter, QTextCursor::KeepAnchor, end - begin - 1);
 
         auto text = cursor.selectedText();
-        auto url  = QRegularExpression(url_regex).match(text);
+        auto url  = QRegularExpression(URL_REGEX).match(text);
         if (url.hasMatch()) {
             errorurl = url.captured(1);
             if (!errorurl.isEmpty()) {
@@ -280,7 +280,7 @@ void LogWindow::contextMenuEvent(QContextMenuEvent *event)
 
     // process line of text where the cursor is
     auto text = textCursor().block().text().replace('\t', ' ').trimmed();
-    auto url  = QRegularExpression(url_regex).match(text);
+    auto url  = QRegularExpression(URL_REGEX).match(text);
     if (url.hasMatch()) {
         errorurl = url.captured(1);
         action   = menu->addAction("Open &URL in Web Browser", this, &LogWindow::openErrorUrl);
