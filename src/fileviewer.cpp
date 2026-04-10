@@ -36,7 +36,7 @@ FileViewer::FileViewer(const QString &_filename, const QString &title, QWidget *
     auto *action = new QShortcut(QKeySequence(Qt::CTRL | Qt::Key_Q), this);
     connect(action, &QShortcut::activated, this, &FileViewer::quit);
     action = new QShortcut(QKeySequence(Qt::CTRL | Qt::Key_Slash), this);
-    connect(action, &QShortcut::activated, this, &FileViewer::stop_run);
+    connect(action, &QShortcut::activated, this, &FileViewer::stopRun);
 
     installEventFilter(this);
 
@@ -125,14 +125,14 @@ FileViewer::FileViewer(const QString &_filename, const QString &title, QWidget *
 
 void FileViewer::quit()
 {
-    auto *main = dynamic_cast<LammpsGui *>(get_main_widget());
+    auto *main = dynamic_cast<LammpsGui *>(getMainWidget());
     if (main) main->quit();
 }
 
-void FileViewer::stop_run()
+void FileViewer::stopRun()
 {
-    auto *main = dynamic_cast<LammpsGui *>(get_main_widget());
-    if (main) main->stop_run();
+    auto *main = dynamic_cast<LammpsGui *>(getMainWidget());
+    if (main) main->stopRun();
 }
 
 // event filter to handle "Ambiguous shortcut override" issues
@@ -142,7 +142,7 @@ bool FileViewer::eventFilter(QObject *watched, QEvent *event)
         auto *keyEvent = dynamic_cast<QKeyEvent *>(event);
         if (!keyEvent) return QAbstractScrollArea::eventFilter(watched, event);
         if (keyEvent->modifiers().testFlag(Qt::ControlModifier) && keyEvent->key() == '/') {
-            stop_run();
+            stopRun();
             event->accept();
             return true;
         }

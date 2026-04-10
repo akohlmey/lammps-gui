@@ -106,17 +106,17 @@ ChartWindow::ChartWindow(const QString &_filename, QWidget *parent) :
     int smoothchoice = settings.value("smoothchoice", 0).toInt();
     switch (smoothchoice) {
         case 0:
-            do_raw    = true;
-            do_smooth = false;
+            doRaw    = true;
+            doSmooth = false;
             break;
         case 1:
-            do_raw    = false;
-            do_smooth = true;
+            doRaw    = false;
+            doSmooth = true;
             break;
         case 2: // fallthrough
         default:
-            do_raw    = true;
-            do_smooth = true;
+            doRaw    = true;
+            doSmooth = true;
             break;
     }
     // list of choices must be kepy in sync with list in preferences
@@ -194,7 +194,7 @@ ChartWindow::ChartWindow(const QString &_filename, QWidget *parent) :
     exportYamlAct = file->addAction("Export data to &YAML...", this, &ChartWindow::exportYaml);
     exportYamlAct->setIcon(QIcon(":/icons/yaml-file-icon.png"));
     file->addSeparator();
-    stopAct = file->addAction("Stop &Run", this, &ChartWindow::stop_run);
+    stopAct = file->addAction("Stop &Run", this, &ChartWindow::stopRun);
     stopAct->setIcon(QIcon(":/icons/process-stop.png"));
     stopAct->setShortcut(QKeySequence(Qt::CTRL | Qt::Key_Slash));
     closeAct = file->addAction("&Close", this, &QWidget::close);
@@ -208,33 +208,33 @@ ChartWindow::ChartWindow(const QString &_filename, QWidget *parent) :
     layout->setSpacing(LAYOUT_SPACING);
     setLayout(layout);
 
-    connect(chartTitle, &QLineEdit::editingFinished, this, &ChartWindow::update_tlabel);
-    connect(chartYlabel, &QLineEdit::editingFinished, this, &ChartWindow::update_ylabel);
-    connect(smooth, SIGNAL(currentIndexChanged(int)), this, SLOT(select_smooth(int)));
-    connect(window, &QAbstractSpinBox::editingFinished, this, &ChartWindow::update_smooth);
-    connect(order, &QAbstractSpinBox::editingFinished, this, &ChartWindow::update_smooth);
-    connect(window, QOverload<int>::of(&QSpinBox::valueChanged), this, &ChartWindow::update_smooth);
-    connect(order, QOverload<int>::of(&QSpinBox::valueChanged), this, &ChartWindow::update_smooth);
-    connect(columns, SIGNAL(currentIndexChanged(int)), this, SLOT(change_chart(int)));
-    connect(xrange, &RangeSlider::sliderMoved, this, &ChartWindow::update_xrange);
-    connect(yrange, &RangeSlider::sliderMoved, this, &ChartWindow::update_yrange);
+    connect(chartTitle, &QLineEdit::editingFinished, this, &ChartWindow::updateTLabel);
+    connect(chartYlabel, &QLineEdit::editingFinished, this, &ChartWindow::updateYLabel);
+    connect(smooth, SIGNAL(currentIndexChanged(int)), this, SLOT(selectSmooth(int)));
+    connect(window, &QAbstractSpinBox::editingFinished, this, &ChartWindow::updateSmooth);
+    connect(order, &QAbstractSpinBox::editingFinished, this, &ChartWindow::updateSmooth);
+    connect(window, QOverload<int>::of(&QSpinBox::valueChanged), this, &ChartWindow::updateSmooth);
+    connect(order, QOverload<int>::of(&QSpinBox::valueChanged), this, &ChartWindow::updateSmooth);
+    connect(columns, SIGNAL(currentIndexChanged(int)), this, SLOT(changeChart(int)));
+    connect(xrange, &RangeSlider::sliderMoved, this, &ChartWindow::updateXRange);
+    connect(yrange, &RangeSlider::sliderMoved, this, &ChartWindow::updateYRange);
 
     installEventFilter(this);
     resize(settings.value("chartx", 640).toInt(), settings.value("charty", 480).toInt());
 }
 
-int ChartWindow::get_step() const
+int ChartWindow::getStep() const
 {
     if (!charts.empty()) {
         auto *v = charts[0];
         if (v) {
-            return (int)v->get_step(v->get_count() - 1);
+            return (int)v->getStep(v->getCount() - 1);
         }
     }
     return -1;
 }
 
-void ChartWindow::reset_charts()
+void ChartWindow::resetCharts()
 {
     while (layout()->count() > 1) {
         auto *item = layout()->takeAt(1);
@@ -248,12 +248,12 @@ void ChartWindow::reset_charts()
     columns->clear();
 }
 
-void ChartWindow::reset_zoom() {
+void ChartWindow::resetZoom() {
     for (auto &c : charts)
-        c->reset_zoom();
+        c->resetZoom();
 }
 
-void ChartWindow::add_chart(const QString &title, int index)
+void ChartWindow::addChart(const QString &title, int index)
 {
     auto *chart = new ChartViewer(title, index);
     layout()->addWidget(chart);
@@ -268,22 +268,22 @@ void ChartWindow::add_chart(const QString &title, int index)
         chartYlabel->setText(title);
     }
     charts.append(chart);
-    update_tlabel();
-    select_smooth(0);
+    updateTLabel();
+    selectSmooth(0);
 }
 
-void ChartWindow::add_data(int step, double data, int index)
+void ChartWindow::addData(int step, double data, int index)
 {
     for (auto &c : charts)
-        if (c->get_index() == index) c->add_data(step, data);
+        if (c->getIndex() == index) c->addData(step, data);
 }
 
-void ChartWindow::set_units(const QString &_units)
+void ChartWindow::setUnits(const QString &_units)
 {
     units->setText(_units);
 }
 
-void ChartWindow::set_norm(bool _norm)
+void ChartWindow::setNorm(bool _norm)
 {
     norm->setChecked(_norm);
 }
@@ -296,7 +296,7 @@ void ChartWindow::copy()
         int choice     = columns->currentData().toInt();
         QWidget *graph = nullptr;
         for (auto &c : charts)
-            if (choice == c->get_index()) graph = c;
+            if (choice == c->getIndex()) graph = c;
 
         if (graph) {
             auto image = graph->grab().toImage();
@@ -315,68 +315,68 @@ void ChartWindow::copy()
 
 void ChartWindow::quit()
 {
-    auto *main = dynamic_cast<LammpsGui *>(get_main_widget());
+    auto *main = dynamic_cast<LammpsGui *>(getMainWidget());
     if (main) main->quit();
 }
 
-void ChartWindow::stop_run()
+void ChartWindow::stopRun()
 {
-    auto *main = dynamic_cast<LammpsGui *>(get_main_widget());
-    if (main) main->stop_run();
+    auto *main = dynamic_cast<LammpsGui *>(getMainWidget());
+    if (main) main->stopRun();
 }
 
-void ChartWindow::select_smooth(int)
+void ChartWindow::selectSmooth(int)
 {
     switch (smooth->currentIndex()) {
         case 0:
-            do_raw    = true;
-            do_smooth = false;
+            doRaw    = true;
+            doSmooth = false;
             break;
         case 1:
-            do_raw    = false;
-            do_smooth = true;
+            doRaw    = false;
+            doSmooth = true;
             break;
         case 2: // fallthrough
         default:
-            do_raw    = true;
-            do_smooth = true;
+            doRaw    = true;
+            doSmooth = true;
             break;
     }
-    window->setEnabled(do_smooth);
-    order->setEnabled(do_smooth);
-    update_smooth();
+    window->setEnabled(doSmooth);
+    order->setEnabled(doSmooth);
+    updateSmooth();
 }
 
-void ChartWindow::update_smooth()
+void ChartWindow::updateSmooth()
 {
     int wval = window->value();
     int oval = order->value();
 
     for (auto &c : charts)
-        c->smooth_param(do_raw, do_smooth, wval, oval);
+        c->smoothParam(doRaw, doSmooth, wval, oval);
 }
 
-void ChartWindow::update_tlabel()
+void ChartWindow::updateTLabel()
 {
     if (chartTitle) {
         for (auto &c : charts)
-            c->set_tlabel(chartTitle->text());
+            c->setTLabel(chartTitle->text());
     }
 }
 
-void ChartWindow::update_ylabel()
+void ChartWindow::updateYLabel()
 {
     for (auto &c : charts) {
-        if (c->isVisible()) c->set_ylabel(chartYlabel->text());
+        if (c->isVisible()) c->setYLabel(chartYlabel->text());
     }
 }
 
-void ChartWindow::update_xrange(int low, int high)
+void ChartWindow::updateXRange(int low, int high)
 {
     for (auto &c : charts) {
         if (c->isVisible()) {
-            auto axes   = c->get_axes();
-            auto ranges = c->get_minmax();
+            auto axes   = c->getAxes();
+            auto ranges = c->getMinMax();
             double xmin = ranges.left() + (double)low * SLIDER_FRACTION * ranges.width();
             double xmax = ranges.left() + (double)high * SLIDER_FRACTION * ranges.width();
             axes[0]->setRange(xmin, xmax);
@@ -384,12 +384,12 @@ void ChartWindow::update_xrange(int low, int high)
     }
 }
 
-void ChartWindow::update_yrange(int low, int high)
+void ChartWindow::updateYRange(int low, int high)
 {
     for (auto &c : charts) {
         if (c->isVisible()) {
-            auto axes   = c->get_axes();
-            auto ranges = c->get_minmax();
+            auto axes   = c->getAxes();
+            auto ranges = c->getMinMax();
             double ymin = ranges.bottom() - (double)low * SLIDER_FRACTION * ranges.height();
             double ymax = ranges.bottom() - (double)high * SLIDER_FRACTION * ranges.height();
             axes[1]->setRange(ymin, ymax);
@@ -407,7 +407,7 @@ void ChartWindow::saveAs()
     if (!fileName.isEmpty()) {
         int choice = columns->currentData().toInt();
         for (auto &c : charts)
-            if (choice == c->get_index()) c->grab().save(fileName);
+            if (choice == c->getIndex()) c->grab().save(fileName);
     }
 }
 
@@ -429,15 +429,15 @@ void ChartWindow::exportDat()
             out << "# Thermodynamic data from " << filename << "\n";
             out << "#          Step";
             for (auto &c : charts)
-                out << qSetFieldWidth(0) << ' ' << qSetFieldWidth(fw) << c->get_title();
+                out << qSetFieldWidth(0) << ' ' << qSetFieldWidth(fw) << c->getTitle();
             out << qSetFieldWidth(0) << '\n';
 
-            int lines = charts[0]->get_count();
+            int lines = charts[0]->getCount();
             for (int i = 0; i < lines; ++i) {
                 // timestep
-                out << qSetFieldWidth(0) << ' ' << qSetFieldWidth(fw) << charts[0]->get_step(i);
+                out << qSetFieldWidth(0) << ' ' << qSetFieldWidth(fw) << charts[0]->getStep(i);
                 for (auto &c : charts)
-                    out << qSetFieldWidth(0) << ' ' << qSetFieldWidth(fw) << c->get_data(i);
+                    out << qSetFieldWidth(0) << ' ' << qSetFieldWidth(fw) << c->getData(i);
                 out << qSetFieldWidth(0) << '\n';
             }
             file.close();
@@ -460,15 +460,15 @@ void ChartWindow::exportCsv()
 
             out << "Step";
             for (auto &c : charts)
-                out << ',' << c->get_title();
+                out << ',' << c->getTitle();
             out << '\n';
 
-            int lines = charts[0]->get_count();
+            int lines = charts[0]->getCount();
             for (int i = 0; i < lines; ++i) {
                 // timestep
-                out << charts[0]->get_step(i);
+                out << charts[0]->getStep(i);
                 for (auto &c : charts)
-                    out << ',' << c->get_data(i);
+                    out << ',' << c->getData(i);
                 out << '\n';
             }
             file.close();
@@ -491,17 +491,17 @@ void ChartWindow::exportYaml()
 
             out << "keywords: ['Step'";
             for (auto &c : charts)
-                out << ", " << c->get_title();
+                out << ", " << c->getTitle();
             out << "]\n";
 
             out << "data: \n";
-            int lines = charts[0]->get_count();
+            int lines = charts[0]->getCount();
             for (int i = 0; i < lines; ++i) {
                 // timestep
-                out << "  - [" << charts[0]->get_step(i);
+                out << "  - [" << charts[0]->getStep(i);
                 // data
                 for (auto &c : charts)
-                    out << ", " << c->get_data(i);
+                    out << ", " << c->getData(i);
                 out << "]\n";
             }
             out << "...\n";
@@ -510,14 +510,14 @@ void ChartWindow::exportYaml()
     }
 }
 
-void ChartWindow::change_chart(int)
+void ChartWindow::changeChart(int)
 {
     int choice = columns->currentData().toInt();
     for (auto &c : charts) {
-        if (choice == c->get_index()) {
+        if (choice == c->getIndex()) {
             c->show();
-            chartTitle->setText(c->get_tlabel());
-            chartYlabel->setText(c->get_ylabel());
+            chartTitle->setText(c->getTLabel());
+            chartYlabel->setText(c->getYLabel());
         } else {
             c->hide();
         }
@@ -547,7 +547,7 @@ bool ChartWindow::eventFilter(QObject *watched, QEvent *event)
         auto *keyEvent = dynamic_cast<QKeyEvent *>(event);
         if (!keyEvent) return QWidget::eventFilter(watched, event);
         if (keyEvent->modifiers().testFlag(Qt::ControlModifier) && keyEvent->key() == '/') {
-            stop_run();
+            stopRun();
             event->accept();
             return true;
         }
@@ -563,10 +563,10 @@ bool ChartWindow::eventFilter(QObject *watched, QEvent *event)
 /* -------------------------------------------------------------------- */
 
 ChartViewer::ChartViewer(const QString &title, int _index, QWidget *parent) :
-    QWidget(parent), last_step(-1), index(_index), window(10), order(4), quickWidget(nullptr),
+    QWidget(parent), lastStep(-1), index(_index), window(10), order(4), quickWidget(nullptr),
     graphsView(nullptr), ylabelWidget(nullptr), xlabelWidget(nullptr), titleWidget(nullptr),
     series(new QLineSeries), smooth(nullptr), xaxis(new QValueAxis), yaxis(new QValueAxis),
-    do_raw(true), do_smooth(false)
+    doRaw(true), doSmooth(false)
 {
     QSettings settings;
     settings.beginGroup("charts");
@@ -666,8 +666,8 @@ ChartViewer::ChartViewer(const QString &title, int _index, QWidget *parent) :
     vlayout->addWidget(xlabelWidget);
     settings.endGroup();
 
-    last_update = QTime::currentTime();
-    update_smooth();
+    lastUpdate = QTime::currentTime();
+    updateSmooth();
 }
 
 /* -------------------------------------------------------------------- */
@@ -682,25 +682,25 @@ ChartViewer::~ChartViewer()
 
 /* -------------------------------------------------------------------- */
 
-void ChartViewer::add_data(int step, double data)
+void ChartViewer::addData(int step, double data)
 {
-    if (last_step < step) {
-        last_step = step;
+    if (lastStep < step) {
+        lastStep = step;
         series->append(step, data);
 
         QSettings settings;
         // update the chart display only after at least updchart milliseconds have passed
-        if (last_update.msecsTo(QTime::currentTime()) > settings.value("updchart", "500").toInt()) {
-            last_update = QTime::currentTime();
-            update_smooth();
-            reset_zoom();
+        if (lastUpdate.msecsTo(QTime::currentTime()) > settings.value("updchart", "500").toInt()) {
+            lastUpdate = QTime::currentTime();
+            updateSmooth();
+            resetZoom();
         }
     }
 }
 
 /* -------------------------------------------------------------------- */
 
-QRectF ChartViewer::get_minmax() const
+QRectF ChartViewer::getMinMax() const
 {
     auto points = series->points();
 
@@ -755,9 +755,9 @@ QRectF ChartViewer::get_minmax() const
 
 /* -------------------------------------------------------------------- */
 
-void ChartViewer::reset_zoom()
+void ChartViewer::resetZoom()
 {
-    auto ranges = get_minmax();
+    auto ranges = getMinMax();
     xaxis->setRange(ranges.left(), ranges.right());
     yaxis->setRange(ranges.bottom(), ranges.top());
     // compute "nice" tick intervals targeting about 5 major ticks per axis
@@ -787,11 +787,11 @@ void ChartViewer::reset_zoom()
 
 /* -------------------------------------------------------------------- */
 
-void ChartViewer::smooth_param(bool _do_raw, bool _do_smooth, int _window, int _order)
+void ChartViewer::smoothParam(bool _do_raw, bool _do_smooth, int _window, int _order)
 {
     // turn off raw plot
     if (!_do_raw) {
-        if (do_raw && graphsView)
+        if (doRaw && graphsView)
             QMetaObject::invokeMethod(graphsView, "removeSeries", Q_ARG(QObject *, series));
     }
     // turn off smooth plot
@@ -803,23 +803,23 @@ void ChartViewer::smooth_param(bool _do_raw, bool _do_smooth, int _window, int _
             smooth = nullptr;
         }
     }
-    do_raw    = _do_raw;
-    do_smooth = _do_smooth;
+    doRaw    = _do_raw;
+    doSmooth = _do_smooth;
     window    = _window;
     order     = _order;
-    update_smooth();
+    updateSmooth();
 }
 
 /* -------------------------------------------------------------------- */
 
-void ChartViewer::set_tlabel(const QString &tlabel)
+void ChartViewer::setTLabel(const QString &tlabel)
 {
     if (titleWidget) titleWidget->setText(tlabel);
 }
 
 /* -------------------------------------------------------------------- */
 
-void ChartViewer::set_ylabel(const QString &ylabel)
+void ChartViewer::setYLabel(const QString &ylabel)
 {
     yaxis->setTitleText(ylabel);
     ylabelWidget->setText(ylabel);
@@ -1235,7 +1235,7 @@ float_vect sg_smooth(const float_vect &v, const std::size_t width, const int deg
 
 // update smooth plot data
 
-void ChartViewer::update_smooth()
+void ChartViewer::updateSmooth()
 {
     QSettings settings;
     settings.beginGroup("charts");
@@ -1245,7 +1245,7 @@ void ChartViewer::update_smooth()
     if ((smoothidx < 0) || (smoothidx >= mybrushes.size())) smoothidx = 0;
     settings.endGroup();
 
-    if (do_raw) {
+    if (doRaw) {
         // add raw data if not in view
         bool hasSeries = false;
         if (graphsView)
@@ -1260,7 +1260,7 @@ void ChartViewer::update_smooth()
         }
     }
 
-    if (do_smooth) {
+    if (doSmooth) {
         if (series->count() > (2 * window)) {
             if (!smooth) {
                 smooth = new QLineSeries;

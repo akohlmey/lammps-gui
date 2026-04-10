@@ -119,37 +119,37 @@ public:
 
 protected:
     /** @brief Open a file in the editor */
-    void open_file(const QString &filename);
+    void openFile(const QString &filename);
 
     /** @brief Open a file in a read-only viewer dialog */
-    void view_file(const QString &filename);
+    void viewFile(const QString &filename);
 
     /** @brief Open a file for inspection (data files, etc.) */
-    void inspect_file(const QString &filename);
+    void inspectFile(const QString &filename);
 
     /** @brief Write current editor content to a file */
-    void write_file(const QString &filename);
+    void writeFile(const QString &filename);
 
     /** @brief Update the recent files list */
-    void update_recents(const QString &filename = "");
+    void updateRecents(const QString &filename = "");
 
     /** @brief Clear the list of index-style variables */
-    void clear_variables();
+    void clearVariables();
 
     /** @brief Update variables in LAMMPS from the variables list */
-    void update_variables();
+    void updateVariables();
 
     /**
      * @brief Execute a LAMMPS simulation
      * @param use_buffer If true, runs from editor buffer; if false, saves and runs from file
      */
-    void do_run(bool use_buffer);
+    void doRun(bool use_buffer);
 
     /** @brief Initialize and start a new LAMMPS instance */
-    void start_lammps();
+    void startLammps();
 
     /** @brief Handle completion of a LAMMPS run */
-    void run_done();
+    void runDone();
 
     /** @brief Set the documentation version string for help links */
     void setDocver();
@@ -169,14 +169,14 @@ protected:
      * @param infotext Information text to display
      * @return Wizard page with tutorial introduction
      */
-    QWizardPage *tutorial_intro(const int ntutorial, const QString &infotext);
+    QWizardPage *tutorialIntro(const int ntutorial, const QString &infotext);
 
     /**
      * @brief Create a directory selection page for a tutorial
      * @param ntutorial Tutorial number
      * @return Wizard page for tutorial directory selection
      */
-    QWizardPage *tutorial_directory(const int ntutorial);
+    QWizardPage *tutorialDirectory(const int ntutorial);
 
     /**
      * @brief Set up files and resources for a tutorial
@@ -186,11 +186,11 @@ protected:
      * @param getsolution Whether to include solution files
      * @param openwebpage Whether to open the tutorial web page
      */
-    void setup_tutorial(int tutno, const QString &dir, bool purgedir, bool getsolution,
+    void setupTutorial(int tutno, const QString &dir, bool purgedir, bool getsolution,
                         bool openwebpage);
 
     /** @brief Clean up the inspect file dialog list */
-    void purge_inspect_list();
+    void purgeInspectList();
 
     /**
      * @brief Event filter for handling special events
@@ -205,11 +205,11 @@ public slots:
     void quit();
 
     /** @brief Stop a running LAMMPS simulation */
-    void stop_run();
+    void stopRun();
 
 private slots:
     /** @brief Create a new document */
-    void new_document();
+    void newDocument();
 
     /** @brief Open an existing file */
     void open();
@@ -221,19 +221,19 @@ private slots:
     void inspect();
 
     /** @brief Open a file from the recent files list */
-    void open_recent();
+    void openRecent();
 
     /** @brief Change the working directory */
-    void get_directory();
+    void getDirectory();
 
     /** @brief Start external executable */
-    void start_exe();
+    void startExe();
 
     /** @brief Save the current file */
     void save();
 
     /** @brief Save the current file with a new name */
-    void save_as();
+    void saveAs();
 
     /** @brief Copy selected text to clipboard */
     void copy();
@@ -251,37 +251,37 @@ private slots:
     void redo();
 
     /** @brief Open find and replace dialog */
-    void findandreplace();
+    void findAndReplace();
 
     /** @brief Run LAMMPS with content from editor buffer */
-    void run_buffer() { do_run(true); }
+    void runBuffer() { doRun(true); }
 
     /** @brief Run LAMMPS from saved file */
-    void run_file() { do_run(false); }
+    void runFile() { doRun(false); }
 
     /** @brief Restart LAMMPS with a new instance */
-    void restart_lammps();
+    void restartLammps();
 
     /** @brief Open dialog to edit index-style variables */
-    void edit_variables();
+    void editVariables();
 
     /** @brief Render an image from a dump file */
-    void render_image();
+    void renderImage();
 
     /** @brief View a slideshow of images */
-    void view_slides();
+    void viewSlides();
 
     /** @brief View a single image */
-    void view_image();
+    void viewImage();
 
     /** @brief View a chart from thermodynamic data */
-    void view_chart();
+    void viewChart();
 
     /** @brief View the log window */
-    void view_log();
+    void viewLog();
 
     /** @brief View current variable definitions */
-    void view_variables();
+    void viewVariables();
 
     /** @brief Show about dialog */
     void about();
@@ -293,37 +293,37 @@ private slots:
     void manual();
 
     /** @brief Open tutorial web page */
-    void tutorial_web();
+    void tutorialWeb();
 
     /** @brief Start tutorial 1 */
-    void start_tutorial1();
+    void startTutorial1();
 
     /** @brief Start tutorial 2 */
-    void start_tutorial2();
+    void startTutorial2();
 
     /** @brief Start tutorial 3 */
-    void start_tutorial3();
+    void startTutorial3();
 
     /** @brief Start tutorial 4 */
-    void start_tutorial4();
+    void startTutorial4();
 
     /** @brief Start tutorial 5 */
-    void start_tutorial5();
+    void startTutorial5();
 
     /** @brief Start tutorial 6 */
-    void start_tutorial6();
+    void startTutorial6();
 
     /** @brief Start tutorial 7 */
-    void start_tutorial7();
+    void startTutorial7();
 
     /** @brief Start tutorial 8 */
-    void start_tutorial8();
+    void startTutorial8();
 
     /** @brief Open HOWTO documentation */
     void howto();
 
     /** @brief Update log window with new output */
-    void logupdate();
+    void logUpdate();
 
     /** @brief Handle document modification */
     void modified();
@@ -426,18 +426,18 @@ private:
     };
     QList<InspectData *> inspectList; ///< List of open inspect dialogs
 
-    QString current_file;                     ///< Path to currently opened file
-    QString current_dir;                      ///< Current working directory
+    QString currentFile;                     ///< Path to currently opened file
+    QString currentDir;                      ///< Current working directory
     QList<QString> recent;                    ///< List of recently opened files
     QList<QPair<QString, QString>> variables; ///< Index-style variable definitions
 
     LammpsWrapper lammps;            ///< Interface to LAMMPS library
     LammpsRunner *runner;            ///< Thread for running LAMMPS simulations
     QString docver;                  ///< LAMMPS documentation version string
-    QString plugin_path;             ///< Path to LAMMPS shared library (plugin mode)
-    bool is_running;                 ///< Whether a simulation is currently running
-    int run_counter;                 ///< Counter for simulation runs
-    std::vector<char *> lammps_args; ///< Command-line arguments for LAMMPS
+    QString pluginPath;             ///< Path to LAMMPS shared library (plugin mode)
+    bool isRunning;                 ///< Whether a simulation is currently running
+    int runCounter;                 ///< Counter for simulation runs
+    std::vector<char *> lammpsArgs; ///< Command-line arguments for LAMMPS
 
 protected:
     int nthreads; ///< Number of threads for parallel execution

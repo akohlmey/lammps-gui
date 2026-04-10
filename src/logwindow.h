@@ -49,12 +49,12 @@ public:
     LogWindow &operator=(LogWindow &&)      = delete;
 
 private slots:
-    void extract_yaml();  ///< Extract YAML data to separate file
+    void extractYaml();  ///< Extract YAML data to separate file
     void quit();          ///< Close window
-    void save_as();       ///< Save log to file
-    void stop_run();      ///< Stop running simulation
-    void next_warning();  ///< Navigate to next warning
-    void open_errorurl(); ///< Open error documentation URL in browser
+    void saveAs();       ///< Save log to file
+    void stopRun();      ///< Stop running simulation
+    void nextWarning();  ///< Navigate to next warning
+    void openErrorUrl(); ///< Open error documentation URL in browser
 
 protected:
     /**
@@ -87,7 +87,7 @@ protected:
      * @brief Check if log contains embedded YAML data
      * @return true if YAML data detected, false otherwise
      */
-    bool check_yaml();
+    bool checkYaml();
 
 private:
     QString filename;                ///< Path to log file

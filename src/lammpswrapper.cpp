@@ -52,7 +52,7 @@ int LammpsWrapper::version()
     return val;
 }
 
-int LammpsWrapper::extract_setting(const char *keyword)
+int LammpsWrapper::extractSetting(const char *keyword)
 {
     int val = 0;
     if (lammps_handle) {
@@ -65,7 +65,7 @@ int LammpsWrapper::extract_setting(const char *keyword)
     return val;
 }
 
-void *LammpsWrapper::extract_global(const char *keyword)
+void *LammpsWrapper::extractGlobal(const char *keyword)
 {
     void *val = nullptr;
 #if defined(LAMMPS_GUI_USE_PLUGIN)
@@ -76,7 +76,7 @@ void *LammpsWrapper::extract_global(const char *keyword)
     return val;
 }
 
-void *LammpsWrapper::extract_pair(const char *keyword)
+void *LammpsWrapper::extractPair(const char *keyword)
 {
     void *val = nullptr;
     if (lammps_handle) {
@@ -89,7 +89,7 @@ void *LammpsWrapper::extract_pair(const char *keyword)
     return val;
 }
 
-void *LammpsWrapper::extract_atom(const char *keyword)
+void *LammpsWrapper::extractAtom(const char *keyword)
 {
     void *val = nullptr;
     if (lammps_handle) {
@@ -102,7 +102,7 @@ void *LammpsWrapper::extract_atom(const char *keyword)
     return val;
 }
 
-void *LammpsWrapper::extract_compute(const char *id, int style, int type)
+void *LammpsWrapper::extractCompute(const char *id, int style, int type)
 {
     int mystyle = -1;
     int mytype  = -1;
@@ -145,7 +145,7 @@ void *LammpsWrapper::extract_compute(const char *id, int style, int type)
     if (lammps_handle) {
 #if defined(LAMMPS_GUI_USE_PLUGIN)
         return ((liblammpsplugin_t *)plugin_handle)
-            ->extract_compute(lammps_handle, id, mystyle, mytype);
+            ->extractCompute(lammps_handle, id, mystyle, mytype);
 #else
         return lammps_extract_compute(lammps_handle, id, mystyle, mytype);
 #endif
@@ -153,7 +153,7 @@ void *LammpsWrapper::extract_compute(const char *id, int style, int type)
     return nullptr;
 }
 
-void *LammpsWrapper::extract_fix(const char *id, int style, int type, int nrow, int ncol)
+void *LammpsWrapper::extractFix(const char *id, int style, int type, int nrow, int ncol)
 {
     int mystyle = -1;
     int mytype  = -1;
@@ -196,7 +196,7 @@ void *LammpsWrapper::extract_fix(const char *id, int style, int type, int nrow, 
     if (lammps_handle) {
 #if defined(LAMMPS_GUI_USE_PLUGIN)
         return ((liblammpsplugin_t *)plugin_handle)
-            ->extract_fix(lammps_handle, id, mystyle, mytype, nrow, ncol);
+            ->extractFix(lammps_handle, id, mystyle, mytype, nrow, ncol);
 #else
         return lammps_extract_fix(lammps_handle, id, mystyle, mytype, nrow, ncol);
 #endif
@@ -204,7 +204,7 @@ void *LammpsWrapper::extract_fix(const char *id, int style, int type, int nrow, 
     return nullptr;
 }
 
-int LammpsWrapper::extract_variable_datatype(const char *keyword)
+int LammpsWrapper::extractVariableDatatype(const char *keyword)
 {
     int type = -1;
     if (lammps_handle) {
@@ -236,7 +236,7 @@ int LammpsWrapper::extract_variable_datatype(const char *keyword)
 }
 
 // note: equal style and compatible variables only
-double LammpsWrapper::extract_variable(const char *keyword)
+double LammpsWrapper::extractVariable(const char *keyword)
 {
     void *ptr = nullptr;
     if (lammps_handle) {
@@ -256,7 +256,7 @@ double LammpsWrapper::extract_variable(const char *keyword)
     return val;
 }
 
-int LammpsWrapper::id_count(const char *idtype)
+int LammpsWrapper::idCount(const char *idtype)
 {
     int val = 0;
     if (lammps_handle) {
@@ -269,7 +269,7 @@ int LammpsWrapper::id_count(const char *idtype)
     return val;
 }
 
-int LammpsWrapper::has_id(const char *idtype, const char *id)
+int LammpsWrapper::hasId(const char *idtype, const char *id)
 {
     int val = 0;
     if (lammps_handle) {
@@ -282,7 +282,7 @@ int LammpsWrapper::has_id(const char *idtype, const char *id)
     return val;
 }
 
-int LammpsWrapper::id_name(const char *keyword, int idx, char *buf, int len)
+int LammpsWrapper::idName(const char *keyword, int idx, char *buf, int len)
 {
     int val = 0;
     if (lammps_handle) {
@@ -295,7 +295,7 @@ int LammpsWrapper::id_name(const char *keyword, int idx, char *buf, int len)
     return val;
 }
 
-int LammpsWrapper::style_count(const char *keyword)
+int LammpsWrapper::styleCount(const char *keyword)
 {
     int val = 0;
     if (lammps_handle) {
@@ -308,7 +308,7 @@ int LammpsWrapper::style_count(const char *keyword)
     return val;
 }
 
-int LammpsWrapper::style_name(const char *keyword, int idx, char *buf, int len)
+int LammpsWrapper::styleName(const char *keyword, int idx, char *buf, int len)
 {
     int val = 0;
     if (lammps_handle) {
@@ -322,7 +322,7 @@ int LammpsWrapper::style_name(const char *keyword, int idx, char *buf, int len)
     return val;
 }
 
-int LammpsWrapper::variable_info(int idx, char *buf, int len)
+int LammpsWrapper::variableInfo(int idx, char *buf, int len)
 {
     int val = 0;
     if (lammps_handle) {
@@ -335,7 +335,7 @@ int LammpsWrapper::variable_info(int idx, char *buf, int len)
     return val;
 }
 
-double LammpsWrapper::get_thermo(const char *keyword)
+double LammpsWrapper::getThermo(const char *keyword)
 {
     double val = 0.0;
     if (lammps_handle) {
@@ -348,7 +348,7 @@ double LammpsWrapper::get_thermo(const char *keyword)
     return val;
 }
 
-void *LammpsWrapper::last_thermo(const char *keyword, int index)
+void *LammpsWrapper::lastThermo(const char *keyword, int index)
 {
     void *ptr = nullptr;
     if (lammps_handle) {
@@ -361,7 +361,7 @@ void *LammpsWrapper::last_thermo(const char *keyword, int index)
     return ptr;
 }
 
-bool LammpsWrapper::is_running()
+bool LammpsWrapper::isRunning()
 {
     int val = 0;
     if (lammps_handle) {
@@ -396,7 +396,7 @@ void LammpsWrapper::file(const char *filename)
     }
 }
 
-void LammpsWrapper::commands_string(const char *input)
+void LammpsWrapper::commandsString(const char *input)
 {
     if (lammps_handle) {
 #if defined(LAMMPS_GUI_USE_PLUGIN)
@@ -408,7 +408,7 @@ void LammpsWrapper::commands_string(const char *input)
 }
 
 // may be called with null handle. returns global error then.
-bool LammpsWrapper::has_error() const
+bool LammpsWrapper::hasError() const
 {
 #if defined(LAMMPS_GUI_USE_PLUGIN)
     return ((liblammpsplugin_t *)plugin_handle)->has_error(lammps_handle) != 0;
@@ -418,7 +418,7 @@ bool LammpsWrapper::has_error() const
 }
 
 // may be called with null handle. returns global error then.
-int LammpsWrapper::get_last_error_message(char *buf, int buflen)
+int LammpsWrapper::getLastErrorMessage(char *buf, int buflen)
 {
 #if defined(LAMMPS_GUI_USE_PLUGIN)
     return ((liblammpsplugin_t *)plugin_handle)->get_last_error_message(lammps_handle, buf, buflen);
@@ -427,7 +427,7 @@ int LammpsWrapper::get_last_error_message(char *buf, int buflen)
 #endif
 }
 
-void LammpsWrapper::force_timeout()
+void LammpsWrapper::forceTimeout()
 {
 #if defined(LAMMPS_GUI_USE_PLUGIN)
     if (lammps_handle) ((liblammpsplugin_t *)plugin_handle)->force_timeout(lammps_handle);
@@ -466,7 +466,7 @@ void LammpsWrapper::finalize()
 #endif
 }
 
-bool LammpsWrapper::config_has_package(const char *package) const
+bool LammpsWrapper::configHasPackage(const char *package) const
 {
 #if defined(LAMMPS_GUI_USE_PLUGIN)
     return ((liblammpsplugin_t *)plugin_handle)->config_has_package(package) != 0;
@@ -475,7 +475,7 @@ bool LammpsWrapper::config_has_package(const char *package) const
 #endif
 }
 
-bool LammpsWrapper::config_accelerator(const char *package, const char *category,
+bool LammpsWrapper::configAccelerator(const char *package, const char *category,
                                        const char *setting) const
 {
 #if defined(LAMMPS_GUI_USE_PLUGIN)
@@ -486,7 +486,7 @@ bool LammpsWrapper::config_accelerator(const char *package, const char *category
 #endif
 }
 
-bool LammpsWrapper::config_has_curl_support() const
+bool LammpsWrapper::configHasCurlSupport() const
 {
 #if defined(LAMMPS_GUI_USE_PLUGIN)
     return ((liblammpsplugin_t *)plugin_handle)->config_has_curl_support() != 0;
@@ -495,7 +495,7 @@ bool LammpsWrapper::config_has_curl_support() const
 #endif
 }
 
-bool LammpsWrapper::config_has_omp_support() const
+bool LammpsWrapper::configHasOmpSupport() const
 {
 #if defined(LAMMPS_GUI_USE_PLUGIN)
     return ((liblammpsplugin_t *)plugin_handle)->config_has_omp_support() != 0;
@@ -504,7 +504,7 @@ bool LammpsWrapper::config_has_omp_support() const
 #endif
 }
 
-bool LammpsWrapper::config_has_png_support() const
+bool LammpsWrapper::configHasPngSupport() const
 {
 #if defined(LAMMPS_GUI_USE_PLUGIN)
     return ((liblammpsplugin_t *)plugin_handle)->config_has_png_support() != 0;
@@ -513,7 +513,7 @@ bool LammpsWrapper::config_has_png_support() const
 #endif
 }
 
-bool LammpsWrapper::config_has_jpeg_support() const
+bool LammpsWrapper::configHasJpegSupport() const
 {
 #if defined(LAMMPS_GUI_USE_PLUGIN)
     return ((liblammpsplugin_t *)plugin_handle)->config_has_jpeg_support() != 0;
@@ -522,7 +522,7 @@ bool LammpsWrapper::config_has_jpeg_support() const
 #endif
 }
 
-bool LammpsWrapper::has_gpu_device() const
+bool LammpsWrapper::hasGpuDevice() const
 {
 #if defined(LAMMPS_GUI_USE_PLUGIN)
     return ((liblammpsplugin_t *)plugin_handle)->has_gpu_device() != 0;
@@ -532,12 +532,12 @@ bool LammpsWrapper::has_gpu_device() const
 }
 
 #if defined(LAMMPS_GUI_USE_PLUGIN)
-bool LammpsWrapper::has_plugin() const
+bool LammpsWrapper::hasPlugin() const
 {
     return true;
 }
 
-bool LammpsWrapper::load_lib(const char *libfile)
+bool LammpsWrapper::loadLib(const char *libfile)
 {
     if (plugin_handle) {
         close();
@@ -565,10 +565,10 @@ bool LammpsWrapper::load_lib(const char *libfile)
     }
 
     CHECKSYM(get_thermo);
-    CHECKSYM(last_thermo);
-    CHECKSYM(config_has_curl_support);
-    CHECKSYM(config_has_omp_support);
-    CHECKSYM(extract_pair);
+    CHECKSYM(lastThermo);
+    CHECKSYM(configHasCurlSupport);
+    CHECKSYM(configHasOmpSupport);
+    CHECKSYM(extractPair);
 
     // check minimum required version
     QString lmpversion;
@@ -576,16 +576,16 @@ bool LammpsWrapper::load_lib(const char *libfile)
     if (ptr) lmpversion = ptr;
 
     // found a suitable version
-    if (!lmpversion.isEmpty() && (date_compare(lmpversion, "22 Jul 2025") >= 0)) return true;
+    if (!lmpversion.isEmpty() && (dateCompare(lmpversion, "22 Jul 2025") >= 0)) return true;
     return false;
 }
 #else
-bool LammpsWrapper::has_plugin() const
+bool LammpsWrapper::hasPlugin() const
 {
     return false;
 }
 
-bool LammpsWrapper::load_lib(const char *)
+bool LammpsWrapper::loadLib(const char *)
 {
     return true;
 }

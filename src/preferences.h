@@ -68,14 +68,14 @@ public:
      *
      * Some settings require restarting the application to take effect.
      */
-    void set_relaunch(bool val) { need_relaunch = val; }
+    void setRelaunch(bool val) { needRelaunch = val; }
 
 private:
     QTabWidget *tabWidget;       ///< Tab widget for preference categories
     QDialogButtonBox *buttonBox; ///< Dialog buttons (OK, Cancel)
     QSettings *settings;         ///< Qt settings storage
     LammpsWrapper *lammps;       ///< LAMMPS interface for configuration queries
-    bool need_relaunch;          ///< Flag indicating restart is needed
+    bool needRelaunch;          ///< Flag indicating restart is needed
 };
 
 // individual tabs
@@ -96,12 +96,12 @@ public:
     explicit GeneralTab(QSettings *settings, LammpsWrapper *lammps, QWidget *parent = nullptr);
 
 private slots:
-    void pluginpath();
-    void newallfont();
-    void newtextfont();
+    void pluginPath();
+    void newAllFont();
+    void newTextFont();
 
 private:
-    void updatefonts(const QFont &all, const QFont &text);
+    void updateFonts(const QFont &all, const QFont &text);
     QSettings *settings;
     LammpsWrapper *lammps;
 };
@@ -124,7 +124,7 @@ public:
     enum AccelPrec { Double, Mixed, Single };
 
 private slots:
-    void update_accel();
+    void updateAccel();
 
 private:
     QSettings *settings;
@@ -146,8 +146,8 @@ public:
     explicit SnapshotTab(QSettings *settings, QWidget *parent = nullptr);
 
 private slots:
-    void choose_vdw();
-    void choose_bond();
+    void chooseVdw();
+    void chooseBond();
 
 private:
     QSettings *settings;

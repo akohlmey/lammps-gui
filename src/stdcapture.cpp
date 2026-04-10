@@ -72,7 +72,7 @@ StdCapture::StdCapture() : m_oldStdOut(0), m_capturing(false), maxread(0), buf(n
 
 StdCapture::~StdCapture()
 {
-    notify_capture_state(false);
+    notifyCaptureState(false);
     delete[] buf;
     if (m_oldStdOut > 0) close(m_oldStdOut);
     if (m_pipe[READ] > 0) close(m_pipe[READ]);
@@ -82,17 +82,17 @@ StdCapture::~StdCapture()
 void StdCapture::BeginCapture()
 {
     if (m_capturing) EndCapture();
-    if (is_stdout_silenced()) restore_stdout();
+    if (isStdoutSilenced()) restoreStdout();
     dup2(m_pipe[WRITE], fileno(stdout));
     m_capturing = true;
     maxread     = 0;
-    notify_capture_state(true);
+    notifyCaptureState(true);
 }
 
 bool StdCapture::EndCapture()
 {
     if (!m_capturing) return false;
-    notify_capture_state(false);
+    notifyCaptureState(false);
     dup2(m_oldStdOut, fileno(stdout));
     m_captured.clear();
 

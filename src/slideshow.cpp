@@ -89,7 +89,7 @@ SlideShow::SlideShow(const QString &fileName, QWidget *parent) :
     buttonhint.setWidth(buttonhint.height() * 4 / 3);
     stoprun->setMinimumSize(buttonhint);
     stoprun->setMaximumSize(buttonhint);
-    connect(stoprun, &QPushButton::released, this, &SlideShow::stop_run);
+    connect(stoprun, &QPushButton::released, this, &SlideShow::stopRun);
 
     imageCounter->setMinimumHeight(buttonhint.height());
     imageCounter->setMaximumHeight(buttonhint.height());
@@ -99,7 +99,7 @@ SlideShow::SlideShow(const QString &fileName, QWidget *parent) :
     auto *shortcut = new QShortcut(QKeySequence(Qt::CTRL | Qt::Key_W), this);
     connect(shortcut, &QShortcut::activated, this, &QWidget::close);
     shortcut = new QShortcut(QKeySequence(Qt::CTRL | Qt::Key_Slash), this);
-    connect(shortcut, &QShortcut::activated, this, &SlideShow::stop_run);
+    connect(shortcut, &QShortcut::activated, this, &SlideShow::stopRun);
     shortcut = new QShortcut(QKeySequence(Qt::CTRL | Qt::Key_Q), this);
     connect(shortcut, &QShortcut::activated, this, &SlideShow::quit);
     shortcut = new QShortcut(QKeySequence(Qt::CTRL | Qt::Key_C), this);
@@ -107,7 +107,7 @@ SlideShow::SlideShow(const QString &fileName, QWidget *parent) :
     shortcut = new QShortcut(QKeySequence(Qt::CTRL | Qt::Key_E), this);
     connect(shortcut, &QShortcut::activated, this, &SlideShow::movie);
     shortcut = new QShortcut(QKeySequence(Qt::CTRL | Qt::Key_S), this);
-    connect(shortcut, &QShortcut::activated, this, &SlideShow::save_current_image);
+    connect(shortcut, &QShortcut::activated, this, &SlideShow::saveCurrentImage);
 
     auto *mainLayout  = new QVBoxLayout;
     auto *toolsLayout = new QHBoxLayout;
@@ -122,7 +122,7 @@ SlideShow::SlideShow(const QString &fileName, QWidget *parent) :
 
     auto *tomovie = new QPushButton(QIcon(":/icons/export-movie.png"), "");
     tomovie->setToolTip("Export to movie file");
-    tomovie->setEnabled(has_exe("ffmpeg") || has_exe("magick") || has_exe("convert"));
+    tomovie->setEnabled(hasExe("ffmpeg") || hasExe("magick") || hasExe("convert"));
     tomovie->setMinimumSize(buttonhint);
     tomovie->setMaximumSize(buttonhint);
 
@@ -223,10 +223,10 @@ SlideShow::SlideShow(const QString &fileName, QWidget *parent) :
     normal->setMaximumSize(buttonhint);
 
     connect(tomovie, &QPushButton::released, this, &SlideShow::movie);
-    connect(toimage, &QPushButton::released, this, &SlideShow::save_current_image);
+    connect(toimage, &QPushButton::released, this, &SlideShow::saveCurrentImage);
     connect(toclip, &QPushButton::released, this, &SlideShow::copy);
-    connect(totrash, &QPushButton::released, this, &SlideShow::delete_images);
-    connect(delay, &QAbstractSpinBox::editingFinished, this, &SlideShow::set_delay);
+    connect(totrash, &QPushButton::released, this, &SlideShow::deleteImages);
+    connect(delay, &QAbstractSpinBox::editingFinished, this, &SlideShow::setDelay);
 
     connect(gofirst, &QPushButton::released, this, &SlideShow::first);
     connect(goprev, &QPushButton::released, this, &SlideShow::prev);
@@ -236,10 +236,10 @@ SlideShow::SlideShow(const QString &fileName, QWidget *parent) :
     connect(goloop, &QPushButton::released, this, &SlideShow::loop);
     connect(zoomin, &QPushButton::released, this, &SlideShow::zoomIn);
     connect(zoomout, &QPushButton::released, this, &SlideShow::zoomOut);
-    connect(imgrotcw, &QPushButton::released, this, &SlideShow::do_image_rotate_cw);
-    connect(imgrotccw, &QPushButton::released, this, &SlideShow::do_image_rotate_ccw);
-    connect(imgfliph, &QPushButton::released, this, &SlideShow::do_image_flip_h);
-    connect(imgflipv, &QPushButton::released, this, &SlideShow::do_image_flip_v);
+    connect(imgrotcw, &QPushButton::released, this, &SlideShow::doImageRotateCw);
+    connect(imgrotccw, &QPushButton::released, this, &SlideShow::doImageRotateCcw);
+    connect(imgfliph, &QPushButton::released, this, &SlideShow::doImageFlipH);
+    connect(imgflipv, &QPushButton::released, this, &SlideShow::doImageFlipV);
     connect(normal, &QPushButton::released, this, &SlideShow::normalSize);
 
     toolsLayout->addWidget(tomovie, 1);
@@ -315,7 +315,7 @@ SlideShow::SlideShow(const QString &fileName, QWidget *parent) :
     setWindowFlags(flags);
 }
 
-void SlideShow::add_image(const QString &filename)
+void SlideShow::addImage(const QString &filename)
 {
     if (!imagefiles.contains(filename)) {
         int lastidx = imagefiles.size();
@@ -326,7 +326,7 @@ void SlideShow::add_image(const QString &filename)
     }
 }
 
-void SlideShow::delete_images()
+void SlideShow::deleteImages()
 {
     for (const auto &file : imagefiles) {
         QFile::remove(file);
@@ -348,7 +348,7 @@ void SlideShow::clear()
     repaint();
 }
 
-void SlideShow::set_delay()
+void SlideShow::setDelay()
 {
     auto *field = qobject_cast<QSpinBox *>(sender());
     if (field && (field->objectName() == "delay")) {
@@ -398,19 +398,19 @@ void SlideShow::copy()
 
 void SlideShow::quit()
 {
-    auto *main = dynamic_cast<LammpsGui *>(get_main_widget());
+    auto *main = dynamic_cast<LammpsGui *>(getMainWidget());
     if (main) main->quit();
 }
 
-void SlideShow::stop_run()
+void SlideShow::stopRun()
 {
-    auto *main = dynamic_cast<LammpsGui *>(get_main_widget());
-    if (main) main->stop_run();
+    auto *main = dynamic_cast<LammpsGui *>(getMainWidget());
+    if (main) main->stopRun();
 }
 
-void SlideShow::save_current_image()
+void SlideShow::saveCurrentImage()
 {
-    export_image(this, &image, "SlideShow");
+    exportImage(this, &image, "SlideShow");
 }
 
 void SlideShow::movie()
@@ -420,7 +420,7 @@ void SlideShow::movie()
                                      "Movie Files (*.mp4 *.mkv *.avi *.mpg *.mpeg *.gif *.webm)");
     if (fileName.isEmpty()) return;
 
-    if (has_exe("ffmpeg")) {
+    if (hasExe("ffmpeg")) {
         QDir curdir(".");
         QTemporaryFile concatfile;
         if (concatfile.open()) {
@@ -471,7 +471,7 @@ void SlideShow::movie()
         }
     } else {
         QString cmd = "magick";
-        if (!has_exe("magick")) cmd = "convert";
+        if (!hasExe("magick")) cmd = "convert";
         QStringList args;
         args << "-delay" << QString::number(timer_delay / 10);
         QDir curdir(".");
@@ -609,28 +609,28 @@ void SlideShow::adjustWindowSize()
     adjustSize();
 }
 
-void SlideShow::do_image_rotate_cw()
+void SlideShow::doImageRotateCw()
 {
     imageRotation = (imageRotation + 90) % 360;
     applyImageTransform();
     adjustWindowSize();
 }
 
-void SlideShow::do_image_rotate_ccw()
+void SlideShow::doImageRotateCcw()
 {
     imageRotation = (imageRotation + 270) % 360;
     applyImageTransform();
     adjustWindowSize();
 }
 
-void SlideShow::do_image_flip_h()
+void SlideShow::doImageFlipH()
 {
     imageFlipH = !imageFlipH;
     applyImageTransform();
     adjustWindowSize();
 }
 
-void SlideShow::do_image_flip_v()
+void SlideShow::doImageFlipV()
 {
     imageFlipV = !imageFlipV;
     applyImageTransform();

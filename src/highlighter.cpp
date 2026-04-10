@@ -54,7 +54,7 @@ Highlighter::Highlighter(QTextDocument *parent) :
     isTriple(QStringLiteral("[^\"]*\"\"\"[^\"]*")),
     isString(QStringLiteral("(\".+?\"|'.+?'|\"\"\".*\"\"\")")), in_triple(false)
 {
-    if (is_light_theme()) {
+    if (isLightTheme()) {
         // syntax colors for light themes
         formatNumber.setForeground(Qt::blue);
         formatString.setForeground(Qt::darkGreen);

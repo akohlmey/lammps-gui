@@ -53,7 +53,7 @@ public:
     void run() override
     {
         if (input) {
-            lammps->commands_string(input);
+            lammps->commandsString(input);
             delete[] input;
         } else if (file) {
             lammps->file(file);
@@ -72,7 +72,7 @@ public:
      * previous LAMMPS state with the "clear" command. Either input or
      * file should be provided, not both.
      */
-    void setup_run(LammpsWrapper *_lammps, const char *_input, const char *_file = nullptr)
+    void setupRun(LammpsWrapper *_lammps, const char *_input, const char *_file = nullptr)
     {
         lammps = _lammps;
         input  = _input;

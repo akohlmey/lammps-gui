@@ -57,7 +57,7 @@ public:
      * @brief Get the number of charts currently displayed
      * @return Number of charts
      */
-    int num_charts() const { return charts.size(); }
+    int numCharts() const { return charts.size(); }
 
     /**
      * @brief Check if a chart at given index has the specified title
@@ -65,7 +65,7 @@ public:
      * @param index Chart index
      * @return true if chart has the title, false otherwise
      */
-    bool has_title(const QString &title, int index) const
+    bool hasTitle(const QString &title, int index) const
     {
         return (columns->itemText(index) == title);
     }
@@ -74,12 +74,12 @@ public:
      * @brief Get the current simulation step number
      * @return Current step
      */
-    int get_step() const;
+    int getStep() const;
 
     /**
      * @brief Reset all charts to initial state
      */
-    void reset_charts();
+    void resetCharts();
 
     /**
      * @brief Manually update chart display zoom status
@@ -87,14 +87,14 @@ public:
      * This is needed at an end of a run when the run finishes too quickly
      * and the regular chart update has not yet triggered.
      */
-    void reset_zoom();
+    void resetZoom();
 
     /**
      * @brief Add a new chart to the window
      * @param title Chart title (thermodynamic property name)
      * @param index Chart index
      */
-    void add_chart(const QString &title, int index);
+    void addChart(const QString &title, int index);
 
     /**
      * @brief Add a data point to a chart
@@ -102,29 +102,29 @@ public:
      * @param data Data value
      * @param index Chart index
      */
-    void add_data(int step, double data, int index);
+    void addData(int step, double data, int index);
 
     /**
      * @brief Set the units displayed for thermodynamic quantities
      * @param _units Units string (e.g., "real", "metal", "lj")
      */
-    void set_units(const QString &_units);
+    void setUnits(const QString &_units);
 
     /**
      * @brief Enable/disable data normalization
      * @param norm true to normalize data, false otherwise
      */
-    void set_norm(bool norm);
+    void setNorm(bool norm);
 
 private slots:
     void quit();                           ///< Close window and quit
-    void stop_run();                       ///< Stop running simulation
-    void select_smooth(int selection);     ///< Select smoothing algorithm
-    void update_smooth();                  ///< Update smoothing parameters
-    void update_tlabel();                  ///< Update chart title
-    void update_ylabel();                  ///< Update Y-axis label
-    void update_xrange(int low, int high); ///< Update X-axis range
-    void update_yrange(int low, int high); ///< Update Y-axis range
+    void stopRun();                       ///< Stop running simulation
+    void selectSmooth(int selection);     ///< Select smoothing algorithm
+    void updateSmooth();                  ///< Update smoothing parameters
+    void updateTLabel();                  ///< Update chart title
+    void updateYLabel();                  ///< Update Y-axis label
+    void updateXRange(int low, int high); ///< Update X-axis range
+    void updateYRange(int low, int high); ///< Update Y-axis range
 
     void copy();       ///< Copy image to clipboard
     void saveAs();     ///< Save chart as image
@@ -132,7 +132,7 @@ private slots:
     void exportCsv();  ///< Export data in CSV format
     void exportYaml(); ///< Export data in YAML format
 
-    void change_chart(int index); ///< Switch to different chart
+    void changeChart(int index); ///< Switch to different chart
 
 protected:
     /**
@@ -150,7 +150,7 @@ protected:
     bool eventFilter(QObject *watched, QEvent *event) override;
 
 private:
-    bool do_raw, do_smooth; ///< Flags for displaying raw/smoothed data
+    bool doRaw, doSmooth; ///< Flags for displaying raw/smoothed data
     QMenuBar *menu;         ///< Menu bar
     QMenu *file;            ///< File menu
     QComboBox *columns;     ///< Dropdown for selecting chart
@@ -214,24 +214,24 @@ public:
      * @param step Simulation step number
      * @param data Data value for this step
      */
-    void add_data(int step, double data);
+    void addData(int step, double data);
 
     /**
      * @brief Get the min/max bounds of the data
      * @return Rectangle containing data bounds
      */
-    QRectF get_minmax() const;
+    QRectF getMinMax() const;
 
     /**
      * @brief Get list of chart axes
      * @return List of axes (X and Y)
      */
-    QList<QAbstractAxis *> get_axes() const { return {xaxis, yaxis}; }
+    QList<QAbstractAxis *> getAxes() const { return {xaxis, yaxis}; }
 
     /**
      * @brief Reset zoom to show all data
      */
-    void reset_zoom();
+    void resetZoom();
 
     /**
      * @brief Set smoothing parameters
@@ -240,77 +240,77 @@ public:
      * @param _window Smoothing window size
      * @param _order Polynomial order for Savitzky-Golay
      */
-    void smooth_param(bool _do_raw, bool _do_smooth, int _window, int _order);
+    void smoothParam(bool _do_raw, bool _do_smooth, int _window, int _order);
 
     /**
      * @brief Recalculate and update smoothed data
      */
-    void update_smooth();
+    void updateSmooth();
 
     /**
      * @brief Get chart index
      * @return Index of this chart
      */
-    int get_index() const { return index; };
+    int getIndex() const { return index; };
 
     /**
      * @brief Get number of data points
      * @return Number of points in series
      */
-    int get_count() const { return series->count(); }
+    int getCount() const { return series->count(); }
 
     /**
      * @brief Get chart title
      * @return Title string
      */
-    QString get_title() const { return series->name(); }
+    QString getTitle() const { return series->name(); }
 
     /**
      * @brief Get step number at given index
      * @param index Data point index
      * @return Step number (X value)
      */
-    double get_step(int index) const { return (index < 0) ? 0.0 : series->at(index).x(); }
+    double getStep(int index) const { return (index < 0) ? 0.0 : series->at(index).x(); }
 
     /**
      * @brief Get data value at given index
      * @param index Data point index
      * @return Data value (Y value)
      */
-    double get_data(int index) const { return (index < 0) ? 0.0 : series->at(index).y(); }
+    double getData(int index) const { return (index < 0) ? 0.0 : series->at(index).y(); }
 
     /**
      * @brief Set chart title
      * @param tlabel New title
      */
-    void set_tlabel(const QString &tlabel);
+    void setTLabel(const QString &tlabel);
 
     /**
      * @brief Set Y-axis label
      * @param ylabel New Y-axis label
      */
-    void set_ylabel(const QString &ylabel);
+    void setYLabel(const QString &ylabel);
 
     /**
      * @brief Get current chart title
      * @return Chart title
      */
-    QString get_tlabel() const { return titleWidget->text(); }
+    QString getTLabel() const { return titleWidget->text(); }
 
     /**
      * @brief Get X-axis label
      * @return X-axis label
      */
-    QString get_xlabel() const { return xaxis->titleText(); }
+    QString getXLabel() const { return xaxis->titleText(); }
 
     /**
      * @brief Get Y-axis label
      * @return Y-axis label
      */
-    QString get_ylabel() const { return yaxis->titleText(); }
+    QString getYLabel() const { return yaxis->titleText(); }
 
 private:
-    int last_step, index;         ///< Last step processed, chart index
+    int lastStep, index;         ///< Last step processed, chart index
     int window, order;            ///< Smoothing window and polynomial order
     QQuickWidget *quickWidget;    ///< Widget hosting the QGraphsView QML item
     QQuickItem *graphsView;       ///< Root QGraphsView QML item
@@ -320,8 +320,8 @@ private:
     QLineSeries *series, *smooth; ///< Raw and smoothed data series
     QValueAxis *xaxis;            ///< X-axis (time/step)
     QValueAxis *yaxis;            ///< Y-axis (property value)
-    QTime last_update;            ///< Time of last chart update
-    bool do_raw, do_smooth;       ///< Flags for showing raw/smoothed data
+    QTime lastUpdate;            ///< Time of last chart update
+    bool doRaw, doSmooth;       ///< Flags for showing raw/smoothed data
 };
 } // namespace QtCharts
 #endif

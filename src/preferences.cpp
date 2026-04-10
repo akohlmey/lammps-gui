@@ -60,7 +60,7 @@
 Preferences::Preferences(LammpsWrapper *_lammps, QWidget *parent) :
     QDialog(parent), tabWidget(new QTabWidget),
     buttonBox(new QDialogButtonBox(QDialogButtonBox::Ok | QDialogButtonBox::Cancel)),
-    settings(new QSettings), lammps(_lammps), need_relaunch(false)
+    settings(new QSettings), lammps(_lammps), needRelaunch(false)
 {
     tabWidget->addTab(new GeneralTab(settings, lammps), "&General Settings");
     tabWidget->addTab(new AcceleratorTab(settings, lammps), "&Accelerators");
@@ -124,7 +124,7 @@ void Preferences::accept()
     QLineEdit *field;
 
     // store number of threads, reset to 1 for "None" and "Opt" settings
-    auto *mainwidget = dynamic_cast<LammpsGui *>(get_main_widget());
+    auto *mainwidget = dynamic_cast<LammpsGui *>(getMainWidget());
     field            = tabWidget->findChild<QLineEdit *>("nthreads");
     if (field && mainwidget) {
         int accel = settings->value("accelerator", AcceleratorTab::None).toInt();
@@ -224,7 +224,7 @@ void Preferences::accept()
     field = tabWidget->findChild<QLineEdit *>("proxyval");
     if (field) settings->setValue("https_proxy", field->text());
 
-    if (need_relaunch) {
+    if (needRelaunch) {
         warning(this, "Relaunching LAMMPS-GUI", "LAMMPS library plugin path was changed.",
                 "LAMMPS-GUI must be relaunched.");
         const char *path = mystrdup(QCoreApplication::applicationFilePath());
@@ -322,8 +322,8 @@ GeneralTab::GeneralTab(QSettings *_settings, LammpsWrapper *_lammps, QWidget *pa
         new QPushButton(QIcon(":/icons/preferences-desktop-font.png"), "Select &Default Font...");
     auto *gettextfont =
         new QPushButton(QIcon(":/icons/preferences-desktop-font.png"), "Select &Text Font...");
-    connect(getallfont, &QPushButton::released, this, &GeneralTab::newallfont);
-    connect(gettextfont, &QPushButton::released, this, &GeneralTab::newtextfont);
+    connect(getallfont, &QPushButton::released, this, &GeneralTab::newAllFont);
+    connect(gettextfont, &QPushButton::released, this, &GeneralTab::newTextFont);
 
     auto *freqlabel = new QLabel("Data update interval (ms):");
     auto *freqval   = new QSpinBox;
@@ -387,7 +387,7 @@ GeneralTab::GeneralTab(QSettings *_settings, LammpsWrapper *_lammps, QWidget *pa
     pluginlayout->addWidget(pluginedit);
     pluginlayout->addWidget(pluginbrowse);
 
-    connect(pluginbrowse, &QPushButton::released, this, &GeneralTab::pluginpath);
+    connect(pluginbrowse, &QPushButton::released, this, &GeneralTab::pluginPath);
 
     layout->addWidget(pluginlabel, nrow++, 0, 1, 2);
     layout->addLayout(pluginlayout, nrow++, 0, 1, 2);
@@ -400,9 +400,9 @@ GeneralTab::GeneralTab(QSettings *_settings, LammpsWrapper *_lammps, QWidget *pa
     setLayout(layout);
 }
 
-void GeneralTab::updatefonts(const QFont &all, const QFont &text)
+void GeneralTab::updateFonts(const QFont &all, const QFont &text)
 {
-    auto *mainwidget = dynamic_cast<LammpsGui *>(get_main_widget());
+    auto *mainwidget = dynamic_cast<LammpsGui *>(getMainWidget());
     if (mainwidget) {
         mainwidget->setFont(all);
         mainwidget->textEdit->document()->setDefaultFont(text);
@@ -417,7 +417,7 @@ void GeneralTab::updatefonts(const QFont &all, const QFont &text)
     if (prefs) prefs->setFont(all);
 }
 
-void GeneralTab::newallfont()
+void GeneralTab::newAllFont()
 {
     QFont all_font;
     QFontInfo all_info(*GUI_ALLFONT);
@@ -434,14 +434,14 @@ void GeneralTab::newallfont()
 
     bool font_ok   = false;
     QFont new_font = QFontDialog::getFont(&font_ok, all_font, this, QString("Select Default Font"));
-    if (font_ok) updatefonts(new_font, mono_font);
+    if (font_ok) updateFonts(new_font, mono_font);
 
     settings->setValue("allfamily", new_font.family());
     settings->setValue("allsize", new_font.pointSize());
     settings->sync();
 }
 
-void GeneralTab::newtextfont()
+void GeneralTab::newTextFont()
 {
     QFont all_font;
     QFontInfo all_info(*GUI_ALLFONT);
@@ -458,14 +458,14 @@ void GeneralTab::newtextfont()
 
     bool font_ok   = false;
     QFont new_font = QFontDialog::getFont(&font_ok, mono_font, this, QString("Select Text Font"));
-    if (font_ok) updatefonts(all_font, new_font);
+    if (font_ok) updateFonts(all_font, new_font);
 
     settings->setValue("monofamily", new_font.family());
     settings->setValue("monosize", new_font.pointSize());
     settings->sync();
 }
 
-void GeneralTab::pluginpath()
+void GeneralTab::pluginPath()
 {
     auto *field = findChild<QLineEdit *>("pluginedit");
 #if defined(Q_OS_MACOS)
@@ -492,7 +492,7 @@ void GeneralTab::pluginpath()
             settings->sync();
 
             // ugly hack
-            qobject_cast<Preferences *>(parent()->parent()->parent())->set_relaunch(true);
+            qobject_cast<Preferences *>(parent()->parent()->parent())->setRelaunch(true);
         }
     }
 }
@@ -526,31 +526,31 @@ AcceleratorTab::AcceleratorTab(QSettings *_settings, LammpsWrapper *_lammps, QWi
 
     none->setEnabled(true);
     none->setObjectName("none");
-    opt->setEnabled(lammps->config_has_package("OPT"));
+    opt->setEnabled(lammps->configHasPackage("OPT"));
     opt->setObjectName("opt");
-    openmp->setEnabled(lammps->config_has_package("OPENMP"));
+    openmp->setEnabled(lammps->configHasPackage("OPENMP"));
     openmp->setObjectName("openmp");
-    intel->setEnabled(lammps->config_has_package("INTEL"));
+    intel->setEnabled(lammps->configHasPackage("INTEL"));
     intel->setObjectName("intel");
     // Kokkos support only works with Serial and OpenMP for now.
     kokkos->setEnabled(false);
-    if (lammps->config_has_package("KOKKOS")) {
-        if ((lammps->config_accelerator("KOKKOS", "api", "openmp") ||
-             lammps->config_accelerator("KOKKOS", "api", "serial")) &&
-            !(lammps->config_accelerator("KOKKOS", "api", "cuda") ||
-              lammps->config_accelerator("KOKKOS", "api", "hip") ||
-              lammps->config_accelerator("KOKKOS", "api", "sycl")))
+    if (lammps->configHasPackage("KOKKOS")) {
+        if ((lammps->configAccelerator("KOKKOS", "api", "openmp") ||
+             lammps->configAccelerator("KOKKOS", "api", "serial")) &&
+            !(lammps->configAccelerator("KOKKOS", "api", "cuda") ||
+              lammps->configAccelerator("KOKKOS", "api", "hip") ||
+              lammps->configAccelerator("KOKKOS", "api", "sycl")))
             kokkos->setEnabled(true);
     }
     kokkos->setObjectName("kokkos");
-    gpu->setEnabled(lammps->config_has_package("GPU") && lammps->has_gpu_device());
+    gpu->setEnabled(lammps->configHasPackage("GPU") && lammps->hasGpuDevice());
     gpu->setObjectName("gpu");
 
     auto *choices       = new QFrame;
     auto *choiceLayout  = new QVBoxLayout;
     QLabel *ntlabel     = nullptr;
     QLineEdit *ntchoice = nullptr;
-    if (lammps->config_has_omp_support()) {
+    if (lammps->configHasOmpSupport()) {
         // maximum number of threads is limited half of available threads and no more than 16
         // unless OMP_NUM_THREADS is set to a larger value
         int maxthreads = std::min(QThread::idealThreadCount() / 2, 16);
@@ -568,12 +568,12 @@ AcceleratorTab::AcceleratorTab(QSettings *_settings, LammpsWrapper *_lammps, QWi
     }
     ntchoice->setObjectName("nthreads");
 
-    connect(none, &QRadioButton::released, this, &AcceleratorTab::update_accel);
-    connect(opt, &QRadioButton::released, this, &AcceleratorTab::update_accel);
-    connect(openmp, &QRadioButton::released, this, &AcceleratorTab::update_accel);
-    connect(intel, &QRadioButton::released, this, &AcceleratorTab::update_accel);
-    connect(kokkos, &QRadioButton::released, this, &AcceleratorTab::update_accel);
-    connect(gpu, &QRadioButton::released, this, &AcceleratorTab::update_accel);
+    connect(none, &QRadioButton::released, this, &AcceleratorTab::updateAccel);
+    connect(opt, &QRadioButton::released, this, &AcceleratorTab::updateAccel);
+    connect(openmp, &QRadioButton::released, this, &AcceleratorTab::updateAccel);
+    connect(intel, &QRadioButton::released, this, &AcceleratorTab::updateAccel);
+    connect(kokkos, &QRadioButton::released, this, &AcceleratorTab::updateAccel);
+    connect(gpu, &QRadioButton::released, this, &AcceleratorTab::updateAccel);
 
     auto *intelLayout = new QHBoxLayout;
     auto *intelprec   = new QGroupBox("Intel Precision:");
@@ -590,9 +590,9 @@ AcceleratorTab::AcceleratorTab(QSettings *_settings, LammpsWrapper *_lammps, QWi
     intelprec->setObjectName("intelprec");
     intelprec->setEnabled(false);
 
-    connect(inteldouble, &QRadioButton::released, this, &AcceleratorTab::update_accel);
-    connect(intelmixed, &QRadioButton::released, this, &AcceleratorTab::update_accel);
-    connect(intelsingle, &QRadioButton::released, this, &AcceleratorTab::update_accel);
+    connect(inteldouble, &QRadioButton::released, this, &AcceleratorTab::updateAccel);
+    connect(intelmixed, &QRadioButton::released, this, &AcceleratorTab::updateAccel);
+    connect(intelsingle, &QRadioButton::released, this, &AcceleratorTab::updateAccel);
 
     auto *gpuLayout   = new QHBoxLayout;
     auto *gpuchoice   = new QGroupBox("GPU Settings:");
@@ -670,7 +670,7 @@ AcceleratorTab::AcceleratorTab(QSettings *_settings, LammpsWrapper *_lammps, QWi
     }
 }
 
-void AcceleratorTab::update_accel()
+void AcceleratorTab::updateAccel()
 {
     // store selected accelerator
     int choice = AcceleratorTab::None;
@@ -703,7 +703,7 @@ void AcceleratorTab::update_accel()
     auto *field = findChild<QLineEdit *>("nthreads");
     if (field) {
         if ((choice == AcceleratorTab::None) || (choice == AcceleratorTab::Opt) ||
-            (lammps->config_has_omp_support() == 0)) {
+            (lammps->configHasOmpSupport() == 0)) {
             field->setText("1");
             field->setEnabled(false);
         } else {
@@ -892,11 +892,11 @@ SnapshotTab::SnapshotTab(QSettings *_settings, QWidget *parent) :
 
     setLayout(grid);
 
-    connect(vval, &QCheckBox::toggled, this, &SnapshotTab::choose_vdw);
-    connect(uval, &QCheckBox::toggled, this, &SnapshotTab::choose_bond);
+    connect(vval, &QCheckBox::toggled, this, &SnapshotTab::chooseVdw);
+    connect(uval, &QCheckBox::toggled, this, &SnapshotTab::chooseBond);
 }
 
-void SnapshotTab::choose_vdw()
+void SnapshotTab::chooseVdw()
 {
     auto *vdw = findChild<QCheckBox *>("vdwstyle");
     auto *bnd = findChild<QCheckBox *>("autobond");
@@ -905,7 +905,7 @@ void SnapshotTab::choose_vdw()
     }
 }
 
-void SnapshotTab::choose_bond()
+void SnapshotTab::chooseBond()
 {
     auto *vdw = findChild<QCheckBox *>("vdwstyle");
     auto *bnd = findChild<QCheckBox *>("autobond");

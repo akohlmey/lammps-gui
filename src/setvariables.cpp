@@ -41,7 +41,7 @@ SetVariables::SetVariables(QList<QPair<QString, QString>> &_vars, QWidget *paren
         name->setObjectName("varname");
         val->setObjectName("varval");
         del->setObjectName(QString::number(i));
-        connect(del, &QPushButton::released, this, &SetVariables::del_row);
+        connect(del, &QPushButton::released, this, &SetVariables::delRow);
         row->addWidget(name);
         row->addWidget(val);
         row->addWidget(del);
@@ -53,9 +53,9 @@ SetVariables::SetVariables(QList<QPair<QString, QString>> &_vars, QWidget *paren
 
     auto *buttonBox = new QDialogButtonBox(QDialogButtonBox::Ok | QDialogButtonBox::Cancel);
     auto *add       = new QPushButton("&Add Row");
-    add->setObjectName("add_row");
+    add->setObjectName("addRow");
     buttonBox->addButton(add, QDialogButtonBox::ActionRole);
-    connect(add, &QPushButton::released, this, &SetVariables::add_row);
+    connect(add, &QPushButton::released, this, &SetVariables::addRow);
     connect(buttonBox, &QDialogButtonBox::accepted, this, &SetVariables::accept);
     connect(buttonBox, &QDialogButtonBox::rejected, this, &QDialog::reject);
 
@@ -81,7 +81,7 @@ void SetVariables::accept()
     QDialog::accept();
 }
 
-void SetVariables::add_row()
+void SetVariables::addRow()
 {
     int nrows  = layout->count();
     auto *row  = new QHBoxLayout;
@@ -91,14 +91,14 @@ void SetVariables::add_row()
     name->setObjectName("varname");
     val->setObjectName("varval");
     del->setObjectName(QString::number(nrows - 2));
-    connect(del, &QPushButton::released, this, &SetVariables::del_row);
+    connect(del, &QPushButton::released, this, &SetVariables::delRow);
     row->addWidget(name);
     row->addWidget(val);
     row->addWidget(del);
     layout->insertLayout(nrows - 2, row);
 }
 
-void SetVariables::del_row()
+void SetVariables::delRow()
 {
     int nrows = layout->count();
     auto *who = sender();

@@ -65,7 +65,7 @@ CodeEditor::CodeEditor(QWidget *parent) :
     automatic_completion(true), docver("")
 {
     help_action = new QShortcut(QKeySequence::fromString("Ctrl+?"), parent);
-    connect(help_action, &QShortcut::activated, this, &CodeEditor::get_help);
+    connect(help_action, &QShortcut::activated, this, &CodeEditor::getHelp);
 
     // set up completer class (without a model currently)
 #define COMPLETER_SETUP(completer)                                                   \
@@ -222,7 +222,7 @@ void CodeEditor::setHighlight(int block, bool error)
 
 QString CodeEditor::reformatLine(const QString &line)
 {
-    auto words = split_line(line.toStdString());
+    auto words = splitLine(line.toStdString());
     QString newtext;
     QSettings settings;
     settings.beginGroup("reformat");
@@ -336,7 +336,7 @@ void CodeEditor::setGroupList()
     cursor.movePosition(QTextCursor::Start);
     setTextCursor(cursor);
     while (find(groupcmd)) {
-        auto words = split_line(textCursor().block().text().replace('\t', ' ').toStdString());
+        auto words = splitLine(textCursor().block().text().replace('\t', ' ').toStdString());
         if ((words.size() > 1) && !groups.contains(words[1].c_str())) groups << words[1].c_str();
     }
     groups.sort();
@@ -355,12 +355,12 @@ void CodeEditor::setVarNameList()
     vars << QString("v_gui_run");
 
     LammpsWrapper *lammps = &qobject_cast<LammpsGui *>(parent())->lammps;
-    int nvar              = lammps->id_count("variable");
+    int nvar              = lammps->idCount("variable");
     constexpr int BUFLEN  = 256;
     char buffer[BUFLEN];
     for (int i = 0; i < nvar; ++i) {
         memset(buffer, 0, BUFLEN);
-        if (lammps->variable_info(i, buffer, BUFLEN)) {
+        if (lammps->variableInfo(i, buffer, BUFLEN)) {
             if (strlen(buffer) == 1) vars << QString("$%1").arg(buffer);
             vars << QString("${%1}").arg(buffer);
             vars << QString("v_%1").arg(buffer);
@@ -374,7 +374,7 @@ void CodeEditor::setVarNameList()
     cursor.movePosition(QTextCursor::Start);
     setTextCursor(cursor);
     while (find(varcmd)) {
-        auto words = split_line(textCursor().block().text().replace('\t', ' ').toStdString());
+        auto words = splitLine(textCursor().block().text().replace('\t', ' ').toStdString());
         if ((words.size() > 1)) {
             QString w = QString("$%1").arg(words[1].c_str());
             if ((words[1].size() == 1) && !vars.contains(w)) vars << w;
@@ -401,7 +401,7 @@ void CodeEditor::setComputeIDList()
     cursor.movePosition(QTextCursor::Start);
     setTextCursor(cursor);
     while (find(compcmd)) {
-        auto words = split_line(textCursor().block().text().replace('\t', ' ').toStdString());
+        auto words = splitLine(textCursor().block().text().replace('\t', ' ').toStdString());
         if ((words.size() > 1)) {
             QString w = QString("c_%1").arg(words[1].c_str());
             if (!compid.contains(w)) compid << w;
@@ -426,7 +426,7 @@ void CodeEditor::setFixIDList()
     cursor.movePosition(QTextCursor::Start);
     setTextCursor(cursor);
     while (find(fixcmd)) {
-        auto words = split_line(textCursor().block().text().replace('\t', ' ').toStdString());
+        auto words = splitLine(textCursor().block().text().replace('\t', ' ').toStdString());
         if ((words.size() > 1)) {
             QString w = QString("f_%1").arg(words[1].c_str());
             if (!fixid.contains(w)) fixid << w;
@@ -556,7 +556,7 @@ void CodeEditor::dropEvent(QDropEvent *event)
         auto *gui = dynamic_cast<LammpsGui *>(parent());
         if (gui) {
             moveCursor(QTextCursor::Start, QTextCursor::MoveAnchor);
-            gui->open_file(file);
+            gui->openFile(file);
         }
         // properly handle drop event in base class, but set editor
         // buffer readonly to prevent undesired changes
@@ -627,41 +627,41 @@ void CodeEditor::contextMenuEvent(QContextMenuEvent *event)
     if (!textCursor().hasSelection()) setTextCursor(cursorForPosition(event->pos()));
 
     QString page, help;
-    find_help(page, help);
+    findHelp(page, help);
 
     auto *menu = createStandardContextMenu();
     menu->addSeparator();
     if (textCursor().hasSelection()) {
         auto *action1 = menu->addAction("Comment out selection");
         action1->setIcon(QIcon(":/icons/expand-text.png"));
-        connect(action1, &QAction::triggered, this, &CodeEditor::comment_selection);
+        connect(action1, &QAction::triggered, this, &CodeEditor::commentSelection);
         auto *action2 = menu->addAction("Uncomment selection");
         action2->setIcon(QIcon(":/icons/expand-text.png"));
-        connect(action2, &QAction::triggered, this, &CodeEditor::uncomment_selection);
+        connect(action2, &QAction::triggered, this, &CodeEditor::uncommentSelection);
     } else {
         auto *action1 = menu->addAction("Comment out line");
         action1->setIcon(QIcon(":/icons/expand-text.png"));
-        connect(action1, &QAction::triggered, this, &CodeEditor::comment_line);
+        connect(action1, &QAction::triggered, this, &CodeEditor::commentLine);
         auto *action2 = menu->addAction("Uncomment line");
         action2->setIcon(QIcon(":/icons/expand-text.png"));
-        connect(action2, &QAction::triggered, this, &CodeEditor::uncomment_line);
+        connect(action2, &QAction::triggered, this, &CodeEditor::uncommentLine);
     }
     menu->addSeparator();
     LammpsWrapper *lammps = &qobject_cast<LammpsGui *>(parent())->lammps;
-    if (lammps->is_running()) {
+    if (lammps->isRunning()) {
         auto *action1 = menu->addAction("Stop LAMMPS");
         action1->setIcon(QIcon(":/icons/process-stop.png"));
         connect(action1, &QAction::triggered, qobject_cast<LammpsGui *>(parent()),
-                &LammpsGui::stop_run);
+                &LammpsGui::stopRun);
     } else {
         auto *action1 = menu->addAction("Run LAMMPS from Editor Buffer");
         action1->setIcon(QIcon(":/icons/system-run.png"));
         connect(action1, &QAction::triggered, qobject_cast<LammpsGui *>(parent()),
-                &LammpsGui::run_buffer);
+                &LammpsGui::runBuffer);
         auto *action2 = menu->addAction("Run LAMMPS from File");
         action2->setIcon(QIcon(":/icons/run-file.png"));
         connect(action2, &QAction::triggered, qobject_cast<LammpsGui *>(parent()),
-                &LammpsGui::run_file);
+                &LammpsGui::runFile);
     }
     menu->addSeparator();
 
@@ -682,7 +682,7 @@ void CodeEditor::contextMenuEvent(QContextMenuEvent *event)
         action = menu->addAction(QString("View Documentation for '%1'").arg(help));
         action->setIcon(QIcon(":/icons/system-help.png"));
         action->setData(page);
-        connect(action, &QAction::triggered, this, &CodeEditor::open_help);
+        connect(action, &QAction::triggered, this, &CodeEditor::openHelp);
         // if we link to help with specific styles (fix, compute, pair, bond, ...)
         // also link to the docs for the primary command
         auto words = help.split(' ');
@@ -693,7 +693,7 @@ void CodeEditor::contextMenuEvent(QContextMenuEvent *event)
             auto *action2 = menu->addAction(QString("View Documentation for '%1'").arg(help));
             action2->setIcon(QIcon(":/icons/system-help.png"));
             action2->setData(page);
-            connect(action2, &QAction::triggered, this, &CodeEditor::open_help);
+            connect(action2, &QAction::triggered, this, &CodeEditor::openHelp);
         }
     }
 
@@ -732,12 +732,12 @@ void CodeEditor::contextMenuEvent(QContextMenuEvent *event)
                     auto *action = menu->addAction(QString("Inspect restart file '%1'").arg(word));
                     action->setIcon(QIcon(":/icons/document-open.png"));
                     action->setData(word);
-                    connect(action, &QAction::triggered, this, &CodeEditor::inspect_file);
+                    connect(action, &QAction::triggered, this, &CodeEditor::inspectFile);
                 } else {
                     auto *action = menu->addAction(QString("View file '%1'").arg(word));
                     action->setIcon(QIcon(":/icons/document-open.png"));
                     action->setData(word);
-                    connect(action, &QAction::triggered, this, &CodeEditor::view_file);
+                    connect(action, &QAction::triggered, this, &CodeEditor::viewFile);
                 }
             }
         }
@@ -746,17 +746,17 @@ void CodeEditor::contextMenuEvent(QContextMenuEvent *event)
     auto *action = menu->addAction(QString("LAMMPS Commands Overview"));
     action->setIcon(QIcon(":/icons/help-browser.png"));
     action->setData(QString("/Commands_all.html"));
-    connect(action, &QAction::triggered, this, &CodeEditor::open_help);
+    connect(action, &QAction::triggered, this, &CodeEditor::openHelp);
 
     action = menu->addAction(QString("LAMMPS Manual"));
     action->setIcon(QIcon(":/icons/help-browser.png"));
     action->setData(QString());
-    connect(action, &QAction::triggered, this, &CodeEditor::open_help);
+    connect(action, &QAction::triggered, this, &CodeEditor::openHelp);
 
     action = menu->addAction(QString("LAMMPS Tutorial"));
     action->setIcon(QIcon(":/icons/help-tutorial.png"));
     action->setData(QString("https://lammpstutorials.github.io/"));
-    connect(action, &QAction::triggered, this, &CodeEditor::open_url);
+    connect(action, &QAction::triggered, this, &CodeEditor::openUrl);
 
     menu->exec(event->globalPos());
     delete menu;
@@ -778,14 +778,14 @@ void CodeEditor::reformatCurrentLine()
     }
 }
 
-void CodeEditor::comment_line()
+void CodeEditor::commentLine()
 {
     auto cursor = textCursor();
     cursor.movePosition(QTextCursor::StartOfLine);
     cursor.insertText("#");
 }
 
-void CodeEditor::comment_selection()
+void CodeEditor::commentSelection()
 {
     auto cursor = textCursor();
     auto text   = cursor.selection().toPlainText();
@@ -801,7 +801,7 @@ void CodeEditor::comment_selection()
     setTextCursor(cursor);
 }
 
-void CodeEditor::uncomment_selection()
+void CodeEditor::uncommentSelection()
 {
     auto cursor = textCursor();
     auto text   = cursor.selection().toPlainText();
@@ -825,7 +825,7 @@ void CodeEditor::uncomment_selection()
     setTextCursor(cursor);
 }
 
-void CodeEditor::uncomment_line()
+void CodeEditor::uncommentLine()
 {
     auto cursor = textCursor();
     auto text   = cursor.block().text();
@@ -859,7 +859,7 @@ void CodeEditor::runCompletion()
     auto line   = cursor.block().text().trimmed();
     // no completion possible on empty lines
     if (line.isEmpty()) return;
-    auto words = split_line(line.toStdString());
+    auto words = splitLine(line.toStdString());
 
     // QTextCursor::WordUnderCursor is unusable here since it recognizes '/' as word boundary.
     // Work around it by manually searching for the beginning and end position of the word
@@ -1122,7 +1122,7 @@ void CodeEditor::setDocver()
     LammpsWrapper *lammps = &qobject_cast<LammpsGui *>(parent())->lammps;
     docver                = "/";
     if (lammps) {
-        QString git_branch = (const char *)lammps->extract_global("git_branch");
+        QString git_branch = (const char *)lammps->extractGlobal("git_branch");
         if ((git_branch == "stable") || (git_branch == "maintenance")) {
             docver = "/stable/";
         } else if (git_branch == "release") {
@@ -1133,17 +1133,17 @@ void CodeEditor::setDocver()
     }
 }
 
-void CodeEditor::get_help()
+void CodeEditor::getHelp()
 {
     QString page, help;
-    find_help(page, help);
+    findHelp(page, help);
     if (docver.isEmpty()) setDocver();
     if (!page.isEmpty())
         QDesktopServices::openUrl(
             QUrl(QString("https://docs.lammps.org%1%2").arg(docver).arg(page)));
 }
 
-void CodeEditor::find_help(QString &page, QString &help)
+void CodeEditor::findHelp(QString &page, QString &help)
 {
     // process line of text where the cursor is
     auto text = textCursor().block().text().replace('\t', ' ').trimmed();
@@ -1188,7 +1188,7 @@ void CodeEditor::find_help(QString &page, QString &help)
     }
 }
 
-void CodeEditor::open_help()
+void CodeEditor::openHelp()
 {
     auto *act = qobject_cast<QAction *>(sender());
     if (docver.isEmpty()) setDocver();
@@ -1196,7 +1196,7 @@ void CodeEditor::open_help()
         QUrl(QString("https://docs.lammps.org%1%2").arg(docver).arg(act->data().toString())));
 }
 
-void CodeEditor::open_url()
+void CodeEditor::openUrl()
 {
     auto *act = qobject_cast<QAction *>(sender());
     QDesktopServices::openUrl(QUrl(act->data().toString()));
@@ -1204,18 +1204,18 @@ void CodeEditor::open_url()
 
 // forward requests to view or inspect files to the corresponding LammpsGui methods
 
-void CodeEditor::view_file()
+void CodeEditor::viewFile()
 {
     auto *act     = qobject_cast<QAction *>(sender());
     auto *guimain = qobject_cast<LammpsGui *>(parent());
-    guimain->view_file(act->data().toString());
+    guimain->viewFile(act->data().toString());
 }
 
-void CodeEditor::inspect_file()
+void CodeEditor::inspectFile()
 {
     auto *act     = qobject_cast<QAction *>(sender());
     auto *guimain = qobject_cast<LammpsGui *>(parent());
-    guimain->inspect_file(act->data().toString());
+    guimain->inspectFile(act->data().toString());
 }
 
 // Local Variables:

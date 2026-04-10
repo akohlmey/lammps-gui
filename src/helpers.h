@@ -51,20 +51,20 @@ extern char *mystrdup(const QString &text);
  * @param two Second date string
  * @return -1 if one < two, 0 if equal, 1 if one > two
  */
-extern int date_compare(const QString &one, const QString &two);
+extern int dateCompare(const QString &one, const QString &two);
 
 /**
  * @brief Split a string into words while respecting quotes
  * @param text The string to split
  * @return Vector of words extracted from the string
  */
-extern std::vector<std::string> split_line(const std::string &text);
+extern std::vector<std::string> splitLine(const std::string &text);
 
 /**
  * @brief Get pointer to the main LAMMPS-GUI widget
  * @return Pointer to the main widget (used for dialogs)
  */
-extern class QWidget *get_main_widget();
+extern class QWidget *getMainWidget();
 
 /**
  * @brief Provide standardized critical error dialog
@@ -92,26 +92,26 @@ extern void warning(QWidget *parent, const QString &title, const QString &text1,
  * @param image   Pointer to image class
  * @param title   Warning dialog title if failed
  */
-extern void export_image(QWidget *parent, QImage *image, const QString &title);
+extern void exportImage(QWidget *parent, QImage *image, const QString &title);
 
 /**
  * @brief Check if an executable is in the system PATH
  * @param exe The executable name to search for
  * @return true if executable is found in PATH, false otherwise
  */
-extern bool has_exe(const QString &exe);
+extern bool hasExe(const QString &exe);
 
 /**
  * @brief Recursively delete all files in a directory
  * @param dir The directory to purge
  */
-extern void purge_directory(const QString &dir);
+extern void purgeDirectory(const QString &dir);
 
 /**
  * @brief Determine if the current Qt theme is light or dark
  * @return true if light theme, false if dark theme
  */
-extern bool is_light_theme();
+extern bool isLightTheme();
 
 /**
  * @brief Silence stdout by redirecting it to the null device
@@ -122,34 +122,34 @@ extern bool is_light_theme();
  *
  * @note Not thread-safe.  Must only be called from the main thread.
  */
-extern void silence_stdout();
+extern void silenceStdout();
 
 /**
  * @brief Restore stdout after it was silenced
  *
  * Restores the original stdout file descriptor that was saved by
- * silence_stdout().  Does nothing if stdout is not currently silenced.
+ * silenceStdout().  Does nothing if stdout is not currently silenced.
  *
  * @note Not thread-safe.  Must only be called from the main thread.
  */
-extern void restore_stdout();
+extern void restoreStdout();
 
 /**
  * @brief Check if stdout is currently silenced
- * @return true if silence_stdout() is active, false otherwise
+ * @return true if silenceStdout() is active, false otherwise
  */
-extern bool is_stdout_silenced();
+extern bool isStdoutSilenced();
 
 /**
  * @brief Notify the silence/restore system about StdCapture state changes
  *
  * Called by StdCapture to indicate whether it is actively capturing output.
- * While capture is active, silence_stdout() becomes a no-op to avoid
+ * While capture is active, silenceStdout() becomes a no-op to avoid
  * interfering with the capture pipe.
  *
  * @param active true when StdCapture starts capturing, false when it stops
  */
-extern void notify_capture_state(bool active);
+extern void notifyCaptureState(bool active);
 
 #endif
 // Local Variables:

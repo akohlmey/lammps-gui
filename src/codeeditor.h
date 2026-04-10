@@ -312,34 +312,34 @@ private slots:
     /**
      * @brief Show help for word at cursor
      */
-    void get_help();
+    void getHelp();
 
     /**
      * @brief Find help page and section for a command
      * @param page Output parameter for help page name
      * @param help Output parameter for help section
      */
-    void find_help(QString &page, QString &help);
+    void findHelp(QString &page, QString &help);
 
     /**
      * @brief Open help URL in browser
      */
-    void open_help();
+    void openHelp();
 
     /**
      * @brief Open URL at cursor in browser
      */
-    void open_url();
+    void openUrl();
 
     /**
      * @brief View file at cursor
      */
-    void view_file();
+    void viewFile();
 
     /**
      * @brief Inspect file at cursor
      */
-    void inspect_file();
+    void inspectFile();
 
     /**
      * @brief Reformat current line with proper indentation
@@ -360,22 +360,22 @@ private slots:
     /**
      * @brief Comment out selected lines
      */
-    void comment_selection();
+    void commentSelection();
 
     /**
      * @brief Uncomment selected lines
      */
-    void uncomment_selection();
+    void uncommentSelection();
 
     /**
      * @brief Comment out current line
      */
-    void comment_line();
+    void commentLine();
 
     /**
      * @brief Uncomment current line
      */
-    void uncomment_line();
+    void uncommentLine();
 
 private:
     QWidget *lineNumberArea; ///< Widget for displaying line numbers

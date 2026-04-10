@@ -110,26 +110,26 @@ public:
      * @brief Execute multiple LAMMPS commands from a string
      * @param cmd Commands string with newlines as C-style string
      */
-    void commands_string(const char *cmd);
+    void commandsString(const char *cmd);
 
     /**
      * @brief Execute multiple LAMMPS commands from a string
      * @overload
      * @param cmd Commands string with newlines as Qt-style QString
      */
-    void commands_string(const QString &cmd) { commands_string(cmd.toStdString()); }
+    void commandsString(const QString &cmd) { commandsString(cmd.toStdString()); }
 
     /**
      * @brief Execute multiple LAMMPS commands from a string
      * @overload
      * @param cmd Commands string with newlines as C++-style std::string
      */
-    void commands_string(const std::string &cmd) { commands_string(cmd.c_str()); }
+    void commandsString(const std::string &cmd) { commandsString(cmd.c_str()); }
 
     /**
      * @brief Force a timeout condition in LAMMPS
      */
-    void force_timeout();
+    void forceTimeout();
 
     /**
      * @brief Get LAMMPS version number
@@ -142,28 +142,28 @@ public:
      * @param keyword Setting name to extract
      * @return Integer value of the setting
      */
-    int extract_setting(const char *keyword);
+    int extractSetting(const char *keyword);
 
     /**
      * @brief Extract a pointer to global data from LAMMPS
      * @param keyword Name of global data to extract
      * @return Pointer to the data
      */
-    void *extract_global(const char *keyword);
+    void *extractGlobal(const char *keyword);
 
     /**
      * @brief Extract pair style data from LAMMPS
      * @param keyword Name of pair data to extract
      * @return Pointer to the pair data cast to a void pointer
      */
-    void *extract_pair(const char *keyword);
+    void *extractPair(const char *keyword);
 
     /**
      * @brief Extract atom data from LAMMPS
      * @param keyword Name of atom data to extract
      * @return Pointer to the atom data cast to void pointer
      */
-    void *extract_atom(const char *keyword);
+    void *extractAtom(const char *keyword);
 
     /**
      * @brief Extract data from a compute from LAMMPS
@@ -172,7 +172,7 @@ public:
      * @param type type of data to extract
      * @return data cast to a void pointer.
      */
-    void *extract_compute(const char *id, int style, int type);
+    void *extractCompute(const char *id, int style, int type);
 
     /**
      * @brief Extract data from a fix from LAMMPS
@@ -183,21 +183,21 @@ public:
      * @param ncol column index (only for global)
      * @return data cast to a void pointer. Must be freed for global elements
      */
-    void *extract_fix(const char *id, int style, int type, int nrow, int ncol);
+    void *extractFix(const char *id, int style, int type, int nrow, int ncol);
 
     /**
      * @brief Extract a variable value from LAMMPS
      * @param keyword Variable name to extract
      * @return Value of the variable as double
      */
-    double extract_variable(const char *keyword);
+    double extractVariable(const char *keyword);
 
     /**
      * @brief Extract style of a variable from LAMMPS
      * @param keyword Variable name to extract
      * @return Value type of variable as integer
      */
-    int extract_variable_datatype(const char *keyword);
+    int extractVariableDatatype(const char *keyword);
 
     /**
      * @brief Check if a compute/fix/variable ID exists
@@ -205,14 +205,14 @@ public:
      * @param id The ID to check
      * @return 1 if exists, 0 otherwise
      */
-    int has_id(const char *idtype, const char *id);
+    int hasId(const char *idtype, const char *id);
 
     /**
      * @brief Get count of IDs of a specific type
      * @param idtype Type of ID ("compute", "fix", "variable", "group")
      * @return Number of IDs of that type
      */
-    int id_count(const char *idtype);
+    int idCount(const char *idtype);
 
     /**
      * @brief Get name of an ID by index
@@ -222,14 +222,14 @@ public:
      * @param buflen Length of buffer
      * @return 0 on success, -1 on error
      */
-    int id_name(const char *idtype, int idx, char *buf, int buflen);
+    int idName(const char *idtype, int idx, char *buf, int buflen);
 
     /**
      * @brief Get count of styles of a specific type
      * @param keyword Type of style ("compute", "fix", "pair", etc.)
      * @return Number of available styles
      */
-    int style_count(const char *keyword);
+    int styleCount(const char *keyword);
 
     /**
      * @brief Get name of a style by index
@@ -239,7 +239,7 @@ public:
      * @param buflen Length of buffer
      * @return 0 on success, -1 on error
      */
-    int style_name(const char *keyword, int idx, char *buf, int buflen);
+    int styleName(const char *keyword, int idx, char *buf, int buflen);
 
     /**
      * @brief Get information about a variable by index
@@ -248,14 +248,14 @@ public:
      * @param buflen Length of buffer
      * @return Variable type code
      */
-    int variable_info(int idx, char *buf, int buflen);
+    int variableInfo(int idx, char *buf, int buflen);
 
     /**
      * @brief Get current value of a thermodynamic quantity
      * @param keyword Thermo keyword
      * @return Value of the thermo quantity
      */
-    double get_thermo(const char *keyword);
+    double getThermo(const char *keyword);
 
     /**
      * @brief Get a specific value from last thermo output
@@ -263,7 +263,7 @@ public:
      * @param idx Index for vector quantities
      * @return Pointer to the value
      */
-    void *last_thermo(const char *keyword, int idx);
+    void *lastThermo(const char *keyword, int idx);
 
     /**
      * @brief Check if LAMMPS instance is open
@@ -275,13 +275,13 @@ public:
      * @brief Check if LAMMPS is currently executing a run
      * @return true if running, false otherwise
      */
-    bool is_running();
+    bool isRunning();
 
     /**
      * @brief Check if LAMMPS has encountered an error
      * @return true if error occurred, false otherwise
      */
-    bool has_error() const;
+    bool hasError() const;
 
     /**
      * @brief Get the last error message from LAMMPS
@@ -289,7 +289,7 @@ public:
      * @param buflen Length of buffer
      * @return Error type code
      */
-    int get_last_error_message(char *errorbuf, int buflen);
+    int getLastErrorMessage(char *errorbuf, int buflen);
 
     /**
      * @brief Check if an accelerator package is available
@@ -298,64 +298,64 @@ public:
      * @param setting Setting name
      * @return true if available, false otherwise
      */
-    bool config_accelerator(const char *package, const char *category, const char *setting) const;
+    bool configAccelerator(const char *package, const char *category, const char *setting) const;
 
     /**
      * @brief Check if a package is included in LAMMPS build
      * @param pkg Package name
      * @return true if included, false otherwise
      */
-    bool config_has_package(const char *pkg) const;
+    bool configHasPackage(const char *pkg) const;
 
     /**
      * @brief Check if LAMMPS was built with CURL support
      * @return true if CURL is available, false otherwise
      */
-    bool config_has_curl_support() const;
+    bool configHasCurlSupport() const;
 
     /**
      * @brief Check if LAMMPS was built with OpenMP support
      * @return true if OpenMP is available, false otherwise
      */
-    bool config_has_omp_support() const;
+    bool configHasOmpSupport() const;
 
     /**
      * @brief Check if LAMMPS was compiled with PNG format image support
      * @return true if PNG image format support is available, false if not
      */
-    bool config_has_png_support() const;
+    bool configHasPngSupport() const;
 
     /**
      * @brief Check if LAMMPS was compiled with JPEG format image support
      * @return true if JPEG image format support is available, false if not
      */
-    bool config_has_jpeg_support() const;
+    bool configHasJpegSupport() const;
 
     /**
      * @brief Check if GPU device is available for GPU package
      * @return true if GPU device found, false otherwise
      */
-    bool has_gpu_device() const;
+    bool hasGpuDevice() const;
 
     /**
      * @brief Load LAMMPS shared library (plugin mode)
      * @param fname Library filename (QString version)
      * @return true on success, false on failure
      */
-    bool load_lib(const QString &fname) { return load_lib(fname.toStdString().c_str()); }
+    bool loadLib(const QString &fname) { return loadLib(fname.toStdString().c_str()); }
 
     /**
      * @brief Load LAMMPS shared library (plugin mode)
      * @param lammpslib Library filename (C-string version)
      * @return true on success, false on failure
      */
-    bool load_lib(const char *lammpslib);
+    bool loadLib(const char *lammpslib);
 
     /**
      * @brief Check if running in plugin mode
      * @return true if plugin mode enabled, false if linked mode
      */
-    bool has_plugin() const;
+    bool hasPlugin() const;
 
 private:
     void *lammps_handle; ///< Handle to LAMMPS instance

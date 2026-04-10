@@ -69,36 +69,36 @@ private slots:
     void saveAs();   ///< Save image to file
     void copy();     ///< Copy image to clipboard
     void quit();     ///< Close dialog
-    void get_help(); ///< Open online help
+    void getHelp(); ///< Open online help
 
-    void set_atom_size();      ///< Set explicit atom display size
-    void set_bond_size();      ///< Set explicit bond display size
-    void edit_size();          ///< Edit image dimensions
-    void reset_view();         ///< Reset view to defaults
-    void toggle_ssao();        ///< Toggle screen-space ambient occlusion
-    void toggle_anti();        ///< Toggle antialiasing
-    void toggle_shiny();       ///< Toggle shiny/specular rendering
-    void toggle_vdw();         ///< Toggle Van der Waals radii
-    void toggle_bond();        ///< Toggle bond display
-    void vdwbond_sync();       ///< Sync settings of VDW style and autobonds in Atoms dialog
-    void acolor_sync();        ///< Sync settings of atom color based on shaped object color
-    void set_bondcut();        ///< Set bond cutoff distance
-    void toggle_box();         ///< Toggle simulation box display
-    void toggle_axes();        ///< Toggle coordinate axes display
-    void do_zoom_in();         ///< Zoom in view
-    void do_zoom_out();        ///< Zoom out view
-    void do_rot_left();        ///< Rotate view left
-    void do_rot_right();       ///< Rotate view right
-    void do_rot_up();          ///< Rotate view up
-    void do_rot_down();        ///< Rotate view down
-    void do_recenter();        ///< Recenter view
-    void cmd_to_clipboard();   ///< Copy dump command to clipboard
-    void global_settings();    ///< Configure global dump image settings
-    void atom_settings();      ///< Configure atom and bond settings
-    void fix_settings();       ///< Configure fix graphics display
-    void region_settings();    ///< Configure region display
-    void change_group(int);    ///< Change atom group selection
-    void change_molecule(int); ///< Change molecule selection
+    void setAtomSize();      ///< Set explicit atom display size
+    void setBondSize();      ///< Set explicit bond display size
+    void editSize();          ///< Edit image dimensions
+    void resetView();         ///< Reset view to defaults
+    void toggleSsao();        ///< Toggle screen-space ambient occlusion
+    void toggleAnti();        ///< Toggle antialiasing
+    void toggleShiny();       ///< Toggle shiny/specular rendering
+    void toggleVdw();         ///< Toggle Van der Waals radii
+    void toggleBond();        ///< Toggle bond display
+    void vdwbondSync();       ///< Sync settings of VDW style and autobonds in Atoms dialog
+    void acolorSync();        ///< Sync settings of atom color based on shaped object color
+    void setBondcut();        ///< Set bond cutoff distance
+    void toggleBox();         ///< Toggle simulation box display
+    void toggleAxes();        ///< Toggle coordinate axes display
+    void doZoomIn();         ///< Zoom in view
+    void doZoomOut();        ///< Zoom out view
+    void doRotLeft();        ///< Rotate view left
+    void doRotRight();       ///< Rotate view right
+    void doRotUp();          ///< Rotate view up
+    void doRotDown();        ///< Rotate view down
+    void doRecenter();        ///< Recenter view
+    void cmdToClipboard();   ///< Copy dump command to clipboard
+    void globalSettings();    ///< Configure global dump image settings
+    void atomSettings();      ///< Configure atom and bond settings
+    void fixSettings();       ///< Configure fix graphics display
+    void regionSettings();    ///< Configure region display
+    void changeGroup(int);    ///< Change atom group selection
+    void changeMolecule(int); ///< Change molecule selection
 
 public:
     /**
@@ -116,10 +116,10 @@ private:
     void createActions();    ///< Setup menu actions
     void updateActions();    ///< Update action states
     void adjustWindowSize(); ///< Auto-resize window to fit image
-    void update_fixes();     ///< Update fix graphics information
-    void update_regions();   ///< Update region information
-    void update_peratom();   ///< Update per-atom information
-    bool has_autobonds();    ///< Check if autobonds are enabled
+    void updateFixes();     ///< Update fix graphics information
+    void updateRegions();   ///< Update region information
+    void updatePeratom();   ///< Update per-atom information
+    bool hasAutobonds();    ///< Check if autobonds are enabled
 
 private:
     QImage image;            ///< Currently displayed image

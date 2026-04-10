@@ -386,7 +386,7 @@ ImageViewer::ImageViewer(const QString &fileName, LammpsWrapper *_lammps, QWidge
     mapmin         = "auto";
     mapmax         = "auto";
     showatoms      = true;
-    showbonds      = lammps->extract_setting("molecule_flag") == 1;
+    showbonds      = lammps->extractSetting("molecule_flag") == 1;
     showbodies     = true;
     bodydiam       = 0.2;
     bodyflag       = TRIANGLES;
@@ -400,9 +400,9 @@ ImageViewer::ImageViewer(const QString &fileName, LammpsWrapper *_lammps, QWidge
     tridiam        = 0.2;
     triflag        = CYLINDERS;
     xcenter = ycenter = zcenter = 0.5;
-    if (lammps->extract_setting("dimension") == 2) zcenter = 0.0;
+    if (lammps->extractSetting("dimension") == 2) zcenter = 0.0;
     // initialize atomSize with lattice spacing
-    const auto *xlattice = (const double *)lammps->extract_global("xlattice");
+    const auto *xlattice = (const double *)lammps->extractGlobal("xlattice");
     if (xlattice) atomSize = *xlattice;
     settings.endGroup();
 
@@ -450,10 +450,10 @@ ImageViewer::ImageViewer(const QString &fileName, LammpsWrapper *_lammps, QWidge
     yval->setToolTip("Set rendered image height");
     yval->setMinimumSize(fsize);
 
-    connect(asize, &QLineEdit::editingFinished, this, &ImageViewer::set_atom_size);
-    connect(bsize, &QLineEdit::editingFinished, this, &ImageViewer::set_bond_size);
-    connect(xval, &QAbstractSpinBox::editingFinished, this, &ImageViewer::edit_size);
-    connect(yval, &QAbstractSpinBox::editingFinished, this, &ImageViewer::edit_size);
+    connect(asize, &QLineEdit::editingFinished, this, &ImageViewer::setAtomSize);
+    connect(bsize, &QLineEdit::editingFinished, this, &ImageViewer::setBondSize);
+    connect(xval, &QAbstractSpinBox::editingFinished, this, &ImageViewer::editSize);
+    connect(yval, &QAbstractSpinBox::editingFinished, this, &ImageViewer::editSize);
 
     // workaround for incorrect highlight bug on macOS
     auto *dummy1 = new QPushButton(QIcon(), "");
@@ -569,10 +569,10 @@ ImageViewer::ImageViewer(const QString &fileName, LammpsWrapper *_lammps, QWidge
     auto *combo = new QComboBox;
     combo->setToolTip("Select group to display");
     combo->setObjectName("group");
-    int ngroup = lammps->id_count("group");
+    int ngroup = lammps->idCount("group");
     for (int i = 0; i < ngroup; ++i) {
         memset(gname, 0, BUFLEN);
-        lammps->id_name("group", i, gname, BUFLEN);
+        lammps->idName("group", i, gname, BUFLEN);
         combo->addItem(gname);
     }
 
@@ -580,10 +580,10 @@ ImageViewer::ImageViewer(const QString &fileName, LammpsWrapper *_lammps, QWidge
     molbox->setToolTip("Select molecule to display");
     molbox->setObjectName("molecule");
     molbox->addItem("none");
-    int nmols = lammps->id_count("molecule");
+    int nmols = lammps->idCount("molecule");
     for (int i = 0; i < nmols; ++i) {
         memset(gname, 0, BUFLEN);
-        lammps->id_name("molecule", i, gname, BUFLEN);
+        lammps->idName("molecule", i, gname, BUFLEN);
         molbox->addItem(gname);
     }
 
@@ -653,31 +653,31 @@ ImageViewer::ImageViewer(const QString &fileName, LammpsWrapper *_lammps, QWidge
     settingsLayout->setSizeConstraint(QLayout::SetMinimumSize);
     settingsLayout->setSpacing(LAYOUT_SPACING);
 
-    connect(dossao, &QPushButton::released, this, &ImageViewer::toggle_ssao);
-    connect(doanti, &QPushButton::released, this, &ImageViewer::toggle_anti);
-    connect(doshiny, &QPushButton::released, this, &ImageViewer::toggle_shiny);
-    connect(dovdw, &QPushButton::released, this, &ImageViewer::toggle_vdw);
-    connect(dobond, &QPushButton::released, this, &ImageViewer::toggle_bond);
-    connect(bondcut, &QLineEdit::editingFinished, this, &ImageViewer::set_bondcut);
-    connect(dobox, &QPushButton::released, this, &ImageViewer::toggle_box);
-    connect(doaxes, &QPushButton::released, this, &ImageViewer::toggle_axes);
-    connect(zoomin, &QPushButton::released, this, &ImageViewer::do_zoom_in);
-    connect(zoomout, &QPushButton::released, this, &ImageViewer::do_zoom_out);
-    connect(rotleft, &QPushButton::released, this, &ImageViewer::do_rot_left);
-    connect(rotright, &QPushButton::released, this, &ImageViewer::do_rot_right);
-    connect(rotup, &QPushButton::released, this, &ImageViewer::do_rot_up);
-    connect(rotdown, &QPushButton::released, this, &ImageViewer::do_rot_down);
-    connect(recenter, &QPushButton::released, this, &ImageViewer::do_recenter);
-    connect(reset, &QPushButton::released, this, &ImageViewer::reset_view);
-    connect(setviz, &QPushButton::released, this, &ImageViewer::global_settings);
-    connect(atomviz, &QPushButton::released, this, &ImageViewer::atom_settings);
-    connect(fixviz, &QPushButton::released, this, &ImageViewer::fix_settings);
-    connect(regviz, &QPushButton::released, this, &ImageViewer::region_settings);
-    connect(help, &QPushButton::released, this, &ImageViewer::get_help);
+    connect(dossao, &QPushButton::released, this, &ImageViewer::toggleSsao);
+    connect(doanti, &QPushButton::released, this, &ImageViewer::toggleAnti);
+    connect(doshiny, &QPushButton::released, this, &ImageViewer::toggleShiny);
+    connect(dovdw, &QPushButton::released, this, &ImageViewer::toggleVdw);
+    connect(dobond, &QPushButton::released, this, &ImageViewer::toggleBond);
+    connect(bondcut, &QLineEdit::editingFinished, this, &ImageViewer::setBondcut);
+    connect(dobox, &QPushButton::released, this, &ImageViewer::toggleBox);
+    connect(doaxes, &QPushButton::released, this, &ImageViewer::toggleAxes);
+    connect(zoomin, &QPushButton::released, this, &ImageViewer::doZoomIn);
+    connect(zoomout, &QPushButton::released, this, &ImageViewer::doZoomOut);
+    connect(rotleft, &QPushButton::released, this, &ImageViewer::doRotLeft);
+    connect(rotright, &QPushButton::released, this, &ImageViewer::doRotRight);
+    connect(rotup, &QPushButton::released, this, &ImageViewer::doRotUp);
+    connect(rotdown, &QPushButton::released, this, &ImageViewer::doRotDown);
+    connect(recenter, &QPushButton::released, this, &ImageViewer::doRecenter);
+    connect(reset, &QPushButton::released, this, &ImageViewer::resetView);
+    connect(setviz, &QPushButton::released, this, &ImageViewer::globalSettings);
+    connect(atomviz, &QPushButton::released, this, &ImageViewer::atomSettings);
+    connect(fixviz, &QPushButton::released, this, &ImageViewer::fixSettings);
+    connect(regviz, &QPushButton::released, this, &ImageViewer::regionSettings);
+    connect(help, &QPushButton::released, this, &ImageViewer::getHelp);
     connect(combo, QOverload<int>::of(&QComboBox::currentIndexChanged), this,
-            &ImageViewer::change_group);
+            &ImageViewer::changeGroup);
     connect(molbox, QOverload<int>::of(&QComboBox::currentIndexChanged), this,
-            &ImageViewer::change_molecule);
+            &ImageViewer::changeMolecule);
 
     mainLayout->addLayout(topLayout);
     imageLayout->addWidget(scrollArea, 10);
@@ -689,15 +689,15 @@ ImageViewer::ImageViewer(const QString &fileName, LammpsWrapper *_lammps, QWidge
     setWindowTitle(QString("LAMMPS-GUI - Image Viewer - ") + QFileInfo(fileName).fileName());
     createActions();
 
-    reset_view();
+    resetView();
     // layout has not yet been established, so we need to fix up some pushbutton
-    // properties directly since lookup in reset_view() will have failed
+    // properties directly since lookup in resetView() will have failed
     dobox->setChecked(showbox);
     doshiny->setChecked(shinyfactor > SHINY_CUT);
     dovdw->setChecked(vdwfactor > VDW_CUT);
     dovdw->setEnabled(showatoms && (useelements || usediameter || usesigma));
     dobond->setChecked(autobond);
-    dobond->setEnabled(has_autobonds());
+    dobond->setEnabled(hasAutobonds());
     doaxes->setChecked(showaxes);
     dossao->setChecked(usessao);
     doanti->setChecked(antialias);
@@ -707,8 +707,8 @@ ImageViewer::ImageViewer(const QString &fileName, LammpsWrapper *_lammps, QWidge
     setLayout(mainLayout);
     mainLayout->setSizeConstraint(QLayout::SetMinAndMaxSize);
     adjustWindowSize();
-    update_fixes();
-    update_regions();
+    updateFixes();
+    updateRegions();
     menuBar->setFocus();
 
     // make Alt-G, Alt-H, Alt-M, and Alt-W hotkeys work for comboboxes and spinboxes
@@ -750,7 +750,7 @@ ImageViewer::~ImageViewer()
         delete ireg.second;
 }
 
-void ImageViewer::reset_view()
+void ImageViewer::resetView()
 {
     QSettings settings;
     settings.beginGroup("snapshot");
@@ -771,7 +771,7 @@ void ImageViewer::reset_view()
     axeslen     = settings.value("axeslen", 0.5).toDouble();
     axesdiam    = settings.value("axesdiam", 0.05).toDouble();
     xcenter = ycenter = zcenter = 0.5;
-    if (lammps->extract_setting("dimension") == 2) zcenter = 0.0;
+    if (lammps->extractSetting("dimension") == 2) zcenter = 0.0;
     settings.endGroup();
 
     // reset state of checkable push buttons and combo box (if accessible)
@@ -793,12 +793,12 @@ void ImageViewer::reset_view()
     if (button) button->setChecked(vdwfactor > VDW_CUT);
     button = findChild<QPushButton *>("autobond");
     if (button) {
-        button->setEnabled(has_autobonds());
-        button->setChecked(autobond && has_autobonds());
+        button->setEnabled(hasAutobonds());
+        button->setChecked(autobond && hasAutobonds());
     }
     auto *cutoff = findChild<QLineEdit *>("bondcut");
     if (cutoff) {
-        cutoff->setEnabled(autobond && has_autobonds());
+        cutoff->setEnabled(autobond && hasAutobonds());
         cutoff->setText(QString::number(bondcutoff));
     }
     button = findChild<QPushButton *>("box");
@@ -810,7 +810,7 @@ void ImageViewer::reset_view()
     createImage();
 }
 
-void ImageViewer::set_atom_size()
+void ImageViewer::setAtomSize()
 {
     auto *field = qobject_cast<QLineEdit *>(sender());
     if (!field) return;
@@ -819,7 +819,7 @@ void ImageViewer::set_atom_size()
     createImage();
 }
 
-void ImageViewer::set_bond_size()
+void ImageViewer::setBondSize()
 {
     auto *field = qobject_cast<QLineEdit *>(sender());
     if (!field) return;
@@ -828,7 +828,7 @@ void ImageViewer::set_bond_size()
     createImage();
 }
 
-void ImageViewer::edit_size()
+void ImageViewer::editSize()
 {
     auto *field = qobject_cast<QSpinBox *>(sender());
     if (!field) return;
@@ -840,7 +840,7 @@ void ImageViewer::edit_size()
     createImage();
 }
 
-void ImageViewer::toggle_ssao()
+void ImageViewer::toggleSsao()
 {
     auto *button = qobject_cast<QPushButton *>(sender());
     if (!button) return;
@@ -849,7 +849,7 @@ void ImageViewer::toggle_ssao()
     createImage();
 }
 
-void ImageViewer::toggle_anti()
+void ImageViewer::toggleAnti()
 {
     auto *button = qobject_cast<QPushButton *>(sender());
     if (!button) return;
@@ -858,7 +858,7 @@ void ImageViewer::toggle_anti()
     createImage();
 }
 
-void ImageViewer::toggle_shiny()
+void ImageViewer::toggleShiny()
 {
     auto *button = qobject_cast<QPushButton *>(sender());
     if (!button) return;
@@ -870,7 +870,7 @@ void ImageViewer::toggle_shiny()
     createImage();
 }
 
-void ImageViewer::toggle_vdw()
+void ImageViewer::toggleVdw()
 {
     auto *button = qobject_cast<QPushButton *>(sender());
     if (!button) return;
@@ -893,13 +893,13 @@ void ImageViewer::toggle_vdw()
     createImage();
 }
 
-void ImageViewer::toggle_bond()
+void ImageViewer::toggleBond()
 {
     auto *button = qobject_cast<QPushButton *>(sender());
     if (button) autobond = button->isChecked();
     auto *cutoff = findChild<QLineEdit *>("bondcut");
     if (cutoff) cutoff->setEnabled(autobond);
-    set_bondcut();
+    setBondcut();
 
     // when enabling autobond, we must turn off VDW
     if (autobond) {
@@ -937,7 +937,7 @@ void ImageViewer::toggle_bond()
     createImage();
 }
 
-void ImageViewer::vdwbond_sync()
+void ImageViewer::vdwbondSync()
 {
     auto *src    = qobject_cast<QCheckBox *>(sender());
     auto *dialog = src->parent();
@@ -951,7 +951,7 @@ void ImageViewer::vdwbond_sync()
     }
 }
 
-void ImageViewer::acolor_sync()
+void ImageViewer::acolorSync()
 {
     auto *src = qobject_cast<QComboBox *>(sender());
     if (!src) return;
@@ -993,11 +993,11 @@ void ImageViewer::acolor_sync()
     }
 }
 
-void ImageViewer::set_bondcut()
+void ImageViewer::setBondcut()
 {
     auto *cutoff = findChild<QLineEdit *>("bondcut");
     if (cutoff) {
-        auto *dptr            = (double *)lammps->extract_global("neigh_cutmax");
+        auto *dptr            = (double *)lammps->extractGlobal("neigh_cutmax");
         double max_bondcutoff = (dptr) ? *dptr : 0.0;
         double new_bondcutoff = cutoff->text().toDouble();
 
@@ -1010,7 +1010,7 @@ void ImageViewer::set_bondcut()
     createImage();
 }
 
-void ImageViewer::toggle_box()
+void ImageViewer::toggleBox()
 {
     auto *button = qobject_cast<QPushButton *>(sender());
     if (!button) return;
@@ -1019,7 +1019,7 @@ void ImageViewer::toggle_box()
     createImage();
 }
 
-void ImageViewer::toggle_axes()
+void ImageViewer::toggleAxes()
 {
     auto *button = qobject_cast<QPushButton *>(sender());
     if (!button) return;
@@ -1028,49 +1028,49 @@ void ImageViewer::toggle_axes()
     createImage();
 }
 
-void ImageViewer::do_zoom_in()
+void ImageViewer::doZoomIn()
 {
     zoom = zoom * 1.1;
     zoom = std::min(zoom, 10.0);
     createImage();
 }
 
-void ImageViewer::do_zoom_out()
+void ImageViewer::doZoomOut()
 {
     zoom = zoom / 1.1;
     zoom = std::max(zoom, 0.1);
     createImage();
 }
 
-void ImageViewer::do_rot_left()
+void ImageViewer::doRotLeft()
 {
     vrot -= 10;
     if (vrot < -180) vrot += 360;
     createImage();
 }
 
-void ImageViewer::do_rot_right()
+void ImageViewer::doRotRight()
 {
     vrot += 10;
     if (vrot > 180) vrot -= 360;
     createImage();
 }
 
-void ImageViewer::do_rot_down()
+void ImageViewer::doRotDown()
 {
     hrot -= 10;
     if (hrot < 0) hrot += 360;
     createImage();
 }
 
-void ImageViewer::do_rot_up()
+void ImageViewer::doRotUp()
 {
     hrot += 10;
     if (hrot > 360) hrot -= 360;
     createImage();
 }
 
-void ImageViewer::do_recenter()
+void ImageViewer::doRecenter()
 {
     QString commands = QString("variable LAMMPSGUI_CX delete\n"
                                "variable LAMMPSGUI_CY delete\n"
@@ -1079,20 +1079,20 @@ void ImageViewer::do_recenter()
                                "variable LAMMPSGUI_CY equal (xcm(%1,y)-ylo)/ly\n"
                                "variable LAMMPSGUI_CZ equal (xcm(%1,z)-zlo)/lz\n")
                            .arg(group);
-    lammps->commands_string(commands);
-    xcenter = lammps->extract_variable("LAMMPSGUI_CX");
-    ycenter = lammps->extract_variable("LAMMPSGUI_CY");
-    zcenter = lammps->extract_variable("LAMMPSGUI_CZ");
-    if (lammps->extract_setting("dimension") == 2) zcenter = 0.0;
-    lammps->commands_string("variable LAMMPSGUI_CX delete\n"
+    lammps->commandsString(commands);
+    xcenter = lammps->extractVariable("LAMMPSGUI_CX");
+    ycenter = lammps->extractVariable("LAMMPSGUI_CY");
+    zcenter = lammps->extractVariable("LAMMPSGUI_CZ");
+    if (lammps->extractSetting("dimension") == 2) zcenter = 0.0;
+    lammps->commandsString("variable LAMMPSGUI_CX delete\n"
                             "variable LAMMPSGUI_CY delete\n"
                             "variable LAMMPSGUI_CZ delete\n");
     createImage();
 }
 
-void ImageViewer::cmd_to_clipboard()
+void ImageViewer::cmdToClipboard()
 {
-    auto words = split_line(last_dump_cmd.toStdString());
+    auto words = splitLine(last_dump_cmd.toStdString());
     int modidx = 0;
     int maxidx = words.size();
     for (int i = 0; i < maxidx; ++i) {
@@ -1105,9 +1105,9 @@ void ImageViewer::cmd_to_clipboard()
     std::string dumpcmd = "dump viz ";
     dumpcmd += words[1];
 
-    if (lammps->config_has_png_support()) {
+    if (lammps->configHasPngSupport()) {
         dumpcmd += " image 100 myimage-*.png";
-    } else if (lammps->config_has_jpeg_support()) {
+    } else if (lammps->configHasJpegSupport()) {
         dumpcmd += " image 100 myimage-*.jpg";
     } else {
         dumpcmd += " image 100 myimage-*.ppm";
@@ -1133,7 +1133,7 @@ void ImageViewer::cmd_to_clipboard()
 #endif
 }
 
-void ImageViewer::global_settings()
+void ImageViewer::globalSettings()
 {
     QDialog setview;
     setview.setWindowTitle(QString("LAMMPS-GUI - Global image settings"));
@@ -1334,7 +1334,7 @@ void ImageViewer::global_settings()
     apply->setFocus();
     connect(cancel, &QPushButton::released, &setview, &QDialog::reject);
     connect(apply, &QPushButton::released, &setview, &QDialog::accept);
-    connect(help, &QPushButton::released, this, &ImageViewer::get_help);
+    connect(help, &QPushButton::released, this, &ImageViewer::getHelp);
 
     bottomlayout->addWidget(cancel, Qt::AlignHCenter);
     bottomlayout->addWidget(apply, Qt::AlignHCenter);
@@ -1397,9 +1397,9 @@ void ImageViewer::global_settings()
     createImage();
 }
 
-void ImageViewer::atom_settings()
+void ImageViewer::atomSettings()
 {
-    update_peratom();
+    updatePeratom();
     QDialog setview;
     setview.setWindowTitle(QString("LAMMPS-GUI - Atom and bond settings for images"));
     setview.setWindowIcon(QIcon(":/icons/lammps-gui-icon-128x128.png"));
@@ -1444,7 +1444,7 @@ void ImageViewer::atom_settings()
         }
     }
     connect(acolor, QOverload<int>::of(&QComboBox::currentIndexChanged), this,
-            &ImageViewer::acolor_sync);
+            &ImageViewer::acolorSync);
     layout->addWidget(acolor, idx, n++, 1, 1);
     layout->addWidget(new QLabel("Size: "), idx, n++, 1, 1, Qt::AlignVCenter | Qt::AlignRight);
 
@@ -1576,21 +1576,21 @@ void ImageViewer::atom_settings()
     layout->addWidget(bndiam, idx, n++, 1, 1);
     auto *autobutton = new QCheckBox("AutoBonds:", this);
     autobutton->setChecked(autobond);
-    autobutton->setEnabled(has_autobonds());
+    autobutton->setEnabled(hasAutobonds());
     autobutton->setObjectName("autobutton");
     layout->addWidget(autobutton, idx, n++, 1, 1, Qt::AlignVCenter | Qt::AlignRight);
     auto *bcutoff = new QLineEdit(QString::number(bondcutoff));
     bcutoff->setValidator(new QDoubleValidator(0.001, 10.0, 100, this));
-    bcutoff->setEnabled(has_autobonds());
+    bcutoff->setEnabled(hasAutobonds());
     layout->addWidget(bcutoff, idx++, n++, 1, 1);
-    if (lammps->extract_setting("molecule_flag") != 1) {
+    if (lammps->extractSetting("molecule_flag") != 1) {
         bondbutton->setEnabled(false);
         bondbutton->setChecked(false);
         showbonds = false;
     }
 
-    connect(vdwbutton, &QCheckBox::checkStateChanged, this, &ImageViewer::vdwbond_sync);
-    connect(autobutton, &QCheckBox::checkStateChanged, this, &ImageViewer::vdwbond_sync);
+    connect(vdwbutton, &QCheckBox::checkStateChanged, this, &ImageViewer::vdwbondSync);
+    connect(autobutton, &QCheckBox::checkStateChanged, this, &ImageViewer::vdwbondSync);
     layout->addWidget(new QHline, idx++, 0, 1, MAXCOLS);
 
     n = 0;
@@ -1613,7 +1613,7 @@ void ImageViewer::atom_settings()
     }
     bcolor->setObjectName("bcolor");
     connect(bcolor, QOverload<int>::of(&QComboBox::currentIndexChanged), this,
-            &ImageViewer::acolor_sync);
+            &ImageViewer::acolorSync);
     layout->addWidget(bcolor, idx, n++, 1, 1);
     auto *bgroup   = new QButtonGroup(this);
     auto *bcbutton = new QRadioButton("Cylinders", this);
@@ -1631,7 +1631,7 @@ void ImageViewer::atom_settings()
     bbbutton->setChecked(bodyflag == BOTH);
     bgroup->addButton(bbbutton);
     layout->addWidget(bbbutton, idx++, n++, 1, 1, Qt::AlignCenter);
-    if (lammps->extract_setting("body_flag") != 1) {
+    if (lammps->extractSetting("body_flag") != 1) {
         bodybutton->setEnabled(false);
         bodybutton->setChecked(false);
         bcolor->setEnabled(false);
@@ -1656,7 +1656,7 @@ void ImageViewer::atom_settings()
     }
     ecolor->setObjectName("ecolor");
     connect(ecolor, QOverload<int>::of(&QComboBox::currentIndexChanged), this,
-            &ImageViewer::acolor_sync);
+            &ImageViewer::acolorSync);
     layout->addWidget(ecolor, idx, n++, 1, 1);
     auto *egroup   = new QButtonGroup(this);
     auto *ecbutton = new QRadioButton("Cylinders", this);
@@ -1679,7 +1679,7 @@ void ImageViewer::atom_settings()
     elevel->setWrapping(false);
     layout->addWidget(elevel, idx++, n++, 1, 1);
     ++n;
-    if ((lammps->extract_setting("ellipsoid_flag") != 1) || (lammps->version() < 20251210)) {
+    if ((lammps->extractSetting("ellipsoid_flag") != 1) || (lammps->version() < 20251210)) {
         ellipsoidbutton->setEnabled(false);
         ellipsoidbutton->setChecked(false);
         ecolor->setEnabled(false);
@@ -1704,13 +1704,13 @@ void ImageViewer::atom_settings()
     }
     lcolor->setObjectName("lcolor");
     connect(lcolor, QOverload<int>::of(&QComboBox::currentIndexChanged), this,
-            &ImageViewer::acolor_sync);
+            &ImageViewer::acolorSync);
     layout->addWidget(lcolor, idx, n++, 1, 1);
     ++n;
     auto *ldiam = new QLineEdit(QString::number(linediam));
     ldiam->setValidator(diamvalidator);
     layout->addWidget(ldiam, idx++, n++, 1, 1, Qt::AlignVCenter | Qt::AlignLeft);
-    if (lammps->extract_setting("line_flag") != 1) {
+    if (lammps->extractSetting("line_flag") != 1) {
         linebutton->setEnabled(false);
         linebutton->setChecked(false);
         lcolor->setEnabled(false);
@@ -1732,7 +1732,7 @@ void ImageViewer::atom_settings()
     }
     tcolor->setObjectName("tcolor");
     connect(tcolor, QOverload<int>::of(&QComboBox::currentIndexChanged), this,
-            &ImageViewer::acolor_sync);
+            &ImageViewer::acolorSync);
     layout->addWidget(tcolor, idx, n++, 1, 1);
     auto *tgroup   = new QButtonGroup(this);
     auto *tcbutton = new QRadioButton("Cylinders", this);
@@ -1751,7 +1751,7 @@ void ImageViewer::atom_settings()
     tgroup->addButton(tbbutton);
     layout->addWidget(tbbutton, idx++, n++, 1, 1, Qt::AlignCenter);
     ++n;
-    if (lammps->extract_setting("tri_flag") != 1) {
+    if (lammps->extractSetting("tri_flag") != 1) {
         tributton->setEnabled(false);
         tributton->setChecked(false);
         tcolor->setEnabled(false);
@@ -1780,7 +1780,7 @@ void ImageViewer::atom_settings()
     apply->setFocus();
     connect(cancel, &QPushButton::released, &setview, &QDialog::reject);
     connect(apply, &QPushButton::released, &setview, &QDialog::accept);
-    connect(help, &QPushButton::released, this, &ImageViewer::get_help);
+    connect(help, &QPushButton::released, this, &ImageViewer::getHelp);
 
     bottomlayout->addWidget(cancel, Qt::AlignHCenter);
     bottomlayout->addWidget(apply, Qt::AlignHCenter);
@@ -1871,7 +1871,7 @@ void ImageViewer::atom_settings()
         }
     }
 
-    if (has_autobonds()) {
+    if (hasAutobonds()) {
         autobond   = autobutton->isChecked();
         bondcutoff = bcutoff->text().toDouble();
 
@@ -1975,9 +1975,9 @@ void ImageViewer::atom_settings()
     createImage();
 }
 
-void ImageViewer::fix_settings()
+void ImageViewer::fixSettings()
 {
-    update_fixes();
+    updateFixes();
     if ((computes.size() + fixes.size()) == 0) return;
     QDialog fixview;
     fixview.setWindowTitle(QString("LAMMPS-GUI - Visualize Compute and Fix Graphics Objects"));
@@ -2057,7 +2057,7 @@ void ImageViewer::fix_settings()
             auto *help = new QPushButton(QIcon(":/icons/system-help.png"), "");
             help->setObjectName(compute_map.value(comp.second->style, QString()));
             layout->addWidget(help, idx, n++);
-            connect(help, &QPushButton::released, this, &ImageViewer::get_help);
+            connect(help, &QPushButton::released, this, &ImageViewer::getHelp);
             ++idx;
         }
         layout->addWidget(new QHline, idx++, 0, 1, MAXCOLS);
@@ -2115,7 +2115,7 @@ void ImageViewer::fix_settings()
             auto *help = new QPushButton(QIcon(":/icons/system-help.png"), "");
             help->setObjectName(fix_map.value(fix.second->style, QString()));
             layout->addWidget(help, idx, n++);
-            connect(help, &QPushButton::released, this, &ImageViewer::get_help);
+            connect(help, &QPushButton::released, this, &ImageViewer::getHelp);
             ++idx;
         }
         layout->addWidget(new QHline, idx++, 0, 1, MAXCOLS);
@@ -2133,7 +2133,7 @@ void ImageViewer::fix_settings()
     layout->addWidget(help, idx, 2 * (MAXCOLS / 3), 1, MAXCOLS / 3, Qt::AlignHCenter);
     connect(cancel, &QPushButton::released, &fixview, &QDialog::reject);
     connect(apply, &QPushButton::released, &fixview, &QDialog::accept);
-    connect(help, &QPushButton::released, this, &ImageViewer::get_help);
+    connect(help, &QPushButton::released, this, &ImageViewer::getHelp);
     fixview.setLayout(layout);
 
     int rv = fixview.exec();
@@ -2206,9 +2206,9 @@ void ImageViewer::fix_settings()
     createImage();
 }
 
-void ImageViewer::region_settings()
+void ImageViewer::regionSettings()
 {
-    update_regions();
+    updateRegions();
     if (regions.size() == 0) return;
     QDialog regionview;
     regionview.setWindowTitle(QString("LAMMPS-GUI - Visualize Regions"));
@@ -2302,7 +2302,7 @@ void ImageViewer::region_settings()
     apply->setFocus();
     connect(cancel, &QPushButton::released, &regionview, &QDialog::reject);
     connect(apply, &QPushButton::released, &regionview, &QDialog::accept);
-    connect(help, &QPushButton::released, this, &ImageViewer::get_help);
+    connect(help, &QPushButton::released, this, &ImageViewer::getHelp);
 
     bottomlayout->addWidget(cancel, Qt::AlignHCenter);
     bottomlayout->addWidget(apply, Qt::AlignHCenter);
@@ -2343,7 +2343,7 @@ void ImageViewer::region_settings()
     createImage();
 }
 
-void ImageViewer::change_group(int)
+void ImageViewer::changeGroup(int)
 {
     auto *box = findChild<QComboBox *>("group");
     group     = box ? box->currentText() : "all";
@@ -2357,7 +2357,7 @@ void ImageViewer::change_group(int)
     }
 }
 
-void ImageViewer::change_molecule(int)
+void ImageViewer::changeMolecule(int)
 {
     auto *box = findChild<QComboBox *>("molecule");
     molecule  = box ? box->currentText() : "none";
@@ -2458,8 +2458,8 @@ void ImageViewer::createImage()
     if (molecule != "none") {
         // get center of box
         double *boxlo, *boxhi, xmid, ymid, zmid;
-        boxlo = (double *)lammps->extract_global("boxlo");
-        boxhi = (double *)lammps->extract_global("boxhi");
+        boxlo = (double *)lammps->extractGlobal("boxlo");
+        boxhi = (double *)lammps->extractGlobal("boxhi");
         if (boxlo && boxhi) {
             xmid = 0.5 * (boxhi[0] + boxlo[0]);
             ymid = 0.5 * (boxhi[1] + boxlo[1]);
@@ -2468,14 +2468,14 @@ void ImageViewer::createImage()
             xmid = ymid = zmid = 0.0;
         }
 
-        silence_stdout();
+        silenceStdout();
         QString molcreate = "create_atoms 0 single %1 %2 %3 mol %4 312944 group %5 units box";
         group             = "imgviewer_tmp_mol";
         lammps->command(molcreate.arg(xmid).arg(ymid).arg(zmid).arg(molecule).arg(group));
         lammps->command(QString("neigh_modify exclude group all %1").arg(group));
         lammps->command("run 0 post no");
-        restore_stdout();
-        if (lammps->has_error()) lammps->get_last_error_message(nullptr, 0);
+        restoreStdout();
+        if (lammps->hasError()) lammps->getLastErrorMessage(nullptr, 0);
     }
 
     QSettings settings;
@@ -2490,11 +2490,11 @@ void ImageViewer::createImage()
     int hhrot = (hrot > 180) ? 360 - hrot : hrot;
 
     // determine elements from masses and set their covalent radii
-    int ntypes             = lammps->extract_setting("ntypes");
-    int nbondtypes         = lammps->extract_setting("nbondtypes");
-    auto *masses           = (double *)lammps->extract_atom("mass");
-    const char *pair_style = (const char *)lammps->extract_global("pair_style");
-    QString units          = (const char *)lammps->extract_global("units");
+    int ntypes             = lammps->extractSetting("ntypes");
+    int nbondtypes         = lammps->extractSetting("nbondtypes");
+    auto *masses           = (double *)lammps->extractAtom("mass");
+    const char *pair_style = (const char *)lammps->extractGlobal("pair_style");
+    QString units          = (const char *)lammps->extractGlobal("units");
     QString elements{"element "};
     QString adiams;
 
@@ -2513,11 +2513,11 @@ void ImageViewer::createImage()
         if (!atomcustom) atomcolor = "type";
     }
 
-    usediameter = lammps->extract_setting("radius_flag") != 0;
+    usediameter = lammps->extractSetting("radius_flag") != 0;
     usesigma    = false;
     // if we cannot use element info or diameter data, try to use Lennard-Jones sigma for radius
     if (!useelements && !usediameter && pair_style && (strncmp(pair_style, "lj/", 3) == 0)) {
-        auto **sigma = (double **)lammps->extract_pair("sigma");
+        auto **sigma = (double **)lammps->extractPair("sigma");
         if (sigma) {
             usesigma = true;
             for (int i = 1; i <= ntypes; ++i) {
@@ -2599,13 +2599,13 @@ void ImageViewer::createImage()
     }
 
     if (!showatoms) dumpcmd += " atom no";
-    if (showbodies && (lammps->extract_setting("body_flag") == 1)) {
+    if (showbodies && (lammps->extractSetting("body_flag") == 1)) {
         dumpcmd += QString(" body %1 %2 %3").arg(bodycolor).arg(bodydiam).arg(bodyflag);
-    } else if (showlines && (lammps->extract_setting("line_flag") == 1))
+    } else if (showlines && (lammps->extractSetting("line_flag") == 1))
         dumpcmd += QString(" line %1 %2").arg(linecolor).arg(linediam);
-    else if (showtris && (lammps->extract_setting("tri_flag") == 1))
+    else if (showtris && (lammps->extractSetting("tri_flag") == 1))
         dumpcmd += QString(" tri %1 %2 %3").arg(tricolor).arg(triflag).arg(tridiam);
-    else if (showellipsoids && (lammps->extract_setting("ellipsoid_flag") == 1) &&
+    else if (showellipsoids && (lammps->extractSetting("ellipsoid_flag") == 1) &&
              (lammps->version() > 20260210)) {
         dumpcmd += QString(" ellipsoid %1 %2 %3 %4")
                        .arg(ellipsoidcolor)
@@ -2623,7 +2623,7 @@ void ImageViewer::createImage()
         else
             dumpcmd += QString(" bond %1 %2 ").arg(bondcolor).arg(bonddiam);
     }
-    if (lammps->extract_setting("dimension") == 3) {
+    if (lammps->extractSetting("dimension") == 3) {
         dumpcmd += QString(" view %1 %2").arg(hhrot).arg(vrot);
     }
     if (usessao) dumpcmd += QString(" ssao yes 453983 %1").arg(ssaoval);
@@ -2737,7 +2737,7 @@ void ImageViewer::createImage()
         dumpcmd += QString(" axestrans %1").arg(axestrans);
         dumpcmd += QString(" boxtrans %1").arg(boxtrans);
         dumpcmd += QString(" atrans * %1").arg(atomtrans);
-        if (lammps->extract_setting("bond_flag") == 1)
+        if (lammps->extractSetting("bond_flag") == 1)
             dumpcmd += QString(" btrans * %1").arg(atomtrans);
     }
 
@@ -2840,15 +2840,15 @@ void ImageViewer::createImage()
         }
     }
 
-    silence_stdout();
+    silenceStdout();
     last_dump_cmd = dumpcmd;
     lammps->command(dumpcmd);
-    restore_stdout();
+    restoreStdout();
 
     // display error message
-    if (lammps->has_error()) {
+    if (lammps->hasError()) {
         char errormesg[DEFAULT_BUFLEN];
-        lammps->get_last_error_message(errormesg, DEFAULT_BUFLEN);
+        lammps->getLastErrorMessage(errormesg, DEFAULT_BUFLEN);
         // ignore "Invalid LAMMPS handle", but report other errors
         if (!strstr(errormesg, "Invalid LAMMPS handle"))
             warning(this, "Image Viewer File Creation Error", "LAMMPS failed to create the image:",
@@ -2884,7 +2884,7 @@ void ImageViewer::createImage()
 
 void ImageViewer::saveAs()
 {
-    export_image(this, &image, "ImageViewer");
+    exportImage(this, &image, "ImageViewer");
 }
 
 void ImageViewer::copy()
@@ -2903,18 +2903,18 @@ void ImageViewer::copy()
 
 void ImageViewer::quit()
 {
-    auto *main = dynamic_cast<LammpsGui *>(get_main_widget());
+    auto *main = dynamic_cast<LammpsGui *>(getMainWidget());
     if (main) main->quit();
 }
 
-void ImageViewer::get_help()
+void ImageViewer::getHelp()
 {
     auto *src = sender();
     if (src) {
         QString page   = src->objectName();
         QString docver = "/";
         if (lammps) {
-            QString git_branch = (const char *)lammps->extract_global("git_branch");
+            QString git_branch = (const char *)lammps->extractGlobal("git_branch");
             if ((git_branch == "stable") || (git_branch == "maintenance")) {
                 docver = "/stable/";
             } else if (git_branch == "release") {
@@ -2952,7 +2952,7 @@ void ImageViewer::createActions()
     copyAct->setIcon(QIcon(":/icons/edit-copy.png"));
     copyAct->setShortcut(QKeySequence::Copy);
     copyAct->setEnabled(false);
-    cmdAct = fileMenu->addAction("Copy &dump image command", this, &ImageViewer::cmd_to_clipboard);
+    cmdAct = fileMenu->addAction("Copy &dump image command", this, &ImageViewer::cmdToClipboard);
     cmdAct->setIcon(QIcon(":/icons/file-clipboard.png"));
     cmdAct->setShortcut(QKeySequence(Qt::CTRL | Qt::Key_D));
     fileMenu->addSeparator();
@@ -2991,46 +2991,46 @@ void ImageViewer::adjustWindowSize()
     adjustSize();
 }
 
-void ImageViewer::update_peratom()
+void ImageViewer::updatePeratom()
 {
     atom_properties.clear();
     if (useelements) atom_properties << "element";
     atom_properties << "type";
 
     if (lammps) {
-        silence_stdout();
+        silenceStdout();
 
-        if (lammps->extract_setting("molecule_flag")) atom_properties << "mol";
-        if (lammps->extract_setting("q_flag")) atom_properties << "q";
-        if (lammps->extract_setting("mu_flag")) atom_properties << "mu";
-        if (lammps->extract_setting("radius_flag")) atom_properties << "diameter";
+        if (lammps->extractSetting("molecule_flag")) atom_properties << "mol";
+        if (lammps->extractSetting("q_flag")) atom_properties << "q";
+        if (lammps->extractSetting("mu_flag")) atom_properties << "mu";
+        if (lammps->extractSetting("radius_flag")) atom_properties << "diameter";
 
         void *ptr = nullptr;
         int type  = 0;
         char name[256];
 
         // add atom style variables to the list
-        int num = lammps->id_count("variable");
+        int num = lammps->idCount("variable");
         for (int idx = 0; idx < num; ++idx) {
-            lammps->id_name("variable", idx, name, 256);
-            type = lammps->extract_variable_datatype(name);
+            lammps->idName("variable", idx, name, 256);
+            type = lammps->extractVariableDatatype(name);
             if (type == LammpsWrapper::ATOM_STYLE) atom_properties << QString("v_%1").arg(name);
         }
 
         // add compatible computes to the list
-        num = lammps->id_count("compute");
+        num = lammps->idCount("compute");
         for (int idx = 0; idx < num; ++idx) {
-            lammps->id_name("compute", idx, name, 256);
-            ptr = lammps->extract_compute(name, LammpsWrapper::ATOM_STYLE,
+            lammps->idName("compute", idx, name, 256);
+            ptr = lammps->extractCompute(name, LammpsWrapper::ATOM_STYLE,
                                           LammpsWrapper::VECTOR_TYPE);
             if (ptr) {
                 atom_properties << QString("c_%1").arg(name);
                 continue;
             }
             ptr =
-                lammps->extract_compute(name, LammpsWrapper::ATOM_STYLE, LammpsWrapper::ARRAY_TYPE);
+                lammps->extractCompute(name, LammpsWrapper::ATOM_STYLE, LammpsWrapper::ARRAY_TYPE);
             if (ptr) {
-                ptr  = lammps->extract_compute(name, LammpsWrapper::ATOM_STYLE,
+                ptr  = lammps->extractCompute(name, LammpsWrapper::ATOM_STYLE,
                                                LammpsWrapper::NUM_COLS);
                 type = *(int *)ptr;
                 for (int col = 1; col <= type; ++col) {
@@ -3040,17 +3040,17 @@ void ImageViewer::update_peratom()
             }
 
             // clear error status, if needed:
-            lammps->get_last_error_message(nullptr, 0);
+            lammps->getLastErrorMessage(nullptr, 0);
         }
 
         // add compatible fixes to the list
-        num = lammps->id_count("fix");
+        num = lammps->idCount("fix");
         for (int idx = 0; idx < num; ++idx) {
-            lammps->id_name("fix", idx, name, 256);
-            ptr = lammps->extract_fix(name, LammpsWrapper::ATOM_STYLE, LammpsWrapper::ARRAY_TYPE,
+            lammps->idName("fix", idx, name, 256);
+            ptr = lammps->extractFix(name, LammpsWrapper::ATOM_STYLE, LammpsWrapper::ARRAY_TYPE,
                                       -1, -1);
             if (ptr) {
-                ptr  = lammps->extract_fix(name, LammpsWrapper::ATOM_STYLE, LammpsWrapper::NUM_COLS,
+                ptr  = lammps->extractFix(name, LammpsWrapper::ATOM_STYLE, LammpsWrapper::NUM_COLS,
                                            -1, -1);
                 type = *(int *)ptr;
                 if (type == 0) {
@@ -3064,16 +3064,16 @@ void ImageViewer::update_peratom()
             }
 
             // clear error status, if needed:
-            lammps->get_last_error_message(nullptr, 0);
+            lammps->getLastErrorMessage(nullptr, 0);
         }
-        restore_stdout();
+        restoreStdout();
     }
     // some more general dump custom properties
     atom_properties << "id" << "mass" << "x" << "y" << "z" << "vx" << "vy" << "vz" << "fx" << "fy"
                     << "fz";
 }
 
-void ImageViewer::update_fixes()
+void ImageViewer::updateFixes()
 {
     if (!lammps) return;
     // we can query for fixes and computes before 10 December 2025, but there is no support
@@ -3084,7 +3084,7 @@ void ImageViewer::update_fixes()
     // over the fixes, we first collect the list of missing ids and then apply it.
     std::unordered_set<std::string> oldkeys;
     for (const auto &istyle : computes) {
-        if (!lammps->has_id("compute", istyle.first.c_str())) oldkeys.insert(istyle.first);
+        if (!lammps->hasId("compute", istyle.first.c_str())) oldkeys.insert(istyle.first);
     }
     for (const auto &id : oldkeys) {
         delete computes[id];
@@ -3092,7 +3092,7 @@ void ImageViewer::update_fixes()
     }
     oldkeys.clear();
     for (const auto &istyle : fixes) {
-        if (!lammps->has_id("fix", istyle.first.c_str())) oldkeys.insert(istyle.first);
+        if (!lammps->hasId("fix", istyle.first.c_str())) oldkeys.insert(istyle.first);
     }
     for (const auto &id : oldkeys) {
         delete fixes[id];
@@ -3142,7 +3142,7 @@ void ImageViewer::update_fixes()
     if (button) button->setEnabled((computes.size() + fixes.size()) > 0);
 }
 
-void ImageViewer::update_regions()
+void ImageViewer::updateRegions()
 {
     if (!lammps) return;
     // support for visualizing regions became available in LAMMPS version 10 September 2025
@@ -3152,7 +3152,7 @@ void ImageViewer::update_regions()
     // over the regions, we first collect the list of missing ids and then apply it.
     std::unordered_set<std::string> oldkeys;
     for (const auto &reg : regions) {
-        if (!lammps->has_id("region", reg.first.c_str())) oldkeys.insert(reg.first);
+        if (!lammps->hasId("region", reg.first.c_str())) oldkeys.insert(reg.first);
     }
     for (const auto &id : oldkeys) {
         delete regions[id];
@@ -3161,9 +3161,9 @@ void ImageViewer::update_regions()
 
     // add any new regions
     char buffer[DEFAULT_BUFLEN];
-    int nregions = lammps->id_count("region");
+    int nregions = lammps->idCount("region");
     for (int i = 0; i < nregions; ++i) {
-        if (lammps->id_name("region", i, buffer, DEFAULT_BUFLEN)) {
+        if (lammps->idName("region", i, buffer, DEFAULT_BUFLEN)) {
             std::string id = buffer;
             if (regions.count(id) == 0) {
                 const auto &color = defaultcolors[i % defaultcolors.size()].toStdString();
@@ -3178,12 +3178,12 @@ void ImageViewer::update_regions()
     if (button) button->setEnabled(regions.size() > 0);
 }
 
-bool ImageViewer::has_autobonds()
+bool ImageViewer::hasAutobonds()
 {
     if (!lammps) return false;
     // support for dynamic bond visualization became available in LAMMPS version 10 September 2025
     if (lammps->version() < 20250910) return false;
-    const auto *pair_style = (const char *)lammps->extract_global("pair_style");
+    const auto *pair_style = (const char *)lammps->extractGlobal("pair_style");
     if (!pair_style) return false;
     return strcmp(pair_style, "none") != 0;
 }
