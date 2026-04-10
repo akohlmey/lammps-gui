@@ -24,6 +24,8 @@ protected:
     {
         // QApplication needed for widget-based tests
         if (!QApplication::instance()) {
+            // Use offscreen platform to avoid display requirement
+            qputenv("QT_QPA_PLATFORM", "offscreen");
             static int argc     = 1;
             static char *argv[] = {(char *)"test_flagwarnings"};
             app                 = new QApplication(argc, argv);
@@ -46,10 +48,13 @@ TEST_F(FlagWarningsTest, DetectsWarningLines)
 {
     QTextDocument doc;
     QLabel label;
-    FlagWarnings fw(&label, &doc);
 
-    // Setting text triggers rehighlight which calls highlightBlock
+    // Setting text BEFORE attaching the highlighter ensures content is there
     doc.setPlainText("WARNING: some warning message\nNormal line\nERROR: some error");
+
+    FlagWarnings fw(&label, &doc);
+    // Force re-highlight after construction
+    fw.rehighlight();
 
     // The highlighter should have found 2 warnings (WARNING + ERROR)
     EXPECT_EQ(fw.getNWarnings(), 2);
@@ -58,9 +63,10 @@ TEST_F(FlagWarningsTest, DetectsWarningLines)
 TEST_F(FlagWarningsTest, IgnoresNormalLines)
 {
     QTextDocument doc;
-    FlagWarnings fw(nullptr, &doc);
-
     doc.setPlainText("This is a normal line\nAnother normal line\nNo warnings here");
+
+    FlagWarnings fw(nullptr, &doc);
+    fw.rehighlight();
 
     EXPECT_EQ(fw.getNWarnings(), 0);
 }
@@ -69,9 +75,10 @@ TEST_F(FlagWarningsTest, UpdatesSummaryLabel)
 {
     QTextDocument doc;
     QLabel label;
-    FlagWarnings fw(&label, &doc);
-
     doc.setPlainText("WARNING: test warning\nLine 2");
+
+    FlagWarnings fw(&label, &doc);
+    fw.rehighlight();
 
     // Label should contain the warning count and line count
     QString text = label.text();
@@ -82,38 +89,42 @@ TEST_F(FlagWarningsTest, UpdatesSummaryLabel)
 TEST_F(FlagWarningsTest, EmptyDocument)
 {
     QTextDocument doc;
-    FlagWarnings fw(nullptr, &doc);
-
     doc.setPlainText("");
+
+    FlagWarnings fw(nullptr, &doc);
+    fw.rehighlight();
+
     EXPECT_EQ(fw.getNWarnings(), 0);
 }
 
 TEST_F(FlagWarningsTest, WarningAtStartOfLine)
 {
-    QTextDocument doc;
-    FlagWarnings fw(nullptr, &doc);
-
+    QTextDocument doc1;
     // WARNING must be at start of line for the regex ^(ERROR|WARNING).*$
-    doc.setPlainText("  WARNING: indented warning");
-    EXPECT_EQ(fw.getNWarnings(), 0); // Should NOT match (not at start)
+    doc1.setPlainText("  WARNING: indented warning");
+    FlagWarnings fw1(nullptr, &doc1);
+    fw1.rehighlight();
+    EXPECT_EQ(fw1.getNWarnings(), 0); // Should NOT match (not at start)
 
     QTextDocument doc2;
-    FlagWarnings fw2(nullptr, &doc2);
     doc2.setPlainText("WARNING: proper warning");
+    FlagWarnings fw2(nullptr, &doc2);
+    fw2.rehighlight();
     EXPECT_EQ(fw2.getNWarnings(), 1); // Should match
 }
 
 TEST_F(FlagWarningsTest, MultipleWarnings)
 {
     QTextDocument doc;
-    FlagWarnings fw(nullptr, &doc);
-
     doc.setPlainText(
         "WARNING: first warning\n"
         "WARNING: second warning\n"
         "ERROR: an error\n"
         "Normal line\n"
         "ERROR: another error");
+
+    FlagWarnings fw(nullptr, &doc);
+    fw.rehighlight();
 
     EXPECT_EQ(fw.getNWarnings(), 4);
 }

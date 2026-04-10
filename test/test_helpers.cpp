@@ -473,8 +473,10 @@ TEST_F(HelpersTest, DateCompareDecemberMonths)
 
 TEST_F(HelpersTest, DateCompareBothInvalid)
 {
-    // Two invalid dates should both get month 0 and compare by day/year
-    EXPECT_EQ(dateCompare("invalid1", "invalid2"), 0);
+    // When the first date is invalid (not 3 words), dateCompare returns -1
+    EXPECT_EQ(dateCompare("invalid1", "invalid2"), -1);
+    // But identical invalid strings return 0 (equality check first)
+    EXPECT_EQ(dateCompare("invalid", "invalid"), 0);
 }
 
 TEST_F(HelpersTest, DateCompareWithUpdateSuffix)
