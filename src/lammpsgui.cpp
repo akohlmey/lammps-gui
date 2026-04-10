@@ -27,6 +27,7 @@
 #include "stdcapture.h"
 
 #include <QAction>
+#include <QApplication>
 #include <QByteArray>
 #include <QCheckBox>
 #include <QClipboard>

@@ -145,7 +145,7 @@ void *LammpsWrapper::extractCompute(const char *id, int style, int type)
     if (lammps_handle) {
 #if defined(LAMMPS_GUI_USE_PLUGIN)
         return ((liblammpsplugin_t *)plugin_handle)
-            ->extractCompute(lammps_handle, id, mystyle, mytype);
+            ->extract_compute(lammps_handle, id, mystyle, mytype);
 #else
         return lammps_extract_compute(lammps_handle, id, mystyle, mytype);
 #endif
@@ -196,7 +196,7 @@ void *LammpsWrapper::extractFix(const char *id, int style, int type, int nrow, i
     if (lammps_handle) {
 #if defined(LAMMPS_GUI_USE_PLUGIN)
         return ((liblammpsplugin_t *)plugin_handle)
-            ->extractFix(lammps_handle, id, mystyle, mytype, nrow, ncol);
+            ->extract_fix(lammps_handle, id, mystyle, mytype, nrow, ncol);
 #else
         return lammps_extract_fix(lammps_handle, id, mystyle, mytype, nrow, ncol);
 #endif
@@ -476,7 +476,7 @@ bool LammpsWrapper::configHasPackage(const char *package) const
 }
 
 bool LammpsWrapper::configAccelerator(const char *package, const char *category,
-                                       const char *setting) const
+                                      const char *setting) const
 {
 #if defined(LAMMPS_GUI_USE_PLUGIN)
     return ((liblammpsplugin_t *)plugin_handle)->config_accelerator(package, category, setting) !=
@@ -565,10 +565,10 @@ bool LammpsWrapper::loadLib(const char *libfile)
     }
 
     CHECKSYM(get_thermo);
-    CHECKSYM(lastThermo);
-    CHECKSYM(configHasCurlSupport);
-    CHECKSYM(configHasOmpSupport);
-    CHECKSYM(extractPair);
+    CHECKSYM(last_thermo);
+    CHECKSYM(config_has_curl_support);
+    CHECKSYM(config_has_omp_support);
+    CHECKSYM(extract_pair);
 
     // check minimum required version
     QString lmpversion;
