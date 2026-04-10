@@ -412,12 +412,12 @@ TEST_F(HelpersTest, PurgeDirectoryRemovesFiles)
 
     // Create some test files
     QFile f1(testDir + "/test1.txt");
-    f1.open(QIODevice::WriteOnly);
+    EXPECT_TRUE(f1.open(QIODevice::WriteOnly));
     f1.write("test");
     f1.close();
 
     QFile f2(testDir + "/test2.txt");
-    f2.open(QIODevice::WriteOnly);
+    EXPECT_TRUE(f2.open(QIODevice::WriteOnly));
     f2.write("test");
     f2.close();
 
