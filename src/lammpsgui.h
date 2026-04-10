@@ -295,29 +295,11 @@ private slots:
     /** @brief Open tutorial web page */
     void tutorialWeb();
 
-    /** @brief Start tutorial 1 */
-    void startTutorial1();
-
-    /** @brief Start tutorial 2 */
-    void startTutorial2();
-
-    /** @brief Start tutorial 3 */
-    void startTutorial3();
-
-    /** @brief Start tutorial 4 */
-    void startTutorial4();
-
-    /** @brief Start tutorial 5 */
-    void startTutorial5();
-
-    /** @brief Start tutorial 6 */
-    void startTutorial6();
-
-    /** @brief Start tutorial 7 */
-    void startTutorial7();
-
-    /** @brief Start tutorial 8 */
-    void startTutorial8();
+    /**
+     * @brief Start a tutorial wizard
+     * @param tutno Tutorial number (1-8)
+     */
+    void startTutorial(int tutno);
 
     /** @brief Open HOWTO documentation */
     void howto();
