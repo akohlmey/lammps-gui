@@ -57,12 +57,12 @@
     <release version="2.0.0" timestamp="1775798011">
       <description>
         Major refactor of the code base for consistency and maintainability:
-        - all widgets are created explicitly
+        - all widgets are created explicitly, QtDesigner created parts of the GUI are converted
         - remove support for Qt 5.x
         - remove support for LAMMPS versions before 30 March 2026
-        - use Qt style naming conventions (camel case)
-        - move replicated functionality to helper functions
-        - no functional changes
+        - use Qt style naming conventions (camel case) throughout
+        - move some more replicated functionality to helper functions
+        - new class URLDownloader to replace downloading of files with LAMMPS' geturl command
       </description>
     </release>
     <release version="1.12.0" timestamp="1774663229">

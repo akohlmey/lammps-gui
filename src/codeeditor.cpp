@@ -52,17 +52,16 @@
 CodeEditor::CodeEditor(QWidget *parent) :
     QPlainTextEdit(parent), currentComp(nullptr), commandComp(new QCompleter(this)),
     fixComp(new QCompleter(this)), computeComp(new QCompleter(this)),
-    dumpComp(new QCompleter(this)), atomComp(new QCompleter(this)),
-    pairComp(new QCompleter(this)), bondComp(new QCompleter(this)),
-    angleComp(new QCompleter(this)), dihedralComp(new QCompleter(this)),
-    improperComp(new QCompleter(this)), kspaceComp(new QCompleter(this)),
-    regionComp(new QCompleter(this)), integrateComp(new QCompleter(this)),
-    minimizeComp(new QCompleter(this)), variableComp(new QCompleter(this)),
-    unitsComp(new QCompleter(this)), groupComp(new QCompleter(this)),
-    varnameComp(new QCompleter(this)), fixidComp(new QCompleter(this)),
-    compidComp(new QCompleter(this)), fileComp(new QCompleter(this)),
-    extraComp(new QCompleter(this)), highlight(NO_HIGHLIGHT), reformatOnReturn(false),
-    automaticCompletion(true), docver("")
+    dumpComp(new QCompleter(this)), atomComp(new QCompleter(this)), pairComp(new QCompleter(this)),
+    bondComp(new QCompleter(this)), angleComp(new QCompleter(this)),
+    dihedralComp(new QCompleter(this)), improperComp(new QCompleter(this)),
+    kspaceComp(new QCompleter(this)), regionComp(new QCompleter(this)),
+    integrateComp(new QCompleter(this)), minimizeComp(new QCompleter(this)),
+    variableComp(new QCompleter(this)), unitsComp(new QCompleter(this)),
+    groupComp(new QCompleter(this)), varnameComp(new QCompleter(this)),
+    fixidComp(new QCompleter(this)), compidComp(new QCompleter(this)),
+    fileComp(new QCompleter(this)), extraComp(new QCompleter(this)), highlight(NO_HIGHLIGHT),
+    reformatOnReturn(false), automaticCompletion(true), docver("")
 {
     helpAction = new QShortcut(QKeySequence::fromString("Ctrl+?"), parent);
     connect(helpAction, &QShortcut::activated, this, &CodeEditor::getHelp);
@@ -297,9 +296,9 @@ QString CodeEditor::reformatLine(const QString &line)
     return newtext;
 }
 
-#define COMPLETER_INIT_FUNC(keyword, Type)                                     \
-    void CodeEditor::set##Type##List(const QStringList &words)                 \
-    {                                                                          \
+#define COMPLETER_INIT_FUNC(keyword, Type)                                   \
+    void CodeEditor::set##Type##List(const QStringList &words)               \
+    {                                                                        \
         keyword##Comp->setModel(new QStringListModel(words, keyword##Comp)); \
     }
 

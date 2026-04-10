@@ -122,8 +122,8 @@ private:
 
     int current;             ///< Index of current image
     int maxwidth, maxheight; ///< Maximum image dimensions
-    int timerDelay;         ///< delay between images when playing images
-    bool doLoop;            ///< Loop playback flag
+    int timerDelay;          ///< delay between images when playing images
+    bool doLoop;             ///< Loop playback flag
     QStringList imagefiles;  ///< List of image file paths
     int imageRotation;       ///< Image rotation angle (0, 90, 180, 270)
     bool imageFlipH;         ///< Horizontal flip state
