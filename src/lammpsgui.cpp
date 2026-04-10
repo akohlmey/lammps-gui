@@ -126,9 +126,8 @@ void LammpsGui::setupUi()
     actionQuit->setShortcut(QKeySequence("Ctrl+Q"));
 
     for (int i = 0; i < 5; ++i) {
-        recentActions[i] =
-            new QAction(QIcon(":/icons/document-open-recent.png"),
-                        QString("&%1.").arg(i + 1), this);
+        recentActions[i] = new QAction(QIcon(":/icons/document-open-recent.png"),
+                                       QString("&%1.").arg(i + 1), this);
     }
 
     // Edit actions
@@ -147,8 +146,7 @@ void LammpsGui::setupUi()
     actionPaste = new QAction(QIcon(":/icons/edit-paste.png"), "&Paste", this);
     actionPaste->setShortcut(QKeySequence("Ctrl+V"));
 
-    actionSearchAndReplace =
-        new QAction(QIcon(":/icons/search.png"), "&Find and Replace...", this);
+    actionSearchAndReplace = new QAction(QIcon(":/icons/search.png"), "&Find and Replace...", this);
     actionSearchAndReplace->setShortcut(QKeySequence("Ctrl+F"));
 
     actionPreferences =
@@ -163,19 +161,17 @@ void LammpsGui::setupUi()
         new QAction(QIcon(":/icons/system-run.png"), "&Run LAMMPS from Editor Buffer", this);
     actionRunBuffer->setShortcut(QKeySequence("Ctrl+Return"));
 
-    actionRunFile =
-        new QAction(QIcon(":/icons/run-file.png"), "Run LAMMPS from &File", this);
+    actionRunFile = new QAction(QIcon(":/icons/run-file.png"), "Run LAMMPS from &File", this);
     actionRunFile->setShortcut(QKeySequence("Ctrl+Shift+Return"));
 
-    actionStopLAMMPS =
-        new QAction(QIcon(":/icons/process-stop.png"), "&Stop LAMMPS", this);
+    actionStopLAMMPS = new QAction(QIcon(":/icons/process-stop.png"), "&Stop LAMMPS", this);
     actionStopLAMMPS->setShortcut(QKeySequence("Ctrl+/"));
 
     actionRestartLAMMPS =
         new QAction(QIcon(":/icons/system-restart.png"), "Relaunch &LAMMPS Instance", this);
 
-    actionSetVariables = new QAction(QIcon(":/icons/preferences-desktop-personal.png"),
-                                     "Set &Variables...", this);
+    actionSetVariables =
+        new QAction(QIcon(":/icons/preferences-desktop-personal.png"), "Set &Variables...", this);
     actionSetVariables->setShortcut(QKeySequence("Ctrl+Shift+V"));
 
     actionImage = new QAction(QIcon(":/icons/emblem-photos.png"), "Create &Image", this);
@@ -196,8 +192,7 @@ void LammpsGui::setupUi()
         new QAction(QIcon(":/icons/x-office-drawing.png"), "&Charts Window", this);
     actionViewGraphWindow->setShortcut(QKeySequence("Ctrl+Shift+C"));
 
-    actionViewImageWindow =
-        new QAction(QIcon(":/icons/emblem-photos.png"), "&Image Window", this);
+    actionViewImageWindow = new QAction(QIcon(":/icons/emblem-photos.png"), "&Image Window", this);
     actionViewImageWindow->setShortcut(QKeySequence("Ctrl+Shift+I"));
 
     actionViewSlideShow =
@@ -210,21 +205,18 @@ void LammpsGui::setupUi()
 
     // Tutorial actions
     for (int i = 0; i < 8; ++i) {
-        tutorialActions[i] =
-            new QAction(QIcon(":/icons/tutorial-logo.png"),
-                        QString("Start LAMMPS Tutorial &%1").arg(i + 1), this);
+        tutorialActions[i] = new QAction(QIcon(":/icons/tutorial-logo.png"),
+                                         QString("Start LAMMPS Tutorial &%1").arg(i + 1), this);
     }
 
     // About actions
-    actionAboutLAMMPSGUI =
-        new QAction(QIcon(":/icons/help-about.png"), "&About LAMMPS-GUI", this);
+    actionAboutLAMMPSGUI = new QAction(QIcon(":/icons/help-about.png"), "&About LAMMPS-GUI", this);
     actionAboutLAMMPSGUI->setShortcut(QKeySequence("Ctrl+Shift+A"));
 
     actionHelp = new QAction(QIcon(":/icons/help-faq.png"), "Quick &Help", this);
     actionHelp->setShortcut(QKeySequence("Ctrl+Shift+H"));
 
-    actionHowto =
-        new QAction(QIcon(":/icons/system-help.png"), "LAMMPS-&GUI Documentation", this);
+    actionHowto = new QAction(QIcon(":/icons/system-help.png"), "LAMMPS-&GUI Documentation", this);
     actionHowto->setShortcut(QKeySequence("Ctrl+Shift+G"));
 
     actionLAMMPSManual =
@@ -310,12 +302,11 @@ void LammpsGui::setupUi()
 }
 
 LammpsGui::LammpsGui(QWidget *parent, const QString &filename, int width, int height) :
-    QMainWindow(parent), highlighter(nullptr), capturer(nullptr),
-    status(nullptr), cpuuse(nullptr), logwindow(nullptr), imagewindow(nullptr),
-    chartwindow(nullptr), slideshow(nullptr), logupdater(nullptr), dirstatus(nullptr),
-    progress(nullptr), prefdialog(nullptr), lammpsstatus(nullptr), varwindow(nullptr),
-    wizard(nullptr), runner(nullptr), isRunning(false), runCounter(0), nthreads(1), mainx(width),
-    mainy(height)
+    QMainWindow(parent), highlighter(nullptr), capturer(nullptr), status(nullptr), cpuuse(nullptr),
+    logwindow(nullptr), imagewindow(nullptr), chartwindow(nullptr), slideshow(nullptr),
+    logupdater(nullptr), dirstatus(nullptr), progress(nullptr), prefdialog(nullptr),
+    lammpsstatus(nullptr), varwindow(nullptr), wizard(nullptr), runner(nullptr), isRunning(false),
+    runCounter(0), nthreads(1), mainx(width), mainy(height)
 {
     docver = "";
     setupUi();
@@ -567,8 +558,9 @@ LammpsGui::LammpsGui(QWidget *parent, const QString &filename, int width, int he
     connect(actionImage, &QAction::triggered, this, &LammpsGui::renderImage);
     connect(actionLAMMPSTutorial, &QAction::triggered, this, &LammpsGui::tutorialWeb);
     for (int i = 0; i < 8; ++i)
-        connect(tutorialActions[i], &QAction::triggered, this,
-                [this, i]() { startTutorial(i + 1); });
+        connect(tutorialActions[i], &QAction::triggered, this, [this, i]() {
+            startTutorial(i + 1);
+        });
     connect(actionAboutLAMMPSGUI, &QAction::triggered, this, &LammpsGui::about);
     connect(actionHelp, &QAction::triggered, this, &LammpsGui::help);
     connect(actionHowto, &QAction::triggered, this, &LammpsGui::howto);
@@ -588,8 +580,7 @@ LammpsGui::LammpsGui(QWidget *parent, const QString &filename, int width, int he
     connect(recentActions[3], &QAction::triggered, this, &LammpsGui::openRecent);
     connect(recentActions[4], &QAction::triggered, this, &LammpsGui::openRecent);
 
-    connect(textEdit->document(), &QTextDocument::modificationChanged, this,
-            &LammpsGui::modified);
+    connect(textEdit->document(), &QTextDocument::modificationChanged, this, &LammpsGui::modified);
 
 #if !QT_CONFIG(clipboard)
     actionCut->setEnabled(false);
@@ -721,9 +712,9 @@ LammpsGui::LammpsGui(QWidget *parent, const QString &filename, int width, int he
         (std::string(#keyword) == "angle") || (std::string(#keyword) == "dihedral") ||         \
         (std::string(#keyword) == "improper") || (std::string(#keyword) == "kspace"))          \
         style_list << QString("none");                                                         \
-    ncmds = lammps.styleCount(#keyword);                                                      \
+    ncmds = lammps.styleCount(#keyword);                                                       \
     for (int i = 0; i < ncmds; ++i) {                                                          \
-        if (lammps.styleName(#keyword, i, buf, DEFAULT_BUFLEN)) {                             \
+        if (lammps.styleName(#keyword, i, buf, DEFAULT_BUFLEN)) {                              \
             const QString style(buf);                                                          \
             if (style.endsWith("/gpu") || style.endsWith("/intel") || style.endsWith("/kk") || \
                 style.endsWith("/kk/device") || style.endsWith("/kk/host") ||                  \
@@ -1561,9 +1552,8 @@ void LammpsGui::logUpdate()
             else
                 slideshow->hide();
         } else {
-            slideshow->setWindowTitle(QString("LAMMPS-GUI - Slide Show - %1 - Run %2")
-                                          .arg(currentFile)
-                                          .arg(runCounter));
+            slideshow->setWindowTitle(
+                QString("LAMMPS-GUI - Slide Show - %1 - Run %2").arg(currentFile).arg(runCounter));
             if (QSettings().value("viewslide", true).toBool()) slideshow->show();
         }
         slideshow->addImage(imagefile);
@@ -1756,7 +1746,7 @@ void LammpsGui::doRun(bool use_buffer)
     if (!lammps.is_open()) return;
     capturer->BeginCapture();
 
-    runner     = new LammpsRunner(this);
+    runner    = new LammpsRunner(this);
     isRunning = true;
     ++runCounter;
 
@@ -1846,8 +1836,7 @@ void LammpsGui::renderImage()
             // add a run 0 and thus create the state of the initial system without running.
             // this will allow us to create a snapshot image.
             auto saved = textEdit->textCursor();
-            if (textEdit->find(
-                    QRegularExpression(QStringLiteral(R"(^\s*(run|minimize)\s+)")))) {
+            if (textEdit->find(QRegularExpression(QStringLiteral(R"(^\s*(run|minimize)\s+)")))) {
                 auto cursor = textEdit->textCursor();
                 cursor.movePosition(QTextCursor::PreviousBlock);
                 cursor.movePosition(QTextCursor::EndOfLine);
@@ -2317,9 +2306,9 @@ void LammpsGui::startTutorial(int tutno)
     delete wizard;
     wizard = new TutorialWizard(tutno);
     const auto infotext =
-        QString(descriptions[tutno - 1])
-        + QString("<hr width=\"33%\"\\>\n<p align=\"center\">Click on the \"Next\" button "
-                  "to select a folder.</p>");
+        QString(descriptions[tutno - 1]) +
+        QString("<hr width=\"33%\"\\>\n<p align=\"center\">Click on the \"Next\" button "
+                "to select a folder.</p>");
     wizard->setFont(font());
     wizard->addPage(tutorialIntro(tutno, infotext));
     wizard->addPage(tutorialDirectory(tutno));
@@ -2566,7 +2555,7 @@ static const QString geturl =
     "lammpstutorials-article/refs/heads/main/files/tutorial%1/%2 output %2 verify no";
 
 void LammpsGui::setupTutorial(int tutno, const QString &dir, bool purgedir, bool getsolution,
-                               bool openwebpage)
+                              bool openwebpage)
 {
     char errorbuf[DEFAULT_BUFLEN];
 

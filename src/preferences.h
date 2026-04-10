@@ -75,7 +75,7 @@ private:
     QDialogButtonBox *buttonBox; ///< Dialog buttons (OK, Cancel)
     QSettings *settings;         ///< Qt settings storage
     LammpsWrapper *lammps;       ///< LAMMPS interface for configuration queries
-    bool needRelaunch;          ///< Flag indicating restart is needed
+    bool needRelaunch;           ///< Flag indicating restart is needed
 };
 
 // individual tabs

@@ -66,13 +66,13 @@ public:
     ImageViewer &operator=(ImageViewer &&)      = delete;
 
 private slots:
-    void saveAs();   ///< Save image to file
-    void copy();     ///< Copy image to clipboard
-    void quit();     ///< Close dialog
+    void saveAs();  ///< Save image to file
+    void copy();    ///< Copy image to clipboard
+    void quit();    ///< Close dialog
     void getHelp(); ///< Open online help
 
-    void setAtomSize();      ///< Set explicit atom display size
-    void setBondSize();      ///< Set explicit bond display size
+    void setAtomSize();       ///< Set explicit atom display size
+    void setBondSize();       ///< Set explicit bond display size
     void editSize();          ///< Edit image dimensions
     void resetView();         ///< Reset view to defaults
     void toggleSsao();        ///< Toggle screen-space ambient occlusion
@@ -85,14 +85,14 @@ private slots:
     void setBondcut();        ///< Set bond cutoff distance
     void toggleBox();         ///< Toggle simulation box display
     void toggleAxes();        ///< Toggle coordinate axes display
-    void doZoomIn();         ///< Zoom in view
-    void doZoomOut();        ///< Zoom out view
-    void doRotLeft();        ///< Rotate view left
-    void doRotRight();       ///< Rotate view right
-    void doRotUp();          ///< Rotate view up
-    void doRotDown();        ///< Rotate view down
+    void doZoomIn();          ///< Zoom in view
+    void doZoomOut();         ///< Zoom out view
+    void doRotLeft();         ///< Rotate view left
+    void doRotRight();        ///< Rotate view right
+    void doRotUp();           ///< Rotate view up
+    void doRotDown();         ///< Rotate view down
     void doRecenter();        ///< Recenter view
-    void cmdToClipboard();   ///< Copy dump command to clipboard
+    void cmdToClipboard();    ///< Copy dump command to clipboard
     void globalSettings();    ///< Configure global dump image settings
     void atomSettings();      ///< Configure atom and bond settings
     void fixSettings();       ///< Configure fix graphics display
@@ -116,10 +116,10 @@ private:
     void createActions();    ///< Setup menu actions
     void updateActions();    ///< Update action states
     void adjustWindowSize(); ///< Auto-resize window to fit image
-    void updateFixes();     ///< Update fix graphics information
-    void updateRegions();   ///< Update region information
-    void updatePeratom();   ///< Update per-atom information
-    bool hasAutobonds();    ///< Check if autobonds are enabled
+    void updateFixes();      ///< Update fix graphics information
+    void updateRegions();    ///< Update region information
+    void updatePeratom();    ///< Update per-atom information
+    bool hasAutobonds();     ///< Check if autobonds are enabled
 
 private:
     QImage image;            ///< Currently displayed image

@@ -187,7 +187,7 @@ protected:
      * @param openwebpage Whether to open the tutorial web page
      */
     void setupTutorial(int tutno, const QString &dir, bool purgedir, bool getsolution,
-                        bool openwebpage);
+                       bool openwebpage);
 
     /** @brief Clean up the inspect file dialog list */
     void purgeInspectList();
@@ -408,14 +408,14 @@ private:
     };
     QList<InspectData *> inspectList; ///< List of open inspect dialogs
 
-    QString currentFile;                     ///< Path to currently opened file
-    QString currentDir;                      ///< Current working directory
+    QString currentFile;                      ///< Path to currently opened file
+    QString currentDir;                       ///< Current working directory
     QList<QString> recent;                    ///< List of recently opened files
     QList<QPair<QString, QString>> variables; ///< Index-style variable definitions
 
-    LammpsWrapper lammps;            ///< Interface to LAMMPS library
-    LammpsRunner *runner;            ///< Thread for running LAMMPS simulations
-    QString docver;                  ///< LAMMPS documentation version string
+    LammpsWrapper lammps;           ///< Interface to LAMMPS library
+    LammpsRunner *runner;           ///< Thread for running LAMMPS simulations
+    QString docver;                 ///< LAMMPS documentation version string
     QString pluginPath;             ///< Path to LAMMPS shared library (plugin mode)
     bool isRunning;                 ///< Whether a simulation is currently running
     int runCounter;                 ///< Counter for simulation runs

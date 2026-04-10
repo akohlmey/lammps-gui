@@ -50,7 +50,7 @@ public:
 
 private slots:
     void extractYaml();  ///< Extract YAML data to separate file
-    void quit();          ///< Close window
+    void quit();         ///< Close window
     void saveAs();       ///< Save log to file
     void stopRun();      ///< Stop running simulation
     void nextWarning();  ///< Navigate to next warning

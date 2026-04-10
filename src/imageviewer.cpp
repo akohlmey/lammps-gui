@@ -1085,8 +1085,8 @@ void ImageViewer::doRecenter()
     zcenter = lammps->extractVariable("LAMMPSGUI_CZ");
     if (lammps->extractSetting("dimension") == 2) zcenter = 0.0;
     lammps->commandsString("variable LAMMPSGUI_CX delete\n"
-                            "variable LAMMPSGUI_CY delete\n"
-                            "variable LAMMPSGUI_CZ delete\n");
+                           "variable LAMMPSGUI_CY delete\n"
+                           "variable LAMMPSGUI_CZ delete\n");
     createImage();
 }
 
@@ -3021,8 +3021,8 @@ void ImageViewer::updatePeratom()
         num = lammps->idCount("compute");
         for (int idx = 0; idx < num; ++idx) {
             lammps->idName("compute", idx, name, 256);
-            ptr = lammps->extractCompute(name, LammpsWrapper::ATOM_STYLE,
-                                          LammpsWrapper::VECTOR_TYPE);
+            ptr =
+                lammps->extractCompute(name, LammpsWrapper::ATOM_STYLE, LammpsWrapper::VECTOR_TYPE);
             if (ptr) {
                 atom_properties << QString("c_%1").arg(name);
                 continue;
@@ -3031,7 +3031,7 @@ void ImageViewer::updatePeratom()
                 lammps->extractCompute(name, LammpsWrapper::ATOM_STYLE, LammpsWrapper::ARRAY_TYPE);
             if (ptr) {
                 ptr  = lammps->extractCompute(name, LammpsWrapper::ATOM_STYLE,
-                                               LammpsWrapper::NUM_COLS);
+                                              LammpsWrapper::NUM_COLS);
                 type = *(int *)ptr;
                 for (int col = 1; col <= type; ++col) {
                     atom_properties << QString("c_%1[%2]").arg(name).arg(col);
@@ -3047,11 +3047,11 @@ void ImageViewer::updatePeratom()
         num = lammps->idCount("fix");
         for (int idx = 0; idx < num; ++idx) {
             lammps->idName("fix", idx, name, 256);
-            ptr = lammps->extractFix(name, LammpsWrapper::ATOM_STYLE, LammpsWrapper::ARRAY_TYPE,
-                                      -1, -1);
+            ptr = lammps->extractFix(name, LammpsWrapper::ATOM_STYLE, LammpsWrapper::ARRAY_TYPE, -1,
+                                     -1);
             if (ptr) {
                 ptr  = lammps->extractFix(name, LammpsWrapper::ATOM_STYLE, LammpsWrapper::NUM_COLS,
-                                           -1, -1);
+                                          -1, -1);
                 type = *(int *)ptr;
                 if (type == 0) {
                     atom_properties << QString("f_%1").arg(name);

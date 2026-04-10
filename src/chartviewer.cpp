@@ -248,7 +248,8 @@ void ChartWindow::resetCharts()
     columns->clear();
 }
 
-void ChartWindow::resetZoom() {
+void ChartWindow::resetZoom()
+{
     for (auto &c : charts)
         c->resetZoom();
 }
@@ -805,8 +806,8 @@ void ChartViewer::smoothParam(bool _do_raw, bool _do_smooth, int _window, int _o
     }
     doRaw    = _do_raw;
     doSmooth = _do_smooth;
-    window    = _window;
-    order     = _order;
+    window   = _window;
+    order    = _order;
     updateSmooth();
 }
 

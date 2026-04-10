@@ -65,22 +65,22 @@ public:
     void clear();
 
 private slots:
-    void quit();                ///< Close slideshow window
-    void copy();                ///< Copy image to clipboard
-    void deleteImages();       ///< Delete all image files in sequence
-    void stopRun();            ///< Stop running simulation
-    void movie();               ///< Export images as movie file
-    void saveCurrentImage();  ///< Save current image with zoom/flip/rotate applied
-    void setDelay();           ///< Set timer delay for slideshow animation
-    void first();               ///< Jump to first image
-    void last();                ///< Jump to last image
-    void next();                ///< Advance to next image
-    void prev();                ///< Go back to previous image
-    void play();                ///< Start/stop automatic playback
-    void loop();                ///< Toggle looping mode
-    void zoomIn();              ///< Zoom in on current image
-    void zoomOut();             ///< Zoom out on current image
-    void normalSize();          ///< Reset zoom to 100%
+    void quit();             ///< Close slideshow window
+    void copy();             ///< Copy image to clipboard
+    void deleteImages();     ///< Delete all image files in sequence
+    void stopRun();          ///< Stop running simulation
+    void movie();            ///< Export images as movie file
+    void saveCurrentImage(); ///< Save current image with zoom/flip/rotate applied
+    void setDelay();         ///< Set timer delay for slideshow animation
+    void first();            ///< Jump to first image
+    void last();             ///< Jump to last image
+    void next();             ///< Advance to next image
+    void prev();             ///< Go back to previous image
+    void play();             ///< Start/stop automatic playback
+    void loop();             ///< Toggle looping mode
+    void zoomIn();           ///< Zoom in on current image
+    void zoomOut();          ///< Zoom out on current image
+    void normalSize();       ///< Reset zoom to 100%
     void doImageRotateCw();  ///< Rotate displayed image 90 degrees clockwise
     void doImageRotateCcw(); ///< Rotate displayed image 90 degrees counter-clockwise
     void doImageFlipH();     ///< Mirror displayed image horizontally

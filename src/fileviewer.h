@@ -47,7 +47,7 @@ public:
     FileViewer &operator=(FileViewer &&)      = delete;
 
 private slots:
-    void quit();     ///< Close the viewer window
+    void quit();    ///< Close the viewer window
     void stopRun(); ///< Stop the running simulation
 
 protected:

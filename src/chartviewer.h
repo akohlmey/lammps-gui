@@ -13,8 +13,8 @@
 #define CHARTVIEWER_H
 
 #include <QComboBox>
-#include <QLineEdit>
 #include <QLabel>
+#include <QLineEdit>
 #include <QList>
 #include <QRectF>
 #include <QString>
@@ -117,7 +117,7 @@ public:
     void setNorm(bool norm);
 
 private slots:
-    void quit();                           ///< Close window and quit
+    void quit();                          ///< Close window and quit
     void stopRun();                       ///< Stop running simulation
     void selectSmooth(int selection);     ///< Select smoothing algorithm
     void updateSmooth();                  ///< Update smoothing parameters
@@ -151,9 +151,9 @@ protected:
 
 private:
     bool doRaw, doSmooth; ///< Flags for displaying raw/smoothed data
-    QMenuBar *menu;         ///< Menu bar
-    QMenu *file;            ///< File menu
-    QComboBox *columns;     ///< Dropdown for selecting chart
+    QMenuBar *menu;       ///< Menu bar
+    QMenu *file;          ///< File menu
+    QComboBox *columns;   ///< Dropdown for selecting chart
     QAction *saveAsAct, *copyAct, *exportCsvAct, *exportDatAct, *exportYamlAct; ///< Export actions
     QAction *closeAct, *stopAct, *quitAct; ///< Window control actions
     QComboBox *smooth;                     ///< Smoothing algorithm selector
@@ -310,7 +310,7 @@ public:
     QString getYLabel() const { return yaxis->titleText(); }
 
 private:
-    int lastStep, index;         ///< Last step processed, chart index
+    int lastStep, index;          ///< Last step processed, chart index
     int window, order;            ///< Smoothing window and polynomial order
     QQuickWidget *quickWidget;    ///< Widget hosting the QGraphsView QML item
     QQuickItem *graphsView;       ///< Root QGraphsView QML item
@@ -320,8 +320,8 @@ private:
     QLineSeries *series, *smooth; ///< Raw and smoothed data series
     QValueAxis *xaxis;            ///< X-axis (time/step)
     QValueAxis *yaxis;            ///< Y-axis (property value)
-    QTime lastUpdate;            ///< Time of last chart update
-    bool doRaw, doSmooth;       ///< Flags for showing raw/smoothed data
+    QTime lastUpdate;             ///< Time of last chart update
+    bool doRaw, doSmooth;         ///< Flags for showing raw/smoothed data
 };
 } // namespace QtCharts
 #endif
