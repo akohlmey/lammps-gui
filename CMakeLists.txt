@@ -79,7 +79,7 @@ if (NOT BUILD_DOC_ONLY)
     endif()
   endif()
   if (NOT LAMMPS_GUI_USE_QTGRAPHS)
-    find_package(Qt6 6.2 QUIET COMPONENTS Gui Widgets Charts)
+    find_package(Qt6 6.2 REQUIRED COMPONENTS Gui Widgets Charts)
   endif()
   message(STATUS "Using Qt version ${Qt6_VERSION} for LAMMPS-GUI")
 
