@@ -16,16 +16,8 @@ FetchContent_MakeAvailable(googletest)
 enable_testing()
 include(GoogleTest)
 
-# Find Qt (use same logic as parent)
-if(NOT LAMMPS_GUI_USE_QT5)
-  find_package(Qt6 6.2 QUIET COMPONENTS Widgets)
-endif()
-if(NOT Qt6_FOUND)
-  find_package(Qt5 5.15 REQUIRED COMPONENTS Widgets)
-  set(QT_VERSION_MAJOR 5)
-else()
-  set(QT_VERSION_MAJOR 6)
-endif()
+# Find Qt6 (Qt5 is no longer supported)
+find_package(Qt6 6.2 REQUIRED COMPONENTS Widgets)
 
 # check that the Xvfb runner and a supported screenshooter are present
 find_program(XVFB_RUNNER
@@ -64,7 +56,7 @@ add_test(NAME CommandLine.GetVersion
   COMMAND $<TARGET_FILE:lammps-gui> --platform offscreen -v)
 set_tests_properties(CommandLine.GetVersion PROPERTIES
   ENVIRONMENT "OMP_NUM_THREADS=1"
-  PASS_REGULAR_EXPRESSION "LAMMPS-GUI \\(QT${QT_VERSION_MAJOR}\\) ${PROJECT_VERSION}")
+  PASS_REGULAR_EXPRESSION "LAMMPS-GUI \\(QT6\\) ${PROJECT_VERSION}")
 
 add_test(NAME CommandLine.HasPlugin
   COMMAND $<TARGET_FILE:lammps-gui> --platform offscreen -h)
@@ -89,7 +81,7 @@ target_include_directories(test_helpers PRIVATE
   ${CMAKE_SOURCE_DIR}/src
 )
 
-target_link_libraries(test_helpers PRIVATE GTest::gtest_main Qt${QT_VERSION_MAJOR}::Widgets)
+target_link_libraries(test_helpers PRIVATE GTest::gtest_main Qt6::Widgets)
 
 # Discover tests for test executables
 gtest_discover_tests(test_helpers)
@@ -102,9 +94,22 @@ add_executable(test_stdcapture
 )
 
 target_include_directories(test_stdcapture PRIVATE  ${CMAKE_SOURCE_DIR}/src)
-target_link_libraries(test_stdcapture PRIVATE GTest::gtest_main Qt${QT_VERSION_MAJOR}::Widgets)
+target_link_libraries(test_stdcapture PRIVATE GTest::gtest_main Qt6::Widgets)
 
 gtest_discover_tests(test_stdcapture)
+
+# Test executable for FlagWarnings
+add_executable(test_flagwarnings
+  test_flagwarnings.cpp
+  ${CMAKE_SOURCE_DIR}/src/flagwarnings.cpp
+  ${CMAKE_SOURCE_DIR}/src/helpers.cpp
+  ${CMAKE_SOURCE_DIR}/src/stdcapture.cpp
+)
+
+target_include_directories(test_flagwarnings PRIVATE ${CMAKE_SOURCE_DIR}/src)
+target_link_libraries(test_flagwarnings PRIVATE GTest::gtest_main Qt6::Widgets)
+
+gtest_discover_tests(test_flagwarnings)
 
 ########################################################################
 # Tests that check the GUI environment and the GUI

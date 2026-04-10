@@ -95,7 +95,7 @@ char *mystrdup(const QString &text)
 // compare two date strings return -1 if first is older than second, 0 if same, or 1 if
 // otherwise
 
-int date_compare(const QString &one, const QString &two)
+int dateCompare(const QString &one, const QString &two)
 {
     if (one == two) return 0;
 
@@ -130,7 +130,7 @@ int date_compare(const QString &one, const QString &two)
 // Convert string into words on whitespace while handling single and double
 // quotes. Adapted from LAMMPS_NS::utils::split_words() to preserve quotes.
 
-std::vector<std::string> split_line(const std::string &text)
+std::vector<std::string> splitLine(const std::string &text)
 {
     std::vector<std::string> list;
     const char *buf = text.c_str();
@@ -212,7 +212,7 @@ std::vector<std::string> split_line(const std::string &text)
 
 // get pointer to LAMMPS-GUI main widget
 
-QWidget *get_main_widget()
+QWidget *getMainWidget()
 {
     for (QWidget *widget : QApplication::topLevelWidgets())
         if (widget->objectName() == "LammpsGui") return widget;
@@ -254,7 +254,7 @@ void warning(QWidget *parent, const QString &title, const QString &text1, const 
 }
 
 // save image directly and if that fails, save to PNG and convert with ImageMagick
-void export_image(QWidget *parent, QImage *image, const QString &title)
+void exportImage(QWidget *parent, QImage *image, const QString &title)
 {
     if (!image) return;
     QString fileName = QFileDialog::getSaveFileName(
@@ -264,7 +264,7 @@ void export_image(QWidget *parent, QImage *image, const QString &title)
 
     // try direct save and if it fails write to PNG and then convert with ImageMagick if available
     if (!image->save(fileName)) {
-        if (has_exe("magick") || has_exe("convert")) {
+        if (hasExe("magick") || hasExe("convert")) {
             QTemporaryFile tmpfile(QDir::tempPath() + "/LAMMPS_GUI.XXXXXX.png");
             // open and close to generate temporary file name
             (void)tmpfile.open();
@@ -276,7 +276,7 @@ void export_image(QWidget *parent, QImage *image, const QString &title)
 
             QString cmd = "magick";
             QStringList args{tmpfile.fileName(), fileName};
-            if (!has_exe("magick")) cmd = "convert";
+            if (!hasExe("magick")) cmd = "convert";
             auto *convert = new QProcess(parent);
             convert->start(cmd, args);
             if (!convert->waitForFinished(-1)) {
@@ -314,7 +314,7 @@ void export_image(QWidget *parent, QImage *image, const QString &title)
 // find if executable is in path
 // https://stackoverflow.com/a/51041497
 
-bool has_exe(const QString &exe)
+bool hasExe(const QString &exe)
 {
     QProcess findProcess;
     QStringList arguments;
@@ -341,7 +341,7 @@ bool has_exe(const QString &exe)
 
 // recursively remove all contents from a directory
 
-void purge_directory(const QString &dir)
+void purgeDirectory(const QString &dir)
 {
     QDir directory(dir);
 
@@ -349,15 +349,16 @@ void purge_directory(const QString &dir)
     const auto &entries = directory.entryList();
     for (const auto &entry : entries) {
         if (!directory.remove(entry)) {
-            directory.cd(entry);
-            directory.removeRecursively();
-            directory.cdUp();
+            if (directory.cd(entry)) {
+                directory.removeRecursively();
+                directory.cdUp();
+            }
         }
     }
 }
 
 // compare black level of foreground and background color
-bool is_light_theme()
+bool isLightTheme()
 {
     QPalette p;
     int fg = p.brush(QPalette::Active, QPalette::WindowText).color().black();
@@ -368,7 +369,7 @@ bool is_light_theme()
 
 // silence stdout by redirecting to the null device
 
-void silence_stdout()
+void silenceStdout()
 {
     if (capture_is_active || stdout_silenced) return;
 
@@ -390,7 +391,7 @@ void silence_stdout()
 
 // restore stdout after silencing
 
-void restore_stdout()
+void restoreStdout()
 {
     if (silenced_counter > 0) --silenced_counter;
     if (!stdout_silenced || (saved_stdout_fd == -1) || (silenced_counter > 0)) return;
@@ -404,14 +405,14 @@ void restore_stdout()
 
 // check if stdout is currently silenced
 
-bool is_stdout_silenced()
+bool isStdoutSilenced()
 {
     return stdout_silenced;
 }
 
 // notify silence/restore system about StdCapture state changes
 
-void notify_capture_state(bool active)
+void notifyCaptureState(bool active)
 {
     capture_is_active = active;
 }

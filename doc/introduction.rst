@@ -2,9 +2,9 @@
 Overview
 ********
 
-LAMMPS-GUI is built using C++17 and the Qt framework (Qt 5.15+ or Qt
-6.2+).  The application follows object-oriented design principles with
-separation of concerns between different components:
+LAMMPS-GUI is built using C++17 and the Qt framework (Qt 6.2+).  The
+application follows object-oriented design principles with separation of
+concerns between different components:
 
 - **Editor Components**: Handle text editing, syntax highlighting, and auto-completion
 - **LAMMPS Interface**: Wraps the LAMMPS C library API
@@ -49,22 +49,13 @@ LAMMPS-GUI makes extensive use of Qt features:
   Used for inter-component communication, especially between GUI
   components and background threads.
 
-**Qt Designer Forms**
-  The main window layout uses a ``.ui`` file edited in Qt Designer.
-  Dialogs are created programmatically in C++.
-
 **Qt Resource System**
   Icons and resources embedded via ``resources/lammpsgui.qrc``.
 
 **Qt Models**
   Used for data display in various viewers and inspectors.
 
-LAMMPS-GUI is compatible with Qt version 5.15 or Qt 6.2 and later.  If a
-Qt 6.x version is available it is preferred unless the CMake setting
-``-D LAMMPS_GUI_USE_QT5=yes`` is used.  For Qt versions 6.10 and later
-the QtGraphs module is used for creating charts instead of the QtCharts
-module.  Using QtCharts can be enforced by setting ``-D
-LAMMPS_GUI_USE_QTCHARTS=yes``.
+LAMMPS-GUI requires Qt version 6.2 or later.
 
 For more details on Qt in general, see the `Qt Documentation
 <https://doc.qt.io/>`_.
@@ -148,21 +139,16 @@ Visualization Components
   - **RegionInfo** - Stores settings for displaying a region in snapshot images.
 
 **ChartWindow (chartviewer.h/.cpp)**
-  Window for displaying thermodynamic data as charts using Qt Charts.
+  Window for displaying thermodynamic data as charts using QtGraphs or QtCharts.
   Supports line plots and multiple data series.  See
   :cpp:class:`ChartWindow`
 
 **ChartViewer (chartviewer.h/.cpp)** Custom chart view widget that
   provides interactive features like zooming, smoothing, and panning for
-  data visualization.  See :cpp:class:`ChartViewer`.
-
-  Two implementations exist: The older is based on the `QChartView
-  widget <https://doc.qt.io/qt-6/qchartview-qtcharts.html>`_ from the
-  QtCharts module and the newer implementation is based on `QQuickWidget
-  <https://doc.qt.io/qt-6/qquickwidget.html>`_ and the QtGraphs module.
-  For Qt versions 6.10 and later the QtGraphs module variant is used and
-  for older versions the QtGraphs module variant.  Using the QtCharts
-  can be enforced by setting ``-D LAMMPS_GUI_USE_QTCHARTS=yes``.
+  data visualization.  The implementation is either based on `QQuickWidget
+  <https://doc.qt.io/qt-6/qquickwidget.html>`_ and the QtGraphs module
+  or on the QtCharts module.  See :cpp:class:`ChartViewer`.  Using the
+  QtCharts module can be enforced by setting ``-D LAMMPS_GUI_USE_QTCHARTS=yes``.
 
 **SlideShow (slideshow.h/.cpp)**
   Dialog for viewing multiple images as a slideshow or animation with
@@ -210,7 +196,7 @@ Dialog and Utility Components
   viewing auxiliary files without allowing modifications.  See
   :cpp:class:`FileViewer`
 
-**TutorialWizard (lammpsgui.h/.cpp)**
+**TutorialWizard (tutorialwizard.h/.cpp)**
   Wizard dialog for interactive LAMMPS tutorials. Guides users through
   setting up tutorial directories and files, providing a structured
   learning experience.  See :cpp:class:`TutorialWizard`

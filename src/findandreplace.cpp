@@ -67,9 +67,9 @@ FindAndReplace::FindAndReplace(CodeEditor *_editor, QWidget *parent) :
     layout->addLayout(buttons, 3, 0, 1, 3, Qt::AlignHCenter);
     layout->setSpacing(LAYOUT_SPACING);
 
-    connect(next, &QPushButton::released, this, &FindAndReplace::find_next);
-    connect(replone, &QPushButton::released, this, &FindAndReplace::replace_next);
-    connect(replall, &QPushButton::released, this, &FindAndReplace::replace_all);
+    connect(next, &QPushButton::released, this, &FindAndReplace::findNext);
+    connect(replone, &QPushButton::released, this, &FindAndReplace::replaceNext);
+    connect(replall, &QPushButton::released, this, &FindAndReplace::replaceAll);
     connect(done, &QPushButton::released, this, &QDialog::accept);
 
     auto *action = new QShortcut(QKeySequence(Qt::CTRL | Qt::Key_Q), this);
@@ -82,7 +82,7 @@ FindAndReplace::FindAndReplace(CodeEditor *_editor, QWidget *parent) :
 
 /* ---------------------------------------------------------------------- */
 
-void FindAndReplace::find_next()
+void FindAndReplace::findNext()
 {
     auto text = search->text();
 
@@ -101,7 +101,7 @@ void FindAndReplace::find_next()
 
 /* ---------------------------------------------------------------------- */
 
-void FindAndReplace::replace_next()
+void FindAndReplace::replaceNext()
 {
     auto text = search->text();
     if (text.isEmpty()) return;
@@ -113,12 +113,12 @@ void FindAndReplace::replace_next()
     if (QString::compare(cursor.selectedText(), search->text(), flag) == 0)
         cursor.insertText(replace->text());
 
-    find_next();
+    findNext();
 }
 
 /* ---------------------------------------------------------------------- */
 
-void FindAndReplace::replace_all()
+void FindAndReplace::replaceAll()
 {
     auto text = search->text();
     if (text.isEmpty()) return;
@@ -127,13 +127,13 @@ void FindAndReplace::replace_all()
     auto cursor = editor->textCursor();
     if (cursor.hasSelection()) cursor.movePosition(QTextCursor::Left);
 
-    find_next();
+    findNext();
     cursor = editor->textCursor();
 
-    // keep replacing until find_next() does not find anything anymore
+    // keep replacing until findNext() does not find anything anymore
     while (cursor.hasSelection()) {
         cursor.insertText(replace->text());
-        find_next();
+        findNext();
         cursor = editor->textCursor();
     }
 }
@@ -142,7 +142,7 @@ void FindAndReplace::replace_all()
 
 void FindAndReplace::quit()
 {
-    auto *main = dynamic_cast<LammpsGui *>(get_main_widget());
+    auto *main = dynamic_cast<LammpsGui *>(getMainWidget());
     if (main) main->quit();
 }
 

@@ -56,12 +56,12 @@ private slots:
     /**
      * @brief Add a new empty variable row
      */
-    void add_row();
+    void addRow();
 
     /**
      * @brief Delete the currently selected variable row
      */
-    void del_row();
+    void delRow();
 
 private:
     QList<QPair<QString, QString>> &vars; ///< Reference to variable list

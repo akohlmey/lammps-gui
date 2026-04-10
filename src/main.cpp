@@ -33,11 +33,6 @@
 
 int main(int argc, char *argv[])
 {
-#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
-    // register QList<QString> only needed for Qt5
-    qRegisterMetaTypeStreamOperators<QList<QString>>("QList<QString>");
-#endif
-
 #if defined(Q_OS_MACOS)
     // macOS does not support the "C" locale with UTF-8 encoding,
     // Since Qt requires UTF-8 we use "en_US" instead.
@@ -85,10 +80,10 @@ int main(int argc, char *argv[])
 
 #if defined(LAMMPS_GUI_USE_PLUGIN)
     if (parser.isSet(plugindir)) {
-        QStringList pluginpath = parser.values(plugindir);
+        QStringList pluginPath = parser.values(plugindir);
         QSettings settings;
-        if (pluginpath.length() > 0) {
-            settings.setValue("plugin_path", QFileInfo(pluginpath.at(0)).canonicalFilePath());
+        if (pluginPath.length() > 0) {
+            settings.setValue("plugin_path", QFileInfo(pluginPath.at(0)).canonicalFilePath());
             settings.sync();
         } else {
             // empty string provided -> delete any old setting

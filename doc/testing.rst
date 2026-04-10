@@ -196,7 +196,7 @@ This test runs::
 and validates that:
 
 - The executable launches successfully
-- Version output includes "LAMMPS-GUI (QT5)" or "LAMMPS-GUI (QT6)"
+- Version output includes "LAMMPS-GUI (QT6)"
 - Version number matches the ``PROJECT_VERSION`` CMake variable
 - Process exits cleanly with status 0
 
@@ -430,7 +430,7 @@ Create a New Test File
 
    target_link_libraries(test_newfile
      GTest::gtest_main
-     Qt${QT_VERSION_MAJOR}::Widgets
+     Qt6::Widgets
    )
 
    gtest_discover_tests(test_newfile)

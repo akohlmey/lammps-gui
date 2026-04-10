@@ -37,9 +37,10 @@
 #include <QString>
 #include <QTextStream>
 
-const QString LogWindow::yaml_regex =
-    QStringLiteral("^(keywords:.*$|data:$|---$|\\.\\.\\.$|  - \\[.*\\]$)");
-const QString LogWindow::url_regex = QStringLiteral("^.*(https://docs.lammps.org/err[0-9]+).*$");
+namespace {
+constexpr auto YAML_REGEX = R"(^(keywords:.*$|data:$|---$|\.\.\.$|  - \[.*\]$))";
+constexpr auto URL_REGEX  = "^.*(https://docs.lammps.org/err[0-9]+).*$";
+} // namespace
 
 LogWindow::LogWindow(const QString &_filename, QWidget *parent) :
     QPlainTextEdit(parent), filename(_filename), warnings(nullptr)
@@ -65,7 +66,7 @@ LogWindow::LogWindow(const QString &_filename, QWidget *parent) :
 
     auto *button = new QPushButton(QIcon(":/icons/warning.png"), "");
     button->setToolTip("Jump to next warning");
-    connect(button, &QPushButton::released, this, &LogWindow::next_warning);
+    connect(button, &QPushButton::released, this, &LogWindow::nextWarning);
 
     auto *spacer = new QSpacerItem(0, 0, QSizePolicy::Minimum, QSizePolicy::Expanding);
     auto *panel  = new QHBoxLayout(frame);
@@ -85,15 +86,15 @@ LogWindow::LogWindow(const QString &_filename, QWidget *parent) :
     warnings = new FlagWarnings(summary, document());
 
     auto *action = new QShortcut(QKeySequence(Qt::CTRL | Qt::Key_S), this);
-    connect(action, &QShortcut::activated, this, &LogWindow::save_as);
+    connect(action, &QShortcut::activated, this, &LogWindow::saveAs);
     action = new QShortcut(QKeySequence(Qt::CTRL | Qt::Key_Y), this);
-    connect(action, &QShortcut::activated, this, &LogWindow::extract_yaml);
+    connect(action, &QShortcut::activated, this, &LogWindow::extractYaml);
     action = new QShortcut(QKeySequence(Qt::CTRL | Qt::Key_Q), this);
     connect(action, &QShortcut::activated, this, &LogWindow::quit);
     action = new QShortcut(QKeySequence(Qt::CTRL | Qt::Key_N), this);
-    connect(action, &QShortcut::activated, this, &LogWindow::next_warning);
+    connect(action, &QShortcut::activated, this, &LogWindow::nextWarning);
     action = new QShortcut(QKeySequence(Qt::CTRL | Qt::Key_Slash), this);
-    connect(action, &QShortcut::activated, this, &LogWindow::stop_run);
+    connect(action, &QShortcut::activated, this, &LogWindow::stopRun);
 
     installEventFilter(this);
     // set window flags for window manager
@@ -128,21 +129,21 @@ void LogWindow::closeEvent(QCloseEvent *event)
 
 void LogWindow::quit()
 {
-    auto *main = dynamic_cast<LammpsGui *>(get_main_widget());
+    auto *main = dynamic_cast<LammpsGui *>(getMainWidget());
     if (main) main->quit();
 }
 
-void LogWindow::stop_run()
+void LogWindow::stopRun()
 {
-    auto *main = dynamic_cast<LammpsGui *>(get_main_widget());
-    if (main) main->stop_run();
+    auto *main = dynamic_cast<LammpsGui *>(getMainWidget());
+    if (main) main->stopRun();
 }
 
-void LogWindow::next_warning()
+void LogWindow::nextWarning()
 {
     auto regex = QRegularExpression(QStringLiteral("^(ERROR|WARNING).*$"));
 
-    if (warnings->get_nwarnings() > 0) {
+    if (warnings->getNWarnings() > 0) {
         // wrap around search
         if (!find(regex)) {
             moveCursor(QTextCursor::Start, QTextCursor::MoveAnchor);
@@ -153,7 +154,7 @@ void LogWindow::next_warning()
     }
 }
 
-void LogWindow::save_as()
+void LogWindow::saveAs()
 {
     QString defaultname = filename + ".log";
     if (filename.isEmpty()) defaultname = "lammps.log";
@@ -177,19 +178,19 @@ void LogWindow::save_as()
     file.close();
 }
 
-bool LogWindow::check_yaml()
+bool LogWindow::checkYaml()
 {
-    QRegularExpression is_yaml(yaml_regex);
+    QRegularExpression is_yaml(YAML_REGEX);
     QStringList lines = toPlainText().split('\n');
     for (const auto &line : lines)
         if (is_yaml.match(line).hasMatch()) return true;
     return false;
 }
 
-void LogWindow::extract_yaml()
+void LogWindow::extractYaml()
 {
     // ignore if no YAML format lines in buffer
-    if (!check_yaml()) return;
+    if (!checkYaml()) return;
 
     QString defaultname = filename + ".yaml";
     if (filename.isEmpty()) defaultname = "lammps.yaml";
@@ -206,7 +207,7 @@ void LogWindow::extract_yaml()
         return;
     }
 
-    QRegularExpression is_yaml(yaml_regex);
+    QRegularExpression is_yaml(YAML_REGEX);
     QTextStream out(&file);
     QStringList lines = toPlainText().split('\n');
     for (const auto &line : lines) {
@@ -215,7 +216,7 @@ void LogWindow::extract_yaml()
     file.close();
 }
 
-void LogWindow::open_errorurl()
+void LogWindow::openErrorUrl()
 {
     if (!errorurl.isEmpty()) QDesktopServices::openUrl(QUrl(errorurl));
 }
@@ -244,7 +245,7 @@ void LogWindow::mouseDoubleClickEvent(QMouseEvent *event)
         cursor.movePosition(QTextCursor::NextCharacter, QTextCursor::KeepAnchor, end - begin - 1);
 
         auto text = cursor.selectedText();
-        auto url  = QRegularExpression(url_regex).match(text);
+        auto url  = QRegularExpression(URL_REGEX).match(text);
         if (url.hasMatch()) {
             errorurl = url.captured(1);
             if (!errorurl.isEmpty()) {
@@ -268,24 +269,24 @@ void LogWindow::contextMenuEvent(QContextMenuEvent *event)
     auto *action = menu->addAction(QString("Save Log to File ..."));
     action->setIcon(QIcon(":/icons/document-save-as.png"));
     action->setShortcut(QKeySequence(Qt::CTRL | Qt::Key_S));
-    connect(action, &QAction::triggered, this, &LogWindow::save_as);
+    connect(action, &QAction::triggered, this, &LogWindow::saveAs);
     // only show export-to-yaml entry if there is YAML format content.
-    if (check_yaml()) {
+    if (checkYaml()) {
         action = menu->addAction(QString("&Export YAML Data to File ..."));
         action->setIcon(QIcon(":/icons/yaml-file-icon.png"));
         action->setShortcut(QKeySequence(Qt::CTRL | Qt::Key_Y));
-        connect(action, &QAction::triggered, this, &LogWindow::extract_yaml);
+        connect(action, &QAction::triggered, this, &LogWindow::extractYaml);
     }
 
     // process line of text where the cursor is
     auto text = textCursor().block().text().replace('\t', ' ').trimmed();
-    auto url  = QRegularExpression(url_regex).match(text);
+    auto url  = QRegularExpression(URL_REGEX).match(text);
     if (url.hasMatch()) {
         errorurl = url.captured(1);
-        action   = menu->addAction("Open &URL in Web Browser", this, &LogWindow::open_errorurl);
+        action   = menu->addAction("Open &URL in Web Browser", this, &LogWindow::openErrorUrl);
         action->setIcon(QIcon(":/icons/help-browser.png"));
     }
-    action = menu->addAction("&Jump to next warning or error", this, &LogWindow::next_warning);
+    action = menu->addAction("&Jump to next warning or error", this, &LogWindow::nextWarning);
     action->setIcon(QIcon(":/icons/warning.png"));
     action->setShortcut(QKeySequence(Qt::CTRL | Qt::Key_N));
     menu->addSeparator();
@@ -306,7 +307,7 @@ bool LogWindow::eventFilter(QObject *watched, QEvent *event)
         auto *keyEvent = dynamic_cast<QKeyEvent *>(event);
         if (!keyEvent) return QAbstractScrollArea::eventFilter(watched, event);
         if (keyEvent->modifiers().testFlag(Qt::ControlModifier) && keyEvent->key() == '/') {
-            stop_run();
+            stopRun();
             event->accept();
             return true;
         }

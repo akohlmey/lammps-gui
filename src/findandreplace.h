@@ -49,10 +49,10 @@ public:
     FindAndReplace &operator=(FindAndReplace &&)      = delete;
 
 private slots:
-    void find_next();    ///< Find next occurrence of search text
-    void replace_next(); ///< Replace current match and find next
-    void replace_all();  ///< Replace all occurrences in document
-    void quit();         ///< Close the dialog
+    void findNext();    ///< Find next occurrence of search text
+    void replaceNext(); ///< Replace current match and find next
+    void replaceAll();  ///< Replace all occurrences in document
+    void quit();        ///< Close the dialog
 
 private:
     CodeEditor *editor;                 ///< Editor to search in

@@ -31,14 +31,12 @@ Prerequisites and portability
 
 LAMMPS-GUI is programmed in C++ based on the C++17 standard and using
 the `Qt GUI framework <https://www.qt.io/product/framework>`_.
-Currently, Qt version 5.15LTS or later is required; compiling with Qt
-version 6.x is preferred.  When compiled with Qt version 6.x, LAMMPS-GUI
-can switch between a "light" and a "dark" theme according to the
-settings of the desktop environment.  Otherwise, there are no changes in
-functionality between using either major version of Qt.  Building
-LAMMPS-GUI requires CMake version 3.20 or later.
+Currently, Qt version 6.2 or later is required;  LAMMPS-GUI can switch
+between a "light" and a "dark" theme according to the settings of the
+desktop environment.  Building LAMMPS-GUI from source requires CMake
+version 3.20 or later.
 
-.. admonition:: LAMMPS-GUI 1.12.0 has been successfully compiled and tested on:
+.. admonition:: LAMMPS-GUI 2.0.0 has been successfully compiled and tested on:
 
    - Ubuntu Linux 22.04LTS x86_64 using GCC 11, Qt version 5.15
    - Fedora Linux 43 x86\_64 using GCC 14 and Clang 17, Qt version 5.15
@@ -92,8 +90,8 @@ any previous choice and thus trigger loading the default library again.
 Once LAMMPS-GUI is running, you can also change the path to the LAMMPS
 shared library from the :doc:`Preferences dialog <dialogs>`.
 
-Since LAMMPS-GUI version 1.8.4, the minimum LAMMPS version required is
-22 July 2025 update 2, but using a more recent LAMMPS release version is
+Since LAMMPS-GUI version 2.0.0, the minimum LAMMPS version required is
+30 March 2026, but using a more recent LAMMPS release version is
 recommended to unlock all advanced features in LAMMPS-GUI.
 
 GPU support and MPI parallelization
@@ -285,22 +283,21 @@ installed as packaged for Linux distributions, then its location is
 typically auto-detected since the required CMake configuration files are
 stored in a location where CMake can find them without additional help.
 Otherwise, the location of the Qt library installation must be indicated
-by setting ``-D Qt5_DIR=/path/to/qt5/lib/cmake/Qt5``, which is a path to
+by setting ``-D Qt6_DIR=/path/to/qt6/lib/cmake/Qt6``, which is a path to
 a folder inside the Qt installation that contains the file
-``Qt5Config.cmake``.  Similarly, for Qt6 the location of the Qt library
-installation can be indicated by setting ``-D
-Qt6_DIR=/path/to/qt6/lib/cmake/Qt6``, if necessary.  When both, Qt5 and
-Qt6 are available, Qt6 will be preferred unless ``-D
-LAMMPS_GUI_USE_QT5=yes`` is set.
-
-.. versionadded:: 1.11.3
+``Qt6Config.cmake``.
 
 Since the QtCharts module of the Qt library has been deprecated with Qt
 version 6.10, LAMMPS-GUI includes an alternate implementation of the
 charts display based on the QtGraphs module.  This alternate version is
 enabled by default when compiling LAMMPS-GUI for Qt 6.10 and later.
-Setting ``-D LAMMPS_GUI_US_QTCHARTS=yes`` will enforce using the
+Setting ``-D LAMMPS_GUI_USE_QTCHARTS=yes`` will enforce using the
 QtCharts based chart display.
+
+.. versionchanged:: 2.0.0
+
+Starting with version 2.0.0, LAMMPS-GUI requires Qt 6.2 or later.
+Support for Qt 5.x has been removed.
 
 LAMMPS-GUI plugin version
 -------------------------
@@ -399,7 +396,7 @@ Linux
 
 *Binary tarball package*
 
-Version 5.15LTS or later of the Qt library is required. Those are
+Version 6.2 or later of the Qt library is required. Those are
 provided by, e.g., Ubuntu 22.04LTS or later.  Thus older Linux
 distributions are not likely to be supported, while more recent ones
 will work, even for pre-compiled executables (see above).  After

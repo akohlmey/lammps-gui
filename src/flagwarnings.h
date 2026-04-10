@@ -53,7 +53,7 @@ public:
      * @brief Get the current number of warnings detected
      * @return Number of warnings found in the document
      */
-    int get_nwarnings() const { return nwarnings; }
+    int getNWarnings() const { return nwarnings; }
 
 protected:
     /**
