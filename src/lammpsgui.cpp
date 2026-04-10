@@ -854,7 +854,7 @@ void LammpsGui::newDocument()
     if (lammps.isRunning()) {
         stopRun();
         runner->wait();
-        delete runner;
+        runner->deleteLater();
         runner = nullptr;
     }
     // close windows
@@ -1091,7 +1091,7 @@ void LammpsGui::openFile(const QString &fileName)
     if (lammps.isRunning()) {
         stopRun();
         runner->wait();
-        delete runner;
+        runner->deleteLater();
         runner = nullptr;
     }
     // close windows
@@ -1377,7 +1377,7 @@ void LammpsGui::quit()
     if (lammps.isRunning()) {
         stopRun();
         runner->wait();
-        delete runner;
+        runner->deleteLater();
         runner = nullptr;
     }
 
@@ -2414,7 +2414,8 @@ void LammpsGui::editVariables()
         if (lammps.isRunning()) {
             stopRun();
             runner->wait();
-            delete runner;
+            runner->deleteLater();
+            runner = nullptr;
         }
         silenceStdout();
         lammps.close();
@@ -2461,7 +2462,8 @@ void LammpsGui::preferences()
             if (lammps.isRunning()) {
                 stopRun();
                 runner->wait();
-                delete runner;
+                runner->deleteLater();
+                runner = nullptr;
             }
             silenceStdout();
             lammps.close();
