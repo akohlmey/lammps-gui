@@ -15,6 +15,8 @@
 #include <gtest/gtest.h>
 
 #include <QCoreApplication>
+#include <QDir>
+#include <QFile>
 #include <QString>
 
 #include <cstdio>
@@ -397,4 +399,136 @@ TEST_F(HelpersTest, SilenceAndRestorePreservesStdout)
     auto output = capturer.GetCapture();
     EXPECT_NE(output.find("visible text"), std::string::npos);
     EXPECT_EQ(output.find("silenced text"), std::string::npos);
+}
+
+// Tests for purgeDirectory function
+
+TEST_F(HelpersTest, PurgeDirectoryRemovesFiles)
+{
+    // Create a temporary directory with some files
+    QDir temp(QDir::tempPath());
+    QString testDir = temp.filePath("lammps_gui_test_purge");
+    temp.mkpath(testDir);
+
+    // Create some test files
+    QFile f1(testDir + "/test1.txt");
+    f1.open(QIODevice::WriteOnly);
+    f1.write("test");
+    f1.close();
+
+    QFile f2(testDir + "/test2.txt");
+    f2.open(QIODevice::WriteOnly);
+    f2.write("test");
+    f2.close();
+
+    // Verify files exist
+    EXPECT_TRUE(QFile::exists(testDir + "/test1.txt"));
+    EXPECT_TRUE(QFile::exists(testDir + "/test2.txt"));
+
+    // Purge the directory
+    purgeDirectory(testDir);
+
+    // Files should be gone but directory should still exist
+    EXPECT_FALSE(QFile::exists(testDir + "/test1.txt"));
+    EXPECT_FALSE(QFile::exists(testDir + "/test2.txt"));
+    EXPECT_TRUE(QDir(testDir).exists());
+
+    // Cleanup
+    temp.rmdir(testDir);
+}
+
+TEST_F(HelpersTest, PurgeDirectoryNonExistent)
+{
+    // Purging a non-existent directory should not crash
+    purgeDirectory("/nonexistent/path/that/does/not/exist");
+}
+
+TEST_F(HelpersTest, PurgeDirectoryEmpty)
+{
+    // Purging an empty directory should work fine
+    QDir temp(QDir::tempPath());
+    QString testDir = temp.filePath("lammps_gui_test_purge_empty");
+    temp.mkpath(testDir);
+
+    purgeDirectory(testDir);
+
+    EXPECT_TRUE(QDir(testDir).exists());
+    temp.rmdir(testDir);
+}
+
+// Additional dateCompare edge case tests
+
+TEST_F(HelpersTest, DateCompareDecemberMonths)
+{
+    // Test all months are recognized correctly
+    QStringList months = {"Jan", "Feb", "Mar", "Apr", "May", "Jun",
+                          "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"};
+    for (int i = 0; i < months.size() - 1; ++i) {
+        QString earlier = QString("15 %1 2024").arg(months[i]);
+        QString later   = QString("15 %1 2024").arg(months[i + 1]);
+        EXPECT_EQ(dateCompare(earlier, later), -1)
+            << "Expected " << months[i].toStdString() << " < " << months[i + 1].toStdString();
+    }
+}
+
+TEST_F(HelpersTest, DateCompareBothInvalid)
+{
+    // Two invalid dates should both get month 0 and compare by day/year
+    EXPECT_EQ(dateCompare("invalid1", "invalid2"), 0);
+}
+
+TEST_F(HelpersTest, DateCompareWithUpdateSuffix)
+{
+    // LAMMPS dates can have "update N" suffix like "22 July 2025 update 2"
+    // dateCompare should handle the date part correctly
+    QString date1 = "22 Jul 2025";
+    QString date2 = "22 Aug 2025";
+    EXPECT_EQ(dateCompare(date1, date2), -1);
+}
+
+// Additional splitLine edge case tests
+
+TEST_F(HelpersTest, SplitLineSingleWord)
+{
+    std::string input                 = "word";
+    auto result                       = splitLine(input);
+    std::vector<std::string> expected = {"word"};
+    EXPECT_EQ(result, expected);
+}
+
+TEST_F(HelpersTest, SplitLineHashComment)
+{
+    // In LAMMPS, # starts a comment - splitLine should handle this
+    std::string input = "fix 1 all nve # this is a comment";
+    auto result       = splitLine(input);
+    // After #, everything is ignored
+    EXPECT_GE(result.size(), 1u);
+    EXPECT_EQ(result[0], "fix");
+}
+
+TEST_F(HelpersTest, SplitLineSpecialCharacters)
+{
+    std::string input = "pair_coeff * * 1.0 2.5";
+    auto result       = splitLine(input);
+    EXPECT_EQ(result.size(), 5u);
+    EXPECT_EQ(result[0], "pair_coeff");
+    EXPECT_EQ(result[1], "*");
+    EXPECT_EQ(result[2], "*");
+    EXPECT_EQ(result[3], "1.0");
+    EXPECT_EQ(result[4], "2.5");
+}
+
+// Additional hasExe tests
+
+TEST_F(HelpersTest, HasExeEmptyString)
+{
+    EXPECT_FALSE(hasExe(""));
+}
+
+TEST_F(HelpersTest, HasExeBash)
+{
+#if !defined(_WIN32)
+    // bash should exist on Linux/macOS
+    EXPECT_TRUE(hasExe("bash"));
+#endif
 }

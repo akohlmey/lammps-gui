@@ -99,6 +99,19 @@ target_link_libraries(test_stdcapture PRIVATE GTest::gtest_main Qt${QT_VERSION_M
 
 gtest_discover_tests(test_stdcapture)
 
+# Test executable for FlagWarnings
+add_executable(test_flagwarnings
+  test_flagwarnings.cpp
+  ${CMAKE_SOURCE_DIR}/src/flagwarnings.cpp
+  ${CMAKE_SOURCE_DIR}/src/helpers.cpp
+  ${CMAKE_SOURCE_DIR}/src/stdcapture.cpp
+)
+
+target_include_directories(test_flagwarnings PRIVATE ${CMAKE_SOURCE_DIR}/src)
+target_link_libraries(test_flagwarnings PRIVATE GTest::gtest_main Qt${QT_VERSION_MAJOR}::Widgets)
+
+gtest_discover_tests(test_flagwarnings)
+
 ########################################################################
 # Tests that check the GUI environment and the GUI
 # IMPORTANT NOTE: we must use a different display number for the -n flag
