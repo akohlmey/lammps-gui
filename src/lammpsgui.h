@@ -394,7 +394,7 @@ private:
     Preferences *prefdialog;  ///< Preferences dialog
     QLabel *lammpsstatus;     ///< Status bar label for LAMMPS state
     QLabel *varwindow;        ///< Window showing variable definitions
-    TutorialWizard *wizard;          ///< Tutorial wizard dialog
+    TutorialWizard *wizard;   ///< Tutorial wizard dialog
 
     /**
      * @brief Container for inspect dialog widgets

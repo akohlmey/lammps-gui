@@ -161,7 +161,7 @@ private:
     QCheckBox *norm;                       ///< Normalization checkbox
     RangeSlider *xrange, *yrange;          ///< Range sliders for axes
 
-    QString filename;                      ///< Log file path
+    QString filename;            ///< Log file path
     QList<ChartViewer *> charts; ///< List of chart viewers
 };
 
