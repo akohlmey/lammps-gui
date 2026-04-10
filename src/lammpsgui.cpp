@@ -13,6 +13,7 @@
 
 #include "aboutdialog.h"
 #include "chartviewer.h"
+#include "codeeditor.h"
 #include "fileviewer.h"
 #include "findandreplace.h"
 #include "helpers.h"
@@ -24,8 +25,8 @@
 #include "setvariables.h"
 #include "slideshow.h"
 #include "stdcapture.h"
-#include "ui_lammpsgui.h"
 
+#include <QAction>
 #include <QByteArray>
 #include <QCheckBox>
 #include <QClipboard>
@@ -41,6 +42,8 @@
 #include <QGuiApplication>
 #include <QLabel>
 #include <QLineEdit>
+#include <QMenu>
+#include <QMenuBar>
 #include <QMessageBox>
 #include <QProcess>
 #include <QProgressBar>
@@ -88,8 +91,225 @@ const QString bannerstyle("CodeEditor {background-position: center center; "
                           "background-image: url(:/icons/lammps-gui-banner.png);}");
 } // namespace
 
+void LammpsGui::setupUi()
+{
+    setWindowTitle("LAMMPS-GUI");
+    resize(600, 400);
+
+    // Central widget
+    textEdit = new CodeEditor(this);
+    textEdit->setEnabled(true);
+    textEdit->setAcceptDrops(true);
+    setCentralWidget(textEdit);
+
+    // File actions
+    actionNew = new QAction(QIcon(":/icons/document-new.png"), "&New", this);
+    actionNew->setShortcut(QKeySequence("Ctrl+N"));
+
+    actionOpen = new QAction(QIcon(":/icons/document-open.png"), "&Open", this);
+    actionOpen->setShortcut(QKeySequence("Ctrl+O"));
+
+    actionView = new QAction(QIcon(":/icons/document-open.png"), "&View", this);
+    actionView->setShortcut(QKeySequence("Ctrl+Shift+F"));
+
+    actionInspect = new QAction(QIcon(":/icons/document-open.png"), "Inspect &Restart", this);
+    actionInspect->setShortcut(QKeySequence("Ctrl+Shift+R"));
+
+    actionSave = new QAction(QIcon(":/icons/document-save.png"), "&Save", this);
+    actionSave->setShortcut(QKeySequence("Ctrl+S"));
+
+    actionSaveAs = new QAction(QIcon(":/icons/document-save-as.png"), "Save &As", this);
+    actionSaveAs->setShortcut(QKeySequence("Ctrl+Shift+S"));
+
+    actionQuit = new QAction(QIcon(":/icons/application-exit.png"), "&Quit", this);
+    actionQuit->setShortcut(QKeySequence("Ctrl+Q"));
+
+    for (int i = 0; i < 5; ++i) {
+        recentActions[i] =
+            new QAction(QIcon(":/icons/document-open-recent.png"),
+                        QString("&%1.").arg(i + 1), this);
+    }
+
+    // Edit actions
+    actionUndo = new QAction(QIcon(":/icons/edit-undo.png"), "&Undo", this);
+    actionUndo->setShortcut(QKeySequence("Ctrl+Z"));
+
+    actionRedo = new QAction(QIcon(":/icons/edit-redo.png"), "&Redo", this);
+    actionRedo->setShortcut(QKeySequence("Ctrl+Shift+Z"));
+
+    actionCopy = new QAction(QIcon(":/icons/edit-copy.png"), "&Copy", this);
+    actionCopy->setShortcut(QKeySequence("Ctrl+C"));
+
+    actionCut = new QAction(QIcon(":/icons/edit-cut.png"), "Cu&t", this);
+    actionCut->setShortcut(QKeySequence("Ctrl+X"));
+
+    actionPaste = new QAction(QIcon(":/icons/edit-paste.png"), "&Paste", this);
+    actionPaste->setShortcut(QKeySequence("Ctrl+V"));
+
+    actionSearchAndReplace =
+        new QAction(QIcon(":/icons/search.png"), "&Find and Replace...", this);
+    actionSearchAndReplace->setShortcut(QKeySequence("Ctrl+F"));
+
+    actionPreferences =
+        new QAction(QIcon(":/icons/preferences-desktop.png"), "P&references...", this);
+    actionPreferences->setShortcut(QKeySequence("Ctrl+P"));
+
+    actionDefaults =
+        new QAction(QIcon(":/icons/document-revert.png"), "Reset Preferences to &Defaults", this);
+
+    // Run actions
+    actionRunBuffer =
+        new QAction(QIcon(":/icons/system-run.png"), "&Run LAMMPS from Editor Buffer", this);
+    actionRunBuffer->setShortcut(QKeySequence("Ctrl+Return"));
+
+    actionRunFile =
+        new QAction(QIcon(":/icons/run-file.png"), "Run LAMMPS from &File", this);
+    actionRunFile->setShortcut(QKeySequence("Ctrl+Shift+Return"));
+
+    actionStopLAMMPS =
+        new QAction(QIcon(":/icons/process-stop.png"), "&Stop LAMMPS", this);
+    actionStopLAMMPS->setShortcut(QKeySequence("Ctrl+/"));
+
+    actionRestartLAMMPS =
+        new QAction(QIcon(":/icons/system-restart.png"), "Relaunch &LAMMPS Instance", this);
+
+    actionSetVariables = new QAction(QIcon(":/icons/preferences-desktop-personal.png"),
+                                     "Set &Variables...", this);
+    actionSetVariables->setShortcut(QKeySequence("Ctrl+Shift+V"));
+
+    actionImage = new QAction(QIcon(":/icons/emblem-photos.png"), "Create &Image", this);
+    actionImage->setShortcut(QKeySequence("Ctrl+I"));
+
+    actionViewInOVITO = new QAction(QIcon(":/icons/ovito.png"), "View in &OVITO", this);
+    actionViewInOVITO->setShortcut(QKeySequence("Ctrl+Shift+O"));
+
+    actionViewInVMD = new QAction(QIcon(":/icons/vmd.png"), "View in VM&D", this);
+    actionViewInVMD->setShortcut(QKeySequence("Ctrl+Shift+D"));
+
+    // View actions
+    actionViewLogWindow =
+        new QAction(QIcon(":/icons/utilities-terminal.png"), "&Output Window", this);
+    actionViewLogWindow->setShortcut(QKeySequence("Ctrl+Shift+L"));
+
+    actionViewGraphWindow =
+        new QAction(QIcon(":/icons/x-office-drawing.png"), "&Charts Window", this);
+    actionViewGraphWindow->setShortcut(QKeySequence("Ctrl+Shift+C"));
+
+    actionViewImageWindow =
+        new QAction(QIcon(":/icons/emblem-photos.png"), "&Image Window", this);
+    actionViewImageWindow->setShortcut(QKeySequence("Ctrl+Shift+I"));
+
+    actionViewSlideShow =
+        new QAction(QIcon(":/icons/image-x-generic.png"), "&Slide Show Window", this);
+    actionViewSlideShow->setShortcut(QKeySequence("Ctrl+L"));
+
+    actionViewVariableWindow =
+        new QAction(QIcon(":/icons/preferences-desktop-personal.png"), "&Variables Window", this);
+    actionViewVariableWindow->setShortcut(QKeySequence("Ctrl+Shift+W"));
+
+    // Tutorial actions
+    for (int i = 0; i < 8; ++i) {
+        tutorialActions[i] =
+            new QAction(QIcon(":/icons/tutorial-logo.png"),
+                        QString("Start LAMMPS Tutorial &%1").arg(i + 1), this);
+    }
+
+    // About actions
+    actionAboutLAMMPSGUI =
+        new QAction(QIcon(":/icons/help-about.png"), "&About LAMMPS-GUI", this);
+    actionAboutLAMMPSGUI->setShortcut(QKeySequence("Ctrl+Shift+A"));
+
+    actionHelp = new QAction(QIcon(":/icons/help-faq.png"), "Quick &Help", this);
+    actionHelp->setShortcut(QKeySequence("Ctrl+Shift+H"));
+
+    actionHowto =
+        new QAction(QIcon(":/icons/system-help.png"), "LAMMPS-&GUI Documentation", this);
+    actionHowto->setShortcut(QKeySequence("Ctrl+Shift+G"));
+
+    actionLAMMPSManual =
+        new QAction(QIcon(":/icons/help-browser.png"), "LAMMPS Online &Manual", this);
+    actionLAMMPSManual->setShortcut(QKeySequence("Ctrl+Shift+M"));
+
+    actionLAMMPSTutorial =
+        new QAction(QIcon(":/icons/help-tutorial.png"), "LAMMPS &Tutorial Website", this);
+    actionLAMMPSTutorial->setShortcut(QKeySequence("Ctrl+Shift+T"));
+
+    // Menu bar
+    menubar = new QMenuBar(this);
+    setMenuBar(menubar);
+
+    // File menu
+    menuFile = menubar->addMenu("&File");
+    menuFile->addAction(actionNew);
+    menuFile->addSeparator();
+    menuFile->addAction(actionOpen);
+    menuFile->addAction(actionView);
+    menuFile->addAction(actionInspect);
+    menuFile->addSeparator();
+    for (int i = 0; i < 5; ++i)
+        menuFile->addAction(recentActions[i]);
+    menuFile->addSeparator();
+    menuFile->addAction(actionSave);
+    menuFile->addAction(actionSaveAs);
+    menuFile->addSeparator();
+    menuFile->addAction(actionQuit);
+
+    // Edit menu
+    menuEdit = menubar->addMenu("&Edit");
+    menuEdit->addAction(actionUndo);
+    menuEdit->addAction(actionRedo);
+    menuEdit->addSeparator();
+    menuEdit->addAction(actionCopy);
+    menuEdit->addAction(actionCut);
+    menuEdit->addAction(actionPaste);
+    menuEdit->addSeparator();
+    menuEdit->addAction(actionSearchAndReplace);
+    menuEdit->addSeparator();
+    menuEdit->addAction(actionPreferences);
+    menuEdit->addAction(actionDefaults);
+
+    // Run menu
+    menuRun = menubar->addMenu("&Run");
+    menuRun->addAction(actionRunBuffer);
+    menuRun->addAction(actionRunFile);
+    menuRun->addAction(actionStopLAMMPS);
+    menuRun->addSeparator();
+    menuRun->addAction(actionRestartLAMMPS);
+    menuRun->addSeparator();
+    menuRun->addAction(actionSetVariables);
+    menuRun->addSeparator();
+    menuRun->addAction(actionImage);
+    menuRun->addAction(actionViewInOVITO);
+    menuRun->addAction(actionViewInVMD);
+
+    // View menu
+    menuView = menubar->addMenu("&View");
+    menuView->addAction(actionViewLogWindow);
+    menuView->addAction(actionViewGraphWindow);
+    menuView->addAction(actionViewImageWindow);
+    menuView->addAction(actionViewSlideShow);
+    menuView->addAction(actionViewVariableWindow);
+
+    // Tutorials menu
+    menuTutorial = menubar->addMenu("&Tutorials");
+    for (int i = 0; i < 8; ++i)
+        menuTutorial->addAction(tutorialActions[i]);
+
+    // About menu
+    menuAbout = menubar->addMenu("&About");
+    menuAbout->addAction(actionAboutLAMMPSGUI);
+    menuAbout->addAction(actionHelp);
+    menuAbout->addAction(actionHowto);
+    menuAbout->addAction(actionLAMMPSManual);
+    menuAbout->addAction(actionLAMMPSTutorial);
+
+    // Status bar
+    statusbar = new QStatusBar(this);
+    setStatusBar(statusbar);
+}
+
 LammpsGui::LammpsGui(QWidget *parent, const QString &filename, int width, int height) :
-    QMainWindow(parent), ui(new Ui::LammpsGui), highlighter(nullptr), capturer(nullptr),
+    QMainWindow(parent), highlighter(nullptr), capturer(nullptr),
     status(nullptr), cpuuse(nullptr), logwindow(nullptr), imagewindow(nullptr),
     chartwindow(nullptr), slideshow(nullptr), logupdater(nullptr), dirstatus(nullptr),
     progress(nullptr), prefdialog(nullptr), lammpsstatus(nullptr), varwindow(nullptr),
@@ -97,12 +317,11 @@ LammpsGui::LammpsGui(QWidget *parent, const QString &filename, int width, int he
     mainy(height)
 {
     docver = "";
-    ui->setupUi(this);
-    ui->textEdit->document()->setPlainText(citeme);
-    ui->textEdit->document()->setModified(false);
-    ui->textEdit->setStyleSheet(bannerstyle);
-    this->setCentralWidget(ui->textEdit);
-    highlighter = new Highlighter(ui->textEdit->document());
+    setupUi();
+    textEdit->document()->setPlainText(citeme);
+    textEdit->document()->setModified(false);
+    textEdit->setStyleSheet(bannerstyle);
+    highlighter = new Highlighter(textEdit->document());
     capturer    = new StdCapture;
     current_file.clear();
     current_dir = QDir(".").absolutePath();
@@ -300,9 +519,9 @@ LammpsGui::LammpsGui(QWidget *parent, const QString &filename, int width, int he
     mono_font.setFixedPitch(true);
     settings.setValue("monofamily", mono_font.family());
     settings.setValue("monosize", mono_font.pointSize());
-    ui->textEdit->setFont(mono_font);
-    ui->textEdit->document()->setDefaultFont(mono_font);
-    ui->textEdit->setMinimumSize(MINIMUM_WIDTH, MINIMUM_HEIGHT);
+    textEdit->setFont(mono_font);
+    textEdit->document()->setDefaultFont(mono_font);
+    textEdit->setMinimumSize(MINIMUM_WIDTH, MINIMUM_HEIGHT);
     settings.sync();
 
     varwindow = new QLabel(QString());
@@ -321,71 +540,71 @@ LammpsGui::LammpsGui(QWidget *parent, const QString &filename, int width, int he
     update_recents();
 
     // check if we have OVITO and VMD installed and deactivate actions if not
-    ui->actionView_in_OVITO->setEnabled(has_exe("ovito"));
-    ui->actionView_in_OVITO->setData("ovito");
-    ui->actionView_in_VMD->setEnabled(has_exe("vmd"));
-    ui->actionView_in_VMD->setData("vmd");
+    actionViewInOVITO->setEnabled(has_exe("ovito"));
+    actionViewInOVITO->setData("ovito");
+    actionViewInVMD->setEnabled(has_exe("vmd"));
+    actionViewInVMD->setData("vmd");
 
-    connect(ui->actionNew, &QAction::triggered, this, &LammpsGui::new_document);
-    connect(ui->actionOpen, &QAction::triggered, this, &LammpsGui::open);
-    connect(ui->actionSave, &QAction::triggered, this, &LammpsGui::save);
-    connect(ui->actionSave_As, &QAction::triggered, this, &LammpsGui::save_as);
-    connect(ui->actionView, &QAction::triggered, this, &LammpsGui::view);
-    connect(ui->actionInspect, &QAction::triggered, this, &LammpsGui::inspect);
-    connect(ui->actionQuit, &QAction::triggered, this, &LammpsGui::quit);
-    connect(ui->actionCopy, &QAction::triggered, this, &LammpsGui::copy);
-    connect(ui->actionCut, &QAction::triggered, this, &LammpsGui::cut);
-    connect(ui->actionPaste, &QAction::triggered, this, &LammpsGui::paste);
-    connect(ui->actionUndo, &QAction::triggered, this, &LammpsGui::undo);
-    connect(ui->actionRedo, &QAction::triggered, this, &LammpsGui::redo);
-    connect(ui->actionSearchAndReplace, &QAction::triggered, this, &LammpsGui::findandreplace);
-    connect(ui->actionRun_Buffer, &QAction::triggered, this, &LammpsGui::run_buffer);
-    connect(ui->actionRun_File, &QAction::triggered, this, &LammpsGui::run_file);
-    connect(ui->actionStop_LAMMPS, &QAction::triggered, this, &LammpsGui::stop_run);
-    connect(ui->actionRestart_LAMMPS, &QAction::triggered, this, &LammpsGui::restart_lammps);
-    connect(ui->actionSet_Variables, &QAction::triggered, this, &LammpsGui::edit_variables);
-    connect(ui->actionImage, &QAction::triggered, this, &LammpsGui::render_image);
-    connect(ui->actionLAMMPS_Tutorial, &QAction::triggered, this, &LammpsGui::tutorial_web);
-    connect(ui->actionTutorial1, &QAction::triggered, this, &LammpsGui::start_tutorial1);
-    connect(ui->actionTutorial2, &QAction::triggered, this, &LammpsGui::start_tutorial2);
-    connect(ui->actionTutorial3, &QAction::triggered, this, &LammpsGui::start_tutorial3);
-    connect(ui->actionTutorial4, &QAction::triggered, this, &LammpsGui::start_tutorial4);
-    connect(ui->actionTutorial5, &QAction::triggered, this, &LammpsGui::start_tutorial5);
-    connect(ui->actionTutorial6, &QAction::triggered, this, &LammpsGui::start_tutorial6);
-    connect(ui->actionTutorial7, &QAction::triggered, this, &LammpsGui::start_tutorial7);
-    connect(ui->actionTutorial8, &QAction::triggered, this, &LammpsGui::start_tutorial8);
-    connect(ui->actionAbout_LAMMPS_GUI, &QAction::triggered, this, &LammpsGui::about);
-    connect(ui->action_Help, &QAction::triggered, this, &LammpsGui::help);
-    connect(ui->actionLAMMPS_GUI_Howto, &QAction::triggered, this, &LammpsGui::howto);
-    connect(ui->actionLAMMPS_Manual, &QAction::triggered, this, &LammpsGui::manual);
-    connect(ui->actionPreferences, &QAction::triggered, this, &LammpsGui::preferences);
-    connect(ui->actionDefaults, &QAction::triggered, this, &LammpsGui::defaults);
-    connect(ui->actionView_in_OVITO, &QAction::triggered, this, &LammpsGui::start_exe);
-    connect(ui->actionView_in_VMD, &QAction::triggered, this, &LammpsGui::start_exe);
-    connect(ui->actionView_Log_Window, &QAction::triggered, this, &LammpsGui::view_log);
-    connect(ui->actionView_Graph_Window, &QAction::triggered, this, &LammpsGui::view_chart);
-    connect(ui->actionView_Image_Window, &QAction::triggered, this, &LammpsGui::view_image);
-    connect(ui->actionView_Slide_Show, &QAction::triggered, this, &LammpsGui::view_slides);
-    connect(ui->actionView_Variable_Window, &QAction::triggered, this, &LammpsGui::view_variables);
-    connect(ui->action_1, &QAction::triggered, this, &LammpsGui::open_recent);
-    connect(ui->action_2, &QAction::triggered, this, &LammpsGui::open_recent);
-    connect(ui->action_3, &QAction::triggered, this, &LammpsGui::open_recent);
-    connect(ui->action_4, &QAction::triggered, this, &LammpsGui::open_recent);
-    connect(ui->action_5, &QAction::triggered, this, &LammpsGui::open_recent);
+    connect(actionNew, &QAction::triggered, this, &LammpsGui::new_document);
+    connect(actionOpen, &QAction::triggered, this, &LammpsGui::open);
+    connect(actionSave, &QAction::triggered, this, &LammpsGui::save);
+    connect(actionSaveAs, &QAction::triggered, this, &LammpsGui::save_as);
+    connect(actionView, &QAction::triggered, this, &LammpsGui::view);
+    connect(actionInspect, &QAction::triggered, this, &LammpsGui::inspect);
+    connect(actionQuit, &QAction::triggered, this, &LammpsGui::quit);
+    connect(actionCopy, &QAction::triggered, this, &LammpsGui::copy);
+    connect(actionCut, &QAction::triggered, this, &LammpsGui::cut);
+    connect(actionPaste, &QAction::triggered, this, &LammpsGui::paste);
+    connect(actionUndo, &QAction::triggered, this, &LammpsGui::undo);
+    connect(actionRedo, &QAction::triggered, this, &LammpsGui::redo);
+    connect(actionSearchAndReplace, &QAction::triggered, this, &LammpsGui::findandreplace);
+    connect(actionRunBuffer, &QAction::triggered, this, &LammpsGui::run_buffer);
+    connect(actionRunFile, &QAction::triggered, this, &LammpsGui::run_file);
+    connect(actionStopLAMMPS, &QAction::triggered, this, &LammpsGui::stop_run);
+    connect(actionRestartLAMMPS, &QAction::triggered, this, &LammpsGui::restart_lammps);
+    connect(actionSetVariables, &QAction::triggered, this, &LammpsGui::edit_variables);
+    connect(actionImage, &QAction::triggered, this, &LammpsGui::render_image);
+    connect(actionLAMMPSTutorial, &QAction::triggered, this, &LammpsGui::tutorial_web);
+    connect(tutorialActions[0], &QAction::triggered, this, &LammpsGui::start_tutorial1);
+    connect(tutorialActions[1], &QAction::triggered, this, &LammpsGui::start_tutorial2);
+    connect(tutorialActions[2], &QAction::triggered, this, &LammpsGui::start_tutorial3);
+    connect(tutorialActions[3], &QAction::triggered, this, &LammpsGui::start_tutorial4);
+    connect(tutorialActions[4], &QAction::triggered, this, &LammpsGui::start_tutorial5);
+    connect(tutorialActions[5], &QAction::triggered, this, &LammpsGui::start_tutorial6);
+    connect(tutorialActions[6], &QAction::triggered, this, &LammpsGui::start_tutorial7);
+    connect(tutorialActions[7], &QAction::triggered, this, &LammpsGui::start_tutorial8);
+    connect(actionAboutLAMMPSGUI, &QAction::triggered, this, &LammpsGui::about);
+    connect(actionHelp, &QAction::triggered, this, &LammpsGui::help);
+    connect(actionHowto, &QAction::triggered, this, &LammpsGui::howto);
+    connect(actionLAMMPSManual, &QAction::triggered, this, &LammpsGui::manual);
+    connect(actionPreferences, &QAction::triggered, this, &LammpsGui::preferences);
+    connect(actionDefaults, &QAction::triggered, this, &LammpsGui::defaults);
+    connect(actionViewInOVITO, &QAction::triggered, this, &LammpsGui::start_exe);
+    connect(actionViewInVMD, &QAction::triggered, this, &LammpsGui::start_exe);
+    connect(actionViewLogWindow, &QAction::triggered, this, &LammpsGui::view_log);
+    connect(actionViewGraphWindow, &QAction::triggered, this, &LammpsGui::view_chart);
+    connect(actionViewImageWindow, &QAction::triggered, this, &LammpsGui::view_image);
+    connect(actionViewSlideShow, &QAction::triggered, this, &LammpsGui::view_slides);
+    connect(actionViewVariableWindow, &QAction::triggered, this, &LammpsGui::view_variables);
+    connect(recentActions[0], &QAction::triggered, this, &LammpsGui::open_recent);
+    connect(recentActions[1], &QAction::triggered, this, &LammpsGui::open_recent);
+    connect(recentActions[2], &QAction::triggered, this, &LammpsGui::open_recent);
+    connect(recentActions[3], &QAction::triggered, this, &LammpsGui::open_recent);
+    connect(recentActions[4], &QAction::triggered, this, &LammpsGui::open_recent);
 
-    connect(ui->textEdit->document(), &QTextDocument::modificationChanged, this,
+    connect(textEdit->document(), &QTextDocument::modificationChanged, this,
             &LammpsGui::modified);
 
 #if !QT_CONFIG(clipboard)
-    ui->actionCut->setEnabled(false);
-    ui->actionCopy->setEnabled(false);
-    ui->actionPaste->setEnabled(false);
+    actionCut->setEnabled(false);
+    actionCopy->setEnabled(false);
+    actionPaste->setEnabled(false);
 #endif
 
     lammpsstatus = new QLabel(QString());
     auto pix     = QPixmap(":/icons/lammps-icon-128x128.png");
     lammpsstatus->setPixmap(pix.scaled(22, 22, Qt::KeepAspectRatio));
-    ui->statusbar->addWidget(lammpsstatus);
+    statusbar->addWidget(lammpsstatus);
     lammpsstatus->setToolTip("LAMMPS instance is active");
     lammpsstatus->hide();
 
@@ -407,10 +626,10 @@ LammpsGui::LammpsGui(QWidget *parent, const QString &filename, int width, int he
     lammpsstop->setMaximumSize(buttonhint);
     lammpsimage->setMinimumSize(buttonhint);
     lammpsimage->setMaximumSize(buttonhint);
-    ui->statusbar->addWidget(lammpssave);
-    ui->statusbar->addWidget(lammpsrun);
-    ui->statusbar->addWidget(lammpsstop);
-    ui->statusbar->addWidget(lammpsimage);
+    statusbar->addWidget(lammpssave);
+    statusbar->addWidget(lammpsrun);
+    statusbar->addWidget(lammpsstop);
+    statusbar->addWidget(lammpsimage);
     connect(lammpssave, &QPushButton::released, this, &LammpsGui::save);
     connect(lammpsrun, &QPushButton::released, this, &LammpsGui::run_buffer);
     connect(lammpsstop, &QPushButton::released, this, &LammpsGui::stop_run);
@@ -418,20 +637,20 @@ LammpsGui::LammpsGui(QWidget *parent, const QString &filename, int width, int he
 
     cpuuse = new QLabel("   0%CPU");
     cpuuse->setFixedWidth(90);
-    ui->statusbar->addWidget(cpuuse);
+    statusbar->addWidget(cpuuse);
     cpuuse->hide();
     status = new QLabel("Ready.");
     status->setFixedWidth(300);
-    ui->statusbar->addWidget(status);
+    statusbar->addWidget(status);
     dirstatus = new QLabel(QString(" Directory: ") + current_dir);
     dirstatus->setMinimumWidth(MINIMUM_WIDTH);
-    ui->statusbar->addWidget(dirstatus);
+    statusbar->addWidget(dirstatus);
     progress = new QProgressBar();
     progress->setRange(0, 1000);
     progress->setMinimumWidth(MINIMUM_WIDTH);
     progress->hide();
     dirstatus->show();
-    ui->statusbar->addWidget(progress);
+    statusbar->addWidget(progress);
 
     if ((filename.size() > 0) && !filename.endsWith("lammps-gui.exe")) {
         open_file(filename);
@@ -470,7 +689,7 @@ LammpsGui::LammpsGui(QWidget *parent, const QString &filename, int width, int he
         }
     }
     style_list.sort();
-    ui->textEdit->setCommandList(style_list);
+    textEdit->setCommandList(style_list);
 
     style_list.clear();
     const char *varstyles[] = {"delete",   "atomfile", "file",   "format", "getenv", "index",
@@ -479,14 +698,14 @@ LammpsGui::LammpsGui(QWidget *parent, const QString &filename, int width, int he
     for (const auto *const var : varstyles)
         style_list << var;
     style_list.sort();
-    ui->textEdit->setVariableList(style_list);
+    textEdit->setVariableList(style_list);
 
     style_list.clear();
     const char *unitstyles[] = {"lj", "real", "metal", "si", "cgs", "electron", "micro", "nano"};
     for (const auto *const unit : unitstyles)
         style_list << unit;
     style_list.sort();
-    ui->textEdit->setUnitsList(style_list);
+    textEdit->setUnitsList(style_list);
 
     style_list.clear();
     const char *extraargs[] = {"extra/atom/types",        "extra/bond/types",
@@ -496,9 +715,9 @@ LammpsGui::LammpsGui(QWidget *parent, const QString &filename, int width, int he
                                "extra/improper/per/atom", "extra/special/per/atom"};
     for (const auto *const extra : extraargs)
         style_list << extra;
-    ui->textEdit->setExtraList(style_list);
+    textEdit->setExtraList(style_list);
 
-    ui->textEdit->setFileList();
+    textEdit->setFileList();
 
 #define ADD_STYLES(keyword, Type)                                                              \
     style_list.clear();                                                                        \
@@ -518,7 +737,7 @@ LammpsGui::LammpsGui(QWidget *parent, const QString &filename, int width, int he
         }                                                                                      \
     }                                                                                          \
     style_list.sort();                                                                         \
-    ui->textEdit->set##Type##List(style_list)
+    textEdit->set##Type##List(style_list)
 
     ADD_STYLES(fix, Fix);
     ADD_STYLES(compute, Compute);
@@ -536,8 +755,8 @@ LammpsGui::LammpsGui(QWidget *parent, const QString &filename, int width, int he
 #undef ADD_STYLES
 
     settings.beginGroup("reformat");
-    ui->textEdit->setReformatOnReturn(settings.value("return", false).toBool());
-    ui->textEdit->setAutoComplete(settings.value("automatic", true).toBool());
+    textEdit->setReformatOnReturn(settings.value("return", false).toBool());
+    textEdit->setAutoComplete(settings.value("automatic", true).toBool());
     settings.endGroup();
 
     // apply https proxy setting: prefer environment variable or fall back to preferences value
@@ -556,7 +775,6 @@ LammpsGui::LammpsGui(QWidget *parent, const QString &filename, int width, int he
 
 LammpsGui::~LammpsGui()
 {
-    delete ui;
     delete highlighter;
     delete capturer;
     delete status;
@@ -572,9 +790,9 @@ LammpsGui::~LammpsGui()
 void LammpsGui::new_document()
 {
     current_file.clear();
-    ui->textEdit->document()->setPlainText(citeme);
-    ui->textEdit->document()->setModified(false);
-    ui->textEdit->setStyleSheet(bannerstyle);
+    textEdit->document()->setPlainText(citeme);
+    textEdit->document()->setModified(false);
+    textEdit->setStyleSheet(bannerstyle);
 
     if (lammps.is_running()) {
         stop_run();
@@ -726,40 +944,40 @@ void LammpsGui::update_recents(const QString &filename)
     else
         settings.remove("recent");
 
-    ui->action_1->setVisible(false);
+    recentActions[0]->setVisible(false);
     if ((!recent.empty()) && !recent[0].isEmpty()) {
         QFileInfo fi(recent[0]);
-        ui->action_1->setText(QString("&1. ") + fi.fileName());
-        ui->action_1->setData(recent[0]);
-        ui->action_1->setVisible(true);
+        recentActions[0]->setText(QString("&1. ") + fi.fileName());
+        recentActions[0]->setData(recent[0]);
+        recentActions[0]->setVisible(true);
     }
-    ui->action_2->setVisible(false);
+    recentActions[1]->setVisible(false);
     if ((recent.size() > 1) && !recent[1].isEmpty()) {
         QFileInfo fi(recent[1]);
-        ui->action_2->setText(QString("&2. ") + fi.fileName());
-        ui->action_2->setData(recent[1]);
-        ui->action_2->setVisible(true);
+        recentActions[1]->setText(QString("&2. ") + fi.fileName());
+        recentActions[1]->setData(recent[1]);
+        recentActions[1]->setVisible(true);
     }
-    ui->action_3->setVisible(false);
+    recentActions[2]->setVisible(false);
     if ((recent.size() > 2) && !recent[2].isEmpty()) {
         QFileInfo fi(recent[2]);
-        ui->action_3->setText(QString("&3. ") + fi.fileName());
-        ui->action_3->setData(recent[2]);
-        ui->action_3->setVisible(true);
+        recentActions[2]->setText(QString("&3. ") + fi.fileName());
+        recentActions[2]->setData(recent[2]);
+        recentActions[2]->setVisible(true);
     }
-    ui->action_4->setVisible(false);
+    recentActions[3]->setVisible(false);
     if ((recent.size() > 3) && !recent[3].isEmpty()) {
         QFileInfo fi(recent[3]);
-        ui->action_4->setText(QString("&4. ") + fi.fileName());
-        ui->action_4->setData(recent[3]);
-        ui->action_4->setVisible(true);
+        recentActions[3]->setText(QString("&4. ") + fi.fileName());
+        recentActions[3]->setData(recent[3]);
+        recentActions[3]->setVisible(true);
     }
-    ui->action_5->setVisible(false);
+    recentActions[4]->setVisible(false);
     if ((recent.size() > 4) && !recent[4].isEmpty()) {
         QFileInfo fi(recent[4]);
-        ui->action_5->setText(QString("&5. ") + fi.fileName());
-        ui->action_5->setData(recent[4]);
-        ui->action_5->setVisible(true);
+        recentActions[4]->setText(QString("&5. ") + fi.fileName());
+        recentActions[4]->setData(recent[4]);
+        recentActions[4]->setVisible(true);
     }
 }
 
@@ -779,7 +997,7 @@ void LammpsGui::clear_variables()
 
 void LammpsGui::update_variables()
 {
-    const auto doc = ui->textEdit->toPlainText().replace('\t', ' ').split('\n');
+    const auto doc = textEdit->toPlainText().replace('\t', ' ').split('\n');
     QStringList known;
     QRegularExpression indexvar(R"(^\s*variable\s+(\w+)\s+index\s+(.*))");
     QRegularExpression anyvar(R"(^\s*variable\s+(\w+)\s+(\w+)\s+(.*))");
@@ -861,8 +1079,8 @@ void LammpsGui::open_file(const QString &fileName)
     restore_stdout();
 
     purge_inspect_list();
-    ui->textEdit->setStyleSheet("");
-    if (ui->textEdit->document()->isModified()) {
+    textEdit->setStyleSheet("");
+    if (textEdit->document()->isModified()) {
         QMessageBox msg;
         msg.setWindowTitle("Unsaved Changes");
         msg.setWindowIcon(windowIcon());
@@ -893,7 +1111,7 @@ void LammpsGui::open_file(const QString &fileName)
                 break;
         }
     }
-    ui->textEdit->setHighlight(CodeEditor::NO_HIGHLIGHT, false);
+    textEdit->setHighlight(CodeEditor::NO_HIGHLIGHT, false);
 
     QFileInfo path(fileName);
     current_file = path.fileName();
@@ -906,26 +1124,26 @@ void LammpsGui::open_file(const QString &fileName)
     if (!file.open(QIODevice::ReadOnly | QFile::Text)) {
         warning(this, "LAMMPS-GUI Warning", "Cannot open file " + path.absoluteFilePath() + ":",
                 file.errorString() + "\n\nWill create new file on saving editor buffer.");
-        ui->textEdit->document()->clear();
-        ui->textEdit->document()->setPlainText(citeme);
-        ui->textEdit->document()->setModified(false);
-        ui->textEdit->setStyleSheet(bannerstyle);
+        textEdit->document()->clear();
+        textEdit->document()->setPlainText(citeme);
+        textEdit->document()->setModified(false);
+        textEdit->setStyleSheet(bannerstyle);
     } else {
         QTextStream in(&file);
         QString text = in.readAll();
-        ui->textEdit->document()->clear();
-        ui->textEdit->document()->setPlainText(text);
-        ui->textEdit->moveCursor(QTextCursor::Start, QTextCursor::MoveAnchor);
+        textEdit->document()->clear();
+        textEdit->document()->setPlainText(text);
+        textEdit->moveCursor(QTextCursor::Start, QTextCursor::MoveAnchor);
         file.close();
     }
     setWindowTitle(QString("LAMMPS-GUI - Editor - " + current_file));
     run_counter = 0;
-    ui->textEdit->document()->setModified(false);
-    ui->textEdit->setGroupList();
-    ui->textEdit->setVarNameList();
-    ui->textEdit->setComputeIDList();
-    ui->textEdit->setFixIDList();
-    ui->textEdit->setFileList();
+    textEdit->document()->setModified(false);
+    textEdit->setGroupList();
+    textEdit->setVarNameList();
+    textEdit->setComputeIDList();
+    textEdit->setFixIDList();
+    textEdit->setFileList();
     dirstatus->setText(QString(" Directory: ") + current_dir);
     status->setText("Ready.");
     cpuuse->hide();
@@ -1095,14 +1313,14 @@ void LammpsGui::write_file(const QString &fileName)
     update_recents(path.absoluteFilePath());
 
     QTextStream out(&file);
-    QString text = ui->textEdit->toPlainText();
+    QString text = textEdit->toPlainText();
     out << text;
     if (text.back().toLatin1() != '\n') out << "\n"; // add final newline if missing
     file.close();
     dirstatus->setText(QString(" Directory: ") + current_dir);
     // update list of files for completion since we may have changed the working directory
-    ui->textEdit->setFileList();
-    ui->textEdit->document()->setModified(false);
+    textEdit->setFileList();
+    textEdit->document()->setModified(false);
 }
 
 void LammpsGui::save()
@@ -1140,7 +1358,7 @@ void LammpsGui::quit()
     lammps.finalize();
 
     autoSave();
-    if (ui->textEdit->document()->isModified()) {
+    if (textEdit->document()->isModified()) {
         QMessageBox msg;
         msg.setWindowTitle("Unsaved Changes");
         msg.setWindowIcon(windowIcon());
@@ -1192,32 +1410,32 @@ void LammpsGui::quit()
 void LammpsGui::copy()
 {
 #if QT_CONFIG(clipboard)
-    ui->textEdit->copy();
+    textEdit->copy();
 #endif
 }
 
 void LammpsGui::cut()
 {
 #if QT_CONFIG(clipboard)
-    ui->textEdit->cut();
+    textEdit->cut();
 #endif
 }
 
 void LammpsGui::paste()
 {
 #if QT_CONFIG(clipboard)
-    ui->textEdit->paste();
+    textEdit->paste();
 #endif
 }
 
 void LammpsGui::undo()
 {
-    ui->textEdit->undo();
+    textEdit->undo();
 }
 
 void LammpsGui::redo()
 {
-    ui->textEdit->redo();
+    textEdit->redo();
 }
 
 void LammpsGui::stop_run()
@@ -1262,7 +1480,7 @@ void LammpsGui::logupdate()
         void *ptr = lammps.last_thermo("line", 0);
         if (ptr) {
             nline = *((int *)ptr);
-            ui->textEdit->setHighlight(nline, false);
+            textEdit->setHighlight(nline, false);
         }
 
         if (varwindow) {
@@ -1386,8 +1604,8 @@ void LammpsGui::modified()
 {
     const QString modflag(" - *modified*");
     auto title = windowTitle().remove(modflag);
-    if (ui->textEdit->document()->isModified()) {
-        ui->textEdit->setStyleSheet("");
+    if (textEdit->document()->isModified()) {
+        textEdit->setStyleSheet("");
         setWindowTitle(title + modflag);
     } else
         setWindowTitle(title);
@@ -1401,7 +1619,7 @@ void LammpsGui::run_done()
         logupdater = nullptr;
     }
     progress->setValue(1000);
-    ui->textEdit->setHighlight(CodeEditor::NO_HIGHLIGHT, false);
+    textEdit->setHighlight(CodeEditor::NO_HIGHLIGHT, false);
 
     capturer->EndCapture();
 
@@ -1488,12 +1706,12 @@ void LammpsGui::run_done()
         cpuuse->setText("   0%CPU");
     } else {
         status->setText("Failed.");
-        ui->textEdit->setHighlight(nline, true);
+        textEdit->setHighlight(nline, true);
         critical(this, "LAMMPS-GUI Error", "<p>Error running LAMMPS:</p>",
                  QString("<p><pre>%1</pre></p>").arg(errorbuf));
     }
-    ui->textEdit->setCursor(nline);
-    ui->textEdit->setFileList();
+    textEdit->setCursor(nline);
+    textEdit->setFileList();
     progress->hide();
     cpuuse->hide();
     dirstatus->show();
@@ -1519,7 +1737,7 @@ void LammpsGui::do_run(bool use_buffer)
 
     purge_inspect_list();
     autoSave();
-    if (!use_buffer && ui->textEdit->document()->isModified()) {
+    if (!use_buffer && textEdit->document()->isModified()) {
         QMessageBox msg;
         msg.setWindowTitle("Unsaved Changes");
         msg.setWindowIcon(windowIcon());
@@ -1579,7 +1797,7 @@ void LammpsGui::do_run(bool use_buffer)
     lammps.command(std::string("variable gui_run index " + std::to_string(run_counter)));
     if (use_buffer) {
         // always add final newline since the text edit widget does not do it
-        char *input = mystrdup(ui->textEdit->toPlainText() + "\n");
+        char *input = mystrdup(textEdit->toPlainText() + "\n");
         runner->setup_run(&lammps, input, nullptr);
     } else {
         char *fname = mystrdup(current_file);
@@ -1657,16 +1875,16 @@ void LammpsGui::render_image()
             // so we select the input from the start to the first run or minimize command
             // add a run 0 and thus create the state of the initial system without running.
             // this will allow us to create a snapshot image.
-            auto saved = ui->textEdit->textCursor();
-            if (ui->textEdit->find(
+            auto saved = textEdit->textCursor();
+            if (textEdit->find(
                     QRegularExpression(QStringLiteral(R"(^\s*(run|minimize)\s+)")))) {
-                auto cursor = ui->textEdit->textCursor();
+                auto cursor = textEdit->textCursor();
                 cursor.movePosition(QTextCursor::PreviousBlock);
                 cursor.movePosition(QTextCursor::EndOfLine);
                 cursor.movePosition(QTextCursor::Start, QTextCursor::KeepAnchor);
                 auto selection = cursor.selectedText().replace(QChar(0x2029), '\n');
                 selection += "\nrun 0 pre yes post no";
-                ui->textEdit->setTextCursor(saved);
+                textEdit->setTextCursor(saved);
                 silence_stdout();
                 lammps.command("clear");
                 clear_variables();
@@ -1691,7 +1909,7 @@ void LammpsGui::render_image()
                         "Cannot create snapshot image from an input not creating a system box");
                 return;
             }
-            ui->textEdit->setTextCursor(saved);
+            textEdit->setTextCursor(saved);
         }
         // if configured, delete old image window before opening new one
         if (QSettings().value("imagereplace", true).toBool()) delete imagewindow;
@@ -1784,7 +2002,7 @@ void LammpsGui::autoSave()
     // no need to auto-save, if the document has no name or is not modified.
     QString fileName = current_file;
     if (fileName.isEmpty()) return;
-    if (!ui->textEdit->document()->isModified()) return;
+    if (!textEdit->document()->isModified()) return;
 
     // check preference
     bool autosave = false;
@@ -1799,15 +2017,15 @@ void LammpsGui::autoSave()
 void LammpsGui::setFont(const QFont &newfont)
 {
     QMainWindow::setFont(newfont);
-    if (ui) {
-        ui->textEdit->setFont(newfont);
-        ui->menubar->setFont(newfont);
-        ui->menuFile->setFont(newfont);
-        ui->menuEdit->setFont(newfont);
-        ui->menu_Run->setFont(newfont);
-        ui->menu_Tutorial->setFont(newfont);
-        ui->menuAbout->setFont(newfont);
-        ui->menu_View->setFont(newfont);
+    if (textEdit) {
+        textEdit->setFont(newfont);
+        menubar->setFont(newfont);
+        menuFile->setFont(newfont);
+        menuEdit->setFont(newfont);
+        menuRun->setFont(newfont);
+        menuTutorial->setFont(newfont);
+        menuAbout->setFont(newfont);
+        menuView->setFont(newfont);
     }
 }
 
@@ -2264,7 +2482,7 @@ void LammpsGui::edit_variables()
 
 void LammpsGui::findandreplace()
 {
-    FindAndReplace find(ui->textEdit, this);
+    FindAndReplace find(textEdit, this);
     find.setFont(font());
     find.setObjectName("find");
     find.exec();
@@ -2316,8 +2534,8 @@ void LammpsGui::preferences()
         }
         if (imagewindow) imagewindow->createImage();
         settings.beginGroup("reformat");
-        ui->textEdit->setReformatOnReturn(settings.value("return", false).toBool());
-        ui->textEdit->setAutoComplete(settings.value("automatic", true).toBool());
+        textEdit->setReformatOnReturn(settings.value("return", false).toBool());
+        textEdit->setAutoComplete(settings.value("automatic", true).toBool());
         settings.endGroup();
     }
 }

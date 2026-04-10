@@ -33,21 +33,20 @@
 
 // forward declarations
 
+class QAction;
 class QFont;
 class QLabel;
+class QMenu;
+class QMenuBar;
 class QPlainTextEdit;
 class QProgressBar;
+class QStatusBar;
 class QTimer;
 class QWidget;
 class QWizardPage;
 
-QT_BEGIN_NAMESPACE
-namespace Ui {
-class LammpsGui;
-}
-QT_END_NAMESPACE
-
 class ChartWindow;
+class CodeEditor;
 class GeneralTab;
 class Highlighter;
 class ImageViewer;
@@ -335,10 +334,70 @@ private slots:
     /** @brief Reset settings to defaults */
     void defaults();
 
-protected:
-    Ui::LammpsGui *ui; ///< UI components generated from .ui file
-
 private:
+    /** @brief Create all menu actions, menus, and status bar */
+    void setupUi();
+
+    // Central widget
+    CodeEditor *textEdit;
+
+    // Menu bar and menus
+    QMenuBar *menubar;
+    QMenu *menuFile;
+    QMenu *menuEdit;
+    QMenu *menuRun;
+    QMenu *menuView;
+    QMenu *menuTutorial;
+    QMenu *menuAbout;
+    QStatusBar *statusbar;
+
+    // Actions - File menu
+    QAction *actionNew;
+    QAction *actionOpen;
+    QAction *actionView;
+    QAction *actionInspect;
+    QAction *actionSave;
+    QAction *actionSaveAs;
+    QAction *actionQuit;
+    QAction *recentActions[5]; ///< Recent file actions
+
+    // Actions - Edit menu
+    QAction *actionUndo;
+    QAction *actionRedo;
+    QAction *actionCopy;
+    QAction *actionCut;
+    QAction *actionPaste;
+    QAction *actionSearchAndReplace;
+    QAction *actionPreferences;
+    QAction *actionDefaults;
+
+    // Actions - Run menu
+    QAction *actionRunBuffer;
+    QAction *actionRunFile;
+    QAction *actionStopLAMMPS;
+    QAction *actionRestartLAMMPS;
+    QAction *actionSetVariables;
+    QAction *actionImage;
+    QAction *actionViewInOVITO;
+    QAction *actionViewInVMD;
+
+    // Actions - View menu
+    QAction *actionViewLogWindow;
+    QAction *actionViewGraphWindow;
+    QAction *actionViewImageWindow;
+    QAction *actionViewSlideShow;
+    QAction *actionViewVariableWindow;
+
+    // Actions - Tutorials menu
+    QAction *tutorialActions[8]; ///< Tutorial 1-8
+
+    // Actions - About menu
+    QAction *actionAboutLAMMPSGUI;
+    QAction *actionHelp;
+    QAction *actionHowto;
+    QAction *actionLAMMPSManual;
+    QAction *actionLAMMPSTutorial;
+
     Highlighter *highlighter; ///< Syntax highlighter for LAMMPS input
     StdCapture *capturer;     ///< Captures stdout/stderr from LAMMPS
     QLabel *status;           ///< Status bar label for general status

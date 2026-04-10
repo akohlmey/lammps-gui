@@ -16,7 +16,7 @@ option(BUILD_DOC "Build LAMMPS-GUI HTML documentation" ON)
 ##################################################################################
 
 # add automatic Qt infrastructure rules
-set(CMAKE_AUTOUIC ON)
+set(CMAKE_AUTOUIC OFF)
 set(CMAKE_AUTOMOC ON)
 set(CMAKE_AUTORCC ON)
 
@@ -78,7 +78,6 @@ if (NOT BUILD_DOC_ONLY)
     ${CMAKE_SOURCE_DIR}/src/main.cpp
     ${CMAKE_SOURCE_DIR}/src/lammpsgui.cpp
     ${CMAKE_SOURCE_DIR}/src/lammpsgui.h
-    ${CMAKE_SOURCE_DIR}/src/lammpsgui.ui
     ${CMAKE_SOURCE_DIR}/src/aboutdialog.cpp
     ${CMAKE_SOURCE_DIR}/src/aboutdialog.h
     ${CMAKE_SOURCE_DIR}/src/chartviewer.cpp

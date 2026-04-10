@@ -11,12 +11,12 @@
 
 #include "preferences.h"
 
+#include "codeeditor.h"
 #include "helpers.h"
 #include "lammpsgui.h"
 #include "lammpswrapper.h"
 #include "logwindow.h"
 #include "qaddon.h"
-#include "ui_lammpsgui.h"
 
 #include <QApplication>
 #include <QCheckBox>
@@ -405,7 +405,7 @@ void GeneralTab::updatefonts(const QFont &all, const QFont &text)
     auto *mainwidget = dynamic_cast<LammpsGui *>(get_main_widget());
     if (mainwidget) {
         mainwidget->setFont(all);
-        mainwidget->ui->textEdit->document()->setDefaultFont(text);
+        mainwidget->textEdit->document()->setDefaultFont(text);
         if (mainwidget->wizard) mainwidget->wizard->setFont(all);
         if (mainwidget->logwindow) mainwidget->logwindow->document()->setDefaultFont(text);
         if (mainwidget->varwindow) mainwidget->varwindow->setFont(text);
