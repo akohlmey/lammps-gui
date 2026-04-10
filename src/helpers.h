@@ -62,7 +62,7 @@ extern std::vector<std::string> splitLine(const std::string &text);
 
 /**
  * @brief Get pointer to the main LAMMPS-GUI widget
- * @return Pointer to the main widget (used for dialogs)
+ * @return Pointer to the main widget (used for dialogs and triggering actions)
  */
 extern class QWidget *getMainWidget();
 
