@@ -706,11 +706,15 @@ ChartViewer::ChartViewer(const QString &title, int _index, QWidget *parent) :
     yaxis->setTickCount(5);
     xaxis->setGridLineVisible(settings.value("grid", true).toBool());
     xaxis->setMinorGridLineVisible(settings.value("minorgrid", true).toBool());
+    xaxis->setMinorGridLineColor(QColor(192, 192, 192));
+    xaxis->setGridLineColor(QColor(160, 160, 160));
     xaxis->setMinorTickCount(4);
     yaxis->setMinorTickCount(4);
     yaxis->setTitleText(title);
     yaxis->setGridLineVisible(settings.value("grid", true).toBool());
     yaxis->setMinorGridLineVisible(settings.value("minorgrid", true).toBool());
+    yaxis->setMinorGridLineColor(QColor(192, 192, 192));
+    yaxis->setGridLineColor(QColor(160, 160, 160));
 
     series->setName(title);
     settings.endGroup();
