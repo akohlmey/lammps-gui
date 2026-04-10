@@ -54,10 +54,11 @@ public:
      *
      * @param url   The HTTPS URL to download from
      * @param file  The local file path to write to
-     * @param showDialog  Display a dialog with the downloaded URL and target file location while downloading
+     * @param showDialog  Display a dialog with the downloaded URL and target file location while
+     * downloading
      * @return true if the download completed successfully, false otherwise
      */
-    bool download(const QString &url, const QString &file, bool showDialog=false);
+    bool download(const QString &url, const QString &file, bool showDialog = false);
 
     /**
      * @brief Check if a website can be accessed over the network

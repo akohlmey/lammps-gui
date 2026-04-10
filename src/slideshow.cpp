@@ -557,7 +557,7 @@ void SlideShow::prev()
 void SlideShow::loop()
 {
     auto *button = qobject_cast<QPushButton *>(sender());
-    doLoop      = !doLoop;
+    doLoop       = !doLoop;
     button->setChecked(doLoop);
 }
 

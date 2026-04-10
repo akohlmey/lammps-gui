@@ -339,37 +339,37 @@ ImageViewer::ImageViewer(const QString &fileName, LammpsWrapper *_lammps, QWidge
 
     QSettings settings;
     settings.beginGroup("snapshot");
-    xsize       = settings.value("xsize", "600").toInt();
-    ysize       = settings.value("ysize", "600").toInt();
-    zoom        = settings.value("zoom", 1.0).toDouble();
-    hrot        = settings.value("hrot", 60).toInt();
-    vrot        = settings.value("vrot", 30).toInt();
-    shinyfactor = settings.value("shinystyle", true).toBool() ? SHINY_ON : SHINY_OFF;
-    vdwfactor   = settings.value("vdwstyle", false).toBool() ? VDW_ON : VDW_OFF;
-    autobond    = settings.value("autobond", false).toBool();
-    bondcutoff  = settings.value("bondcutoff", 1.6).toDouble();
-    showbox     = settings.value("box", true).toBool();
-    showsubbox  = false;
-    boxdiam     = settings.value("boxdiam", 0.025).toDouble();
-    subboxdiam  = boxdiam;
-    boxcolor    = settings.value("boxcolor", "yellow").toString();
-    showaxes    = settings.value("axes", false).toBool();
-    usessao     = settings.value("ssao", false).toBool();
-    antialias   = settings.value("antialias", false).toBool();
-    axeslen     = settings.value("axeslen", 0.5).toDouble();
-    axesdiam    = settings.value("axesdiam", 0.05).toDouble();
-    axestrans   = 1.0;
-    axesloc     = "yes"; // = "lowerleft"
-    boxtrans    = 1.0;
-    backcolor   = settings.value("backcolor", "black").toString();
-    backcolor2  = settings.value("backcolor2", "white").toString();
-    ssaoval     = 0.6;
-    atomcustom  = false;
-    atomtrans   = 1.0;
-    atomcolor   = settings.value("color", "type").toString();
-    atomdiam    = settings.value("diameter", "type").toString();
-    bondcolor   = settings.value("bondcolor", "atom").toString();
-    bonddiam    = settings.value("bonddiam", "type").toString();
+    xsize          = settings.value("xsize", "600").toInt();
+    ysize          = settings.value("ysize", "600").toInt();
+    zoom           = settings.value("zoom", 1.0).toDouble();
+    hrot           = settings.value("hrot", 60).toInt();
+    vrot           = settings.value("vrot", 30).toInt();
+    shinyfactor    = settings.value("shinystyle", true).toBool() ? SHINY_ON : SHINY_OFF;
+    vdwfactor      = settings.value("vdwstyle", false).toBool() ? VDW_ON : VDW_OFF;
+    autobond       = settings.value("autobond", false).toBool();
+    bondcutoff     = settings.value("bondcutoff", 1.6).toDouble();
+    showbox        = settings.value("box", true).toBool();
+    showsubbox     = false;
+    boxdiam        = settings.value("boxdiam", 0.025).toDouble();
+    subboxdiam     = boxdiam;
+    boxcolor       = settings.value("boxcolor", "yellow").toString();
+    showaxes       = settings.value("axes", false).toBool();
+    usessao        = settings.value("ssao", false).toBool();
+    antialias      = settings.value("antialias", false).toBool();
+    axeslen        = settings.value("axeslen", 0.5).toDouble();
+    axesdiam       = settings.value("axesdiam", 0.05).toDouble();
+    axestrans      = 1.0;
+    axesloc        = "yes"; // = "lowerleft"
+    boxtrans       = 1.0;
+    backcolor      = settings.value("backcolor", "black").toString();
+    backcolor2     = settings.value("backcolor2", "white").toString();
+    ssaoval        = 0.6;
+    atomcustom     = false;
+    atomtrans      = 1.0;
+    atomcolor      = settings.value("color", "type").toString();
+    atomdiam       = settings.value("diameter", "type").toString();
+    bondcolor      = settings.value("bondcolor", "atom").toString();
+    bonddiam       = settings.value("bonddiam", "type").toString();
     bodycolor      = "atom";
     ellipsoidcolor = "atom";
     linecolor      = "atom";
@@ -1866,7 +1866,7 @@ void ImageViewer::atomSettings()
     }
 
     showbodies = bodybutton->isChecked();
-    bodycolor = bcolor->currentText();
+    bodycolor  = bcolor->currentText();
     // diameter for body cylinders
     if (bdiam->hasAcceptableInput()) bodydiam = bdiam->text().toDouble();
     if (bcbutton->isChecked()) {
@@ -2668,8 +2668,7 @@ void ImageViewer::createImage()
     dumpcmd += QString(" axestrans %1").arg(axestrans);
     dumpcmd += QString(" boxtrans %1").arg(boxtrans);
     dumpcmd += QString(" atrans * %1").arg(atomtrans);
-    if (lammps->extractSetting("bond_flag") == 1)
-        dumpcmd += QString(" btrans * %1").arg(atomtrans);
+    if (lammps->extractSetting("bond_flag") == 1) dumpcmd += QString(" btrans * %1").arg(atomtrans);
 
     if (useelements) dumpcmd += blank + elements + blank + adiams + blank;
     if (usesigma) dumpcmd += blank + adiams + blank;

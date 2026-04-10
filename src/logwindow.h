@@ -90,10 +90,10 @@ protected:
     bool checkYaml();
 
 private:
-    QString filename;                ///< Path to log file
-    QString errorurl;                ///< URL of last detected error
-    FlagWarnings *warnings;          ///< Warning highlighter
-    QLabel *summary;                 ///< Summary label for warning count
+    QString filename;       ///< Path to log file
+    QString errorurl;       ///< URL of last detected error
+    FlagWarnings *warnings; ///< Warning highlighter
+    QLabel *summary;        ///< Summary label for warning count
 };
 
 #endif
