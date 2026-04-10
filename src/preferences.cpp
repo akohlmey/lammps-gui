@@ -17,6 +17,7 @@
 #include "lammpswrapper.h"
 #include "logwindow.h"
 #include "qaddon.h"
+#include "tutorialwizard.h"
 
 #include <QApplication>
 #include <QCheckBox>
