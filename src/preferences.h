@@ -96,6 +96,7 @@ public:
     explicit GeneralTab(QSettings *settings, LammpsWrapper *lammps, QWidget *parent = nullptr);
 
 private slots:
+    void downloadPlugin();
     void pluginPath();
     void newAllFont();
     void newTextFont();

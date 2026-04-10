@@ -18,6 +18,7 @@
 #include "logwindow.h"
 #include "qaddon.h"
 #include "tutorialwizard.h"
+#include "urldownloader.h"
 
 #include <QApplication>
 #include <QCheckBox>
@@ -43,6 +44,7 @@
 #include <QSettings>
 #include <QSpacerItem>
 #include <QSpinBox>
+#include <QStandardPaths>
 #include <QTabWidget>
 #include <QThread>
 #include <QVBoxLayout>
@@ -382,15 +384,21 @@ GeneralTab::GeneralTab(QSettings *_settings, LammpsWrapper *_lammps, QWidget *pa
     auto *pluginlabel = new QLabel("Path to LAMMPS Shared Library File:");
     auto *pluginedit =
         new QLineEdit(settings->value("plugin_path", "liblammpsplugin.so").toString());
-    auto *pluginbrowse = new QPushButton("&Browse...");
+    auto *plugindownload = new QPushButton("Download &LAMMPS shared library...");
+    auto *pluginbrowse   = new QPushButton("&Browse...");
+    plugindownload->setIcon(QIcon(":/icons/download-file.png"));
+    pluginbrowse->setIcon(QIcon(":/icons/document-open.png"));
+
     auto *pluginlayout = new QHBoxLayout;
     pluginedit->setObjectName("pluginedit");
     pluginlayout->addWidget(pluginedit);
     pluginlayout->addWidget(pluginbrowse);
 
+    connect(plugindownload, &QPushButton::released, this, &GeneralTab::downloadPlugin);
     connect(pluginbrowse, &QPushButton::released, this, &GeneralTab::pluginPath);
 
-    layout->addWidget(pluginlabel, nrow++, 0, 1, 2);
+    layout->addWidget(pluginlabel, nrow, 0);
+    layout->addWidget(plugindownload, nrow++, 1);
     layout->addLayout(pluginlayout, nrow++, 0, 1, 2);
 #endif
     layout->addWidget(new QHline, nrow++, 0, 1, 2);
@@ -464,6 +472,40 @@ void GeneralTab::newTextFont()
     settings->setValue("monofamily", new_font.family());
     settings->setValue("monosize", new_font.pointSize());
     settings->sync();
+}
+
+void GeneralTab::downloadPlugin()
+{
+    // set platform-specific library file name and config directory
+#if defined(Q_OS_MACOS)
+    const auto libName = "liblammps.0.dylib";
+#elif defined(Q_OS_WIN32)
+    const auto libName = "liblammps.dll";
+#else
+    const auto libName = "liblammps.so.0";
+#endif
+    // store in the same config directory where QSettings stores preferences
+    const auto configDir = QStandardPaths::writableLocation(QStandardPaths::AppConfigLocation);
+    if (configDir.isEmpty() || !QDir().mkpath(configDir)) {
+        critical(this, "LAMMPS-GUI Error", "Cannot determine configuration directory.",
+                 "Unable to create a writable directory in the user configuration "
+                 "folder for storing the downloaded LAMMPS shared library.");
+        return;
+    }
+    auto libPath = configDir + QDir::separator() + libName;
+    auto dlUrl   = QString("https://download.lammps.org/lammps-gui/%1").arg(libName);
+
+    URLDownloader downloader(this);
+    if (downloader.download(dlUrl, libPath, true)) {
+        auto canonical = QFileInfo(libPath).canonicalFilePath();
+        settings->setValue("plugin_path", canonical);
+        auto *field = findChild<QLineEdit *>("pluginedit");
+        if (field) field->setText(canonical);
+        settings->sync();
+
+        // ugly hack
+        qobject_cast<Preferences *>(parent()->parent()->parent())->setRelaunch(true);
+    }
 }
 
 void GeneralTab::pluginPath()

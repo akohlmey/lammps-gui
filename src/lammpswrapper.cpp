@@ -439,7 +439,7 @@ void LammpsWrapper::forceTimeout()
 void LammpsWrapper::close()
 {
 #if defined(LAMMPS_GUI_USE_PLUGIN)
-    if (lammps_handle) ((liblammpsplugin_t *)plugin_handle)->close(lammps_handle);
+    if (lammps_handle && plugin_handle) ((liblammpsplugin_t *)plugin_handle)->close(lammps_handle);
 #else
     if (lammps_handle) lammps_close(lammps_handle);
 #endif

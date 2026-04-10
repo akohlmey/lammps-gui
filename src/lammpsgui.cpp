@@ -388,12 +388,12 @@ LammpsGui::LammpsGui(QWidget *parent, const QString &filename, int width, int he
             }
         }
 
-        // No suitable plugin found automatically.  Show a dialog with three choices:
-        // 1) Exit LAMMPS-GUI
+        // No suitable plugin was found automatically.  Show a dialog with three choices:
+        // 1) Download a pre-compiled shared library from the LAMMPS webserver
+        // 2) Exit LAMMPS-GUI
         // 2) Browse the filesystem for a suitable shared library file
-        // 3) Download a pre-compiled shared library from the LAMMPS webserver
         while (pluginPath.isEmpty()) {
-            // remove key so we won't get stuck in a loop reading a bad file
+            // remove key for path to the plugin so we won't get stuck in a loop reading a bad file
             settings.remove("plugin_path");
 
             QMessageBox msgBox(this);
@@ -408,17 +408,19 @@ LammpsGui::LammpsGui(QWidget *parent, const QString &filename, int width, int he
                 "shared library file for your platform from the LAMMPS webserver, browse the "
                 "filesystem for a suitable LAMMPS library file, or exit LAMMPS-GUI now.</p>");
 
-            auto *exitBtn     = msgBox.addButton("Exit", QMessageBox::DestructiveRole);
-            auto *browseBtn   = msgBox.addButton("Browse Filesystem...", QMessageBox::AcceptRole);
-            auto *downloadBtn = msgBox.addButton("Download Library...", QMessageBox::ResetRole);
-            exitBtn->setIcon(QIcon(":/icons/application-exit.png"));
-            browseBtn->setIcon(QIcon(":/icons/document-open.png"));
+            auto *downloadBtn = msgBox.addButton("Download Library...", QMessageBox::ApplyRole);
             downloadBtn->setIcon(QIcon(":/icons/download-file.png"));
+            auto *browseBtn = msgBox.addButton("Browse Filesystem...", QMessageBox::AcceptRole);
+            browseBtn->setIcon(QIcon(":/icons/document-open.png"));
+            auto *exitBtn = msgBox.addButton("Exit", QMessageBox::NoRole);
+            exitBtn->setIcon(QIcon(":/icons/application-exit.png"));
+
             msgBox.setDefaultButton(downloadBtn);
             msgBox.setEscapeButton(exitBtn);
             msgBox.exec();
 
             if (msgBox.clickedButton() == exitBtn) {
+                // we cannot use QApplication::exit() here since we are still in the constructor
                 exit(1);
 
             } else if (msgBox.clickedButton() == browseBtn) {
@@ -440,6 +442,7 @@ LammpsGui::LammpsGui(QWidget *parent, const QString &filename, int width, int he
                     const char *path = mystrdup(QCoreApplication::applicationFilePath());
                     const char *arg0 = mystrdup(QCoreApplication::arguments().at(0));
                     execl(path, arg0, (char *)nullptr);
+                    // This should not happen...
                     critical(this, "LAMMPS-GUI Error", "Relaunching LAMMPS-GUI failed.",
                              "LAMMPS-GUI must be restarted to correctly load the selected "
                              "LAMMPS shared library. Click on 'Close' to exit.");
@@ -448,30 +451,28 @@ LammpsGui::LammpsGui(QWidget *parent, const QString &filename, int width, int he
                 // user cancelled file dialog -> loop back to show the dialog again
 
             } else if (msgBox.clickedButton() == downloadBtn) {
-                // determine platform-specific library file name and config directory
+                // set platform-specific library file name and config directory
 #if defined(Q_OS_MACOS)
-                const QString libName = "liblammps.0.dylib";
+                const auto libName = "liblammps.0.dylib";
 #elif defined(Q_OS_WIN32)
-                const QString libName = "liblammps.dll";
+                const auto libName = "liblammps.dll";
 #else
-                const QString libName = "liblammps.so.0";
+                const auto libName = "liblammps.so.0";
 #endif
                 // store in the same config directory where QSettings stores preferences
-                QString configDir =
+                const auto configDir =
                     QStandardPaths::writableLocation(QStandardPaths::AppConfigLocation);
                 if (configDir.isEmpty() || !QDir().mkpath(configDir)) {
                     critical(this, "LAMMPS-GUI Error", "Cannot determine configuration directory.",
-                             "Unable to create a directory for storing the "
-                             "downloaded LAMMPS shared library.");
+                             "Unable to create a writable directory in the user configuration "
+                             "folder for storing the downloaded LAMMPS shared library.");
                     continue;
                 }
-                QString libPath = configDir + QDir::separator() + libName;
-
-                QString downloadUrl =
-                    QString("https://download.lammps.org/lammps-gui/%1").arg(libName);
+                auto libPath = configDir + QDir::separator() + libName;
+                auto dlUrl   = QString("https://download.lammps.org/lammps-gui/%1").arg(libName);
 
                 URLDownloader downloader(this);
-                if (downloader.download(downloadUrl, libPath, true)) {
+                if (downloader.download(dlUrl, libPath, true)) {
                     // try loading the downloaded library
                     if (lammps.loadLib(libPath)) {
                         pluginPath = libPath;
@@ -481,6 +482,7 @@ LammpsGui::LammpsGui(QWidget *parent, const QString &filename, int width, int he
                         const char *path = mystrdup(QCoreApplication::applicationFilePath());
                         const char *arg0 = mystrdup(QCoreApplication::arguments().at(0));
                         execl(path, arg0, (char *)nullptr);
+                        // This should not happen...
                         critical(this, "LAMMPS-GUI Error", "Relaunching LAMMPS-GUI failed.",
                                  "LAMMPS-GUI must be restarted to correctly load the selected "
                                  "LAMMPS shared library. Click on 'Close' to exit.");
