@@ -2765,7 +2765,7 @@ void LammpsGui::setupTutorial(int tutno, const QString &dir, bool purgedir, bool
     progress->hide();
     dirstatus->show();
     status->repaint();
-    if (!first.isEmpty()) openFile(first);
+    if (!first.isEmpty()) openFile(dir + QDir::separator() + first);
 }
 
 // Local Variables:
