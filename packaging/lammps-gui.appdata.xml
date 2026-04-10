@@ -63,6 +63,10 @@
         - use Qt style naming conventions (camel case) throughout
         - move some more replicated functionality to helper functions
         - new class URLDownloader to replace downloading of files with LAMMPS' geturl command
+        - support downloading LAMMPS shared library from download.lammps.org if reset of not valid
+        - add button to download LAMMPS shared library from download.lammps.org to preferences
+        - support SHA-256 checksum validation from SHA256SUMS file, if available
+        - updated docs and copilot instructions
       </description>
     </release>
     <release version="1.12.0" timestamp="1774663229">
