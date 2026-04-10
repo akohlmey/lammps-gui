@@ -11,6 +11,7 @@
 
 #include "urldownloader.h"
 
+#include <QByteArray>
 #include <QDir>
 #include <QEventLoop>
 #include <QFile>
@@ -81,7 +82,11 @@ bool URLDownloader::download(const QString &url, const QString &file)
 
     // ensure parent directories exist
     QFileInfo fi(file);
-    QDir().mkpath(fi.absolutePath());
+    if (!QDir().mkpath(fi.absolutePath())) {
+        lastError = QString("Cannot create directory: %1").arg(fi.absolutePath());
+        reply->deleteLater();
+        return false;
+    }
 
     QFile outFile(file);
     if (!outFile.open(QIODevice::WriteOnly)) {
@@ -90,9 +95,14 @@ bool URLDownloader::download(const QString &url, const QString &file)
         return false;
     }
 
-    outFile.write(reply->readAll());
-    outFile.close();
+    QByteArray data = reply->readAll();
     reply->deleteLater();
+    if (outFile.write(data) != data.size()) {
+        lastError = QString("Failed to write data to file: %1").arg(file);
+        outFile.close();
+        return false;
+    }
+    outFile.close();
     return true;
 }
 

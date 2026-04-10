@@ -457,7 +457,13 @@ LammpsGui::LammpsGui(QWidget *parent, const QString &filename, int width, int he
                 // store in the same config directory where QSettings stores preferences
                 QString configDir =
                     QStandardPaths::writableLocation(QStandardPaths::AppConfigLocation);
-                QDir().mkpath(configDir);
+                if (configDir.isEmpty() || !QDir().mkpath(configDir)) {
+                    critical(this, "LAMMPS-GUI Error",
+                             "Cannot determine configuration directory.",
+                             "Unable to create a directory for storing the "
+                             "downloaded LAMMPS shared library.");
+                    continue;
+                }
                 QString libPath = configDir + QDir::separator() + libName;
 
                 QString downloadUrl =
