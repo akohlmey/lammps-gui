@@ -49,13 +49,15 @@ public:
      *
      * Performs a synchronous (blocking) download of the resource at \p url,
      * writing the result to the local file \p file.  Respects the configured
-     * HTTPS proxy setting.
+     * HTTPS proxy setting.  Optionally display a dialog with the downloaded
+     * URL and the location of the downloaded file.
      *
      * @param url   The HTTPS URL to download from
      * @param file  The local file path to write to
+     * @param showDialog  Display a dialog with the downloaded URL and target file location while downloading
      * @return true if the download completed successfully, false otherwise
      */
-    bool download(const QString &url, const QString &file);
+    bool download(const QString &url, const QString &file, bool showDialog=false);
 
     /**
      * @brief Check if a website can be accessed over the network

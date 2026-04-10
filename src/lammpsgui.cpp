@@ -398,21 +398,24 @@ LammpsGui::LammpsGui(QWidget *parent, const QString &filename, int width, int he
 
             QMessageBox msgBox(this);
             msgBox.setWindowTitle("LAMMPS-GUI - No LAMMPS Library");
+            msgBox.setWindowIcon(QIcon(":/icons/lammps-gui-icon-128x128.png"));
             msgBox.setIcon(QMessageBox::Warning);
             msgBox.setText("No suitable LAMMPS shared library found.");
             msgBox.setInformativeText(
-                "<p align=\"justify\">Either the shared library path has been reset, "
-                "the library file was not found, or the library failed to load.</p>"
-                "<p align=\"justify\">You may exit LAMMPS-GUI, browse the filesystem "
-                "for a suitable library file, or download a pre-compiled library from "
-                "the LAMMPS webserver.</p>");
+                "<p align=\"justify\">Either the shared library path has been reset, the "
+                "configured or default library file was not found, or the selected library failed "
+                "to load.</p><p align=\"justify\">You may either download a pre-compiled LAMMPS "
+                "shared library file for your platform from the LAMMPS webserver, browse the "
+                "filesystem for a suitable LAMMPS library file, or exit LAMMPS-GUI now.</p>");
 
-            auto *exitBtn = msgBox.addButton("Exit", QMessageBox::RejectRole);
-            auto *browseBtn =
-                msgBox.addButton("Browse Filesystem...", QMessageBox::ActionRole);
-            auto *downloadBtn =
-                msgBox.addButton("Download Library...", QMessageBox::AcceptRole);
+            auto *exitBtn     = msgBox.addButton("Exit", QMessageBox::DestructiveRole);
+            auto *browseBtn   = msgBox.addButton("Browse Filesystem...", QMessageBox::AcceptRole);
+            auto *downloadBtn = msgBox.addButton("Download Library...", QMessageBox::ResetRole);
+            exitBtn->setIcon(QIcon(":/icons/application-exit.png"));
+            browseBtn->setIcon(QIcon(":/icons/document-open.png"));
+            downloadBtn->setIcon(QIcon(":/icons/download-file.png"));
             msgBox.setDefaultButton(downloadBtn);
+            msgBox.setEscapeButton(exitBtn);
             msgBox.exec();
 
             if (msgBox.clickedButton() == exitBtn) {
@@ -429,8 +432,7 @@ LammpsGui::LammpsGui(QWidget *parent, const QString &filename, int width, int he
                 QString pluginfile = QFileDialog::getOpenFileName(
                     this, "Select LAMMPS shared library to use", ".", pattern, nullptr,
                     QFileDialog::DontResolveSymlinks | QFileDialog::ReadOnly);
-                if (!pluginfile.isEmpty() &&
-                    pluginfile.contains("liblammps", Qt::CaseSensitive)) {
+                if (!pluginfile.isEmpty() && pluginfile.contains("liblammps", Qt::CaseSensitive)) {
                     auto canonical = QFileInfo(pluginfile).canonicalFilePath();
                     settings.setValue("plugin_path", canonical);
                     settings.sync();
@@ -448,18 +450,17 @@ LammpsGui::LammpsGui(QWidget *parent, const QString &filename, int width, int he
             } else if (msgBox.clickedButton() == downloadBtn) {
                 // determine platform-specific library file name and config directory
 #if defined(Q_OS_MACOS)
-                const QString libName = "liblammps.dylib";
+                const QString libName = "liblammps.0.dylib";
 #elif defined(Q_OS_WIN32)
                 const QString libName = "liblammps.dll";
 #else
-                const QString libName = "liblammps.so";
+                const QString libName = "liblammps.so.0";
 #endif
                 // store in the same config directory where QSettings stores preferences
                 QString configDir =
                     QStandardPaths::writableLocation(QStandardPaths::AppConfigLocation);
                 if (configDir.isEmpty() || !QDir().mkpath(configDir)) {
-                    critical(this, "LAMMPS-GUI Error",
-                             "Cannot determine configuration directory.",
+                    critical(this, "LAMMPS-GUI Error", "Cannot determine configuration directory.",
                              "Unable to create a directory for storing the "
                              "downloaded LAMMPS shared library.");
                     continue;
@@ -470,7 +471,7 @@ LammpsGui::LammpsGui(QWidget *parent, const QString &filename, int width, int he
                     QString("https://download.lammps.org/lammps-gui/%1").arg(libName);
 
                 URLDownloader downloader(this);
-                if (downloader.download(downloadUrl, libPath)) {
+                if (downloader.download(downloadUrl, libPath, true)) {
                     // try loading the downloaded library
                     if (lammps.loadLib(libPath)) {
                         pluginPath = libPath;
@@ -484,8 +485,7 @@ LammpsGui::LammpsGui(QWidget *parent, const QString &filename, int width, int he
                                  "is not compatible with this system.</p>");
                     }
                 } else {
-                    critical(this, "LAMMPS-GUI Error",
-                             "Failed to download LAMMPS shared library.",
+                    critical(this, "LAMMPS-GUI Error", "Failed to download LAMMPS shared library.",
                              downloader.errorString());
                 }
             }
@@ -2670,8 +2670,8 @@ void LammpsGui::setupTutorial(int tutno, const QString &dir, bool purgedir, bool
     // must check for error after download, e.g. when there is no network.
     QString manifestPath = dir + QDir::separator() + ".manifest";
     if (!downloader.download(tutorialBaseUrl.arg(tutno).arg(".manifest"), manifestPath)) {
-        critical(this, "LAMMPS-GUI Error", "Tutorial files download error:",
-                 downloader.errorString());
+        critical(this, "LAMMPS-GUI Error",
+                 "Tutorial files download error:", downloader.errorString());
         return;
     }
 
@@ -2718,15 +2718,19 @@ void LammpsGui::setupTutorial(int tutno, const QString &dir, bool purgedir, bool
 
     for (const auto &item : downloads) {
         ++i;
+        status->setText(QString("Downloading file %1 of %2").arg(i).arg(num));
         progress->setValue((int)((double)i / ((double)num) * 1000.0));
+        status->repaint();
 
         QString localPath = dir + QDir::separator() + item.fname;
         if (!downloader.download(tutorialBaseUrl.arg(item.ntutorial).arg(item.fname), localPath)) {
             // download failed. abort, restore status line, and launch error dialog
+            status->setText("Error.");
             progress->hide();
             dirstatus->show();
-            critical(this, "LAMMPS-GUI Error", "Tutorial files download error:",
-                     downloader.errorString());
+            status->repaint();
+            critical(this, "LAMMPS-GUI Error",
+                     "Tutorial files download error:", downloader.errorString());
             return;
         }
 

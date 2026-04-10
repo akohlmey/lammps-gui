@@ -55,22 +55,24 @@ void URLDownloader::configureProxy()
     }
 }
 
-bool URLDownloader::download(const QString &url, const QString &file)
+bool URLDownloader::download(const QString &url, const QString &file, bool showDialog)
 {
     lastError.clear();
 
-    // show a temporary dialog while the download is in progress
     QDialog *dlg = nullptr;
-    if (parentWidget) {
-        dlg = new QDialog(parentWidget);
-        dlg->setWindowTitle("Downloading...");
-        dlg->setMinimumWidth(400);
-        auto *layout = new QVBoxLayout(dlg);
-        layout->addWidget(new QLabel(QString("<b>Downloading:</b><br>%1").arg(url)));
-        layout->addWidget(new QLabel(QString("<b>Saving to:</b><br>%1").arg(file)));
-        dlg->setLayout(layout);
-        dlg->show();
-        QCoreApplication::processEvents();
+    if (showDialog) {
+        // show a temporary dialog while the download is in progress
+        if (parentWidget) {
+            dlg = new QDialog(parentWidget);
+            dlg->setWindowTitle("Downloading...");
+            dlg->setMinimumWidth(400);
+            auto *layout = new QVBoxLayout(dlg);
+            layout->addWidget(new QLabel(QString("<b>Downloading:</b><br>%1").arg(url)));
+            layout->addWidget(new QLabel(QString("<b>Saving to:</b><br>%1").arg(file)));
+            dlg->setLayout(layout);
+            dlg->show();
+            QCoreApplication::processEvents();
+        }
     }
 
     QNetworkRequest request{QUrl(url)};
