@@ -477,12 +477,20 @@ LammpsGui::LammpsGui(QWidget *parent, const QString &filename, int width, int he
                         pluginPath = libPath;
                         settings.setValue("plugin_path", pluginPath);
                         settings.sync();
+                        // must re-launch LAMMPS-GUI to cleanly load the selected new plugin
+                        const char *path = mystrdup(QCoreApplication::applicationFilePath());
+                        const char *arg0 = mystrdup(QCoreApplication::arguments().at(0));
+                        execl(path, arg0, (char *)nullptr);
+                        critical(this, "LAMMPS-GUI Error", "Relaunching LAMMPS-GUI failed.",
+                                 "LAMMPS-GUI must be restarted to correctly load the selected "
+                                 "LAMMPS shared library. Click on 'Close' to exit.");
+                        exit(1);
                     } else {
                         QFile::remove(libPath);
                         critical(this, "LAMMPS-GUI Error",
                                  "Downloaded LAMMPS library could not be loaded.",
                                  "<p align=\"justify\">The downloaded shared library file "
-                                 "is not compatible with this system.</p>");
+                                 "does not seem to be compatible with this system.</p>");
                     }
                 } else {
                     critical(this, "LAMMPS-GUI Error", "Failed to download LAMMPS shared library.",
