@@ -349,9 +349,10 @@ void purgeDirectory(const QString &dir)
     const auto &entries = directory.entryList();
     for (const auto &entry : entries) {
         if (!directory.remove(entry)) {
-            directory.cd(entry);
-            directory.removeRecursively();
-            directory.cdUp();
+            if (directory.cd(entry)) {
+                directory.removeRecursively();
+                directory.cdUp();
+            }
         }
     }
 }
