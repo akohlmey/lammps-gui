@@ -73,13 +73,13 @@ if (NOT BUILD_DOC_ONLY)
 
   # check if Qt6.10 and QtGraphs are available unless we force using QtCharts
   if (NOT LAMMPS_GUI_USE_QTCHARTS)
-    find_package(Qt6 6.10 QUIET COMPONENTS Gui Widgets Graphs Quick QuickWidgets)
+    find_package(Qt6 6.10 QUIET COMPONENTS Gui Widgets Network Graphs Quick QuickWidgets)
     if(Qt6_FOUND)
       set(LAMMPS_GUI_USE_QTGRAPHS ON)
     endif()
   endif()
   if (NOT LAMMPS_GUI_USE_QTGRAPHS)
-    find_package(Qt6 6.2 REQUIRED COMPONENTS Gui Widgets Charts)
+    find_package(Qt6 6.2 REQUIRED COMPONENTS Gui Widgets Network Charts)
   endif()
   message(STATUS "Using Qt version ${Qt6_VERSION} for LAMMPS-GUI")
 
@@ -123,6 +123,8 @@ if (NOT BUILD_DOC_ONLY)
     ${CMAKE_SOURCE_DIR}/src/stdcapture.cpp
     ${CMAKE_SOURCE_DIR}/src/tutorialwizard.cpp
     ${CMAKE_SOURCE_DIR}/src/tutorialwizard.h
+    ${CMAKE_SOURCE_DIR}/src/urldownloader.cpp
+    ${CMAKE_SOURCE_DIR}/src/urldownloader.h
     ${PLUGIN_LOADER_SRC}
     ${ICON_RC_FILE}
   )
@@ -178,9 +180,9 @@ if (NOT BUILD_DOC_ONLY)
   target_compile_definitions(lammps-gui PRIVATE LAMMPS_GUI_VERSION="${PROJECT_VERSION}")
   if(LAMMPS_GUI_USE_QTGRAPHS)
     target_compile_definitions(lammps-gui PRIVATE LAMMPS_GUI_USE_QTGRAPHS)
-    target_link_libraries(lammps-gui PRIVATE Qt6::Gui Qt6::Widgets Qt6::Graphs Qt6::Quick Qt6::QuickWidgets)
+    target_link_libraries(lammps-gui PRIVATE Qt6::Gui Qt6::Widgets Qt6::Network Qt6::Graphs Qt6::Quick Qt6::QuickWidgets)
   else()
-    target_link_libraries(lammps-gui PRIVATE Qt6::Gui Qt6::Widgets Qt6::Charts)
+    target_link_libraries(lammps-gui PRIVATE Qt6::Gui Qt6::Widgets Qt6::Network Qt6::Charts)
   endif()
 
   ###################

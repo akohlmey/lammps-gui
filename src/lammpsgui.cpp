@@ -26,6 +26,7 @@
 #include "slideshow.h"
 #include "stdcapture.h"
 #include "tutorialwizard.h"
+#include "urldownloader.h"
 
 #include <QAction>
 #include <QApplication>
@@ -387,48 +388,108 @@ LammpsGui::LammpsGui(QWidget *parent, const QString &filename, int width, int he
             }
         }
 
-        // plugin path has been reset. Open file browser to select a file interactively.
-        if (pluginPath.isEmpty()) {
-#if defined(Q_OS_MACOS)
-            const QString pattern = "LAMMPS shared library (liblammps*.dylib)";
-#elif defined(Q_OS_WIN32)
-            const QString pattern = "LAMMPS shared library (liblammps*.dll)";
-#else
-            const QString pattern = "LAMMPS shared library (liblammps*.so*)";
-#endif
-            QString pluginfile = QFileDialog::getOpenFileName(
-                this, "Select LAMMPS shared library to use", ".", pattern, nullptr,
-                QFileDialog::DontResolveSymlinks | QFileDialog::ReadOnly);
-            if (!pluginfile.isEmpty() && pluginfile.contains("liblammps", Qt::CaseSensitive)) {
-                auto canonical = QFileInfo(pluginfile).canonicalFilePath();
-                settings.setValue("plugin_path", canonical);
-                settings.sync();
-                // must re-launch LAMMPS-GUI to cleanly load the selected new plugin
-                // without overlaps from other load attempts
-                const char *path = mystrdup(QCoreApplication::applicationFilePath());
-                const char *arg0 = mystrdup(QCoreApplication::arguments().at(0));
-                execl(path, arg0, (char *)nullptr);
-                critical(this, "LAMMPS-GUI Error", "Relaunching LAMMPS-GUI failed.",
-                         "LAMMPS-GUI must be restarted to correctly load the selected "
-                         "LAMMPS shared library. Click on 'Close' to exit.");
-                exit(1);
-            }
-        }
-
-        // pluginPath was not changed interactively and not suitable plugin exists.
-        // print warning dialog and exit.
-        if (pluginPath.isEmpty()) {
+        // No suitable plugin found automatically.  Show a dialog with three choices:
+        // 1) Exit LAMMPS-GUI
+        // 2) Browse the filesystem for a suitable shared library file
+        // 3) Download a pre-compiled shared library from the LAMMPS webserver
+        while (pluginPath.isEmpty()) {
             // remove key so we won't get stuck in a loop reading a bad file
             settings.remove("plugin_path");
-            critical(this, "LAMMPS-GUI Error", "No suitable LAMMPS shared library file loaded.",
-                     "<p align=\"justify\">Either no LAMMPS shared library file has been "
-                     "selected, or no compatible LAMMPS shared library file path has been "
-                     "provided, or the provided path has a file with an incompatible LAMMPS "
-                     "version, or some dependent shared library files are not found.</p>"
-                     "<p align=\"justify\">Please try again and either use the -p command line "
-                     "flag to specify a path to a suitable LAMMPS shared library file or select "
-                     "one from the file browser dialog.");
-            exit(1);
+
+            QMessageBox msgBox(this);
+            msgBox.setWindowTitle("LAMMPS-GUI - No LAMMPS Library");
+            msgBox.setIcon(QMessageBox::Warning);
+            msgBox.setText("No suitable LAMMPS shared library found.");
+            msgBox.setInformativeText(
+                "<p align=\"justify\">Either the shared library path has been reset, "
+                "the library file was not found, or the library failed to load.</p>"
+                "<p align=\"justify\">You may exit LAMMPS-GUI, browse the filesystem "
+                "for a suitable library file, or download a pre-compiled library from "
+                "the LAMMPS webserver.</p>");
+
+            auto *exitBtn = msgBox.addButton("Exit", QMessageBox::RejectRole);
+            auto *browseBtn =
+                msgBox.addButton("Browse Filesystem...", QMessageBox::ActionRole);
+            auto *downloadBtn =
+                msgBox.addButton("Download Library...", QMessageBox::AcceptRole);
+            msgBox.setDefaultButton(downloadBtn);
+            msgBox.exec();
+
+            if (msgBox.clickedButton() == exitBtn) {
+                exit(1);
+
+            } else if (msgBox.clickedButton() == browseBtn) {
+#if defined(Q_OS_MACOS)
+                const QString pattern = "LAMMPS shared library (liblammps*.dylib)";
+#elif defined(Q_OS_WIN32)
+                const QString pattern = "LAMMPS shared library (liblammps*.dll)";
+#else
+                const QString pattern = "LAMMPS shared library (liblammps*.so*)";
+#endif
+                QString pluginfile = QFileDialog::getOpenFileName(
+                    this, "Select LAMMPS shared library to use", ".", pattern, nullptr,
+                    QFileDialog::DontResolveSymlinks | QFileDialog::ReadOnly);
+                if (!pluginfile.isEmpty() &&
+                    pluginfile.contains("liblammps", Qt::CaseSensitive)) {
+                    auto canonical = QFileInfo(pluginfile).canonicalFilePath();
+                    settings.setValue("plugin_path", canonical);
+                    settings.sync();
+                    // must re-launch LAMMPS-GUI to cleanly load the selected new plugin
+                    const char *path = mystrdup(QCoreApplication::applicationFilePath());
+                    const char *arg0 = mystrdup(QCoreApplication::arguments().at(0));
+                    execl(path, arg0, (char *)nullptr);
+                    critical(this, "LAMMPS-GUI Error", "Relaunching LAMMPS-GUI failed.",
+                             "LAMMPS-GUI must be restarted to correctly load the selected "
+                             "LAMMPS shared library. Click on 'Close' to exit.");
+                    exit(1);
+                }
+                // user cancelled file dialog -> loop back to show the dialog again
+
+            } else if (msgBox.clickedButton() == downloadBtn) {
+                // determine platform-specific library file name and config directory
+#if defined(Q_OS_MACOS)
+                const QString libName = "liblammps.dylib";
+#elif defined(Q_OS_WIN32)
+                const QString libName = "liblammps.dll";
+#else
+                const QString libName = "liblammps.so";
+#endif
+                // store in the same config directory where QSettings stores preferences
+                QString configDir =
+                    QStandardPaths::writableLocation(QStandardPaths::AppConfigLocation);
+                QDir().mkpath(configDir);
+                QString libPath = configDir + QDir::separator() + libName;
+
+                QString downloadUrl =
+                    QString("https://download.lammps.org/lammps-gui/%1").arg(libName);
+
+                status->setText("Downloading LAMMPS shared library...");
+                status->repaint();
+
+                URLDownloader downloader(this);
+                if (downloader.download(downloadUrl, libPath)) {
+                    // try loading the downloaded library
+                    if (lammps.loadLib(libPath)) {
+                        pluginPath = libPath;
+                        settings.setValue("plugin_path", pluginPath);
+                        settings.sync();
+                        status->setText("Ready.");
+                        status->repaint();
+                    } else {
+                        QFile::remove(libPath);
+                        critical(this, "LAMMPS-GUI Error",
+                                 "Downloaded LAMMPS library could not be loaded.",
+                                 "<p align=\"justify\">The downloaded shared library file "
+                                 "is not compatible with this system.</p>");
+                    }
+                } else {
+                    critical(this, "LAMMPS-GUI Error",
+                             "Failed to download LAMMPS shared library.",
+                             downloader.errorString());
+                }
+                status->setText("Ready.");
+                status->repaint();
+            }
         }
     }
 #endif
@@ -2556,23 +2617,14 @@ bool LammpsGui::eventFilter(QObject *watched, QEvent *event)
     return QWidget::eventFilter(watched, event);
 }
 
-// LAMMPS geturl command template with current location of the input and solution files on the web
-static const QString geturl =
-    "geturl https://raw.githubusercontent.com/lammpstutorials/"
-    "lammpstutorials-article/refs/heads/main/files/tutorial%1/%2 output %2 verify no";
+// Base URL for tutorial input and solution files on the web
+static const QString tutorialBaseUrl =
+    "https://raw.githubusercontent.com/lammpstutorials/"
+    "lammpstutorials-article/refs/heads/main/files/tutorial%1/%2";
 
 void LammpsGui::setupTutorial(int tutno, const QString &dir, bool purgedir, bool getsolution,
                               bool openwebpage)
 {
-    char errorbuf[DEFAULT_BUFLEN];
-
-    if (!lammps.configHasCurlSupport()) {
-        critical(this, "LAMMPS-GUI Error", "Failed to download tutorial files",
-                 "<p align=\"center\">LAMMPS must be compiled with libcurl to support downloading "
-                 "files</p>");
-        return;
-    }
-
     QDir directory(dir);
     directory.cd(dir);
 
@@ -2613,25 +2665,18 @@ void LammpsGui::setupTutorial(int tutno, const QString &dir, bool purgedir, bool
     if (purgedir) purgeDirectory(dir);
     if (getsolution) directory.mkpath("solution");
 
-    startLammps();
-    lammps.command("clear");
-    lammps.command(QString("shell cd '%1'").arg(dir));
-
-    // apply https proxy setting: prefer environment variable or fall back to preferences value
-    auto https_proxy = QString::fromLocal8Bit(qgetenv("https_proxy"));
-    if (https_proxy.isEmpty()) https_proxy = QSettings().value("https_proxy", "").toString();
-    if (!https_proxy.isEmpty()) lammps.command(QString("shell putenv https_proxy=") + https_proxy);
+    URLDownloader downloader(this);
 
     // download and process manifest for selected tutorial
     // must check for error after download, e.g. when there is no network.
-    lammps.command(geturl.arg(tutno).arg(".manifest"));
-    if (lammps.hasError()) {
-        lammps.getLastErrorMessage(errorbuf, DEFAULT_BUFLEN);
-        critical(this, "LAMMPS-GUI Error", "Tutorial files download error:", QString(errorbuf));
+    QString manifestPath = dir + QDir::separator() + ".manifest";
+    if (!downloader.download(tutorialBaseUrl.arg(tutno).arg(".manifest"), manifestPath)) {
+        critical(this, "LAMMPS-GUI Error", "Tutorial files download error:",
+                 downloader.errorString());
         return;
     }
 
-    QFile manifest(".manifest");
+    QFile manifest(manifestPath);
     QString line, first;
     struct DownloadItem {
         DownloadItem(int _n, const QString &_f) : ntutorial(_n), fname(_f) {}
@@ -2677,37 +2722,33 @@ void LammpsGui::setupTutorial(int tutno, const QString &dir, bool purgedir, bool
         status->setText(QString("Downloading file %1 of %2").arg(i).arg(num));
         progress->setValue((int)((double)i / ((double)num) * 1000.0));
         status->repaint();
-        lammps.command(geturl.arg(item.ntutorial).arg(item.fname));
 
-        // download failed. abort, restore status line, and launch error dialog
-        if (lammps.hasError()) {
+        QString localPath = dir + QDir::separator() + item.fname;
+        if (!downloader.download(tutorialBaseUrl.arg(item.ntutorial).arg(item.fname), localPath)) {
+            // download failed. abort, restore status line, and launch error dialog
             status->setText("Error.");
             progress->hide();
             dirstatus->show();
             status->repaint();
-            lammps.getLastErrorMessage(errorbuf, DEFAULT_BUFLEN);
-            critical(this, "LAMMPS-GUI Error", "Tutorial files download error:", QString(errorbuf));
+            critical(this, "LAMMPS-GUI Error", "Tutorial files download error:",
+                     downloader.errorString());
             return;
         }
 
         // check if download is a placeholder for a symbolic link and make a copy instead.
-        QFile dlfile(item.fname);
-        QFileInfo dlpath(item.fname);
+        QFile dlfile(localPath);
+        QFileInfo dlpath(localPath);
         if (dlfile.open(QIODevice::ReadOnly)) {
             line = (const char *)dlfile.readLine();
             line = line.trimmed();
             dlfile.close();
 
-#if defined(_WIN32)
-            if (line == QString("../") + dlpath.fileName())
-                // must replace "/" path separator with "\" on Windows
-                lammps.command(QString("shell copy /y %1 %2")
-                                   .arg(dlpath.fileName())
-                                   .arg(QString(item.fname).replace('/', '\\')));
-#else
-            if (line == QString("../") + dlpath.fileName())
-                lammps.command(QString("shell cp -f %1 %2").arg(dlpath.fileName()).arg(item.fname));
-#endif
+            if (line == QString("../") + dlpath.fileName()) {
+                // the file is a symbolic link placeholder: copy the referenced file instead
+                QString srcFile = dir + QDir::separator() + dlpath.fileName();
+                QFile::remove(localPath);
+                QFile::copy(srcFile, localPath);
+            }
         }
     }
     progress->setValue(1000);
