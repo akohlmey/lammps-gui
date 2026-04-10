@@ -469,9 +469,6 @@ LammpsGui::LammpsGui(QWidget *parent, const QString &filename, int width, int he
                 QString downloadUrl =
                     QString("https://download.lammps.org/lammps-gui/%1").arg(libName);
 
-                status->setText("Downloading LAMMPS shared library...");
-                status->repaint();
-
                 URLDownloader downloader(this);
                 if (downloader.download(downloadUrl, libPath)) {
                     // try loading the downloaded library
@@ -479,8 +476,6 @@ LammpsGui::LammpsGui(QWidget *parent, const QString &filename, int width, int he
                         pluginPath = libPath;
                         settings.setValue("plugin_path", pluginPath);
                         settings.sync();
-                        status->setText("Ready.");
-                        status->repaint();
                     } else {
                         QFile::remove(libPath);
                         critical(this, "LAMMPS-GUI Error",
@@ -493,8 +488,6 @@ LammpsGui::LammpsGui(QWidget *parent, const QString &filename, int width, int he
                              "Failed to download LAMMPS shared library.",
                              downloader.errorString());
                 }
-                status->setText("Ready.");
-                status->repaint();
             }
         }
     }
@@ -2725,17 +2718,13 @@ void LammpsGui::setupTutorial(int tutno, const QString &dir, bool purgedir, bool
 
     for (const auto &item : downloads) {
         ++i;
-        status->setText(QString("Downloading file %1 of %2").arg(i).arg(num));
         progress->setValue((int)((double)i / ((double)num) * 1000.0));
-        status->repaint();
 
         QString localPath = dir + QDir::separator() + item.fname;
         if (!downloader.download(tutorialBaseUrl.arg(item.ntutorial).arg(item.fname), localPath)) {
             // download failed. abort, restore status line, and launch error dialog
-            status->setText("Error.");
             progress->hide();
             dirstatus->show();
-            status->repaint();
             critical(this, "LAMMPS-GUI Error", "Tutorial files download error:",
                      downloader.errorString());
             return;

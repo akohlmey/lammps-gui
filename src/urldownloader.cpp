@@ -12,15 +12,19 @@
 #include "urldownloader.h"
 
 #include <QByteArray>
+#include <QCoreApplication>
+#include <QDialog>
 #include <QDir>
 #include <QEventLoop>
 #include <QFile>
+#include <QLabel>
 #include <QNetworkAccessManager>
 #include <QNetworkProxy>
 #include <QNetworkReply>
 #include <QNetworkRequest>
 #include <QSettings>
 #include <QUrl>
+#include <QVBoxLayout>
 
 URLDownloader::URLDownloader(QWidget *parent) :
     manager(new QNetworkAccessManager), parentWidget(parent)
@@ -55,6 +59,20 @@ bool URLDownloader::download(const QString &url, const QString &file)
 {
     lastError.clear();
 
+    // show a temporary dialog while the download is in progress
+    QDialog *dlg = nullptr;
+    if (parentWidget) {
+        dlg = new QDialog(parentWidget);
+        dlg->setWindowTitle("Downloading...");
+        dlg->setMinimumWidth(400);
+        auto *layout = new QVBoxLayout(dlg);
+        layout->addWidget(new QLabel(QString("<b>Downloading:</b><br>%1").arg(url)));
+        layout->addWidget(new QLabel(QString("<b>Saving to:</b><br>%1").arg(file)));
+        dlg->setLayout(layout);
+        dlg->show();
+        QCoreApplication::processEvents();
+    }
+
     QNetworkRequest request{QUrl(url)};
     request.setAttribute(QNetworkRequest::RedirectPolicyAttribute,
                          QNetworkRequest::NoLessSafeRedirectPolicy);
@@ -65,6 +83,9 @@ bool URLDownloader::download(const QString &url, const QString &file)
     QEventLoop loop;
     QObject::connect(reply, &QNetworkReply::finished, &loop, &QEventLoop::quit);
     loop.exec();
+
+    // close the dialog now that the download is complete
+    delete dlg;
 
     if (reply->error() != QNetworkReply::NoError) {
         lastError = reply->errorString();
