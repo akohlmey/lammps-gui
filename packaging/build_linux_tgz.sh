@@ -29,7 +29,7 @@ echo "Remove libc, gcc, and X11 related shared libs"
 rm -f ${DESTDIR}/lib/ld*.so ${DESTDIR}/lib/ld*.so.[0-9]
 rm -f ${DESTDIR}/lib/lib{c,dl,rt,m,pthread}.so.?
 rm -f ${DESTDIR}/lib/lib{c,dl,rt,m,pthread}-[0-9].[0-9]*.so
-rm -f ${DESTDIR}/lib/libX* ${DESTDIR}/lib/libxcb*
+rm -f ${DESTDIR}/lib/libX* ${DESTDIR}/lib/libxcb* ${DESTDIR}/lib/libxkb*
 rm -f ${DESTDIR}/lib/libgcc_s*
 rm -f ${DESTDIR}/lib/libstdc++*
 
