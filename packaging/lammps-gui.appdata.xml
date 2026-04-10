@@ -56,9 +56,10 @@
   <releases>
     <release version="2.0.0" timestamp="1775798011">
       <description>
-        Major refactor of the code base:
+        Major refactor of the code base for consistency and maintainability:
         - all widgets are created explicitly
         - remove support for Qt 5.x
+        - remove support for LAMMPS versions before 30 March 2026
         - use Qt style naming conventions (camel case)
         - move replicated functionality to helper functions
         - no functional changes
