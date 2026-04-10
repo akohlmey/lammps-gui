@@ -37,9 +37,10 @@
 #include <QString>
 #include <QTextStream>
 
-const QString LogWindow::yaml_regex =
-    QStringLiteral("^(keywords:.*$|data:$|---$|\\.\\.\\.$|  - \\[.*\\]$)");
-const QString LogWindow::url_regex = QStringLiteral("^.*(https://docs.lammps.org/err[0-9]+).*$");
+namespace {
+constexpr auto yaml_regex = R"(^(keywords:.*$|data:$|---$|\.\.\.$|  - \[.*\]$))";
+constexpr auto url_regex  = "^.*(https://docs.lammps.org/err[0-9]+).*$";
+} // namespace
 
 LogWindow::LogWindow(const QString &_filename, QWidget *parent) :
     QPlainTextEdit(parent), filename(_filename), warnings(nullptr)

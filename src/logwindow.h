@@ -92,8 +92,6 @@ protected:
 private:
     QString filename;                ///< Path to log file
     QString errorurl;                ///< URL of last detected error
-    static const QString yaml_regex; ///< Regex for detecting YAML blocks
-    static const QString url_regex;  ///< Regex for detecting URLs
     FlagWarnings *warnings;          ///< Warning highlighter
     QLabel *summary;                 ///< Summary label for warning count
 };
