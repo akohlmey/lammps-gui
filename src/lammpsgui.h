@@ -20,7 +20,6 @@
 #include <QPair>
 #include <QSpacerItem>
 #include <QString>
-#include <QWizard>
 #include <string>
 #include <vector>
 
@@ -55,6 +54,7 @@ class LogWindow;
 class Preferences;
 class SlideShow;
 class StdCapture;
+class TutorialWizard;
 
 /**
  * @brief Main application window for LAMMPS-GUI
@@ -394,7 +394,7 @@ private:
     Preferences *prefdialog;  ///< Preferences dialog
     QLabel *lammpsstatus;     ///< Status bar label for LAMMPS state
     QLabel *varwindow;        ///< Window showing variable definitions
-    QWizard *wizard;          ///< Tutorial wizard dialog
+    TutorialWizard *wizard;          ///< Tutorial wizard dialog
 
     /**
      * @brief Container for inspect dialog widgets
@@ -427,35 +427,6 @@ protected:
     int mainy;    ///< Override value for main editor window height or 0
 };
 
-/**
- * @brief Wizard dialog for interactive LAMMPS tutorials
- *
- * TutorialWizard provides a step-by-step wizard interface for setting up
- * and running LAMMPS tutorials. It guides users through directory selection,
- * file preparation, and launching tutorial exercises.
- */
-class TutorialWizard : public QWizard {
-    Q_OBJECT
-
-public:
-    /**
-     * @brief Construct a tutorial wizard
-     * @param ntutorial Tutorial number (1-8)
-     * @param parent Parent widget
-     */
-    TutorialWizard(int ntutorial, QWidget *parent = nullptr);
-
-    /**
-     * @brief Accept the wizard and set up the tutorial
-     *
-     * Called when the user completes the wizard. Sets up tutorial files
-     * and opens the tutorial in the main window.
-     */
-    void accept() override;
-
-private:
-    int _ntutorial; ///< Tutorial number identifier
-};
 #endif // LAMMPSGUI_H
 
 // Local Variables:

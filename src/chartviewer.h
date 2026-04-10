@@ -30,9 +30,7 @@ class QMenu;
 class QSpinBox;
 class RangeSlider;
 
-namespace QtCharts {
 class ChartViewer;
-}
 
 /**
  * @brief Window for displaying and managing multiple time-series charts
@@ -164,7 +162,7 @@ private:
     RangeSlider *xrange, *yrange;          ///< Range sliders for axes
 
     QString filename;                      ///< Log file path
-    QList<QtCharts::ChartViewer *> charts; ///< List of chart viewers
+    QList<ChartViewer *> charts; ///< List of chart viewers
 };
 
 /* -------------------------------------------------------------------- */
@@ -177,7 +175,6 @@ class QQuickWidget;
 class QQuickItem;
 class VerticalLabel;
 
-namespace QtCharts {
 /**
  * @brief Individual chart viewer for displaying a single time-series
  *
@@ -323,7 +320,6 @@ private:
     QTime lastUpdate;             ///< Time of last chart update
     bool doRaw, doSmooth;         ///< Flags for showing raw/smoothed data
 };
-} // namespace QtCharts
 #endif
 
 // Local Variables:

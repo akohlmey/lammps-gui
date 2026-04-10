@@ -49,8 +49,6 @@
 
 #include <cmath>
 
-using namespace QtCharts;
-
 namespace {
 
 // Set RangeSlider resolution to 1000 steps

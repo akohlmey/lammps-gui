@@ -112,6 +112,8 @@ if (NOT BUILD_DOC_ONLY)
     ${CMAKE_SOURCE_DIR}/src/slideshow.cpp
     ${CMAKE_SOURCE_DIR}/src/slideshow.h
     ${CMAKE_SOURCE_DIR}/src/stdcapture.cpp
+    ${CMAKE_SOURCE_DIR}/src/tutorialwizard.cpp
+    ${CMAKE_SOURCE_DIR}/src/tutorialwizard.h
     ${PLUGIN_LOADER_SRC}
     ${ICON_RC_FILE}
   )
