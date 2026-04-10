@@ -167,13 +167,26 @@ private:
 
 /* -------------------------------------------------------------------- */
 
+#ifdef LAMMPS_GUI_USE_QTGRAPHS
+
 #include <QtGraphs/QAbstractAxis>
 #include <QtGraphs/QLineSeries>
 #include <QtGraphs/QValueAxis>
+
 class QLabel;
 class QQuickWidget;
 class QQuickItem;
 class VerticalLabel;
+
+#else
+
+#include <QChartView>
+#include <QLineSeries>
+#include <QValueAxis>
+
+class QChart;
+
+#endif
 
 /**
  * @brief Individual chart viewer for displaying a single time-series
@@ -183,7 +196,11 @@ class VerticalLabel;
  * time. It supports both raw and smoothed data display, interactive
  * zoom/pan, and provides accessors for data export.
  */
+#ifdef LAMMPS_GUI_USE_QTGRAPHS
 class ChartViewer : public QWidget {
+#else
+class ChartViewer : public QChartView {
+#endif
     Q_OBJECT
 
 public:
@@ -223,7 +240,11 @@ public:
      * @brief Get list of chart axes
      * @return List of axes (X and Y)
      */
+#ifdef LAMMPS_GUI_USE_QTGRAPHS
     QList<QAbstractAxis *> getAxes() const { return {xaxis, yaxis}; }
+#else
+    QList<QAbstractAxis *> getAxes() const { return chart->axes(); }
+#endif
 
     /**
      * @brief Reset zoom to show all data
@@ -260,7 +281,11 @@ public:
      * @brief Get chart title
      * @return Title string
      */
-    QString getTitle() const { return series->name(); }
+#ifdef LAMMPS_GUI_USE_QTGRAPHS
+    QString getTitle() const { return titleWidget->text(); }
+#else
+    QString getTitle() const { return chart->title(); }
+#endif
 
     /**
      * @brief Get step number at given index
@@ -292,7 +317,11 @@ public:
      * @brief Get current chart title
      * @return Chart title
      */
+#ifdef LAMMPS_GUI_USE_QTGRAPHS
     QString getTLabel() const { return titleWidget->text(); }
+#else
+    QString getTLabel() const { return chart->title(); }
+#endif
 
     /**
      * @brief Get X-axis label
@@ -307,13 +336,17 @@ public:
     QString getYLabel() const { return yaxis->titleText(); }
 
 private:
-    int lastStep, index;          ///< Last step processed, chart index
-    int window, order;            ///< Smoothing window and polynomial order
-    QQuickWidget *quickWidget;    ///< Widget hosting the QGraphsView QML item
-    QQuickItem *graphsView;       ///< Root QGraphsView QML item
-    VerticalLabel *ylabelWidget;  ///< External y-axis title label (avoids overlap)
-    QLabel *xlabelWidget;         ///< External x-axis title label (with spacing)
-    QLabel *titleWidget;          ///< Chart title (with spacing)
+    int lastStep, index; ///< Last step processed, chart index
+    int window, order;   ///< Smoothing window and polynomial order
+#ifdef LAMMPS_GUI_USE_QTGRAPHS
+    QQuickWidget *quickWidget;   ///< Widget hosting the QGraphsView QML item
+    QQuickItem *graphsView;      ///< Root QGraphsView QML item
+    VerticalLabel *ylabelWidget; ///< External y-axis title label (avoids overlap)
+    QLabel *xlabelWidget;        ///< External x-axis title label (with spacing)
+    QLabel *titleWidget;         ///< Chart title (with spacing)
+#else
+    QChart *chart; ///< The chart object
+#endif
     QLineSeries *series, *smooth; ///< Raw and smoothed data series
     QValueAxis *xaxis;            ///< X-axis (time/step)
     QValueAxis *yaxis;            ///< Y-axis (property value)

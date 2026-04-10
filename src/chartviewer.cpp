@@ -40,12 +40,18 @@
 #include <QVBoxLayout>
 #include <QVariant>
 
+#ifdef LAMMPS_GUI_USE_QTGRAPHS
 #include <QMetaObject>
 #include <QQuickItem>
 #include <QQuickWidget>
 #include <QtGraphs/QGraphsTheme>
 #include <QtGraphs/QLineSeries>
 #include <QtGraphs/QValueAxis>
+#else
+#include <QChart>
+#include <QLineSeries>
+#include <QValueAxis>
+#endif
 
 #include <cmath>
 
@@ -561,6 +567,8 @@ bool ChartWindow::eventFilter(QObject *watched, QEvent *event)
 
 /* -------------------------------------------------------------------- */
 
+#ifdef LAMMPS_GUI_USE_QTGRAPHS
+
 ChartViewer::ChartViewer(const QString &title, int _index, QWidget *parent) :
     QWidget(parent), lastStep(-1), index(_index), window(10), order(4), quickWidget(nullptr),
     graphsView(nullptr), ylabelWidget(nullptr), xlabelWidget(nullptr), titleWidget(nullptr),
@@ -679,6 +687,53 @@ ChartViewer::~ChartViewer()
     delete yaxis;
 }
 
+#else
+
+ChartViewer::ChartViewer(const QString &title, int _index, QWidget *parent) :
+    QChartView(parent), lastStep(-1), index(_index), window(10), order(4), chart(new QChart),
+    series(new QLineSeries), smooth(nullptr), xaxis(new QValueAxis), yaxis(new QValueAxis),
+    doRaw(true), doSmooth(false)
+{
+    QSettings settings;
+    settings.beginGroup("charts");
+    chart->legend()->hide();
+    chart->addAxis(xaxis, Qt::AlignBottom);
+    chart->addAxis(yaxis, Qt::AlignLeft);
+    chart->setTitle("");
+    xaxis->setTitleText("Time step");
+    xaxis->setTickCount(5);
+    xaxis->setLabelFormat("%d");
+    yaxis->setTickCount(5);
+    xaxis->setGridLineVisible(settings.value("grid", true).toBool());
+    xaxis->setMinorGridLineVisible(settings.value("minorgrid", true).toBool());
+    xaxis->setMinorTickCount(4);
+    yaxis->setMinorTickCount(4);
+    yaxis->setTitleText(title);
+    yaxis->setGridLineVisible(settings.value("grid", true).toBool());
+    yaxis->setMinorGridLineVisible(settings.value("minorgrid", true).toBool());
+
+    series->setName(title);
+    settings.endGroup();
+
+    setRenderHint(QPainter::Antialiasing);
+    setChart(chart);
+    setRubberBand(QChartView::NoRubberBand);
+    lastUpdate = QTime::currentTime();
+    updateSmooth();
+}
+
+/* -------------------------------------------------------------------- */
+
+ChartViewer::~ChartViewer()
+{
+    delete xaxis;
+    delete yaxis;
+    delete smooth;
+    delete series;
+    delete chart;
+}
+
+#endif
 /* -------------------------------------------------------------------- */
 
 void ChartViewer::addData(int step, double data)
@@ -759,6 +814,7 @@ void ChartViewer::resetZoom()
     auto ranges = getMinMax();
     xaxis->setRange(ranges.left(), ranges.right());
     yaxis->setRange(ranges.bottom(), ranges.top());
+#ifdef LAMMPS_GUI_USE_QTGRAPHS
     // compute "nice" tick intervals targeting about 5 major ticks per axis
     auto niceInterval = [](double range) -> double {
         if (range <= 0) return 1.0;
@@ -782,28 +838,37 @@ void ChartViewer::resetZoom()
     yaxis->setTickAnchor(0.0);
     xaxis->setTickInterval(niceInterval(xspan));
     yaxis->setTickInterval(niceInterval(yspan));
+#endif
 }
 
 /* -------------------------------------------------------------------- */
 
-void ChartViewer::smoothParam(bool _do_raw, bool _do_smooth, int _window, int _order)
+void ChartViewer::smoothParam(bool _doRaw, bool _doSmooth, int _window, int _order)
 {
     // turn off raw plot
-    if (!_do_raw) {
+    if (!_doRaw) {
+#ifdef LAMMPS_GUI_USE_QTGRAPHS
         if (doRaw && graphsView)
             QMetaObject::invokeMethod(graphsView, "removeSeries", Q_ARG(QObject *, series));
+#else
+        if (doRaw) chart->removeSeries(series);
+#endif
     }
     // turn off smooth plot
-    if (!_do_smooth) {
+    if (!_doSmooth) {
         if (smooth) {
+#ifdef LAMMPS_GUI_USE_QTGRAPHS
             if (graphsView)
                 QMetaObject::invokeMethod(graphsView, "removeSeries", Q_ARG(QObject *, smooth));
+#else
+            chart->removeSeries(smooth);
+#endif
             delete smooth;
             smooth = nullptr;
         }
     }
-    doRaw    = _do_raw;
-    doSmooth = _do_smooth;
+    doRaw    = _doRaw;
+    doSmooth = _doSmooth;
     window   = _window;
     order    = _order;
     updateSmooth();
@@ -813,7 +878,11 @@ void ChartViewer::smoothParam(bool _do_raw, bool _do_smooth, int _window, int _o
 
 void ChartViewer::setTLabel(const QString &tlabel)
 {
+#ifdef LAMMPS_GUI_USE_QTGRAPHS
     if (titleWidget) titleWidget->setText(tlabel);
+#else
+    if (chart) chart->setTitle(tlabel);
+#endif
 }
 
 /* -------------------------------------------------------------------- */
@@ -821,7 +890,9 @@ void ChartViewer::setTLabel(const QString &tlabel)
 void ChartViewer::setYLabel(const QString &ylabel)
 {
     yaxis->setTitleText(ylabel);
+#ifdef LAMMPS_GUI_USE_QTGRAPHS
     ylabelWidget->setText(ylabel);
+#endif
 }
 
 // local implementation of Savitzky-Golay filter
@@ -1244,6 +1315,7 @@ void ChartViewer::updateSmooth()
     if ((smoothidx < 0) || (smoothidx >= mybrushes.size())) smoothidx = 0;
     settings.endGroup();
 
+#ifdef LAMMPS_GUI_USE_QTGRAPHS
     if (doRaw) {
         // add raw data if not in view
         bool hasSeries = false;
@@ -1272,6 +1344,31 @@ void ChartViewer::updateSmooth()
             smooth->replace(calc_sgsmooth(series->points(), window, order));
         }
     }
+#else
+    auto allseries = chart->series();
+    if (doRaw) {
+        // add raw data if not in chart
+        if (!allseries.contains(series)) {
+            series->setPen(QPen(mybrushes[rawidx], 3, Qt::SolidLine, Qt::RoundCap));
+            chart->addSeries(series);
+            series->attachAxis(xaxis);
+            series->attachAxis(yaxis);
+        }
+    }
+
+    if (doSmooth) {
+        if (series->count() > (2 * window)) {
+            if (!smooth) {
+                smooth = new QLineSeries;
+                smooth->setPen(QPen(mybrushes[smoothidx], 3, Qt::SolidLine, Qt::RoundCap));
+                chart->addSeries(smooth);
+                smooth->attachAxis(xaxis);
+                smooth->attachAxis(yaxis);
+            }
+            smooth->replace(calc_sgsmooth(series->points(), window, order));
+        }
+    }
+#endif
 }
 
 // Local Variables:

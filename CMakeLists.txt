@@ -11,6 +11,8 @@ include(GNUInstallDirs)
 # configuration settings:
 # prefer compiling plugin version only if standalone compile
 option(LAMMPS_GUI_USE_PLUGIN "Load LAMMPS library dynamically at runtime" ON)
+# prefer QtCharts even if deprecated
+option(LAMMPS_GUI_USE_QTCHARTS "Prefer using QtCharts over QtGraphs" OFF)
 # build html documentation by default
 option(BUILD_DOC "Build LAMMPS-GUI HTML documentation" ON)
 ##################################################################################
@@ -69,9 +71,16 @@ if (NOT BUILD_DOC_ONLY)
     set(ICON_RC_FILE ${CMAKE_SOURCE_DIR}/resources/lmpicons.rc)
   endif()
 
-  # we require Qt 6.10 or later with QtGraphs for chart display.
-  find_package(Qt6 6.10 REQUIRED COMPONENTS Gui Widgets Graphs Quick QuickWidgets)
-  set(QT_VERSION_MAJOR 6)
+  # check if Qt6.10 and QtGraphs are available unless we force using QtCharts
+  if (NOT LAMMPS_GUI_USE_QTCHARTS)
+    find_package(Qt6 6.10 QUIET COMPONENTS Gui Widgets Graphs Quick QuickWidgets)
+    if(Qt6_FOUND)
+      set(LAMMPS_GUI_USE_QTGRAPHS ON)
+    endif()
+  endif()
+  if (NOT LAMMPS_GUI_USE_QTGRAPHS)
+    find_package(Qt6 6.2 QUIET COMPONENTS Gui Widgets Charts)
+  endif()
   message(STATUS "Using Qt version ${Qt6_VERSION} for LAMMPS-GUI")
 
   set(PROJECT_SOURCES
@@ -167,7 +176,12 @@ if (NOT BUILD_DOC_ONLY)
   endif()
   target_include_directories(lammps-gui PRIVATE ${CMAKE_SOURCE_DIR}/src)
   target_compile_definitions(lammps-gui PRIVATE LAMMPS_GUI_VERSION="${PROJECT_VERSION}")
-  target_link_libraries(lammps-gui PRIVATE Qt6::Gui Qt6::Widgets Qt6::Graphs Qt6::Quick Qt6::QuickWidgets)
+  if(LAMMPS_GUI_USE_QTGRAPHS)
+    target_compile_definitions(lammps-gui PRIVATE LAMMPS_GUI_USE_QTGRAPHS)
+    target_link_libraries(lammps-gui PRIVATE Qt6::Gui Qt6::Widgets Qt6::Graphs Qt6::Quick Qt6::QuickWidgets)
+  else()
+    target_link_libraries(lammps-gui PRIVATE Qt6::Gui Qt6::Widgets Qt6::Charts)
+  endif()
 
   ###################
   # unit tests, only enabled on Linux
