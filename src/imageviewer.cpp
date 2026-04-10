@@ -1589,8 +1589,13 @@ void ImageViewer::atomSettings()
         showbonds = false;
     }
 
+#if QT_VERSION < QT_VERSION_CHECK(6, 7, 0)
+    connect(vdwbutton, &QCheckBox::stateChanged, this, &ImageViewer::vdwbondSync);
+    connect(autobutton, &QCheckBox::stateChanged, this, &ImageViewer::vdwbondSync);
+#else
     connect(vdwbutton, &QCheckBox::checkStateChanged, this, &ImageViewer::vdwbondSync);
     connect(autobutton, &QCheckBox::checkStateChanged, this, &ImageViewer::vdwbondSync);
+#endif
     layout->addWidget(new QHline, idx++, 0, 1, MAXCOLS);
 
     n = 0;
