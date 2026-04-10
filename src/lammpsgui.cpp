@@ -96,6 +96,7 @@ const QString bannerstyle("CodeEditor {background-position: center center; "
 void LammpsGui::setupUi()
 {
     setWindowTitle("LAMMPS-GUI");
+    setObjectName("LammpsGui");
     resize(600, 400);
 
     // Central widget
