@@ -70,7 +70,7 @@ To contribute to LAMMPS-GUI:
 1. Fork the repository on GitHub
 2. Create a feature branch
 3. Make your changes with proper documentation
-4. Ensure code compiles with both Qt5 and Qt6 (if possible)
+4. Ensure code compiles with Qt 6.10 or later
 5. Test your changes thoroughly
 6. Submit a pull request
 

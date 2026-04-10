@@ -285,22 +285,15 @@ installed as packaged for Linux distributions, then its location is
 typically auto-detected since the required CMake configuration files are
 stored in a location where CMake can find them without additional help.
 Otherwise, the location of the Qt library installation must be indicated
-by setting ``-D Qt5_DIR=/path/to/qt5/lib/cmake/Qt5``, which is a path to
+by setting ``-D Qt6_DIR=/path/to/qt6/lib/cmake/Qt6``, which is a path to
 a folder inside the Qt installation that contains the file
-``Qt5Config.cmake``.  Similarly, for Qt6 the location of the Qt library
-installation can be indicated by setting ``-D
-Qt6_DIR=/path/to/qt6/lib/cmake/Qt6``, if necessary.  When both, Qt5 and
-Qt6 are available, Qt6 will be preferred unless ``-D
-LAMMPS_GUI_USE_QT5=yes`` is set.
+``Qt6Config.cmake``.
 
-.. versionadded:: 1.11.3
+.. versionchanged:: 2.0.0
 
-Since the QtCharts module of the Qt library has been deprecated with Qt
-version 6.10, LAMMPS-GUI includes an alternate implementation of the
-charts display based on the QtGraphs module.  This alternate version is
-enabled by default when compiling LAMMPS-GUI for Qt 6.10 and later.
-Setting ``-D LAMMPS_GUI_US_QTCHARTS=yes`` will enforce using the
-QtCharts based chart display.
+Starting with version 2.0.0, LAMMPS-GUI requires Qt 6.10 or later and
+uses the QtGraphs module for chart display.  Support for Qt 5.x and the
+QtCharts module has been removed.
 
 LAMMPS-GUI plugin version
 -------------------------

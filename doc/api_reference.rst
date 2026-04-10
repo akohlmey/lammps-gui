@@ -94,7 +94,7 @@ ChartWindow Class
 ChartViewer Class
 -----------------
 
-.. doxygenclass:: QtCharts::ChartViewer
+.. doxygenclass:: ChartViewer
    :members:
    :protected-members:
 
