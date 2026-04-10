@@ -14,8 +14,8 @@ The project follows these coding conventions:
 - **Naming**: 
   - Classes: CamelCase (e.g., ``CodeEditor``, ``ChartWindow``)
   - Qt overrides: camelCase (e.g., ``setFont``, ``eventFilter``)
-  - Custom methods/slots: snake_case (e.g., ``stop_run``, ``save_as``)
-  - Members: snake_case (e.g., ``reformat_on_return``)
+  - Custom methods/slots: camelCase (e.g., ``stopRun``, ``saveAs``)
+  - Members: camelCase (e.g., ``reformatOnReturn``)
 
 Documentation
 =============
@@ -70,7 +70,7 @@ To contribute to LAMMPS-GUI:
 1. Fork the repository on GitHub
 2. Create a feature branch
 3. Make your changes with proper documentation
-4. Ensure code compiles with Qt 6.10 or later
+4. Ensure code compiles with Qt 6.2 or later
 5. Test your changes thoroughly
 6. Submit a pull request
 

@@ -2,7 +2,7 @@
 Overview
 ********
 
-LAMMPS-GUI is built using C++17 and the Qt framework (Qt 6.10+).  The
+LAMMPS-GUI is built using C++17 and the Qt framework (Qt 6.2+).  The
 application follows object-oriented design principles with separation of
 concerns between different components:
 
@@ -49,18 +49,13 @@ LAMMPS-GUI makes extensive use of Qt features:
   Used for inter-component communication, especially between GUI
   components and background threads.
 
-**Qt Designer Forms**
-  The main window layout uses a ``.ui`` file edited in Qt Designer.
-  Dialogs are created programmatically in C++.
-
 **Qt Resource System**
   Icons and resources embedded via ``resources/lammpsgui.qrc``.
 
 **Qt Models**
   Used for data display in various viewers and inspectors.
 
-LAMMPS-GUI requires Qt version 6.10 or later.  The QtGraphs module is
-used for creating charts.
+LAMMPS-GUI requires Qt version 6.2 or later.
 
 For more details on Qt in general, see the `Qt Documentation
 <https://doc.qt.io/>`_.
@@ -144,15 +139,16 @@ Visualization Components
   - **RegionInfo** - Stores settings for displaying a region in snapshot images.
 
 **ChartWindow (chartviewer.h/.cpp)**
-  Window for displaying thermodynamic data as charts using QtGraphs.
+  Window for displaying thermodynamic data as charts using QtGraphs or QtCharts.
   Supports line plots and multiple data series.  See
   :cpp:class:`ChartWindow`
 
 **ChartViewer (chartviewer.h/.cpp)** Custom chart view widget that
   provides interactive features like zooming, smoothing, and panning for
-  data visualization.  The implementation is based on `QQuickWidget
-  <https://doc.qt.io/qt-6/qquickwidget.html>`_ and the QtGraphs module.
-  See :cpp:class:`ChartViewer`.
+  data visualization.  The implementation is either based on `QQuickWidget
+  <https://doc.qt.io/qt-6/qquickwidget.html>`_ and the QtGraphs module
+  or on the QtCharts module.  See :cpp:class:`ChartViewer`.  Using the
+  QtCharts module can be enforced by setting ``-D LAMMPS_GUI_USE_QTCHARTS=yes``.
 
 **SlideShow (slideshow.h/.cpp)**
   Dialog for viewing multiple images as a slideshow or animation with
