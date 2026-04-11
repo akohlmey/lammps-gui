@@ -14,8 +14,10 @@ cryptographically
 CTest
 Ctrl
 customizations
+dateCompare
 der
 Destructor
+dev
 dialogs
 dihedral
 dll
@@ -34,8 +36,11 @@ GPL
 Gravelle
 gui
 GUIEditorChecks
+hasExe
 Hoyoung
 http
+https
+isLightTheme
 kspace
 lammps
 Lennard
@@ -58,6 +63,7 @@ pluginpath
 pre
 prev
 programmatically
+purgeDirectory
 py
 QFrame
 QObject
@@ -72,8 +78,10 @@ README
 Savitzky
 screenshooter
 scrollable
+silenceStdout
 sliderDown
 spinbox
+splitLine
 SSAO
 stderr
 stdout
