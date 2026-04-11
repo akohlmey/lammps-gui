@@ -81,6 +81,12 @@ Main Window
   manages the editor, handles file operations, controls LAMMPS
   execution, and manages the overall application state. This is the
   central hub of the application that integrates all other components.
+  The UI is built programmatically in ``setupUi()``, which is decomposed
+  into ``createFileMenu()``, ``createEditMenu()``, ``createRunMenu()``,
+  ``createViewMenu()``, ``createTutorialMenu()``, ``createAboutMenu()``,
+  ``createStatusBar()``, and ``connectSignalsAndSlots()``.  Sub-windows
+  (log, image, chart, slideshow) are configured via the shared helper
+  ``configureSubWindow()``.
   See :cpp:class:`LammpsGui`
 
 Editor Components
@@ -258,18 +264,34 @@ Support Components
   Validator for color input fields, ensuring they contain valid color
   names or hex color codes.  See :cpp:class:`QColorValidator`
 
+**VerticalLabel (qaddon.h/.cpp)**
+  Label widget that renders text rotated 90 degrees for vertical
+  display.  Used in :cpp:class:`QtGraphsBackend` for the Y-axis title.
+  See :cpp:class:`VerticalLabel`
+
 Helper Functions
 ----------------
 
 The :ref:`helpers module <helper_functions>` provides utility functions
 used throughout the application:
 
-- String manipulation (``mystrdup`` variants for different string types, used
-  internally in test code)
+- String manipulation (``mystrdup`` variants for different string types;
+  available for compatibility but no longer used by the main application)
 - Date comparison (``dateCompare`` for version comparisons)
-- Command-line parsing (split_line with quote handling)
-- System utilities (has_exe for executable detection)
-- UI utilities (is_light_theme for theme detection)
+- Command-line parsing (``splitLine`` with quote handling)
+- System utilities (``hasExe`` for executable detection)
+- UI utilities (``isLightTheme`` for theme detection,
+  ``showUnsavedChangesDialog`` for standardized unsaved-changes prompts)
+- Stdout management (``silenceStdout``/``restoreStdout`` for suppressing
+  LAMMPS library output, coordinated with :cpp:class:`StdCapture` via
+  ``isStdoutSilenced`` and ``notifyCaptureState``)
+
+**Constants (constants.h)**
+  The ``GuiConstants`` namespace centralizes application-wide magic
+  numbers and repeated string literals, including default buffer sizes,
+  minimum window dimensions, file limits, resource paths, and status
+  messages.  Using named constants avoids typos and makes maintenance
+  easier.  See :cpp:type:`GuiConstants`
 
 ===========
  Data Flow
