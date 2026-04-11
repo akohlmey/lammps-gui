@@ -110,7 +110,7 @@ public:
     QString text() const;
 
 protected:
-    /** event handler for requests to draw all of parts of the custom widget */
+    /** event handler for requests to draw all or parts of the custom widget */
     void paintEvent(QPaintEvent *event) override;
     /** return the recommended size for the widget */
     QSize sizeHint() const override;
