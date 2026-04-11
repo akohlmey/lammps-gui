@@ -42,6 +42,33 @@ protected:
 
 QCoreApplication *HelpersTest::app = nullptr;
 
+// ---- mystrdup: test-only helpers (removed from production code) ----
+
+namespace {
+
+// duplicate string, STL version
+char *mystrdup(const std::string &text)
+{
+    auto *tmp = new char[text.size() + 1];
+    memcpy(tmp, text.c_str(), text.size() + 1);
+    return tmp;
+}
+
+// duplicate string, pointer version
+char *mystrdup(const char *text)
+{
+    if (text == nullptr) return mystrdup(std::string(""));
+    return mystrdup(std::string(text));
+}
+
+// duplicate string, Qt version
+char *mystrdup(const QString &text)
+{
+    return mystrdup(text.toStdString());
+}
+
+} // namespace
+
 // Tests for mystrdup functions
 
 TEST_F(HelpersTest, MyStrdupStdString)

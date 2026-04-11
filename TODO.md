@@ -107,12 +107,11 @@ The items below are listed roughly in order of impact vs. effort.
   with one `inline const QString` per key; replace all bare literals in a
   single sweep.
 
-- [ ] **8. Remove duplicate image-settings fetch in ImageViewer** —
-  `imageviewer.cpp` fetches `xsize`, `ysize`, `zoom` identically at
-  lines 342-344 and 749-751.  Extract into a small
-  `ImageViewer::readImageSettings()` private method to eliminate the
-  copy-paste.
-  **Strategy**: add a private method, call from both sites, verify tests.
+- [x] **8. Remove duplicate image-settings fetch in ImageViewer** —
+  Extracted ``ImageViewer::readImageSettings()`` private method that
+  reads all snapshot QSettings and resets member variables.  Both the
+  constructor and ``resetView()`` now call this method instead of
+  duplicating the settings-fetch code.
 
 - [ ] **9. Break up large methods in lammpsgui.cpp** — Five methods
   exceed 100 lines: `logUpdate()` (154), `setupTutorial()` (135),
@@ -124,21 +123,15 @@ The items below are listed roughly in order of impact vs. effort.
   **Strategy**: one method at a time, each in its own commit, running
   tests after each extraction.
 
-- [ ] **11. Remove dead `mystrdup` code** — The three `mystrdup`
-  overloads in `helpers.h/cpp` are no longer called by production code.
-  The functions are only exercised by `test_helpers.cpp`.  Consider
-  removing the declarations and implementations (and their tests) or
-  moving them to a test-only header to keep the public API surface
-  minimal.
-  **Strategy**: remove from `helpers.h/cpp`; if the tests are still
-  wanted for historical coverage, move the functions into the test file
-  directly.
+- [x] **11. Remove dead `mystrdup` code** — Removed the three
+  ``mystrdup`` overloads from ``helpers.h/cpp`` (no longer called by
+  any production code).  The functions and their seven test cases are
+  preserved inside ``test/test_helpers.cpp`` in an anonymous namespace
+  so regression coverage is maintained without polluting the public API.
 
-- [ ] **13. Further include-dependency reduction** — Beyond `lammpsgui.h`,
-  several other headers include more than needed (e.g. `preferences.h`
-  includes full widget headers).  A sweep of all `.h` files replacing
-  includes with forward declarations where possible would reduce
-  compile-time coupling.
-  **Strategy**: build with `-H` (GCC/Clang) or `/showIncludes` (MSVC)
-  to identify transitively-pulled headers; replace with forward
-  declarations; verify the build still succeeds on all CI platforms.
+- [x] **13. Further include-dependency reduction** — Audited all 18
+  non-``lammpsgui.h`` headers.  Replaced ``#include "codeeditor.h"``
+  with a forward declaration in ``findandreplace.h`` (CodeEditor is only
+  used as a pointer).  Removed the redundant ``class QComboBox;``
+  forward declaration in ``imageviewer.h`` (already fully included).
+  All remaining headers were already optimal.

@@ -337,66 +337,10 @@ ImageViewer::ImageViewer(const QString &fileName, LammpsWrapper *_lammps, QWidge
         help_index.close();
     }
 
-    QSettings settings;
-    settings.beginGroup("snapshot");
-    xsize          = settings.value("xsize", "600").toInt();
-    ysize          = settings.value("ysize", "600").toInt();
-    zoom           = settings.value("zoom", 1.0).toDouble();
-    hrot           = settings.value("hrot", 60).toInt();
-    vrot           = settings.value("vrot", 30).toInt();
-    shinyfactor    = settings.value("shinystyle", true).toBool() ? SHINY_ON : SHINY_OFF;
-    vdwfactor      = settings.value("vdwstyle", false).toBool() ? VDW_ON : VDW_OFF;
-    autobond       = settings.value("autobond", false).toBool();
-    bondcutoff     = settings.value("bondcutoff", 1.6).toDouble();
-    showbox        = settings.value("box", true).toBool();
-    showsubbox     = false;
-    boxdiam        = settings.value("boxdiam", 0.025).toDouble();
-    subboxdiam     = boxdiam;
-    boxcolor       = settings.value("boxcolor", "yellow").toString();
-    showaxes       = settings.value("axes", false).toBool();
-    usessao        = settings.value("ssao", false).toBool();
-    antialias      = settings.value("antialias", false).toBool();
-    axeslen        = settings.value("axeslen", 0.5).toDouble();
-    axesdiam       = settings.value("axesdiam", 0.05).toDouble();
-    axestrans      = 1.0;
-    axesloc        = "yes"; // = "lowerleft"
-    boxtrans       = 1.0;
-    backcolor      = settings.value("backcolor", "black").toString();
-    backcolor2     = settings.value("backcolor2", "white").toString();
-    ssaoval        = 0.6;
-    atomcustom     = false;
-    atomtrans      = 1.0;
-    atomcolor      = settings.value("color", "type").toString();
-    atomdiam       = settings.value("diameter", "type").toString();
-    bondcolor      = settings.value("bondcolor", "atom").toString();
-    bonddiam       = settings.value("bonddiam", "type").toString();
-    bodycolor      = "atom";
-    ellipsoidcolor = "atom";
-    linecolor      = "atom";
-    tricolor       = "atom";
-    colormap       = settings.value("colormap", "BWR").toString();
-    mapmin         = "auto";
-    mapmax         = "auto";
-    showatoms      = true;
-    showbonds      = lammps->extractSetting("molecule_flag") == 1;
-    showbodies     = true;
-    bodydiam       = 0.2;
-    bodyflag       = TRIANGLES;
-    showellipsoids = true;
-    ellipsoidflag  = TRIANGLES;
-    ellipsoidlevel = 3;
-    ellipsoiddiam  = 0.2;
-    showlines      = true;
-    linediam       = 0.2;
-    showtris       = true;
-    tridiam        = 0.2;
-    triflag        = CYLINDERS;
-    xcenter = ycenter = zcenter = 0.5;
-    if (lammps->extractSetting("dimension") == 2) zcenter = 0.0;
+    readImageSettings();
     // initialize atomSize with lattice spacing
     const auto *xlattice = (const double *)lammps->extractGlobal("xlattice");
     if (xlattice) atomSize = *xlattice;
-    settings.endGroup();
 
     auto pix   = QPixmap(":/icons/emblem-photos.png");
     auto fsize = QFontMetrics(QApplication::font()).size(Qt::TextSingleLine, "Height: 200");
@@ -742,29 +686,70 @@ ImageViewer::~ImageViewer()
         delete ireg.second;
 }
 
-void ImageViewer::resetView()
+void ImageViewer::readImageSettings()
 {
     QSettings settings;
     settings.beginGroup("snapshot");
-    xsize       = settings.value("xsize", "600").toInt();
-    ysize       = settings.value("ysize", "600").toInt();
-    zoom        = settings.value("zoom", 1.0).toDouble();
-    hrot        = settings.value("hrot", 60).toInt();
-    vrot        = settings.value("vrot", 30).toInt();
-    shinyfactor = settings.value("shinystyle", true).toBool() ? SHINY_ON : SHINY_OFF;
-    vdwfactor   = settings.value("vdwstyle", false).toBool() ? VDW_ON : VDW_OFF;
-    autobond    = settings.value("autobond", false).toBool();
-    bondcutoff  = settings.value("bondcutoff", 1.6).toDouble();
-    showbox     = settings.value("box", true).toBool();
-    showaxes    = settings.value("axes", false).toBool();
-    usessao     = settings.value("ssao", false).toBool();
-    antialias   = settings.value("antialias", false).toBool();
-    boxdiam     = settings.value("boxdiam", 0.025).toDouble();
-    axeslen     = settings.value("axeslen", 0.5).toDouble();
-    axesdiam    = settings.value("axesdiam", 0.05).toDouble();
+    xsize          = settings.value("xsize", "600").toInt();
+    ysize          = settings.value("ysize", "600").toInt();
+    zoom           = settings.value("zoom", 1.0).toDouble();
+    hrot           = settings.value("hrot", 60).toInt();
+    vrot           = settings.value("vrot", 30).toInt();
+    shinyfactor    = settings.value("shinystyle", true).toBool() ? SHINY_ON : SHINY_OFF;
+    vdwfactor      = settings.value("vdwstyle", false).toBool() ? VDW_ON : VDW_OFF;
+    autobond       = settings.value("autobond", false).toBool();
+    bondcutoff     = settings.value("bondcutoff", 1.6).toDouble();
+    showbox        = settings.value("box", true).toBool();
+    showsubbox     = false;
+    boxdiam        = settings.value("boxdiam", 0.025).toDouble();
+    subboxdiam     = boxdiam;
+    boxcolor       = settings.value("boxcolor", "yellow").toString();
+    showaxes       = settings.value("axes", false).toBool();
+    usessao        = settings.value("ssao", false).toBool();
+    antialias      = settings.value("antialias", false).toBool();
+    axeslen        = settings.value("axeslen", 0.5).toDouble();
+    axesdiam       = settings.value("axesdiam", 0.05).toDouble();
+    axestrans      = 1.0;
+    axesloc        = "yes"; // = "lowerleft"
+    boxtrans       = 1.0;
+    backcolor      = settings.value("backcolor", "black").toString();
+    backcolor2     = settings.value("backcolor2", "white").toString();
+    ssaoval        = 0.6;
+    atomcustom     = false;
+    atomtrans      = 1.0;
+    atomcolor      = settings.value("color", "type").toString();
+    atomdiam       = settings.value("diameter", "type").toString();
+    bondcolor      = settings.value("bondcolor", "atom").toString();
+    bonddiam       = settings.value("bonddiam", "type").toString();
+    bodycolor      = "atom";
+    ellipsoidcolor = "atom";
+    linecolor      = "atom";
+    tricolor       = "atom";
+    colormap       = settings.value("colormap", "BWR").toString();
+    mapmin         = "auto";
+    mapmax         = "auto";
+    showatoms      = true;
+    showbonds      = lammps->extractSetting("molecule_flag") == 1;
+    showbodies     = true;
+    bodydiam       = 0.2;
+    bodyflag       = TRIANGLES;
+    showellipsoids = true;
+    ellipsoidflag  = TRIANGLES;
+    ellipsoidlevel = 3;
+    ellipsoiddiam  = 0.2;
+    showlines      = true;
+    linediam       = 0.2;
+    showtris       = true;
+    tridiam        = 0.2;
+    triflag        = CYLINDERS;
     xcenter = ycenter = zcenter = 0.5;
     if (lammps->extractSetting("dimension") == 2) zcenter = 0.0;
     settings.endGroup();
+}
+
+void ImageViewer::resetView()
+{
+    readImageSettings();
 
     // reset state of checkable push buttons and combo box (if accessible)
     // also flag that atom/bond customizations should be ignored

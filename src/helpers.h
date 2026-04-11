@@ -26,27 +26,6 @@ extern std::unique_ptr<QFont> GUI_MONOFONT;
 extern std::unique_ptr<QFont> GUI_ALLFONT;
 
 /**
- * @brief Duplicate a string from std::string
- * @param text The string to duplicate
- * @return Pointer to newly allocated C-string (caller must free)
- */
-extern char *mystrdup(const std::string &text);
-
-/**
- * @brief Duplicate a string from C-string
- * @param text The C-string to duplicate
- * @return Pointer to newly allocated C-string (caller must free)
- */
-extern char *mystrdup(const char *text);
-
-/**
- * @brief Duplicate a string from QString
- * @param text The QString to duplicate
- * @return Pointer to newly allocated C-string (caller must free)
- */
-extern char *mystrdup(const QString &text);
-
-/**
  * @brief Compare two date strings in "YYYY-MM-DD" format
  * @param one First date string
  * @param two Second date string

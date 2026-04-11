@@ -71,27 +71,6 @@ bool capture_is_active = false;
 std::unique_ptr<QFont> GUI_MONOFONT;
 std::unique_ptr<QFont> GUI_ALLFONT;
 
-// duplicate string, STL version
-char *mystrdup(const std::string &text)
-{
-    auto *tmp = new char[text.size() + 1];
-    memcpy(tmp, text.c_str(), text.size() + 1);
-    return tmp;
-}
-
-// duplicate string, pointer version
-char *mystrdup(const char *text)
-{
-    if (text == nullptr) return mystrdup("");
-    return mystrdup(std::string(text));
-}
-
-// duplicate string, Qt version
-char *mystrdup(const QString &text)
-{
-    return mystrdup(text.toStdString());
-}
-
 // compare two date strings return -1 if first is older than second, 0 if same, or 1 if
 // otherwise
 

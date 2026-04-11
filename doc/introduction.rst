@@ -275,8 +275,6 @@ Helper Functions
 The :ref:`helpers module <helper_functions>` provides utility functions
 used throughout the application:
 
-- String manipulation (``mystrdup`` variants for different string types;
-  available for compatibility but no longer used by the main application)
 - Date comparison (``dateCompare`` for version comparisons)
 - Command-line parsing (``splitLine`` with quote handling)
 - System utilities (``hasExe`` for executable detection)
