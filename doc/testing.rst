@@ -117,24 +117,8 @@ test_helpers.cpp
 ----------------
 
 Comprehensive tests for functions in ``src/helpers.h`` and ``src/helpers.cpp``.
-This module contains 45 test cases covering utility functions used throughout
+This module contains 38 test cases covering utility functions used throughout
 the application.
-
-**String Duplication (mystrdup)**
-  Tests for the three overloaded mystrdup functions that create heap-allocated
-  C-style strings from different input types:
-
-  - ``mystrdup(const std::string&)`` - From std::string
-  - ``mystrdup(const char*)`` - From C string (handles nullptr)
-  - ``mystrdup(const QString&)`` - From Qt QString
-
-  Coverage includes:
-
-  - Normal strings with content
-  - Empty strings
-  - Null pointers (C string variant)
-  - UTF-8 and special characters
-  - Long strings
 
 **Date Comparison (dateCompare)**
   Tests for the dateCompare function that compares version date strings

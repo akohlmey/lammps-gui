@@ -121,8 +121,21 @@ public:
      * @param parent Parent widget
      */
     explicit AcceleratorTab(QSettings *settings, LammpsWrapper *lammps, QWidget *parent = nullptr);
-    enum AccelType { None, Opt, OpenMP, Intel, Kokkos, Gpu };
-    enum AccelPrec { Double, Mixed, Single };
+    /** Constants for selecting LAMMPS accelerator package */
+    enum AccelType {
+        None,   ///< no accelerator
+        Opt,    ///< OPT package
+        OpenMP, ///< OPENMP package
+        Intel,  ///< INTEL package
+        Kokkos, ///< KOKKOS package
+        Gpu     ///< GPU package
+    };
+    /** Constants for selecting LAMMPS accelerator precision */
+    enum AccelPrec {
+        Double, ///< full double precision
+        Mixed,  ///< only accumulators in double precision, rest in single precision
+        Single  ///< full single precision
+    };
 
 private slots:
     void updateAccel();

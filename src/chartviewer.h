@@ -168,39 +168,29 @@ private:
 /* -------------------------------------------------------------------- */
 
 #ifdef LAMMPS_GUI_USE_QTGRAPHS
-
 #include <QtGraphs/QAbstractAxis>
 #include <QtGraphs/QLineSeries>
 #include <QtGraphs/QValueAxis>
-
-class QLabel;
-class QQuickWidget;
-class QQuickItem;
-class VerticalLabel;
-
 #else
-
-#include <QChartView>
 #include <QLineSeries>
 #include <QValueAxis>
-
-class QChart;
-
 #endif
+
+#include <memory>
+
+class ChartBackend;
 
 /**
  * @brief Individual chart viewer for displaying a single time-series
  *
- * ChartViewer wraps a QGraphsView via QQuickWidget to display a single
- * to display a single thermodynamic property as a function of simulation
- * time. It supports both raw and smoothed data display, interactive
- * zoom/pan, and provides accessors for data export.
+ * ChartViewer displays a single thermodynamic property as a function
+ * of simulation time. It delegates rendering to a ChartBackend
+ * (QtGraphsBackend or QtChartsBackend), supporting both raw and
+ * smoothed data display, interactive zoom/pan, and data export.
+ *
+ * @see ChartBackend, QtGraphsBackend, QtChartsBackend
  */
-#ifdef LAMMPS_GUI_USE_QTGRAPHS
 class ChartViewer : public QWidget {
-#else
-class ChartViewer : public QChartView {
-#endif
     Q_OBJECT
 
 public:
@@ -240,11 +230,7 @@ public:
      * @brief Get list of chart axes
      * @return List of axes (X and Y)
      */
-#ifdef LAMMPS_GUI_USE_QTGRAPHS
-    QList<QAbstractAxis *> getAxes() const { return {xaxis, yaxis}; }
-#else
-    QList<QAbstractAxis *> getAxes() const { return chart->axes(); }
-#endif
+    QList<QAbstractAxis *> getAxes() const;
 
     /**
      * @brief Reset zoom to show all data
@@ -281,11 +267,7 @@ public:
      * @brief Get chart title
      * @return Title string
      */
-#ifdef LAMMPS_GUI_USE_QTGRAPHS
-    QString getTitle() const { return titleWidget->text(); }
-#else
-    QString getTitle() const { return chart->title(); }
-#endif
+    QString getTitle() const;
 
     /**
      * @brief Get step number at given index
@@ -317,41 +299,27 @@ public:
      * @brief Get current chart title
      * @return Chart title
      */
-#ifdef LAMMPS_GUI_USE_QTGRAPHS
-    QString getTLabel() const { return titleWidget->text(); }
-#else
-    QString getTLabel() const { return chart->title(); }
-#endif
+    QString getTLabel() const;
 
     /**
      * @brief Get X-axis label
      * @return X-axis label
      */
-    QString getXLabel() const { return xaxis->titleText(); }
+    QString getXLabel() const;
 
     /**
      * @brief Get Y-axis label
      * @return Y-axis label
      */
-    QString getYLabel() const { return yaxis->titleText(); }
+    QString getYLabel() const;
 
 private:
-    int lastStep, index; ///< Last step processed, chart index
-    int window, order;   ///< Smoothing window and polynomial order
-#ifdef LAMMPS_GUI_USE_QTGRAPHS
-    QQuickWidget *quickWidget;   ///< Widget hosting the QGraphsView QML item
-    QQuickItem *graphsView;      ///< Root QGraphsView QML item
-    VerticalLabel *ylabelWidget; ///< External y-axis title label (avoids overlap)
-    QLabel *xlabelWidget;        ///< External x-axis title label (with spacing)
-    QLabel *titleWidget;         ///< Chart title (with spacing)
-#else
-    QChart *chart; ///< The chart object
-#endif
-    QLineSeries *series, *smooth; ///< Raw and smoothed data series
-    QValueAxis *xaxis;            ///< X-axis (time/step)
-    QValueAxis *yaxis;            ///< Y-axis (property value)
-    QTime lastUpdate;             ///< Time of last chart update
-    bool doRaw, doSmooth;         ///< Flags for showing raw/smoothed data
+    std::unique_ptr<ChartBackend> backend; ///< Rendering backend (QtGraphs or QtCharts)
+    int lastStep, index;                   ///< Last step processed, chart index
+    int window, order;                     ///< Smoothing window and polynomial order
+    QLineSeries *series, *smooth;          ///< Raw and smoothed data series
+    QTime lastUpdate;                      ///< Time of last chart update
+    bool doRaw, doSmooth;                  ///< Flags for showing raw/smoothed data
 };
 #endif
 

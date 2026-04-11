@@ -42,87 +42,6 @@ protected:
 
 QCoreApplication *HelpersTest::app = nullptr;
 
-// Tests for mystrdup functions
-
-TEST_F(HelpersTest, MyStrdupStdString)
-{
-    std::string input = "Hello World";
-    char *result      = mystrdup(input);
-
-    ASSERT_NE(result, nullptr);
-    EXPECT_STREQ(result, "Hello World");
-    EXPECT_EQ(strlen(result), input.size());
-
-    delete[] result;
-}
-
-TEST_F(HelpersTest, MyStrdupStdStringEmpty)
-{
-    std::string input = "";
-    char *result      = mystrdup(input);
-
-    ASSERT_NE(result, nullptr);
-    EXPECT_STREQ(result, "");
-    EXPECT_EQ(strlen(result), 0);
-
-    delete[] result;
-}
-
-TEST_F(HelpersTest, MyStrdupCString)
-{
-    const char *input = "Test String";
-    char *result      = mystrdup(input);
-
-    ASSERT_NE(result, nullptr);
-    EXPECT_STREQ(result, "Test String");
-
-    delete[] result;
-}
-
-TEST_F(HelpersTest, MyStrdupCStringEmpty)
-{
-    const char *input = "";
-    char *result      = mystrdup(input);
-
-    ASSERT_NE(result, nullptr);
-    EXPECT_STREQ(result, "");
-
-    delete[] result;
-}
-
-TEST_F(HelpersTest, MyStrdupCStringNull)
-{
-    const char *input = nullptr;
-    char *result      = mystrdup(input);
-
-    ASSERT_NE(result, nullptr);
-    EXPECT_STREQ(result, "");
-
-    delete[] result;
-}
-
-TEST_F(HelpersTest, MyStrdupQString)
-{
-    QString input = "Qt String Test";
-    char *result  = mystrdup(input);
-
-    ASSERT_NE(result, nullptr);
-    EXPECT_STREQ(result, "Qt String Test");
-
-    delete[] result;
-}
-
-TEST_F(HelpersTest, MyStrdupQStringEmpty)
-{
-    QString input = "";
-    char *result  = mystrdup(input);
-
-    ASSERT_NE(result, nullptr);
-    EXPECT_STREQ(result, "");
-
-    delete[] result;
-}
-
 // Tests for dateCompare function
 
 TEST_F(HelpersTest, DateCompareSame)
@@ -351,12 +270,12 @@ TEST_F(HelpersTest, SilenceStdoutSkippedDuringCapture)
 {
     // When StdCapture is active, silenceStdout should be a no-op
     StdCapture capturer;
-    capturer.BeginCapture();
+    capturer.beginCapture();
 
     silenceStdout();
     EXPECT_FALSE(isStdoutSilenced()); // should NOT have silenced
 
-    capturer.EndCapture();
+    capturer.endCapture();
 }
 
 TEST_F(HelpersTest, CaptureRestoresSilencedStdout)
@@ -368,15 +287,15 @@ TEST_F(HelpersTest, CaptureRestoresSilencedStdout)
     silenceStdout();
     EXPECT_TRUE(isStdoutSilenced());
 
-    capturer.BeginCapture();
-    // BeginCapture should have restored (un-silenced) stdout
+    capturer.beginCapture();
+    // beginCapture should have restored (un-silenced) stdout
     EXPECT_FALSE(isStdoutSilenced());
 
     printf("captured output");
     fflush(stdout);
 
-    capturer.EndCapture();
-    auto output = capturer.GetCapture();
+    capturer.endCapture();
+    auto output = capturer.getCapture();
     EXPECT_NE(output.find("captured output"), std::string::npos);
 }
 
@@ -391,12 +310,12 @@ TEST_F(HelpersTest, SilenceAndRestorePreservesStdout)
     restoreStdout();
 
     // Now capture to verify stdout is functional
-    capturer.BeginCapture();
+    capturer.beginCapture();
     printf("visible text");
     fflush(stdout);
-    capturer.EndCapture();
+    capturer.endCapture();
 
-    auto output = capturer.GetCapture();
+    auto output = capturer.getCapture();
     EXPECT_NE(output.find("visible text"), std::string::npos);
     EXPECT_EQ(output.find("silenced text"), std::string::npos);
 }

@@ -12,9 +12,9 @@
 #ifndef FIND_AND_REPLACE_H
 #define FIND_AND_REPLACE_H
 
-#include "codeeditor.h"
 #include <QDialog>
 
+class CodeEditor;
 class QLineEdit;
 class QCheckBox;
 

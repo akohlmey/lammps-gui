@@ -54,6 +54,9 @@ public:
     AboutDialog &operator=(AboutDialog &&)      = delete;
 
 protected:
+    /**
+     * @brief Event handler for widget show events; implements the auto-scroll functionality.
+     */
     void showEvent(QShowEvent *event) override;
 
 private:

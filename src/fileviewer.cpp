@@ -43,32 +43,31 @@ FileViewer::FileViewer(const QString &_filename, const QString &title, QWidget *
     // open and read file. Set editor to read-only.
     QFile file(fileName);
     QFileInfo finfo(file);
-    QString command;
     QString content;
     QProcess decomp;
     QStringList args = {"-cdf", fileName};
-    bool compressed  = false;
+
+    // lookup table mapping file extensions to decompression programs and extra args
+    struct CompressionFormat {
+        const char *extension;
+        const char *program;
+        const char *extraArg; // nullptr if none
+    };
+    static constexpr CompressionFormat compressionFormats[] = {
+        {"gz", "gzip", nullptr}, {"bz2", "bzip2", nullptr},       {"zst", "zstd", nullptr},
+        {"xz", "xz", nullptr},   {"lzma", "xz", "--format=lzma"}, {"lz4", "lz4", nullptr},
+    };
 
     // match suffix with decompression program
-    if (finfo.suffix() == "gz") {
-        command    = "gzip";
-        compressed = true;
-    } else if (finfo.suffix() == "bz2") {
-        command    = "bzip2";
-        compressed = true;
-    } else if (finfo.suffix() == "zst") {
-        command    = "zstd";
-        compressed = true;
-    } else if (finfo.suffix() == "xz") {
-        command    = "xz";
-        compressed = true;
-    } else if (finfo.suffix() == "lzma") {
-        command = "xz";
-        args.insert(1, "--format=lzma");
-        compressed = true;
-    } else if (finfo.suffix() == "lz4") {
-        command    = "lz4";
-        compressed = true;
+    QString command;
+    bool compressed = false;
+    for (const auto &fmt : compressionFormats) {
+        if (finfo.suffix() == fmt.extension) {
+            command    = fmt.program;
+            compressed = true;
+            if (fmt.extraArg) args.insert(1, fmt.extraArg);
+            break;
+        }
     }
 
     // read compressed file from pipe

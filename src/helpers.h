@@ -13,6 +13,7 @@
 #define HELPERS_H
 
 #include <QString>
+#include <memory>
 #include <string>
 #include <vector>
 
@@ -20,30 +21,9 @@ class QWidget;
 class QImage;
 class QFont;
 
-// OS specific default fonts
-extern QFont *GUI_MONOFONT;
-extern QFont *GUI_ALLFONT;
-
-/**
- * @brief Duplicate a string from std::string
- * @param text The string to duplicate
- * @return Pointer to newly allocated C-string (caller must free)
- */
-extern char *mystrdup(const std::string &text);
-
-/**
- * @brief Duplicate a string from C-string
- * @param text The C-string to duplicate
- * @return Pointer to newly allocated C-string (caller must free)
- */
-extern char *mystrdup(const char *text);
-
-/**
- * @brief Duplicate a string from QString
- * @param text The QString to duplicate
- * @return Pointer to newly allocated C-string (caller must free)
- */
-extern char *mystrdup(const QString &text);
+// OS specific default fonts (managed via unique_ptr for automatic cleanup)
+extern std::unique_ptr<QFont> GUI_MONOFONT;
+extern std::unique_ptr<QFont> GUI_ALLFONT;
 
 /**
  * @brief Compare two date strings in "YYYY-MM-DD" format
@@ -112,6 +92,19 @@ extern void purgeDirectory(const QString &dir);
  * @return true if light theme, false if dark theme
  */
 extern bool isLightTheme();
+
+/**
+ * @brief Show a standardized "unsaved changes" confirmation dialog
+ * @param parent    Pointer to the parent widget
+ * @param filename  Name of the file with unsaved changes
+ * @param question  Informative text explaining the context (e.g. "save before opening?")
+ * @return QMessageBox::Yes, QMessageBox::No, or QMessageBox::Cancel
+ *
+ * Provides a consistent confirmation dialog used whenever the user may lose
+ * unsaved changes (opening a new file, quitting, running LAMMPS, etc.).
+ */
+extern int showUnsavedChangesDialog(QWidget *parent, const QString &filename,
+                                    const QString &question);
 
 /**
  * @brief Silence stdout by redirecting it to the null device
