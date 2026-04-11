@@ -105,6 +105,7 @@ ChartBackend Class
 
 .. doxygenclass:: ChartBackend
    :members:
+   :protected-members:
 
 -----
 
@@ -113,6 +114,7 @@ QtGraphsBackend Class
 
 .. doxygenclass:: QtGraphsBackend
    :members:
+   :protected-members:
 
 -----
 
@@ -121,6 +123,7 @@ QtChartsBackend Class
 
 .. doxygenclass:: QtChartsBackend
    :members:
+   :protected-members:
 
 -----
 
@@ -321,6 +324,7 @@ Qt Helper Widgets
 
 .. doxygenclass:: VerticalLabel
    :members:
+   :protected-members:
 
 -----
 
