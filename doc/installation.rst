@@ -80,6 +80,9 @@ Standalone packages with a basic LAMMPS library
 .. index:: plugin mode
 .. index:: standalone packages
 
+.. image:: JPG/download-dialog.png
+   :align: right
+
 LAMMPS-GUI packages containing *only* LAMMPS-GUI compiled in plugin mode
 are available from the `LAMMPS-GUI releases page on GitHub
 <https://github.com/akohlmey/lammps-gui/releases>`_.  These packages
@@ -90,20 +93,19 @@ If you want to override that choice of LAMMPS library, you can use the
 ``-p`` command line flag to tell LAMMPS-GUI which other LAMMPS shared
 library file you want it to load.  By using ``-p ""`` you can also reset
 any previous choice and thus trigger loading the default library again.
-Once LAMMPS-GUI is running, you can also change the path to the LAMMPS
-shared library from the :doc:`Preferences dialog <dialogs>`.  When
-resetting the LAMMPS shared library path or when the currently configured
-library file cannot be loaded or does no longer exist, a dialog will
-appear that allows to re-download the default minimal LAMMPS
-shared library from the LAMMPS web server or browse the filesystem for
-a suitable custom shared library file.
-
-.. image:: JPG/download-dialog.png
-   :align: center
+When resetting the LAMMPS shared library path or when the currently
+configured library file cannot be loaded or does no longer exist, a
+dialog will appear that allows to re-download the default minimal LAMMPS
+shared library from the LAMMPS web server or browse the filesystem for a
+suitable custom shared library file.  Once LAMMPS-GUI is running, you
+can also change the path to the LAMMPS shared library or re-download a
+pre-compiled copy from the :doc:`Preferences dialog <dialogs>`.
 
 The flatpak version of the standalone LAMMPS-GUI package does not
 contain a precompiled library so it will directly show the download
-or browse dialog on the first invocation.
+or browse dialog on the first invocation.  When the flatpak version
+is updated, it may be required to reset the shared library location
+with ``-p ""`` and re-download the latest version.
 
 Since LAMMPS-GUI version 2.0.0, the minimum LAMMPS version required is
 30 March 2026, but using a more recent LAMMPS release version is
