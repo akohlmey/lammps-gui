@@ -1,0 +1,53 @@
+# GitHub action to build LAMMPS-GUI on macOS and create a DMG installer
+name: "Compile on macOS and build DMG"
+
+on:
+  push:
+    branches:
+      - develop
+  pull_request:
+    branches:
+      - develop
+
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.event_name }}-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{github.event_name == 'pull_request'}}
+
+jobs:
+  build:
+    name: Build on macOS and create DMG
+    if: ${{ github.repository == 'akohlmey/lammps-gui' }}
+    runs-on: macos-latest
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v6
+      with:
+        fetch-depth: 20
+
+    - name: Install Qt
+      uses: jurplel/install-qt-action@v4
+      with:
+        version: '6.8.*'
+        modules: 'qtcharts'
+
+    - name: Building LAMMPS-GUI via CMake
+      shell: bash
+      run: |
+        cmake -S . -B build \
+              -D LAMMPS_GUI_USE_PLUGIN=yes \
+              -D BUILD_DOC=no \
+              -D CMAKE_BUILD_TYPE=Release
+        cmake --build build --parallel 3
+
+    - name: Check if LAMMPS-GUI can run at all
+      shell: bash
+      run: |
+        build/lammps-gui.app/Contents/MacOS/lammps-gui --platform offscreen -v
+
+    - name: Create DMG installer
+      shell: bash
+      run: |
+        cmake --build build --target dmg

@@ -1,0 +1,44 @@
+# GitHub action to build LAMMPS-GUI on Windows with MSVC
+name: "Compile on Windows with MSVC"
+
+on:
+  push:
+    branches:
+      - develop
+  pull_request:
+    branches:
+      - develop
+
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.event_name }}-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{github.event_name == 'pull_request'}}
+
+jobs:
+  build:
+    name: Build with MSVC on Windows
+    if: ${{ github.repository == 'akohlmey/lammps-gui' }}
+    runs-on: windows-latest
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v6
+      with:
+        fetch-depth: 20
+
+    - name: Install Qt
+      uses: jurplel/install-qt-action@v4
+      with:
+        version: '6.8.*'
+        arch: 'win64_msvc2022_64'
+        modules: 'qtcharts'
+
+    - name: Building LAMMPS-GUI via CMake
+      shell: cmd
+      run: |
+        cmake -S . -B build ^
+              -D LAMMPS_GUI_USE_PLUGIN=yes ^
+              -D BUILD_DOC=no
+        cmake --build build --config Release --parallel 2
+

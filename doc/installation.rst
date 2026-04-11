@@ -39,9 +39,12 @@ version 3.20 or later.
 .. admonition:: LAMMPS-GUI 2.0.0 has been successfully compiled and tested on:
 
    - Ubuntu Linux 22.04LTS x86_64 using GCC 11, Qt version 6.2
+   - Ubuntu Linux 24.04LTS x86_64 using GCC 13, Qt version 6.4
    - Fedora Linux 43 x86\_64 using Clang 21, Qt version 6.10
    - Fedora Linux 43 x86\_64 using GCC 15, Qt version 6.10
-   - Apple macOS 12 (Monterey) with Xcode 14.2 on arm64 and x86\_64, Qt version 6.5
+   - Apple macOS 12 (Monterey) with Xcode 14.2 / AppleClang 14 on arm64 and x86\_64, Qt version 6.5
+   - Apple macOS 14 (Sonoma) with Xcode 16.4 / AppleClang 17 on arm64, Qt version 6.8
+   - Windows Server 2025 x86_64 with Visual Studio 2022 and Visual C++ 14.40, Qt version 6.8
    - Windows 11 x86_64 with Visual Studio 2026 and Visual C++ 14.50, Qt version 6.10
    - Windows 11 x86_64 with MinGW / GCC 15.2 cross-compiler on Fedora 43, Qt version 6.10
 
@@ -77,6 +80,9 @@ Standalone packages with a basic LAMMPS library
 .. index:: plugin mode
 .. index:: standalone packages
 
+.. image:: JPG/download-dialog.png
+   :align: right
+
 LAMMPS-GUI packages containing *only* LAMMPS-GUI compiled in plugin mode
 are available from the `LAMMPS-GUI releases page on GitHub
 <https://github.com/akohlmey/lammps-gui/releases>`_.  These packages
@@ -87,8 +93,19 @@ If you want to override that choice of LAMMPS library, you can use the
 ``-p`` command line flag to tell LAMMPS-GUI which other LAMMPS shared
 library file you want it to load.  By using ``-p ""`` you can also reset
 any previous choice and thus trigger loading the default library again.
-Once LAMMPS-GUI is running, you can also change the path to the LAMMPS
-shared library from the :doc:`Preferences dialog <dialogs>`.
+When resetting the LAMMPS shared library path or when the currently
+configured library file cannot be loaded or no longer exists, a dialog
+will appear that allows to re-download the default minimal LAMMPS shared
+library from the LAMMPS web server or browse the filesystem for a
+suitable custom shared library file.  Once LAMMPS-GUI is running, you
+can also change the path to the LAMMPS shared library or re-download a
+pre-compiled copy from the :doc:`Preferences dialog <dialogs>`.
+
+The flatpak version of the standalone LAMMPS-GUI package does not
+contain a precompiled library so it will directly show the download
+or browse dialog on the first invocation.  When the flatpak version
+is updated, it may be required to reset the shared library location
+with ``-p ""`` and re-download the latest version.
 
 Since LAMMPS-GUI version 2.0.0, the minimum LAMMPS version required is
 30 March 2026, but using a more recent LAMMPS release version is
@@ -227,13 +244,13 @@ automatically.
 The second Linux package variant uses `flatpak
 <https://www.flatpak.org>`_ and requires the flatpak management and
 runtime software to be installed.  After downloading the
-``LAMMPS-GUI-Linux-x86_64-GUI-<version>.flatpak`` flatpak bundle, you
+``LAMMPS-Linux-x86_64-GUI-<version>.flatpak`` flatpak bundle, you
 can install it with:
 
 .. code-block:: bash
 
    $ cd ~/Downloads
-   $ flatpak install --user LAMMPS-GUI-Linux-x86_64-GUI-<version>.flatpak
+   $ flatpak install --user LAMMPS-Linux-GUI-x86_64-<version>.flatpak
 
 .. image:: JPG/lammps-gui-menu.png
    :align: right
