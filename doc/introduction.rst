@@ -145,10 +145,25 @@ Visualization Components
 
 **ChartViewer (chartviewer.h/.cpp)** Custom chart view widget that
   provides interactive features like zooming, smoothing, and panning for
-  data visualization.  The implementation is either based on `QQuickWidget
-  <https://doc.qt.io/qt-6/qquickwidget.html>`_ and the QtGraphs module
-  or on the QtCharts module.  See :cpp:class:`ChartViewer`.  Using the
-  QtCharts module can be enforced by setting ``-D LAMMPS_GUI_USE_QTCHARTS=yes``.
+  data visualization.  ChartViewer delegates rendering to a
+  :cpp:class:`ChartBackend` interface, with concrete implementations for
+  the QtGraphs module (:cpp:class:`QtGraphsBackend`) and the QtCharts
+  module (:cpp:class:`QtChartsBackend`).  See :cpp:class:`ChartViewer`.
+  Using the QtCharts module can be enforced by setting
+  ``-D LAMMPS_GUI_USE_QTCHARTS=yes``.
+
+**ChartBackend (chartbackend.h)** Abstract interface for chart rendering
+  backends.  Provides a common API for axis management, series display,
+  zoom control, and label management.  See :cpp:class:`ChartBackend`.
+
+**QtGraphsBackend (qtgraphsbackend.h/.cpp)** QtGraphs-based implementation
+  of :cpp:class:`ChartBackend`.  Uses QML-based QGraphsView via QQuickWidget
+  for rendering, with external labels for axis titles.
+  See :cpp:class:`QtGraphsBackend`.
+
+**QtChartsBackend (qtchartsbackend.h/.cpp)** QtCharts-based implementation
+  of :cpp:class:`ChartBackend`.  Uses QChart and QChartView for widget-based
+  rendering.  See :cpp:class:`QtChartsBackend`.
 
 **SlideShow (slideshow.h/.cpp)**
   Dialog for viewing multiple images as a slideshow or animation with
@@ -249,8 +264,9 @@ Helper Functions
 The :ref:`helpers module <helper_functions>` provides utility functions
 used throughout the application:
 
-- String manipulation (mystrdup variants for different string types)
-- Date comparison (date_compare for version comparisons)
+- String manipulation (``mystrdup`` variants for different string types, used
+  internally in test code)
+- Date comparison (``dateCompare`` for version comparisons)
 - Command-line parsing (split_line with quote handling)
 - System utilities (has_exe for executable detection)
 - UI utilities (is_light_theme for theme detection)

@@ -121,8 +121,10 @@ This module contains 45 test cases covering utility functions used throughout
 the application.
 
 **String Duplication (mystrdup)**
-  Tests for the three overloaded mystrdup functions that create heap-allocated
-  C-style strings from different input types:
+  Tests for the three overloaded ``mystrdup`` functions that create heap-allocated
+  C-style strings from different input types. Note: these functions are no longer
+  used by the main application code (which uses ``std::string`` directly) but
+  remain available as utility functions:
 
   - ``mystrdup(const std::string&)`` - From std::string
   - ``mystrdup(const char*)`` - From C string (handles nullptr)

@@ -14,11 +14,8 @@
 
 #include <QMainWindow>
 
-#include <QEvent>
-#include <QGridLayout>
 #include <QList>
 #include <QPair>
-#include <QSpacerItem>
 #include <QString>
 #include <string>
 #include <vector>
@@ -34,6 +31,7 @@
 // forward declarations
 
 class QAction;
+class QEvent;
 class QFont;
 class QLabel;
 class QMenu;

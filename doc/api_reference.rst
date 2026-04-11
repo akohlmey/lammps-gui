@@ -100,6 +100,30 @@ ChartViewer Class
 
 -----
 
+ChartBackend Class
+------------------
+
+.. doxygenclass:: ChartBackend
+   :members:
+
+-----
+
+QtGraphsBackend Class
+---------------------
+
+.. doxygenclass:: QtGraphsBackend
+   :members:
+
+-----
+
+QtChartsBackend Class
+---------------------
+
+.. doxygenclass:: QtChartsBackend
+   :members:
+
+-----
+
 ImageViewer Class
 -----------------
 
