@@ -2577,7 +2577,9 @@ void LammpsGui::startLammps()
         }
     }
 
-    // build temporary char* array for LAMMPS C API
+    // Build temporary char* array for the LAMMPS C API which takes char**
+    // but does not modify the argument strings. The const_cast is safe here
+    // because lammps.open() only reads the strings to copy them internally.
     std::vector<char *> cargs;
     cargs.reserve(lammpsArgs.size());
     for (auto &s : lammpsArgs)
