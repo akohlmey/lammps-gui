@@ -40,6 +40,12 @@ jobs:
             mingw64-qt6-qtbase \
             mingw64-qt6-qtcharts \
             mingw64-pkg-config \
+            mingw64-curl \
+            mingw64-libgomp \
+            mingw64-winpthreads \
+            mingw64-fftw \
+            mingw64-libjpeg-turbo \
+            mingw64-libpng \
             doxygen \
             python3 \
             python3-pip \
