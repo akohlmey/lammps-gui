@@ -40,17 +40,11 @@
 #include <QVBoxLayout>
 #include <QVariant>
 
+#include "chartbackend.h"
 #ifdef LAMMPS_GUI_USE_QTGRAPHS
-#include <QMetaObject>
-#include <QQuickItem>
-#include <QQuickWidget>
-#include <QtGraphs/QGraphsTheme>
-#include <QtGraphs/QLineSeries>
-#include <QtGraphs/QValueAxis>
+#include "qtgraphsbackend.h"
 #else
-#include <QChart>
-#include <QLineSeries>
-#include <QValueAxis>
+#include "qtchartsbackend.h"
 #endif
 
 #include <cmath>
@@ -567,161 +561,29 @@ bool ChartWindow::eventFilter(QObject *watched, QEvent *event)
 
 /* -------------------------------------------------------------------- */
 
+ChartViewer::ChartViewer(const QString &title, int _index, QWidget *parent) :
+    QWidget(parent), lastStep(-1), index(_index), window(10), order(4),
+    series(new QLineSeries), smooth(nullptr), doRaw(true), doSmooth(false)
+{
 #ifdef LAMMPS_GUI_USE_QTGRAPHS
-
-ChartViewer::ChartViewer(const QString &title, int _index, QWidget *parent) :
-    QWidget(parent), lastStep(-1), index(_index), window(10), order(4), quickWidget(nullptr),
-    graphsView(nullptr), ylabelWidget(nullptr), xlabelWidget(nullptr), titleWidget(nullptr),
-    series(new QLineSeries), smooth(nullptr), xaxis(new QValueAxis), yaxis(new QValueAxis),
-    doRaw(true), doSmooth(false)
-{
-    QSettings settings;
-    settings.beginGroup("charts");
-    xaxis->setTitleText("Time step");
-    xaxis->setLabelFormat("%.0f");
-
-    xaxis->setSubTickCount(4);
-    yaxis->setSubTickCount(4);
-    yaxis->setTitleText(title);
-    series->setName(title);
-
-    // hide built-in axis titles; external labels provide proper spacing
-    xaxis->setTitleVisible(false);
-    yaxis->setTitleVisible(false);
-
-    // configure theme: white background for axis/tick area and plot area, grid appearance
-    auto *theme = new QGraphsTheme;
-    theme->setBackgroundVisible(true);
-    theme->setBackgroundColor(Qt::white);
-    theme->setPlotAreaBackgroundVisible(true);
-    theme->setPlotAreaBackgroundColor(Qt::white);
-    QGraphsLine gridLine;
-    if (settings.value("grid", true).toBool()) {
-        gridLine.setMainColor(QColor(160, 160, 160));
-        gridLine.setMainWidth(2.0);
-    } else {
-        gridLine.setMainColor(Qt::white);
-        gridLine.setMainWidth(0.0);
-    }
-    if (settings.value("minorgrid", true).toBool()) {
-        gridLine.setSubColor(QColor(192, 192, 192));
-        gridLine.setSubWidth(1.0);
-    } else {
-        gridLine.setSubColor(Qt::white);
-        gridLine.setSubWidth(0.0);
-    }
-    theme->setGrid(gridLine);
-
-    // embed QtGraphs QML GraphsView via QQuickWidget
-    quickWidget = new QQuickWidget(this);
-    quickWidget->setResizeMode(QQuickWidget::SizeRootObjectToView);
-    theme->setParent(quickWidget);
-    quickWidget->setInitialProperties({
-        {"theme", QVariant::fromValue(theme)},
-        {"axisX", QVariant::fromValue(static_cast<QObject *>(xaxis))},
-        {"axisY", QVariant::fromValue(static_cast<QObject *>(yaxis))},
-    });
-    quickWidget->loadFromModule("QtGraphs", "GraphsView");
-    quickWidget->setContentsMargins(0, 0, 0, 0);
-    graphsView = quickWidget->rootObject();
-    if (!graphsView) return;
-
-    // external axis and plot title labels: bold black, positioned outside the chart
-    QFont titleFont;
-    titleFont.setBold(true);
-
-    ylabelWidget = new VerticalLabel(title, this);
-    ylabelWidget->setFont(titleFont);
-    ylabelWidget->setAutoFillBackground(true);
-    ylabelWidget->setContentsMargins(10, 0, 0, 0);
-    QPalette pal = ylabelWidget->palette();
-    pal.setColor(QPalette::Window, Qt::white);
-    pal.setColor(QPalette::WindowText, Qt::black);
-    ylabelWidget->setPalette(pal);
-
-    xlabelWidget = new QLabel("Time step", this);
-    xlabelWidget->setAlignment(Qt::AlignCenter);
-    xlabelWidget->setFont(titleFont);
-    xlabelWidget->setAutoFillBackground(true);
-    xlabelWidget->setContentsMargins(0, 0, 0, 10);
-    pal = xlabelWidget->palette();
-    pal.setColor(QPalette::Window, Qt::white);
-    pal.setColor(QPalette::WindowText, Qt::black);
-    xlabelWidget->setPalette(pal);
-
-    titleWidget = new QLabel("", this);
-    titleWidget->setAlignment(Qt::AlignCenter);
-    titleWidget->setFont(titleFont);
-    titleWidget->setAutoFillBackground(true);
-    titleWidget->setContentsMargins(0, 10, 0, 0);
-    pal = titleWidget->palette();
-    pal.setColor(QPalette::Window, Qt::white);
-    pal.setColor(QPalette::WindowText, Qt::black);
-    titleWidget->setPalette(pal);
-
-    auto *hlayout = new QHBoxLayout;
-    hlayout->setContentsMargins(0, 0, 0, 0);
-    hlayout->setSpacing(0);
-    hlayout->addWidget(ylabelWidget);
-    hlayout->addWidget(quickWidget, 1);
-
-    auto *vlayout = new QVBoxLayout(this);
-    vlayout->setContentsMargins(0, 0, 0, 0);
-    vlayout->setSpacing(0);
-    vlayout->addWidget(titleWidget);
-    vlayout->addLayout(hlayout, 1);
-    vlayout->addWidget(xlabelWidget);
-    settings.endGroup();
-
-    lastUpdate = QTime::currentTime();
-    updateSmooth();
-}
-
-/* -------------------------------------------------------------------- */
-
-ChartViewer::~ChartViewer()
-{
-    delete smooth;
-    delete series;
-    delete xaxis;
-    delete yaxis;
-}
-
+    backend = std::make_unique<QtGraphsBackend>();
 #else
+    backend = std::make_unique<QtChartsBackend>();
+#endif
+    backend->init(this, title, series);
 
-ChartViewer::ChartViewer(const QString &title, int _index, QWidget *parent) :
-    QChartView(parent), lastStep(-1), index(_index), window(10), order(4), chart(new QChart),
-    series(new QLineSeries), smooth(nullptr), xaxis(new QValueAxis), yaxis(new QValueAxis),
-    doRaw(true), doSmooth(false)
-{
-    QSettings settings;
-    settings.beginGroup("charts");
-    chart->legend()->hide();
-    chart->addAxis(xaxis, Qt::AlignBottom);
-    chart->addAxis(yaxis, Qt::AlignLeft);
-    chart->setTitle("");
-    xaxis->setTitleText("Time step");
-    xaxis->setTickCount(5);
-    xaxis->setLabelFormat("%d");
-    yaxis->setTickCount(5);
-    xaxis->setGridLineVisible(settings.value("grid", true).toBool());
-    xaxis->setMinorGridLineVisible(settings.value("minorgrid", true).toBool());
-    xaxis->setMinorGridLineColor(QColor(192, 192, 192));
-    xaxis->setGridLineColor(QColor(160, 160, 160));
-    xaxis->setMinorTickCount(4);
-    yaxis->setMinorTickCount(4);
-    yaxis->setTitleText(title);
-    yaxis->setGridLineVisible(settings.value("grid", true).toBool());
-    yaxis->setMinorGridLineVisible(settings.value("minorgrid", true).toBool());
-    yaxis->setMinorGridLineColor(QColor(192, 192, 192));
-    yaxis->setGridLineColor(QColor(160, 160, 160));
+    // embed the backend widget into our layout
+    auto *layout = new QVBoxLayout(this);
+    layout->setContentsMargins(0, 0, 0, 0);
+    if (auto *widget = backend->widget()) {
+        layout->addWidget(widget);
+    } else {
+        auto *error = new QLabel(tr("Unable to initialize chart display."), this);
+        error->setAlignment(Qt::AlignCenter);
+        error->setWordWrap(true);
+        layout->addWidget(error);
+    }
 
-    series->setName(title);
-    settings.endGroup();
-
-    setRenderHint(QPainter::Antialiasing);
-    setChart(chart);
-    setRubberBand(QChartView::NoRubberBand);
     lastUpdate = QTime::currentTime();
     updateSmooth();
 }
@@ -730,14 +592,10 @@ ChartViewer::ChartViewer(const QString &title, int _index, QWidget *parent) :
 
 ChartViewer::~ChartViewer()
 {
-    delete xaxis;
-    delete yaxis;
     delete smooth;
     delete series;
-    delete chart;
 }
 
-#endif
 /* -------------------------------------------------------------------- */
 
 void ChartViewer::addData(int step, double data)
@@ -754,6 +612,41 @@ void ChartViewer::addData(int step, double data)
             resetZoom();
         }
     }
+}
+
+/* -------------------------------------------------------------------- */
+
+QList<QAbstractAxis *> ChartViewer::getAxes() const
+{
+    return backend->getAxes();
+}
+
+/* -------------------------------------------------------------------- */
+
+QString ChartViewer::getTitle() const
+{
+    return backend->getTLabel();
+}
+
+/* -------------------------------------------------------------------- */
+
+QString ChartViewer::getTLabel() const
+{
+    return backend->getTLabel();
+}
+
+/* -------------------------------------------------------------------- */
+
+QString ChartViewer::getXLabel() const
+{
+    return backend->xAxis()->titleText();
+}
+
+/* -------------------------------------------------------------------- */
+
+QString ChartViewer::getYLabel() const
+{
+    return backend->yAxis()->titleText();
 }
 
 /* -------------------------------------------------------------------- */
@@ -816,33 +709,7 @@ QRectF ChartViewer::getMinMax() const
 void ChartViewer::resetZoom()
 {
     auto ranges = getMinMax();
-    xaxis->setRange(ranges.left(), ranges.right());
-    yaxis->setRange(ranges.bottom(), ranges.top());
-#ifdef LAMMPS_GUI_USE_QTGRAPHS
-    // compute "nice" tick intervals targeting about 5 major ticks per axis
-    auto niceInterval = [](double range) -> double {
-        if (range <= 0) return 1.0;
-        double rough = range / 4.0;
-        double p     = pow(10.0, floor(log10(rough)));
-        double frac  = rough / p;
-        double nice;
-        if (frac < 1.5)
-            nice = 1.0;
-        else if (frac < 3.0)
-            nice = 2.0;
-        else if (frac < 7.0)
-            nice = 5.0;
-        else
-            nice = 10.0;
-        return nice * p;
-    };
-    double xspan = ranges.right() - ranges.left();
-    double yspan = ranges.top() - ranges.bottom();
-    xaxis->setTickAnchor(0.0);
-    yaxis->setTickAnchor(0.0);
-    xaxis->setTickInterval(niceInterval(xspan));
-    yaxis->setTickInterval(niceInterval(yspan));
-#endif
+    backend->resetZoom(ranges.left(), ranges.right(), ranges.bottom(), ranges.top());
 }
 
 /* -------------------------------------------------------------------- */
@@ -851,22 +718,12 @@ void ChartViewer::smoothParam(bool _doRaw, bool _doSmooth, int _window, int _ord
 {
     // turn off raw plot
     if (!_doRaw) {
-#ifdef LAMMPS_GUI_USE_QTGRAPHS
-        if (doRaw && graphsView)
-            QMetaObject::invokeMethod(graphsView, "removeSeries", Q_ARG(QObject *, series));
-#else
-        if (doRaw) chart->removeSeries(series);
-#endif
+        if (doRaw) backend->removeSeries(series);
     }
     // turn off smooth plot
     if (!_doSmooth) {
         if (smooth) {
-#ifdef LAMMPS_GUI_USE_QTGRAPHS
-            if (graphsView)
-                QMetaObject::invokeMethod(graphsView, "removeSeries", Q_ARG(QObject *, smooth));
-#else
-            chart->removeSeries(smooth);
-#endif
+            backend->removeSeries(smooth);
             delete smooth;
             smooth = nullptr;
         }
@@ -882,21 +739,14 @@ void ChartViewer::smoothParam(bool _doRaw, bool _doSmooth, int _window, int _ord
 
 void ChartViewer::setTLabel(const QString &tlabel)
 {
-#ifdef LAMMPS_GUI_USE_QTGRAPHS
-    if (titleWidget) titleWidget->setText(tlabel);
-#else
-    if (chart) chart->setTitle(tlabel);
-#endif
+    backend->setTLabel(tlabel);
 }
 
 /* -------------------------------------------------------------------- */
 
 void ChartViewer::setYLabel(const QString &ylabel)
 {
-    yaxis->setTitleText(ylabel);
-#ifdef LAMMPS_GUI_USE_QTGRAPHS
-    ylabelWidget->setText(ylabel);
-#endif
+    backend->setYLabel(ylabel);
 }
 
 // local implementation of Savitzky-Golay filter
@@ -1319,60 +1169,21 @@ void ChartViewer::updateSmooth()
     if ((smoothidx < 0) || (smoothidx >= mybrushes.size())) smoothidx = 0;
     settings.endGroup();
 
-#ifdef LAMMPS_GUI_USE_QTGRAPHS
-    if (doRaw) {
-        // add raw data if not in view
-        bool hasSeries = false;
-        if (graphsView)
-            QMetaObject::invokeMethod(graphsView, "hasSeries", Q_RETURN_ARG(bool, hasSeries),
-                                      Q_ARG(QObject *, series));
-        if (!hasSeries) {
-            series->setColor(mybrushes[rawidx].color());
-            series->setWidth(3.0);
-            series->setCapStyle(Qt::RoundCap);
-            if (graphsView)
-                QMetaObject::invokeMethod(graphsView, "addSeries", Q_ARG(QObject *, series));
-        }
-    }
-
-    if (doSmooth) {
-        if (series->count() > (2 * window)) {
-            if (!smooth) {
-                smooth = new QLineSeries;
-                smooth->setColor(mybrushes[smoothidx].color());
-                smooth->setWidth(3.0);
-                smooth->setCapStyle(Qt::RoundCap);
-                if (graphsView)
-                    QMetaObject::invokeMethod(graphsView, "addSeries", Q_ARG(QObject *, smooth));
-            }
-            smooth->replace(calc_sgsmooth(series->points(), window, order));
-        }
-    }
-#else
-    auto allseries = chart->series();
     if (doRaw) {
         // add raw data if not in chart
-        if (!allseries.contains(series)) {
-            series->setPen(QPen(mybrushes[rawidx], 3, Qt::SolidLine, Qt::RoundCap));
-            chart->addSeries(series);
-            series->attachAxis(xaxis);
-            series->attachAxis(yaxis);
-        }
+        if (!backend->hasSeries(series))
+            backend->addSeries(series, mybrushes[rawidx].color(), 3.0);
     }
 
     if (doSmooth) {
         if (series->count() > (2 * window)) {
             if (!smooth) {
                 smooth = new QLineSeries;
-                smooth->setPen(QPen(mybrushes[smoothidx], 3, Qt::SolidLine, Qt::RoundCap));
-                chart->addSeries(smooth);
-                smooth->attachAxis(xaxis);
-                smooth->attachAxis(yaxis);
+                backend->addSeries(smooth, mybrushes[smoothidx].color(), 3.0);
             }
             smooth->replace(calc_sgsmooth(series->points(), window, order));
         }
     }
-#endif
 }
 
 // Local Variables:

@@ -68,29 +68,8 @@ bool capture_is_active = false;
 } // namespace
 
 // will be allocated and initialized in main() to avoid segfault on macOS
-QFont *GUI_MONOFONT = nullptr;
-QFont *GUI_ALLFONT  = nullptr;
-
-// duplicate string, STL version
-char *mystrdup(const std::string &text)
-{
-    auto *tmp = new char[text.size() + 1];
-    memcpy(tmp, text.c_str(), text.size() + 1);
-    return tmp;
-}
-
-// duplicate string, pointer version
-char *mystrdup(const char *text)
-{
-    if (text == nullptr) return mystrdup("");
-    return mystrdup(std::string(text));
-}
-
-// duplicate string, Qt version
-char *mystrdup(const QString &text)
-{
-    return mystrdup(text.toStdString());
-}
+std::unique_ptr<QFont> GUI_MONOFONT;
+std::unique_ptr<QFont> GUI_ALLFONT;
 
 // compare two date strings return -1 if first is older than second, 0 if same, or 1 if
 // otherwise
@@ -365,6 +344,28 @@ bool isLightTheme()
     int bg = p.brush(QPalette::Active, QPalette::Window).color().black();
 
     return (fg > bg);
+}
+
+// standardized "Unsaved Changes" confirmation dialog
+int showUnsavedChangesDialog(QWidget *parent, const QString &filename, const QString &question)
+{
+    QMessageBox msg(parent);
+    msg.setWindowTitle("Unsaved Changes");
+    msg.setWindowIcon(parent ? parent->windowIcon() : QIcon());
+    msg.setText(QString("The buffer ") + filename + " has changes");
+    msg.setInformativeText(question);
+    msg.setIcon(QMessageBox::Question);
+    msg.setStandardButtons(QMessageBox::Yes | QMessageBox::No | QMessageBox::Cancel);
+
+    auto *button = msg.button(QMessageBox::Yes);
+    button->setIcon(QIcon(":/icons/dialog-ok.png"));
+    button = msg.button(QMessageBox::No);
+    button->setIcon(QIcon(":/icons/dialog-no.png"));
+    button = msg.button(QMessageBox::Cancel);
+    button->setIcon(QIcon(":/icons/dialog-cancel.png"));
+
+    if (parent) msg.setFont(parent->font());
+    return msg.exec();
 }
 
 // silence stdout by redirecting to the null device

@@ -53,7 +53,7 @@ namespace {
 constexpr int bufSize = (1 << 16) + 1;
 } // namespace
 
-StdCapture::StdCapture() : m_oldStdOut(0), m_capturing(false), maxread(0), buf(new char[bufSize])
+StdCapture::StdCapture() : m_oldStdOut(0), m_capturing(false), maxread(0), buf(bufSize)
 {
     // make stdout unbuffered so that we don't need to flush the stream
     setvbuf(stdout, nullptr, _IONBF, 0);
@@ -73,15 +73,14 @@ StdCapture::StdCapture() : m_oldStdOut(0), m_capturing(false), maxread(0), buf(n
 StdCapture::~StdCapture()
 {
     notifyCaptureState(false);
-    delete[] buf;
     if (m_oldStdOut > 0) close(m_oldStdOut);
     if (m_pipe[READ] > 0) close(m_pipe[READ]);
     if (m_pipe[WRITE] > 0) close(m_pipe[WRITE]);
 }
 
-void StdCapture::BeginCapture()
+void StdCapture::beginCapture()
 {
-    if (m_capturing) EndCapture();
+    if (m_capturing) endCapture();
     if (isStdoutSilenced()) restoreStdout();
     dup2(m_pipe[WRITE], fileno(stdout));
     m_capturing = true;
@@ -89,7 +88,7 @@ void StdCapture::BeginCapture()
     notifyCaptureState(true);
 }
 
-bool StdCapture::EndCapture()
+bool StdCapture::endCapture()
 {
     if (!m_capturing) return false;
     notifyCaptureState(false);
@@ -106,14 +105,14 @@ bool StdCapture::EndCapture()
 
 #ifdef _WIN32
         if (pipe_has_data(m_pipe[READ])) {
-            bytesRead = read(m_pipe[READ], buf, bufSize - 1);
+            bytesRead = read(m_pipe[READ], buf.data(), bufSize - 1);
         }
 #else
-        bytesRead = read(m_pipe[READ], buf, bufSize - 1);
+        bytesRead = read(m_pipe[READ], buf.data(), bufSize - 1);
 #endif
         if (bytesRead > 0) {
             buf[bytesRead] = 0;
-            m_captured += buf;
+            m_captured += buf.data();
         } else if (bytesRead < 0) {
             fd_blocked =
                 ((errno == EAGAIN) || (errno == EWOULDBLOCK) || (errno == EINTR)) && (maxwait > 0);
@@ -126,7 +125,7 @@ bool StdCapture::EndCapture()
     return true;
 }
 
-std::string StdCapture::GetChunk()
+std::string StdCapture::getChunk()
 {
     if (!m_capturing) return {};
     int bytesRead = 0;
@@ -134,24 +133,24 @@ std::string StdCapture::GetChunk()
 
 #ifdef _WIN32
     if (pipe_has_data(m_pipe[READ])) {
-        bytesRead = read(m_pipe[READ], buf, bufSize - 1);
+        bytesRead = read(m_pipe[READ], buf.data(), bufSize - 1);
     }
 #else
-    bytesRead = read(m_pipe[READ], buf, bufSize - 1);
+    bytesRead = read(m_pipe[READ], buf.data(), bufSize - 1);
 #endif
     if (bytesRead > 0) {
         buf[bytesRead] = '\0';
     }
     maxread = (maxread > bytesRead) ? maxread : bytesRead;
-    return {buf};
+    return {buf.data()};
 }
 
-double StdCapture::get_bufferuse() const
+double StdCapture::getBufferUse() const
 {
     return (double)maxread / (double)(bufSize - 1);
 }
 
-std::string StdCapture::GetCapture()
+std::string StdCapture::getCapture()
 {
     std::string::size_type idx = m_captured.find_last_not_of("\r\n");
     if (idx == std::string::npos) {

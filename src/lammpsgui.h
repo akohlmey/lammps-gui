@@ -14,15 +14,13 @@
 
 #include <QMainWindow>
 
-#include <QEvent>
-#include <QGridLayout>
 #include <QList>
 #include <QPair>
-#include <QSpacerItem>
 #include <QString>
 #include <string>
 #include <vector>
 
+#include "constants.h"
 #include "lammpswrapper.h"
 
 // identifier for LAMMPS restart files
@@ -33,6 +31,7 @@
 // forward declarations
 
 class QAction;
+class QEvent;
 class QFont;
 class QLabel;
 class QMenu;
@@ -320,6 +319,41 @@ private:
     /** @brief Create all menu actions, menus, and status bar */
     void setupUi();
 
+    /** @brief Create File menu actions and add them to the menu bar */
+    void createFileMenu();
+
+    /** @brief Create Edit menu actions and add them to the menu bar */
+    void createEditMenu();
+
+    /** @brief Create Run menu actions and add them to the menu bar */
+    void createRunMenu();
+
+    /** @brief Create View menu actions and add them to the menu bar */
+    void createViewMenu();
+
+    /** @brief Create Tutorials menu with tutorial actions */
+    void createTutorialMenu();
+
+    /** @brief Create About/Help menu actions and add them to the menu bar */
+    void createAboutMenu();
+
+    /** @brief Create the status bar and its widgets */
+    void createStatusBar();
+
+    /** @brief Connect all actions to their respective slots */
+    void connectSignalsAndSlots();
+
+    /**
+     * @brief Configure a sub-window with standard icon, minimum size, and shortcuts
+     * @param window       The widget to configure
+     * @param windowTitle  Title to set on the window
+     *
+     * Sets the window icon to the standard LAMMPS-GUI icon, sets the minimum size
+     * to MINIMUM_WIDTH x MINIMUM_HEIGHT, and adds Ctrl+W (close) and Ctrl+/ (stop run)
+     * keyboard shortcuts.
+     */
+    void configureSubWindow(QWidget *window, const QString &windowTitle);
+
     // Central widget
     CodeEditor *textEdit;
 
@@ -341,7 +375,7 @@ private:
     QAction *actionSave;
     QAction *actionSaveAs;
     QAction *actionQuit;
-    QAction *recentActions[5]; ///< Recent file actions
+    QAction *recentActions[GuiConstants::NUM_RECENT_FILES]; ///< Recent file actions
 
     // Actions - Edit menu
     QAction *actionUndo;
@@ -371,7 +405,7 @@ private:
     QAction *actionViewVariableWindow;
 
     // Actions - Tutorials menu
-    QAction *tutorialActions[8]; ///< Tutorial 1-8
+    QAction *tutorialActions[GuiConstants::NUM_TUTORIALS]; ///< Tutorial 1-8
 
     // Actions - About menu
     QAction *actionAboutLAMMPSGUI;
@@ -416,10 +450,10 @@ private:
     LammpsWrapper lammps;           ///< Interface to LAMMPS library
     LammpsRunner *runner;           ///< Thread for running LAMMPS simulations
     QString docver;                 ///< LAMMPS documentation version string
-    QString pluginPath;             ///< Path to LAMMPS shared library (plugin mode)
-    bool isRunning;                 ///< Whether a simulation is currently running
-    int runCounter;                 ///< Counter for simulation runs
-    std::vector<char *> lammpsArgs; ///< Command-line arguments for LAMMPS
+    QString pluginPath;                  ///< Path to LAMMPS shared library (plugin mode)
+    bool isRunning;                      ///< Whether a simulation is currently running
+    int runCounter;                      ///< Counter for simulation runs
+    std::vector<std::string> lammpsArgs; ///< Command-line arguments for LAMMPS
 
 protected:
     int nthreads; ///< Number of threads for parallel execution

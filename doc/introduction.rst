@@ -81,6 +81,12 @@ Main Window
   manages the editor, handles file operations, controls LAMMPS
   execution, and manages the overall application state. This is the
   central hub of the application that integrates all other components.
+  The UI is built programmatically in ``setupUi()``, which is decomposed
+  into ``createFileMenu()``, ``createEditMenu()``, ``createRunMenu()``,
+  ``createViewMenu()``, ``createTutorialMenu()``, ``createAboutMenu()``,
+  ``createStatusBar()``, and ``connectSignalsAndSlots()``.  Sub-windows
+  (log, image, chart, slideshow) are configured via the shared helper
+  ``configureSubWindow()``.
   See :cpp:class:`LammpsGui`
 
 Editor Components
@@ -145,10 +151,25 @@ Visualization Components
 
 **ChartViewer (chartviewer.h/.cpp)** Custom chart view widget that
   provides interactive features like zooming, smoothing, and panning for
-  data visualization.  The implementation is either based on `QQuickWidget
-  <https://doc.qt.io/qt-6/qquickwidget.html>`_ and the QtGraphs module
-  or on the QtCharts module.  See :cpp:class:`ChartViewer`.  Using the
-  QtCharts module can be enforced by setting ``-D LAMMPS_GUI_USE_QTCHARTS=yes``.
+  data visualization.  ChartViewer delegates rendering to a
+  :cpp:class:`ChartBackend` interface, with concrete implementations for
+  the QtGraphs module (:cpp:class:`QtGraphsBackend`) and the QtCharts
+  module (:cpp:class:`QtChartsBackend`).  See :cpp:class:`ChartViewer`.
+  Using the QtCharts module can be enforced by setting
+  ``-D LAMMPS_GUI_USE_QTCHARTS=yes``.
+
+**ChartBackend (chartbackend.h)** Abstract interface for chart rendering
+  backends.  Provides a common API for axis management, series display,
+  zoom control, and label management.  See :cpp:class:`ChartBackend`.
+
+**QtGraphsBackend (qtgraphsbackend.h/.cpp)** QtGraphs-based implementation
+  of :cpp:class:`ChartBackend`.  Uses QML-based QGraphsView via QQuickWidget
+  for rendering, with external labels for axis titles.
+  See :cpp:class:`QtGraphsBackend`.
+
+**QtChartsBackend (qtchartsbackend.h/.cpp)** QtCharts-based implementation
+  of :cpp:class:`ChartBackend`.  Uses QChart and QChartView for widget-based
+  rendering.  See :cpp:class:`QtChartsBackend`.
 
 **SlideShow (slideshow.h/.cpp)**
   Dialog for viewing multiple images as a slideshow or animation with
@@ -243,17 +264,32 @@ Support Components
   Validator for color input fields, ensuring they contain valid color
   names or hex color codes.  See :cpp:class:`QColorValidator`
 
+**VerticalLabel (qaddon.h/.cpp)**
+  Label widget that renders text rotated 90 degrees for vertical
+  display.  Used in :cpp:class:`QtGraphsBackend` for the Y-axis title.
+  See :cpp:class:`VerticalLabel`
+
 Helper Functions
 ----------------
 
 The :ref:`helpers module <helper_functions>` provides utility functions
 used throughout the application:
 
-- String manipulation (mystrdup variants for different string types)
-- Date comparison (date_compare for version comparisons)
-- Command-line parsing (split_line with quote handling)
-- System utilities (has_exe for executable detection)
-- UI utilities (is_light_theme for theme detection)
+- Date comparison (``dateCompare`` for version comparisons)
+- Command-line parsing (``splitLine`` with quote handling)
+- System utilities (``hasExe`` for executable detection)
+- UI utilities (``isLightTheme`` for theme detection,
+  ``showUnsavedChangesDialog`` for standardized unsaved-changes prompts)
+- Stdout management (``silenceStdout``/``restoreStdout`` for suppressing
+  LAMMPS library output, coordinated with :cpp:class:`StdCapture` via
+  ``isStdoutSilenced`` and ``notifyCaptureState``)
+
+**Constants (constants.h)**
+  The ``GuiConstants`` namespace centralizes application-wide magic
+  numbers and repeated string literals, including default buffer sizes,
+  minimum window dimensions, file limits, resource paths, and status
+  messages.  Using named constants avoids typos and makes maintenance
+  easier.  See :cpp:type:`GuiConstants`
 
 ===========
  Data Flow

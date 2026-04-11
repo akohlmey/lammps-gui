@@ -269,7 +269,7 @@ public:
      * @brief Check if LAMMPS instance is open
      * @return true if LAMMPS is initialized, false otherwise
      */
-    bool is_open() const { return lammps_handle != nullptr; }
+    bool isOpen() const { return lammps_handle != nullptr; }
 
     /**
      * @brief Check if LAMMPS is currently executing a run

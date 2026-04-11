@@ -1,4 +1,4 @@
-# GitHub action to build LAMMPS-GUI on Linux with Qt 6.x
+# GitHub action to build LAMMPS-GUI on Linux with Qt 6.x and QtCharts
 name: "Compile and run tests with Qt 6.x"
 
 on:
@@ -59,6 +59,7 @@ jobs:
               -D CMAKE_CXX_STANDARD=23 \
               -D CMAKE_BUILD_TYPE=Debug \
               -D ENABLE_TESTING=yes \
+              -D LAMMPS_GUI_USE_QTCHARTS=yes \
               -D CMAKE_CXX_FLAGS_DEBUG="-Og -g -Wall -Wextra"
         cmake --build build --parallel 2
 

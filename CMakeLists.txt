@@ -91,8 +91,10 @@ if (NOT BUILD_DOC_ONLY)
     ${CMAKE_SOURCE_DIR}/src/aboutdialog.h
     ${CMAKE_SOURCE_DIR}/src/chartviewer.cpp
     ${CMAKE_SOURCE_DIR}/src/chartviewer.h
+    ${CMAKE_SOURCE_DIR}/src/chartbackend.h
     ${CMAKE_SOURCE_DIR}/src/codeeditor.cpp
     ${CMAKE_SOURCE_DIR}/src/codeeditor.h
+    ${CMAKE_SOURCE_DIR}/src/constants.h
     ${CMAKE_SOURCE_DIR}/src/fileviewer.cpp
     ${CMAKE_SOURCE_DIR}/src/fileviewer.h
     ${CMAKE_SOURCE_DIR}/src/findandreplace.cpp
@@ -104,6 +106,7 @@ if (NOT BUILD_DOC_ONLY)
     ${CMAKE_SOURCE_DIR}/src/highlighter.h
     ${CMAKE_SOURCE_DIR}/src/imageviewer.cpp
     ${CMAKE_SOURCE_DIR}/src/imageviewer.h
+    ${CMAKE_SOURCE_DIR}/src/lammpsrunner.cpp
     ${CMAKE_SOURCE_DIR}/src/lammpsrunner.h
     ${CMAKE_SOURCE_DIR}/src/lammpswrapper.cpp
     ${CMAKE_SOURCE_DIR}/src/lammpswrapper.h
@@ -129,6 +132,17 @@ if (NOT BUILD_DOC_ONLY)
     ${ICON_RC_FILE}
   )
   qt6_add_resources(PROJECT_SOURCES resources/lammpsgui.qrc)
+
+  # add the correct chart backend implementation
+  if(LAMMPS_GUI_USE_QTGRAPHS)
+    list(APPEND PROJECT_SOURCES
+      ${CMAKE_SOURCE_DIR}/src/qtgraphsbackend.cpp
+      ${CMAKE_SOURCE_DIR}/src/qtgraphsbackend.h)
+  else()
+    list(APPEND PROJECT_SOURCES
+      ${CMAKE_SOURCE_DIR}/src/qtchartsbackend.cpp
+      ${CMAKE_SOURCE_DIR}/src/qtchartsbackend.h)
+  endif()
 
   if(APPLE)
     if (LAMMPS_SOURCE_DIR)
