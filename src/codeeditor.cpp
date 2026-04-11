@@ -66,39 +66,22 @@ CodeEditor::CodeEditor(QWidget *parent) :
     helpAction = new QShortcut(QKeySequence::fromString("Ctrl+?"), parent);
     connect(helpAction, &QShortcut::activated, this, &CodeEditor::getHelp);
 
-    // set up completer class (without a model currently)
-#define COMPLETER_SETUP(completer)                                                   \
-    completer->setCompletionMode(QCompleter::UnfilteredPopupCompletion);             \
-    completer->setModelSorting(QCompleter::CaseInsensitivelySortedModel);            \
-    completer->setWidget(this);                                                      \
-    completer->setMaxVisibleItems(16);                                               \
-    completer->setWrapAround(false);                                                 \
-    connect(completer, QOverload<const QString &>::of(&QCompleter::activated), this, \
-            &CodeEditor::insertCompletedCommand)
+    // set up each completer with consistent settings
+    auto setupCompleter = [this](QCompleter *completer) {
+        completer->setCompletionMode(QCompleter::UnfilteredPopupCompletion);
+        completer->setModelSorting(QCompleter::CaseInsensitivelySortedModel);
+        completer->setWidget(this);
+        completer->setMaxVisibleItems(16);
+        completer->setWrapAround(false);
+        connect(completer, QOverload<const QString &>::of(&QCompleter::activated), this,
+                &CodeEditor::insertCompletedCommand);
+    };
 
-    COMPLETER_SETUP(commandComp);
-    COMPLETER_SETUP(fixComp);
-    COMPLETER_SETUP(computeComp);
-    COMPLETER_SETUP(dumpComp);
-    COMPLETER_SETUP(atomComp);
-    COMPLETER_SETUP(pairComp);
-    COMPLETER_SETUP(bondComp);
-    COMPLETER_SETUP(angleComp);
-    COMPLETER_SETUP(dihedralComp);
-    COMPLETER_SETUP(improperComp);
-    COMPLETER_SETUP(kspaceComp);
-    COMPLETER_SETUP(regionComp);
-    COMPLETER_SETUP(integrateComp);
-    COMPLETER_SETUP(minimizeComp);
-    COMPLETER_SETUP(variableComp);
-    COMPLETER_SETUP(unitsComp);
-    COMPLETER_SETUP(groupComp);
-    COMPLETER_SETUP(varnameComp);
-    COMPLETER_SETUP(fixidComp);
-    COMPLETER_SETUP(compidComp);
-    COMPLETER_SETUP(fileComp);
-    COMPLETER_SETUP(extraComp);
-#undef COMPLETER_SETUP
+    for (auto *c : {commandComp, fixComp, computeComp, dumpComp, atomComp, pairComp, bondComp,
+                     angleComp, dihedralComp, improperComp, kspaceComp, regionComp, integrateComp,
+                     minimizeComp, variableComp, unitsComp, groupComp, varnameComp, fixidComp,
+                     compidComp, fileComp, extraComp})
+        setupCompleter(c);
 
     // initialize help system
     QFile help_index(":/help_index.table");
@@ -146,30 +129,11 @@ CodeEditor::CodeEditor(QWidget *parent) :
 
 CodeEditor::~CodeEditor()
 {
+    // helpAction's parent is the main window (not this widget), so we
+    // must delete it explicitly.  All other children (lineNumberArea,
+    // completers) are Qt children of this widget and are automatically
+    // deleted by Qt's parent-child ownership.
     delete helpAction;
-    delete lineNumberArea;
-
-    delete commandComp;
-    delete fixComp;
-    delete computeComp;
-    delete atomComp;
-    delete pairComp;
-    delete bondComp;
-    delete angleComp;
-    delete dihedralComp;
-    delete improperComp;
-    delete kspaceComp;
-    delete regionComp;
-    delete integrateComp;
-    delete minimizeComp;
-    delete variableComp;
-    delete unitsComp;
-    delete groupComp;
-    delete varnameComp;
-    delete fixidComp;
-    delete compidComp;
-    delete fileComp;
-    delete extraComp;
 }
 
 int CodeEditor::lineNumberAreaWidth()
