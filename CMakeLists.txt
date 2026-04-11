@@ -362,31 +362,26 @@ endif()
 
 if (LAMMPS_GUI_USE_PLUGIN AND NOT BUILD_DOC_ONLY)
   # build LAMMPS-GUI as flatpak
-  if (WE_DONT_SUPPORT_FLATPAK_YET)
-    find_program(FLATPAK_COMMAND flatpak DOC "Path to flatpak command")
-    find_program(FLATPAK_BUILDER flatpak-builder DOC "Path to flatpak-builder command")
-    if(FLATPAK_COMMAND AND FLATPAK_BUILDER)
-      set(FLATPAK_BUNDLE "LAMMPS-GUI-Linux-x86_64-${PROJECT_VERSION}.flatpak")
-      add_custom_target(flatpak
-        COMMAND ${FLATPAK_COMMAND} --user remote-add --if-not-exists flathub https://dl.flathub.org/repo/flathub.flatpakrepo
-        COMMAND ${FLATPAK_BUILDER} --force-clean --verbose --repo=${CMAKE_CURRENT_BINARY_DIR}/flatpak-repo
-                                   --install-deps-from=flathub --state-dir=${CMAKE_CURRENT_BINARY_DIR}
-                                   --user --ccache --default-branch=${PROJECT_VERSION}
-                                   flatpak-build ${CMAKE_SOURCE_DIR}/packaging/org.lammps.lammps-gui.yml
-        COMMAND ${FLATPAK_COMMAND} build-bundle --runtime-repo=https://flathub.org/repo/flathub.flatpakrepo --verbose
-                                   ${CMAKE_CURRENT_BINARY_DIR}/flatpak-repo
-                                   ${FLATPAK_BUNDLE} org.lammps.lammps-gui ${PROJECT_VERSION}
-        COMMENT "Create Flatpak bundle file of LAMMPS-GUI"
-        BYPRODUCT ${FLATPAK_BUNDLE}
-        WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
-      )
-    else()
-      add_custom_target(flatpak
-        COMMAND ${CMAKE_COMMAND} -E echo "The flatpak and flatpak-builder commands required to build a LAMMPS-GUI flatpak bundle were not found. Skipping.")
-    endif()
+  find_program(FLATPAK_COMMAND flatpak DOC "Path to flatpak command")
+  find_program(FLATPAK_BUILDER flatpak-builder DOC "Path to flatpak-builder command")
+  if(FLATPAK_COMMAND AND FLATPAK_BUILDER)
+    set(FLATPAK_BUNDLE "LAMMPS-GUI-Linux-x86_64-${PROJECT_VERSION}.flatpak")
+    add_custom_target(flatpak
+      COMMAND ${FLATPAK_COMMAND} --user remote-add --if-not-exists flathub https://dl.flathub.org/repo/flathub.flatpakrepo
+      COMMAND ${FLATPAK_BUILDER} --force-clean --verbose --repo=${CMAKE_CURRENT_BINARY_DIR}/flatpak-repo
+                                 --install-deps-from=flathub --state-dir=${CMAKE_CURRENT_BINARY_DIR}
+                                 --user --ccache --default-branch=${PROJECT_VERSION}
+                                 flatpak-build ${CMAKE_SOURCE_DIR}/packaging/org.lammps.lammps-gui.yml
+      COMMAND ${FLATPAK_COMMAND} build-bundle --runtime-repo=https://flathub.org/repo/flathub.flatpakrepo --verbose
+                               ${CMAKE_CURRENT_BINARY_DIR}/flatpak-repo
+                               ${FLATPAK_BUNDLE} org.lammps.lammps-gui ${PROJECT_VERSION}
+      COMMENT "Create Flatpak bundle file of LAMMPS-GUI"
+      BYPRODUCT ${FLATPAK_BUNDLE}
+      WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
+    )
   else()
     add_custom_target(flatpak
-      COMMAND ${CMAKE_COMMAND} -E echo "Building LAMMPS-GUI in plugin mode for flatpak is currently not supported")
+      COMMAND ${CMAKE_COMMAND} -E echo "The flatpak and flatpak-builder commands required to build a LAMMPS-GUI flatpak bundle were not found. Skipping.")
   endif()
 
   # when compiling on macOS, create an "app bundle"
