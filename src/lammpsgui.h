@@ -321,6 +321,41 @@ private:
     /** @brief Create all menu actions, menus, and status bar */
     void setupUi();
 
+    /** @brief Create File menu actions and add them to the menu bar */
+    void createFileMenu();
+
+    /** @brief Create Edit menu actions and add them to the menu bar */
+    void createEditMenu();
+
+    /** @brief Create Run menu actions and add them to the menu bar */
+    void createRunMenu();
+
+    /** @brief Create View menu actions and add them to the menu bar */
+    void createViewMenu();
+
+    /** @brief Create Tutorials menu with tutorial actions */
+    void createTutorialMenu();
+
+    /** @brief Create About/Help menu actions and add them to the menu bar */
+    void createAboutMenu();
+
+    /** @brief Create the status bar and its widgets */
+    void createStatusBar();
+
+    /** @brief Connect all actions to their respective slots */
+    void connectSignalsAndSlots();
+
+    /**
+     * @brief Configure a sub-window with standard icon, minimum size, and shortcuts
+     * @param window       The widget to configure
+     * @param windowTitle  Title to set on the window
+     *
+     * Sets the window icon to the standard LAMMPS-GUI icon, sets the minimum size
+     * to MINIMUM_WIDTH x MINIMUM_HEIGHT, and adds Ctrl+W (close) and Ctrl+/ (stop run)
+     * keyboard shortcuts.
+     */
+    void configureSubWindow(QWidget *window, const QString &windowTitle);
+
     // Central widget
     CodeEditor *textEdit;
 
