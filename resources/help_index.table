@@ -7,6 +7,7 @@ angle_class2.html angle_style class2
 angle_class2.html angle_style class2/kk
 angle_class2.html angle_style class2/omp
 angle_class2.html angle_style class2/p6
+angle_class2.html angle_style class2xe
 angle_coeff.html angle_coeff
 angle_cosine_buck6d.html angle_style cosine/buck6d
 angle_cosine_delta.html angle_style cosine/delta
@@ -388,6 +389,7 @@ dihedral_charmm.html dihedral_style charmm/omp
 dihedral_class2.html dihedral_style class2
 dihedral_class2.html dihedral_style class2/kk
 dihedral_class2.html dihedral_style class2/omp
+dihedral_class2.html dihedral_style class2xe
 dihedral_coeff.html dihedral_coeff
 dihedral_cosine_shift_exp.html dihedral_style cosine/shift/exp
 dihedral_cosine_shift_exp.html dihedral_style cosine/shift/exp/omp
@@ -410,6 +412,7 @@ dihedral_multi_harmonic.html dihedral_style multi/harmonic
 dihedral_multi_harmonic.html dihedral_style multi/harmonic/kk
 dihedral_multi_harmonic.html dihedral_style multi/harmonic/omp
 dihedral_nharmonic.html dihedral_style nharmonic
+dihedral_nharmonic.html dihedral_style nharmonic/kk
 dihedral_nharmonic.html dihedral_style nharmonic/omp
 dihedral_none.html dihedral_style none
 dihedral_opls.html dihedral_style opls
@@ -576,6 +579,7 @@ fix_imd.html fix imd
 fix_indent.html fix indent
 fix_ipi.html fix ipi
 fix_lambda_apip.html fix lambda/apip
+fix_lambda_la_csp_apip.html fix lambda/la/csp/apip
 fix_lambda_thermostat_apip.html fix lambda_thermostat/apip
 fix_langevin_drude.html fix langevin/drude
 fix_langevin_eff.html fix langevin/eff
@@ -1195,6 +1199,7 @@ pair_gran.html pair_style gran/hooke/history/kk
 pair_gran.html pair_style gran/hooke/history/omp
 pair_gran.html pair_style gran/hooke/omp
 pair_granular.html pair_style granular
+pair_granular_superellipsoid.html pair_style granular/superellipsoid
 pair_gromacs.html pair_style lj/gromacs
 pair_gromacs.html pair_style lj/gromacs/coul/gromacs
 pair_gromacs.html pair_style lj/gromacs/coul/gromacs/kk
@@ -1252,6 +1257,7 @@ pair_lj96.html pair_style lj96/cut/kk
 pair_lj96.html pair_style lj96/cut/omp
 pair_lj_cubic.html pair_style lj/cubic
 pair_lj_cubic.html pair_style lj/cubic/gpu
+pair_lj_cubic.html pair_style lj/cubic/kk
 pair_lj_cubic.html pair_style lj/cubic/omp
 pair_lj_cut_coul.html pair_style lj/cut/coul/cut
 pair_lj_cut_coul.html pair_style lj/cut/coul/cut/gpu
