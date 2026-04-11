@@ -876,27 +876,9 @@ void CodeEditor::runCompletion()
     }
     const auto selected = line.mid(begin, end - begin);
 
-    // variable expansion may be anywhere
-    if (selected.startsWith("$")) {
-        currentComp = varnameComp;
-        currentComp->setCompletionPrefix(selected);
-        if (popup && (popup != currentComp->popup())) popup->hide();
-        popup = currentComp->popup();
-        // if the command is already a complete command, remove existing popup
-        if (selected == currentComp->currentCompletion()) {
-            if (popup->isVisible()) {
-                popup->hide();
-                currentComp = nullptr;
-            }
-            return;
-        }
-        QRect cr = cursorRect();
-        cr.setWidth(popup->sizeHintForColumn(0) + popup->verticalScrollBar()->sizeHint().width());
-        popup->setAlternatingRowColors(true);
-        currentComp->complete(cr);
 
-        // if on first word, try to complete command
-    } else if ((!words.empty()) && (words[0] == selected.toStdString())) {
+    // if on first word, try to complete command
+    if ((!words.empty()) && (words[0] == selected.toStdString())) {
         // no completion on comment lines
         if (words[0][0] == '#') return;
 
