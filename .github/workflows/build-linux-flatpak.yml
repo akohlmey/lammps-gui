@@ -53,7 +53,7 @@ jobs:
           FB_BRANCH="${{ github.ref_name }}"
         fi
 
-        sed -i -e "s/branch:.*/branch: ${FB_BRANCH}/' packaging/org.lammps.lammps-gui.yml
+        sed -i -e "s/branch:.*/branch: ${FB_BRANCH}/" packaging/org.lammps.lammps-gui.yml
 
         flatpak-builder --force-clean --verbose --repo=flatpak-repo \
           --install-deps-from=flathub --state-dir=flatpak-state \
