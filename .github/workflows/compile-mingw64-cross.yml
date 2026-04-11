@@ -1,0 +1,68 @@
+# GitHub action to cross-compile LAMMPS-GUI for Windows using MinGW64 on Linux
+name: "Cross-compile for Windows with MinGW64"
+
+on:
+  push:
+    branches:
+      - develop
+  pull_request:
+    branches:
+      - develop
+
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.event_name }}-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{github.event_name == 'pull_request'}}
+
+jobs:
+  build:
+    name: Cross-compile with MinGW64 and build NSIS installer
+    if: ${{ github.repository == 'akohlmey/lammps-gui' }}
+    runs-on: ubuntu-latest
+    container:
+      image: fedora:latest
+
+    steps:
+    - name: Install system dependencies
+      run: |
+        dnf install -y \
+            cmake \
+            ninja-build \
+            gcc-c++ \
+            git \
+            mingw64-gcc-c++ \
+            mingw64-qt6-qtbase \
+            mingw64-qt6-qtcharts \
+            mingw64-filesystem \
+            nsis \
+            doxygen \
+            python3 \
+            python3-pip \
+            texlive-scheme-basic \
+            texlive-collection-latexrecommended \
+            texlive-collection-latexextra \
+            texlive-collection-fontsrecommended \
+            latexmk \
+            wget \
+            dos2unix \
+            binutils \
+            gzip
+
+    - name: Checkout repository
+      uses: actions/checkout@v6
+      with:
+        fetch-depth: 20
+
+    - name: Cross-compile LAMMPS-GUI via CMake
+      shell: bash
+      run: |
+        mingw64-cmake -S . -B build \
+              -D LAMMPS_GUI_USE_PLUGIN=yes \
+              -D BUILD_DOC=yes
+        cmake --build build --parallel 2
+
+    - name: Build NSIS installer
+      shell: bash
+      run: |
+        cmake --build build --target nsis

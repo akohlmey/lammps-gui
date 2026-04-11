@@ -1,0 +1,67 @@
+# GitHub action to build LAMMPS-GUI on Linux with Qt 6.10+ and QtGraphs
+name: "Compile with Qt 6.10+ and QtGraphs"
+
+on:
+  push:
+    branches:
+      - develop
+  pull_request:
+    branches:
+      - develop
+
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.event_name }}-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{github.event_name == 'pull_request'}}
+
+jobs:
+  build:
+    name: Build with QtGraphs on Linux
+    if: ${{ github.repository == 'akohlmey/lammps-gui' }}
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v6
+      with:
+        fetch-depth: 20
+
+    - name: Install Qt 6.10 with QtGraphs
+      uses: jurplel/install-qt-action@v4
+      with:
+        version: '6.10.*'
+        modules: 'qtshadertools qtdeclarative qtgraphs'
+
+    - name: Install extra packages
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y \
+                                build-essential \
+                                cmake \
+                                libfontconfig1 \
+                                libglu1-mesa-dev \
+                                libomp-dev \
+                                libxkbcommon-dev \
+                                mesa-common-dev \
+                                ninja-build
+
+    - name: Create Build Environment
+      run: mkdir build
+
+    - name: Building LAMMPS-GUI via CMake
+      shell: bash
+      run: |
+        cmake -S . -B build \
+              -D LAMMPS_GUI_USE_PLUGIN=yes \
+              -D LAMMPS_GUI_USE_QTCHARTS=no \
+              -D BUILD_DOC=no \
+              -D CMAKE_CXX_STANDARD=23 \
+              -D CMAKE_BUILD_TYPE=Debug \
+              -D CMAKE_CXX_FLAGS_DEBUG="-Og -g -Wall -Wextra"
+        cmake --build build --parallel 2
+
+    - name: Check if LAMMPS-GUI can run at all
+      shell: bash
+      run: |
+        build/lammps-gui --platform offscreen -v
