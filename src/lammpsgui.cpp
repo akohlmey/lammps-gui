@@ -523,9 +523,9 @@ LammpsGui::LammpsGui(QWidget *parent, const QString &filename, int width, int he
                     settings.setValue("plugin_path", canonical);
                     settings.sync();
                     // must re-launch LAMMPS-GUI to cleanly load the selected new plugin
-                    const char *path = mystrdup(QCoreApplication::applicationFilePath());
-                    const char *arg0 = mystrdup(QCoreApplication::arguments().at(0));
-                    execl(path, arg0, (char *)nullptr);
+                    const auto path = QCoreApplication::applicationFilePath().toStdString();
+                    const auto arg0 = QCoreApplication::arguments().at(0).toStdString();
+                    execl(path.c_str(), arg0.c_str(), (char *)nullptr);
                     // This should not happen...
                     critical(this, "LAMMPS-GUI Error", "Relaunching LAMMPS-GUI failed.",
                              "LAMMPS-GUI must be restarted to correctly load the selected "
@@ -563,9 +563,9 @@ LammpsGui::LammpsGui(QWidget *parent, const QString &filename, int width, int he
                         settings.setValue("plugin_path", pluginPath);
                         settings.sync();
                         // must re-launch LAMMPS-GUI to cleanly load the selected new plugin
-                        const char *path = mystrdup(QCoreApplication::applicationFilePath());
-                        const char *arg0 = mystrdup(QCoreApplication::arguments().at(0));
-                        execl(path, arg0, (char *)nullptr);
+                        const auto path = QCoreApplication::applicationFilePath().toStdString();
+                        const auto arg0 = QCoreApplication::arguments().at(0).toStdString();
+                        execl(path.c_str(), arg0.c_str(), (char *)nullptr);
                         // This should not happen...
                         critical(this, "LAMMPS-GUI Error", "Relaunching LAMMPS-GUI failed.",
                                  "LAMMPS-GUI must be restarted to correctly load the selected "
@@ -642,9 +642,9 @@ LammpsGui::LammpsGui(QWidget *parent, const QString &filename, int width, int he
 
     // set up default LAMMPS thread arguments
     lammpsArgs.clear();
-    lammpsArgs.push_back(mystrdup("LAMMPS-GUI"));
-    lammpsArgs.push_back(mystrdup("-log"));
-    lammpsArgs.push_back(mystrdup("none"));
+    lammpsArgs.push_back("LAMMPS-GUI");
+    lammpsArgs.push_back("-log");
+    lammpsArgs.push_back("none");
 
     installEventFilter(this);
 
@@ -2486,83 +2486,83 @@ void LammpsGui::startLammps()
     qputenv("OMP_NUM_THREADS", QByteArray::number(nthreads));
 
     if (accel == AcceleratorTab::Opt) {
-        lammpsArgs.push_back(mystrdup("-suffix"));
-        lammpsArgs.push_back(mystrdup("opt"));
+        lammpsArgs.push_back("-suffix");
+        lammpsArgs.push_back("opt");
     } else if (accel == AcceleratorTab::OpenMP) {
-        lammpsArgs.push_back(mystrdup("-suffix"));
-        lammpsArgs.push_back(mystrdup("omp"));
-        lammpsArgs.push_back(mystrdup("-pk"));
-        lammpsArgs.push_back(mystrdup("omp"));
-        lammpsArgs.push_back(mystrdup(std::to_string(nthreads)));
+        lammpsArgs.push_back("-suffix");
+        lammpsArgs.push_back("omp");
+        lammpsArgs.push_back("-pk");
+        lammpsArgs.push_back("omp");
+        lammpsArgs.push_back(std::to_string(nthreads));
     } else if (accel == AcceleratorTab::Intel) {
-        lammpsArgs.push_back(mystrdup("-suffix"));
+        lammpsArgs.push_back("-suffix");
         if (lammps.configHasPackage("OPENMP")) {
-            lammpsArgs.push_back(mystrdup("hybrid"));
-            lammpsArgs.push_back(mystrdup("intel"));
-            lammpsArgs.push_back(mystrdup("omp"));
-            lammpsArgs.push_back(mystrdup("-pk"));
-            lammpsArgs.push_back(mystrdup("omp"));
-            lammpsArgs.push_back(mystrdup(std::to_string(nthreads)));
+            lammpsArgs.push_back("hybrid");
+            lammpsArgs.push_back("intel");
+            lammpsArgs.push_back("omp");
+            lammpsArgs.push_back("-pk");
+            lammpsArgs.push_back("omp");
+            lammpsArgs.push_back(std::to_string(nthreads));
         } else {
-            lammpsArgs.push_back(mystrdup("intel"));
+            lammpsArgs.push_back("intel");
         }
-        lammpsArgs.push_back(mystrdup("-pk"));
-        lammpsArgs.push_back(mystrdup("intel"));
-        lammpsArgs.push_back(mystrdup("0"));
-        lammpsArgs.push_back(mystrdup("omp"));
-        lammpsArgs.push_back(mystrdup(std::to_string(nthreads)));
-        lammpsArgs.push_back(mystrdup("mode"));
+        lammpsArgs.push_back("-pk");
+        lammpsArgs.push_back("intel");
+        lammpsArgs.push_back("0");
+        lammpsArgs.push_back("omp");
+        lammpsArgs.push_back(std::to_string(nthreads));
+        lammpsArgs.push_back("mode");
         int iprec = settings.value("intelprec", AcceleratorTab::Mixed).toInt();
         if (iprec == AcceleratorTab::Double)
-            lammpsArgs.push_back(mystrdup("double"));
+            lammpsArgs.push_back("double");
         else if (iprec == AcceleratorTab::Mixed)
-            lammpsArgs.push_back(mystrdup("mixed"));
+            lammpsArgs.push_back("mixed");
         else if (iprec == AcceleratorTab::Single)
-            lammpsArgs.push_back(mystrdup("single"));
+            lammpsArgs.push_back("single");
         else // use mixed precision for invalid value so there is no syntax error crash
-            lammpsArgs.push_back(mystrdup("mixed"));
+            lammpsArgs.push_back("mixed");
     } else if (accel == AcceleratorTab::Gpu) {
-        lammpsArgs.push_back(mystrdup("-suffix"));
+        lammpsArgs.push_back("-suffix");
         if ((nthreads > 1) && lammps.configHasPackage("OPENMP")) {
-            lammpsArgs.push_back(mystrdup("hybrid"));
-            lammpsArgs.push_back(mystrdup("gpu"));
-            lammpsArgs.push_back(mystrdup("omp"));
-            lammpsArgs.push_back(mystrdup("-pk"));
-            lammpsArgs.push_back(mystrdup("omp"));
-            lammpsArgs.push_back(mystrdup(std::to_string(nthreads)));
+            lammpsArgs.push_back("hybrid");
+            lammpsArgs.push_back("gpu");
+            lammpsArgs.push_back("omp");
+            lammpsArgs.push_back("-pk");
+            lammpsArgs.push_back("omp");
+            lammpsArgs.push_back(std::to_string(nthreads));
         } else {
-            lammpsArgs.push_back(mystrdup("gpu"));
+            lammpsArgs.push_back("gpu");
         }
-        lammpsArgs.push_back(mystrdup("-pk"));
-        lammpsArgs.push_back(mystrdup("gpu"));
-        lammpsArgs.push_back(mystrdup("1")); // can use only one GPU without MPI
-        lammpsArgs.push_back(mystrdup("omp"));
-        lammpsArgs.push_back(mystrdup(std::to_string(nthreads)));
-        lammpsArgs.push_back(mystrdup("neigh"));
+        lammpsArgs.push_back("-pk");
+        lammpsArgs.push_back("gpu");
+        lammpsArgs.push_back("1"); // can use only one GPU without MPI
+        lammpsArgs.push_back("omp");
+        lammpsArgs.push_back(std::to_string(nthreads));
+        lammpsArgs.push_back("neigh");
         if (settings.value("gpuneigh", true).toBool())
-            lammpsArgs.push_back(mystrdup("yes"));
+            lammpsArgs.push_back("yes");
         else
-            lammpsArgs.push_back(mystrdup("no"));
-        lammpsArgs.push_back(mystrdup("pair/only"));
+            lammpsArgs.push_back("no");
+        lammpsArgs.push_back("pair/only");
         if (settings.value("gpupaironly", false).toBool())
-            lammpsArgs.push_back(mystrdup("on"));
+            lammpsArgs.push_back("on");
         else
-            lammpsArgs.push_back(mystrdup("off"));
+            lammpsArgs.push_back("off");
     } else if (accel == AcceleratorTab::Kokkos) {
-        lammpsArgs.push_back(mystrdup("-kokkos"));
-        lammpsArgs.push_back(mystrdup("on"));
-        lammpsArgs.push_back(mystrdup("t"));
-        lammpsArgs.push_back(mystrdup(std::to_string(nthreads)));
-        lammpsArgs.push_back(mystrdup("-suffix"));
-        lammpsArgs.push_back(mystrdup("kk"));
+        lammpsArgs.push_back("-kokkos");
+        lammpsArgs.push_back("on");
+        lammpsArgs.push_back("t");
+        lammpsArgs.push_back(std::to_string(nthreads));
+        lammpsArgs.push_back("-suffix");
+        lammpsArgs.push_back("kk");
     }
     if (settings.value("echo", false).toBool()) {
-        lammpsArgs.push_back(mystrdup("-echo"));
-        lammpsArgs.push_back(mystrdup("screen"));
+        lammpsArgs.push_back("-echo");
+        lammpsArgs.push_back("screen");
     }
     if (settings.value("cite", false).toBool()) {
-        lammpsArgs.push_back(mystrdup("-cite"));
-        lammpsArgs.push_back(mystrdup("screen"));
+        lammpsArgs.push_back("-cite");
+        lammpsArgs.push_back("screen");
     }
 
     // add variables, if defined
@@ -2570,16 +2570,20 @@ void LammpsGui::startLammps()
         QString name  = var.first;
         QString value = var.second;
         if (!name.isEmpty() && !value.isEmpty()) {
-            lammpsArgs.push_back(mystrdup("-var"));
-            lammpsArgs.push_back(mystrdup(name));
+            lammpsArgs.push_back("-var");
+            lammpsArgs.push_back(name.toStdString());
             for (const auto &v : value.split(' '))
-                lammpsArgs.push_back(mystrdup(v));
+                lammpsArgs.push_back(v.toStdString());
         }
     }
 
-    char **args = lammpsArgs.data();
-    int narg    = lammpsArgs.size();
-    lammps.open(narg, args);
+    // build temporary char* array for LAMMPS C API
+    std::vector<char *> cargs;
+    cargs.reserve(lammpsArgs.size());
+    for (auto &s : lammpsArgs)
+        cargs.push_back(const_cast<char *>(s.c_str()));
+    int narg = static_cast<int>(cargs.size());
+    lammps.open(narg, cargs.data());
     lammpsstatus->show();
 
     // Must have at least LAMMPS version 30 March 2026
@@ -2590,11 +2594,8 @@ void LammpsGui::startLammps()
         exit(1);
     }
 
-    // delete additional arguments again (3 were there initially)
-    while ((int)lammpsArgs.size() > initial_narg) {
-        delete[] lammpsArgs.back();
-        lammpsArgs.pop_back();
-    }
+    // remove additional arguments (3 were there initially)
+    lammpsArgs.resize(initial_narg);
 
     if (lammps.hasError()) {
         char errorbuf[GuiConstants::DEFAULT_BUFLEN];

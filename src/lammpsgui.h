@@ -452,10 +452,10 @@ private:
     LammpsWrapper lammps;           ///< Interface to LAMMPS library
     LammpsRunner *runner;           ///< Thread for running LAMMPS simulations
     QString docver;                 ///< LAMMPS documentation version string
-    QString pluginPath;             ///< Path to LAMMPS shared library (plugin mode)
-    bool isRunning;                 ///< Whether a simulation is currently running
-    int runCounter;                 ///< Counter for simulation runs
-    std::vector<char *> lammpsArgs; ///< Command-line arguments for LAMMPS
+    QString pluginPath;                  ///< Path to LAMMPS shared library (plugin mode)
+    bool isRunning;                      ///< Whether a simulation is currently running
+    int runCounter;                      ///< Counter for simulation runs
+    std::vector<std::string> lammpsArgs; ///< Command-line arguments for LAMMPS
 
 protected:
     int nthreads; ///< Number of threads for parallel execution

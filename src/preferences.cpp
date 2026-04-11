@@ -230,9 +230,9 @@ void Preferences::accept()
     if (needRelaunch) {
         warning(this, "Relaunching LAMMPS-GUI", "LAMMPS library plugin path was changed.",
                 "LAMMPS-GUI must be relaunched.");
-        const char *path = mystrdup(QCoreApplication::applicationFilePath());
-        const char *arg0 = mystrdup(QCoreApplication::arguments().at(0));
-        execl(path, arg0, (char *)nullptr);
+        const auto path = QCoreApplication::applicationFilePath().toStdString();
+        const auto arg0 = QCoreApplication::arguments().at(0).toStdString();
+        execl(path.c_str(), arg0.c_str(), (char *)nullptr);
     }
 
     // reformatting settings
