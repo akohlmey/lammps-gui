@@ -3027,10 +3027,10 @@ void ImageViewer::updateFixes()
 
     // map compute and fix styles to their ids by parsing info command output.
     StdCapture capturer;
-    capturer.BeginCapture();
+    capturer.beginCapture();
     lammps->command("info computes fixes");
-    capturer.EndCapture();
-    QString styleinfo(capturer.GetCapture().c_str());
+    capturer.endCapture();
+    QString styleinfo(capturer.getCapture().c_str());
     QRegularExpression infoline(
         QStringLiteral(R"(^(Compute|Fix)\[.*\]: *([^,]+), *style = ([^,]+).*)"));
     QRegularExpression newline(QStringLiteral("[\r\n]+"));

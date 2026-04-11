@@ -78,9 +78,9 @@ StdCapture::~StdCapture()
     if (m_pipe[WRITE] > 0) close(m_pipe[WRITE]);
 }
 
-void StdCapture::BeginCapture()
+void StdCapture::beginCapture()
 {
-    if (m_capturing) EndCapture();
+    if (m_capturing) endCapture();
     if (isStdoutSilenced()) restoreStdout();
     dup2(m_pipe[WRITE], fileno(stdout));
     m_capturing = true;
@@ -88,7 +88,7 @@ void StdCapture::BeginCapture()
     notifyCaptureState(true);
 }
 
-bool StdCapture::EndCapture()
+bool StdCapture::endCapture()
 {
     if (!m_capturing) return false;
     notifyCaptureState(false);
@@ -125,7 +125,7 @@ bool StdCapture::EndCapture()
     return true;
 }
 
-std::string StdCapture::GetChunk()
+std::string StdCapture::getChunk()
 {
     if (!m_capturing) return {};
     int bytesRead = 0;
@@ -145,12 +145,12 @@ std::string StdCapture::GetChunk()
     return {buf.data()};
 }
 
-double StdCapture::get_bufferuse() const
+double StdCapture::getBufferUse() const
 {
     return (double)maxread / (double)(bufSize - 1);
 }
 
-std::string StdCapture::GetCapture()
+std::string StdCapture::getCapture()
 {
     std::string::size_type idx = m_captured.find_last_not_of("\r\n");
     if (idx == std::string::npos) {

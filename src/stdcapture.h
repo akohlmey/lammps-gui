@@ -43,31 +43,31 @@ public:
      *
      * Redirects stdout to an internal pipe for capture
      */
-    void BeginCapture();
+    void beginCapture();
 
     /**
      * @brief Stop capturing stdout and restore original stdout
      * @return true if capture was active, false otherwise
      */
-    bool EndCapture();
+    bool endCapture();
 
     /**
      * @brief Get all captured output and clear the buffer
      * @return String containing all captured output
      */
-    std::string GetCapture();
+    std::string getCapture();
 
     /**
      * @brief Get a chunk of captured output without clearing
-     * @return String containing new output since last GetChunk call
+     * @return String containing new output since last getChunk call
      */
-    std::string GetChunk();
+    std::string getChunk();
 
     /**
      * @brief Get the buffer usage as a fraction of max buffer size
      * @return Value between 0.0 and 1.0 indicating buffer fullness
      */
-    double get_bufferuse() const;
+    double getBufferUse() const;
 
 private:
     /**

@@ -22,27 +22,27 @@ protected:
     StdCapture capturer;
 };
 
-// Basic capture via EndCapture/GetCapture
+// Basic capture via endCapture/getCapture
 
 TEST_F(StdCaptureTest, CaptureSimpleOutput)
 {
-    capturer.BeginCapture();
+    capturer.beginCapture();
     printf("Hello World");
-    capturer.EndCapture();
+    capturer.endCapture();
 
-    std::string result = capturer.GetCapture();
+    std::string result = capturer.getCapture();
     EXPECT_EQ(result, "Hello World");
 }
 
 TEST_F(StdCaptureTest, CaptureMultipleLines)
 {
-    capturer.BeginCapture();
+    capturer.beginCapture();
     printf("Line 1\n");
     printf("Line 2\n");
     printf("Line 3");
-    capturer.EndCapture();
+    capturer.endCapture();
 
-    std::string result = capturer.GetCapture();
+    std::string result = capturer.getCapture();
     EXPECT_NE(result.find("Line 1"), std::string::npos);
     EXPECT_NE(result.find("Line 2"), std::string::npos);
     EXPECT_NE(result.find("Line 3"), std::string::npos);
@@ -50,91 +50,91 @@ TEST_F(StdCaptureTest, CaptureMultipleLines)
 
 TEST_F(StdCaptureTest, CaptureEmptyOutput)
 {
-    capturer.BeginCapture();
+    capturer.beginCapture();
     // write nothing
-    capturer.EndCapture();
+    capturer.endCapture();
 
-    std::string result = capturer.GetCapture();
+    std::string result = capturer.getCapture();
     EXPECT_TRUE(result.empty());
 }
 
 TEST_F(StdCaptureTest, MultipleCapturesSameInstance)
 {
     // First capture
-    capturer.BeginCapture();
+    capturer.beginCapture();
     printf("First");
-    capturer.EndCapture();
-    std::string first = capturer.GetCapture();
+    capturer.endCapture();
+    std::string first = capturer.getCapture();
     EXPECT_EQ(first, "First");
 
     // Second capture reuses the same pipe
-    capturer.BeginCapture();
+    capturer.beginCapture();
     printf("Second");
-    capturer.EndCapture();
-    std::string second = capturer.GetCapture();
+    capturer.endCapture();
+    std::string second = capturer.getCapture();
     EXPECT_EQ(second, "Second");
 }
 
-// GetChunk tests
+// getChunk tests
 
 TEST_F(StdCaptureTest, GetChunkDuringCapture)
 {
-    capturer.BeginCapture();
+    capturer.beginCapture();
     printf("chunk data");
 
-    std::string chunk = capturer.GetChunk();
+    std::string chunk = capturer.getChunk();
     EXPECT_EQ(chunk, "chunk data");
 
-    capturer.EndCapture();
+    capturer.endCapture();
 }
 
 TEST_F(StdCaptureTest, GetChunkWhenNotCapturing)
 {
-    // GetChunk without active capture should return empty
-    std::string chunk = capturer.GetChunk();
+    // getChunk without active capture should return empty
+    std::string chunk = capturer.getChunk();
     EXPECT_TRUE(chunk.empty());
 }
 
 TEST_F(StdCaptureTest, GetChunkMultipleTimes)
 {
-    capturer.BeginCapture();
+    capturer.beginCapture();
 
     printf("part1");
-    std::string chunk1 = capturer.GetChunk();
+    std::string chunk1 = capturer.getChunk();
     EXPECT_EQ(chunk1, "part1");
 
     printf("part2");
-    std::string chunk2 = capturer.GetChunk();
+    std::string chunk2 = capturer.getChunk();
     EXPECT_EQ(chunk2, "part2");
 
-    capturer.EndCapture();
+    capturer.endCapture();
 }
 
-// EndCapture without BeginCapture
+// endCapture without beginCapture
 
 TEST_F(StdCaptureTest, EndCaptureWithoutBegin)
 {
-    EXPECT_FALSE(capturer.EndCapture());
+    EXPECT_FALSE(capturer.endCapture());
 }
 
 // Buffer use tracking
 
 TEST_F(StdCaptureTest, BufferUseInitiallyZero)
 {
-    EXPECT_DOUBLE_EQ(capturer.get_bufferuse(), 0.0);
+    EXPECT_DOUBLE_EQ(capturer.getBufferUse(), 0.0);
 }
 
 TEST_F(StdCaptureTest, BufferUseAfterChunk)
 {
-    capturer.BeginCapture();
+    capturer.beginCapture();
     printf("some data");
-    capturer.GetChunk();
+    capturer.getChunk();
 
-    double usage = capturer.get_bufferuse();
+    double usage = capturer.getBufferUse();
     EXPECT_GT(usage, 0.0);
     EXPECT_LT(usage, 1.0);
 
-    capturer.EndCapture();
+    capturer.endCapture();
 }
 
 // Verify stdout is restored after capture
@@ -142,16 +142,16 @@ TEST_F(StdCaptureTest, BufferUseAfterChunk)
 TEST_F(StdCaptureTest, StdoutRestoredAfterCapture)
 {
     // Capture something
-    capturer.BeginCapture();
+    capturer.beginCapture();
     printf("captured");
-    capturer.EndCapture();
+    capturer.endCapture();
 
-    // After EndCapture, stdout should work normally again.
+    // After endCapture, stdout should work normally again.
     // We verify indirectly: a second capture cycle should still work.
-    capturer.BeginCapture();
+    capturer.beginCapture();
     printf("also captured");
-    capturer.EndCapture();
-    std::string result = capturer.GetCapture();
+    capturer.endCapture();
+    std::string result = capturer.getCapture();
     EXPECT_EQ(result, "also captured");
 }
 

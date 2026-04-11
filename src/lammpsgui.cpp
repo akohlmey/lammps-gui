@@ -1321,10 +1321,10 @@ void LammpsGui::inspectFile(const QString &fileName)
         clearVariables();
         lammps.command(QString("read_restart %1").arg(fileName));
         restoreStdout();
-        capturer->BeginCapture();
+        capturer->beginCapture();
         lammps.command("info system group compute fix");
-        capturer->EndCapture();
-        auto info    = capturer->GetCapture();
+        capturer->endCapture();
+        auto info    = capturer->getCapture();
         auto infolog = QString("%1.info.log").arg(fileName);
         QFile dumpinfo(infolog);
         if (dumpinfo.open(QIODevice::WriteOnly)) {
@@ -1545,7 +1545,7 @@ void LammpsGui::logUpdate()
 
     progress->setValue(completed);
     if (logwindow) {
-        const auto text = capturer->GetChunk();
+        const auto text = capturer->getChunk();
         if (!text.empty()) {
             logwindow->moveCursor(QTextCursor::End);
             logwindow->insertPlainText(text.c_str());
@@ -1665,17 +1665,17 @@ void LammpsGui::runDone()
     progress->setValue(GuiConstants::PROGRESS_MAXIMUM);
     textEdit->setHighlight(CodeEditor::NO_HIGHLIGHT, false);
 
-    capturer->EndCapture();
+    capturer->endCapture();
 
     if (logwindow) {
-        auto log = capturer->GetCapture();
+        auto log = capturer->getCapture();
         logwindow->insertPlainText(log.c_str());
         logwindow->moveCursor(QTextCursor::End);
     }
 
     // check stdout capture buffer utilization and print warning message if large
 
-    double bufferuse = capturer->get_bufferuse();
+    double bufferuse = capturer->getBufferUse();
     if (bufferuse > GuiConstants::BUFFER_WARNING_THRESHOLD) {
         int thermo_val     = lammps.extractSetting("thermo_every");
         int thermo_suggest =
@@ -1813,8 +1813,8 @@ void LammpsGui::doRun(bool use_buffer)
         status->setText(QString("Running LAMMPS ..."));
     status->repaint();
     startLammps();
-    if (!lammps.is_open()) return;
-    capturer->BeginCapture();
+    if (!lammps.isOpen()) return;
+    capturer->beginCapture();
 
     runner    = new LammpsRunner(this);
     isRunning = true;
@@ -2079,10 +2079,10 @@ void LammpsGui::about()
     // LAMMPS is not re-entrant, so we can only query LAMMPS when it is not running
     if (!lammps.isRunning()) {
         startLammps();
-        capturer->BeginCapture();
+        capturer->beginCapture();
         lammps.command("info config styles");
-        capturer->EndCapture();
-        info       = capturer->GetCapture();
+        capturer->endCapture();
+        info       = capturer->getCapture();
         auto start = info.find("LAMMPS version:");
         auto mid   = info.find("Styles information:", start);
         auto end   = info.find("Info-Info-Info", start);
