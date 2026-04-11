@@ -44,13 +44,24 @@ jobs:
 
     - name: Build flatpak
       run: |
-        mkdir flatpack-state
+        mkdir -p flatpak-state
+
+        # Use a Flatpak-safe branch name (no "/"), especially for pull_request refs like "78/merge"
+        if [ "${{ github.event_name }}" = "pull_request" ]; then
+          FB_BRANCH="pr-${{ github.event.pull_request.number }}"
+        else
+          FB_BRANCH="${{ github.ref_name }}"
+        fi
+
         sed -i -e 's/branch:.*/branch: develop/' packaging/org.lammps.lammps-gui.yml
+
         flatpak-builder --force-clean --verbose --repo=flatpak-repo \
-                               --install-deps-from=flathub --state-dir=flatpak-state \
-                               --user --ccache --default-branch=${{ github.ref_name }} \
-                               flatpak-build packaging/org.lammps.lammps-gui.yml
+          --install-deps-from=flathub --state-dir=flatpak-state \
+          --user --ccache --default-branch="${FB_BRANCH}" \
+          flatpak-build packaging/org.lammps.lammps-gui.yml
+
         flatpak build-bundle --runtime-repo=https://flathub.org/repo/flathub.flatpakrepo \
-                               --verbose  flatpak-repo LAMMPS-GUI-Linux-x86_64.flatpak \
-                               org.lammps.lammps-gui ${{ github.ref_name }}
+          --verbose flatpak-repo LAMMPS-GUI-Linux-x86_64.flatpak \
+          org.lammps.lammps-gui "${FB_BRANCH}"
+
         flatpak install -y -v --user LAMMPS-GUI-Linux-x86_64.flatpak
