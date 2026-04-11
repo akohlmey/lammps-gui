@@ -38,10 +38,10 @@ version 3.20 or later.
 
 .. admonition:: LAMMPS-GUI 2.0.0 has been successfully compiled and tested on:
 
-   - Ubuntu Linux 22.04LTS x86_64 using GCC 11, Qt version 6.4
-   - Fedora Linux 43 x86\_64 using GCC 14 and Clang 17, Qt version 6.8
+   - Ubuntu Linux 22.04LTS x86_64 using GCC 11, Qt version 6.2
+   - Fedora Linux 43 x86\_64 using Clang 21, Qt version 6.10
    - Fedora Linux 43 x86\_64 using GCC 15, Qt version 6.10
-   - Apple macOS 12 (Monterey) with Xcode on arm64 and x86\_64, Qt version 6.8
+   - Apple macOS 12 (Monterey) with Xcode 14.2 on arm64 and x86\_64, Qt version 6.5
    - Windows 11 x86_64 with Visual Studio 2026 and Visual C++ 14.50, Qt version 6.10
    - Windows 11 x86_64 with MinGW / GCC 15.2 cross-compiler on Fedora 43, Qt version 6.10
 
@@ -63,7 +63,7 @@ In these packages LAMMPS-GUI is linked directly to the included LAMMPS
 library and thus it *cannot* be changed in the :doc:`LAMMPS-GUI
 preferences dialog <dialogs>`.  Such pre-compiled LAMMPS executable
 packages are available for download for Linux x86\_64 (Ubuntu 22.04LTS
-or later and compatible), macOS (version 11 aka Big Sur or later), and
+or later and compatible), macOS (version 12 aka Monterey or later), and
 Windows (version 10 or later) from the `LAMMPS releases page on GitHub
 <https://github.com/lammps/lammps/releases/>`_.  A backup download
 location is at https://download.lammps.org/static/ but may not always be
@@ -106,8 +106,9 @@ The pre-compiled packages include support for GPUs through the GPU
 package with OpenCL (in mixed precision).  However, this requires
 that you have a compatible driver and the OpenCL runtime installed.
 This is not always available and when using the flatpak bundle, the
-flatpak sandbox usually prevents accessing the GPU.  GPU support through
-the KOKKOS package is currently not available for technical reasons,
+flatpak sandbox usually prevents accessing the GPU and thus the GPU
+package is disabled for that version.  GPU support through the KOKKOS
+package is currently not available for technical reasons,
 but serial and OpenMP multi-threading use of KOKKOS is available.
 
 The design decisions for LAMMPS-GUI and how it launches LAMMPS conflict
@@ -146,7 +147,7 @@ in the Windows System Settings to be able to run the installer.
    :width: 50%
 
 
-MacOS 11 and later
+MacOS 12 and later
 """"""""""""""""""
 
 .. index:: macOS installation
@@ -349,8 +350,8 @@ To build multi-arch executables that will run on both, arm64 and x86_64
 architectures natively, it is necessary to set the CMake variable ``-D
 CMAKE_OSX_ARCHITECTURES=arm64;x86_64``.  To achieve wide compatibility
 with different macOS versions, you can also set ``-D
-CMAKE_OSX_DEPLOYMENT_TARGET=11.0`` which will set compatibility to macOS
-11 (Big Sur) and later, even if you are compiling on a more recent macOS
+CMAKE_OSX_DEPLOYMENT_TARGET=12.0`` which will set compatibility to macOS
+12 (Monterey) and later, even if you are compiling on a more recent macOS
 version.
 
 Windows
