@@ -575,7 +575,14 @@ ChartViewer::ChartViewer(const QString &title, int _index, QWidget *parent) :
     // embed the backend widget into our layout
     auto *layout = new QVBoxLayout(this);
     layout->setContentsMargins(0, 0, 0, 0);
-    layout->addWidget(backend->widget());
+    if (auto *widget = backend->widget()) {
+        layout->addWidget(widget);
+    } else {
+        auto *error = new QLabel(tr("Unable to initialize chart display."), this);
+        error->setAlignment(Qt::AlignCenter);
+        error->setWordWrap(true);
+        layout->addWidget(error);
+    }
 
     lastUpdate = QTime::currentTime();
     updateSmooth();
