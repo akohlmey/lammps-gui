@@ -43,13 +43,17 @@ constexpr double BUFFER_WARNING_THRESHOLD = 0.333; ///< Warn when capture buffer
 constexpr int THERMO_SUGGEST_MULTIPLIER   = 5;     ///< Multiplier for thermo interval suggestion
 
 // ---- Resource paths ------------------------------------------------------
-inline const QString MAIN_ICON   = QStringLiteral(":/icons/lammps-gui-icon-128x128.png");
+/** path to LAMMPS-GUI Window Icon resource */
+inline const QString MAIN_ICON = QStringLiteral(":/icons/lammps-gui-icon-128x128.png");
+/** path to LAMMPS Icon resource */
 inline const QString LAMMPS_ICON = QStringLiteral(":/icons/lammps-icon-128x128.png");
 
 // ---- Status messages -----------------------------------------------------
+/** status string when LAMMPS-GUI is ready */
 inline const QString STATUS_READY = QStringLiteral("Ready.");
 
 // ---- Window title prefix -------------------------------------------------
+/** window title prefix string for LAMMPS-GUI windows */
 inline const QString TITLE_PREFIX = QStringLiteral("LAMMPS-GUI - ");
 
 } // namespace GuiConstants
