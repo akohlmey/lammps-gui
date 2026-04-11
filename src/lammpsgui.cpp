@@ -1789,6 +1789,8 @@ void LammpsGui::doRun(bool use_buffer)
             case QMessageBox::Yes:
                 save();
                 break;
+            case QMessageBox::No:
+                break;
             case QMessageBox::Cancel: // falthrough
             default:
                 return;
