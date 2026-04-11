@@ -114,6 +114,19 @@ extern void purgeDirectory(const QString &dir);
 extern bool isLightTheme();
 
 /**
+ * @brief Show a standardized "unsaved changes" confirmation dialog
+ * @param parent    Pointer to the parent widget
+ * @param filename  Name of the file with unsaved changes
+ * @param question  Informative text explaining the context (e.g. "save before opening?")
+ * @return QMessageBox::Yes, QMessageBox::No, or QMessageBox::Cancel
+ *
+ * Provides a consistent confirmation dialog used whenever the user may lose
+ * unsaved changes (opening a new file, quitting, running LAMMPS, etc.).
+ */
+extern int showUnsavedChangesDialog(QWidget *parent, const QString &filename,
+                                    const QString &question);
+
+/**
  * @brief Silence stdout by redirecting it to the null device
  *
  * Redirects stdout to /dev/null (Unix) or NUL: (Windows) to suppress

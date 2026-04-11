@@ -367,6 +367,28 @@ bool isLightTheme()
     return (fg > bg);
 }
 
+// standardized "Unsaved Changes" confirmation dialog
+int showUnsavedChangesDialog(QWidget *parent, const QString &filename, const QString &question)
+{
+    QMessageBox msg(parent);
+    msg.setWindowTitle("Unsaved Changes");
+    msg.setWindowIcon(parent ? parent->windowIcon() : QIcon());
+    msg.setText(QString("The buffer ") + filename + " has changes");
+    msg.setInformativeText(question);
+    msg.setIcon(QMessageBox::Question);
+    msg.setStandardButtons(QMessageBox::Yes | QMessageBox::No | QMessageBox::Cancel);
+
+    auto *button = msg.button(QMessageBox::Yes);
+    button->setIcon(QIcon(":/icons/dialog-ok.png"));
+    button = msg.button(QMessageBox::No);
+    button->setIcon(QIcon(":/icons/dialog-no.png"));
+    button = msg.button(QMessageBox::Cancel);
+    button->setIcon(QIcon(":/icons/dialog-cancel.png"));
+
+    if (parent) msg.setFont(parent->font());
+    return msg.exec();
+}
+
 // silence stdout by redirecting to the null device
 
 void silenceStdout()

@@ -23,6 +23,7 @@
 #include <string>
 #include <vector>
 
+#include "constants.h"
 #include "lammpswrapper.h"
 
 // identifier for LAMMPS restart files
@@ -341,7 +342,7 @@ private:
     QAction *actionSave;
     QAction *actionSaveAs;
     QAction *actionQuit;
-    QAction *recentActions[5]; ///< Recent file actions
+    QAction *recentActions[GuiConstants::MAX_RECENT_FILES]; ///< Recent file actions
 
     // Actions - Edit menu
     QAction *actionUndo;
@@ -371,7 +372,7 @@ private:
     QAction *actionViewVariableWindow;
 
     // Actions - Tutorials menu
-    QAction *tutorialActions[8]; ///< Tutorial 1-8
+    QAction *tutorialActions[GuiConstants::MAX_TUTORIALS]; ///< Tutorial 1-8
 
     // Actions - About menu
     QAction *actionAboutLAMMPSGUI;
