@@ -32,8 +32,8 @@ constexpr int ICON_SCALE          = 22;   ///< Status bar icon dimension in pixe
 constexpr int PROGRESS_MAXIMUM    = 1000; ///< Maximum value for QProgressBar
 
 // ---- File limits ---------------------------------------------------------
-constexpr int MAX_RECENT_FILES = 5; ///< Number of entries in the recent files list
-constexpr int MAX_TUTORIALS    = 8; ///< Number of tutorials available
+constexpr int NUM_RECENT_FILES = 5; ///< Number of entries in the recent files list
+constexpr int NUM_TUTORIALS    = 8; ///< Number of tutorials available
 
 // ---- LAMMPS version requirement ------------------------------------------
 constexpr int MIN_LAMMPS_VERSION = 20260330; ///< Minimum LAMMPS version (30 March 2026)

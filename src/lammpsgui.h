@@ -375,7 +375,7 @@ private:
     QAction *actionSave;
     QAction *actionSaveAs;
     QAction *actionQuit;
-    QAction *recentActions[GuiConstants::MAX_RECENT_FILES]; ///< Recent file actions
+    QAction *recentActions[GuiConstants::NUM_RECENT_FILES]; ///< Recent file actions
 
     // Actions - Edit menu
     QAction *actionUndo;
@@ -405,7 +405,7 @@ private:
     QAction *actionViewVariableWindow;
 
     // Actions - Tutorials menu
-    QAction *tutorialActions[GuiConstants::MAX_TUTORIALS]; ///< Tutorial 1-8
+    QAction *tutorialActions[GuiConstants::NUM_TUTORIALS]; ///< Tutorial 1-8
 
     // Actions - About menu
     QAction *actionAboutLAMMPSGUI;

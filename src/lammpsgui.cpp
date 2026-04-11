@@ -142,7 +142,7 @@ void LammpsGui::createFileMenu()
     actionQuit = new QAction(QIcon(":/icons/application-exit.png"), "&Quit", this);
     actionQuit->setShortcut(QKeySequence("Ctrl+Q"));
 
-    for (int i = 0; i < GuiConstants::MAX_RECENT_FILES; ++i) {
+    for (int i = 0; i < GuiConstants::NUM_RECENT_FILES; ++i) {
         recentActions[i] = new QAction(QIcon(":/icons/document-open-recent.png"),
                                        QString("&%1.").arg(i + 1), this);
     }
@@ -154,7 +154,7 @@ void LammpsGui::createFileMenu()
     menuFile->addAction(actionView);
     menuFile->addAction(actionInspect);
     menuFile->addSeparator();
-    for (int i = 0; i < GuiConstants::MAX_RECENT_FILES; ++i)
+    for (int i = 0; i < GuiConstants::NUM_RECENT_FILES; ++i)
         menuFile->addAction(recentActions[i]);
     menuFile->addSeparator();
     menuFile->addAction(actionSave);
@@ -277,13 +277,13 @@ void LammpsGui::createViewMenu()
 
 void LammpsGui::createTutorialMenu()
 {
-    for (int i = 0; i < GuiConstants::MAX_TUTORIALS; ++i) {
+    for (int i = 0; i < GuiConstants::NUM_TUTORIALS; ++i) {
         tutorialActions[i] = new QAction(QIcon(":/icons/tutorial-logo.png"),
                                          QString("Start LAMMPS Tutorial &%1").arg(i + 1), this);
     }
 
     menuTutorial = menubar->addMenu("&Tutorials");
-    for (int i = 0; i < GuiConstants::MAX_TUTORIALS; ++i)
+    for (int i = 0; i < GuiConstants::NUM_TUTORIALS; ++i)
         menuTutorial->addAction(tutorialActions[i]);
 }
 
@@ -330,7 +330,7 @@ void LammpsGui::connectSignalsAndSlots()
     connect(actionView, &QAction::triggered, this, &LammpsGui::view);
     connect(actionInspect, &QAction::triggered, this, &LammpsGui::inspect);
     connect(actionQuit, &QAction::triggered, this, &LammpsGui::quit);
-    for (int i = 0; i < GuiConstants::MAX_RECENT_FILES; ++i)
+    for (int i = 0; i < GuiConstants::NUM_RECENT_FILES; ++i)
         connect(recentActions[i], &QAction::triggered, this, &LammpsGui::openRecent);
 
     // Edit actions
@@ -362,7 +362,7 @@ void LammpsGui::connectSignalsAndSlots()
 
     // Tutorial actions
     connect(actionLAMMPSTutorial, &QAction::triggered, this, &LammpsGui::tutorialWeb);
-    for (int i = 0; i < GuiConstants::MAX_TUTORIALS; ++i)
+    for (int i = 0; i < GuiConstants::NUM_TUTORIALS; ++i)
         connect(tutorialActions[i], &QAction::triggered, this, [this, i]() {
             startTutorial(i + 1);
         });
@@ -1045,7 +1045,7 @@ void LammpsGui::updateRecents(const QString &filename)
     else
         settings.remove("recent");
 
-    for (int i = 0; i < GuiConstants::MAX_RECENT_FILES; ++i) {
+    for (int i = 0; i < GuiConstants::NUM_RECENT_FILES; ++i) {
         recentActions[i]->setVisible(false);
         if (i < recent.size() && !recent[i].isEmpty()) {
             QFileInfo fi(recent[i]);
