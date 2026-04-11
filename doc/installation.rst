@@ -94,9 +94,9 @@ If you want to override that choice of LAMMPS library, you can use the
 library file you want it to load.  By using ``-p ""`` you can also reset
 any previous choice and thus trigger loading the default library again.
 When resetting the LAMMPS shared library path or when the currently
-configured library file cannot be loaded or does no longer exist, a
-dialog will appear that allows to re-download the default minimal LAMMPS
-shared library from the LAMMPS web server or browse the filesystem for a
+configured library file cannot be loaded or no longer exists, a dialog
+will appear that allows to re-download the default minimal LAMMPS shared
+library from the LAMMPS web server or browse the filesystem for a
 suitable custom shared library file.  Once LAMMPS-GUI is running, you
 can also change the path to the LAMMPS shared library or re-download a
 pre-compiled copy from the :doc:`Preferences dialog <dialogs>`.
