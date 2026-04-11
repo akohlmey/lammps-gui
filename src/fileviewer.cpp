@@ -54,9 +54,8 @@ FileViewer::FileViewer(const QString &_filename, const QString &title, QWidget *
         const char *extraArg; // nullptr if none
     };
     static constexpr CompressionFormat compressionFormats[] = {
-        {"gz", "gzip", nullptr},       {"bz2", "bzip2", nullptr},
-        {"zst", "zstd", nullptr},      {"xz", "xz", nullptr},
-        {"lzma", "xz", "--format=lzma"}, {"lz4", "lz4", nullptr},
+        {"gz", "gzip", nullptr}, {"bz2", "bzip2", nullptr},       {"zst", "zstd", nullptr},
+        {"xz", "xz", nullptr},   {"lzma", "xz", "--format=lzma"}, {"lz4", "lz4", nullptr},
     };
 
     // match suffix with decompression program

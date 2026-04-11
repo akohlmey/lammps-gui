@@ -15,8 +15,8 @@
 #include <QPen>
 #include <QSettings>
 
-QtChartsBackend::QtChartsBackend() : chart(nullptr), chartView(nullptr), xaxis(nullptr),
-                                     yaxis(nullptr)
+QtChartsBackend::QtChartsBackend() :
+    chart(nullptr), chartView(nullptr), xaxis(nullptr), yaxis(nullptr)
 {
 }
 

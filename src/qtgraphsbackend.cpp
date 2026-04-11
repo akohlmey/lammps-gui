@@ -27,10 +27,9 @@
 
 #include <cmath>
 
-QtGraphsBackend::QtGraphsBackend() : container(nullptr), quickWidget(nullptr),
-                                     graphsView(nullptr), ylabelWidget(nullptr),
-                                     xlabelWidget(nullptr), titleWidget(nullptr),
-                                     xaxis(nullptr), yaxis(nullptr)
+QtGraphsBackend::QtGraphsBackend() :
+    container(nullptr), quickWidget(nullptr), graphsView(nullptr), ylabelWidget(nullptr),
+    xlabelWidget(nullptr), titleWidget(nullptr), xaxis(nullptr), yaxis(nullptr)
 {
 }
 
@@ -131,7 +130,7 @@ void QtGraphsBackend::init(QWidget *parent, const QString &title, QLineSeries *s
     pal.setColor(QPalette::WindowText, Qt::black);
     titleWidget->setPalette(pal);
 
-    container = new QWidget(parent);
+    container     = new QWidget(parent);
     auto *hlayout = new QHBoxLayout;
     hlayout->setContentsMargins(0, 0, 0, 0);
     hlayout->setSpacing(0);
@@ -192,14 +191,12 @@ void QtGraphsBackend::addSeries(QLineSeries *s, const QColor &color, qreal width
     s->setColor(color);
     s->setWidth(width);
     s->setCapStyle(Qt::RoundCap);
-    if (graphsView)
-        QMetaObject::invokeMethod(graphsView, "addSeries", Q_ARG(QObject *, s));
+    if (graphsView) QMetaObject::invokeMethod(graphsView, "addSeries", Q_ARG(QObject *, s));
 }
 
 void QtGraphsBackend::removeSeries(QLineSeries *s)
 {
-    if (graphsView)
-        QMetaObject::invokeMethod(graphsView, "removeSeries", Q_ARG(QObject *, s));
+    if (graphsView) QMetaObject::invokeMethod(graphsView, "removeSeries", Q_ARG(QObject *, s));
 }
 
 bool QtGraphsBackend::hasSeries(QLineSeries *s) const

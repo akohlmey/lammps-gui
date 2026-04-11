@@ -77,10 +77,11 @@ CodeEditor::CodeEditor(QWidget *parent) :
                 &CodeEditor::insertCompletedCommand);
     };
 
-    for (auto *c : {commandComp, fixComp, computeComp, dumpComp, atomComp, pairComp, bondComp,
-                     angleComp, dihedralComp, improperComp, kspaceComp, regionComp, integrateComp,
-                     minimizeComp, variableComp, unitsComp, groupComp, varnameComp, fixidComp,
-                     compidComp, fileComp, extraComp})
+    for (auto *c :
+         {commandComp,   fixComp,      computeComp,  dumpComp,     atomComp,   pairComp,
+          bondComp,      angleComp,    dihedralComp, improperComp, kspaceComp, regionComp,
+          integrateComp, minimizeComp, variableComp, unitsComp,    groupComp,  varnameComp,
+          fixidComp,     compidComp,   fileComp,     extraComp})
         setupCompleter(c);
 
     // initialize help system
@@ -839,7 +840,6 @@ void CodeEditor::runCompletion()
         ++end;
     }
     const auto selected = line.mid(begin, end - begin);
-
 
     // if on first word, try to complete command
     if ((!words.empty()) && (words[0] == selected.toStdString())) {

@@ -562,8 +562,8 @@ bool ChartWindow::eventFilter(QObject *watched, QEvent *event)
 /* -------------------------------------------------------------------- */
 
 ChartViewer::ChartViewer(const QString &title, int _index, QWidget *parent) :
-    QWidget(parent), lastStep(-1), index(_index), window(10), order(4),
-    series(new QLineSeries), smooth(nullptr), doRaw(true), doSmooth(false)
+    QWidget(parent), lastStep(-1), index(_index), window(10), order(4), series(new QLineSeries),
+    smooth(nullptr), doRaw(true), doSmooth(false)
 {
 #ifdef LAMMPS_GUI_USE_QTGRAPHS
     backend = std::make_unique<QtGraphsBackend>();
@@ -1171,8 +1171,7 @@ void ChartViewer::updateSmooth()
 
     if (doRaw) {
         // add raw data if not in chart
-        if (!backend->hasSeries(series))
-            backend->addSeries(series, mybrushes[rawidx].color(), 3.0);
+        if (!backend->hasSeries(series)) backend->addSeries(series, mybrushes[rawidx].color(), 3.0);
     }
 
     if (doSmooth) {

@@ -112,14 +112,14 @@ protected:
     bool eventFilter(QObject *watched, QEvent *event) override; ///< Intercept Alt-keystrokes
 
 private:
-    void createActions();      ///< Setup menu actions
-    void updateActions();      ///< Update action states
-    void adjustWindowSize();   ///< Auto-resize window to fit image
-    void readImageSettings();  ///< Read snapshot settings from QSettings and reset members
-    void updateFixes();        ///< Update fix graphics information
-    void updateRegions();      ///< Update region information
-    void updatePeratom();      ///< Update per-atom information
-    bool hasAutobonds();       ///< Check if autobonds are enabled
+    void createActions();     ///< Setup menu actions
+    void updateActions();     ///< Update action states
+    void adjustWindowSize();  ///< Auto-resize window to fit image
+    void readImageSettings(); ///< Read snapshot settings from QSettings and reset members
+    void updateFixes();       ///< Update fix graphics information
+    void updateRegions();     ///< Update region information
+    void updatePeratom();     ///< Update per-atom information
+    bool hasAutobonds();      ///< Check if autobonds are enabled
 
 private:
     QImage image;            ///< Currently displayed image

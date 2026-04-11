@@ -625,10 +625,11 @@ LammpsGui::LammpsGui(QWidget *parent, const QString &filename, int width, int he
 
     // Check and initialize nthreads setting for when OpenMP support is compiled in.
     // Default is to use OMP_NUM_THREADS setting, if that is not available, thenhalf of max
-    // (assuming hyper-threading is enabled) and no more than GuiConstants::MAX_DEFAULT_THREADS (=16).
-    // This is only if there is no preference set but do not override OMP_NUM_THREADS
-    int default_threads = std::min(QThread::idealThreadCount() / 2, GuiConstants::MAX_DEFAULT_THREADS);
-    default_threads     = std::max(default_threads, 1);
+    // (assuming hyper-threading is enabled) and no more than GuiConstants::MAX_DEFAULT_THREADS
+    // (=16). This is only if there is no preference set but do not override OMP_NUM_THREADS
+    int default_threads =
+        std::min(QThread::idealThreadCount() / 2, GuiConstants::MAX_DEFAULT_THREADS);
+    default_threads = std::max(default_threads, 1);
     if (qEnvironmentVariableIsSet("OMP_NUM_THREADS"))
         default_threads = qEnvironmentVariable("OMP_NUM_THREADS").toInt();
     nthreads = settings.value("nthreads", default_threads).toInt();
@@ -828,7 +829,7 @@ LammpsGui::LammpsGui(QWidget *parent, const QString &filename, int width, int he
         style_list << QString("none");                                                         \
     ncmds = lammps.styleCount(#keyword);                                                       \
     for (int i = 0; i < ncmds; ++i) {                                                          \
-        if (lammps.styleName(#keyword, i, buf, GuiConstants::DEFAULT_BUFLEN)) {                              \
+        if (lammps.styleName(#keyword, i, buf, GuiConstants::DEFAULT_BUFLEN)) {                \
             const QString style(buf);                                                          \
             if (style.endsWith("/gpu") || style.endsWith("/intel") || style.endsWith("/kk") || \
                 style.endsWith("/kk/device") || style.endsWith("/kk/host") ||                  \
@@ -1346,7 +1347,8 @@ void LammpsGui::inspectFile(const QString &fileName)
             QFile(infodata).remove();
             auto *inspect_image = new ImageViewer(fileName, &lammps);
             inspect_image->setFont(font());
-            inspect_image->setMinimumSize(GuiConstants::MINIMUM_WIDTH, GuiConstants::MINIMUM_HEIGHT);
+            inspect_image->setMinimumSize(GuiConstants::MINIMUM_WIDTH,
+                                          GuiConstants::MINIMUM_HEIGHT);
             inspect_image->show();
             ilist->image = inspect_image;
         }
@@ -1419,8 +1421,8 @@ void LammpsGui::quit()
 
     autoSave();
     if (textEdit->document()->isModified()) {
-        int rv = showUnsavedChangesDialog(
-            this, currentFile, "Do you want to save the file before exiting?");
+        int rv = showUnsavedChangesDialog(this, currentFile,
+                                          "Do you want to save the file before exiting?");
         switch (rv) {
             case QMessageBox::Yes:
                 save();
@@ -1677,7 +1679,7 @@ void LammpsGui::runDone()
 
     double bufferuse = capturer->getBufferUse();
     if (bufferuse > GuiConstants::BUFFER_WARNING_THRESHOLD) {
-        int thermo_val     = lammps.extractSetting("thermo_every");
+        int thermo_val = lammps.extractSetting("thermo_every");
         int thermo_suggest =
             GuiConstants::THERMO_SUGGEST_MULTIPLIER * (int)round(bufferuse * thermo_val);
         int update_val     = QSettings().value("updfreq", 100).toInt();
@@ -1783,8 +1785,8 @@ void LammpsGui::doRun(bool use_buffer)
     purgeInspectList();
     autoSave();
     if (!use_buffer && textEdit->document()->isModified()) {
-        int rv = showUnsavedChangesDialog(
-            this, currentFile, "Do you want to save the buffer before running LAMMPS?");
+        int rv = showUnsavedChangesDialog(this, currentFile,
+                                          "Do you want to save the buffer before running LAMMPS?");
         switch (rv) {
             case QMessageBox::Yes:
                 save();
@@ -1851,8 +1853,7 @@ void LammpsGui::doRun(bool use_buffer)
     logwindow->moveCursor(QTextCursor::End);
     logwindow->setLineWrapMode(LogWindow::NoWrap);
     configureSubWindow(
-        logwindow,
-        QString("LAMMPS-GUI - Output - %1 - Run %2").arg(currentFile).arg(runCounter));
+        logwindow, QString("LAMMPS-GUI - Output - %1 - Run %2").arg(currentFile).arg(runCounter));
     if (settings.value("viewlog", true).toBool())
         logwindow->show();
     else
@@ -1862,8 +1863,7 @@ void LammpsGui::doRun(bool use_buffer)
     if (settings.value("chartreplace", true).toBool()) delete chartwindow;
     chartwindow = new ChartWindow(currentFile);
     configureSubWindow(
-        chartwindow,
-        QString("LAMMPS-GUI - Charts - %1 - Run %2").arg(currentFile).arg(runCounter));
+        chartwindow, QString("LAMMPS-GUI - Charts - %1 - Run %2").arg(currentFile).arg(runCounter));
     const auto *unitptr = (const char *)lammps.extractGlobal("units");
     if (unitptr) chartwindow->setUnits(QString("%1").arg(unitptr));
     auto normflag = lammps.extractSetting("thermo_norm");

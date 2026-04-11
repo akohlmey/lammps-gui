@@ -447,9 +447,9 @@ private:
     QList<QString> recent;                    ///< List of recently opened files
     QList<QPair<QString, QString>> variables; ///< Index-style variable definitions
 
-    LammpsWrapper lammps;           ///< Interface to LAMMPS library
-    LammpsRunner *runner;           ///< Thread for running LAMMPS simulations
-    QString docver;                 ///< LAMMPS documentation version string
+    LammpsWrapper lammps;                ///< Interface to LAMMPS library
+    LammpsRunner *runner;                ///< Thread for running LAMMPS simulations
+    QString docver;                      ///< LAMMPS documentation version string
     QString pluginPath;                  ///< Path to LAMMPS shared library (plugin mode)
     bool isRunning;                      ///< Whether a simulation is currently running
     int runCounter;                      ///< Counter for simulation runs
