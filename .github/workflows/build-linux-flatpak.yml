@@ -53,8 +53,7 @@ jobs:
           FB_BRANCH="${{ github.ref_name }}"
         fi
 
-        sed -i -e "s/branch:.*/branch: ${FB_BRANCH}/" packaging/org.lammps.lammps-gui.yml
-
+        # IMPORTANT: don't rewrite the manifest's git source branch to pr-<n> (it doesn't exist on the remote)
         flatpak-builder --force-clean --verbose --repo=flatpak-repo \
           --install-deps-from=flathub --state-dir=flatpak-state \
           --user --ccache --default-branch="${FB_BRANCH}" \
