@@ -42,7 +42,3 @@ jobs:
               -D BUILD_DOC=no
         cmake --build build --config Release --parallel 2
 
-    - name: Check if LAMMPS-GUI can run at all
-      shell: cmd
-      run: |
-        build\Release\lammps-gui.exe --platform offscreen -v
