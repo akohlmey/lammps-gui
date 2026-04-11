@@ -36,15 +36,13 @@ QtGraphsBackend::QtGraphsBackend() : container(nullptr), quickWidget(nullptr),
 
 QtGraphsBackend::~QtGraphsBackend()
 {
-    delete xaxis;
-    delete yaxis;
-    // container, quickWidget, labels are Qt children of the parent widget
+    // container, quickWidget, labels, and axes are Qt children of the parent widget
 }
 
 void QtGraphsBackend::init(QWidget *parent, const QString &title, QLineSeries *series)
 {
-    xaxis = new QValueAxis;
-    yaxis = new QValueAxis;
+    xaxis = new QValueAxis(parent);
+    yaxis = new QValueAxis(parent);
 
     QSettings settings;
     settings.beginGroup("charts");
