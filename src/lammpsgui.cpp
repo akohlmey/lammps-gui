@@ -1780,11 +1780,9 @@ void LammpsGui::doRun(bool use_buffer)
     lammps.command(std::string("variable gui_run index " + std::to_string(runCounter)));
     if (use_buffer) {
         // always add final newline since the text edit widget does not do it
-        char *input = mystrdup(textEdit->toPlainText() + "\n");
-        runner->setupRun(&lammps, input, nullptr);
+        runner->setupRun(&lammps, (textEdit->toPlainText() + "\n").toStdString());
     } else {
-        char *fname = mystrdup(currentFile);
-        runner->setupRun(&lammps, nullptr, fname);
+        runner->setupRun(&lammps, {}, currentFile.toStdString());
     }
 
     // apply https proxy setting: prefer environment variable or fall back to preferences value

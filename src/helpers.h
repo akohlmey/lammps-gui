@@ -13,6 +13,7 @@
 #define HELPERS_H
 
 #include <QString>
+#include <memory>
 #include <string>
 #include <vector>
 
@@ -20,9 +21,9 @@ class QWidget;
 class QImage;
 class QFont;
 
-// OS specific default fonts
-extern QFont *GUI_MONOFONT;
-extern QFont *GUI_ALLFONT;
+// OS specific default fonts (managed via unique_ptr for automatic cleanup)
+extern std::unique_ptr<QFont> GUI_MONOFONT;
+extern std::unique_ptr<QFont> GUI_ALLFONT;
 
 /**
  * @brief Duplicate a string from std::string

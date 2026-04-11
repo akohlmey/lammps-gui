@@ -13,6 +13,7 @@
 #define STDCAPTURE_H
 
 #include <string>
+#include <vector>
 
 /**
  * @brief Capture stdout output to a string buffer
@@ -79,7 +80,7 @@ private:
     std::string m_captured; ///< Buffer for captured output
     int maxread;            ///< Maximum bytes to read at once
 
-    char *buf; ///< Internal read buffer
+    std::vector<char> buf; ///< Internal read buffer
 };
 
 #endif

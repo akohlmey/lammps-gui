@@ -68,8 +68,8 @@ bool capture_is_active = false;
 } // namespace
 
 // will be allocated and initialized in main() to avoid segfault on macOS
-QFont *GUI_MONOFONT = nullptr;
-QFont *GUI_ALLFONT  = nullptr;
+std::unique_ptr<QFont> GUI_MONOFONT;
+std::unique_ptr<QFont> GUI_ALLFONT;
 
 // duplicate string, STL version
 char *mystrdup(const std::string &text)
