@@ -31,7 +31,7 @@ jobs:
       uses: jurplel/install-qt-action@v4
       with:
         version: '6.10.*'
-        modules: 'qtshadertools qtdeclarative qtgraphs'
+        modules: 'qtshadertools qtgraphs'
 
     - name: Install extra packages
       run: |
