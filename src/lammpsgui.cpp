@@ -451,7 +451,12 @@ LammpsGui::LammpsGui(QWidget *parent, const QString &filename, int width, int he
         dirlist.append(
             QString::fromLocal8Bit(qgetenv("LD_LIBRARY_PATH")).split(":", Qt::SkipEmptyParts));
 #endif
-        dirlist.append({"/usr/lib", "/usr/lib64", "/usr/local/lib", "/usr/local/lib64"});
+
+        // also check in the config dir location for a previously downloaded library
+        dirlist.append(QStandardPaths::writableLocation(QStandardPaths::AppConfigLocation));
+        // check some more system paths on Linux or unix-like systems
+        dirlist.append({"/usr/lib", "/usr/lib64", "/lib/x86_64-linux-gnu", "/usr/local/lib",
+                        "/usr/local/lib64"});
 
         // construct list of matching files
         QFileInfoList entries;
