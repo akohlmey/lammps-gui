@@ -55,10 +55,8 @@ const QStringList months({"Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug"
 
 #ifdef _WIN32
 constexpr char NULL_DEVICE[] = "NUL:";
-constexpr char TTY_DEVICE[]  = "COM1:";
 #else
 constexpr char NULL_DEVICE[] = "/dev/null";
-constexpr char TTY_DEVICE[]  = "/dev/tty";
 #endif
 
 int saved_stdout_fd    = -1;
