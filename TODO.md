@@ -1,34 +1,49 @@
 LAMMPS-GUI TODO list:
 
-# Short term goals (v1.x)
+# New feature ideas
 
-- add a "Colors" menu to the image viewer to adjust color settings for the
-  current image (unlike the defaults in the perferences) including assigning
-  colors to individual atom types.
+## Add a "Colors" menu to the image viewer
+  This would allow to adjust color settings for the current image
+  (unlike the defaults in the preferences) including assigning colors to
+  individual atom types and defining new color names
 
-- implement data file manager GUI with the following features:
-   - import coordinates and topology via VMD molfile plugins
-   - import coordinates and topology from intermol
-   - import coordinates and topology from OpenBabel
-   - store data internally in a generalized YAML format
-   - add/remove columns to per-atom data
-   - change atom style for export to data file
-   - merge one system to another
-   - edit mapping between numeric and symbolic types. create labelmaps.
-   - import/export LAMMPS data and molecule files
-   - store coordinates internally as unwrapped coordinates
-   - recenter coordinates
-   - edit box boundaries
-   - readjust box to extent of atoms (with or without estimated radius)
-   - call to LAMMPS to create geometries from lattices (with/without molecule files) and STL files
-   - call to LAMMPS to generate visualizations of geometries
-   - edit force field parameters, e.g. apply charmm
-   - edit / manage labelmap
+## Add a few more color maps
+  We are missing a few selections for sequential color maps
 
-# Long term ideas (v2.x)
-- add option to attach a debugger to the running program (highly non-portable, need customization support in preferences)
-- write a "wizard" dialog that can be used for beginners to create an input file template for a few typical use scenarios
-  (could perhaps use some LLM based KI to look up suggestions for answers?).
+## Implement data file manager GUI with the following features:
+  - import coordinates and topology via VMD molfile plugins
+  - import coordinates and topology from intermol
+  - import coordinates and topology from OpenBabel
+  - store data internally in a generalized YAML format
+  - add/remove columns to per-atom data
+  - change atom style for export to data file
+  - merge one system to another
+  - edit mapping between numeric and symbolic types. create labelmaps.
+  - import/export LAMMPS data and molecule files
+  - store coordinates internally as unwrapped coordinates
+  - recenter coordinates
+  - edit box boundaries
+  - readjust box to extent of atoms (with or without estimated radius)
+  - call to LAMMPS to create geometries from lattices (with/without molecule files) and STL files
+  - call to LAMMPS to generate visualizations of geometries
+  - edit force field parameters, e.g. apply charmm
+  - edit / manage labelmap
+
+## Add option to attach a debugger to the running program
+  highly non-portable, need customization support in preferences
+  alternative could be to print a stack trace
+
+## Write "wizard" dialogs for bootstrapping simulations
+  this could be used for beginners to create an input file template for
+  a few typical use scenarios (could perhaps use some LLM based KI to
+  look up suggestions for answers?).
+
+## Integrate / adapt Mark Tschopp's LAMMPS tutorials
+  Available as python jupyter notebooks here (unchanged for 6 years):
+  https://github.com/mrkllntschpp/lammps-tutorials
+  these have not been updated in a long time.
+  These could make a different category of tutorials
+  relative to the existing: atomic / molecular simulations versus materials science
 
 # Refactoring status and recommendations
 
