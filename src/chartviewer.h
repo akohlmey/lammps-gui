@@ -51,7 +51,7 @@ public:
      * @param lammpsgui Pointer to LammpsGui for sending signals
      * @param parent Parent widget
      */
-    explicit ChartWindow(const QString &filename, LammpsGui *lampsgui, QWidget *parent = nullptr);
+    explicit ChartWindow(const QString &filename, LammpsGui *lammpsgui, QWidget *parent = nullptr);
 
     /**
      * @brief Get the number of charts currently displayed
