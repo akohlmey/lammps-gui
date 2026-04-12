@@ -49,11 +49,11 @@ constexpr int LAYOUT_SPACING = 6;
 constexpr int EXTRA_HEIGHT   = 130;
 } // namespace
 
-SlideShow::SlideShow(const QString &fileName, QWidget *parent) :
-    QDialog(parent), playtimer(nullptr), imageLabel(new QLabel), scrollArea(new QScrollArea),
-    scrollBar(new QSlider), imageCounter(new QLabel("Image   0 /   0 :")),
-    imageName(new QLabel("(none)")), timerDelay(100), doLoop(true), imageRotation(0),
-    imageFlipH(false), imageFlipV(false)
+SlideShow::SlideShow(const QString &fileName, LammpsGui *_lammpsgui, QWidget *parent) :
+    QDialog(parent), lammpsgui(_lammpsgui), playtimer(nullptr), imageLabel(new QLabel),
+    scrollArea(new QScrollArea), scrollBar(new QSlider),
+    imageCounter(new QLabel("Image   0 /   0 :")), imageName(new QLabel("(none)")), timerDelay(100),
+    doLoop(true), imageRotation(0), imageFlipH(false), imageFlipV(false)
 {
     imageLabel->setBackgroundRole(QPalette::Base);
     imageLabel->setSizePolicy(QSizePolicy::Minimum, QSizePolicy::Minimum);
@@ -398,14 +398,12 @@ void SlideShow::copy()
 
 void SlideShow::quit()
 {
-    auto *main = dynamic_cast<LammpsGui *>(getMainWidget());
-    if (main) main->quit();
+    if (lammpsgui) lammpsgui->quit();
 }
 
 void SlideShow::stopRun()
 {
-    auto *main = dynamic_cast<LammpsGui *>(getMainWidget());
-    if (main) main->stopRun();
+    if (lammpsgui) lammpsgui->stopRun();
 }
 
 void SlideShow::saveCurrentImage()

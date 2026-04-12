@@ -21,6 +21,7 @@ class QLabel;
 class QScrollArea;
 class QSlider;
 class QTimer;
+class LammpsGui;
 
 /**
  * @brief Slideshow viewer for displaying sequences of images
@@ -38,9 +39,10 @@ public:
     /**
      * @brief Constructor
      * @param fileName Path to first image file
+     * @param lammpsgui Pointer to LammpsGui for sending signals
      * @param parent Parent widget
      */
-    explicit SlideShow(const QString &fileName, QWidget *parent = nullptr);
+    explicit SlideShow(const QString &fileName, LammpsGui *lammpsgui, QWidget *parent = nullptr);
 
     /**
      * @brief Destructor
@@ -110,6 +112,7 @@ private:
     void adjustWindowSize();
 
 private:
+    LammpsGui *lammpsgui;     ///< Main widget pointer for receiving signals
     QImage image;             ///< Currently displayed image
     QImage rawImage;          ///< Raw image before transformations
     QTimer *playtimer;        ///< Timer for automatic playback

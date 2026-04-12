@@ -41,12 +41,6 @@ extern int dateCompare(const QString &one, const QString &two);
 extern std::vector<std::string> splitLine(const std::string &text);
 
 /**
- * @brief Get pointer to the main LAMMPS-GUI widget
- * @return Pointer to the main widget (used for dialogs and triggering actions)
- */
-extern class QWidget *getMainWidget();
-
-/**
  * @brief Provide standardized critical error dialog
  * @param parent  Pointer to parent widget
  * @param title   Error dialog title

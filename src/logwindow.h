@@ -15,6 +15,7 @@
 #include <QPlainTextEdit>
 
 class FlagWarnings;
+class LammpsGui;
 class QLabel;
 
 /**
@@ -33,9 +34,10 @@ public:
     /**
      * @brief Constructor
      * @param filename Path to log file to display
+     * @param lammpsgui Pointer to LammpsGui for sending signals
      * @param parent Parent widget
      */
-    LogWindow(const QString &filename, QWidget *parent = nullptr);
+    LogWindow(const QString &filename, LammpsGui *lammpsgui, QWidget *parent = nullptr);
 
     /**
      * @brief Destructor
@@ -91,6 +93,7 @@ protected:
 
 private:
     QString filename;       ///< Path to log file
+    LammpsGui *lammpsgui;   ///< Main widget pointer for receiving signals
     QString errorurl;       ///< URL of last detected error
     FlagWarnings *warnings; ///< Warning highlighter
     QLabel *summary;        ///< Summary label for warning count

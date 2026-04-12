@@ -14,6 +14,8 @@
 
 #include <QWizard>
 
+class LammpsGui;
+
 /**
  * @brief Wizard dialog for interactive LAMMPS tutorials
  *
@@ -28,9 +30,10 @@ public:
     /**
      * @brief Construct a tutorial wizard
      * @param ntutorial Tutorial number (1-8)
+     * @param lammpsgui Pointer to LammpsGui for sending signals
      * @param parent Parent widget
      */
-    TutorialWizard(int ntutorial, QWidget *parent = nullptr);
+    TutorialWizard(int ntutorial, LammpsGui *lammpsgui, QWidget *parent = nullptr);
 
     /**
      * @brief Accept the wizard and set up the tutorial
@@ -41,7 +44,8 @@ public:
     void accept() override;
 
 private:
-    int _ntutorial; ///< Tutorial number identifier
+    int ntutorial;        ///< Tutorial number identifier
+    LammpsGui *lammpsgui; ///< Main widget pointer for receiving signals
 };
 
 #endif // TUTORIALWIZARD_H

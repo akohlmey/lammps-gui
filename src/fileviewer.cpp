@@ -30,8 +30,9 @@
 #include <QTextCursor>
 #include <QTextStream>
 
-FileViewer::FileViewer(const QString &_filename, const QString &title, QWidget *parent) :
-    QPlainTextEdit(parent), fileName(_filename)
+FileViewer::FileViewer(const QString &_filename, LammpsGui *_lammpsgui, const QString &title,
+                       QWidget *parent) :
+    QPlainTextEdit(parent), fileName(_filename), lammpsgui(_lammpsgui)
 {
     auto *action = new QShortcut(QKeySequence(Qt::CTRL | Qt::Key_Q), this);
     connect(action, &QShortcut::activated, this, &FileViewer::quit);
@@ -124,14 +125,12 @@ FileViewer::FileViewer(const QString &_filename, const QString &title, QWidget *
 
 void FileViewer::quit()
 {
-    auto *main = dynamic_cast<LammpsGui *>(getMainWidget());
-    if (main) main->quit();
+    if (lammpsgui) lammpsgui->quit();
 }
 
 void FileViewer::stopRun()
 {
-    auto *main = dynamic_cast<LammpsGui *>(getMainWidget());
-    if (main) main->stopRun();
+    if (lammpsgui) lammpsgui->stopRun();
 }
 
 // event filter to handle "Ambiguous shortcut override" issues

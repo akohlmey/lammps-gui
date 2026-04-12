@@ -280,11 +280,12 @@ public:
     int npoints;       ///< number of points to be used for POINTS style region display
 };
 
-ImageViewer::ImageViewer(const QString &fileName, LammpsWrapper *_lammps, QWidget *parent) :
+ImageViewer::ImageViewer(const QString &fileName, LammpsWrapper *_lammps, LammpsGui *_lammpsgui,
+                         QWidget *parent) :
     QDialog(parent), menuBar(new QMenuBar), imageLabel(new QLabel), scrollArea(new QScrollArea),
     atomSize(1.0), bondSize(0.4), saveAsAct(nullptr), copyAct(nullptr), cmdAct(nullptr),
-    lammps(_lammps), group("all"), molecule("none"), filename(fileName), useelements(false),
-    usediameter(false), usesigma(false), shutdown(false)
+    lammps(_lammps), lammpsgui(_lammpsgui), group("all"), molecule("none"), filename(fileName),
+    useelements(false), usediameter(false), usesigma(false), shutdown(false)
 {
     imageLabel->setBackgroundRole(QPalette::Base);
     imageLabel->setSizePolicy(QSizePolicy::Minimum, QSizePolicy::Minimum);
@@ -2817,8 +2818,7 @@ void ImageViewer::copy()
 
 void ImageViewer::quit()
 {
-    auto *main = dynamic_cast<LammpsGui *>(getMainWidget());
-    if (main) main->quit();
+    if (lammpsgui) lammpsgui->quit();
 }
 
 void ImageViewer::getHelp()

@@ -28,6 +28,7 @@ class QObject;
 class QScrollArea;
 class QStatusBar;
 class LammpsWrapper;
+class LammpsGui;
 class ImageInfo;
 class RegionInfo;
 
@@ -47,10 +48,11 @@ public:
     /**
      * @brief Constructor
      * @param fileName Path to the image file to display
-     * @param _lammps Pointer to LammpsWrapper for regenerating images
+     * @param lammps Pointer to LammpsWrapper for regenerating images
+     * @param lammpsgui Pointer to LammpsGui for sending signals
      * @param parent Parent widget
      */
-    explicit ImageViewer(const QString &fileName, LammpsWrapper *_lammps,
+    explicit ImageViewer(const QString &fileName, LammpsWrapper *lammps, LammpsGui *lammpsgui,
                          QWidget *parent = nullptr);
 
     /**
@@ -65,11 +67,10 @@ public:
     ImageViewer &operator=(ImageViewer &&)      = delete;
 
 private slots:
-    void saveAs();  ///< Save image to file
-    void copy();    ///< Copy image to clipboard
-    void quit();    ///< Close dialog
-    void getHelp(); ///< Open online help
-
+    void saveAs();            ///< Save image to file
+    void copy();              ///< Copy image to clipboard
+    void quit();              ///< Close dialog
+    void getHelp();           ///< Open online help
     void setAtomSize();       ///< Set explicit atom display size
     void setBondSize();       ///< Set explicit bond display size
     void editSize();          ///< Edit image dimensions
@@ -139,6 +140,7 @@ private:
     QStringList image_fixes;                     ///< list of fixes supporting dump image
     QStringList atom_properties;                 ///< list of per-atom properties for coloring
     LammpsWrapper *lammps;                       ///< LAMMPS interface for image generation
+    LammpsGui *lammpsgui;                        ///< Main widget pointer for receiving signals
     QString group;                               ///< Current atom group
     QString molecule;                            ///< Current molecule selection
     QString filename;                            ///< Image filename

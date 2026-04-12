@@ -189,15 +189,6 @@ std::vector<std::string> splitLine(const std::string &text)
     return list;
 }
 
-// get pointer to LAMMPS-GUI main widget
-
-QWidget *getMainWidget()
-{
-    for (QWidget *widget : QApplication::topLevelWidgets())
-        if (widget->objectName() == "LammpsGui") return widget;
-    return nullptr;
-}
-
 // customized critical error dialog
 
 void critical(QWidget *parent, const QString &title, const QString &text1, const QString &text2)

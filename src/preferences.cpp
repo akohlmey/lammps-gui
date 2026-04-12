@@ -60,12 +60,12 @@
 #include <unistd.h>
 #endif
 
-Preferences::Preferences(LammpsWrapper *_lammps, QWidget *parent) :
+Preferences::Preferences(LammpsWrapper *_lammps, LammpsGui *_lammpsgui, QWidget *parent) :
     QDialog(parent), tabWidget(new QTabWidget),
     buttonBox(new QDialogButtonBox(QDialogButtonBox::Ok | QDialogButtonBox::Cancel)),
-    settings(new QSettings), lammps(_lammps), needRelaunch(false)
+    settings(new QSettings), lammps(_lammps), lammpsgui(_lammpsgui), needRelaunch(false)
 {
-    tabWidget->addTab(new GeneralTab(settings, lammps), "&General Settings");
+    tabWidget->addTab(new GeneralTab(settings, lammps, lammpsgui), "&General Settings");
     tabWidget->addTab(new AcceleratorTab(settings, lammps), "&Accelerators");
     tabWidget->addTab(new SnapshotTab(settings), "&Snapshot Image");
     tabWidget->addTab(new EditorTab(settings), "&Editor Settings");
@@ -127,15 +127,14 @@ void Preferences::accept()
     QLineEdit *field;
 
     // store number of threads, reset to 1 for "None" and "Opt" settings
-    auto *mainwidget = dynamic_cast<LammpsGui *>(getMainWidget());
-    field            = tabWidget->findChild<QLineEdit *>("nthreads");
-    if (field && mainwidget) {
+    field = tabWidget->findChild<QLineEdit *>("nthreads");
+    if (field && lammpsgui) {
         int accel = settings->value("accelerator", AcceleratorTab::None).toInt();
         if ((accel == AcceleratorTab::None) || (accel == AcceleratorTab::Opt)) {
-            mainwidget->nthreads = 1;
+            lammpsgui->nthreads = 1;
         } else if (field->hasAcceptableInput()) {
             settings->setValue("nthreads", field->text());
-            mainwidget->nthreads = settings->value("nthreads", 1).toInt();
+            lammpsgui->nthreads = settings->value("nthreads", 1).toInt();
         }
     }
 
@@ -282,8 +281,9 @@ void Preferences::accept()
     QDialog::accept();
 }
 
-GeneralTab::GeneralTab(QSettings *_settings, LammpsWrapper *_lammps, QWidget *parent) :
-    QWidget(parent), settings(_settings), lammps(_lammps)
+GeneralTab::GeneralTab(QSettings *_settings, LammpsWrapper *_lammps, LammpsGui *_lammpsgui,
+                       QWidget *parent) :
+    QWidget(parent), settings(_settings), lammps(_lammps), lammpsgui(_lammpsgui)
 {
     auto *layout = new QGridLayout;
 
@@ -411,13 +411,12 @@ GeneralTab::GeneralTab(QSettings *_settings, LammpsWrapper *_lammps, QWidget *pa
 
 void GeneralTab::updateFonts(const QFont &all, const QFont &text)
 {
-    auto *mainwidget = dynamic_cast<LammpsGui *>(getMainWidget());
-    if (mainwidget) {
-        mainwidget->setFont(all);
-        mainwidget->textEdit->document()->setDefaultFont(text);
-        if (mainwidget->wizard) mainwidget->wizard->setFont(all);
-        if (mainwidget->logwindow) mainwidget->logwindow->document()->setDefaultFont(text);
-        if (mainwidget->varwindow) mainwidget->varwindow->setFont(text);
+    if (lammpsgui) {
+        lammpsgui->setFont(all);
+        lammpsgui->textEdit->document()->setDefaultFont(text);
+        if (lammpsgui->wizard) lammpsgui->wizard->setFont(all);
+        if (lammpsgui->logwindow) lammpsgui->logwindow->document()->setDefaultFont(text);
+        if (lammpsgui->varwindow) lammpsgui->varwindow->setFont(text);
     }
 
     Preferences *prefs = nullptr;

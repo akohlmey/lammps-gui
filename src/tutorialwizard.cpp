@@ -19,8 +19,8 @@
 #include <QIcon>
 #include <QLineEdit>
 
-TutorialWizard::TutorialWizard(int ntutorial, QWidget *parent) :
-    QWizard(parent), _ntutorial(ntutorial)
+TutorialWizard::TutorialWizard(int _ntutorial, LammpsGui *_lammpsgui, QWidget *parent) :
+    QWizard(parent), ntutorial(_ntutorial), lammpsgui(_lammpsgui)
 {
     setWindowIcon(QIcon(":/icons/tutorial-logo.png"));
 }
@@ -49,7 +49,7 @@ void TutorialWizard::accept()
         if (!directory.mkpath(curdir)) {
             warning(this, "LAMMPS-GUI Warning",
                     QString("Cannot create tutorial %1 working directory '%2'.")
-                        .arg(_ntutorial)
+                        .arg(ntutorial)
                         .arg(curdir),
                     "Going back to directory selection.");
             back();
@@ -61,10 +61,10 @@ void TutorialWizard::accept()
     }
     QDialog::accept();
 
-    // get hold of LAMMPS-GUI main widget
+    // tell main widget to set up the tutorial
     if (dirname) {
-        auto *main = dynamic_cast<LammpsGui *>(getMainWidget());
-        if (main) main->setupTutorial(_ntutorial, curdir, purgedir, getsolution, openwebpage);
+        if (lammpsgui)
+            lammpsgui->setupTutorial(ntutorial, curdir, purgedir, getsolution, openwebpage);
     }
 }
 

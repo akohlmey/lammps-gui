@@ -31,6 +31,7 @@ class QSpinBox;
 class RangeSlider;
 
 class ChartViewer;
+class LammpsGui;
 
 /**
  * @brief Window for displaying and managing multiple time-series charts
@@ -47,9 +48,10 @@ public:
     /**
      * @brief Constructor
      * @param filename Path to the log file containing the data
+     * @param lammpsgui Pointer to LammpsGui for sending signals
      * @param parent Parent widget
      */
-    ChartWindow(const QString &filename, QWidget *parent = nullptr);
+    explicit ChartWindow(const QString &filename, LammpsGui *lampsgui, QWidget *parent = nullptr);
 
     /**
      * @brief Get the number of charts currently displayed
@@ -148,6 +150,7 @@ protected:
     bool eventFilter(QObject *watched, QEvent *event) override;
 
 private:
+    LammpsGui *lammpsgui; ///< Main widget pointer for receiving signals
     bool doRaw, doSmooth; ///< Flags for displaying raw/smoothed data
     QMenuBar *menu;       ///< Menu bar
     QMenu *file;          ///< File menu

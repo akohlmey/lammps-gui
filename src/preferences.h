@@ -19,6 +19,7 @@ class QFont;
 class QSettings;
 class QTabWidget;
 class LammpsWrapper;
+class LammpsGui;
 
 /**
  * @brief Preferences/Settings dialog for LAMMPS-GUI
@@ -40,9 +41,10 @@ public:
     /**
      * @brief Constructor
      * @param lammps Pointer to LammpsWrapper for querying LAMMPS configuration
+     * @param lammpsgui Pointer to LammpsGui for sending signals
      * @param parent Parent widget
      */
-    explicit Preferences(LammpsWrapper *lammps, QWidget *parent = nullptr);
+    explicit Preferences(LammpsWrapper *lammps, LammpsGui *lammpsgui, QWidget *parent = nullptr);
 
     /**
      * @brief Destructor - saves settings on close
@@ -75,6 +77,7 @@ private:
     QDialogButtonBox *buttonBox; ///< Dialog buttons (OK, Cancel)
     QSettings *settings;         ///< Qt settings storage
     LammpsWrapper *lammps;       ///< LAMMPS interface for configuration queries
+    LammpsGui *lammpsgui;        ///< Main widget pointer for receiving signals
     bool needRelaunch;           ///< Flag indicating restart is needed
 };
 
@@ -91,9 +94,11 @@ public:
      * @brief Constructor
      * @param settings Pointer to QSettings for storing preferences
      * @param lammps Pointer to LammpsWrapper for querying LAMMPS configuration
+     * @param lammpsgui Pointer to LammpsGui for sending signals
      * @param parent Parent widget
      */
-    explicit GeneralTab(QSettings *settings, LammpsWrapper *lammps, QWidget *parent = nullptr);
+    explicit GeneralTab(QSettings *settings, LammpsWrapper *lammps, LammpsGui *lammpsgui,
+                        QWidget *parent = nullptr);
 
 private slots:
     void downloadPlugin();
@@ -105,6 +110,7 @@ private:
     void updateFonts(const QFont &all, const QFont &text);
     QSettings *settings;
     LammpsWrapper *lammps;
+    LammpsGui *lammpsgui;
 };
 
 /**

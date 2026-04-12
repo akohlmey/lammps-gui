@@ -68,12 +68,12 @@ const QList<QBrush> mybrushes = {
 
 } // namespace
 
-ChartWindow::ChartWindow(const QString &_filename, QWidget *parent) :
-    QWidget(parent), menu(new QMenuBar), file(new QMenu("&File")), saveAsAct(nullptr),
-    copyAct(nullptr), exportCsvAct(nullptr), exportDatAct(nullptr), exportYamlAct(nullptr),
-    closeAct(nullptr), stopAct(nullptr), quitAct(nullptr), smooth(nullptr), window(nullptr),
-    order(nullptr), chartTitle(nullptr), chartYlabel(nullptr), units(nullptr), norm(nullptr),
-    filename(_filename)
+ChartWindow::ChartWindow(const QString &_filename, LammpsGui *_lammpsgui, QWidget *parent) :
+    QWidget(parent), lammpsgui(_lammpsgui), menu(new QMenuBar), file(new QMenu("&File")),
+    saveAsAct(nullptr), copyAct(nullptr), exportCsvAct(nullptr), exportDatAct(nullptr),
+    exportYamlAct(nullptr), closeAct(nullptr), stopAct(nullptr), quitAct(nullptr), smooth(nullptr),
+    window(nullptr), order(nullptr), chartTitle(nullptr), chartYlabel(nullptr), units(nullptr),
+    norm(nullptr), filename(_filename)
 {
     QSettings settings;
     auto *top  = new QVBoxLayout;
@@ -314,14 +314,12 @@ void ChartWindow::copy()
 
 void ChartWindow::quit()
 {
-    auto *main = dynamic_cast<LammpsGui *>(getMainWidget());
-    if (main) main->quit();
+    if (lammpsgui) lammpsgui->quit();
 }
 
 void ChartWindow::stopRun()
 {
-    auto *main = dynamic_cast<LammpsGui *>(getMainWidget());
-    if (main) main->stopRun();
+    if (lammpsgui) lammpsgui->stopRun();
 }
 
 void ChartWindow::selectSmooth(int)

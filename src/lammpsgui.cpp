@@ -1229,7 +1229,7 @@ void LammpsGui::viewFile(const QString &fileName)
                 file.errorString());
     } else {
         file.close();
-        auto *viewer = new FileViewer(fileName);
+        auto *viewer = new FileViewer(fileName, this);
         viewer->show();
     }
 }
@@ -1337,20 +1337,20 @@ void LammpsGui::inspectFile(const QString &fileName)
             auto infodata = QString("%1.tmp.data").arg(fileName);
             dumpinfo.write(info.c_str(), info.size());
             dumpinfo.close();
-            auto *infoviewer =
-                new FileViewer(infolog, QString("LAMMPS-GUI: restart info for %1").arg(shortName));
+            auto *infoviewer = new FileViewer(
+                infolog, this, QString("LAMMPS-GUI: restart info for %1").arg(shortName));
             infoviewer->show();
             ilist->info = infoviewer;
             dumpinfo.remove();
             silenceStdout();
             lammps.command(QString("write_data %1 pair ij noinit").arg(infodata));
             restoreStdout();
-            auto *dataviewer =
-                new FileViewer(infodata, QString("LAMMPS-GUI: data file for %1").arg(shortName));
+            auto *dataviewer = new FileViewer(
+                infodata, this, QString("LAMMPS-GUI: data file for %1").arg(shortName));
             dataviewer->show();
             ilist->data = dataviewer;
             QFile(infodata).remove();
-            auto *inspect_image = new ImageViewer(fileName, &lammps);
+            auto *inspect_image = new ImageViewer(fileName, &lammps, this);
             inspect_image->setFont(font());
             inspect_image->setMinimumSize(GuiConstants::MINIMUM_WIDTH,
                                           GuiConstants::MINIMUM_HEIGHT);
@@ -1637,7 +1637,7 @@ void LammpsGui::logUpdate()
     QString imagefile = (const char *)lammps.lastThermo("imagename", 0);
     if (!imagefile.isEmpty()) {
         if (!slideshow) {
-            slideshow = new SlideShow(currentFile);
+            slideshow = new SlideShow(currentFile, this);
             if (QSettings().value("viewslide", true).toBool())
                 slideshow->show();
             else
@@ -1852,7 +1852,7 @@ void LammpsGui::doRun(bool use_buffer)
 
     // if configured, delete old log window before opening new one
     if (settings.value("logreplace", true).toBool()) delete logwindow;
-    logwindow = new LogWindow(currentFile);
+    logwindow = new LogWindow(currentFile, this);
     logwindow->setReadOnly(true);
     logwindow->setCenterOnScroll(true);
     logwindow->moveCursor(QTextCursor::End);
@@ -1866,7 +1866,7 @@ void LammpsGui::doRun(bool use_buffer)
 
     // if configured, delete old chart window before opening new one
     if (settings.value("chartreplace", true).toBool()) delete chartwindow;
-    chartwindow = new ChartWindow(currentFile);
+    chartwindow = new ChartWindow(currentFile, this);
     configureSubWindow(
         chartwindow, QString("LAMMPS-GUI - Charts - %1 - Run %2").arg(currentFile).arg(runCounter));
     const auto *unitptr = (const char *)lammps.extractGlobal("units");
@@ -1937,7 +1937,7 @@ void LammpsGui::renderImage()
         }
         // if configured, delete old image window before opening new one
         if (QSettings().value("imagereplace", true).toBool()) delete imagewindow;
-        imagewindow = new ImageViewer(currentFile, &lammps);
+        imagewindow = new ImageViewer(currentFile, &lammps, this);
         imagewindow->setMinimumSize(GuiConstants::MINIMUM_WIDTH, GuiConstants::MINIMUM_HEIGHT);
     } else {
         warning(this, "ImageViewer File Creation Error",
@@ -1950,7 +1950,7 @@ void LammpsGui::renderImage()
 void LammpsGui::viewSlides()
 {
     if (!slideshow) {
-        slideshow = new SlideShow(currentFile);
+        slideshow = new SlideShow(currentFile, this);
         slideshow->setMinimumSize(GuiConstants::MINIMUM_WIDTH, GuiConstants::MINIMUM_HEIGHT);
     }
     if (slideshow->isVisible())
@@ -2374,7 +2374,7 @@ void LammpsGui::startTutorial(int tutno)
     if (tutno < 1 || tutno > 8) return;
 
     delete wizard;
-    wizard = new TutorialWizard(tutno);
+    wizard = new TutorialWizard(tutno, this);
     const auto infotext =
         QString(descriptions[tutno - 1]) +
         QString("<hr width=\"33%\"\\>\n<p align=\"center\">Click on the \"Next\" button "
@@ -2439,7 +2439,7 @@ void LammpsGui::preferences()
     bool oldgpuneigh = settings.value("gpuneigh", true).toBool();
     bool oldgpupair  = settings.value("gpupaironly", false).toBool();
 
-    Preferences prefs(&lammps);
+    Preferences prefs(&lammps, this);
     prefs.setFont(font());
     prefs.setObjectName("preferences");
     if (prefs.exec() == QDialog::Accepted) {

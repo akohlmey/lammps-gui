@@ -42,8 +42,8 @@ constexpr auto YAML_REGEX = R"(^(keywords:.*$|data:$|---$|\.\.\.$|  - \[.*\]$))"
 constexpr auto URL_REGEX  = "^.*(https://docs.lammps.org/err[0-9]+).*$";
 } // namespace
 
-LogWindow::LogWindow(const QString &_filename, QWidget *parent) :
-    QPlainTextEdit(parent), filename(_filename), warnings(nullptr)
+LogWindow::LogWindow(const QString &_filename, LammpsGui *_lammpsgui, QWidget *parent) :
+    QPlainTextEdit(parent), filename(_filename), lammpsgui(_lammpsgui), warnings(nullptr)
 {
     QSettings settings;
     resize(settings.value("logx", 500).toInt(), settings.value("logy", 320).toInt());
@@ -129,14 +129,12 @@ void LogWindow::closeEvent(QCloseEvent *event)
 
 void LogWindow::quit()
 {
-    auto *main = dynamic_cast<LammpsGui *>(getMainWidget());
-    if (main) main->quit();
+    if (lammpsgui) lammpsgui->quit();
 }
 
 void LogWindow::stopRun()
 {
-    auto *main = dynamic_cast<LammpsGui *>(getMainWidget());
-    if (main) main->stopRun();
+    if (lammpsgui) lammpsgui->stopRun();
 }
 
 void LogWindow::nextWarning()

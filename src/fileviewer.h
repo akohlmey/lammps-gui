@@ -14,6 +14,8 @@
 
 #include <QPlainTextEdit>
 
+class LammpsGui;
+
 /**
  * @brief Read-only text viewer for displaying file contents
  *
@@ -30,10 +32,12 @@ public:
     /**
      * @brief Constructor
      * @param filename Path to file to display
+     * @param lammpsgui Pointer to LammpsGui for sending signals
      * @param title Window title (defaults to filename if empty)
      * @param parent Parent widget
      */
-    FileViewer(const QString &filename, const QString &title = "", QWidget *parent = nullptr);
+    explicit FileViewer(const QString &filename, LammpsGui *lammpsgui, const QString &title = "",
+                        QWidget *parent = nullptr);
 
     /**
      * @brief Destructor
@@ -60,7 +64,8 @@ protected:
     bool eventFilter(QObject *watched, QEvent *event) override;
 
 private:
-    QString fileName; ///< Path to the displayed file
+    QString fileName;     ///< Path to the displayed file
+    LammpsGui *lammpsgui; ///< Main widget pointer for receiving signals
 };
 
 #endif
