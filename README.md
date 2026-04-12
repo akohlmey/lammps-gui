@@ -4,7 +4,11 @@ Please see the online documentation at https://lammps-gui.lammps.org/
 
 ## Test Status of the development branch
 
-[![Compile with Qt 6.x](https://github.com/akohlmey/lammps-gui/actions/workflows/compile-linux-qt6.yml/badge.svg)](https://github.com/akohlmey/lammps-gui/actions/workflows/compile-linux-qt6.yml)
+[![Compile and run tests on Linux with Qt 6.x](https://github.com/akohlmey/lammps-gui/actions/workflows/compile-linux-qt6.yml/badge.svg)](https://github.com/akohlmey/lammps-gui/actions/workflows/compile-linux-qt6.yml)
+[![Build LAMMPS-GUI as flatpak bundle](https://github.com/akohlmey/lammps-gui/actions/workflows/build-linux-flatpak.yml/badge.svg)](https://github.com/akohlmey/lammps-gui/actions/workflows/build-linux-flatpak.yml)
+[![Compile on macOS and build DMG](https://github.com/akohlmey/lammps-gui/actions/workflows/compile-mscos-dmg.yml/badge.svg)](https://github.com/akohlmey/lammps-gui/actions/workflows/compile-macos-dmg.yml)
+[![Cross-compile for Windows with MinGW64](https://github.com/akohlmey/lammps-gui/actions/workflows/compile-mingw64-cross.yml/badge.svg)](https://github.com/akohlmey/lammps-gui/actions/workflows/compile-mingw64-cross.yml)
+[![Compile on Windows with MSVC](https://github.com/akohlmey/lammps-gui/actions/workflows/compile-windows-msvc.yml/badge.svg)](https://github.com/akohlmey/lammps-gui/actions/workflows/compile-windows-msvc.yml)
 [![CodeQL Code Analysis](https://github.com/akohlmey/lammps-gui/actions/workflows/codeql-analysis.yml/badge.svg)](https://github.com/akohlmey/lammps-gui/actions/workflows/codeql-analysis.yml)
 [![Build Documentation in HTML](https://github.com/akohlmey/lammps-gui/actions/workflows/build-html-docs.yml/badge.svg)](https://github.com/akohlmey/lammps-gui/actions/workflows/build-html-docs.yml)
 
