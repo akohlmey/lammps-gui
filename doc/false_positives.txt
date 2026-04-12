@@ -1,6 +1,8 @@
 AboutDialog
 accessors
 Alvares
+backend
+backends
 camelCase
 cecill
 CheckSize
@@ -29,6 +31,7 @@ exe
 executables
 flatpak
 Framebuffer
+getChunk
 Gissinger
 Golay
 GPG
@@ -54,6 +57,7 @@ monofamily
 monosize
 Mutex
 mystrdup
+namespace
 natively
 nsis
 nullptr
@@ -65,7 +69,9 @@ prev
 programmatically
 purgeDirectory
 py
+QChart
 QFrame
+QML
 QObject
 QSettings
 QSize
@@ -80,11 +86,13 @@ screenshooter
 scrollable
 silenceStdout
 sliderDown
+Sonoma
 spinbox
 splitLine
 SSAO
 stderr
 stdout
+Subclassed
 supercomputing
 Sur
 Thermo

@@ -96,13 +96,13 @@ any previous choice and thus trigger loading the default library again.
 When resetting the LAMMPS shared library path or when the currently
 configured library file cannot be loaded or no longer exists, a dialog
 will appear that allows to re-download the default minimal LAMMPS shared
-library from the LAMMPS web server or browse the filesystem for a
+library from the LAMMPS web server or browse the file system for a
 suitable custom shared library file.  Once LAMMPS-GUI is running, you
 can also change the path to the LAMMPS shared library or re-download a
 pre-compiled copy from the :doc:`Preferences dialog <dialogs>`.
 
 The flatpak version of the standalone LAMMPS-GUI package does not
-contain a precompiled library so it will directly show the download
+contain a pre-compiled library so it will directly show the download
 or browse dialog on the first invocation.  When the flatpak version
 is updated, it may be required to reset the shared library location
 with ``-p ""`` and re-download the latest version.
