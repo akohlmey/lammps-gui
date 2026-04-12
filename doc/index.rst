@@ -75,9 +75,15 @@ This document describes LAMMPS-GUI version |version|.
    </h2>
    <hr>
    <h3>Test Status of the development branch:</h3>
-   <p dir="auto"><a href="https://github.com/akohlmey/lammps-gui/actions/workflows/compile-linux-qt6.yml"><img src="https://github.com/akohlmey/lammps-gui/actions/workflows/compile-linux-qt6.yml/badge.svg" alt="Compile with Qt 6.x" style="max-width: 100%;"></a>
+   <p>
+   <a href="https://github.com/akohlmey/lammps-gui/actions/workflows/compile-linux-qt6.yml"><img src="https://github.com/akohlmey/lammps-gui/actions/workflows/compile-linux-qt6.yml/badge.svg" alt="Compile with Qt 6.x" style="max-width: 100%;"></a>
+   <a href="https://github.com/akohlmey/lammps-gui/actions/workflows/compile-macos-dmg.yml"><img src="https://github.com/akohlmey/lammps-gui/actions/workflows/compile-macos-dmg.yml/badge.svg" alt="Compile on macOS and build DMG" style="max-width: 100%;"></a>
    <a href="https://github.com/akohlmey/lammps-gui/actions/workflows/codeql-analysis.yml"><img src="https://github.com/akohlmey/lammps-gui/actions/workflows/codeql-analysis.yml/badge.svg" alt="CodeQL Code Analysis" style="max-width: 100%;"></a>
-   <a href="https://github.com/akohlmey/lammps-gui/actions/workflows/build-html-docs.yml"><img src="https://github.com/akohlmey/lammps-gui/actions/workflows/build-html-docs.yml/badge.svg" alt="Build Documentation in HTML" style="max-width: 100%;"></a></p>
+   <a href="https://github.com/akohlmey/lammps-gui/actions/workflows/build-html-docs.yml"><img src="https://github.com/akohlmey/lammps-gui/actions/workflows/build-html-docs.yml/badge.svg" alt="Build Documentation in HTML" style="max-width: 100%;"></a><br>
+   <a href="https://github.com/akohlmey/lammps-gui/actions/workflows/compile-windows-msvc.yml"><img src="https://github.com/akohlmey/lammps-gui/actions/workflows/compile-windows-msvc.yml/badge.svg" alt="Compile on Windows with MSVC" style="max-width: 100%;"></a>
+   <a href="https://github.com/akohlmey/lammps-gui/actions/workflows/compile-mingw64-cross.yml"><img src="https://github.com/akohlmey/lammps-gui/actions/workflows/compile-mingw64-cross.yml/badge.svg" alt="Cross-compile for Windows with MinGW64" style="max-width: 100%;"></a>
+   <a href="https://github.com/akohlmey/lammps-gui/actions/workflows/build-linux-flatpak.yml"><img src="https://github.com/akohlmey/lammps-gui/actions/workflows/build-linux-flatpak.yml/badge.svg" alt="Build LAMMPS-GUI as flatpak bundle" style="max-width: 100%;"></a>
+   </p>
 
 ------------------
 
