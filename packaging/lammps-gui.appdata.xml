@@ -54,6 +54,29 @@
   </provides>
 
   <releases>
+    <release version="2.0.2" timestamp="1776131328">
+      <description>
+        eliminate getMainWindow() function by passing pointer to main widget
+        expand list of shared library locations to search for Ubuntu/Debian and include config dir
+        update list of test status badges in README and on homepage langing page
+      </description>
+    </release>
+    <release version="2.0.1" timestamp="1776031328">
+      <description>
+        do not attempt to use auto-completion of $-style variable
+        expansions which were often too disrupting and difficult to keep
+        up-to-date
+        update command help index
+        enable building flatpak bundles. these are missing the LAMMPS shared library, but this
+        will be offered to download on first use
+        add extensive compilation and integration testing using github workflows:
+        - Linux flatpak bundle with Qt 6.10
+        - macOS to build .dmg application bundle
+        - Windows Server with MSVC 2022 MinGW64
+        - Linux2Windows cross-compiler in Fedora container to build NSIS installer package
+        Further refactoring of the core code mostly using Claude Opus 4.6
+      </description>
+    </release>
     <release version="2.0.0" timestamp="1775798011">
       <description>
         Major refactor of the code base for consistency and maintainability:
