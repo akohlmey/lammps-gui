@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.20)
 
 project(lammps-gui
-  VERSION 2.0.1
+  VERSION 2.0.2
   LANGUAGES CXX
   DESCRIPTION "The LAMMPS GUI"
   HOMEPAGE_URL "https://lammps-gui.lammps.org/")
@@ -419,6 +419,7 @@ if (LAMMPS_GUI_USE_PLUGIN AND NOT BUILD_DOC_ONLY)
     install(CODE "execute_process(COMMAND \"${CMAKE_COMMAND}\" -D INSTNAME=${INSTNAME} -D VC_INIT=\"${VC_INIT}\" -D QT6_BIN_DIR=\"${QT6_BIN_DIR}\" -P \"${CMAKE_SOURCE_DIR}/packaging/build_windows_vs.cmake\" WORKING_DIRECTORY \"${CMAKE_INSTALL_PREFIX}/..\" COMMAND_ECHO STDOUT)")
   # settings for packaging Windows NSIS installer on Linux with MinGW cross-compiler
   elseif((CMAKE_SYSTEM_NAME STREQUAL "Windows") AND CMAKE_CROSSCOMPILING)
+    set(QT_NO_QTPATHS_DEPLOYMENT_WARNING ON CACHE BOOL "" FORCE)
     install(TARGETS lammps-gui DESTINATION ${CMAKE_INSTALL_BINDIR})
     add_custom_target(nsis
       COMMAND ${CMAKE_SOURCE_DIR}/packaging/build_windows_cross_nsis.sh ${CMAKE_INSTALL_PREFIX} ${PROJECT_VERSION} ${CMAKE_SOURCE_DIR}
