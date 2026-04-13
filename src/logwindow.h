@@ -55,6 +55,7 @@ private slots:
     void quit();         ///< Close window
     void saveAs();       ///< Save log to file
     void stopRun();      ///< Stop running simulation
+    void runBuffer();    ///< Start running simulation
     void nextWarning();  ///< Navigate to next warning
     void openErrorUrl(); ///< Open error documentation URL in browser
 

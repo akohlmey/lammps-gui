@@ -7,9 +7,6 @@ LAMMPS-GUI TODO list:
   (unlike the defaults in the preferences) including assigning colors to
   individual atom types and defining new color names
 
-## Add a few more color maps
-  We are missing a few selections for sequential color maps
-
 ## Implement data file manager GUI with the following features:
   - import coordinates and topology via VMD molfile plugins
   - import coordinates and topology from intermol
