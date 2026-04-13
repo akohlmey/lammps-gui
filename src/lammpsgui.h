@@ -359,23 +359,14 @@ private:
 
     // Menu bar and menus
     QMenuBar *menubar;
-    QMenu *menuFile;
+    QAction *recentActions[GuiConstants::NUM_RECENT_FILES]; ///< Recent file actions
+
     QMenu *menuEdit;
     QMenu *menuRun;
     QMenu *menuView;
     QMenu *menuTutorial;
     QMenu *menuAbout;
     QStatusBar *statusbar;
-
-    // Actions - File menu
-    QAction *actionNew;
-    QAction *actionOpen;
-    QAction *actionView;
-    QAction *actionInspect;
-    QAction *actionSave;
-    QAction *actionSaveAs;
-    QAction *actionQuit;
-    QAction *recentActions[GuiConstants::NUM_RECENT_FILES]; ///< Recent file actions
 
     // Actions - Edit menu
     QAction *actionUndo;
@@ -456,9 +447,10 @@ private:
     std::vector<std::string> lammpsArgs; ///< Command-line arguments for LAMMPS
 
 protected:
-    int nthreads; ///< Number of threads for parallel execution
-    int mainx;    ///< Override value for main editor window width or 0
-    int mainy;    ///< Override value for main editor window height or 0
+    int nthreads;      ///< Number of threads for parallel execution
+    int mainx;         ///< Override value for main editor window width or 0
+    int mainy;         ///< Override value for main editor window height or 0
+    bool hasClipboard; ///< true if Qt was configured with Clipboard support, otherwise false
 };
 
 #endif // LAMMPSGUI_H
