@@ -257,7 +257,7 @@ The second Linux package variant uses `flatpak software deployment
 environment <https://www.flatpak.org>`_ and requires the flatpak
 management and runtime software to be installed.  After downloading the
 ``LAMMPS-Linux-x86_64-GUI-<version>.flatpak`` file containing the
-flatpack bundle, you can install it with:
+flatpak bundle, you can install it with:
 
 .. code-block:: bash
 

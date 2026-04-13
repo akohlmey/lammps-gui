@@ -45,7 +45,7 @@ downloaded and edited directly from within the GUI while automatically
 loading the matching tutorial instructions into a web browser.
 
 While making it easy for beginners to get started with LAMMPS, it is
-expectated that LAMMPS-GUI users will eventually transition to workflows
+expected that LAMMPS-GUI users will eventually transition to workflows
 that most experienced LAMMPS users employ.  That traditional procedure
 is effective for people proficient in using the command-line, as it
 allows them to use the tools for the individual steps that they are most
