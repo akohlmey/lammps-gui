@@ -1935,7 +1935,6 @@ void LammpsGui::renderImage()
                         "Cannot create snapshot image from an input not creating a system box");
                 return;
             }
-            textEdit->setTextCursor(saved);
         }
         // if configured, delete old image window before opening new one
         if (QSettings().value("imagereplace", true).toBool()) delete imagewindow;
