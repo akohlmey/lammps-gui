@@ -20,10 +20,9 @@
 #include <string>
 #include <vector>
 
-#include "constants.h"
 #include "lammpswrapper.h"
 
-// identifier for LAMMPS restart files
+// define magic string for LAMMPS restart files, if not already defined
 #if !defined(LAMMPS_MAGIC)
 #define LAMMPS_MAGIC "LammpS RestartT"
 #endif
@@ -38,6 +37,7 @@ class QMenu;
 class QMenuBar;
 class QPlainTextEdit;
 class QProgressBar;
+class QSettings;
 class QStatusBar;
 class QTimer;
 class QWidget;
@@ -316,8 +316,11 @@ private slots:
     void defaults();
 
 private:
-    /** @brief Create all menu actions, menus, and status bar */
-    void setupUi();
+    /**
+     * @brief Create all menu actions, menus, and status bar
+     * @param settings application settings class instance
+     */
+    void setupUi(QSettings &settings);
 
     /** @brief Create File menu actions and add them to the menu bar */
     void createFileMenu();
@@ -348,7 +351,7 @@ private:
 
     // Menu bar and menus
     QMenuBar *menubar;
-    QAction *recentActions[GuiConstants::NUM_RECENT_FILES]; ///< Recent file actions
+    QList<QAction *> recentActions;
 
     QMenu *menuEdit;
     QMenu *menuRun;
@@ -383,9 +386,6 @@ private:
     QAction *actionViewImageWindow;
     QAction *actionViewSlideShow;
     QAction *actionViewVariableWindow;
-
-    // Actions - Tutorials menu
-    QAction *tutorialActions[GuiConstants::NUM_TUTORIALS]; ///< Tutorial 1-8
 
     // Actions - About menu
     QAction *actionAboutLAMMPSGUI;

@@ -90,11 +90,18 @@ const QString bannerstyle("CodeEditor {background-position: center center; "
                           "background-image: url(:/icons/lammps-gui-banner.png);}");
 } // namespace
 
-void LammpsGui::setupUi()
+void LammpsGui::setupUi(QSettings &settings)
 {
     setWindowTitle("LAMMPS-GUI");
     setObjectName("LammpsGui");
-    resize(600, 400);
+
+    // set width and height of main window
+    // use default so the background logo is fully shown
+    // use last values unless overridden from command-line
+    // do not accept a geometry smaller than minimum, revert to default instead
+    if (mainx < GuiConstants::MINIMUM_WIDTH) mainx = settings.value("mainx", 1024).toInt();
+    if (mainy < GuiConstants::MINIMUM_HEIGHT) mainy = settings.value("mainy", 512).toInt();
+    resize(mainx, mainy);
 
     // Central widget
     textEdit = new CodeEditor(this);
@@ -158,11 +165,13 @@ void LammpsGui::createFileMenu()
     menu->addAction(action);
     menu->addSeparator();
 
+    recentActions.resize(GuiConstants::NUM_RECENT_FILES);
+    auto recentIcon = QIcon(":/icons/document-open-recent.png");
     for (int i = 0; i < GuiConstants::NUM_RECENT_FILES; ++i) {
-        recentActions[i] = new QAction(QIcon(":/icons/document-open-recent.png"),
-                                       QString("&%1.").arg(i + 1), this);
-        connect(recentActions[i], &QAction::triggered, this, &LammpsGui::openRecent);
-        menu->addAction(recentActions[i]);
+        action = new QAction(recentIcon, QString("&%1.").arg(i + 1), this);
+        connect(action, &QAction::triggered, this, &LammpsGui::openRecent);
+        menu->addAction(action);
+        recentActions[i] = action;
     }
     menu->addSeparator();
 
@@ -295,14 +304,16 @@ void LammpsGui::createViewMenu()
 
 void LammpsGui::createTutorialMenu()
 {
+    auto *menu = menubar->addMenu("&Tutorials");
+    auto tutorialIcon = QIcon(":/icons/tutorial-logo.png");
+    QAction *action;
     for (int i = 0; i < GuiConstants::NUM_TUTORIALS; ++i) {
-        tutorialActions[i] = new QAction(QIcon(":/icons/tutorial-logo.png"),
-                                         QString("Start LAMMPS Tutorial &%1").arg(i + 1), this);
+        action = new QAction(tutorialIcon, QString("Start LAMMPS Tutorial &%1").arg(i + 1), this);
+        connect(action, &QAction::triggered, this, [this, i]() {
+            startTutorial(i + 1);
+        });
+        menu->addAction(action);
     }
-
-    menuTutorial = menubar->addMenu("&Tutorials");
-    for (int i = 0; i < GuiConstants::NUM_TUTORIALS; ++i)
-        menuTutorial->addAction(tutorialActions[i]);
 }
 
 void LammpsGui::createAboutMenu()
@@ -363,10 +374,6 @@ void LammpsGui::connectSignalsAndSlots()
 
     // Tutorial actions
     connect(actionLAMMPSTutorial, &QAction::triggered, this, &LammpsGui::tutorialWeb);
-    for (int i = 0; i < GuiConstants::NUM_TUTORIALS; ++i)
-        connect(tutorialActions[i], &QAction::triggered, this, [this, i]() {
-            startTutorial(i + 1);
-        });
 
     // About/Help actions
     connect(actionAboutLAMMPSGUI, &QAction::triggered, this, &LammpsGui::about);
@@ -380,11 +387,11 @@ void LammpsGui::connectSignalsAndSlots()
 
 LammpsGui::LammpsGui(QWidget *parent, const QString &filename, int width, int height) :
     QMainWindow(parent), textEdit(nullptr), menubar(nullptr), highlighter(nullptr),
-    capturer(nullptr), status(nullptr), cpuuse(nullptr), logwindow(nullptr), imagewindow(nullptr),
-    chartwindow(nullptr), slideshow(nullptr), logupdater(nullptr), dirstatus(nullptr),
-    progress(nullptr), prefdialog(nullptr), lammpsstatus(nullptr), varwindow(nullptr),
-    wizard(nullptr), runner(nullptr), isRunning(false), runCounter(0), nthreads(1), mainx(width),
-    mainy(height)
+    capturer(new StdCapture), status(nullptr), cpuuse(nullptr), logwindow(nullptr),
+    imagewindow(nullptr), chartwindow(nullptr), slideshow(nullptr), logupdater(nullptr),
+    dirstatus(nullptr), progress(nullptr), prefdialog(nullptr), lammpsstatus(nullptr),
+    varwindow(nullptr), wizard(nullptr), runner(nullptr), isRunning(false), runCounter(0),
+    nthreads(1), mainx(width), mainy(height)
 {
 #if QT_CONFIG(clipboard)
     hasClipboard = true;
@@ -392,9 +399,13 @@ LammpsGui::LammpsGui(QWidget *parent, const QString &filename, int width, int he
     hasClipboard = false;
 #endif
     docver = "";
-    setupUi();
 
-    capturer = new StdCapture;
+    // restore and initialize settings
+    QSettings settings;
+
+    // create and connect GUI elements
+    setupUi(settings);
+
     currentFile.clear();
     currentDir = QDir(".").absolutePath();
     // use $HOME if we get dropped to "/" like on macOS or the installation folder or
@@ -406,9 +417,6 @@ LammpsGui::LammpsGui(QWidget *parent, const QString &filename, int width, int he
 
     inspectList.clear();
     setAutoFillBackground(true);
-
-    // restore and initialize settings
-    QSettings settings;
 
 #if defined(LAMMPS_GUI_USE_PLUGIN)
     // first try to load from existing setting
@@ -751,15 +759,6 @@ LammpsGui::LammpsGui(QWidget *parent, const QString &filename, int width, int he
     } else {
         setWindowTitle("LAMMPS-GUI - Editor - *unknown*");
     }
-
-    // set width and height of main window.
-    // use last values unless overridden from command-line
-    // do not accept an geometry smaller than minimum
-    if (mainx < GuiConstants::MINIMUM_WIDTH)
-        mainx = settings.value("mainx", QString::number(GuiConstants::MINIMUM_WIDTH)).toInt();
-    if (mainy < GuiConstants::MINIMUM_HEIGHT)
-        mainy = settings.value("mainy", QString::number(GuiConstants::MINIMUM_HEIGHT)).toInt();
-    resize(mainx, mainy);
 
     // start LAMMPS and initialize command completion
     startLammps();
