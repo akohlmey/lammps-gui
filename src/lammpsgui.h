@@ -343,54 +343,11 @@ private:
     /** @brief Create the status bar and its widgets */
     void createStatusBar();
 
-    /** @brief Connect all actions to their respective slots */
-    void connectSignalsAndSlots();
-
-    // Central widget
-    CodeEditor *textEdit;
-
-    // Menu bar and menus
-    QMenuBar *menubar;
-    QList<QAction *> recentActions;
-
-    QMenu *menuRun;
-    QMenu *menuView;
-    QMenu *menuAbout;
-    QStatusBar *statusbar;
-
-    // Actions - Edit menu
-    QAction *actionUndo;
-    QAction *actionRedo;
-    QAction *actionCopy;
-    QAction *actionCut;
-    QAction *actionPaste;
-    QAction *actionSearchAndReplace;
-    QAction *actionPreferences;
-    QAction *actionDefaults;
-
-    // Actions - Run menu
-    QAction *actionRunBuffer;
-    QAction *actionRunFile;
-    QAction *actionStopLAMMPS;
-    QAction *actionRestartLAMMPS;
-    QAction *actionSetVariables;
-    QAction *actionImage;
-    QAction *actionViewInOVITO;
-    QAction *actionViewInVMD;
-
-    // Actions - View menu
-    QAction *actionViewLogWindow;
-    QAction *actionViewGraphWindow;
-    QAction *actionViewImageWindow;
-    QAction *actionViewSlideShow;
-    QAction *actionViewVariableWindow;
-
-    // Actions - About menu
-    QAction *actionAboutLAMMPSGUI;
-    QAction *actionHelp;
-    QAction *actionHowto;
-    QAction *actionLAMMPSManual;
-    QAction *actionLAMMPSTutorial;
+    // Central GUI elements
+    CodeEditor *textEdit;           ///< Custom code editor widget
+    QMenuBar *menubar;              ///< Menu bar with menus and actions
+    QStatusBar *statusbar;          ///< status bar
+    QList<QAction *> recentActions; ///< list of actions for recent files
 
     Highlighter *highlighter; ///< Syntax highlighter for LAMMPS input
     StdCapture *capturer;     ///< Captures stdout/stderr from LAMMPS

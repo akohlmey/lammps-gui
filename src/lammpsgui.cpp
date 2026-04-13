@@ -103,27 +103,29 @@ void LammpsGui::setupUi(QSettings &settings)
     if (mainy < GuiConstants::MINIMUM_HEIGHT) mainy = settings.value("mainy", 512).toInt();
     resize(mainx, mainy);
 
-    // Central widget
+    // set up central widget
     textEdit = new CodeEditor(this);
     textEdit->setEnabled(true);
     textEdit->setAcceptDrops(true);
-    textEdit->document()->setPlainText(citeme);
-    textEdit->document()->setModified(false);
     textEdit->setStyleSheet(bannerstyle);
-    highlighter = new Highlighter(textEdit->document());
     setCentralWidget(textEdit);
 
-    // Menu bar
-    menubar = new QMenuBar(this);
-    setMenuBar(menubar);
+    // document settings
+    auto *document = textEdit->document();
+    document->setPlainText(citeme);
+    document->setModified(false);
+    highlighter = new Highlighter(document);
+    connect(document, &QTextDocument::modificationChanged, this, &LammpsGui::modified);
 
-    // Create menus with their actions
+    // set up menu bar and menus with their actions and shortcuts
+    menubar = new QMenuBar(this);
     createFileMenu();
     createEditMenu();
     createRunMenu();
     createViewMenu();
     createTutorialMenu();
     createAboutMenu();
+    setMenuBar(menubar);
 
     // Status bar
     createStatusBar();
@@ -233,73 +235,85 @@ void LammpsGui::createEditMenu()
 
 void LammpsGui::createRunMenu()
 {
-    actionRunBuffer =
+    auto *menu = menubar->addMenu("&Run");
+    auto *action =
         new QAction(QIcon(":/icons/system-run.png"), "&Run LAMMPS from Editor Buffer", this);
-    actionRunBuffer->setShortcut(QKeySequence("Ctrl+Return"));
+    action->setShortcut(QKeySequence("Ctrl+Return"));
+    connect(action, &QAction::triggered, this, &LammpsGui::runBuffer);
+    menu->addAction(action);
 
-    actionRunFile = new QAction(QIcon(":/icons/run-file.png"), "Run LAMMPS from &File", this);
-    actionRunFile->setShortcut(QKeySequence("Ctrl+Shift+Return"));
+    action = new QAction(QIcon(":/icons/run-file.png"), "Run LAMMPS from &File", this);
+    action->setShortcut(QKeySequence("Ctrl+Shift+Return"));
+    connect(action, &QAction::triggered, this, &LammpsGui::runFile);
+    menu->addAction(action);
 
-    actionStopLAMMPS = new QAction(QIcon(":/icons/process-stop.png"), "&Stop LAMMPS", this);
-    actionStopLAMMPS->setShortcut(QKeySequence("Ctrl+/"));
+    action = new QAction(QIcon(":/icons/process-stop.png"), "&Stop LAMMPS", this);
+    action->setShortcut(QKeySequence("Ctrl+/"));
+    connect(action, &QAction::triggered, this, &LammpsGui::stopRun);
+    menu->addAction(action);
+    menu->addSeparator();
 
-    actionRestartLAMMPS =
-        new QAction(QIcon(":/icons/system-restart.png"), "Relaunch &LAMMPS Instance", this);
+    action = new QAction(QIcon(":/icons/system-restart.png"), "Relaunch &LAMMPS Instance", this);
+    connect(action, &QAction::triggered, this, &LammpsGui::restartLammps);
+    menu->addAction(action);
+    menu->addSeparator();
 
-    actionSetVariables =
+    action =
         new QAction(QIcon(":/icons/preferences-desktop-personal.png"), "Set &Variables...", this);
-    actionSetVariables->setShortcut(QKeySequence("Ctrl+Shift+V"));
+    action->setShortcut(QKeySequence("Ctrl+Shift+V"));
+    connect(action, &QAction::triggered, this, &LammpsGui::editVariables);
+    menu->addAction(action);
+    menu->addSeparator();
 
-    actionImage = new QAction(QIcon(":/icons/emblem-photos.png"), "Create &Image", this);
-    actionImage->setShortcut(QKeySequence("Ctrl+I"));
+    action = new QAction(QIcon(":/icons/emblem-photos.png"), "Create &Image", this);
+    action->setShortcut(QKeySequence("Ctrl+I"));
+    connect(action, &QAction::triggered, this, &LammpsGui::renderImage);
+    menu->addAction(action);
+    menu->addSeparator();
 
-    actionViewInOVITO = new QAction(QIcon(":/icons/ovito.png"), "View in &OVITO", this);
-    actionViewInOVITO->setShortcut(QKeySequence("Ctrl+Shift+O"));
+    action = new QAction(QIcon(":/icons/ovito.png"), "View in &OVITO", this);
+    action->setShortcut(QKeySequence("Ctrl+Shift+O"));
+    action->setEnabled(hasExe("ovito"));
+    action->setData("ovito");
+    connect(action, &QAction::triggered, this, &LammpsGui::startExe);
+    menu->addAction(action);
 
-    actionViewInVMD = new QAction(QIcon(":/icons/vmd.png"), "View in VM&D", this);
-    actionViewInVMD->setShortcut(QKeySequence("Ctrl+Shift+D"));
-
-    menuRun = menubar->addMenu("&Run");
-    menuRun->addAction(actionRunBuffer);
-    menuRun->addAction(actionRunFile);
-    menuRun->addAction(actionStopLAMMPS);
-    menuRun->addSeparator();
-    menuRun->addAction(actionRestartLAMMPS);
-    menuRun->addSeparator();
-    menuRun->addAction(actionSetVariables);
-    menuRun->addSeparator();
-    menuRun->addAction(actionImage);
-    menuRun->addAction(actionViewInOVITO);
-    menuRun->addAction(actionViewInVMD);
+    action = new QAction(QIcon(":/icons/vmd.png"), "View in VM&D", this);
+    action->setShortcut(QKeySequence("Ctrl+Shift+D"));
+    action->setEnabled(hasExe("vmd"));
+    action->setData("vmd");
+    connect(action, &QAction::triggered, this, &LammpsGui::startExe);
+    menu->addAction(action);
 }
 
 void LammpsGui::createViewMenu()
 {
-    actionViewLogWindow =
-        new QAction(QIcon(":/icons/utilities-terminal.png"), "&Output Window", this);
-    actionViewLogWindow->setShortcut(QKeySequence("Ctrl+Shift+L"));
+    auto *menu   = menubar->addMenu("&View");
+    auto *action = new QAction(QIcon(":/icons/utilities-terminal.png"), "&Output Window", this);
+    action->setShortcut(QKeySequence("Ctrl+Shift+L"));
+    connect(action, &QAction::triggered, this, &LammpsGui::viewLog);
+    menu->addAction(action);
 
-    actionViewGraphWindow =
-        new QAction(QIcon(":/icons/x-office-drawing.png"), "&Charts Window", this);
-    actionViewGraphWindow->setShortcut(QKeySequence("Ctrl+Shift+C"));
+    action = new QAction(QIcon(":/icons/x-office-drawing.png"), "&Charts Window", this);
+    action->setShortcut(QKeySequence("Ctrl+Shift+C"));
+    connect(action, &QAction::triggered, this, &LammpsGui::viewChart);
+    menu->addAction(action);
 
-    actionViewImageWindow = new QAction(QIcon(":/icons/emblem-photos.png"), "&Image Window", this);
-    actionViewImageWindow->setShortcut(QKeySequence("Ctrl+Shift+I"));
+    action = new QAction(QIcon(":/icons/emblem-photos.png"), "&Image Window", this);
+    action->setShortcut(QKeySequence("Ctrl+Shift+I"));
+    connect(action, &QAction::triggered, this, &LammpsGui::viewImage);
+    menu->addAction(action);
 
-    actionViewSlideShow =
-        new QAction(QIcon(":/icons/image-x-generic.png"), "&Slide Show Window", this);
-    actionViewSlideShow->setShortcut(QKeySequence("Ctrl+L"));
+    action = new QAction(QIcon(":/icons/image-x-generic.png"), "&Slide Show Window", this);
+    action->setShortcut(QKeySequence("Ctrl+L"));
+    connect(action, &QAction::triggered, this, &LammpsGui::viewSlides);
+    menu->addAction(action);
 
-    actionViewVariableWindow =
+    action =
         new QAction(QIcon(":/icons/preferences-desktop-personal.png"), "&Variables Window", this);
-    actionViewVariableWindow->setShortcut(QKeySequence("Ctrl+Shift+W"));
-
-    menuView = menubar->addMenu("&View");
-    menuView->addAction(actionViewLogWindow);
-    menuView->addAction(actionViewGraphWindow);
-    menuView->addAction(actionViewImageWindow);
-    menuView->addAction(actionViewSlideShow);
-    menuView->addAction(actionViewVariableWindow);
+    action->setShortcut(QKeySequence("Ctrl+Shift+W"));
+    connect(action, &QAction::triggered, this, &LammpsGui::viewVariables);
+    menu->addAction(action);
 }
 
 void LammpsGui::createTutorialMenu()
@@ -318,72 +332,98 @@ void LammpsGui::createTutorialMenu()
 
 void LammpsGui::createAboutMenu()
 {
-    actionAboutLAMMPSGUI = new QAction(QIcon(":/icons/help-about.png"), "&About LAMMPS-GUI", this);
-    actionAboutLAMMPSGUI->setShortcut(QKeySequence("Ctrl+Shift+A"));
+    auto *menu   = menubar->addMenu("&About");
+    auto *action = new QAction(QIcon(":/icons/help-about.png"), "&About LAMMPS-GUI", this);
+    action->setShortcut(QKeySequence("Ctrl+Shift+A"));
+    connect(action, &QAction::triggered, this, &LammpsGui::about);
+    menu->addAction(action);
 
-    actionHelp = new QAction(QIcon(":/icons/help-faq.png"), "Quick &Help", this);
-    actionHelp->setShortcut(QKeySequence("Ctrl+Shift+H"));
+    action = new QAction(QIcon(":/icons/help-faq.png"), "Quick &Help", this);
+    action->setShortcut(QKeySequence("Ctrl+Shift+H"));
+    connect(action, &QAction::triggered, this, &LammpsGui::help);
+    menu->addAction(action);
 
-    actionHowto = new QAction(QIcon(":/icons/system-help.png"), "LAMMPS-&GUI Documentation", this);
-    actionHowto->setShortcut(QKeySequence("Ctrl+Shift+G"));
+    action = new QAction(QIcon(":/icons/system-help.png"), "LAMMPS-&GUI Documentation", this);
+    action->setShortcut(QKeySequence("Ctrl+Shift+G"));
+    connect(action, &QAction::triggered, this, &LammpsGui::howto);
+    menu->addAction(action);
 
-    actionLAMMPSManual =
-        new QAction(QIcon(":/icons/help-browser.png"), "LAMMPS Online &Manual", this);
-    actionLAMMPSManual->setShortcut(QKeySequence("Ctrl+Shift+M"));
+    action = new QAction(QIcon(":/icons/help-browser.png"), "LAMMPS Online &Manual", this);
+    action->setShortcut(QKeySequence("Ctrl+Shift+M"));
+    connect(action, &QAction::triggered, this, &LammpsGui::manual);
+    menu->addAction(action);
 
-    actionLAMMPSTutorial =
-        new QAction(QIcon(":/icons/help-tutorial.png"), "LAMMPS &Tutorial Website", this);
-    actionLAMMPSTutorial->setShortcut(QKeySequence("Ctrl+Shift+T"));
-
-    menuAbout = menubar->addMenu("&About");
-    menuAbout->addAction(actionAboutLAMMPSGUI);
-    menuAbout->addAction(actionHelp);
-    menuAbout->addAction(actionHowto);
-    menuAbout->addAction(actionLAMMPSManual);
-    menuAbout->addAction(actionLAMMPSTutorial);
+    action = new QAction(QIcon(":/icons/help-tutorial.png"), "LAMMPS &Tutorial Website", this);
+    action->setShortcut(QKeySequence("Ctrl+Shift+T"));
+    connect(action, &QAction::triggered, this, &LammpsGui::tutorialWeb);
+    menu->addAction(action);
 }
 
 void LammpsGui::createStatusBar()
 {
     statusbar = new QStatusBar(this);
     setStatusBar(statusbar);
+
+    lammpsstatus = new QLabel(QString());
+    auto pix     = QPixmap(GuiConstants::LAMMPS_ICON);
+    lammpsstatus->setPixmap(
+        pix.scaled(GuiConstants::ICON_SCALE, GuiConstants::ICON_SCALE, Qt::KeepAspectRatio));
+    lammpsstatus->setToolTip("LAMMPS instance is active");
+    lammpsstatus->hide();
+    statusbar->addWidget(lammpsstatus);
+
+    auto *button = new QPushButton(QIcon(":/icons/document-save.png"), "");
+    button->setToolTip("Save edit buffer to file");
+    auto buttonhint = button->minimumSizeHint();
+    buttonhint.setWidth(buttonhint.height() * 4 / 3);
+    button->setMinimumSize(buttonhint);
+    button->setMaximumSize(buttonhint);
+    connect(button, &QPushButton::released, this, &LammpsGui::save);
+    statusbar->addWidget(button);
+
+    button = new QPushButton(QIcon(":/icons/system-run.png"), "");
+    button->setToolTip("Run LAMMPS on input");
+    button->setMinimumSize(buttonhint);
+    button->setMaximumSize(buttonhint);
+    connect(button, &QPushButton::released, this, &LammpsGui::runBuffer);
+    statusbar->addWidget(button);
+
+    button = new QPushButton(QIcon(":/icons/process-stop.png"), "");
+    button->setToolTip("Stop LAMMPS");
+    button->setMinimumSize(buttonhint);
+    button->setMaximumSize(buttonhint);
+    connect(button, &QPushButton::released, this, &LammpsGui::stopRun);
+    statusbar->addWidget(button);
+
+    button = new QPushButton(QIcon(":/icons/emblem-photos.png"), "");
+    button->setToolTip("Create snapshot image");
+    button->setMinimumSize(buttonhint);
+    button->setMaximumSize(buttonhint);
+    connect(button, &QPushButton::released, this, &LammpsGui::renderImage);
+    statusbar->addWidget(button);
+
+    cpuuse = new QLabel("   0%CPU");
+    cpuuse->setFixedWidth(90);
+    statusbar->addWidget(cpuuse);
+    cpuuse->hide();
+
+    status = new QLabel("Ready.");
+    status->setFixedWidth(300);
+    statusbar->addWidget(status);
+
+    dirstatus = new QLabel(QString(" Directory: ") + currentDir);
+    dirstatus->setMinimumWidth(GuiConstants::MINIMUM_WIDTH);
+    dirstatus->show();
+    statusbar->addWidget(dirstatus);
+
+    progress = new QProgressBar();
+    progress->setRange(0, GuiConstants::PROGRESS_MAXIMUM);
+    progress->setMinimumWidth(GuiConstants::MINIMUM_WIDTH);
+    progress->hide();
+    statusbar->addWidget(progress);
 }
 
-void LammpsGui::connectSignalsAndSlots()
-{
-    // File actions
-
-    // Edit actions
-
-    // Run actions
-    connect(actionRunBuffer, &QAction::triggered, this, &LammpsGui::runBuffer);
-    connect(actionRunFile, &QAction::triggered, this, &LammpsGui::runFile);
-    connect(actionStopLAMMPS, &QAction::triggered, this, &LammpsGui::stopRun);
-    connect(actionRestartLAMMPS, &QAction::triggered, this, &LammpsGui::restartLammps);
-    connect(actionSetVariables, &QAction::triggered, this, &LammpsGui::editVariables);
-    connect(actionImage, &QAction::triggered, this, &LammpsGui::renderImage);
-    connect(actionViewInOVITO, &QAction::triggered, this, &LammpsGui::startExe);
-    connect(actionViewInVMD, &QAction::triggered, this, &LammpsGui::startExe);
-
-    // View actions
-    connect(actionViewLogWindow, &QAction::triggered, this, &LammpsGui::viewLog);
-    connect(actionViewGraphWindow, &QAction::triggered, this, &LammpsGui::viewChart);
-    connect(actionViewImageWindow, &QAction::triggered, this, &LammpsGui::viewImage);
-    connect(actionViewSlideShow, &QAction::triggered, this, &LammpsGui::viewSlides);
-    connect(actionViewVariableWindow, &QAction::triggered, this, &LammpsGui::viewVariables);
-
-    // Tutorial actions
-    connect(actionLAMMPSTutorial, &QAction::triggered, this, &LammpsGui::tutorialWeb);
-
-    // About/Help actions
-    connect(actionAboutLAMMPSGUI, &QAction::triggered, this, &LammpsGui::about);
-    connect(actionHelp, &QAction::triggered, this, &LammpsGui::help);
-    connect(actionHowto, &QAction::triggered, this, &LammpsGui::howto);
-    connect(actionLAMMPSManual, &QAction::triggered, this, &LammpsGui::manual);
-
-    // Editor signals
-    connect(textEdit->document(), &QTextDocument::modificationChanged, this, &LammpsGui::modified);
-}
+/* -------------------------------------------------------------------- */
 
 LammpsGui::LammpsGui(QWidget *parent, const QString &filename, int width, int height) :
     QMainWindow(parent), textEdit(nullptr), menubar(nullptr), highlighter(nullptr),
@@ -693,66 +733,6 @@ LammpsGui::LammpsGui(QWidget *parent, const QString &filename, int width, int he
     varwindow->hide();
 
     updateRecents();
-
-    // check if we have OVITO and VMD installed and deactivate actions if not
-    actionViewInOVITO->setEnabled(hasExe("ovito"));
-    actionViewInOVITO->setData("ovito");
-    actionViewInVMD->setEnabled(hasExe("vmd"));
-    actionViewInVMD->setData("vmd");
-
-    connectSignalsAndSlots();
-
-    lammpsstatus = new QLabel(QString());
-    auto pix     = QPixmap(GuiConstants::LAMMPS_ICON);
-    lammpsstatus->setPixmap(
-        pix.scaled(GuiConstants::ICON_SCALE, GuiConstants::ICON_SCALE, Qt::KeepAspectRatio));
-    statusbar->addWidget(lammpsstatus);
-    lammpsstatus->setToolTip("LAMMPS instance is active");
-    lammpsstatus->hide();
-
-    auto *lammpssave  = new QPushButton(QIcon(":/icons/document-save.png"), "");
-    auto *lammpsrun   = new QPushButton(QIcon(":/icons/system-run.png"), "");
-    auto *lammpsstop  = new QPushButton(QIcon(":/icons/process-stop.png"), "");
-    auto *lammpsimage = new QPushButton(QIcon(":/icons/emblem-photos.png"), "");
-    lammpssave->setToolTip("Save edit buffer to file");
-    lammpsrun->setToolTip("Run LAMMPS on input");
-    lammpsstop->setToolTip("Stop LAMMPS");
-    lammpsimage->setToolTip("Create snapshot image");
-    auto buttonhint = lammpssave->minimumSizeHint();
-    buttonhint.setWidth(buttonhint.height() * 4 / 3);
-    lammpssave->setMinimumSize(buttonhint);
-    lammpssave->setMaximumSize(buttonhint);
-    lammpsrun->setMinimumSize(buttonhint);
-    lammpsrun->setMaximumSize(buttonhint);
-    lammpsstop->setMinimumSize(buttonhint);
-    lammpsstop->setMaximumSize(buttonhint);
-    lammpsimage->setMinimumSize(buttonhint);
-    lammpsimage->setMaximumSize(buttonhint);
-    statusbar->addWidget(lammpssave);
-    statusbar->addWidget(lammpsrun);
-    statusbar->addWidget(lammpsstop);
-    statusbar->addWidget(lammpsimage);
-    connect(lammpssave, &QPushButton::released, this, &LammpsGui::save);
-    connect(lammpsrun, &QPushButton::released, this, &LammpsGui::runBuffer);
-    connect(lammpsstop, &QPushButton::released, this, &LammpsGui::stopRun);
-    connect(lammpsimage, &QPushButton::released, this, &LammpsGui::renderImage);
-
-    cpuuse = new QLabel("   0%CPU");
-    cpuuse->setFixedWidth(90);
-    statusbar->addWidget(cpuuse);
-    cpuuse->hide();
-    status = new QLabel("Ready.");
-    status->setFixedWidth(300);
-    statusbar->addWidget(status);
-    dirstatus = new QLabel(QString(" Directory: ") + currentDir);
-    dirstatus->setMinimumWidth(GuiConstants::MINIMUM_WIDTH);
-    statusbar->addWidget(dirstatus);
-    progress = new QProgressBar();
-    progress->setRange(0, GuiConstants::PROGRESS_MAXIMUM);
-    progress->setMinimumWidth(GuiConstants::MINIMUM_WIDTH);
-    progress->hide();
-    dirstatus->show();
-    statusbar->addWidget(progress);
 
     if ((filename.size() > 0) && !filename.endsWith("lammps-gui.exe")) {
         openFile(filename);
