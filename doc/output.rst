@@ -132,10 +132,9 @@ runs.
 
 The *Preferences* dialog has a *Charts* tab, where you can configure
 multiple chart-related settings, like the default title, colors for the
-graphs, default choice of the raw / smooth graph selection, and the
-default chart graph size.
-
-
+graphs, default choice of the raw / smooth graph selection, whether the
+grid for the major and minor ticks is drawn, and the default chart graph
+size.
 
 .. admonition:: Slowdown of Simulations from Charts Data Processing
    :class: warning
