@@ -90,7 +90,7 @@ const QString bannerstyle("CodeEditor {background-position: center center; "
                           "background-image: url(:/icons/lammps-gui-banner.png);}");
 } // namespace
 
-void LammpsGui::setupUi(QSettings &settings)
+void LammpsGui::setupUi(QSettings &settings, QFont &allFont, QFont &monoFont)
 {
     setObjectName("LammpsGui");
     setWindowTitle("LAMMPS-GUI");
@@ -109,6 +109,7 @@ void LammpsGui::setupUi(QSettings &settings)
     textEdit->setEnabled(true);
     textEdit->setAcceptDrops(true);
     textEdit->setStyleSheet(bannerstyle);
+    textEdit->setMinimumSize(GuiConstants::MINIMUM_WIDTH, GuiConstants::MINIMUM_HEIGHT);
     setCentralWidget(textEdit);
 
     // document settings
@@ -130,6 +131,24 @@ void LammpsGui::setupUi(QSettings &settings)
 
     // Status bar
     createStatusBar();
+
+    // apply font settings
+    setFont(allFont);
+    textEdit->setFont(monoFont);
+    document->setDefaultFont(monoFont);
+
+    varwindow = new QLabel(QString());
+    varwindow->setWindowTitle(QString("LAMMPS-GUI - Current Variables"));
+    varwindow->setWindowIcon(QIcon(GuiConstants::MAIN_ICON));
+    varwindow->setMinimumSize(100, 50);
+    varwindow->setText("(none)");
+    varwindow->setFont(monoFont);
+    varwindow->setFrameStyle(QFrame::Sunken);
+    varwindow->setFrameShape(QFrame::Panel);
+    varwindow->setAlignment(Qt::AlignVCenter);
+    varwindow->setContentsMargins(5, 5, 5, 5);
+    varwindow->setSizePolicy(QSizePolicy::MinimumExpanding, QSizePolicy::MinimumExpanding);
+    varwindow->hide();
 
     // set window flags for window manager
     auto flags = windowFlags();
@@ -670,6 +689,7 @@ LammpsGui::LammpsGui(QWidget *parent, const QString &filename, int width, int he
     varwindow(nullptr), wizard(nullptr), runner(nullptr), isRunning(false), runCounter(0),
     nthreads(1), mainx(width), mainy(height)
 {
+    hide();
 #if QT_CONFIG(clipboard)
     hasClipboard = true;
 #else
@@ -680,8 +700,27 @@ LammpsGui::LammpsGui(QWidget *parent, const QString &filename, int width, int he
     // restore and initialize settings
     QSettings settings;
 
+    // configure fonts
+    QFont allFont;
+    QFontInfo allInfo(*GUI_ALLFONT);
+    allFont.setFamily(settings.value("allfamily", allInfo.family()).toString());
+    allFont.setPointSize(settings.value("allsize", allInfo.pointSize()).toInt());
+    allFont.setStyleHint(GUI_ALLFONT->styleHint());
+    settings.setValue("allfamily", allFont.family());
+    settings.setValue("allsize", allFont.pointSize());
+
+    QFont monoFont;
+    QFontInfo monoInfo(*GUI_MONOFONT);
+    monoFont.setFamily(settings.value("monofamily", monoInfo.family()).toString());
+    monoFont.setPointSize(settings.value("monosize", monoInfo.pointSize()).toInt());
+    monoFont.setStyleHint(GUI_MONOFONT->styleHint());
+    monoFont.setFixedPitch(true);
+    settings.setValue("monofamily", monoFont.family());
+    settings.setValue("monosize", monoFont.pointSize());
+
     // create and connect GUI elements
-    setupUi(settings);
+    setupUi(settings, allFont, monoFont);
+    show();
 
     currentFile.clear();
     currentDir = QDir(".").absolutePath();
@@ -707,40 +746,7 @@ LammpsGui::LammpsGui(QWidget *parent, const QString &filename, int width, int he
 
     installEventFilter(this);
 
-    QFont all_font;
-    QFontInfo all_info(*GUI_ALLFONT);
-    all_font.setFamily(settings.value("allfamily", all_info.family()).toString());
-    all_font.setPointSize(settings.value("allsize", all_info.pointSize()).toInt());
-    all_font.setStyleHint(GUI_ALLFONT->styleHint());
-    settings.setValue("allfamily", all_font.family());
-    settings.setValue("allsize", all_font.pointSize());
-    setFont(all_font);
-
-    QFont mono_font;
-    QFontInfo mono_info(*GUI_MONOFONT);
-    mono_font.setFamily(settings.value("monofamily", mono_info.family()).toString());
-    mono_font.setPointSize(settings.value("monosize", mono_info.pointSize()).toInt());
-    mono_font.setStyleHint(GUI_MONOFONT->styleHint());
-    mono_font.setFixedPitch(true);
-    settings.setValue("monofamily", mono_font.family());
-    settings.setValue("monosize", mono_font.pointSize());
-    textEdit->setFont(mono_font);
-    textEdit->document()->setDefaultFont(mono_font);
-    textEdit->setMinimumSize(GuiConstants::MINIMUM_WIDTH, GuiConstants::MINIMUM_HEIGHT);
     settings.sync();
-
-    varwindow = new QLabel(QString());
-    varwindow->setWindowTitle(QString("LAMMPS-GUI - Current Variables"));
-    varwindow->setWindowIcon(QIcon(GuiConstants::MAIN_ICON));
-    varwindow->setMinimumSize(100, 50);
-    varwindow->setText("(none)");
-    varwindow->setFont(mono_font);
-    varwindow->setFrameStyle(QFrame::Sunken);
-    varwindow->setFrameShape(QFrame::Panel);
-    varwindow->setAlignment(Qt::AlignVCenter);
-    varwindow->setContentsMargins(5, 5, 5, 5);
-    varwindow->setSizePolicy(QSizePolicy::MinimumExpanding, QSizePolicy::MinimumExpanding);
-    varwindow->hide();
 
     updateRecents();
 
@@ -1419,13 +1425,10 @@ void LammpsGui::quit()
     settings.sync();
 
 #if QT_CONFIG(clipboard)
-    auto *clip = QGuiApplication::clipboard();
-    if (clip) clip->clear();
-}
+    if (auto *clip = QGuiApplication::clipboard()) clip->clear();
 #endif
-
-// quit application
-QCoreApplication::quit();
+    // quit application
+    QCoreApplication::quit();
 }
 
 void LammpsGui::copy()

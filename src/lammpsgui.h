@@ -319,8 +319,10 @@ private:
     /**
      * @brief Create all menu actions, menus, and status bar
      * @param settings application settings class instance
+     * @param allFont global proportional font selection
+     * @param monoFont global monospace font selection
      */
-    void setupUi(QSettings &settings);
+    void setupUi(QSettings &settings, QFont &allFont, QFont &monoFont);
 
     /**
      * @brief Configure, check, and download the LAMMPS shared library
