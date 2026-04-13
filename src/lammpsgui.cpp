@@ -305,8 +305,8 @@ void LammpsGui::createViewMenu()
 void LammpsGui::createTutorialMenu()
 {
     auto *menu = menubar->addMenu("&Tutorials");
-    auto tutorialIcon = QIcon(":/icons/tutorial-logo.png");
     QAction *action;
+    auto tutorialIcon = QIcon(":/icons/tutorial-logo.png");
     for (int i = 0; i < GuiConstants::NUM_TUTORIALS; ++i) {
         action = new QAction(tutorialIcon, QString("Start LAMMPS Tutorial &%1").arg(i + 1), this);
         connect(action, &QAction::triggered, this, [this, i]() {

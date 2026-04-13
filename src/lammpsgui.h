@@ -353,10 +353,8 @@ private:
     QMenuBar *menubar;
     QList<QAction *> recentActions;
 
-    QMenu *menuEdit;
     QMenu *menuRun;
     QMenu *menuView;
-    QMenu *menuTutorial;
     QMenu *menuAbout;
     QStatusBar *statusbar;
 
