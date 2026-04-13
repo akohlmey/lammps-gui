@@ -19,8 +19,8 @@ features not available in the official LAMMPS distribution packages.  It
 also allows to use LAMMPS-GUI with LAMMPS shared libraries compiled
 using the traditional makefile based build process (which does not
 support compiling LAMMPS-GUI directly).  Pre-compiled packages of
-standalone LAMMPS-GUI versions with some basic LAMMPS shared library
-included are also available for download (see below).
+standalone LAMMPS-GUI versions with a LAMMPS shared library included are
+also available for download (see below).
 
 Prerequisites and portability
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -30,13 +30,13 @@ Prerequisites and portability
 .. index:: CMake
 
 LAMMPS-GUI is programmed in C++ based on the C++17 standard and using
-the `Qt GUI framework <https://www.qt.io/product/framework>`_.
-Currently, Qt version 6.2 or later is required;  LAMMPS-GUI can switch
-between a "light" and a "dark" theme according to the settings of the
-desktop environment.  Building LAMMPS-GUI from source requires CMake
-version 3.20 or later.
+the `Qt GUI framework <https://www.qt.io/product/framework>`_.  As of
+LAMMPS-GUI version 2.0.0 Qt version 6.2 or later is required.
+LAMMPS-GUI can switch between a "light" and a "dark" theme according to
+the settings of the desktop environment.  Building LAMMPS-GUI from
+source requires CMake version 3.20 or later and suitable C++ compiler.
 
-.. admonition:: LAMMPS-GUI 2.0.0 has been successfully compiled and tested on:
+.. admonition:: LAMMPS-GUI |version| has been successfully compiled and tested on:
 
    - Ubuntu Linux 22.04LTS x86_64 using GCC 11, Qt version 6.2
    - Ubuntu Linux 24.04LTS x86_64 using GCC 13, Qt version 6.4
@@ -82,12 +82,14 @@ Standalone packages with a basic LAMMPS library
 
 .. image:: JPG/download-dialog.png
    :align: right
+   :width: 33%
 
 LAMMPS-GUI packages containing *only* LAMMPS-GUI compiled in plugin mode
 are available from the `LAMMPS-GUI releases page on GitHub
-<https://github.com/akohlmey/lammps-gui/releases>`_.  These packages
-include a LAMMPS shared library with some subset of LAMMPS' features
-that do not depend on additional libraries.
+<https://github.com/akohlmey/lammps-gui/releases>`_.  Most of these
+packages include a LAMMPS shared library with some subset of LAMMPS'
+features that do not depend on additional libraries for improved
+portability.
 
 If you want to override that choice of LAMMPS library, you can use the
 ``-p`` command line flag to tell LAMMPS-GUI which other LAMMPS shared
@@ -107,9 +109,15 @@ or browse dialog on the first invocation.  When the flatpak version
 is updated, it may be required to reset the shared library location
 with ``-p ""`` and re-download the latest version.
 
-Since LAMMPS-GUI version 2.0.0, the minimum LAMMPS version required is
-30 March 2026, but using a more recent LAMMPS release version is
-recommended to unlock all advanced features in LAMMPS-GUI.
+.. versionchanged:: 1.8.4
+
+   The minimum LAMMPS version required by LAMMPS-GUI is now 22 July 2025
+   update2
+
+.. versionchanged:: 2.0.0
+
+   The minimum LAMMPS version required by LAMMPS-GUI is now 30
+   March 2026.
 
 GPU support and MPI parallelization
 -----------------------------------
@@ -119,14 +127,15 @@ GPU support and MPI parallelization
 .. index:: OpenCL
 .. index:: KOKKOS package
 
-The pre-compiled packages include support for GPUs through the GPU
-package with OpenCL (in mixed precision).  However, this requires
-that you have a compatible driver and the OpenCL runtime installed.
-This is not always available and when using the flatpak bundle, the
-flatpak sandbox usually prevents accessing the GPU and thus the GPU
-package is disabled for that version.  GPU support through the KOKKOS
-package is currently not available for technical reasons,
-but serial and OpenMP multi-threading use of KOKKOS is available.
+The pre-compiled packages include a LAMMPS version with support for GPUs
+through the GPU package using OpenCL in mixed precision.  However, this
+requires that you have a compatible driver and the OpenCL runtime
+installed.  This is not always available, and when using the LAMMPS
+flatpak bundle, the flatpak sandbox usually prevents accessing the GPU
+and thus the GPU package is disabled for that version.  GPU support
+through the KOKKOS package is currently not available for technical
+reasons, but serial and OpenMP multi-threading use of KOKKOS is
+available.
 
 The design decisions for LAMMPS-GUI and how it launches LAMMPS conflict
 with parallel runs using MPI.  You have to `use a regular LAMMPS
@@ -147,7 +156,7 @@ Windows 10 and later
 
 .. image:: JPG/windows-download-keep2.png
    :align: right
-   :width: 45%
+   :width: 25%
 
 After downloading either the ``LAMMPS-Win10-64bit-GUI-<LAMMPS version>.exe``
 or the ``LAMMPS-GUI-Win10-x86_64-<LAMMPS-GUI version>.exe`` installer
@@ -161,7 +170,7 @@ in the Windows System Settings to be able to run the installer.
 
 .. image:: JPG/windows-download-keep1.png
    :align: center
-   :width: 50%
+   :width: 33%
 
 
 MacOS 12 and later
@@ -178,10 +187,10 @@ the "README.txt" file to get access to the other included command-line
 executables, if desired.
 
 .. |macos1| image:: JPG/macos-install.png
-   :width: 49%
+   :width: 33%
 
 .. |macos2| image:: JPG/macos-privacy.png
-   :width: 49%
+   :width: 33%
 
 |macos1| |macos2|
 
@@ -194,11 +203,14 @@ For Linux with x86\_64 CPU there are currently two variants of
 pre-compiled LAMMPS-GUI: 1) a tar file with binaries and a wrapper
 script and 2) a flatpak bundle.  The first is currently compiled on
 Ubuntu 22.04LTS (the oldest popular Linux distribution that provides the
-required C++17 compatibility out of the box) and depends on the backward
-compatibility of the core libraries between different releases on Linux
-distributions, and should be compatible with most recent Linux
-distributions.  The second uses the flatpak sandbox environment
-to maintain binary compatibility across platforms.
+required C++17 compatibility out of the box and thus has the best chance
+that the pre-compiled binaries will run on current Linux installations)
+and depends on the backward compatibility of the core libraries between
+different releases on Linux distributions, and should be compatible with
+most recent Linux distributions.  The second uses the flatpak sandbox
+environment to maintain binary compatibility across platforms, but uses
+a more recent build environment and Qt library release than what is
+available on Ubuntu 22.04LTS.
 
 *Linux binary tarball*
 
@@ -241,11 +253,11 @@ automatically.
 
 .. index:: flatpak
 
-The second Linux package variant uses `flatpak
-<https://www.flatpak.org>`_ and requires the flatpak management and
-runtime software to be installed.  After downloading the
-``LAMMPS-Linux-x86_64-GUI-<version>.flatpak`` flatpak bundle, you
-can install it with:
+The second Linux package variant uses `flatpak software deployment
+environment <https://www.flatpak.org>`_ and requires the flatpak
+management and runtime software to be installed.  After downloading the
+``LAMMPS-Linux-x86_64-GUI-<version>.flatpak`` file containing the
+flatpack bundle, you can install it with:
 
 .. code-block:: bash
 
@@ -254,7 +266,7 @@ can install it with:
 
 .. image:: JPG/lammps-gui-menu.png
    :align: right
-   :width: 33%
+   :width: 25%
 
 After installation, LAMMPS-GUI should be integrated into your desktop
 environment under "Applications > Science" but also can be launched from
@@ -283,27 +295,27 @@ Compilation from source
 
 The source for LAMMPS-GUI was included with the LAMMPS source code
 distribution until LAMMPS version 22 July 2025 in the folder
-``tools/lammps-gui``.  Starting with LAMMPS-GUI version 1.8.0 and
-LAMMPS version 10 September 2025 the LAMMPS-GUI sources are distributed
+``tools/lammps-gui``.  Starting with LAMMPS-GUI version 1.8.0 and LAMMPS
+version 10 September 2025 the LAMMPS-GUI sources are distributed
 separately through its own git repository at
 https://github.com/akohlmey/lammps-gui.
 
-LAMMPS-GUI can still be built as part of a regular LAMMPS
-compilation.  It will be automatically downloaded from its git
-repository and configured.  This is usually the most convenient way.
-Since `CMake <https://docs.lammps.org/Howto_cmake.html>`_ is *required*
-to build LAMMPS-GUI, you need to build LAMMPS with CMake as well.  To
-enable its compilation during compiling LAMMPS, the CMake variable ``-D
-BUILD_LAMMPS_GUI=on`` must be set when creating the CMake configuration.
-All other settings (compiler, flags, compile type) for LAMMPS-GUI are
-then inherited from the regular LAMMPS build.  If the Qt library is
-installed as packaged for Linux distributions, then its location is
-typically auto-detected since the required CMake configuration files are
-stored in a location where CMake can find them without additional help.
-Otherwise, the location of the Qt library installation must be indicated
-by setting ``-D Qt6_DIR=/path/to/qt6/lib/cmake/Qt6``, which is a path to
-a folder inside the Qt installation that contains the file
-``Qt6Config.cmake``.
+LAMMPS-GUI can still be built as part of a regular LAMMPS compilation.
+It will be automatically downloaded from its git repository and
+configured.  This is usually the most convenient way to compile and
+install it.  Since `CMake <https://docs.lammps.org/Howto_cmake.html>`_
+is *required* to build LAMMPS-GUI, you need to build LAMMPS with CMake
+as well.  To enable its compilation during compiling LAMMPS, the CMake
+variable ``-D BUILD_LAMMPS_GUI=on`` must be set when creating the CMake
+configuration.  All other settings (compiler, flags, compile type) for
+LAMMPS-GUI are then inherited from the regular LAMMPS build.  If the Qt
+library is installed as packaged for Linux distributions, then its
+location is typically auto-detected since the required CMake
+configuration files are stored in a location where CMake can find them
+without additional help.  Otherwise, the location of the Qt library
+installation must be indicated by setting ``-D
+Qt6_DIR=/path/to/qt6/lib/cmake/Qt6``, which is a path to a folder inside
+the Qt installation that contains the file ``Qt6Config.cmake``.
 
 Since the QtCharts module of the Qt library has been deprecated with Qt
 version 6.10, LAMMPS-GUI includes an alternate implementation of the
@@ -314,8 +326,7 @@ QtCharts based chart display.
 
 .. versionchanged:: 2.0.0
 
-Starting with version 2.0.0, LAMMPS-GUI requires Qt 6.2 or later.
-Support for Qt 5.x has been removed.
+   LAMMPS-GUI now *requires* Qt 6.2 or later. Support for Qt 5.x has been removed.
 
 LAMMPS-GUI plugin version
 -------------------------
@@ -349,7 +360,8 @@ to the LAMMPS library directly.  This feature is enabled by setting ``-D
 LAMMPS_GUI_USE_PLUGIN=off`` (default setting is on).  This is also the
 setting for compilation within LAMMPS.  In this case, the CMake
 configuration needs to be told where to find the LAMMPS headers and the
-LAMMPS library, via ``-D LAMMPS_SOURCE_DIR=/path/to/lammps/src``.
+LAMMPS library, via ``-D LAMMPS_SOURCE_DIR=/path/to/lammps/src`` and
+``-D LAMMPS_LIBRARY=/path/to/liblammps/file``
 
 
 Platform notes
@@ -369,14 +381,16 @@ CMAKE_OSX_ARCHITECTURES=arm64;x86_64``.  To achieve wide compatibility
 with different macOS versions, you can also set ``-D
 CMAKE_OSX_DEPLOYMENT_TARGET=12.0`` which will set compatibility to macOS
 12 (Monterey) and later, even if you are compiling on a more recent macOS
-version.
+version.  These are the settings used when building the pre-compiled
+LAMMPS-GUI packages.
 
 Windows
 """""""
 
-On Windows either native compilation from within Visual Studio 2022 with
-Visual C++ is supported and tested, or compilation with the MinGW / GCC
-cross-compiler environment on Fedora Linux.
+On Windows either native compilation from within Visual Studio 2022 or
+Visual Studio 2026 with Visual C++ is supported and tested, or
+compilation with the MinGW / GCC cross-compiler environment on Fedora
+Linux.
 
 *Visual Studio*
 
@@ -388,11 +402,11 @@ There is a custom `x64-GUI-MSVC` build configuration provided in the
 compilation settings for project.  Choosing this configuration will
 activate building the `lammps-gui.exe` executable in addition to LAMMPS
 through importing package selection from the ``windows.cmake`` preset
-file and enabling building LAMMPS-GUI and disabling building with
-MPI.  When requesting an installation from the `Build` menu in Visual
-Studio, it will create a compressed ``LAMMPS-GUI-Win10-amd64.zip`` zip file
-with the executables and required dependent .dll files.  This zip file
-can be uncompressed and ``lammps-gui.exe`` run directly from there.  The
+file and enabling building LAMMPS-GUI and disabling building with MPI.
+When requesting an installation from the `Build` menu in Visual Studio,
+it will create a compressed ``LAMMPS-GUI-Win10-amd64.zip`` zip file with
+the executables and required dependent .dll files.  This zip file can be
+uncompressed and ``lammps-gui.exe`` run directly from there.  The
 uncompressed folder can be added to the ``PATH`` environment and LAMMPS
 and LAMMPS-GUI can be launched from anywhere from the command-line.
 
@@ -404,22 +418,22 @@ automatically include a suitable CMake toolchain file (the regular cmake
 command can be used after that to modify the configuration settings, if
 needed).  After building the libraries and executables, you can build
 the target 'nsis' (i.e. ``cmake --build <build dir> --target nsis`` or
-``make nsis`` to build an Nullsoft installer package executable that
-can be executed on a Windows 10 or later machine with x86\_64 CPU and
-will then install LAMMPS-GUI including a basic LAMMPS shared library
-file and all required dependencies.
+``make nsis`` to build an Nullsoft installer package executable that can
+be executed on a Windows 10 or later machine with x86\_64 CPU and will
+then install LAMMPS-GUI including a basic LAMMPS shared library file and
+all required dependencies.
 
 Linux
 """""
 
 *Binary tarball package*
 
-Version 6.2 or later of the Qt library is required. Those are
-provided by, e.g., Ubuntu 22.04LTS or later.  Thus older Linux
-distributions are not likely to be supported, while more recent ones
-will work, even for pre-compiled executables (see above).  After
-compiling with ``cmake --build <build folder>``, use ``cmake --build
-<build folder> --target tgz`` or ``make tgz`` to build a
+Version 6.2 or later of the Qt library is required. Those are provided
+by, e.g., Ubuntu 22.04LTS or later.  Thus older Linux distributions are
+not likely to be supported, while more recent ones will work, even for
+pre-compiled executables (see above).  After compiling with
+``cmake --build <build folder>``, use ``cmake --build <build
+folder> --target tgz`` or ``make tgz`` to build a
 ``LAMMPS-Linux-amd64.tar.gz`` file with the executables and their
 support libraries.
 
@@ -433,5 +447,3 @@ Linux distributions (provided the flatpak system is installed).  Use the
 folder> --target flatpak`` or ``make flatpak``).  Please note that this
 will not build from the local sources but from the repository and branch
 listed in the ``org.lammps.lammps-gui.yml`` LAMMPS-GUI source folder.
-Flatpak builds are currently only supported when building LAMMPS-GUI
-from within LAMMPS due to restrictions imposed by the flatpak sandbox.
