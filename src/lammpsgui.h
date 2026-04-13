@@ -206,6 +206,9 @@ public slots:
     /** @brief Stop a running LAMMPS simulation */
     void stopRun();
 
+    /** @brief Run LAMMPS with content from editor buffer */
+    void runBuffer() { doRun(true); }
+
 private slots:
     /** @brief Create a new document */
     void newDocument();
@@ -251,9 +254,6 @@ private slots:
 
     /** @brief Open find and replace dialog */
     void findAndReplace();
-
-    /** @brief Run LAMMPS with content from editor buffer */
-    void runBuffer() { doRun(true); }
 
     /** @brief Run LAMMPS from saved file */
     void runFile() { doRun(false); }
