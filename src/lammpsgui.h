@@ -84,10 +84,10 @@ class LammpsGui : public QMainWindow {
     Q_OBJECT
 
     friend class CodeEditor;
+    friend class Preferences;
     friend class AcceleratorTab;
     friend class GeneralTab;
     friend class TutorialWizard;
-    friend class Preferences;
 
 public:
     /**
@@ -342,17 +342,6 @@ private:
 
     /** @brief Connect all actions to their respective slots */
     void connectSignalsAndSlots();
-
-    /**
-     * @brief Configure a sub-window with standard icon, minimum size, and shortcuts
-     * @param window       The widget to configure
-     * @param windowTitle  Title to set on the window
-     *
-     * Sets the window icon to the standard LAMMPS-GUI icon, sets the minimum size
-     * to MINIMUM_WIDTH x MINIMUM_HEIGHT, and adds Ctrl+W (close) and Ctrl+/ (stop run)
-     * keyboard shortcuts.
-     */
-    void configureSubWindow(QWidget *window, const QString &windowTitle);
 
     // Central widget
     CodeEditor *textEdit;

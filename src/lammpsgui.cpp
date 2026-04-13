@@ -378,17 +378,6 @@ void LammpsGui::connectSignalsAndSlots()
     connect(textEdit->document(), &QTextDocument::modificationChanged, this, &LammpsGui::modified);
 }
 
-void LammpsGui::configureSubWindow(QWidget *window, const QString &windowTitle)
-{
-    window->setWindowTitle(windowTitle);
-    window->setWindowIcon(QIcon(GuiConstants::MAIN_ICON));
-    window->setMinimumSize(GuiConstants::MINIMUM_WIDTH, GuiConstants::MINIMUM_HEIGHT);
-    auto *closeShortcut = new QShortcut(QKeySequence(Qt::CTRL | Qt::Key_W), window);
-    connect(closeShortcut, &QShortcut::activated, window, &QWidget::close);
-    auto *stopShortcut = new QShortcut(QKeySequence(Qt::CTRL | Qt::Key_Slash), window);
-    connect(stopShortcut, &QShortcut::activated, this, &LammpsGui::stopRun);
-}
-
 LammpsGui::LammpsGui(QWidget *parent, const QString &filename, int width, int height) :
     QMainWindow(parent), textEdit(nullptr), menubar(nullptr), highlighter(nullptr),
     capturer(nullptr), status(nullptr), cpuuse(nullptr), logwindow(nullptr), imagewindow(nullptr),
@@ -1849,8 +1838,10 @@ void LammpsGui::doRun(bool use_buffer)
     logwindow->setCenterOnScroll(true);
     logwindow->moveCursor(QTextCursor::End);
     logwindow->setLineWrapMode(LogWindow::NoWrap);
-    configureSubWindow(
-        logwindow, QString("LAMMPS-GUI - Output - %1 - Run %2").arg(currentFile).arg(runCounter));
+    logwindow->setWindowTitle(
+        QString("LAMMPS-GUI - Output - %1 - Run %2").arg(currentFile).arg(runCounter));
+    logwindow->setWindowIcon(QIcon(GuiConstants::MAIN_ICON));
+    logwindow->setMinimumSize(GuiConstants::MINIMUM_WIDTH, GuiConstants::MINIMUM_HEIGHT);
     if (settings.value("viewlog", true).toBool())
         logwindow->show();
     else
@@ -1859,8 +1850,11 @@ void LammpsGui::doRun(bool use_buffer)
     // if configured, delete old chart window before opening new one
     if (settings.value("chartreplace", true).toBool()) delete chartwindow;
     chartwindow = new ChartWindow(currentFile, this);
-    configureSubWindow(
-        chartwindow, QString("LAMMPS-GUI - Charts - %1 - Run %2").arg(currentFile).arg(runCounter));
+    chartwindow->setWindowTitle(
+        QString("LAMMPS-GUI - Charts - %1 - Run %2").arg(currentFile).arg(runCounter));
+    chartwindow->setWindowIcon(QIcon(GuiConstants::MAIN_ICON));
+    chartwindow->setMinimumSize(GuiConstants::MINIMUM_WIDTH, GuiConstants::MINIMUM_HEIGHT);
+
     const auto *unitptr = (const char *)lammps.extractGlobal("units");
     if (unitptr) chartwindow->setUnits(QString("%1").arg(unitptr));
     auto normflag = lammps.extractSetting("thermo_norm");
