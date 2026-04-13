@@ -322,6 +322,18 @@ private:
      */
     void setupUi(QSettings &settings);
 
+    /**
+     * @brief Configure, check, and download the LAMMPS shared library
+     * @param settings application settings class instance
+     */
+    void setupPlugin(QSettings &settings);
+
+    /**
+     * @brief Configure, check, and assign LAMMPS accelerator package settings
+     * @param settings application settings class instance
+     */
+    void setupAccelerators(QSettings &settings);
+
     /** @brief Create File menu actions and add them to the menu bar */
     void createFileMenu();
 

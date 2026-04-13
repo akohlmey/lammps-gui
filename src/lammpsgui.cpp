@@ -92,8 +92,9 @@ const QString bannerstyle("CodeEditor {background-position: center center; "
 
 void LammpsGui::setupUi(QSettings &settings)
 {
-    setWindowTitle("LAMMPS-GUI");
     setObjectName("LammpsGui");
+    setWindowTitle("LAMMPS-GUI");
+    setWindowIcon(QIcon(GuiConstants::MAIN_ICON));
 
     // set width and height of main window
     // use default so the background logo is fully shown
@@ -129,6 +130,14 @@ void LammpsGui::setupUi(QSettings &settings)
 
     // Status bar
     createStatusBar();
+
+    // set window flags for window manager
+    auto flags = windowFlags();
+    flags &= ~Qt::Dialog;
+    flags |= Qt::CustomizeWindowHint;
+    flags |= Qt::WindowMinimizeButtonHint;
+    flags |= Qt::WindowMaximizeButtonHint;
+    setWindowFlags(flags);
 }
 
 void LammpsGui::createFileMenu()
@@ -423,41 +432,8 @@ void LammpsGui::createStatusBar()
     statusbar->addWidget(progress);
 }
 
-/* -------------------------------------------------------------------- */
-
-LammpsGui::LammpsGui(QWidget *parent, const QString &filename, int width, int height) :
-    QMainWindow(parent), textEdit(nullptr), menubar(nullptr), highlighter(nullptr),
-    capturer(new StdCapture), status(nullptr), cpuuse(nullptr), logwindow(nullptr),
-    imagewindow(nullptr), chartwindow(nullptr), slideshow(nullptr), logupdater(nullptr),
-    dirstatus(nullptr), progress(nullptr), prefdialog(nullptr), lammpsstatus(nullptr),
-    varwindow(nullptr), wizard(nullptr), runner(nullptr), isRunning(false), runCounter(0),
-    nthreads(1), mainx(width), mainy(height)
+void LammpsGui::setupPlugin(QSettings &settings)
 {
-#if QT_CONFIG(clipboard)
-    hasClipboard = true;
-#else
-    hasClipboard = false;
-#endif
-    docver = "";
-
-    // restore and initialize settings
-    QSettings settings;
-
-    // create and connect GUI elements
-    setupUi(settings);
-
-    currentFile.clear();
-    currentDir = QDir(".").absolutePath();
-    // use $HOME if we get dropped to "/" like on macOS or the installation folder or
-    // system folder like on Windows
-    if ((currentDir == "/") || (currentDir.contains("AppData")) ||
-        (currentDir.contains("system32")))
-        currentDir = QDir::homePath();
-    QDir::setCurrent(currentDir);
-
-    inspectList.clear();
-    setAutoFillBackground(true);
-
 #if defined(LAMMPS_GUI_USE_PLUGIN)
     // first try to load from existing setting
     pluginPath = settings.value("plugin_path", "").toString();
@@ -471,27 +447,40 @@ LammpsGui::LammpsGui(QWidget *parent, const QString &filename, int width, int he
         }
     }
 
+    // set platform-specific library file name and config directory
+#if defined(Q_OS_MACOS)
+#elif defined(Q_OS_WIN32)
+#else
+#endif
+    // set platform specific paths and filename patterns
+    QStringList dirlist{"."};
+#if defined(Q_OS_MACOS)
+    const QString pattern = QStringLiteral("LAMMPS shared library (liblammps*.dylib)");
+    const QString libName = QStringLiteral("liblammps.0.dylib");
+    QStringList filter("liblammps*.dylib");
+    dirlist.append(
+        QString::fromLocal8Bit(qgetenv("DYLD_LIBRARY_PATH")).split(":", Qt::SkipEmptyParts));
+    // library may be included in an application bundle:
+    dirlist.append({"/Applications/LAMMPS-GUI.app/Contents/Frameworks",
+                    "/Applications/LAMMPS.app/Contents/Frameworks"});
+#elif defined(Q_OS_WIN32)
+    const QString pattern = QStringLiteral("LAMMPS shared library (liblammps*.dll)");
+    const QString libName = QStringLiteral("liblammps.dll");
+    QStringList filter("liblammps*.dll");
+    dirlist.append(QString::fromLocal8Bit(qgetenv("PATH")).split(";", Qt::SkipEmptyParts));
+#else
+    // for Linux and other unix-like systems
+    const QString pattern = QStringLiteral("LAMMPS shared library (liblammps*.so*)");
+    const QString libName = QStringLiteral("liblammps.so.0");
+    QStringList filter("liblammps*.so*");
+    dirlist.append(
+        QString::fromLocal8Bit(qgetenv("LD_LIBRARY_PATH")).split(":", Qt::SkipEmptyParts));
+#endif
+
     if (pluginPath.isEmpty()) {
         // construct list of possible standard choices for the shared library file
         // we prefer the current directory, then the dynamic library path, then some system folders
         // adapt file pattern and paths to the different operating systems
-        QStringList dirlist{"."};
-#if defined(Q_OS_MACOS)
-        QStringList filter("liblammps*.dylib");
-        dirlist.append(
-            QString::fromLocal8Bit(qgetenv("DYLD_LIBRARY_PATH")).split(":", Qt::SkipEmptyParts));
-        // library may be included in an application bundle:
-        dirlist.append({"/Applications/LAMMPS-GUI.app/Contents/Frameworks",
-                        "/Applications/LAMMPS.app/Contents/Frameworks"});
-#elif defined(Q_OS_WIN32)
-        QStringList filter("liblammps*.dll");
-        dirlist.append(QString::fromLocal8Bit(qgetenv("PATH")).split(";", Qt::SkipEmptyParts));
-#else
-        // for Linux and other unix-like systems
-        QStringList filter("liblammps*.so*");
-        dirlist.append(
-            QString::fromLocal8Bit(qgetenv("LD_LIBRARY_PATH")).split(":", Qt::SkipEmptyParts));
-#endif
 
         // also check in the config dir location for a previously downloaded library
         dirlist.append(QStandardPaths::writableLocation(QStandardPaths::AppConfigLocation));
@@ -554,13 +543,6 @@ LammpsGui::LammpsGui(QWidget *parent, const QString &filename, int width, int he
                 exit(1);
 
             } else if (msgBox.clickedButton() == browseBtn) {
-#if defined(Q_OS_MACOS)
-                const QString pattern = "LAMMPS shared library (liblammps*.dylib)";
-#elif defined(Q_OS_WIN32)
-                const QString pattern = "LAMMPS shared library (liblammps*.dll)";
-#else
-                const QString pattern = "LAMMPS shared library (liblammps*.so*)";
-#endif
                 QString pluginfile = QFileDialog::getOpenFileName(
                     this, "Select LAMMPS shared library to use", ".", pattern, nullptr,
                     QFileDialog::DontResolveSymlinks | QFileDialog::ReadOnly);
@@ -581,14 +563,6 @@ LammpsGui::LammpsGui(QWidget *parent, const QString &filename, int width, int he
                 // user cancelled file dialog -> loop back to show the dialog again
 
             } else if (msgBox.clickedButton() == downloadBtn) {
-                // set platform-specific library file name and config directory
-#if defined(Q_OS_MACOS)
-                const auto libName = "liblammps.0.dylib";
-#elif defined(Q_OS_WIN32)
-                const auto libName = "liblammps.dll";
-#else
-                const auto libName = "liblammps.so.0";
-#endif
                 // store in the same config directory where QSettings stores preferences
                 const auto configDir =
                     QStandardPaths::writableLocation(QStandardPaths::AppConfigLocation);
@@ -632,7 +606,10 @@ LammpsGui::LammpsGui(QWidget *parent, const QString &filename, int width, int he
         }
     }
 #endif
+}
 
+void LammpsGui::setupAccelerators(QSettings &settings)
+{
     // default accelerator package is OPENMP, but we switch the configured accelerator to
     // "none" if the selected package is not available to have an option that always works
     int accel = settings.value("accelerator", AcceleratorTab::OpenMP).toInt();
@@ -686,6 +663,45 @@ LammpsGui::LammpsGui(QWidget *parent, const QString &filename, int width, int he
     // set OMP_NUM_THREADS environment variable, if not set
     if (!qEnvironmentVariableIsSet("OMP_NUM_THREADS"))
         qputenv("OMP_NUM_THREADS", QByteArray::number(nthreads));
+}
+
+/* -------------------------------------------------------------------- */
+
+LammpsGui::LammpsGui(QWidget *parent, const QString &filename, int width, int height) :
+    QMainWindow(parent), textEdit(nullptr), menubar(nullptr), highlighter(nullptr),
+    capturer(new StdCapture), status(nullptr), cpuuse(nullptr), logwindow(nullptr),
+    imagewindow(nullptr), chartwindow(nullptr), slideshow(nullptr), logupdater(nullptr),
+    dirstatus(nullptr), progress(nullptr), prefdialog(nullptr), lammpsstatus(nullptr),
+    varwindow(nullptr), wizard(nullptr), runner(nullptr), isRunning(false), runCounter(0),
+    nthreads(1), mainx(width), mainy(height)
+{
+#if QT_CONFIG(clipboard)
+    hasClipboard = true;
+#else
+    hasClipboard = false;
+#endif
+    docver = "";
+
+    // restore and initialize settings
+    QSettings settings;
+
+    // create and connect GUI elements
+    setupUi(settings);
+
+    currentFile.clear();
+    currentDir = QDir(".").absolutePath();
+    // use $HOME if we get dropped to "/" like on macOS or the installation folder or
+    // system folder like on Windows
+    if ((currentDir == "/") || (currentDir.contains("AppData")) ||
+        (currentDir.contains("system32")))
+        currentDir = QDir::homePath();
+    QDir::setCurrent(currentDir);
+
+    inspectList.clear();
+    setAutoFillBackground(true);
+
+    setupPlugin(settings);
+    setupAccelerators(settings);
 
     // set up default LAMMPS thread arguments
     lammpsArgs.clear();
@@ -694,8 +710,6 @@ LammpsGui::LammpsGui(QWidget *parent, const QString &filename, int width, int he
     lammpsArgs.push_back("none");
 
     installEventFilter(this);
-
-    setWindowIcon(QIcon(GuiConstants::MAIN_ICON));
 
     QFont all_font;
     QFontInfo all_info(*GUI_ALLFONT);
@@ -836,14 +850,6 @@ LammpsGui::LammpsGui(QWidget *parent, const QString &filename, int width, int he
     auto https_proxy = QString::fromLocal8Bit(qgetenv("https_proxy"));
     if (https_proxy.isEmpty()) https_proxy = settings.value("https_proxy", "").toString();
     if (!https_proxy.isEmpty()) lammps.command(QString("shell putenv https_proxy=") + https_proxy);
-
-    // set window flags for window manager
-    auto flags = windowFlags();
-    flags &= ~Qt::Dialog;
-    flags |= Qt::CustomizeWindowHint;
-    flags |= Qt::WindowMinimizeButtonHint;
-    flags |= Qt::WindowMaximizeButtonHint;
-    setWindowFlags(flags);
 }
 
 LammpsGui::~LammpsGui()
