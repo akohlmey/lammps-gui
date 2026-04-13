@@ -1658,6 +1658,7 @@ void LammpsGui::render_image()
             // add a run 0 and thus create the state of the initial system without running.
             // this will allow us to create a snapshot image.
             auto saved = ui->textEdit->textCursor();
+            ui->textEdit->moveCustor(QTextCursor::Start);
             if (ui->textEdit->find(
                     QRegularExpression(QStringLiteral(R"(^\s*(run|minimize)\s+)")))) {
                 auto cursor = ui->textEdit->textCursor();
