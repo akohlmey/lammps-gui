@@ -1901,6 +1901,7 @@ void LammpsGui::renderImage()
             // add a run 0 and thus create the state of the initial system without running.
             // this will allow us to create a snapshot image.
             auto saved = textEdit->textCursor();
+            textEdit->moveCursor(QTextCursor::Start);
             if (textEdit->find(QRegularExpression(QStringLiteral(R"(^\s*(run|minimize)\s+)")))) {
                 auto cursor = textEdit->textCursor();
                 cursor.movePosition(QTextCursor::PreviousBlock);
@@ -1927,6 +1928,7 @@ void LammpsGui::renderImage()
                     }
                 }
             }
+            textEdit->setTextCursor(saved);
             // still no system box. bail out with a suitable message
             if (!lammps.extractSetting("box_exist")) {
                 warning(this, "ImageViewer File Creation Error",
