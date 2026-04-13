@@ -20,10 +20,9 @@
 #include <string>
 #include <vector>
 
-#include "constants.h"
 #include "lammpswrapper.h"
 
-// identifier for LAMMPS restart files
+// define magic string for LAMMPS restart files, if not already defined
 #if !defined(LAMMPS_MAGIC)
 #define LAMMPS_MAGIC "LammpS RestartT"
 #endif
@@ -38,6 +37,7 @@ class QMenu;
 class QMenuBar;
 class QPlainTextEdit;
 class QProgressBar;
+class QSettings;
 class QStatusBar;
 class QTimer;
 class QWidget;
@@ -84,10 +84,10 @@ class LammpsGui : public QMainWindow {
     Q_OBJECT
 
     friend class CodeEditor;
+    friend class Preferences;
     friend class AcceleratorTab;
     friend class GeneralTab;
     friend class TutorialWizard;
-    friend class Preferences;
 
 public:
     /**
@@ -206,6 +206,9 @@ public slots:
     /** @brief Stop a running LAMMPS simulation */
     void stopRun();
 
+    /** @brief Run LAMMPS with content from editor buffer */
+    void runBuffer() { doRun(true); }
+
 private slots:
     /** @brief Create a new document */
     void newDocument();
@@ -251,9 +254,6 @@ private slots:
 
     /** @brief Open find and replace dialog */
     void findAndReplace();
-
-    /** @brief Run LAMMPS with content from editor buffer */
-    void runBuffer() { doRun(true); }
 
     /** @brief Run LAMMPS from saved file */
     void runFile() { doRun(false); }
@@ -316,8 +316,25 @@ private slots:
     void defaults();
 
 private:
-    /** @brief Create all menu actions, menus, and status bar */
-    void setupUi();
+    /**
+     * @brief Create all menu actions, menus, and status bar
+     * @param settings application settings class instance
+     * @param allFont global proportional font selection
+     * @param monoFont global monospace font selection
+     */
+    void setupUi(QSettings &settings, QFont &allFont, QFont &monoFont);
+
+    /**
+     * @brief Configure, check, and download the LAMMPS shared library
+     * @param settings application settings class instance
+     */
+    void setupPlugin(QSettings &settings);
+
+    /**
+     * @brief Configure, check, and assign LAMMPS accelerator package settings
+     * @param settings application settings class instance
+     */
+    void setupAccelerators(QSettings &settings);
 
     /** @brief Create File menu actions and add them to the menu bar */
     void createFileMenu();
@@ -340,79 +357,11 @@ private:
     /** @brief Create the status bar and its widgets */
     void createStatusBar();
 
-    /** @brief Connect all actions to their respective slots */
-    void connectSignalsAndSlots();
-
-    /**
-     * @brief Configure a sub-window with standard icon, minimum size, and shortcuts
-     * @param window       The widget to configure
-     * @param windowTitle  Title to set on the window
-     *
-     * Sets the window icon to the standard LAMMPS-GUI icon, sets the minimum size
-     * to MINIMUM_WIDTH x MINIMUM_HEIGHT, and adds Ctrl+W (close) and Ctrl+/ (stop run)
-     * keyboard shortcuts.
-     */
-    void configureSubWindow(QWidget *window, const QString &windowTitle);
-
-    // Central widget
-    CodeEditor *textEdit;
-
-    // Menu bar and menus
-    QMenuBar *menubar;
-    QMenu *menuFile;
-    QMenu *menuEdit;
-    QMenu *menuRun;
-    QMenu *menuView;
-    QMenu *menuTutorial;
-    QMenu *menuAbout;
-    QStatusBar *statusbar;
-
-    // Actions - File menu
-    QAction *actionNew;
-    QAction *actionOpen;
-    QAction *actionView;
-    QAction *actionInspect;
-    QAction *actionSave;
-    QAction *actionSaveAs;
-    QAction *actionQuit;
-    QAction *recentActions[GuiConstants::NUM_RECENT_FILES]; ///< Recent file actions
-
-    // Actions - Edit menu
-    QAction *actionUndo;
-    QAction *actionRedo;
-    QAction *actionCopy;
-    QAction *actionCut;
-    QAction *actionPaste;
-    QAction *actionSearchAndReplace;
-    QAction *actionPreferences;
-    QAction *actionDefaults;
-
-    // Actions - Run menu
-    QAction *actionRunBuffer;
-    QAction *actionRunFile;
-    QAction *actionStopLAMMPS;
-    QAction *actionRestartLAMMPS;
-    QAction *actionSetVariables;
-    QAction *actionImage;
-    QAction *actionViewInOVITO;
-    QAction *actionViewInVMD;
-
-    // Actions - View menu
-    QAction *actionViewLogWindow;
-    QAction *actionViewGraphWindow;
-    QAction *actionViewImageWindow;
-    QAction *actionViewSlideShow;
-    QAction *actionViewVariableWindow;
-
-    // Actions - Tutorials menu
-    QAction *tutorialActions[GuiConstants::NUM_TUTORIALS]; ///< Tutorial 1-8
-
-    // Actions - About menu
-    QAction *actionAboutLAMMPSGUI;
-    QAction *actionHelp;
-    QAction *actionHowto;
-    QAction *actionLAMMPSManual;
-    QAction *actionLAMMPSTutorial;
+    // Central GUI elements
+    CodeEditor *textEdit;           ///< Custom code editor widget
+    QMenuBar *menubar;              ///< Menu bar with menus and actions
+    QStatusBar *statusbar;          ///< status bar
+    QList<QAction *> recentActions; ///< list of actions for recent files
 
     Highlighter *highlighter; ///< Syntax highlighter for LAMMPS input
     StdCapture *capturer;     ///< Captures stdout/stderr from LAMMPS
@@ -456,9 +405,10 @@ private:
     std::vector<std::string> lammpsArgs; ///< Command-line arguments for LAMMPS
 
 protected:
-    int nthreads; ///< Number of threads for parallel execution
-    int mainx;    ///< Override value for main editor window width or 0
-    int mainy;    ///< Override value for main editor window height or 0
+    int nthreads;      ///< Number of threads for parallel execution
+    int mainx;         ///< Override value for main editor window width or 0
+    int mainy;         ///< Override value for main editor window height or 0
+    bool hasClipboard; ///< true if Qt was configured with Clipboard support, otherwise false
 };
 
 #endif // LAMMPSGUI_H

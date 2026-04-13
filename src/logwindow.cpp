@@ -85,16 +85,18 @@ LogWindow::LogWindow(const QString &_filename, LammpsGui *_lammpsgui, QWidget *p
 
     warnings = new FlagWarnings(summary, document());
 
-    auto *action = new QShortcut(QKeySequence(Qt::CTRL | Qt::Key_S), this);
+    auto *action = new QShortcut(QKeySequence("Ctrl+S"), this);
     connect(action, &QShortcut::activated, this, &LogWindow::saveAs);
-    action = new QShortcut(QKeySequence(Qt::CTRL | Qt::Key_Y), this);
+    action = new QShortcut(QKeySequence("Ctrl+Y"), this);
     connect(action, &QShortcut::activated, this, &LogWindow::extractYaml);
-    action = new QShortcut(QKeySequence(Qt::CTRL | Qt::Key_Q), this);
+    action = new QShortcut(QKeySequence("Ctrl+Q"), this);
     connect(action, &QShortcut::activated, this, &LogWindow::quit);
-    action = new QShortcut(QKeySequence(Qt::CTRL | Qt::Key_N), this);
+    action = new QShortcut(QKeySequence("Ctrl+N"), this);
     connect(action, &QShortcut::activated, this, &LogWindow::nextWarning);
-    action = new QShortcut(QKeySequence(Qt::CTRL | Qt::Key_Slash), this);
+    action = new QShortcut(QKeySequence("Ctrl+/"), this);
     connect(action, &QShortcut::activated, this, &LogWindow::stopRun);
+    action = new QShortcut(QKeySequence("Ctrl+Return"), this);
+    connect(action, &QShortcut::activated, this, &LogWindow::runBuffer);
 
     installEventFilter(this);
     // set window flags for window manager
@@ -135,6 +137,11 @@ void LogWindow::quit()
 void LogWindow::stopRun()
 {
     if (lammpsgui) lammpsgui->stopRun();
+}
+
+void LogWindow::runBuffer()
+{
+    if (lammpsgui) lammpsgui->runBuffer();
 }
 
 void LogWindow::nextWarning()
