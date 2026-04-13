@@ -413,21 +413,21 @@ The dialog contains the following sections:
    - **VDW style** (checkbox): Enable or disable space-filling sphere
      rendering.  When unchecked, the ball-and-stick style is used.
    - **Colormap**: Select the colormap used for coloring by a per-atom
-     property.  This option is *not* available for atom color
-     selections *type* and *element*\ .  Currently available continuous
-     colormaps are: *BWR* (blue-white-red), *RWB* (red-white-blue),
-     *PWT* (purple-white-teal), *BWG* (blue-white-green), *BGR*
-     (blue-green-red), "Viridis" (from matplotlib), "Plasma" (from
-     matplotlib), "Inferno" (from matplotlib), "Teal", "Rainbow", and
-     *Grayscale*.  *Sequential* is a map with discrete colors.  These
-     are pre-defined colormap settings and cannot be adjusted from
-     LAMMPS-GUI.  As for *all* image settings, further customizations
-     can be realized by copying the dump image command line as
-     customized by the Image Viewer to the editor and then run LAMMPS
-     and observe the resulting images in the Slideshow Viewer window.
-     Then the color map setting can be fully customized according to the
-     `dump_modify colormap documentation
-     <https://docs.lammps.org/dump_image.html>`_.
+     property.  This option is *not* available for atom color selections
+     *type* and *element*\ .  Currently available continuous colormaps
+     are: *BWR* (blue-white-red), *RWB* (red-white-blue), *PWT*
+     (purple-white-teal), *BWG* (blue-white-green), *BGR*
+     (blue-green-red), *Grayscale* (black-white), "Viridis" (from
+     matplotlib), "Plasma" (from matplotlib), "Inferno" (from
+     matplotlib), "Teal", and "Rainbow".  *Sequential*, *Landscape*, and
+     *Basic* are maps with discrete colors.  These are pre-defined
+     colormap settings and currently cannot be adjusted from LAMMPS-GUI
+     directly.  As for *all* image settings, further customizations can
+     be realized by copying the dump image command line as customized by
+     the Image Viewer to the editor and then run LAMMPS and observe the
+     resulting images in the Slideshow Viewer window.  Then the color
+     map setting can be fully customized according to the `dump_modify
+     colormap documentation <https://docs.lammps.org/dump_image.html>`_.
    - **Min** / **Max**: Set the range of the colormap.  Use *auto* to
      have LAMMPS determine the range automatically or specify an
      explicit numeric value.

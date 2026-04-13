@@ -1441,6 +1441,7 @@ void ImageViewer::atomSettings()
     amap->addItem(gradient_icon({QColor(73, 29, 141), "white", QColor(0, 65, 68)}), "PWT");
     amap->addItem(gradient_icon({"blue", "white", "green"}), "BWG");
     amap->addItem(gradient_icon({"blue", "green", "red"}), "BGR");
+    amap->addItem(gradient_icon({"black", "white"}), "Grayscale");
     // clang-format off
     amap->addItem(gradient_icon({QColor(72, 33, 115), QColor(111, 111, 142), QColor(41, 175, 127),
                                  QColor(189, 223, 174)}), "Viridis");
@@ -1450,12 +1451,17 @@ void ImageViewer::atomSettings()
                                  QColor(252, 137, 97), QColor(252, 253, 191)}), "Inferno");
     amap->addItem(gradient_icon({QColor(18, 39, 64), QColor(27, 72, 94), QColor(86, 139, 135),
                                  QColor(181, 209, 174)}), "Teal");
-    // clang-format on
     amap->addItem(gradient_icon({"red", "yellow", "green", "cyan", "blue", "purple"}), "Rainbow");
     amap->addItem(sequence_icon({QColor(206, 206, 206), QColor(165, 89, 170), QColor(81, 168, 156),
                                  QColor(240, 197, 113), QColor(224, 43, 53), QColor(8, 42, 84)}),
                   "Sequential");
-    amap->addItem(gradient_icon({"black", "white"}), "Grayscale");
+    amap->addItem(sequence_icon({QColor(37, 102, 118), QColor(100, 221, 150), QColor(146, 49, 36),
+                                 QColor(100, 212, 253), QColor(5, 110, 18), QColor(253, 89, 37),
+                                 QColor(70, 243, 62), QColor(186, 134, 92), QColor(201, 221, 135),
+                                 QColor(62, 76, 20)}), "Landscape");
+    amap->addItem(sequence_icon({"red", "cyan", "green", "black", "magenta", "blue", "yellow",
+                                 "purple", "white", "orange"}), "Basic");
+    // clang-format on
     for (int idx = 0; idx < amap->count(); ++idx) {
         if (amap->itemText(idx) == colormap) amap->setCurrentIndex(idx);
     }
@@ -2695,6 +2701,22 @@ void ImageViewer::createImage()
         dumpcmd += " color map6 0.031 0.165 0.329";
         dumpcmd += QString(" amap %1 %2 sa 1.0 ").arg(mmin).arg(mmax);
         dumpcmd += "6 map1 map2 map3 map4 map5 map6";
+    } else if (colormap == "Landscape") {
+        dumpcmd += " color map0 0.145 0.400 0.463";
+        dumpcmd += " color map1 0.392 0.867 0.588";
+        dumpcmd += " color map2 0.572 0.192 0.141";
+        dumpcmd += " color map3 0.392 0.831 0.992";
+        dumpcmd += " color map4 0.020 0.431 0.071";
+        dumpcmd += " color map5 0.992 0.349 0.145";
+        dumpcmd += " color map6 0.275 0.953 0.243";
+        dumpcmd += " color map7 0.729 0.525 0.361";
+        dumpcmd += " color map8 0.780 0.867 0.529";
+        dumpcmd += " color map9 0.243 0.298 0.078";
+        dumpcmd += QString(" amap %1 %2 sa 1.0 ").arg(mmin).arg(mmax);
+        dumpcmd += "10 map0 map1 map2 map3 map4 map5 map6 map7 map8 map9";
+    } else if (colormap == "Basic") {
+        dumpcmd += QString(" amap %1 %2 sa 1.0 ").arg(mmin).arg(mmax);
+        dumpcmd += "10 red cyan green black magenta blue yellow purple white orange";
     } else if (colormap == "Teal") {
         dumpcmd += " color map1 0.071 0.153 0.251";
         dumpcmd += " color map2 0.106 0.282 0.369";
