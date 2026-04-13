@@ -420,7 +420,7 @@ void LammpsGui::createStatusBar()
     status->setFixedWidth(300);
     statusbar->addWidget(status);
 
-    dirstatus = new QLabel(QString(" Directory: ") + currentDir);
+    dirstatus = new QLabel(QString(" Directory: (unknown)"));
     dirstatus->setMinimumWidth(GuiConstants::MINIMUM_WIDTH);
     dirstatus->show();
     statusbar->addWidget(dirstatus);
@@ -447,12 +447,7 @@ void LammpsGui::setupPlugin(QSettings &settings)
         }
     }
 
-    // set platform-specific library file name and config directory
-#if defined(Q_OS_MACOS)
-#elif defined(Q_OS_WIN32)
-#else
-#endif
-    // set platform specific paths and filename patterns
+    // set platform specific paths, library file name,config directory, and filename patterns
     QStringList dirlist{"."};
 #if defined(Q_OS_MACOS)
     const QString pattern = QStringLiteral("LAMMPS shared library (liblammps*.dylib)");
@@ -696,6 +691,7 @@ LammpsGui::LammpsGui(QWidget *parent, const QString &filename, int width, int he
         (currentDir.contains("system32")))
         currentDir = QDir::homePath();
     QDir::setCurrent(currentDir);
+    dirstatus->setText(QString(" Directory: ") + currentDir);
 
     inspectList.clear();
     setAutoFillBackground(true);
@@ -1422,28 +1418,35 @@ void LammpsGui::quit()
     }
     settings.sync();
 
-    if (hasClipboard) {
-        auto *clip = QGuiApplication::clipboard();
-        if (clip) clip->clear();
-    }
+#if QT_CONFIG(clipboard)
+    auto *clip = QGuiApplication::clipboard();
+    if (clip) clip->clear();
+}
+#endif
 
-    // quit application
-    QCoreApplication::quit();
+// quit application
+QCoreApplication::quit();
 }
 
 void LammpsGui::copy()
 {
-    if (hasClipboard) textEdit->copy();
+#if QT_CONFIG(clipboard)
+    textEdit->copy();
+#endif
 }
 
 void LammpsGui::cut()
 {
-    if (hasClipboard) textEdit->cut();
+#if QT_CONFIG(clipboard)
+    textEdit->cut();
+#endif
 }
 
 void LammpsGui::paste()
 {
-    if (hasClipboard) textEdit->paste();
+#if QT_CONFIG(clipboard)
+    textEdit->paste();
+#endif
 }
 
 void LammpsGui::undo()
@@ -2104,9 +2107,9 @@ void LammpsGui::about()
     to_clipboard += info.c_str();
     to_clipboard += details.c_str();
 
-    if (hasClipboard) {
-        if (auto *clip = QGuiApplication::clipboard()) clip->setText(to_clipboard);
-    }
+#if QT_CONFIG(clipboard)
+    if (auto *clip = QGuiApplication::clipboard()) clip->setText(to_clipboard);
+#endif
 
     auto fsize = QFontMetrics(QApplication::font()).size(Qt::TextSingleLine, citeme);
     AboutDialog dialog(QString::fromStdString(version).trimmed(),
