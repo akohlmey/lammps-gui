@@ -116,6 +116,12 @@ public:
      */
     void set_norm(bool norm);
 
+    /**
+     * @brief Enable/Disable range sliders
+     * @param enabled  true to enable sliders and false to disable them
+     */
+    void setRangeEnabled(bool enabled);
+
 private slots:
     void quit();                           ///< Close window and quit
     void stop_run();                       ///< Stop running simulation

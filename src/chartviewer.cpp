@@ -294,6 +294,12 @@ void ChartWindow::set_norm(bool _norm)
     norm->setChecked(_norm);
 }
 
+void ChartWindow::setRangeEnabled(bool enabled)
+{
+    xrange->setEnabled(enabled);
+    yrange->setEnabled(enabled);
+}
+
 void ChartWindow::copy()
 {
 #if QT_CONFIG(clipboard)

@@ -1461,6 +1461,7 @@ void LammpsGui::run_done()
             }
         }
         chartwindow->reset_zoom();
+        chartwindow->setRangeEnabled(true);
     }
 
     bool success = true;
@@ -1626,6 +1627,7 @@ void LammpsGui::do_run(bool use_buffer)
     if (unitptr) chartwindow->set_units(QString("%1").arg(unitptr));
     auto normflag = lammps.extract_setting("thermo_norm");
     chartwindow->set_norm(normflag != 0);
+    chartwindow->setRangeEnabled(false);
 
     shortcut = new QShortcut(QKeySequence(Qt::CTRL | Qt::Key_W), chartwindow);
     connect(shortcut, &QShortcut::activated, chartwindow, &ChartWindow::close);
@@ -1658,7 +1660,7 @@ void LammpsGui::render_image()
             // add a run 0 and thus create the state of the initial system without running.
             // this will allow us to create a snapshot image.
             auto saved = ui->textEdit->textCursor();
-            ui->textEdit->moveCustor(QTextCursor::Start);
+            ui->textEdit->moveCursor(QTextCursor::Start);
             if (ui->textEdit->find(
                     QRegularExpression(QStringLiteral(R"(^\s*(run|minimize)\s+)")))) {
                 auto cursor = ui->textEdit->textCursor();
