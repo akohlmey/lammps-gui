@@ -320,9 +320,10 @@ the Qt installation that contains the file ``Qt6Config.cmake``.
 Since the QtCharts module of the Qt library has been deprecated with Qt
 version 6.10, LAMMPS-GUI includes an alternate implementation of the
 charts display based on the QtGraphs module.  This alternate version is
-enabled by default when compiling LAMMPS-GUI for Qt 6.10 and later.
-Setting ``-D LAMMPS_GUI_USE_QTCHARTS=yes`` will enforce using the
-QtCharts based chart display.
+*only* enabled by default when compiling LAMMPS-GUI for Qt 6.10 and later
+*and* when the QtCharts module is not available.  Setting
+``-D LAMMPS_GUI_USE_QTCHARTS=no`` will enforce using the QtGraphs based
+chart display.
 
 .. versionchanged:: 2.0.0
 

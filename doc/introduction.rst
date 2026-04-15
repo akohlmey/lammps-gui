@@ -156,7 +156,8 @@ Visualization Components
   the QtGraphs module (:cpp:class:`QtGraphsBackend`) and the QtCharts
   module (:cpp:class:`QtChartsBackend`).  See :cpp:class:`ChartViewer`.
   Using the QtCharts module can be enforced by setting
-  ``-D LAMMPS_GUI_USE_QTCHARTS=yes``.
+  ``-D LAMMPS_GUI_USE_QTCHARTS=yes`` while using QtGraphs will be used
+  with ``-D LAMMPS_GUI_USE_QTCHARTS=no``.
 
 **ChartBackend (chartbackend.h)** Abstract interface for chart rendering
   backends.  Provides a common API for axis management, series display,

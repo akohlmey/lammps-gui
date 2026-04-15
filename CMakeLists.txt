@@ -12,7 +12,7 @@ include(GNUInstallDirs)
 # prefer compiling plugin version only if standalone compile
 option(LAMMPS_GUI_USE_PLUGIN "Load LAMMPS library dynamically at runtime" ON)
 # prefer QtCharts even if deprecated
-option(LAMMPS_GUI_USE_QTCHARTS "Prefer using QtCharts over QtGraphs" OFF)
+option(LAMMPS_GUI_USE_QTCHARTS "Prefer using QtCharts over QtGraphs" ON)
 # build html documentation by default
 option(BUILD_DOC "Build LAMMPS-GUI HTML documentation" ON)
 ##################################################################################
@@ -79,10 +79,20 @@ if (NOT BUILD_DOC_ONLY)
     endif()
   endif()
   if (NOT LAMMPS_GUI_USE_QTGRAPHS)
-    find_package(Qt6 6.2 REQUIRED COMPONENTS Gui Widgets Network Charts)
+    find_package(Qt6 6.2 QUIET COMPONENTS Gui Widgets Network Charts)
+    if(NOT Qt6_FOUND)
+       message("Did not find QtCharts library. Falling back to QtGraphs")
+       find_package(Qt6 6.10 REQUIRED COMPONENTS Gui Widgets Network Graphs Quick QuickWidgets)
+       if (Qt6_FOUND)
+         set(LAMMPS_GUI_USE_QTGRAPHS ON)
+       endif()
+    endif()
   endif()
-  message(STATUS "Using Qt version ${Qt6_VERSION} for LAMMPS-GUI")
-
+  if(LAMMPS_GUI_USE_QTGRAPHS)
+    message(STATUS "Using Qt version ${Qt6_VERSION} with QtGraphs for LAMMPS-GUI")
+  else()
+    message(STATUS "Using Qt version ${Qt6_VERSION} with QtCharts for LAMMPS-GUI")
+  endif()
   set(PROJECT_SOURCES
     ${CMAKE_SOURCE_DIR}/src/main.cpp
     ${CMAKE_SOURCE_DIR}/src/lammpsgui.cpp
