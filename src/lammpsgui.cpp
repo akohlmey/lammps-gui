@@ -1703,6 +1703,7 @@ void LammpsGui::runDone()
             }
         }
         chartwindow->resetZoom();
+        chartwindow->setRangeEnabled(true);
     }
 
     bool success = true;
@@ -1850,6 +1851,7 @@ void LammpsGui::doRun(bool use_buffer)
     if (unitptr) chartwindow->setUnits(QString("%1").arg(unitptr));
     auto normflag = lammps.extractSetting("thermo_norm");
     chartwindow->setNorm(normflag != 0);
+    chartwindow->setRangeEnabled(false);
 
     if (settings.value("viewchart", true).toBool())
         chartwindow->show();
