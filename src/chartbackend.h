@@ -113,16 +113,6 @@ public:
      * @param ylabel New Y-axis label text
      */
     virtual void setYLabel(const QString &ylabel) = 0;
-
-    /**
-     * @brief Refresh the series display by removing and re-adding all series
-     *
-     * This is a no-op for QtCharts, which handles axis range changes
-     * automatically. The QtGraphs backend overrides this to clear the
-     * stale full-range rendering and create a fresh one for the current
-     * axis range after a range slider update.
-     */
-    virtual void refreshSeries() {}
 };
 
 #endif

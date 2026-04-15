@@ -372,12 +372,11 @@ void ChartWindow::updateXRange(int low, int high)
 {
     for (auto &c : charts) {
         if (c->isVisible()) {
-            auto axes   = c->getAxes();
             auto ranges = c->getMinMax();
             double xmin = ranges.left() + (double)low * SLIDER_FRACTION * ranges.width();
             double xmax = ranges.left() + (double)high * SLIDER_FRACTION * ranges.width();
-            axes[0]->setRange(xmin, xmax);
-            c->refreshView();
+            c->applyXRange(xmin, xmax);
+            c->setRangeLocked(low != 0 || high != SLIDER_RANGE);
         }
     }
 }
@@ -386,12 +385,11 @@ void ChartWindow::updateYRange(int low, int high)
 {
     for (auto &c : charts) {
         if (c->isVisible()) {
-            auto axes   = c->getAxes();
             auto ranges = c->getMinMax();
             double ymin = ranges.bottom() - (double)low * SLIDER_FRACTION * ranges.height();
             double ymax = ranges.bottom() - (double)high * SLIDER_FRACTION * ranges.height();
-            axes[1]->setRange(ymin, ymax);
-            c->refreshView();
+            c->applyYRange(ymin, ymax);
+            c->setRangeLocked(low != 0 || high != SLIDER_RANGE);
         }
     }
 }
@@ -514,6 +512,8 @@ void ChartWindow::changeChart(int)
     int choice = columns->currentData().toInt();
     for (auto &c : charts) {
         if (choice == c->getIndex()) {
+            c->setRangeLocked(false);
+            c->resetZoom();
             c->show();
             chartTitle->setText(c->getTLabel());
             chartYlabel->setText(c->getYLabel());
@@ -563,7 +563,7 @@ bool ChartWindow::eventFilter(QObject *watched, QEvent *event)
 
 ChartViewer::ChartViewer(const QString &title, int _index, QWidget *parent) :
     QWidget(parent), lastStep(-1), index(_index), window(10), order(4), series(new QLineSeries),
-    smooth(nullptr), doRaw(true), doSmooth(false)
+    smooth(nullptr), doRaw(true), doSmooth(false), lockRange(false)
 {
 #ifdef LAMMPS_GUI_USE_QTGRAPHS
     backend = std::make_unique<QtGraphsBackend>();
@@ -609,7 +609,8 @@ void ChartViewer::addData(int step, double data)
         if (lastUpdate.msecsTo(QTime::currentTime()) > settings.value("updchart", "500").toInt()) {
             lastUpdate = QTime::currentTime();
             updateSmooth();
-            resetZoom();
+            // skip resetZoom() when the user has constrained the range via sliders
+            if (!lockRange) resetZoom();
         }
     }
 }
@@ -751,9 +752,23 @@ void ChartViewer::setYLabel(const QString &ylabel)
 
 /* -------------------------------------------------------------------- */
 
-void ChartViewer::refreshView()
+void ChartViewer::applyXRange(double xmin, double xmax)
 {
-    backend->refreshSeries();
+    backend->resetZoom(xmin, xmax, backend->yAxis()->min(), backend->yAxis()->max());
+}
+
+/* -------------------------------------------------------------------- */
+
+void ChartViewer::applyYRange(double ymin, double ymax)
+{
+    backend->resetZoom(backend->xAxis()->min(), backend->xAxis()->max(), ymin, ymax);
+}
+
+/* -------------------------------------------------------------------- */
+
+void ChartViewer::setRangeLocked(bool locked)
+{
+    lockRange = locked;
 }
 
 // local implementation of Savitzky-Golay filter

@@ -299,14 +299,35 @@ public:
     void setYLabel(const QString &ylabel);
 
     /**
-     * @brief Refresh the series display after an axis range change
+     * @brief Apply a restricted X-axis range, updating tick intervals properly
      *
-     * For the QtGraphs backend this removes and re-adds all series so that
-     * the QML GraphsView creates a fresh rendering for the current axis range,
-     * discarding any stale full-range rendering left over from a previous state.
-     * For the QtCharts backend this is a no-op.
+     * Calls the backend's resetZoom with the new X range and the current Y range.
+     * Using resetZoom (rather than a bare setRange) ensures that QtGraphs also
+     * updates its tick intervals, which forces a clean re-render without leaving
+     * stale full-range artifacts in the scene.
+     * @param xmin New minimum X value
+     * @param xmax New maximum X value
      */
-    void refreshView();
+    void applyXRange(double xmin, double xmax);
+
+    /**
+     * @brief Apply a restricted Y-axis range, updating tick intervals properly
+     *
+     * Calls the backend's resetZoom with the current X range and the new Y range.
+     * @param ymin New minimum Y value
+     * @param ymax New maximum Y value
+     */
+    void applyYRange(double ymin, double ymax);
+
+    /**
+     * @brief Lock or unlock the axis range
+     *
+     * When locked, addData() skips the periodic resetZoom() call so that
+     * a user-selected range constraint set via range sliders is preserved
+     * even as new data arrives during a running simulation.
+     * @param locked true to lock the range, false to allow auto-scaling
+     */
+    void setRangeLocked(bool locked);
 
     /**
      * @brief Get current chart title
@@ -333,6 +354,7 @@ private:
     QLineSeries *series, *smooth;          ///< Raw and smoothed data series
     QTime lastUpdate;                      ///< Time of last chart update
     bool doRaw, doSmooth;                  ///< Flags for showing raw/smoothed data
+    bool lockRange;                        ///< When true, addData() skips resetZoom()
 };
 #endif
 
