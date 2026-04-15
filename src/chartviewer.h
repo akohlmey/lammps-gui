@@ -299,6 +299,16 @@ public:
     void setYLabel(const QString &ylabel);
 
     /**
+     * @brief Refresh the series display after an axis range change
+     *
+     * For the QtGraphs backend this removes and re-adds all series so that
+     * the QML GraphsView creates a fresh rendering for the current axis range,
+     * discarding any stale full-range rendering left over from a previous state.
+     * For the QtCharts backend this is a no-op.
+     */
+    void refreshView();
+
+    /**
      * @brief Get current chart title
      * @return Chart title
      */

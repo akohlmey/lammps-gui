@@ -44,11 +44,21 @@ public:
     void addSeries(QLineSeries *s, const QColor &color, qreal width) override;
     void removeSeries(QLineSeries *s) override;
     bool hasSeries(QLineSeries *s) const override;
+    void refreshSeries() override;
     void setTLabel(const QString &tlabel) override;
     QString getTLabel() const override;
     void setYLabel(const QString &ylabel) override;
 
 private:
+    /**
+     * @brief Stores a series together with its display style for refresh
+     */
+    struct SeriesRecord {
+        QLineSeries *series = nullptr; ///< The series pointer
+        QColor color;                  ///< Line color
+        qreal width = 0.0;             ///< Line width
+    };
+
     QWidget *container;          ///< Container widget holding the layout
     QQuickWidget *quickWidget;   ///< Widget hosting the QGraphsView QML item
     QQuickItem *graphsView;      ///< Root QGraphsView QML item
@@ -57,6 +67,7 @@ private:
     QLabel *titleWidget;         ///< Chart title label (with spacing)
     QValueAxis *xaxis;           ///< X-axis (time/step)
     QValueAxis *yaxis;           ///< Y-axis (property value)
+    QList<SeriesRecord> trackedSeries; ///< Tracks all added series for refresh
 };
 
 #endif

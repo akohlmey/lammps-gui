@@ -192,20 +192,37 @@ void QtGraphsBackend::addSeries(QLineSeries *s, const QColor &color, qreal width
     s->setWidth(width);
     s->setCapStyle(Qt::RoundCap);
     if (graphsView) QMetaObject::invokeMethod(graphsView, "addSeries", Q_ARG(QObject *, s));
+    trackedSeries.append({s, color, width});
 }
 
 void QtGraphsBackend::removeSeries(QLineSeries *s)
 {
     if (graphsView) QMetaObject::invokeMethod(graphsView, "removeSeries", Q_ARG(QObject *, s));
+    trackedSeries.removeIf([s](const SeriesRecord &r) { return r.series == s; });
 }
 
 bool QtGraphsBackend::hasSeries(QLineSeries *s) const
 {
-    bool result = false;
-    if (graphsView)
-        QMetaObject::invokeMethod(graphsView, "hasSeries", Q_RETURN_ARG(bool, result),
-                                  Q_ARG(QObject *, s));
-    return result;
+    for (const auto &r : trackedSeries)
+        if (r.series == s) return true;
+    return false;
+}
+
+void QtGraphsBackend::refreshSeries()
+{
+    if (!graphsView) return;
+    // snapshot the tracked list so we can iterate safely
+    const auto snapshot = trackedSeries;
+    // remove all series from the GraphsView to clear stale renderings
+    for (const auto &r : snapshot)
+        QMetaObject::invokeMethod(graphsView, "removeSeries", Q_ARG(QObject *, r.series));
+    // re-add all series so the GraphsView renders them for the current axis range
+    for (const auto &r : snapshot) {
+        r.series->setColor(r.color);
+        r.series->setWidth(r.width);
+        r.series->setCapStyle(Qt::RoundCap);
+        QMetaObject::invokeMethod(graphsView, "addSeries", Q_ARG(QObject *, r.series));
+    }
 }
 
 void QtGraphsBackend::setTLabel(const QString &tlabel)

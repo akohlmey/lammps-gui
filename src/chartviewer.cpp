@@ -377,6 +377,7 @@ void ChartWindow::updateXRange(int low, int high)
             double xmin = ranges.left() + (double)low * SLIDER_FRACTION * ranges.width();
             double xmax = ranges.left() + (double)high * SLIDER_FRACTION * ranges.width();
             axes[0]->setRange(xmin, xmax);
+            c->refreshView();
         }
     }
 }
@@ -390,6 +391,7 @@ void ChartWindow::updateYRange(int low, int high)
             double ymin = ranges.bottom() - (double)low * SLIDER_FRACTION * ranges.height();
             double ymax = ranges.bottom() - (double)high * SLIDER_FRACTION * ranges.height();
             axes[1]->setRange(ymin, ymax);
+            c->refreshView();
         }
     }
 }
@@ -745,6 +747,13 @@ void ChartViewer::setTLabel(const QString &tlabel)
 void ChartViewer::setYLabel(const QString &ylabel)
 {
     backend->setYLabel(ylabel);
+}
+
+/* -------------------------------------------------------------------- */
+
+void ChartViewer::refreshView()
+{
+    backend->refreshSeries();
 }
 
 // local implementation of Savitzky-Golay filter
