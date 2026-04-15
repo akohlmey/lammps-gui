@@ -298,6 +298,9 @@ void ChartWindow::setRangeEnabled(bool enabled)
 {
     xrange->setEnabled(enabled);
     yrange->setEnabled(enabled);
+    smooth->setEnabled(enabled);
+    window->setEnabled(enabled && doSmooth);
+    order->setEnabled(enabled && doSmooth);
 }
 
 void ChartWindow::copy()
