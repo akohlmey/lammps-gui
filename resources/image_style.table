@@ -5,6 +5,7 @@ fix wall/body/polyhedron
 fix surface/global
 fix wall/gran
 fix graphics/arrows
+fix graphics/chunk
 fix graphics/isosurface
 fix graphics/labels
 fix graphics/lines
