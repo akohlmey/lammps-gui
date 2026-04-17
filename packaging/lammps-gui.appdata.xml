@@ -59,8 +59,6 @@
         eliminate getMainWindow() function by passing pointer to main widget
         expand list of shared library locations to search for Ubuntu/Debian and include config dir
         update list of test status badges in README and on homepage langing page
-        use QtCharts based GraphViewer window, even for Qt 6.10+ for as long as it can be found
-        disable access to plot range sliders and plot style while simulation is running
       </description>
     </release>
     <release version="2.0.1" timestamp="1776031328">
