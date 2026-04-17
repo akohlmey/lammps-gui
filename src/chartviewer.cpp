@@ -599,8 +599,11 @@ ChartViewer::ChartViewer(const QString &title, int _index, QWidget *parent) :
 
 ChartViewer::~ChartViewer()
 {
-    delete smooth;
-    delete series;
+    // series and smooth are owned by the chart backend (QChart or GraphsView)
+    // and will be cleaned up when the backend widget is destroyed as a child
+    // of this widget. Do not delete them manually to avoid double-free crashes,
+    // particularly with the QtGraphs backend where removeSeries() and widget
+    // destruction both delete attached series objects.
 }
 
 /* -------------------------------------------------------------------- */
@@ -675,7 +678,7 @@ QRectF ChartViewer::getMinMax() const
     }
 
     // if plotting the smoothed plot, check for its min/max values, too
-    if (smooth) {
+    if (doSmooth && smooth) {
         auto spoints = smooth->points();
         for (auto &p : spoints) {
             xmin = qMin(xmin, p.x());
@@ -723,17 +726,13 @@ void ChartViewer::resetZoom()
 
 void ChartViewer::smoothParam(bool _doRaw, bool _doSmooth, int _window, int _order)
 {
-    // turn off raw plot
-    if (!_doRaw) {
-        if (doRaw) backend->removeSeries(series);
+    // hide raw plot (keep the series alive; data is still needed for smoothing)
+    if (!_doRaw && series) {
+        series->setVisible(false);
     }
-    // turn off smooth plot
-    if (!_doSmooth) {
-        if (smooth) {
-            backend->removeSeries(smooth);
-            delete smooth;
-            smooth = nullptr;
-        }
+    // hide smooth plot (keep the series alive for quick re-enable)
+    if (!_doSmooth && smooth) {
+        smooth->setVisible(false);
     }
     doRaw    = _doRaw;
     doSmooth = _doSmooth;
@@ -1179,6 +1178,7 @@ void ChartViewer::updateSmooth()
     if (doRaw) {
         // add raw data if not in chart
         if (!backend->hasSeries(series)) backend->addSeries(series, mybrushes[rawidx].color(), 3.0);
+        series->setVisible(true);
     }
 
     if (doSmooth) {
@@ -1187,6 +1187,7 @@ void ChartViewer::updateSmooth()
                 smooth = new QLineSeries;
                 backend->addSeries(smooth, mybrushes[smoothidx].color(), 3.0);
             }
+            smooth->setVisible(true);
             smooth->replace(calc_sgsmooth(series->points(), window, order));
         }
     }
