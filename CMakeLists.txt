@@ -81,7 +81,11 @@ if (NOT BUILD_DOC_ONLY)
   if (NOT LAMMPS_GUI_USE_QTGRAPHS)
     find_package(Qt6 6.2 REQUIRED COMPONENTS Gui Widgets Network Charts)
   endif()
-  message(STATUS "Using Qt version ${Qt6_VERSION} for LAMMPS-GUI")
+  if(LAMMPS_GUI_USE_QTGRAPHS)
+    message(STATUS "Using Qt version ${Qt6_VERSION} with QtGraphs for LAMMPS-GUI")
+  else()
+    message(STATUS "Using Qt version ${Qt6_VERSION} with QtCharts for LAMMPS-GUI")
+  endif()
 
   set(PROJECT_SOURCES
     ${CMAKE_SOURCE_DIR}/src/main.cpp
