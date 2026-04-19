@@ -2586,13 +2586,19 @@ void ImageViewer::createImage()
                     case FRAME:
                         dumpcmd += " region " + id + blank + color;
                         dumpcmd += " frame " + QString::number(reg.second->diameter);
+                        if (lammps->version() > 20260330)
+                            dumpcmd += " hull_points " + QString::number(reg.second->npoints);
                         break;
                     case FILLED:
                         dumpcmd += " region " + id + blank + color + " filled";
+                        if (lammps->version() > 20260330)
+                            dumpcmd += " hull_points " + QString::number(reg.second->npoints);
                         break;
                     case TRANSPARENT:
                         dumpcmd += " region " + id + blank + color;
                         dumpcmd += " transparent " + QString::number(reg.second->opacity);
+                        if (lammps->version() > 20260330)
+                            dumpcmd += " hull_points " + QString::number(reg.second->npoints);
                         break;
                     case POINTS:
                     default:
