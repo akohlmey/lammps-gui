@@ -116,7 +116,7 @@
 ### Test Infrastructure (`test/`)
 - **Framework**: GoogleTest v1.17.0 (auto-fetched via CMake FetchContent)
 - **CMakeLists.txt**: Test configuration and executable definitions
-- **test_helpers.cpp**: Unit tests for utility functions (38 test cases)
+- **test_helpers.cpp**: Unit tests for utility functions (38 test cases; `mystrdup` was removed from production code so its tests are gone)
 - **test_flagwarnings.cpp**: Unit tests for FlagWarnings syntax highlighter (7 test cases)
 - **test_stdcapture.cpp**: Unit tests for StdCapture output capture (11 test cases)
 - **test_shooter.py, test_xvfbsize.py, test_gui_edit.py**: Python-based GUI tests using PyAutoGUI and Xvfb
@@ -392,7 +392,7 @@ The project includes a test suite using GoogleTest:
 - **Test Directory**: `test/` contains test files and CMakeLists.txt
 - **Test Framework**: GoogleTest v1.17.0 (fetched automatically via CMake)
 - **Current Coverage**:
-  - 38 test cases in `test_helpers.cpp` covering:
+  - 38 test cases in `test_helpers.cpp` covering (note: `mystrdup` helper was removed from production code and its tests were removed accordingly):
     - Date comparison (`dateCompare`)
     - Line splitting with quote handling (`splitLine`)
     - Executable detection (`hasExe`)
@@ -440,7 +440,7 @@ When making changes:
 1. **Never use `git push` or `gh` commands directly** - Use `report_progress` tool to commit/push
 2. **Always use absolute paths** starting with `/home/runner/work/lammps-gui/lammps-gui/`
 3. **Document build must complete in <300s** - It's a real constraint (virtualenv setup takes time)
-4. **Plugin mode works on all platforms** - Including Windows (MSVC and MinGW cross-compile)
+4. **Plugin mode works on all platforms** - Including Windows (MSVC and MinGW cross-compile); the earlier restriction was removed in version 2.0.x
 5. **C++17 minimum** - Can use C++23 for Qt6 builds, but C++17 for LAMMPS compatibility
 6. **Work around deprecated Qt features** - If an API is deprecated in a recent version of Qt, implement a version check and use the deprecated feature only with older versions of Qt and the new API where available
 7. **Always update documentation** - When adding new features, always update the user's guide, programmer's guide, and API reference (see Documentation Requirements above)
