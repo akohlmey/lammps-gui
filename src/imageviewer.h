@@ -12,9 +12,11 @@
 #ifndef IMAGEVIEWER_H
 #define IMAGEVIEWER_H
 
+#include <QColor>
 #include <QComboBox>
 #include <QDialog>
 #include <QImage>
+#include <QList>
 #include <QMap>
 #include <QString>
 #include <QStringList>
@@ -99,6 +101,8 @@ private slots:
     void regionSettings();    ///< Configure region display
     void colorSettings();     ///< Customize colors
     void resetColors();       ///< Restore original color list
+    void loadColors();        ///< Load color list from JSON file
+    void saveColors();        ///< Save color list to JSON file
     void changeGroup(int);    ///< Change atom group selection
     void changeMolecule(int); ///< Change molecule selection
 
@@ -204,6 +208,7 @@ private:
     std::map<std::string, ImageInfo *> computes; ///< Compute graphics settings
     std::map<std::string, ImageInfo *> fixes;    ///< Fix graphics settings
     std::map<std::string, RegionInfo *> regions; ///< Region settings
+    QList<QColor> color_list;                    ///< Per-type atom colors (not stored persistently)
     bool shutdown;                               ///< flag if class has entered the destructor
 };
 #endif
