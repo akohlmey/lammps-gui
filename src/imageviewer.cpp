@@ -2422,8 +2422,7 @@ void ImageViewer::colorSettings()
                                          + EXTRA_WIDTH);
         int maxWidth  = std::min(desiredWidth, screenSize.width() * 3 / 4);
         int maxHeight = std::min(desiredHeight, screenSize.height() * 9 / 10);
-        colorview.setMinimumSize(std::min(MINIMUM_WIDTH, maxWidth),
-                                 std::min(MINIMUM_HEIGHT, maxHeight));
+        colorview.setMinimumSize(MINIMUM_WIDTH, MINIMUM_HEIGHT);
         colorview.resize(maxWidth, maxHeight);
     } else {
         colorview.setMinimumSize(MINIMUM_WIDTH, MINIMUM_HEIGHT);
