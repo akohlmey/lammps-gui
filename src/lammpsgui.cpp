@@ -696,6 +696,9 @@ LammpsGui::LammpsGui(QWidget *parent, const QString &filename, int width, int he
 #endif
     docver = "";
 
+    // minimize window so we don't see it while it is being constructed and configured
+    showMinimized();
+
     // restore and initialize settings
     QSettings settings;
 
@@ -850,6 +853,9 @@ LammpsGui::LammpsGui(QWidget *parent, const QString &filename, int width, int he
     auto https_proxy = QString::fromLocal8Bit(qgetenv("https_proxy"));
     if (https_proxy.isEmpty()) https_proxy = settings.value("https_proxy", "").toString();
     if (!https_proxy.isEmpty()) lammps.command(QString("shell putenv https_proxy=") + https_proxy);
+
+    // finally show the window
+    showNormal();
 }
 
 LammpsGui::~LammpsGui()
