@@ -2420,11 +2420,13 @@ void ImageViewer::colorSettings()
 
             item = layout->itemAtPosition(i + colorstart, 3);
             rgb  = item ? dynamic_cast<QLineEdit *>(item->widget()) : nullptr;
-            if (rgb && rgb->hasAcceptableInput()) settings.setValue(greenkey, rgb->text().toDouble());
+            if (rgb && rgb->hasAcceptableInput())
+                settings.setValue(greenkey, rgb->text().toDouble());
 
             item = layout->itemAtPosition(i + colorstart, 4);
             rgb  = item ? dynamic_cast<QLineEdit *>(item->widget()) : nullptr;
-            if (rgb && rgb->hasAcceptableInput()) settings.setValue(bluekey, rgb->text().toDouble());
+            if (rgb && rgb->hasAcceptableInput())
+                settings.setValue(bluekey, rgb->text().toDouble());
         }
         settings.setValue("numcolors", std::max(numcolors, numtypes));
         settings.endGroup();
@@ -2432,30 +2434,27 @@ void ImageViewer::colorSettings()
     createImage();
 }
 
+// our custom list of default colors for per-type colors
+constexpr double DEFAULT_RGB[][3] = {
+    {0.9, 0.0, 0.0}, {0.0, 0.9, 0.0}, {0.0, 0.0, 0.9}, {0.9, 0.9, 0.0}, {0.0, 0.9, 0.9},
+    {0.9, 0.0, 0.9}, {0.9, 0.5, 0.0}, {0.9, 0.0, 0.5}, {0.0, 0.9, 0.5}, {0.5, 0.9, 0.0},
+    {0.0, 0.5, 0.9}, {0.5, 0.0, 0.9}, {0.5, 0.0, 0.0}, {0.0, 0.5, 0.0}, {0.0, 0.0, 0.5},
+    {0.5, 0.5, 0.0}, {0.0, 0.5, 0.5}, {0.5, 0.0, 0.5}, {0.9, 0.9, 0.9}, {0.5, 0.5, 0.5},
+    {0.2, 0.2, 0.2}};
+
 void ImageViewer::resetColors()
 {
     QSettings settings;
     settings.beginGroup("colors");
     settings.remove(""); // clear all settings in this group
-    settings.setValue("numcolors", 6);
-    settings.setValue("red1", 1.0);
-    settings.setValue("green1", 0.0);
-    settings.setValue("blue1", 0.0);
-    settings.setValue("red2", 0.0);
-    settings.setValue("green2", 1.0);
-    settings.setValue("blue2", 0.0);
-    settings.setValue("red3", 0.0);
-    settings.setValue("green3", 0.0);
-    settings.setValue("blue3", 1.0);
-    settings.setValue("red4", 1.0);
-    settings.setValue("green4", 1.0);
-    settings.setValue("blue4", 0.0);
-    settings.setValue("red5", 0.0);
-    settings.setValue("green5", 1.0);
-    settings.setValue("blue5", 1.0);
-    settings.setValue("red6", 1.0);
-    settings.setValue("green6", 0.0);
-    settings.setValue("blue6", 1.0);
+    int i = 0;
+    for (const auto &rgb : DEFAULT_RGB) {
+        ++i;
+        settings.setValue(QString("red%1").arg(i), rgb[0]);
+        settings.setValue(QString("green%1").arg(i), rgb[1]);
+        settings.setValue(QString("blue%1").arg(i), rgb[2]);
+    }
+    settings.setValue("numcolors", i);
     settings.endGroup();
 }
 
