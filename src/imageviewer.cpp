@@ -2306,22 +2306,27 @@ void ImageViewer::colorSettings()
     QDialog colorview;
     colorview.setWindowTitle(QString("LAMMPS-GUI - Atom Type Colors"));
     colorview.setWindowIcon(QIcon(":/icons/lammps-gui-icon-128x128.png"));
-    colorview.setMinimumSize(MINIMUM_WIDTH, MINIMUM_HEIGHT);
     colorview.setContentsMargins(CONTENT_MARGIN, CONTENT_MARGIN, CONTENT_MARGIN, CONTENT_MARGIN);
     QFontMetrics metrics(colorview.fontMetrics());
 
-    int idx     = 0;
-    int n       = 0;
-    auto *title = new QLabel("Cutomize colors:");
+    // Main outer layout for the dialog (title + scroll area + buttons)
+    auto *mainLayout = new QVBoxLayout(&colorview);
+    mainLayout->setSpacing(LAYOUT_SPACING);
+
+    // Fixed title outside the scroll area
+    auto *title = new QLabel("Customize colors:");
     title->setFrameStyle(QFrame::Panel | QFrame::Raised);
     title->setLineWidth(1);
     title->setMargin(TITLE_MARGIN);
-    constexpr int MAXCOLS = 5;
-    auto *layout          = new QGridLayout;
-    layout->setSizeConstraint(QLayout::SetMinAndMaxSize);
+    mainLayout->addWidget(title, 0, Qt::AlignHCenter);
+    mainLayout->addWidget(new QHline);
 
-    layout->addWidget(title, idx++, 0, 1, MAXCOLS, Qt::AlignHCenter);
-    layout->addWidget(new QHline, idx++, 0, 1, MAXCOLS);
+    // Scrollable area: column headers + color-editing rows
+    int idx           = 0;
+    int n             = 0;
+    constexpr int MAXCOLS = 5;
+    auto *layout      = new QGridLayout;
+    layout->setSizeConstraint(QLayout::SetMinAndMaxSize);
 
     layout->addWidget(new QLabel("Type:"), idx, n++, Qt::AlignHCenter);
     layout->addWidget(new QLabel(""), idx, n++, Qt::AlignHCenter);
@@ -2333,7 +2338,7 @@ void ImageViewer::colorSettings()
     for (int i = 2; i < MAXCOLS; ++i)
         layout->setColumnStretch(i, 1);
 
-    auto *rgbvalidator = new QDoubleValidator(0.0, 1.0, 3, this);
+    auto *rgbvalidator = new QDoubleValidator(0.0, 1.0, 3, &colorview);
     int colorstart     = idx - 1;
 
     for (int i = 0; i < numtypes; ++i) {
@@ -2373,9 +2378,15 @@ void ImageViewer::colorSettings()
     }
     settings.endGroup();
 
-    n = 0;
-    layout->addWidget(new QHline, idx++, 0, 1, MAXCOLS);
+    auto *scrollWidget = new QWidget;
+    scrollWidget->setLayout(layout);
+    auto *scrollArea = new QScrollArea;
+    scrollArea->setWidget(scrollWidget);
+    scrollArea->setWidgetResizable(true);
+    mainLayout->addWidget(scrollArea, 1);
 
+    // Fixed buttons outside the scroll area
+    mainLayout->addWidget(new QHline);
     auto *bottomlayout = new QHBoxLayout;
     bottomlayout->setSpacing(LAYOUT_SPACING);
     auto *cancel = new QPushButton(QIcon(":/icons/dialog-cancel.png"), "&Cancel");
@@ -2393,12 +2404,30 @@ void ImageViewer::colorSettings()
     connect(reset, &QPushButton::released, this, [mydialog]() {
         mydialog->done(RESET_ALL_COLORS);
     });
-
     bottomlayout->addWidget(cancel, Qt::AlignHCenter);
     bottomlayout->addWidget(apply, Qt::AlignHCenter);
     bottomlayout->addWidget(reset, Qt::AlignHCenter);
-    layout->addLayout(bottomlayout, idx, 0, 1, MAXCOLS, Qt::AlignHCenter);
-    colorview.setLayout(layout);
+    mainLayout->addLayout(bottomlayout);
+
+    // Size the dialog relative to screen dimensions (same approach as AboutDialog)
+    auto *screen = QGuiApplication::primaryScreen();
+    if (screen) {
+        auto screenSize = screen->availableSize();
+        int rowHeight   = metrics.height() + 8;
+        // Estimate total desired height: fixed overhead + one row per atom type
+        int desiredHeight = rowHeight * (numtypes + 5) + 4 * LAYOUT_SPACING + 4 * CONTENT_MARGIN;
+        int desiredWidth  = std::max(MINIMUM_WIDTH,
+                                     metrics.averageCharWidth() * 8 * 3
+                                         + scrollArea->verticalScrollBar()->sizeHint().width()
+                                         + EXTRA_WIDTH);
+        int maxWidth  = std::min(desiredWidth, screenSize.width() * 3 / 4);
+        int maxHeight = std::min(desiredHeight, screenSize.height() * 9 / 10);
+        colorview.setMinimumSize(std::min(MINIMUM_WIDTH, maxWidth),
+                                 std::min(MINIMUM_HEIGHT, maxHeight));
+        colorview.resize(maxWidth, maxHeight);
+    } else {
+        colorview.setMinimumSize(MINIMUM_WIDTH, MINIMUM_HEIGHT);
+    }
 
     int cv = colorview.exec();
 
