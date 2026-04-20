@@ -9,6 +9,7 @@
 // This software is distributed under the GNU General Public License version 2 or later.
 ////////////////////////////////////////////////////////////////////////////////////////
 
+#include "constants.h"
 #include "helpers.h"
 #include "lammpsgui.h"
 
@@ -120,8 +121,9 @@ int main(int argc, char *argv[])
 
     Q_INIT_RESOURCE(lammpsgui);
 
-    QSplashScreen splash(
-        QPixmap(":/icons/lammps-gui-banner.png").scaledToWidth(500, Qt::SmoothTransformation));
+    QSplashScreen splash(QPixmap(":/icons/lammps-gui-banner.png")
+                             .scaledToWidth(GuiConstants::SPLASH_SCREEN_WIDTH,
+                                            Qt::SmoothTransformation));
     splash.show();
     splash.showMessage("Loading LAMMPS-GUI", Qt::AlignBottom | Qt::AlignHCenter, Qt::black);
     app.processEvents();
