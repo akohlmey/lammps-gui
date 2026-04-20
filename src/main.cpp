@@ -18,7 +18,9 @@
 #include <QFileInfo>
 #include <QFont>
 #include <QLocale>
+#include <QPixmap>
 #include <QSettings>
+#include <QSplashScreen>
 #include <QString>
 #include <QStringList>
 #include <QStyle>
@@ -117,7 +119,15 @@ int main(int argc, char *argv[])
     if (!args.empty()) infile = args[0];
 
     Q_INIT_RESOURCE(lammpsgui);
+
+    QSplashScreen splash(
+        QPixmap(":/icons/lammps-gui-banner.png").scaledToWidth(500, Qt::SmoothTransformation));
+    splash.show();
+    splash.showMessage("Loading LAMMPS-GUI", Qt::AlignBottom | Qt::AlignHCenter, Qt::black);
+    app.processEvents();
+
     LammpsGui w(nullptr, infile, width, height);
+    splash.finish(&w);
     w.show();
 
     return app.exec();
