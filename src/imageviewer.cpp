@@ -3292,7 +3292,11 @@ void ImageViewer::createActions()
     QAction *saveColorsAct =
         fileMenu->addAction("S&ave Colors to JSON...", this, &ImageViewer::saveColors);
     saveColorsAct->setIcon(QIcon(":/icons/document-save.png"));
-    QAction *resetColorsAct = fileMenu->addAction("&Reset Colors", this, &ImageViewer::resetColors);
+    QAction *resetColorsAct = fileMenu->addAction("&Reset Colors");
+    connect(resetColorsAct, &QAction::triggered, this, [this]() {
+        resetColors();
+        createImage();
+    });
     resetColorsAct->setIcon(QIcon(":/icons/system-restart.png"));
     fileMenu->addSeparator();
     QAction *exitAct = fileMenu->addAction("&Close", this, &QWidget::close);
