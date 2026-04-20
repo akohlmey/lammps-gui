@@ -2322,10 +2322,11 @@ void ImageViewer::colorSettings()
     mainLayout->addWidget(new QHline);
 
     // Scrollable area: column headers + color-editing rows
-    int idx           = 0;
-    int n             = 0;
     constexpr int MAXCOLS = 5;
-    auto *layout      = new QGridLayout;
+
+    int idx      = 0;
+    int n        = 0;
+    auto *layout = new QGridLayout;
     layout->setSizeConstraint(QLayout::SetMinAndMaxSize);
 
     layout->addWidget(new QLabel("Type:"), idx, n++, Qt::AlignHCenter);
@@ -2335,11 +2336,10 @@ void ImageViewer::colorSettings()
     layout->addWidget(new QLabel("Blue:"), idx++, n++, Qt::AlignHCenter);
     layout->addWidget(new QHline, idx++, 0, 1, MAXCOLS);
 
-    for (int i = 2; i < MAXCOLS; ++i)
-        layout->setColumnStretch(i, 1);
-
     auto *rgbvalidator = new QDoubleValidator(0.0, 1.0, 3, &colorview);
-    int colorstart     = idx - 1;
+
+    // record the row index where the colors start
+    int colorstart = idx - 1;
 
     for (int i = 0; i < numtypes; ++i) {
         int icolor    = (i % numcolors) + 1;
@@ -2350,13 +2350,21 @@ void ImageViewer::colorSettings()
         auto green    = settings.value(greenkey, 1.0).toDouble();
         auto blue     = settings.value(bluekey, 1.0).toDouble();
 
-        n = 0;
-        layout->addWidget(new QLabel(QString::number(i + 1)), idx, n++, Qt::AlignHCenter);
+        n       = 0;
+        auto *t = new QLabel(QString::number(i + 1));
+        t->setFixedSize(metrics.averageCharWidth() * 4, metrics.height() + 4);
+        t->setAlignment(Qt::AlignRight);
+        layout->addWidget(t, idx, n++, Qt::AlignHCenter);
 
         auto *icon = new QLabel("");
         icon->setPixmap(color_icon(QColor(red * 255, green * 255, blue * 255)));
         icon->setFrameStyle(QFrame::Panel | QFrame::Raised);
-        layout->addWidget(icon, idx, n++);
+
+        auto iconhint = icon->minimumSizeHint();
+        icon->setMinimumSize(iconhint);
+        icon->setMaximumSize(iconhint);
+
+        layout->addWidget(icon, idx, n++, Qt::AlignHCenter);
 
         auto *r = new QLineEdit(QString::number(red, 'f', 3));
         r->setValidator(rgbvalidator);
@@ -2415,11 +2423,11 @@ void ImageViewer::colorSettings()
         auto screenSize = screen->availableSize();
         int rowHeight   = metrics.height() + 8;
         // Estimate total desired height: fixed overhead + one row per atom type
-        int desiredHeight = rowHeight * (numtypes + 5) + 4 * LAYOUT_SPACING + 4 * CONTENT_MARGIN;
-        int desiredWidth  = std::max(MINIMUM_WIDTH,
-                                     metrics.averageCharWidth() * 8 * 3
-                                         + scrollArea->verticalScrollBar()->sizeHint().width()
-                                         + EXTRA_WIDTH);
+        int desiredHeight = rowHeight * (numtypes + 5) + 5 * (LAYOUT_SPACING + CONTENT_MARGIN);
+        desiredHeight += title->sizeHint().height() + cancel->sizeHint().height();
+        int desiredWidth = std::max(
+            MINIMUM_WIDTH, metrics.averageCharWidth() * 8 * 3 +
+                               scrollArea->verticalScrollBar()->sizeHint().width() + EXTRA_WIDTH);
         int maxWidth  = std::min(desiredWidth, screenSize.width() * 3 / 4);
         int maxHeight = std::min(desiredHeight, screenSize.height() * 9 / 10);
         colorview.setMinimumSize(MINIMUM_WIDTH, MINIMUM_HEIGHT);
