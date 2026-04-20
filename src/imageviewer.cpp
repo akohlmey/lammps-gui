@@ -2446,9 +2446,8 @@ void ImageViewer::colorSettings()
                 return;
             }
 
-            int nload = std::min((int)arr.size(), numtypes);
-            for (int i = 1; i <= nload; ++i) {
-                auto obj = arr[i - 1].toObject();
+            for (int i = 1; i <= numtypes; ++i) {
+                auto obj = arr[(i - 1) % arr.size()].toObject();
                 double r = std::clamp(obj.value("red").toDouble(1.0), 0.0, 1.0);
                 double g = std::clamp(obj.value("green").toDouble(1.0), 0.0, 1.0);
                 double b = std::clamp(obj.value("blue").toDouble(1.0), 0.0, 1.0);
