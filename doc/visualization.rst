@@ -139,10 +139,11 @@ list.  This list is maintained by LAMMPS-GUI and information from them
 is passed to LAMMPS via LAMMPS commands while creating colors named
 "type#" where '#' is the atom type number.  These color definitions can
 also be written to and loaded from JSON files.  The second is the list
-of named colors that are mainted by the *dump image* command in LAMMMPS.
-LAMMPS-GUI has the list of predefined color names and may define
-additional colors as needed, but will give them names that are specific
-to LAMMPS-GUI and not attempt to overwrite any of the predefined colors.
+of named colors that are maintained by the *dump image* command in
+LAMMMPS.  LAMMPS-GUI has the list of predefined color names and may
+define additional colors as needed, but will give them names that are
+specific to LAMMPS-GUI and not attempt to overwrite any of the
+predefined colors.
 
 -----------
 
@@ -218,8 +219,8 @@ The **menu bar row** has:
   "colors" is composed of a list of color definitions with three entries
   each: "red", "green", and "blue" that have the value of the
   corresponding color component given as a floating point number in the
-  range from 0.0 to 10.  Here is an example with just two colors (red
-  and green):
+  range from 0.0 to 1.0 inclusive.  Here is an example with just two
+  colors (red and green):
 
   .. code-block:: JSON
 
@@ -711,14 +712,14 @@ per-type coloring, reset them to the default settings, and load or save
 them using `JSON format <https://www.json.org/>`_ files.
 
 The dialog contains as many color rows as the current system has atom
-types and the it is initialized from the current list of colors.  If
-there are fewer types, then only the first part of that list is used.
-If there are more types, then the list of colors is used multiple times
-and wraps around.  When the list is too long to fit into the dialog
-window, it can be scrolled up and down as needed.
+types and it is initialized from the current list of colors.  If there
+are fewer types, then only the first part of that list is used.  If
+there are more types, then the list of colors is used multiple times and
+wraps around.  When the list is too long to fit into the dialog window,
+it can be scrolled up and down as needed.
 
 The changes are applied to the image only after the "Apply" button is
-clicked and the dialog closed.  At this step, the list of colors are
+clicked and the dialog closed.  At this step, the list of colors is
 updated with the colors in the dialog and expanded, if needed.  When the
 "Cancel" button is pressed, the edits are discarded and the original
 list of colors retained.  Clicking on the "Reset" button will reset the
