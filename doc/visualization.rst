@@ -168,6 +168,18 @@ The **menu bar row** has:
      :doc:`text editor window <editor>` or some other text editor.  This
      allows the current visualization settings to be reproduced during a
      simulation run, including in the :ref:`slide show viewer <slideshow>`.
+   - **Load Colors from JSON File...**: Load a list of definitions for
+     per-type colors from a `JSON format <https://www.json.org/>`_ file.
+     The list may contain either more or fewer definitions than the
+     current system has atom types. In the latter case the colors "wrap
+     around", that is colors are read from the list multiple times.
+   - **Save Colors to JSON File...**: Save the currently used list of
+     definitions for per-type colors to a `JSON format
+     <https://www.json.org/>`_ file.  The list may be loaded later to
+     restore a previous color assignment, since the list of colors is
+     reset when the Image Viewer dialog is restarted.
+   - **Reset Colors**: Reset the list of per-type colors to a compiled
+     in default list.
    - **Close** (`Ctrl-W`): Close the Image Viewer window.
    - **Quit** (`Ctrl-Q`): Quit the entire application.
 - The **busy indicator**, a small palette icon that is colored |palette|
@@ -183,6 +195,32 @@ The **menu bar row** has:
   accessed using the `Alt-W` keyboard shortcut.
 - The **Height** spin box, where the image height can be set.  It can
   be accessed using the `Alt-H` keyboard shortcut.
+
+.. admonition:: JSON file format for color definitions
+
+  The JSON file for the color has the following format. An object
+  "colors" is composed of a list of color definitions with three entries
+  each: "red", "green", and "blue" that have the value of the
+  corresponding color component given as a floating point number in the
+  range from 0.0 to 10.  Here is an example with just two colors (red
+  and green):
+
+  .. code-block:: JSON
+
+     {
+         "colors": [
+            {
+                "blue": 0,
+                "green": 0,
+                "red": 0.9
+            },
+            {
+                "blue": 0,
+                "green": 0.9,
+                "red": 0
+            }
+         ]
+     }
 
 The **toolbar buttons** row below the menu bar provide quick access to
 several rendering options and view manipulations.  From left to right
@@ -254,6 +292,9 @@ additional controls (most are explained in detail below):
   <fix_settings>` dialog to enable and configure extra graphics objects
   provided by `selected compute and fix styles
   <https://docs.lammps.org/Howto_viz.html#visualizing-graphics-provided-by-compute-or-fix-commands>`_.
+- **Colors**: Opens the :ref:`Atom Type Color Customization <customcolors>`
+  dialog where the current list of colors used for per-type coloring
+  can be customized and saved or loaded from a file.
 - **Help**: Opens this online documentation page for the visualization
   features in LAMMPS-GUI in a web browser.
 
@@ -636,6 +677,46 @@ bottom opens the LAMMPS `dump image
 <https://docs.lammps.org/dump_image.html>`_ documentation.
 
 ------------
+
+.. _customcolors:
+
+Atom Type Color Customization
+-----------------------------
+
+.. index:: per-type colors
+.. index:: color customization
+
+.. image:: JPG/lammps-gui-image-colors.png
+           :align: right
+           :width: 15%
+
+This dialog allows customizing the current color definitions used for
+per-type coloring, reset them to the default settings, and load or save
+them using `JSON format <https://www.json.org/>`_ files.
+
+The dialog contains as many color rows as the current system has atom
+types and the it is initialized from the current list of colors.  If
+there are fewer types, then only the first part of that list is used.
+If there are more types, then the list of colors is used multiple times
+and wraps around.  When the list is too long to fit into the dialog
+window, it can be scrolled up and down as needed.
+
+The changes are applied to the image only after the "Apply" button is
+clicked and the dialog closed.  At this step, the list of colors are
+updated with the colors in the dialog and expanded, if needed.  When the
+"Cancel" button is pressed, the edits are discarded and the original
+list of colors retained.  Clicking on the "Reset" button will reset the
+list of colors to its default values.
+
+With the "Load from JSON" button a list of definitions for per-type
+colors is loaded from a `JSON format <https://www.json.org/>`_ file.
+The list may contain either more or fewer definitions than the current
+system has atom types.  The "Save to JSON" button instead saves the
+edited list of definitions to a `JSON format <https://www.json.org/>`_
+file.  The list may be loaded later to restore a previous color
+assignment.
+
+--------------
 
 .. _slideshow:
 
