@@ -96,28 +96,12 @@ void LammpsGui::setupUi(QSettings &settings, QFont &allFont, QFont &monoFont)
     setWindowTitle("LAMMPS-GUI");
     setWindowIcon(QIcon(GuiConstants::MAIN_ICON));
 
-    // set width and height of main window
-    // use default so the background logo is fully shown
-    // use last values unless overridden from command-line
-    // do not accept a geometry smaller than minimum, revert to default instead
-    if (mainx < GuiConstants::MINIMUM_WIDTH) mainx = settings.value("mainx", 1024).toInt();
-    if (mainy < GuiConstants::MINIMUM_HEIGHT) mainy = settings.value("mainy", 512).toInt();
-    resize(mainx, mainy);
-
     // set up central widget
     textEdit = new CodeEditor(this);
     textEdit->setEnabled(true);
     textEdit->setAcceptDrops(true);
     textEdit->setStyleSheet(bannerstyle);
     textEdit->setMinimumSize(GuiConstants::MINIMUM_WIDTH, GuiConstants::MINIMUM_HEIGHT);
-    setCentralWidget(textEdit);
-
-    // document settings
-    auto *document = textEdit->document();
-    document->setPlainText(citeme);
-    document->setModified(false);
-    highlighter = new Highlighter(document);
-    connect(document, &QTextDocument::modificationChanged, this, &LammpsGui::modified);
 
     // set up menu bar and menus with their actions and shortcuts
     menubar = new QMenuBar(this);
@@ -132,10 +116,26 @@ void LammpsGui::setupUi(QSettings &settings, QFont &allFont, QFont &monoFont)
     // Status bar
     createStatusBar();
 
+    // document settings
+    auto *document = textEdit->document();
+    document->setPlainText(citeme);
+    document->setModified(false);
+    highlighter = new Highlighter(document);
+    connect(document, &QTextDocument::modificationChanged, this, &LammpsGui::modified);
+
     // apply font settings
     setFont(allFont);
     textEdit->setFont(monoFont);
     document->setDefaultFont(monoFont);
+    setCentralWidget(textEdit);
+
+    // set width and height of main window
+    // use default so the background logo is fully shown
+    // use last values unless overridden from command-line
+    // do not accept a geometry smaller than minimum, revert to default instead
+    if (mainx < GuiConstants::MINIMUM_WIDTH) mainx = settings.value("mainx", 1024).toInt();
+    if (mainy < GuiConstants::MINIMUM_HEIGHT) mainy = settings.value("mainy", 512).toInt();
+    resize(mainx, mainy);
 
     varwindow = new QLabel(QString());
     varwindow->setWindowTitle(QString("LAMMPS-GUI - Current Variables"));
@@ -689,7 +689,6 @@ LammpsGui::LammpsGui(QWidget *parent, const QString &filename, int width, int he
     varwindow(nullptr), wizard(nullptr), runner(nullptr), isRunning(false), runCounter(0),
     nthreads(1), mainx(width), mainy(height)
 {
-    hide();
 #if QT_CONFIG(clipboard)
     hasClipboard = true;
 #else
@@ -720,7 +719,6 @@ LammpsGui::LammpsGui(QWidget *parent, const QString &filename, int width, int he
 
     // create and connect GUI elements
     setupUi(settings, allFont, monoFont);
-    show();
 
     currentFile.clear();
     currentDir = QDir(".").absolutePath();
