@@ -204,6 +204,18 @@ QIcon sequence_icon(const QList<QColor> &colors)
     return QIcon(pixmap);
 }
 
+// 4) create a single color icon
+QPixmap color_icon(const QColor &color)
+{
+    // define pixmap and fill with color
+    QPixmap pixmap(ICON_SIZE / 2, ICON_SIZE / 2);
+    pixmap.fill(Qt::transparent);
+    QPainter painter(&pixmap);
+    painter.fillRect(pixmap.rect(), color);
+    painter.end();
+    return pixmap;
+}
+
 QStringList defaultcolors = {"white", "gray",  "magenta", "cyan",   "yellow",
                              "blue",  "green", "red",     "orange", "brown"};
 
@@ -226,6 +238,7 @@ constexpr int MINIMUM_WIDTH       = 400;
 constexpr int MINIMUM_HEIGHT      = 300;
 constexpr int EXTRA_WIDTH         = 150;
 constexpr int EXTRA_HEIGHT        = 100;
+constexpr int RESET_ALL_COLORS    = 10;
 
 enum { FRAME, FILLED, TRANSPARENT, POINTS };
 enum { TYPE, ELEMENT, CONSTANT };
@@ -497,6 +510,9 @@ ImageViewer::ImageViewer(const QString &fileName, LammpsWrapper *_lammps, Lammps
     regviz->setToolTip("Open dialog for visualizing regions");
     regviz->setObjectName("regions");
     regviz->setEnabled(false);
+    auto *colviz = new QPushButton("C&olors");
+    colviz->setToolTip("Open dialog for customizing colors");
+    colviz->setObjectName("colors");
     auto *help = new QPushButton("Help");
     help->setToolTip("Open online help");
     help->setObjectName("visualization.html");
@@ -584,6 +600,7 @@ ImageViewer::ImageViewer(const QString &fileName, LammpsWrapper *_lammps, Lammps
     settingsLayout->addWidget(atomviz);
     settingsLayout->addWidget(regviz);
     settingsLayout->addWidget(fixviz);
+    settingsLayout->addWidget(colviz);
     settingsLayout->addWidget(new QHline);
     settingsLayout->addWidget(help);
     settingsLayout->insertStretch(-1, 10);
@@ -610,7 +627,8 @@ ImageViewer::ImageViewer(const QString &fileName, LammpsWrapper *_lammps, Lammps
     connect(atomviz, &QPushButton::released, this, &ImageViewer::atomSettings);
     connect(fixviz, &QPushButton::released, this, &ImageViewer::fixSettings);
     connect(regviz, &QPushButton::released, this, &ImageViewer::regionSettings);
-    connect(help, &QPushButton::released, this, &ImageViewer::getHelp);
+    connect(colviz, &QPushButton::released, this, &ImageViewer::colorSettings);
+    connect(help, &QPushButton::released, this, &ImageViewer::resetColors);
     connect(combo, QOverload<int>::of(&QComboBox::currentIndexChanged), this,
             &ImageViewer::changeGroup);
     connect(molbox, QOverload<int>::of(&QComboBox::currentIndexChanged), this,
@@ -746,6 +764,11 @@ void ImageViewer::readImageSettings()
     xcenter = ycenter = zcenter = 0.5;
     if (lammps->extractSetting("dimension") == 2) zcenter = 0.0;
     settings.endGroup();
+
+    settings.beginGroup("colors");
+    int numcolors = settings.value("numcolors", 0).toInt();
+    settings.endGroup();
+    if (!numcolors) resetColors(); // create list of default colors
 }
 
 void ImageViewer::resetView()
@@ -2269,6 +2292,171 @@ void ImageViewer::regionSettings()
     createImage();
 }
 
+void ImageViewer::colorSettings()
+{
+    QSettings settings;
+    settings.beginGroup("colors");
+    int numcolors = settings.value("numcolors", 0).toInt();
+    if (!numcolors) return; // something went wrong. go back
+    int numtypes = lammps->extractSetting("ntypes");
+    if (numtypes < 1) return; // nothing to do
+
+    QDialog colorview;
+    colorview.setWindowTitle(QString("LAMMPS-GUI - Atom Type Colors"));
+    colorview.setWindowIcon(QIcon(":/icons/lammps-gui-icon-128x128.png"));
+    colorview.setMinimumSize(MINIMUM_WIDTH, MINIMUM_HEIGHT);
+    colorview.setContentsMargins(CONTENT_MARGIN, CONTENT_MARGIN, CONTENT_MARGIN, CONTENT_MARGIN);
+    QFontMetrics metrics(colorview.fontMetrics());
+
+    int idx     = 0;
+    int n       = 0;
+    auto *title = new QLabel("Cutomize colors:");
+    title->setFrameStyle(QFrame::Panel | QFrame::Raised);
+    title->setLineWidth(1);
+    title->setMargin(TITLE_MARGIN);
+    constexpr int MAXCOLS = 5;
+    auto *layout          = new QGridLayout;
+    layout->setSizeConstraint(QLayout::SetMinAndMaxSize);
+
+    layout->addWidget(title, idx++, 0, 1, MAXCOLS, Qt::AlignHCenter);
+    layout->addWidget(new QHline, idx++, 0, 1, MAXCOLS);
+
+    layout->addWidget(new QLabel("Type:"), idx, n++, Qt::AlignHCenter);
+    layout->addWidget(new QLabel(""), idx, n++, Qt::AlignHCenter);
+    layout->addWidget(new QLabel("Red:"), idx, n++, Qt::AlignHCenter);
+    layout->addWidget(new QLabel("Green:"), idx, n++, Qt::AlignHCenter);
+    layout->addWidget(new QLabel("Blue:"), idx++, n++, Qt::AlignHCenter);
+    layout->addWidget(new QHline, idx++, 0, 1, MAXCOLS);
+
+    for (int i = 2; i < MAXCOLS; ++i)
+        layout->setColumnStretch(i, 1);
+
+    auto *rgbvalidator = new QDoubleValidator(0.0, 1.0, 3, this);
+    int colorstart     = idx - 1;
+
+    for (int i = 0; i < numtypes; ++i) {
+        int icolor    = (i % numcolors) + 1;
+        auto redkey   = QString("red%1").arg(icolor);
+        auto greenkey = QString("green%1").arg(icolor);
+        auto bluekey  = QString("blue%1").arg(icolor);
+        auto red      = settings.value(redkey, 1.0).toDouble();
+        auto green    = settings.value(greenkey, 1.0).toDouble();
+        auto blue     = settings.value(bluekey, 1.0).toDouble();
+
+        n = 0;
+        layout->addWidget(new QLabel(QString::number(i + 1)), idx, n++, Qt::AlignHCenter);
+
+        auto *icon = new QLabel("");
+        icon->setPixmap(color_icon(QColor(red * 255, green * 255, blue * 255)));
+        icon->setFrameStyle(QFrame::Panel | QFrame::Raised);
+        layout->addWidget(icon, idx, n++);
+
+        auto *r = new QLineEdit(QString::number(red, 'f', 3));
+        r->setValidator(rgbvalidator);
+        r->setFixedSize(metrics.averageCharWidth() * 8, metrics.height() + 4);
+        r->setObjectName(redkey);
+        layout->addWidget(r, idx, n++);
+
+        auto *g = new QLineEdit(QString::number(green, 'f', 3));
+        g->setValidator(rgbvalidator);
+        g->setFixedSize(metrics.averageCharWidth() * 8, metrics.height() + 4);
+        g->setObjectName(greenkey);
+        layout->addWidget(g, idx, n++);
+
+        auto *b = new QLineEdit(QString::number(blue, 'f', 3));
+        b->setValidator(rgbvalidator);
+        b->setFixedSize(metrics.averageCharWidth() * 8, metrics.height() + 4);
+        b->setObjectName(bluekey);
+        layout->addWidget(b, idx++, n++);
+    }
+    settings.endGroup();
+
+    n = 0;
+    layout->addWidget(new QHline, idx++, 0, 1, MAXCOLS);
+
+    auto *bottomlayout = new QHBoxLayout;
+    bottomlayout->setSpacing(LAYOUT_SPACING);
+    auto *cancel = new QPushButton(QIcon(":/icons/dialog-cancel.png"), "&Cancel");
+    auto *apply  = new QPushButton(QIcon(":/icons/dialog-ok.png"), "&Apply");
+    auto *reset  = new QPushButton(QIcon(":/icons/system-restart.png"), "&Reset");
+    reset->setObjectName("dump_image.html");
+    cancel->setAutoDefault(false);
+    reset->setAutoDefault(false);
+    apply->setAutoDefault(true);
+    apply->setDefault(true);
+    apply->setFocus();
+    auto *mydialog = &colorview;
+    connect(cancel, &QPushButton::released, &colorview, &QDialog::reject);
+    connect(apply, &QPushButton::released, &colorview, &QDialog::accept);
+    connect(reset, &QPushButton::released, this, [mydialog]() {
+        mydialog->done(RESET_ALL_COLORS);
+    });
+
+    bottomlayout->addWidget(cancel, Qt::AlignHCenter);
+    bottomlayout->addWidget(apply, Qt::AlignHCenter);
+    bottomlayout->addWidget(reset, Qt::AlignHCenter);
+    layout->addLayout(bottomlayout, idx, 0, 1, MAXCOLS, Qt::AlignHCenter);
+    colorview.setLayout(layout);
+
+    int cv = colorview.exec();
+
+    // return immediately on cancel
+    if (!cv) return;
+
+    if (cv == RESET_ALL_COLORS) {
+        resetColors();
+    } else {
+        settings.beginGroup("colors");
+        for (int i = 1; i <= numtypes; ++i) {
+            auto redkey   = QString("red%1").arg(i);
+            auto greenkey = QString("green%1").arg(i);
+            auto bluekey  = QString("blue%1").arg(i);
+
+            auto *item = layout->itemAtPosition(i + colorstart, 2);
+            auto *rgb  = item ? dynamic_cast<QLineEdit *>(item->widget()) : nullptr;
+            if (rgb && rgb->hasAcceptableInput()) settings.setValue(redkey, rgb->text().toDouble());
+
+            item = layout->itemAtPosition(i + colorstart, 3);
+            rgb  = item ? dynamic_cast<QLineEdit *>(item->widget()) : nullptr;
+            if (rgb && rgb->hasAcceptableInput()) settings.setValue(greenkey, rgb->text().toDouble());
+
+            item = layout->itemAtPosition(i + colorstart, 4);
+            rgb  = item ? dynamic_cast<QLineEdit *>(item->widget()) : nullptr;
+            if (rgb && rgb->hasAcceptableInput()) settings.setValue(bluekey, rgb->text().toDouble());
+        }
+        settings.setValue("numcolors", std::max(numcolors, numtypes));
+        settings.endGroup();
+    }
+    createImage();
+}
+
+void ImageViewer::resetColors()
+{
+    QSettings settings;
+    settings.beginGroup("colors");
+    settings.remove(""); // clear all settings in this group
+    settings.setValue("numcolors", 6);
+    settings.setValue("red1", 1.0);
+    settings.setValue("green1", 0.0);
+    settings.setValue("blue1", 0.0);
+    settings.setValue("red2", 0.0);
+    settings.setValue("green2", 1.0);
+    settings.setValue("blue2", 0.0);
+    settings.setValue("red3", 0.0);
+    settings.setValue("green3", 0.0);
+    settings.setValue("blue3", 1.0);
+    settings.setValue("red4", 1.0);
+    settings.setValue("green4", 1.0);
+    settings.setValue("blue4", 0.0);
+    settings.setValue("red5", 0.0);
+    settings.setValue("green5", 1.0);
+    settings.setValue("blue5", 1.0);
+    settings.setValue("red6", 1.0);
+    settings.setValue("green6", 0.0);
+    settings.setValue("blue6", 1.0);
+    settings.endGroup();
+}
+
 void ImageViewer::changeGroup(int)
 {
     auto *box = findChild<QComboBox *>("group");
@@ -2412,7 +2600,6 @@ void ImageViewer::createImage()
     QFile dumpfile(dumpdir.absoluteFilePath(filename + ".ppm"));
     dumpcmd += "'" + dumpfile.fileName() + "'";
 
-    settings.beginGroup("snapshot");
     int hhrot = (hrot > 180) ? 360 - hrot : hrot;
 
     // determine elements from masses and set their covalent radii
@@ -2660,7 +2847,30 @@ void ImageViewer::createImage()
 
     dumpcmd += QString(" center s %1 %2 %3").arg(xcenter).arg(ycenter).arg(zcenter);
     if (!dofixes) dumpcmd += " noinit";
-    dumpcmd += " modify boxcolor " + boxcolor;
+    dumpcmd += " modify";
+
+    // must change global colors first so they apply everywhere
+    settings.beginGroup("colors");
+    int numcolors = settings.value("numcolors", 0).toInt();
+    for (int i = 1; i <= numcolors; ++i) {
+        auto namekey  = QString("type%1").arg(i);
+        auto redkey   = QString("red%1").arg(i);
+        auto greenkey = QString("green%1").arg(i);
+        auto bluekey  = QString("blue%1").arg(i);
+        auto red      = settings.value(redkey, 1.0).toDouble();
+        auto green    = settings.value(greenkey, 1.0).toDouble();
+        auto blue     = settings.value(bluekey, 1.0).toDouble();
+        dumpcmd += QString(" color %1 %2 %3 %4").arg(namekey).arg(red).arg(green).arg(blue);
+    }
+    settings.endGroup();
+    int numtypes = lammps->extractSetting("ntypes");
+    for (int i = 1; i <= numtypes; ++i) {
+        int icolor   = ((i - 1) % numcolors) + 1;
+        auto namekey = QString("type%1").arg(icolor);
+        dumpcmd += QString(" acolor %1 %2").arg(i).arg(namekey);
+    }
+
+    dumpcmd += " boxcolor " + boxcolor;
     dumpcmd += " backcolor " + backcolor;
     dumpcmd += " backcolor2 " + backcolor2;
     dumpcmd += QString(" axestrans %1").arg(axestrans);
@@ -2758,7 +2968,6 @@ void ImageViewer::createImage()
         dumpcmd += QString(" amap %1 %2 cf 0.0 ").arg(mmin).arg(mmax);
         dumpcmd += "3 min map1 0.5 white max map2";
     }
-    settings.endGroup();
 
     if (computes.size() > 0) {
         for (const auto &comp : computes) {
@@ -3011,7 +3220,8 @@ void ImageViewer::updatePeratom()
         restoreStdout();
     }
     // some more general dump custom properties
-    atom_properties << "id" << "mass" << "x" << "y" << "z" << "vx" << "vy" << "vz" << "fx" << "fy"
+    atom_properties << "id" << "mass" << "x" << "y" << "z" << "vx" << "vy" << "vz" << "fx"
+                    << "fy"
                     << "fz";
 }
 

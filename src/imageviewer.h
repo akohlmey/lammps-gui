@@ -97,6 +97,8 @@ private slots:
     void atomSettings();      ///< Configure atom and bond settings
     void fixSettings();       ///< Configure fix graphics display
     void regionSettings();    ///< Configure region display
+    void colorSettings();     ///< Customize colors
+    void resetColors();       ///< Restore original color list
     void changeGroup(int);    ///< Change atom group selection
     void changeMolecule(int); ///< Change molecule selection
 
