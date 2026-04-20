@@ -421,7 +421,7 @@ void GeneralTab::updateFonts(const QFont &all, const QFont &text)
 
     Preferences *prefs = nullptr;
     for (QWidget *widget : QApplication::topLevelWidgets())
-        if (widget->objectName() == "preferences") prefs = dynamic_cast<Preferences *>(widget);
+        if (widget->objectName() == "preferences") prefs = qobject_cast<Preferences *>(widget);
     if (prefs) prefs->setFont(all);
 }
 

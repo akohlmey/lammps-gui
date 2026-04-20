@@ -60,6 +60,7 @@
         expand list of shared library locations to search for Ubuntu/Debian and include config dir
         update list of test status badges in README and on homepage langing page
         disable access to plot range sliders and plot style while simulation is running
+        add new "Colors" dialog to ImageViewer that allows to edit, store, and load definitions for per-type colors
         add support for new hull_points keyword of LAMMPS versions newer than 30 March 2026 for regions so that union and intersect regions can be approximated for draw styles frame, filled, and transparent
       </description>
     </release>

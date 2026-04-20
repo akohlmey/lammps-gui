@@ -517,7 +517,7 @@ void CodeEditor::dropEvent(QDropEvent *event)
     if (event->mimeData()->hasUrls()) {
         event->accept();
         auto file = event->mimeData()->urls()[0].toLocalFile();
-        auto *gui = dynamic_cast<LammpsGui *>(parent());
+        auto *gui = qobject_cast<LammpsGui *>(parent());
         if (gui) {
             moveCursor(QTextCursor::Start, QTextCursor::MoveAnchor);
             gui->openFile(file);

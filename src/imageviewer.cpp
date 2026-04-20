@@ -36,6 +36,9 @@
 #include <QImage>
 #include <QImageReader>
 #include <QIntValidator>
+#include <QJsonArray>
+#include <QJsonDocument>
+#include <QJsonObject>
 #include <QKeyEvent>
 #include <QKeySequence>
 #include <QLabel>
@@ -43,6 +46,7 @@
 #include <QLinearGradient>
 #include <QMenu>
 #include <QMenuBar>
+#include <QMessageBox>
 #include <QPainter>
 #include <QPalette>
 #include <QPixmap>
@@ -767,10 +771,7 @@ void ImageViewer::readImageSettings()
     if (lammps->extractSetting("dimension") == 2) zcenter = 0.0;
     settings.endGroup();
 
-    settings.beginGroup("colors");
-    int numcolors = settings.value("numcolors", 0).toInt();
-    settings.endGroup();
-    if (!numcolors) resetColors(); // create list of default colors
+    if (color_list.isEmpty()) resetColors(); // create list of default colors
 }
 
 void ImageViewer::resetView()
@@ -2296,32 +2297,36 @@ void ImageViewer::regionSettings()
 
 void ImageViewer::colorSettings()
 {
-    QSettings settings;
-    settings.beginGroup("colors");
-    int numcolors = settings.value("numcolors", 0).toInt();
-    if (!numcolors) return; // something went wrong. go back
+    int numcolors = color_list.size();
+    if (numcolors == 0) return; // color list is not initialized, nothing to do
     int numtypes = lammps->extractSetting("ntypes");
     if (numtypes < 1) return; // nothing to do
 
     QDialog colorview;
     colorview.setWindowTitle(QString("LAMMPS-GUI - Atom Type Colors"));
     colorview.setWindowIcon(QIcon(":/icons/lammps-gui-icon-128x128.png"));
-    colorview.setMinimumSize(MINIMUM_WIDTH, MINIMUM_HEIGHT);
     colorview.setContentsMargins(CONTENT_MARGIN, CONTENT_MARGIN, CONTENT_MARGIN, CONTENT_MARGIN);
     QFontMetrics metrics(colorview.fontMetrics());
 
-    int idx     = 0;
-    int n       = 0;
-    auto *title = new QLabel("Cutomize colors:");
+    // Main outer layout for the dialog (title + scroll area + buttons)
+    auto *mainLayout = new QVBoxLayout(&colorview);
+    mainLayout->setSpacing(LAYOUT_SPACING);
+
+    // Fixed title outside the scroll area
+    auto *title = new QLabel("Customize colors:");
     title->setFrameStyle(QFrame::Panel | QFrame::Raised);
     title->setLineWidth(1);
     title->setMargin(TITLE_MARGIN);
-    constexpr int MAXCOLS = 5;
-    auto *layout          = new QGridLayout;
-    layout->setSizeConstraint(QLayout::SetMinAndMaxSize);
+    mainLayout->addWidget(title, 0, Qt::AlignHCenter);
+    mainLayout->addWidget(new QHline);
 
-    layout->addWidget(title, idx++, 0, 1, MAXCOLS, Qt::AlignHCenter);
-    layout->addWidget(new QHline, idx++, 0, 1, MAXCOLS);
+    // Scrollable area: column headers + color-editing rows
+    constexpr int MAXCOLS = 5;
+
+    int idx      = 0;
+    int n        = 0;
+    auto *layout = new QGridLayout;
+    layout->setSizeConstraint(QLayout::SetMinAndMaxSize);
 
     layout->addWidget(new QLabel("Type:"), idx, n++, Qt::AlignHCenter);
     layout->addWidget(new QLabel(""), idx, n++, Qt::AlignHCenter);
@@ -2330,51 +2335,72 @@ void ImageViewer::colorSettings()
     layout->addWidget(new QLabel("Blue:"), idx++, n++, Qt::AlignHCenter);
     layout->addWidget(new QHline, idx++, 0, 1, MAXCOLS);
 
-    for (int i = 2; i < MAXCOLS; ++i)
-        layout->setColumnStretch(i, 1);
+    auto *rgbvalidator = new QDoubleValidator(0.0, 1.0, 3, &colorview);
 
-    auto *rgbvalidator = new QDoubleValidator(0.0, 1.0, 3, this);
-    int colorstart     = idx - 1;
+    // record the row index where the colors start
+    int colorstart = idx - 1;
 
     for (int i = 0; i < numtypes; ++i) {
-        int icolor    = (i % numcolors) + 1;
-        auto redkey   = QString("red%1").arg(icolor);
-        auto greenkey = QString("green%1").arg(icolor);
-        auto bluekey  = QString("blue%1").arg(icolor);
-        auto red      = settings.value(redkey, 1.0).toDouble();
-        auto green    = settings.value(greenkey, 1.0).toDouble();
-        auto blue     = settings.value(bluekey, 1.0).toDouble();
+        int icolor = i % numcolors;
+        auto red   = color_list[icolor].redF();
+        auto green = color_list[icolor].greenF();
+        auto blue  = color_list[icolor].blueF();
 
-        n = 0;
-        layout->addWidget(new QLabel(QString::number(i + 1)), idx, n++, Qt::AlignHCenter);
+        n       = 0;
+        auto *t = new QLabel(QString::number(i + 1));
+        t->setFixedSize(metrics.averageCharWidth() * 4, metrics.height() + 4);
+        t->setAlignment(Qt::AlignRight);
+        layout->addWidget(t, idx, n++, Qt::AlignHCenter);
 
         auto *icon = new QLabel("");
-        icon->setPixmap(color_icon(QColor(red * 255, green * 255, blue * 255)));
+        icon->setPixmap(color_icon(QColor::fromRgbF(red, green, blue)));
         icon->setFrameStyle(QFrame::Panel | QFrame::Raised);
-        layout->addWidget(icon, idx, n++);
+
+        auto iconhint = icon->minimumSizeHint();
+        icon->setMinimumSize(iconhint);
+        icon->setMaximumSize(iconhint);
+
+        layout->addWidget(icon, idx, n++, Qt::AlignHCenter);
 
         auto *r = new QLineEdit(QString::number(red, 'f', 3));
         r->setValidator(rgbvalidator);
         r->setFixedSize(metrics.averageCharWidth() * 8, metrics.height() + 4);
-        r->setObjectName(redkey);
+        r->setObjectName(QString("red%1").arg(i + 1));
         layout->addWidget(r, idx, n++);
 
         auto *g = new QLineEdit(QString::number(green, 'f', 3));
         g->setValidator(rgbvalidator);
         g->setFixedSize(metrics.averageCharWidth() * 8, metrics.height() + 4);
-        g->setObjectName(greenkey);
+        g->setObjectName(QString("green%1").arg(i + 1));
         layout->addWidget(g, idx, n++);
 
         auto *b = new QLineEdit(QString::number(blue, 'f', 3));
         b->setValidator(rgbvalidator);
         b->setFixedSize(metrics.averageCharWidth() * 8, metrics.height() + 4);
-        b->setObjectName(bluekey);
+        b->setObjectName(QString("blue%1").arg(i + 1));
         layout->addWidget(b, idx++, n++);
     }
-    settings.endGroup();
 
-    n = 0;
-    layout->addWidget(new QHline, idx++, 0, 1, MAXCOLS);
+    auto *scrollWidget = new QWidget;
+    scrollWidget->setLayout(layout);
+    auto *scrollArea = new QScrollArea;
+    scrollArea->setWidget(scrollWidget);
+    scrollArea->setWidgetResizable(true);
+    mainLayout->addWidget(scrollArea, 1);
+
+    // Fixed buttons outside the scroll area
+    mainLayout->addWidget(new QHline);
+
+    // Load/Save JSON row (above Cancel/Apply/Reset)
+    auto *jsonlayout = new QHBoxLayout;
+    jsonlayout->setSpacing(LAYOUT_SPACING);
+    auto *loadJson = new QPushButton(QIcon(":/icons/document-open.png"), "&Load from JSON...");
+    auto *saveJson = new QPushButton(QIcon(":/icons/document-save.png"), "&Save to JSON...");
+    loadJson->setAutoDefault(false);
+    saveJson->setAutoDefault(false);
+    jsonlayout->addWidget(loadJson, Qt::AlignHCenter);
+    jsonlayout->addWidget(saveJson, Qt::AlignHCenter);
+    mainLayout->addLayout(jsonlayout);
 
     auto *bottomlayout = new QHBoxLayout;
     bottomlayout->setSpacing(LAYOUT_SPACING);
@@ -2394,11 +2420,113 @@ void ImageViewer::colorSettings()
         mydialog->done(RESET_ALL_COLORS);
     });
 
+    // Connect Load JSON button: read a JSON file and update dialog widgets
+    connect(
+        loadJson, &QPushButton::released, &colorview, [&colorview, layout, colorstart, numtypes]() {
+            QString fileName = QFileDialog::getOpenFileName(&colorview, "Load Colors from JSON", "",
+                                                            "JSON files (*.json);;All files (*)");
+            if (fileName.isEmpty()) return;
+
+            QFile file(fileName);
+            if (!file.open(QIODevice::ReadOnly)) {
+                QMessageBox::warning(&colorview, "Load Colors", "Could not open file for reading.");
+                return;
+            }
+            QJsonParseError err;
+            auto doc = QJsonDocument::fromJson(file.readAll(), &err);
+            if (doc.isNull() || !doc.isObject()) {
+                QMessageBox::warning(&colorview, "Load Colors",
+                                     "Invalid JSON file: " + err.errorString());
+                return;
+            }
+            auto arr = doc.object().value("colors").toArray();
+            if (arr.isEmpty()) {
+                QMessageBox::warning(&colorview, "Load Colors",
+                                     "JSON file contains no color entries.");
+                return;
+            }
+
+            for (int i = 1; i <= numtypes; ++i) {
+                auto obj = arr[(i - 1) % arr.size()].toObject();
+                double r = std::clamp(obj.value("red").toDouble(1.0), 0.0, 1.0);
+                double g = std::clamp(obj.value("green").toDouble(1.0), 0.0, 1.0);
+                double b = std::clamp(obj.value("blue").toDouble(1.0), 0.0, 1.0);
+
+                auto *iconItem = layout->itemAtPosition(i + colorstart, 1);
+                if (auto *lbl = qobject_cast<QLabel *>(iconItem ? iconItem->widget() : nullptr))
+                    lbl->setPixmap(color_icon(QColor::fromRgbF(r, g, b)));
+
+                auto *item = layout->itemAtPosition(i + colorstart, 2);
+                if (auto *w = qobject_cast<QLineEdit *>(item ? item->widget() : nullptr))
+                    w->setText(QString::number(r, 'f', 3));
+                item = layout->itemAtPosition(i + colorstart, 3);
+                if (auto *w = qobject_cast<QLineEdit *>(item ? item->widget() : nullptr))
+                    w->setText(QString::number(g, 'f', 3));
+                item = layout->itemAtPosition(i + colorstart, 4);
+                if (auto *w = qobject_cast<QLineEdit *>(item ? item->widget() : nullptr))
+                    w->setText(QString::number(b, 'f', 3));
+            }
+        });
+
+    // Connect Save JSON button: read current dialog widget values and save to JSON
+    connect(
+        saveJson, &QPushButton::released, &colorview, [&colorview, layout, colorstart, numtypes]() {
+            QString fileName = QFileDialog::getSaveFileName(&colorview, "Save Colors to JSON", "",
+                                                            "JSON files (*.json);;All files (*)");
+            if (fileName.isEmpty()) return;
+
+            QJsonArray arr;
+            for (int i = 1; i <= numtypes; ++i) {
+                double r = 1.0, g = 1.0, b = 1.0;
+                auto *item = layout->itemAtPosition(i + colorstart, 2);
+                if (auto *w = qobject_cast<QLineEdit *>(item ? item->widget() : nullptr))
+                    if (w->hasAcceptableInput()) r = w->text().toDouble();
+                item = layout->itemAtPosition(i + colorstart, 3);
+                if (auto *w = qobject_cast<QLineEdit *>(item ? item->widget() : nullptr))
+                    if (w->hasAcceptableInput()) g = w->text().toDouble();
+                item = layout->itemAtPosition(i + colorstart, 4);
+                if (auto *w = qobject_cast<QLineEdit *>(item ? item->widget() : nullptr))
+                    if (w->hasAcceptableInput()) b = w->text().toDouble();
+                QJsonObject obj;
+                obj["red"]   = r;
+                obj["green"] = g;
+                obj["blue"]  = b;
+                arr.append(obj);
+            }
+            QJsonObject root;
+            root["colors"] = arr;
+
+            QFile file(fileName);
+            if (!file.open(QIODevice::WriteOnly)) {
+                QMessageBox::warning(&colorview, "Save Colors", "Could not open file for writing.");
+                return;
+            }
+            file.write(QJsonDocument(root).toJson());
+        });
+
     bottomlayout->addWidget(cancel, Qt::AlignHCenter);
     bottomlayout->addWidget(apply, Qt::AlignHCenter);
     bottomlayout->addWidget(reset, Qt::AlignHCenter);
-    layout->addLayout(bottomlayout, idx, 0, 1, MAXCOLS, Qt::AlignHCenter);
-    colorview.setLayout(layout);
+    mainLayout->addLayout(bottomlayout);
+
+    // Size the dialog relative to screen dimensions (same approach as AboutDialog)
+    auto *screen = QGuiApplication::primaryScreen();
+    if (screen) {
+        auto screenSize = screen->availableSize();
+        int rowHeight   = metrics.height() + 8;
+        // Estimate total desired height: fixed overhead + one row per atom type
+        int desiredHeight = rowHeight * (numtypes + 5) + 5 * (LAYOUT_SPACING + CONTENT_MARGIN);
+        desiredHeight += title->sizeHint().height() + 2 * cancel->sizeHint().height();
+        int desiredWidth = std::max(
+            MINIMUM_WIDTH, metrics.averageCharWidth() * 8 * 3 +
+                               scrollArea->verticalScrollBar()->sizeHint().width() + EXTRA_WIDTH);
+        int maxWidth  = std::min(desiredWidth, screenSize.width() * 3 / 4);
+        int maxHeight = std::min(desiredHeight, screenSize.height() * 4 / 5);
+        colorview.setMinimumSize(MINIMUM_WIDTH, MINIMUM_HEIGHT);
+        colorview.resize(maxWidth, maxHeight);
+    } else {
+        colorview.setMinimumSize(MINIMUM_WIDTH, MINIMUM_HEIGHT);
+    }
 
     int cv = colorview.exec();
 
@@ -2408,28 +2536,30 @@ void ImageViewer::colorSettings()
     if (cv == RESET_ALL_COLORS) {
         resetColors();
     } else {
-        settings.beginGroup("colors");
+        // expand color_list if more types than existing colors
+        int old_size = color_list.size();
+        for (int i = color_list.size(); i < numtypes; ++i)
+            color_list.append(color_list[i % old_size]);
+
         for (int i = 1; i <= numtypes; ++i) {
-            auto redkey   = QString("red%1").arg(i);
-            auto greenkey = QString("green%1").arg(i);
-            auto bluekey  = QString("blue%1").arg(i);
+            double r = color_list[i - 1].redF();
+            double g = color_list[i - 1].greenF();
+            double b = color_list[i - 1].blueF();
 
             auto *item = layout->itemAtPosition(i + colorstart, 2);
-            auto *rgb  = item ? dynamic_cast<QLineEdit *>(item->widget()) : nullptr;
-            if (rgb && rgb->hasAcceptableInput()) settings.setValue(redkey, rgb->text().toDouble());
+            auto *rgb  = item ? qobject_cast<QLineEdit *>(item->widget()) : nullptr;
+            if (rgb && rgb->hasAcceptableInput()) r = rgb->text().toDouble();
 
             item = layout->itemAtPosition(i + colorstart, 3);
-            rgb  = item ? dynamic_cast<QLineEdit *>(item->widget()) : nullptr;
-            if (rgb && rgb->hasAcceptableInput())
-                settings.setValue(greenkey, rgb->text().toDouble());
+            rgb  = item ? qobject_cast<QLineEdit *>(item->widget()) : nullptr;
+            if (rgb && rgb->hasAcceptableInput()) g = rgb->text().toDouble();
 
             item = layout->itemAtPosition(i + colorstart, 4);
-            rgb  = item ? dynamic_cast<QLineEdit *>(item->widget()) : nullptr;
-            if (rgb && rgb->hasAcceptableInput())
-                settings.setValue(bluekey, rgb->text().toDouble());
+            rgb  = item ? qobject_cast<QLineEdit *>(item->widget()) : nullptr;
+            if (rgb && rgb->hasAcceptableInput()) b = rgb->text().toDouble();
+
+            color_list[i - 1] = QColor::fromRgbF(r, g, b);
         }
-        settings.setValue("numcolors", std::max(numcolors, numtypes));
-        settings.endGroup();
     }
     createImage();
 }
@@ -2437,25 +2567,76 @@ void ImageViewer::colorSettings()
 // our custom list of default colors for per-type colors
 constexpr double DEFAULT_RGB[][3] = {
     {0.9, 0.0, 0.0}, {0.0, 0.9, 0.0}, {0.0, 0.0, 0.9}, {0.9, 0.9, 0.0}, {0.0, 0.9, 0.9},
-    {0.9, 0.0, 0.9}, {0.9, 0.5, 0.0}, {0.9, 0.0, 0.5}, {0.0, 0.9, 0.5}, {0.5, 0.9, 0.0},
-    {0.0, 0.5, 0.9}, {0.5, 0.0, 0.9}, {0.5, 0.0, 0.0}, {0.0, 0.5, 0.0}, {0.0, 0.0, 0.5},
+    {0.9, 0.0, 0.9}, {0.9, 0.5, 0.0}, {0.5, 0.0, 0.9}, {0.8, 0.0, 0.4}, {0.0, 0.9, 0.5},
+    {0.5, 0.2, 0.2}, {0.0, 0.5, 0.0}, {0.1, 0.1, 0.5}, {0.6, 0.9, 0.0}, {0.0, 0.5, 0.9},
     {0.5, 0.5, 0.0}, {0.0, 0.5, 0.5}, {0.5, 0.0, 0.5}, {0.9, 0.9, 0.9}, {0.5, 0.5, 0.5},
     {0.2, 0.2, 0.2}};
 
 void ImageViewer::resetColors()
 {
-    QSettings settings;
-    settings.beginGroup("colors");
-    settings.remove(""); // clear all settings in this group
-    int i = 0;
-    for (const auto &rgb : DEFAULT_RGB) {
-        ++i;
-        settings.setValue(QString("red%1").arg(i), rgb[0]);
-        settings.setValue(QString("green%1").arg(i), rgb[1]);
-        settings.setValue(QString("blue%1").arg(i), rgb[2]);
+    color_list.clear();
+    for (const auto &rgb : DEFAULT_RGB)
+        color_list.append(QColor::fromRgbF(rgb[0], rgb[1], rgb[2]));
+}
+
+void ImageViewer::loadColors()
+{
+    QString fileName = QFileDialog::getOpenFileName(this, "Load Colors from JSON", "",
+                                                    "JSON files (*.json);;All files (*)");
+    if (fileName.isEmpty()) return;
+
+    QFile file(fileName);
+    if (!file.open(QIODevice::ReadOnly)) {
+        QMessageBox::warning(this, "Load Colors", "Could not open file for reading.");
+        return;
     }
-    settings.setValue("numcolors", i);
-    settings.endGroup();
+    QJsonParseError err;
+    auto doc = QJsonDocument::fromJson(file.readAll(), &err);
+    if (doc.isNull() || !doc.isObject()) {
+        QMessageBox::warning(this, "Load Colors", "Invalid JSON file: " + err.errorString());
+        return;
+    }
+    auto arr = doc.object().value("colors").toArray();
+    if (arr.isEmpty()) {
+        QMessageBox::warning(this, "Load Colors", "JSON file contains no color entries.");
+        return;
+    }
+
+    color_list.clear();
+    for (const auto &item : arr) {
+        auto obj = item.toObject();
+        double r = std::clamp(obj.value("red").toDouble(1.0), 0.0, 1.0);
+        double g = std::clamp(obj.value("green").toDouble(1.0), 0.0, 1.0);
+        double b = std::clamp(obj.value("blue").toDouble(1.0), 0.0, 1.0);
+        color_list.append(QColor::fromRgbF(r, g, b));
+    }
+    if (color_list.isEmpty()) resetColors();
+    createImage();
+}
+
+void ImageViewer::saveColors()
+{
+    QString fileName = QFileDialog::getSaveFileName(this, "Save Colors to JSON", "",
+                                                    "JSON files (*.json);;All files (*)");
+    if (fileName.isEmpty()) return;
+
+    QJsonArray arr;
+    for (const auto &c : color_list) {
+        QJsonObject obj;
+        obj["red"]   = c.redF();
+        obj["green"] = c.greenF();
+        obj["blue"]  = c.blueF();
+        arr.append(obj);
+    }
+    QJsonObject root;
+    root["colors"] = arr;
+
+    QFile file(fileName);
+    if (!file.open(QIODevice::WriteOnly)) {
+        QMessageBox::warning(this, "Save Colors", "Could not open file for writing.");
+        return;
+    }
+    file.write(QJsonDocument(root).toJson());
 }
 
 void ImageViewer::changeGroup(int)
@@ -2851,20 +3032,16 @@ void ImageViewer::createImage()
     dumpcmd += " modify";
 
     // must change global colors first so they apply everywhere
-    settings.beginGroup("colors");
-    int numcolors = settings.value("numcolors", 0).toInt();
+    int numcolors = color_list.size();
 
-    for (int i = 1; i <= numcolors; ++i) {
-        auto namekey  = QString("type%1").arg(i);
-        auto redkey   = QString("red%1").arg(i);
-        auto greenkey = QString("green%1").arg(i);
-        auto bluekey  = QString("blue%1").arg(i);
-        auto red      = settings.value(redkey, 1.0).toDouble();
-        auto green    = settings.value(greenkey, 1.0).toDouble();
-        auto blue     = settings.value(bluekey, 1.0).toDouble();
-        dumpcmd += QString(" color %1 %2 %3 %4").arg(namekey).arg(red).arg(green).arg(blue);
+    for (int i = 0; i < numcolors; ++i) {
+        auto namekey = QString("type%1").arg(i + 1);
+        dumpcmd += QString(" color %1 %2 %3 %4")
+                       .arg(namekey)
+                       .arg(color_list[i].redF())
+                       .arg(color_list[i].greenF())
+                       .arg(color_list[i].blueF());
     }
-    settings.endGroup();
     int numtypes = lammps->extractSetting("ntypes");
     for (int i = 1; i <= numtypes; ++i) {
         int icolor   = ((i - 1) % numcolors) + 1;
@@ -3101,13 +3278,26 @@ void ImageViewer::createActions()
     saveAsAct->setEnabled(false);
     saveAsAct->setShortcut(QKeySequence(Qt::CTRL | Qt::Key_S));
     fileMenu->addSeparator();
-    copyAct = fileMenu->addAction("&Copy Image", this, &ImageViewer::copy);
+    copyAct = fileMenu->addAction("Copy &Image", this, &ImageViewer::copy);
     copyAct->setIcon(QIcon(":/icons/edit-copy.png"));
     copyAct->setShortcut(QKeySequence::Copy);
     copyAct->setEnabled(false);
     cmdAct = fileMenu->addAction("Copy &dump image command", this, &ImageViewer::cmdToClipboard);
     cmdAct->setIcon(QIcon(":/icons/file-clipboard.png"));
     cmdAct->setShortcut(QKeySequence(Qt::CTRL | Qt::Key_D));
+    fileMenu->addSeparator();
+    QAction *loadColorsAct =
+        fileMenu->addAction("&Load Colors from JSON...", this, &ImageViewer::loadColors);
+    loadColorsAct->setIcon(QIcon(":/icons/document-open.png"));
+    QAction *saveColorsAct =
+        fileMenu->addAction("S&ave Colors to JSON...", this, &ImageViewer::saveColors);
+    saveColorsAct->setIcon(QIcon(":/icons/document-save.png"));
+    QAction *resetColorsAct = fileMenu->addAction("&Reset Colors");
+    connect(resetColorsAct, &QAction::triggered, this, [this]() {
+        resetColors();
+        createImage();
+    });
+    resetColorsAct->setIcon(QIcon(":/icons/system-restart.png"));
     fileMenu->addSeparator();
     QAction *exitAct = fileMenu->addAction("&Close", this, &QWidget::close);
     exitAct->setIcon(QIcon(":/icons/window-close.png"));

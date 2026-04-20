@@ -73,8 +73,8 @@ void SetVariables::accept()
     int nrows = layout->count() - 2;
     for (int i = 1; i < nrows; ++i) {
         auto *row = layout->itemAt(i)->layout();
-        auto *var = dynamic_cast<QLineEdit *>(row->itemAt(0)->widget());
-        auto *val = dynamic_cast<QLineEdit *>(row->itemAt(1)->widget());
+        auto *var = qobject_cast<QLineEdit *>(row->itemAt(0)->widget());
+        auto *val = qobject_cast<QLineEdit *>(row->itemAt(1)->widget());
         if (var && val) vars.append(qMakePair(var->text(), val->text()));
     }
 
