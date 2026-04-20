@@ -130,6 +130,22 @@ documentation and the LAMMPS manual.
 
 -----------
 
+Color customizations
+--------------------
+
+LAMMPS-GUI uses two lists of colors.  The first are the per-type atom
+colors that can be customized from an initial assignment from a built in
+list.  This list is maintained by LAMMPS-GUI and information from them
+is passed to LAMMPS via LAMMPS commands while creating colors named
+"type#" where '#' is the atom type number.  These color definitions can
+also be written to and loaded from JSON files.  The second is the list
+of named colors that are mainted by the *dump image* command in LAMMMPS.
+LAMMPS-GUI has the list of predefined color names and may define
+additional colors as needed, but will give them names that are specific
+to LAMMPS-GUI and not attempt to overwrite any of the predefined colors.
+
+-----------
+
 Available controls
 ------------------
 
