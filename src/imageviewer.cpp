@@ -216,8 +216,10 @@ QPixmap color_icon(const QColor &color)
     return pixmap;
 }
 
-QStringList defaultcolors = {"white", "gray",  "magenta", "cyan",   "yellow",
-                             "blue",  "green", "red",     "orange", "brown"};
+QStringList defaultcolors = {"red",       "green",    "blue",       "yellow",   "cyan",
+                             "magenta",   "orange",   "chartreuse", "brown",    "darkred",
+                             "darkgreen", "darkblue", "darkyellow", "darkcyan", "darkmagenta",
+                             "silver",    "gray"};
 
 // constants
 const QString blank(" ");
