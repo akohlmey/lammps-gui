@@ -2852,6 +2852,7 @@ void ImageViewer::createImage()
     // must change global colors first so they apply everywhere
     settings.beginGroup("colors");
     int numcolors = settings.value("numcolors", 0).toInt();
+
     for (int i = 1; i <= numcolors; ++i) {
         auto namekey  = QString("type%1").arg(i);
         auto redkey   = QString("red%1").arg(i);
