@@ -3279,7 +3279,7 @@ void ImageViewer::createActions()
     saveAsAct->setEnabled(false);
     saveAsAct->setShortcut(QKeySequence(Qt::CTRL | Qt::Key_S));
     fileMenu->addSeparator();
-    copyAct = fileMenu->addAction("&Copy Image", this, &ImageViewer::copy);
+    copyAct = fileMenu->addAction("Copy &Image", this, &ImageViewer::copy);
     copyAct->setIcon(QIcon(":/icons/edit-copy.png"));
     copyAct->setShortcut(QKeySequence::Copy);
     copyAct->setEnabled(false);
@@ -3293,6 +3293,9 @@ void ImageViewer::createActions()
     QAction *saveColorsAct =
         fileMenu->addAction("S&ave Colors to JSON...", this, &ImageViewer::saveColors);
     saveColorsAct->setIcon(QIcon(":/icons/document-save.png"));
+    QAction *resetColorsAct =
+        fileMenu->addAction("&Reset Colors", this, &ImageViewer::resetColors);
+    resetColorsAct->setIcon(QIcon(":/icons/system-restart.png"));
     fileMenu->addSeparator();
     QAction *exitAct = fileMenu->addAction("&Close", this, &QWidget::close);
     exitAct->setIcon(QIcon(":/icons/window-close.png"));
