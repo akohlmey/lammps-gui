@@ -11,14 +11,14 @@
 
 **Repository**: https://github.com/akohlmey/lammps-gui
 **Documentation**: https://lammps-gui.lammps.org/
-**Version**: 2.0.0 (see CMakeLists.txt line 4)
+**Version**: 2.0.4 (see CMakeLists.txt line 4)
 **License**: GNU GPL v2
 
 ### Key Statistics
 - **Language**: C++ (C++17 standard)
-- **Framework**: Qt (requires Qt 6.2+)
+- **Framework**: Qt (requires Qt 6.2+; Qt 6.10+ for QtGraphs support)
 - **Build System**: CMake 3.20+
-- **Codebase Size**: ~17k lines across 43 source files in `src/`
+- **Codebase Size**: ~17.8k lines across 50 source files in `src/`
 - **Total Files**: ~11,290 files (includes docs, resources)
 - **Disk Size**: ~263 MB
 
@@ -26,13 +26,13 @@
 
 ### Root Directory Structure
 ```
-├── CMakeLists.txt          # Main build configuration (466 lines)
+├── CMakeLists.txt          # Main build configuration (480 lines)
 ├── README.md               # Brief overview with CI badges
 ├── TODO.md                 # Feature roadmap
 ├── LICENSE                 # GPL v2 license
 ├── .clang-format           # C++ code formatting rules (LLVM-based, 100 char limit)
 ├── .gitignore              # Build artifacts, temp files
-├── src/                    # C++ source files (38 files)
+├── src/                    # C++ source files (50 files)
 ├── doc/                    # Sphinx documentation (RST format)
 ├── resources/              # Icons, QRC files, help text
 ├── plugin/                 # Plugin loader for dynamic LAMMPS library loading
@@ -54,7 +54,10 @@
 
 **Visualization components**:
 - `imageviewer.{cpp,h}` - Image display with zoom/pan
-- `chartviewer.{cpp,h}` - QtCharts or QtGraphs integration for plotting
+- `chartviewer.{cpp,h}` - Chart display with pluggable backend (QtCharts or QtGraphs)
+- `chartbackend.h` - Abstract interface for chart backends
+- `qtchartsbackend.{cpp,h}` - QtCharts chart backend implementation
+- `qtgraphsbackend.{cpp,h}` - QtGraphs chart backend implementation
 - `slideshow.{cpp,h}` - Multi-image slideshow
 - `rangeslider.{cpp,h}` - Custom slider widget for image sequences
 
@@ -69,18 +72,19 @@
 - `stdcapture.{cpp,h}` - stdout/stderr capture
 - `flagwarnings.{cpp,h}` - LAMMPS flag validation
 - `qaddon.{cpp,h}` - Qt helper widgets (QHline, QColorCompleter, QColorValidator, VerticalLabel)
+- `constants.h` - Application-wide constants (GuiConstants namespace)
 
 **Networking**:
 - `urldownloader.{cpp,h}` - HTTPS file download with SHA-256 checksum verification
 
 **Runner**:
-- `lammpsrunner.h` - Thread-based LAMMPS execution
+- `lammpsrunner.{cpp,h}` - Thread-based LAMMPS execution
 
 **Note**: All classes are documented in the Architecture section of `doc/introduction.rst` with detailed descriptions organized into:
 - Main Window and Application Control (LammpsGui, TutorialWizard)
 - Editor Components (CodeEditor, LineNumberArea, Highlighter, FindAndReplace)
 - LAMMPS Interface (LammpsWrapper, LammpsRunner)
-- Visualization Components (ImageViewer, ChartWindow, ChartViewer, SlideShow, RangeSlider)
+- Visualization Components (ImageViewer, ChartWindow, ChartViewer, ChartBackend, QtChartsBackend, QtGraphsBackend, SlideShow, RangeSlider)
 - Dialog Components (Preferences, SetVariables, FileViewer, LogWindow, AboutDialog)
 - Support Components (URLDownloader, StdCapture, FlagWarnings, Qt helper widgets)
 
@@ -112,7 +116,7 @@
 ### Test Infrastructure (`test/`)
 - **Framework**: GoogleTest v1.17.0 (auto-fetched via CMake FetchContent)
 - **CMakeLists.txt**: Test configuration and executable definitions
-- **test_helpers.cpp**: Unit tests for utility functions (45 test cases)
+- **test_helpers.cpp**: Unit tests for utility functions (38 test cases)
 - **test_flagwarnings.cpp**: Unit tests for FlagWarnings syntax highlighter (7 test cases)
 - **test_stdcapture.cpp**: Unit tests for StdCapture output capture (11 test cases)
 - **test_shooter.py, test_xvfbsize.py, test_gui_edit.py**: Python-based GUI tests using PyAutoGUI and Xvfb
@@ -174,10 +178,9 @@ sudo apt-get install -y \
     libglu1-mesa-dev \
     libomp-dev \
     mesa-common-dev \
-    qt6-base-dev qt6-charts-dev      # For Qt6
-
-# For documentation building (optional)
-sudo apt-get install -y doxygen
+    qt6-base-dev qt6-charts-dev \    # For Qt6
+    doxygen \                         # For documentation
+    python3 python3-venv              # For Sphinx documentation build
 ```
 
 #### macOS (11+)
@@ -188,9 +191,9 @@ sudo apt-get install -y doxygen
 - DMG target: `cmake --build build --target dmg`
 
 #### Windows
-- **Not supported in plugin mode** (LAMMPS_GUI_USE_PLUGIN=ON fails on Windows)
-- Visual Studio 2022 + Visual C++ 14.36+ required
-- MinGW cross-compilation from Linux is supported
+- Supports both MSVC (Visual Studio 2022) and MinGW cross-compilation from Linux
+- Plugin mode (`LAMMPS_GUI_USE_PLUGIN=yes`) is supported on Windows
+- MSVC requires Visual C++ 14.36+
 - Qt installation typically in `C:\Qt\`
 
 ### Build Targets
@@ -240,6 +243,7 @@ Before submitting a PR, ensure:
 6. **Tests pass** if modifying tested components (`ctest --test-dir build/test`)
 7. **Doxygen comments** added for new public classes/methods
 8. **CodeQL scans pass** (checked automatically on push to develop)
+9. **Documentation updated**: User's guide, programmer's guide, and API reference updated for any new features or changed behavior
 
 ## Common Build Patterns & Issues
 
@@ -279,10 +283,6 @@ cmake --build build --parallel 2
 - **Solution**: Install Qt dev packages (see platform-specific notes above)
 - **Alternative**: For docs only, use `-D BUILD_DOC_ONLY=yes`
 
-**Error**: `Building LAMMPS-GUI with -D LAMMPS_GUI_USE_PLUGIN=on is currently not supported on Windows`
-- **Cause**: Plugin mode disabled on Windows in CMakeLists.txt line 46-48
-- **Solution**: Use `-D LAMMPS_GUI_USE_PLUGIN=off` and provide LAMMPS library
-
 **Error**: Sphinx import errors during doc build
 - **Cause**: virtualenv creation or pip install failed
 - **Solution**: Check Python 3.8+ is available; delete `build-doc/docenv` and retry
@@ -300,12 +300,14 @@ cmake --build build --parallel 2
 3. **Format before commit**: Use `clang-format` with project's `.clang-format` config
 4. **GPG sign commits**: All git commits must be GPG signed with a verifiable signature
 5. **Test with QtGraphs and QtCharts** if possible (QtCharts and QtGraphs use some different code paths)
-6. **Update docs** if changing user-facing features (files in `doc/` directory)
-7. **Add Doxygen comments** for new classes/methods using `/** @brief */` style
-8. **Update introduction.rst** when adding new classes or major components
+6. **Update user-facing docs** if changing user-facing features (files in `doc/` directory, especially `basic_usage.rst` and `installation.rst`)
+7. **Update programmer's guide** when adding new features, classes, or changing architecture (`doc/introduction.rst`, `doc/api_reference.rst`, and the Programmer's Guide section in `doc/index.rst`)
+8. **Add Doxygen comments** for new classes/methods using `/** @brief */` style
+9. **Update introduction.rst** when adding new classes or major components
+10. **Verify documentation builds**: Run `cmake --build build-doc --target doc` after any doc changes
 
 ### Adding New Source Files
-1. Add to `PROJECT_SOURCES` list in `CMakeLists.txt` (lines 86-130)
+1. Add to `PROJECT_SOURCES` list in `CMakeLists.txt` (around line 90)
 2. If using Qt signals/slots, ensure `CMAKE_AUTOMOC=ON` is set (line 22)
 3. Include file in `#include` directives in relevant source files
 
@@ -322,6 +324,16 @@ cmake --build build --parallel 2
 - **Spell check**: Run `cmake --build build-doc --target spelling`
 - **Preview locally**: Open `build-doc/doc/html/index.html` in browser
 - **CI validates**: Every PR builds docs automatically (including Doxygen → Breathe → Sphinx)
+
+### Documentation Requirements When Adding New Features
+
+**Always** update documentation when adding new features, changing behavior, or adding new classes:
+
+1. **User's guide** (`doc/basic_usage.rst` or relevant `.rst` files): Document new UI features, commands, or workflows visible to end users.
+2. **Programmer's guide** (`doc/index.rst` Programmer's Guide section and `doc/introduction.rst`): Describe new classes, their responsibilities, and how they fit into the architecture.
+3. **API reference** (`doc/api_reference.rst`): Add a `doxygenclass` directive for every new public class with full Doxygen documentation in its header file.
+4. **Doxygen comments**: Every new public class and method must have `/** @brief */` style documentation in the header file.
+5. **Verify build**: After updating docs, always run `cmake --build build-doc --target doc` to confirm no errors.
 
 ### Doxygen Documentation Standards
 Use Javadoc-style comments for C++ code documentation:
@@ -365,7 +377,7 @@ QString current_file;  ///< Brief description of member variable
 - **Installation**: Automatic via CMake in virtualenv `build-doc/docenv/`
 
 ### GitHub Actions Dependencies
-- **File**: Workflow YAML files use `actions/checkout@v5`, `codeql-action/init@v4`
+- **File**: Workflow YAML files use `actions/checkout@v6`, `codeql-action/init@v4`
 - **Update frequency**: Weekly (Dependabot monitors)
 
 ### No Package Manager for C++
@@ -380,8 +392,7 @@ The project includes a test suite using GoogleTest:
 - **Test Directory**: `test/` contains test files and CMakeLists.txt
 - **Test Framework**: GoogleTest v1.17.0 (fetched automatically via CMake)
 - **Current Coverage**:
-  - 45 test cases in `test_helpers.cpp` covering:
-    - String duplication functions (`mystrdup` - 3 overloads)
+  - 38 test cases in `test_helpers.cpp` covering:
     - Date comparison (`dateCompare`)
     - Line splitting with quote handling (`splitLine`)
     - Executable detection (`hasExe`)
@@ -429,9 +440,10 @@ When making changes:
 1. **Never use `git push` or `gh` commands directly** - Use `report_progress` tool to commit/push
 2. **Always use absolute paths** starting with `/home/runner/work/lammps-gui/lammps-gui/`
 3. **Document build must complete in <300s** - It's a real constraint (virtualenv setup takes time)
-4. **Plugin mode doesn't work on Windows** - This is a known limitation (see CMakeLists.txt:46-48)
-6. **C++17 minimum** - Can use C++23 for Qt6 builds, but C++17 for LAMMPS compatibility
-7. **Work around deprecated Qt features** - If an API is deprecated in a recent version of Qt, implement a version check and use the deprecated feature only with older versions of Qt and the new API where available
+4. **Plugin mode works on all platforms** - Including Windows (MSVC and MinGW cross-compile)
+5. **C++17 minimum** - Can use C++23 for Qt6 builds, but C++17 for LAMMPS compatibility
+6. **Work around deprecated Qt features** - If an API is deprecated in a recent version of Qt, implement a version check and use the deprecated feature only with older versions of Qt and the new API where available
+7. **Always update documentation** - When adding new features, always update the user's guide, programmer's guide, and API reference (see Documentation Requirements above)
 
 ### Known Issues & Workarounds
 - **No TBD/TODO in code**: Only one found at `src/lammpsgui.cpp` (update tutorial URL)
@@ -515,4 +527,4 @@ These instructions have been thoroughly researched by examining:
 - The information appears outdated or incorrect
 - You need details about specific source files not covered
 
-For implementation details of specific features, refer to the source files in `src/`. For user-facing behavior, check the documentation in `doc/`. For build system internals, study `CMakeLists.txt` (well-commented, 466 lines). For API documentation, see `doc/api_reference.rst`.
+For implementation details of specific features, refer to the source files in `src/`. For user-facing behavior, check the documentation in `doc/`. For build system internals, study `CMakeLists.txt` (well-commented, 480 lines). For API documentation, see `doc/api_reference.rst`.
