@@ -2568,8 +2568,8 @@ void ImageViewer::colorSettings()
 // our custom list of default colors for per-type colors
 constexpr double DEFAULT_RGB[][3] = {
     {0.9, 0.0, 0.0}, {0.0, 0.9, 0.0}, {0.0, 0.0, 0.9}, {0.9, 0.9, 0.0}, {0.0, 0.9, 0.9},
-    {0.9, 0.0, 0.9}, {0.9, 0.5, 0.0}, {0.9, 0.0, 0.5}, {0.0, 0.9, 0.5}, {0.5, 0.9, 0.0},
-    {0.0, 0.5, 0.9}, {0.5, 0.0, 0.9}, {0.5, 0.0, 0.0}, {0.0, 0.5, 0.0}, {0.0, 0.0, 0.5},
+    {0.9, 0.0, 0.9}, {0.9, 0.5, 0.0}, {0.5, 0.0, 0.9}, {0.8, 0.0, 0.4}, {0.0, 0.9, 0.5},
+    {0.5, 0.2, 0.2}, {0.0, 0.5, 0.0}, {0.1, 0.1, 0.5}, {0.6, 0.9, 0.0}, {0.0, 0.5, 0.9},
     {0.5, 0.5, 0.0}, {0.0, 0.5, 0.5}, {0.5, 0.0, 0.5}, {0.9, 0.9, 0.9}, {0.5, 0.5, 0.5},
     {0.2, 0.2, 0.2}};
 
@@ -3293,8 +3293,7 @@ void ImageViewer::createActions()
     QAction *saveColorsAct =
         fileMenu->addAction("S&ave Colors to JSON...", this, &ImageViewer::saveColors);
     saveColorsAct->setIcon(QIcon(":/icons/document-save.png"));
-    QAction *resetColorsAct =
-        fileMenu->addAction("&Reset Colors", this, &ImageViewer::resetColors);
+    QAction *resetColorsAct = fileMenu->addAction("&Reset Colors", this, &ImageViewer::resetColors);
     resetColorsAct->setIcon(QIcon(":/icons/system-restart.png"));
     fileMenu->addSeparator();
     QAction *exitAct = fileMenu->addAction("&Close", this, &QWidget::close);
