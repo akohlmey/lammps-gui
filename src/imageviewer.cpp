@@ -2298,7 +2298,7 @@ void ImageViewer::regionSettings()
 void ImageViewer::colorSettings()
 {
     int numcolors = color_list.size();
-    if (numcolors == 0) return; // something went wrong, go back
+    if (numcolors == 0) return; // color list is not initialized, nothing to do
     int numtypes = lammps->extractSetting("ntypes");
     if (numtypes < 1) return; // nothing to do
 
