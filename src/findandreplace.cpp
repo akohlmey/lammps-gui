@@ -142,7 +142,7 @@ void FindAndReplace::replaceAll()
 
 void FindAndReplace::quit()
 {
-    auto *main = dynamic_cast<LammpsGui *>(parent());
+    auto *main = qobject_cast<LammpsGui *>(parent());
     if (main) main->quit();
 }
 

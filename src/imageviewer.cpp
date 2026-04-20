@@ -2454,17 +2454,17 @@ void ImageViewer::colorSettings()
                 double b = std::clamp(obj.value("blue").toDouble(1.0), 0.0, 1.0);
 
                 auto *iconItem = layout->itemAtPosition(i + colorstart, 1);
-                if (auto *lbl = dynamic_cast<QLabel *>(iconItem ? iconItem->widget() : nullptr))
+                if (auto *lbl = qobject_cast<QLabel *>(iconItem ? iconItem->widget() : nullptr))
                     lbl->setPixmap(color_icon(QColor::fromRgbF(r, g, b)));
 
                 auto *item = layout->itemAtPosition(i + colorstart, 2);
-                if (auto *w = dynamic_cast<QLineEdit *>(item ? item->widget() : nullptr))
+                if (auto *w = qobject_cast<QLineEdit *>(item ? item->widget() : nullptr))
                     w->setText(QString::number(r, 'f', 3));
                 item = layout->itemAtPosition(i + colorstart, 3);
-                if (auto *w = dynamic_cast<QLineEdit *>(item ? item->widget() : nullptr))
+                if (auto *w = qobject_cast<QLineEdit *>(item ? item->widget() : nullptr))
                     w->setText(QString::number(g, 'f', 3));
                 item = layout->itemAtPosition(i + colorstart, 4);
-                if (auto *w = dynamic_cast<QLineEdit *>(item ? item->widget() : nullptr))
+                if (auto *w = qobject_cast<QLineEdit *>(item ? item->widget() : nullptr))
                     w->setText(QString::number(b, 'f', 3));
             }
         });
@@ -2480,13 +2480,13 @@ void ImageViewer::colorSettings()
             for (int i = 1; i <= numtypes; ++i) {
                 double r = 1.0, g = 1.0, b = 1.0;
                 auto *item = layout->itemAtPosition(i + colorstart, 2);
-                if (auto *w = dynamic_cast<QLineEdit *>(item ? item->widget() : nullptr))
+                if (auto *w = qobject_cast<QLineEdit *>(item ? item->widget() : nullptr))
                     if (w->hasAcceptableInput()) r = w->text().toDouble();
                 item = layout->itemAtPosition(i + colorstart, 3);
-                if (auto *w = dynamic_cast<QLineEdit *>(item ? item->widget() : nullptr))
+                if (auto *w = qobject_cast<QLineEdit *>(item ? item->widget() : nullptr))
                     if (w->hasAcceptableInput()) g = w->text().toDouble();
                 item = layout->itemAtPosition(i + colorstart, 4);
-                if (auto *w = dynamic_cast<QLineEdit *>(item ? item->widget() : nullptr))
+                if (auto *w = qobject_cast<QLineEdit *>(item ? item->widget() : nullptr))
                     if (w->hasAcceptableInput()) b = w->text().toDouble();
                 QJsonObject obj;
                 obj["red"]   = r;
@@ -2548,15 +2548,15 @@ void ImageViewer::colorSettings()
             double b = color_list[i - 1].blueF();
 
             auto *item = layout->itemAtPosition(i + colorstart, 2);
-            auto *rgb  = item ? dynamic_cast<QLineEdit *>(item->widget()) : nullptr;
+            auto *rgb  = item ? qobject_cast<QLineEdit *>(item->widget()) : nullptr;
             if (rgb && rgb->hasAcceptableInput()) r = rgb->text().toDouble();
 
             item = layout->itemAtPosition(i + colorstart, 3);
-            rgb  = item ? dynamic_cast<QLineEdit *>(item->widget()) : nullptr;
+            rgb  = item ? qobject_cast<QLineEdit *>(item->widget()) : nullptr;
             if (rgb && rgb->hasAcceptableInput()) g = rgb->text().toDouble();
 
             item = layout->itemAtPosition(i + colorstart, 4);
-            rgb  = item ? dynamic_cast<QLineEdit *>(item->widget()) : nullptr;
+            rgb  = item ? qobject_cast<QLineEdit *>(item->widget()) : nullptr;
             if (rgb && rgb->hasAcceptableInput()) b = rgb->text().toDouble();
 
             color_list[i - 1] = QColor::fromRgbF(r, g, b);
