@@ -2,11 +2,6 @@ LAMMPS-GUI TODO list:
 
 # New feature ideas
 
-## Add a "Colors" menu to the image viewer
-  This would allow to adjust color settings for the current image
-  (unlike the defaults in the preferences) including assigning colors to
-  individual atom types and defining new color names
-
 ## Implement data file manager GUI with the following features:
   - import coordinates and topology via VMD molfile plugins
   - import coordinates and topology from intermol
@@ -25,10 +20,6 @@ LAMMPS-GUI TODO list:
   - call to LAMMPS to generate visualizations of geometries
   - edit force field parameters, e.g. apply charmm
   - edit / manage labelmap
-
-## Add option to attach a debugger to the running program
-  highly non-portable, need customization support in preferences
-  alternative could be to print a stack trace
 
 ## Write "wizard" dialogs for bootstrapping simulations
   this could be used for beginners to create an input file template for
