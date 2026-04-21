@@ -560,6 +560,7 @@ fix_gjf.html fix gjf
 fix_gld.html fix gld
 fix_gle.html fix gle
 fix_graphics_arrows.html fix graphics/arrows
+fix_graphics_chunk.html fix graphics/chunk
 fix_graphics_isosurface.html fix graphics/isosurface
 fix_graphics_labels.html fix graphics/labels
 fix_graphics_lines.html fix graphics/lines
