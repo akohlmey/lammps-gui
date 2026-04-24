@@ -221,6 +221,23 @@ void warning(QWidget *parent, const QString &title, const QString &text1, const 
     mb.exec();
 }
 
+// platform specific shared library name
+
+const QString &getLammpsLibName()
+{
+#if defined(LAMMPS_GUI_USE_PLUGIN)
+#if defined(Q_OS_MACOS)
+    return QStringLiteral("liblammps.0.dylib");
+#elif defined(Q_OS_WIN32)
+    return QStringLiteral("liblammps.dll");
+#else
+    return QStringLiteral("liblammps.so.0");
+#endif
+#else
+    return QStringLiteral("");
+#endif
+}
+
 // save image directly and if that fails, save to PNG and convert with ImageMagick
 void exportImage(QWidget *parent, QImage *image, const QString &title)
 {

@@ -61,6 +61,12 @@ extern void warning(QWidget *parent, const QString &title, const QString &text1,
                     const QString &text2 = QString());
 
 /**
+ * @brief Provide platform specific name of a LAMMPS shared library
+ * @return String with the filename or an empty string if compiled without plugin support
+ */
+extern const QString &getLammpsLibName();
+
+/**
  * @brief Save image directly or convert with ImageMagick
  * @param parent  Pointer to parent widget
  * @param image   Pointer to image class
