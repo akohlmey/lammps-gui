@@ -11,6 +11,7 @@ fix graphics/labels
 fix graphics/lines
 fix graphics/objects
 fix graphics/periodic
+fix graphics/replica
 fix smd/wall_surface
 fix atom/swap
 fix bond/break

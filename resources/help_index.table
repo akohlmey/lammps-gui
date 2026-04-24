@@ -575,6 +575,7 @@ fix_graphics_labels.html fix graphics/labels
 fix_graphics_lines.html fix graphics/lines
 fix_graphics_objects.html fix graphics/objects
 fix_graphics_periodic.html fix graphics/periodic
+fix_graphics_replica.html fix graphics/replica
 fix_gravity.html fix gravity
 fix_gravity.html fix gravity/kk
 fix_gravity.html fix gravity/omp
@@ -1183,6 +1184,7 @@ pair_exp6_rx.html pair_style exp6/rx/kk
 pair_extep.html pair_style extep
 pair_extep.html pair_style extep/omp
 pair_fep_soft.html pair_style coul/cut/soft
+pair_fep_soft.html pair_style coul/cut/soft/gapsys
 pair_fep_soft.html pair_style coul/cut/soft/omp
 pair_fep_soft.html pair_style coul/long/soft
 pair_fep_soft.html pair_style coul/long/soft/omp
