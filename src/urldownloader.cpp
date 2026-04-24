@@ -68,10 +68,15 @@ bool URLDownloader::download(const QString &url, const QString &file, bool showD
             dlg = new QDialog(parentWidget);
             dlg->setWindowTitle("Downloading...");
             dlg->setMinimumWidth(400);
-            auto *layout = new QVBoxLayout(dlg);
-            layout->addWidget(new QLabel(QString("<b>Downloading:</b><br>%1").arg(url)));
-            layout->addWidget(new QLabel(QString("<b>Saving to:</b><br>%1").arg(file)));
-            dlg->setLayout(layout);
+            auto *hlayout = new QHBoxLayout(dlg);
+            auto *pixmap = new QLabel();
+            pixmap->setPixmap(QPixmap(":/icons/lammps-plugin.png").scaled(96,96));
+            hlayout->addWidget(pixmap);
+            auto *vlayout = new QVBoxLayout();
+            vlayout->addWidget(new QLabel(QString("<b>Downloading:</b><br>%1").arg(url)));
+            vlayout->addWidget(new QLabel(QString("<b>Saving to:</b><br>%1").arg(file)));
+            hlayout->addLayout(vlayout);
+            dlg->setLayout(hlayout);
             dlg->show();
             QCoreApplication::processEvents();
         }
@@ -159,20 +164,19 @@ QByteArray URLDownloader::fetchRawContent(const QString &url)
     return data;
 }
 
-bool URLDownloader::verifyChecksum(const QString &url, const QString &file)
+QString URLDownloader::getRemoteChecksum(const QString &url)
 {
     // build URL for the SHA256SUMS file in the same remote directory
     int lastSlash = url.lastIndexOf('/');
-    if (lastSlash < 0) return true;
+    if (lastSlash < 0) return QString();
 
     QString sumsUrl  = url.left(lastSlash + 1) + "SHA256SUMS";
     QString fileName = url.mid(lastSlash + 1);
 
     QByteArray sumsData = fetchRawContent(sumsUrl);
-    if (sumsData.isEmpty()) return true; // no SHA256SUMS file — nothing to check
+    if (sumsData.isEmpty()) return QString();
 
     // parse SHA256SUMS: each line is "<hex-hash>  <filename>" or "<hex-hash> <filename>"
-    QString expectedHash;
     const QList<QByteArray> lines = sumsData.split('\n');
     for (const auto &line : lines) {
         QString sline = QString::fromUtf8(line).trimmed();
@@ -188,26 +192,35 @@ bool URLDownloader::verifyChecksum(const QString &url, const QString &file)
         if (name.startsWith("./")) name = name.mid(2);
         if (name.startsWith('*')) name = name.mid(1);
 
-        if (name == fileName) {
-            expectedHash = hash.toLower();
-            break;
-        }
+        if (name == fileName) return hash.toLower();
     }
+    return QString();
+}
 
-    if (expectedHash.isEmpty()) return true; // no entry for this file — nothing to check
-
-    // compute SHA-256 of the downloaded file
+QString URLDownloader::getLocalChecksum(const QString &file)
+{
     QFile localFile(file);
-    if (!localFile.open(QIODevice::ReadOnly)) return true;
+    if (!localFile.open(QIODevice::ReadOnly)) return QString();
 
     QCryptographicHash hasher(QCryptographicHash::Sha256);
     hasher.addData(&localFile);
     localFile.close();
 
-    QString actualHash = hasher.result().toHex().toLower();
+    return hasher.result().toHex().toLower();
+}
+
+bool URLDownloader::verifyChecksum(const QString &url, const QString &file)
+{
+    QString expectedHash = getRemoteChecksum(url);
+    if (expectedHash.isEmpty()) return true; // no SHA256SUMS entry — nothing to check
+
+    QString actualHash = getLocalChecksum(file);
+    if (actualHash.isEmpty()) return true;
 
     if (actualHash != expectedHash) {
-        lastError = QString("SHA-256 checksum mismatch for %1").arg(fileName);
+        int lastSlash    = url.lastIndexOf('/');
+        QString fileName = url.mid(lastSlash + 1);
+        lastError        = QString("SHA-256 checksum mismatch for %1").arg(fileName);
         critical(parentWidget, "Download Error",
                  QString("The SHA-256 checksum of the downloaded file \"%1\" does not match "
                          "the expected checksum.")

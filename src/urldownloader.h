@@ -76,9 +76,38 @@ public:
      */
     QString errorString() const { return lastError; }
 
+    /**
+     * @brief Fetch raw content from a given HTTPS URL
+     *
+     * Performs a synchronous (blocking) GET request to the given URL and
+     * returns the response body as a QByteArray.
+     *
+     * @param url  The HTTPS URL to fetch from
+     * @return     Response body or empty QByteArray on error
+     */
+    QByteArray fetchRawContent(const QString &url);
+
+    /**
+     * @brief Return the remote SHA-256 checksum for a given URL
+     *
+     * Fetches the SHA256SUMS file from the same remote directory as the resource at \p url,
+     * and returns the expected hex-hash for the resource's filename.
+     *
+     * @param url   The HTTPS URL of the resource
+     * @return      Hex-hash string or empty string if not found or on error
+     */
+    QString getRemoteChecksum(const QString &url);
+
+    /**
+     * @brief Compute the local SHA-256 checksum for a given file
+     *
+     * @param file  The local file path
+     * @return      Hex-hash string or empty string on error
+     */
+    static QString getLocalChecksum(const QString &file);
+
 private:
     void configureProxy();
-    QByteArray fetchRawContent(const QString &url);
     bool verifyChecksum(const QString &url, const QString &file);
 
     QNetworkAccessManager *manager; ///< Qt network access manager

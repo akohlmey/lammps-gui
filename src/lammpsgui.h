@@ -285,6 +285,11 @@ private slots:
     /** @brief Show about dialog */
     void about();
 
+#if defined(LAMMPS_GUI_USE_PLUGIN)
+    /** @brief Check for LAMMPS library updates */
+    void checkUpdate();
+#endif
+
     /** @brief Show context-sensitive help */
     void help();
 

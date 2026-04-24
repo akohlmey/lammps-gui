@@ -385,6 +385,14 @@ void LammpsGui::createAboutMenu()
     action->setShortcut(QKeySequence("Ctrl+Shift+T"));
     connect(action, &QAction::triggered, this, &LammpsGui::tutorialWeb);
     menu->addAction(action);
+
+#if defined(LAMMPS_GUI_USE_PLUGIN)
+    menu->addSeparator();
+    action = new QAction(QIcon(":/icons/lammps-plugin.png"), "Check for &LAMMPS update", this);
+    action->setShortcut(QKeySequence("Ctrl+Shift+U"));
+    connect(action, &QAction::triggered, this, &LammpsGui::checkUpdate);
+    menu->addAction(action);
+#endif
 }
 
 void LammpsGui::createStatusBar()
@@ -468,9 +476,9 @@ void LammpsGui::setupPlugin(QSettings &settings)
 
     // set platform specific paths, library file name,config directory, and filename patterns
     QStringList dirlist{"."};
+    const auto libName = getLammpsLibName();
 #if defined(Q_OS_MACOS)
     const QString pattern = QStringLiteral("LAMMPS shared library (liblammps*.dylib)");
-    const QString libName = QStringLiteral("liblammps.0.dylib");
     QStringList filter("liblammps*.dylib");
     dirlist.append(
         QString::fromLocal8Bit(qgetenv("DYLD_LIBRARY_PATH")).split(":", Qt::SkipEmptyParts));
@@ -479,13 +487,11 @@ void LammpsGui::setupPlugin(QSettings &settings)
                     "/Applications/LAMMPS.app/Contents/Frameworks"});
 #elif defined(Q_OS_WIN32)
     const QString pattern = QStringLiteral("LAMMPS shared library (liblammps*.dll)");
-    const QString libName = QStringLiteral("liblammps.dll");
     QStringList filter("liblammps*.dll");
     dirlist.append(QString::fromLocal8Bit(qgetenv("PATH")).split(";", Qt::SkipEmptyParts));
 #else
     // for Linux and other unix-like systems
     const QString pattern = QStringLiteral("LAMMPS shared library (liblammps*.so*)");
-    const QString libName = QStringLiteral("liblammps.so.0");
     QStringList filter("liblammps*.so*");
     dirlist.append(
         QString::fromLocal8Bit(qgetenv("LD_LIBRARY_PATH")).split(":", Qt::SkipEmptyParts));
@@ -529,34 +535,34 @@ void LammpsGui::setupPlugin(QSettings &settings)
             // remove key for path to the plugin so we won't get stuck in a loop reading a bad file
             settings.remove("plugin_path");
 
-            QMessageBox msgBox(this);
-            msgBox.setWindowTitle("LAMMPS-GUI - No LAMMPS Library");
-            msgBox.setWindowIcon(QIcon(GuiConstants::MAIN_ICON));
-            msgBox.setIcon(QMessageBox::Warning);
-            msgBox.setText("No suitable LAMMPS shared library found.");
-            msgBox.setInformativeText(
+            QMessageBox mb(this);
+            mb.setWindowTitle("LAMMPS-GUI - No LAMMPS Library");
+            mb.setWindowIcon(QIcon(GuiConstants::MAIN_ICON));
+            mb.setIcon(QMessageBox::Warning);
+            mb.setText("No suitable LAMMPS shared library found.");
+            mb.setInformativeText(
                 "<p align=\"justify\">Either the shared library path has been reset, the "
                 "configured or default library file was not found, or the selected library failed "
                 "to load.</p><p align=\"justify\">You may either download a pre-compiled LAMMPS "
                 "shared library file for your platform from the LAMMPS webserver, browse the "
                 "filesystem for a suitable LAMMPS library file, or exit LAMMPS-GUI now.</p>");
 
-            auto *downloadBtn = msgBox.addButton("Download Library...", QMessageBox::ApplyRole);
+            auto *downloadBtn = mb.addButton("Download Library...", QMessageBox::ApplyRole);
             downloadBtn->setIcon(QIcon(":/icons/download-file.png"));
-            auto *browseBtn = msgBox.addButton("Browse Filesystem...", QMessageBox::AcceptRole);
+            auto *browseBtn = mb.addButton("Browse Filesystem...", QMessageBox::AcceptRole);
             browseBtn->setIcon(QIcon(":/icons/document-open.png"));
-            auto *exitBtn = msgBox.addButton("Exit", QMessageBox::NoRole);
+            auto *exitBtn = mb.addButton("Exit", QMessageBox::NoRole);
             exitBtn->setIcon(QIcon(":/icons/application-exit.png"));
 
-            msgBox.setDefaultButton(downloadBtn);
-            msgBox.setEscapeButton(exitBtn);
-            msgBox.exec();
+            mb.setDefaultButton(downloadBtn);
+            mb.setEscapeButton(exitBtn);
+            mb.exec();
 
-            if (msgBox.clickedButton() == exitBtn) {
+            if (mb.clickedButton() == exitBtn) {
                 // we cannot use QApplication::exit() here since we are still in the constructor
                 exit(1);
 
-            } else if (msgBox.clickedButton() == browseBtn) {
+            } else if (mb.clickedButton() == browseBtn) {
                 QString pluginfile = QFileDialog::getOpenFileName(
                     this, "Select LAMMPS shared library to use", ".", pattern, nullptr,
                     QFileDialog::DontResolveSymlinks | QFileDialog::ReadOnly);
@@ -576,7 +582,7 @@ void LammpsGui::setupPlugin(QSettings &settings)
                 }
                 // user cancelled file dialog -> loop back to show the dialog again
 
-            } else if (msgBox.clickedButton() == downloadBtn) {
+            } else if (mb.clickedButton() == downloadBtn) {
                 // store in the same config directory where QSettings stores preferences
                 const auto configDir =
                     QStandardPaths::writableLocation(QStandardPaths::AppConfigLocation);
@@ -1251,26 +1257,26 @@ void LammpsGui::inspectFile(const QString &fileName)
     inspectList.append(ilist);
 
     if (file.size() > 262144000L) {
-        QMessageBox msg;
-        msg.setWindowTitle("  Warning:  Large Restart File  ");
-        msg.setWindowIcon(windowIcon());
-        msg.setText(QString("<center>The restart file ") + shortName + " is large</center>");
+        QMessageBox mb;
+        mb.setWindowTitle("  Warning:  Large Restart File  ");
+        mb.setWindowIcon(windowIcon());
+        mb.setText(QString("<center>The restart file ") + shortName + " is large</center>");
         QString details = "Inspecting the restart file %1 with LAMMPS-GUI may need an additional "
                           "%2 GB of free RAM (or more) to proceed";
-        msg.setDetailedText(details.arg(shortName).arg(file.size() / 134217728.0));
-        msg.setInformativeText("Do you want to continue?");
-        msg.setIcon(QMessageBox::Question);
-        msg.setStandardButtons(QMessageBox::Yes | QMessageBox::No);
-        msg.setDefaultButton(QMessageBox::No);
-        msg.setEscapeButton(QMessageBox::No);
-        msg.setFont(font());
+        mb.setDetailedText(details.arg(shortName).arg(file.size() / 134217728.0));
+        mb.setInformativeText("Do you want to continue?");
+        mb.setIcon(QMessageBox::Question);
+        mb.setStandardButtons(QMessageBox::Yes | QMessageBox::No);
+        mb.setDefaultButton(QMessageBox::No);
+        mb.setEscapeButton(QMessageBox::No);
+        mb.setFont(font());
 
-        auto *button = msg.button(QMessageBox::Yes);
+        auto *button = mb.button(QMessageBox::Yes);
         button->setIcon(QIcon(":/icons/dialog-ok.png"));
-        button = msg.button(QMessageBox::No);
+        button = mb.button(QMessageBox::No);
         button->setIcon(QIcon(":/icons/dialog-no.png"));
 
-        int rv = msg.exec();
+        int rv = mb.exec();
         switch (rv) {
             case QMessageBox::No:
                 return;
@@ -2127,13 +2133,75 @@ void LammpsGui::about()
     dialog.exec();
 }
 
+#if defined(LAMMPS_GUI_USE_PLUGIN)
+void LammpsGui::checkUpdate()
+{
+    const auto libName   = getLammpsLibName();
+    const auto configDir = QStandardPaths::writableLocation(QStandardPaths::AppConfigLocation);
+    auto libPath         = configDir + QDir::separator() + libName;
+    auto dlUrl           = QString("https://download.lammps.org/lammps-gui/%1").arg(libName);
+
+    if (!QFile::exists(libPath)) {
+        information(this, "Check for LAMMPS Update",
+                    "No pre-compiled LAMMPS library found in the configuration folder. "
+                    "Click on 'Download Library' in the plugin search dialog to download one.");
+        return;
+    }
+
+    URLDownloader downloader(this);
+    QString expectedHash = downloader.getRemoteChecksum(dlUrl);
+    if (expectedHash.isEmpty()) {
+        critical(this, "Check for LAMMPS Update", "Failed to retrieve remote checksum.",
+                 downloader.errorString());
+        return;
+    }
+
+    QString actualHash = URLDownloader::getLocalChecksum(libPath);
+    if (actualHash == expectedHash) {
+        information(this, "Check for LAMMPS Update",
+                    "Your downloaded LAMMPS shared library is up-to-date.");
+        return;
+    } else {
+        QMessageBox mb(this);
+        mb.setWindowTitle("Check for LAMMPS Shared Library Update");
+        mb.setText("An updated pre-compiled LAMMPS shared library is available. ");
+        mb.setInformativeText("Do you want to download it now?");
+        mb.setIcon(QMessageBox::Question);
+        mb.setStandardButtons(QMessageBox::Yes | QMessageBox::No);
+        mb.setWindowIcon(QIcon(GuiConstants::MAIN_ICON));
+        mb.setIconPixmap(QPixmap(":/icons/lammps-plugin.png").scaled(96, 96));
+
+        // customize button icons
+        auto *button = mb.button(QMessageBox::Yes);
+        button->setIcon(QIcon(":/icons/dialog-ok.png"));
+        button = mb.button(QMessageBox::No);
+        button->setIcon(QIcon(":/icons/dialog-no.png"));
+
+        if (mb.exec() == QMessageBox::Yes) {
+            if (downloader.download(dlUrl, libPath, true)) {
+                warning(this, "LAMMPS Shared Library Updated",
+                        "The latest LAMMPS library has been downloaded successfully. "
+                        "LAMMPS-GUI must be relaunched to activate it.");
+                const auto path = QCoreApplication::applicationFilePath().toStdString();
+                const auto arg0 = QCoreApplication::arguments().at(0).toStdString();
+                execl(path.c_str(), arg0.c_str(), (char *)nullptr);
+            } else {
+                critical(this, "Check for LAMMPS Update",
+                         "Failed to download LAMMPS shared library.", downloader.errorString());
+            }
+        }
+        return;
+    }
+}
+#endif
+
 void LammpsGui::help()
 {
-    QMessageBox msg(this);
-    msg.setWindowTitle("LAMMPS-GUI Quick Help");
-    msg.setWindowIcon(QIcon(GuiConstants::MAIN_ICON));
-    msg.setText("<div>This is LAMMPS-GUI version " LAMMPS_GUI_VERSION "</div>");
-    msg.setInformativeText(
+    QMessageBox mb(this);
+    mb.setWindowTitle("LAMMPS-GUI Quick Help");
+    mb.setWindowIcon(QIcon(GuiConstants::MAIN_ICON));
+    mb.setText("<div>This is LAMMPS-GUI version " LAMMPS_GUI_VERSION "</div>");
+    mb.setInformativeText(
         "<p>LAMMPS-GUI is a graphical text editor that is customized for "
         "editing LAMMPS input files and linked to the LAMMPS "
         "library and thus can run LAMMPS directly using the contents of the "
@@ -2178,12 +2246,12 @@ void LammpsGui::help()
         "accelerator packages and number of OpenMP threads. Due to its nature "
         "as a graphical application, it is <b>not</b> possible to use the "
         "LAMMPS-GUI in parallel with MPI.</p>");
-    msg.setIconPixmap(QPixmap(":/icons/lammps-gui-icon-128x128.png").scaled(64, 64));
-    msg.setStandardButtons(QMessageBox::Close);
-    auto *button = msg.button(QMessageBox::Close);
+    mb.setIconPixmap(QPixmap(":/icons/lammps-gui-icon-128x128.png").scaled(64, 64));
+    mb.setStandardButtons(QMessageBox::Close);
+    auto *button = mb.button(QMessageBox::Close);
     button->setIcon(QIcon(":/icons/window-close.png"));
-    msg.setFont(font());
-    msg.exec();
+    mb.setFont(font());
+    mb.exec();
 }
 
 void LammpsGui::manual()

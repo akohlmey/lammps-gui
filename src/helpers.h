@@ -41,6 +41,16 @@ extern int dateCompare(const QString &one, const QString &two);
 extern std::vector<std::string> splitLine(const std::string &text);
 
 /**
+ * @brief Provide standardized information dialog
+ * @param parent  Pointer to parent widget
+ * @param title   Information dialog title
+ * @param text1   Information message part 1
+ * @param text2   Information message part 2 (optional)
+ */
+extern void information(QWidget *parent, const QString &title, const QString &text1,
+                        const QString &text2 = QString());
+
+/**
  * @brief Provide standardized critical error dialog
  * @param parent  Pointer to parent widget
  * @param title   Error dialog title
@@ -64,7 +74,7 @@ extern void warning(QWidget *parent, const QString &title, const QString &text1,
  * @brief Provide platform specific name of a LAMMPS shared library
  * @return String with the filename or an empty string if compiled without plugin support
  */
-extern const QString &getLammpsLibName();
+extern QString getLammpsLibName();
 
 /**
  * @brief Save image directly or convert with ImageMagick

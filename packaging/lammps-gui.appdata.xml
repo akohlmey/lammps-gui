@@ -54,11 +54,14 @@
   </provides>
 
   <releases>
-    <release version="2.0.4" timestamp="1776131328">
+    <release version="2.0.5" timestamp="1776131328">
       <description>
         eliminate getMainWindow() function by passing pointer to main widget
+        add check-for-updates dialog to the About menu to download updated plugins
         expand list of shared library locations to search for Ubuntu/Debian and include config dir
         update list of test status badges in README and on homepage langing page
+        update list of commands for help and compute/fix support in dump image
+        add helper functions for information dialogs and shared library file names
         disable access to plot range sliders and plot style while simulation is running
         add new "Colors" dialog to ImageViewer that allows to edit, store, and load definitions for per-type colors
         add support for new hull_points keyword of LAMMPS versions newer than 30 March 2026 for regions so that union and intersect regions can be approximated for draw styles frame, filled, and transparent

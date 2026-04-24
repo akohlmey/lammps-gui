@@ -10,6 +10,7 @@
 ////////////////////////////////////////////////////////////////////////////////////////
 
 #include "helpers.h"
+#include "constants.h"
 
 #include <QAbstractButton>
 #include <QApplication>
@@ -187,6 +188,23 @@ std::vector<std::string> splitLine(const std::string &text)
     return list;
 }
 
+// customized information dialog
+
+void information(QWidget *parent, const QString &title, const QString &text1, const QString &text2)
+{
+    QMessageBox mb(parent);
+    mb.setWindowTitle(title);
+    mb.setText(text1);
+    if (!text2.isEmpty()) mb.setInformativeText(QString("<p>%1</p>").arg(text2));
+    mb.setIcon(QMessageBox::Information);
+    mb.setStandardButtons(QMessageBox::Close);
+    mb.setWindowIcon(QIcon(GuiConstants::MAIN_ICON));
+    // customize button icon
+    auto *button = mb.button(QMessageBox::Close);
+    button->setIcon(QIcon(":/icons/window-close.png"));
+    mb.exec();
+}
+
 // customized critical error dialog
 
 void critical(QWidget *parent, const QString &title, const QString &text1, const QString &text2)
@@ -223,7 +241,7 @@ void warning(QWidget *parent, const QString &title, const QString &text1, const 
 
 // platform specific shared library name
 
-const QString &getLammpsLibName()
+QString getLammpsLibName()
 {
 #if defined(LAMMPS_GUI_USE_PLUGIN)
 #if defined(Q_OS_MACOS)
@@ -355,23 +373,23 @@ bool isLightTheme()
 // standardized "Unsaved Changes" confirmation dialog
 int showUnsavedChangesDialog(QWidget *parent, const QString &filename, const QString &question)
 {
-    QMessageBox msg(parent);
-    msg.setWindowTitle("Unsaved Changes");
-    msg.setWindowIcon(parent ? parent->windowIcon() : QIcon());
-    msg.setText(QString("The buffer ") + filename + " has changes");
-    msg.setInformativeText(question);
-    msg.setIcon(QMessageBox::Question);
-    msg.setStandardButtons(QMessageBox::Yes | QMessageBox::No | QMessageBox::Cancel);
+    QMessageBox mb(parent);
+    mb.setWindowTitle("Unsaved Changes");
+    mb.setWindowIcon(parent ? parent->windowIcon() : QIcon());
+    mb.setText(QString("The buffer ") + filename + " has changes");
+    mb.setInformativeText(question);
+    mb.setIcon(QMessageBox::Question);
+    mb.setStandardButtons(QMessageBox::Yes | QMessageBox::No | QMessageBox::Cancel);
 
-    auto *button = msg.button(QMessageBox::Yes);
+    auto *button = mb.button(QMessageBox::Yes);
     button->setIcon(QIcon(":/icons/dialog-ok.png"));
-    button = msg.button(QMessageBox::No);
+    button = mb.button(QMessageBox::No);
     button->setIcon(QIcon(":/icons/dialog-no.png"));
-    button = msg.button(QMessageBox::Cancel);
+    button = mb.button(QMessageBox::Cancel);
     button->setIcon(QIcon(":/icons/dialog-cancel.png"));
 
-    if (parent) msg.setFont(parent->font());
-    return msg.exec();
+    if (parent) mb.setFont(parent->font());
+    return mb.exec();
 }
 
 // silence stdout by redirecting to the null device
