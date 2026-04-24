@@ -22,6 +22,7 @@ fix bond/react
 fix reaxff/bonds
 fix wall/srd
 compute hbond/local
+compute chunk/atom
 fix wall/harmonic
 fix wall/harmonic/outside
 fix wall/harmonic/returned
