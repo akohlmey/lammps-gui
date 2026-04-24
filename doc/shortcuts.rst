@@ -92,6 +92,12 @@ available (On macOS use the Command key instead of Ctrl/Control).
      - Context Help
      - Ctrl+Shift+T
      - LAMMPS Tutorial
+   * - Ctrl+Shift+U
+     - LAMMPS Update
+     - Ctrl+Home
+     - Go to Beginning
+     - Ctrl+End
+     - Go to End
 
 Further keybindings of the editor window `are documented with the Qt
 documentation
