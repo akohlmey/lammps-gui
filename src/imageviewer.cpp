@@ -752,6 +752,11 @@ void ImageViewer::readImageSettings()
     colormap       = settings.value("colormap", "BWR").toString();
     mapmin         = "auto";
     mapmax         = "auto";
+    ambientlight   = 0.0;
+    keylight       = 0.9;
+    filllight      = 0.45;
+    backlight      = 0.9;
+
     showatoms      = true;
     showbonds      = lammps->extractSetting("molecule_flag") == 1;
     showbodies     = true;
@@ -1263,12 +1268,12 @@ void ImageViewer::globalSettings()
     ssao->setChecked(usessao);
     layout->addWidget(ssao, idx, n++, 1, 1, Qt::AlignVCenter | Qt::AlignRight);
     auto *aoval = new QLineEdit(QString::number(ssaoval));
-    aoval->setValidator(new QDoubleValidator(0.0, 1.0, 5, this));
+    aoval->setValidator(transvalidator);
     aoval->setMaximumWidth(fwidth);
     layout->addWidget(aoval, idx, n++, 1, 1);
     layout->addWidget(new QLabel("Shiny: "), idx, n++, 1, 1, Qt::AlignVCenter | Qt::AlignRight);
     auto *shiny = new QLineEdit(QString::number(shinyfactor));
-    shiny->setValidator(new QDoubleValidator(0.0, 1.0, 5, this));
+    shiny->setValidator(transvalidator);
     shiny->setMaximumWidth(fwidth);
     layout->addWidget(shiny, idx++, n++, 1, 1);
 
@@ -1277,24 +1282,55 @@ void ImageViewer::globalSettings()
     layout->addWidget(new QLabel("X-direction: "), idx, n++, 1, 1,
                       Qt::AlignVCenter | Qt::AlignRight);
     auto *xval = new QLineEdit(QString::number(xcenter));
-    xval->setValidator(new QDoubleValidator(0.0, 1.0, 10, this));
+    xval->setValidator(transvalidator);
     xval->setMaximumWidth(fwidth);
     layout->addWidget(xval, idx, n++, 1, 1);
     layout->addWidget(new QLabel("Y-direction: "), idx, n++, 1, 1,
                       Qt::AlignVCenter | Qt::AlignRight);
     auto *yval = new QLineEdit(QString::number(ycenter));
-    yval->setValidator(new QDoubleValidator(0.0, 1.0, 10, this));
+    yval->setValidator(transvalidator);
     yval->setMaximumWidth(fwidth);
     layout->addWidget(yval, idx, n++, 1, 1);
     layout->addWidget(new QLabel("Z-direction: "), idx, n++, 1, 1,
                       Qt::AlignVCenter | Qt::AlignRight);
     auto *zval = new QLineEdit(QString::number(zcenter));
-    zval->setValidator(new QDoubleValidator(0.0, 1.0, 10, this));
+    zval->setValidator(transvalidator);
     zval->setMaximumWidth(fwidth);
     layout->addWidget(zval, idx++, n++, 1, 1);
 
     n = 0;
     layout->addWidget(new QHline, idx++, 0, 1, MAXCOLS);
+    auto *lightlayout = new QHBoxLayout;
+    lightlayout->setSpacing(LAYOUT_SPACING);
+    lightlayout->addWidget(new QLabel("Lights: "), 3, Qt::AlignLeft);
+    lightlayout->addWidget(new QLabel("Ambient: "), 2, Qt::AlignRight);
+    auto *ambient = new QLineEdit(QString::number(ambientlight));
+    ambient->setValidator(transvalidator);
+    ambient->setMaximumWidth(fwidth);
+    lightlayout->addWidget(ambient, 2);
+    lightlayout->addWidget(new QLabel("Key: "), 2, Qt::AlignRight);
+    auto *key = new QLineEdit(QString::number(keylight));
+    key->setValidator(transvalidator);
+    key->setMaximumWidth(fwidth);
+    lightlayout->addWidget(key, 2);
+    lightlayout->addWidget(new QLabel("Fill: "), 2, Qt::AlignRight);
+    auto *fill = new QLineEdit(QString::number(filllight));
+    fill->setValidator(transvalidator);
+    fill->setMaximumWidth(fwidth);
+    lightlayout->addWidget(fill, 2);
+    lightlayout->addWidget(new QLabel("Back: "), 2, Qt::AlignRight);
+    auto *back = new QLineEdit(QString::number(backlight));
+    back->setValidator(transvalidator);
+    back->setMaximumWidth(fwidth);
+    lightlayout->addWidget(back, 2);
+    // only allow modifying lights for LAMMPS versions after 30 March 2026
+    if (lammps->version() > 20260330) {
+        layout->addLayout(lightlayout, idx++, 0, 1, MAXCOLS, Qt::AlignHCenter);
+        layout->addWidget(new QHline, idx++, 0, 1, MAXCOLS);
+    }
+
+    n = 0;
+
     auto *bottomlayout = new QHBoxLayout;
     bottomlayout->setSpacing(LAYOUT_SPACING);
     auto *cancel = new QPushButton(QIcon(":/icons/dialog-cancel.png"), "&Cancel");
@@ -1366,6 +1402,11 @@ void ImageViewer::globalSettings()
     if (xval->hasAcceptableInput()) xcenter = xval->text().toDouble();
     if (yval->hasAcceptableInput()) ycenter = yval->text().toDouble();
     if (zval->hasAcceptableInput()) zcenter = zval->text().toDouble();
+
+    if (ambient->hasAcceptableInput()) ambientlight = ambient->text().toDouble();
+    if (key->hasAcceptableInput()) keylight = key->text().toDouble();
+    if (fill->hasAcceptableInput()) filllight = fill->text().toDouble();
+    if (back->hasAcceptableInput()) backlight = back->text().toDouble();
 
     // update image with new settings
     createImage();
@@ -3054,6 +3095,12 @@ void ImageViewer::createImage()
     dumpcmd += QString(" boxtrans %1").arg(boxtrans);
     dumpcmd += QString(" atrans * %1").arg(atomtrans);
     if (lammps->extractSetting("bond_flag") == 1) dumpcmd += QString(" btrans * %1").arg(atomtrans);
+    if (lammps->version() > 20260330)
+        dumpcmd += QString(" lights %1 %2 %3 %4")
+                       .arg(ambientlight)
+                       .arg(keylight)
+                       .arg(filllight)
+                       .arg(backlight);
 
     if (useelements) dumpcmd += blank + elements + blank + adiams + blank;
     if (usesigma) dumpcmd += blank + adiams + blank;
