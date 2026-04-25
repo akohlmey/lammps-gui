@@ -134,15 +134,18 @@ Color customizations
 --------------------
 
 LAMMPS-GUI uses two lists of colors.  The first are the per-type atom
-colors that can be customized from an initial assignment from a built in
-list.  This list is maintained by LAMMPS-GUI and information from them
-is passed to LAMMPS via LAMMPS commands while creating colors named
-"type#" where '#' is the atom type number.  These color definitions can
-also be written to and loaded from JSON files.  The second is the list
-of named colors that are maintained by the *dump image* command in
+colors that can be customized from a built-in initial assignment.  This
+list is maintained by LAMMPS-GUI and information from them is passed to
+LAMMPS via LAMMPS commands while creating colors named "type#" where '#'
+is the atom type number.  These color definitions can also be written to
+and loaded from :ref:`JSON files <json_format>`.  Recent LAMMPS versions
+have a `dump_modify loadcolors
+<https://docs.lammps.org/dump_image.html>`_ and *savecolors* command
+that can read and write files in the same format.  The second is the
+list of named colors that are maintained by the *dump image* command in
 LAMMMPS.  LAMMPS-GUI has the list of predefined color names and may
 define additional colors as needed, but will give them names that are
-specific to LAMMPS-GUI and not attempt to overwrite any of the
+specific to LAMMPS-GUI and does not attempt to overwrite any of the
 predefined colors.
 
 -----------
@@ -185,16 +188,18 @@ The **menu bar row** has:
      :doc:`text editor window <editor>` or some other text editor.  This
      allows the current visualization settings to be reproduced during a
      simulation run, including in the :ref:`slide show viewer <slideshow>`.
-   - **Load Colors from JSON File...**: Load a list of definitions for
-     per-type colors from a `JSON format <https://www.json.org/>`_ file.
-     The list may contain either more or fewer definitions than the
+   - **Load Colors/Lights from JSON File...**: Load a list of
+     definitions for per-type colors and settings for the four light
+     sources from a :ref:`JSON format file <json_format>`.  The list of
+     colors may contain either more or fewer definitions than the
      current system has atom types. In the latter case the colors "wrap
      around", that is colors are read from the list multiple times.
-   - **Save Colors to JSON File...**: Save the currently used list of
-     definitions for per-type colors to a `JSON format
-     <https://www.json.org/>`_ file.  The list may be loaded later to
-     restore a previous color assignment, since the list of colors is
-     reset when the Image Viewer dialog is restarted.
+   - **Save Colors/Lights to JSON File...**: Save the currently used
+     list of definitions for per-type colors and the current lighting
+     settings to a :ref:`JSON format file <json_format>`.  The list may
+     be loaded later to restore a previous color and lighting
+     assignment, since these settings are reset when the Image Viewer
+     dialog is restarted.
    - **Reset Colors**: Reset the list of per-type colors to a compiled
      in default list.
    - **Close** (`Ctrl-W`): Close the Image Viewer window.
@@ -213,31 +218,6 @@ The **menu bar row** has:
 - The **Height** spin box, where the image height can be set.  It can
   be accessed using the `Alt-H` keyboard shortcut.
 
-.. admonition:: JSON file format for color definitions
-
-  The JSON file for the color has the following format. An object
-  "colors" is composed of a list of color definitions with three entries
-  each: "red", "green", and "blue" that have the value of the
-  corresponding color component given as a floating point number in the
-  range from 0.0 to 1.0 inclusive.  Here is an example with just two
-  colors (red and green):
-
-  .. code-block:: JSON
-
-     {
-         "colors": [
-            {
-                "blue": 0,
-                "green": 0,
-                "red": 0.9
-            },
-            {
-                "blue": 0,
-                "green": 0.9,
-                "red": 0
-            }
-         ]
-     }
 
 The **toolbar buttons** row below the menu bar provide quick access to
 several rendering options and view manipulations.  From left to right
@@ -413,6 +393,21 @@ The dialog is organized into the following sections:
    - **X-direction**, **Y-direction**, **Z-direction**: Fractional
      coordinates (range: 0.0 -- 1.0) specifying the center of the
      view relative to the simulation box.
+
+**Lighting**
+   Adjusts the settings for the four light sources used in the
+   rendering.  Each value is a floating point number (range: 0.0 -- 1.0)
+   representing the intensity of the respective light source.
+
+   - **Ambient**: The intensity of the uniform, non-directional base
+     lighting that illuminates all parts of the scene equally.
+   - **Key**: The intensity of the primary, directional light source
+     that provides the main illumination and highlights.
+   - **Fill**: The intensity of the secondary directional light source
+     that fills in the shadows created by the key light.
+   - **Back**: The intensity of the tertiary directional light source
+     that illuminates the back of the objects, helping to separate
+     them from the background.
 
 Press **Apply** to apply the current settings and re-render the image,
 or **Cancel** to discard changes.  The **Help** button opens the LAMMPS
@@ -729,9 +724,60 @@ With the "Load from JSON" button a list of definitions for per-type
 colors is loaded from a `JSON format <https://www.json.org/>`_ file.
 The list may contain either more or fewer definitions than the current
 system has atom types.  The "Save to JSON" button instead saves the
-edited list of definitions to a `JSON format <https://www.json.org/>`_
-file.  The list may be loaded later to restore a previous color
-assignment.
+edited list of definitions to a file.  The list may be loaded later to
+restore a previous color assignment.
+
+.. _json_format:
+
+.. admonition:: JSON file format for colors and lighting definitions
+
+  The `JSON format <https://www.json.org/>`_ file for color and lighting
+  definitions has the following structure and is compatible with the
+  format used by the LAMMPS commands `dump_modify savecolors
+  <https://docs.lammps.org/dump_image.html>`_ and `dump_modify
+  loadcolors <https://docs.lammps.org/dump_image.html>`_.  The file can
+  be validated with the JSON schema file at
+  https://download.lammps.org/json/color-schema.json.
+
+  The "application", "format", "revision" entries are *required* and are
+  checked for on reading so that files without them are rejected.  Also
+  the "colors" list is *required* with color definitions of three
+  entries each: "red", "green", and "blue" that have the value of the
+  corresponding color component given as a floating point number in the
+  range from 0.0 to 1.0 inclusive.  The "lights" object is *optional*
+  (LAMMPS-GUI will display a warning if it is missing) and contains the
+  intensity settings for the four light sources: "ambient", "key",
+  "fill", and "back" also in the range from 0.0 to 1.0 inclusive.
+
+  Here is an example with just two colors (red and green) and default
+  lighting settings:
+
+  .. code-block:: JSON
+
+     {
+         "application": "LAMMPS",
+         "format": "colors",
+         "revision": 1,
+         "schema": "https://download.lammps.org/json/color-schema.json",
+         "colors": [
+            {
+                "blue": 0,
+                "green": 0,
+                "red": 0.9
+            },
+            {
+                "blue": 0,
+                "green": 0.9,
+                "red": 0
+            }
+         ],
+         "lights": {
+            "ambient": 0.2,
+            "back": 0.4,
+            "fill": 0.4,
+            "key": 0.4
+         }
+     }
 
 --------------
 
