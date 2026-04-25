@@ -69,8 +69,8 @@ bool URLDownloader::download(const QString &url, const QString &file, bool showD
             dlg->setWindowTitle("Downloading...");
             dlg->setMinimumWidth(400);
             auto *hlayout = new QHBoxLayout(dlg);
-            auto *pixmap = new QLabel();
-            pixmap->setPixmap(QPixmap(":/icons/lammps-plugin.png").scaled(96,96));
+            auto *pixmap  = new QLabel();
+            pixmap->setPixmap(QPixmap(":/icons/lammps-plugin.png").scaled(96, 96));
             hlayout->addWidget(pixmap);
             auto *vlayout = new QVBoxLayout();
             vlayout->addWidget(new QLabel(QString("<b>Downloading:</b><br>%1").arg(url)));

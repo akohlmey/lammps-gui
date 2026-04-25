@@ -46,7 +46,6 @@
 #include <QLinearGradient>
 #include <QMenu>
 #include <QMenuBar>
-#include <QMessageBox>
 #include <QPainter>
 #include <QPalette>
 #include <QPixmap>
@@ -2421,88 +2420,87 @@ void ImageViewer::colorSettings()
     });
 
     // Connect Load JSON button: read a JSON file and update dialog widgets
-    connect(
-        loadJson, &QPushButton::released, &colorview, [&colorview, layout, colorstart, numtypes]() {
-            QString fileName = QFileDialog::getOpenFileName(&colorview, "Load Colors from JSON", "",
-                                                            "JSON files (*.json);;All files (*)");
-            if (fileName.isEmpty()) return;
+    connect(loadJson, &QPushButton::released, &colorview,
+            [&colorview, layout, colorstart, numtypes]() {
+                QString fileName = QFileDialog::getOpenFileName(
+                    &colorview, "Load Colors from JSON", "", "JSON files (*.json);;All files (*)");
+                if (fileName.isEmpty()) return;
 
-            QFile file(fileName);
-            if (!file.open(QIODevice::ReadOnly)) {
-                QMessageBox::warning(&colorview, "Load Colors", "Could not open file for reading.");
-                return;
-            }
-            QJsonParseError err;
-            auto doc = QJsonDocument::fromJson(file.readAll(), &err);
-            if (doc.isNull() || !doc.isObject()) {
-                QMessageBox::warning(&colorview, "Load Colors",
-                                     "Invalid JSON file: " + err.errorString());
-                return;
-            }
-            auto arr = doc.object().value("colors").toArray();
-            if (arr.isEmpty()) {
-                QMessageBox::warning(&colorview, "Load Colors",
-                                     "JSON file contains no color entries.");
-                return;
-            }
+                QFile file(fileName);
+                if (!file.open(QIODevice::ReadOnly)) {
+                    warning(&colorview, "Load Colors", "Could not open file for reading.");
+                    return;
+                }
+                QJsonParseError err;
+                auto doc = QJsonDocument::fromJson(file.readAll(), &err);
+                if (doc.isNull() || !doc.isObject()) {
+                    warning(&colorview, "Load Colors", "Invalid JSON file: " + err.errorString());
+                    return;
+                }
+                auto arr = doc.object().value("colors").toArray();
+                if (arr.isEmpty()) {
+                    warning(&colorview, "Load Colors", "JSON file contains no color entries.");
+                    return;
+                }
 
-            for (int i = 1; i <= numtypes; ++i) {
-                auto obj = arr[(i - 1) % arr.size()].toObject();
-                double r = std::clamp(obj.value("red").toDouble(1.0), 0.0, 1.0);
-                double g = std::clamp(obj.value("green").toDouble(1.0), 0.0, 1.0);
-                double b = std::clamp(obj.value("blue").toDouble(1.0), 0.0, 1.0);
+                for (int i = 1; i <= numtypes; ++i) {
+                    auto obj = arr[(i - 1) % arr.size()].toObject();
+                    double r = std::clamp(obj.value("red").toDouble(1.0), 0.0, 1.0);
+                    double g = std::clamp(obj.value("green").toDouble(1.0), 0.0, 1.0);
+                    double b = std::clamp(obj.value("blue").toDouble(1.0), 0.0, 1.0);
 
-                auto *iconItem = layout->itemAtPosition(i + colorstart, 1);
-                if (auto *lbl = qobject_cast<QLabel *>(iconItem ? iconItem->widget() : nullptr))
-                    lbl->setPixmap(color_icon(QColor::fromRgbF(r, g, b)));
+                    auto *iconItem = layout->itemAtPosition(i + colorstart, 1);
+                    if (auto *lbl = qobject_cast<QLabel *>(iconItem ? iconItem->widget() : nullptr))
+                        lbl->setPixmap(color_icon(QColor::fromRgbF(r, g, b)));
 
-                auto *item = layout->itemAtPosition(i + colorstart, 2);
-                if (auto *w = qobject_cast<QLineEdit *>(item ? item->widget() : nullptr))
-                    w->setText(QString::number(r, 'f', 3));
-                item = layout->itemAtPosition(i + colorstart, 3);
-                if (auto *w = qobject_cast<QLineEdit *>(item ? item->widget() : nullptr))
-                    w->setText(QString::number(g, 'f', 3));
-                item = layout->itemAtPosition(i + colorstart, 4);
-                if (auto *w = qobject_cast<QLineEdit *>(item ? item->widget() : nullptr))
-                    w->setText(QString::number(b, 'f', 3));
-            }
-        });
+                    auto *item = layout->itemAtPosition(i + colorstart, 2);
+                    if (auto *w = qobject_cast<QLineEdit *>(item ? item->widget() : nullptr))
+                        w->setText(QString::number(r, 'f', 3));
+                    item = layout->itemAtPosition(i + colorstart, 3);
+                    if (auto *w = qobject_cast<QLineEdit *>(item ? item->widget() : nullptr))
+                        w->setText(QString::number(g, 'f', 3));
+                    item = layout->itemAtPosition(i + colorstart, 4);
+                    if (auto *w = qobject_cast<QLineEdit *>(item ? item->widget() : nullptr))
+                        w->setText(QString::number(b, 'f', 3));
+                }
+            });
 
     // Connect Save JSON button: read current dialog widget values and save to JSON
-    connect(
-        saveJson, &QPushButton::released, &colorview, [&colorview, layout, colorstart, numtypes]() {
-            QString fileName = QFileDialog::getSaveFileName(&colorview, "Save Colors to JSON", "",
-                                                            "JSON files (*.json);;All files (*)");
-            if (fileName.isEmpty()) return;
+    connect(saveJson, &QPushButton::released, &colorview,
+            [&colorview, layout, colorstart, numtypes]() {
+                QString fileName = QFileDialog::getSaveFileName(
+                    &colorview, "Save Colors to JSON", "", "JSON files (*.json);;All files (*)");
+                if (fileName.isEmpty()) return;
 
-            QJsonArray arr;
-            for (int i = 1; i <= numtypes; ++i) {
-                double r = 1.0, g = 1.0, b = 1.0;
-                auto *item = layout->itemAtPosition(i + colorstart, 2);
-                if (auto *w = qobject_cast<QLineEdit *>(item ? item->widget() : nullptr))
-                    if (w->hasAcceptableInput()) r = w->text().toDouble();
-                item = layout->itemAtPosition(i + colorstart, 3);
-                if (auto *w = qobject_cast<QLineEdit *>(item ? item->widget() : nullptr))
-                    if (w->hasAcceptableInput()) g = w->text().toDouble();
-                item = layout->itemAtPosition(i + colorstart, 4);
-                if (auto *w = qobject_cast<QLineEdit *>(item ? item->widget() : nullptr))
-                    if (w->hasAcceptableInput()) b = w->text().toDouble();
-                QJsonObject obj;
-                obj["red"]   = r;
-                obj["green"] = g;
-                obj["blue"]  = b;
-                arr.append(obj);
-            }
-            QJsonObject root;
-            root["colors"] = arr;
+                QJsonArray arr;
+                for (int i = 1; i <= numtypes; ++i) {
+                    double r = 1.0, g = 1.0, b = 1.0;
+                    auto *item = layout->itemAtPosition(i + colorstart, 2);
+                    if (auto *w = qobject_cast<QLineEdit *>(item ? item->widget() : nullptr))
+                        if (w->hasAcceptableInput()) r = w->text().toDouble();
+                    item = layout->itemAtPosition(i + colorstart, 3);
+                    if (auto *w = qobject_cast<QLineEdit *>(item ? item->widget() : nullptr))
+                        if (w->hasAcceptableInput()) g = w->text().toDouble();
+                    item = layout->itemAtPosition(i + colorstart, 4);
+                    if (auto *w = qobject_cast<QLineEdit *>(item ? item->widget() : nullptr))
+                        if (w->hasAcceptableInput()) b = w->text().toDouble();
+                    QJsonObject obj;
+                    obj["red"]   = r;
+                    obj["green"] = g;
+                    obj["blue"]  = b;
+                    arr.append(obj);
+                }
+                QJsonObject root;
+                root["colors"] = arr;
 
-            QFile file(fileName);
-            if (!file.open(QIODevice::WriteOnly)) {
-                QMessageBox::warning(&colorview, "Save Colors", "Could not open file for writing.");
-                return;
-            }
-            file.write(QJsonDocument(root).toJson());
-        });
+                QFile file(fileName);
+                if (!file.open(QIODevice::WriteOnly)) {
+                    warning(&colorview, "Save Colors",
+                            "Could not open file '" + fileName + "' for writing.");
+                    return;
+                }
+                file.write(QJsonDocument(root).toJson());
+            });
 
     bottomlayout->addWidget(cancel, Qt::AlignHCenter);
     bottomlayout->addWidget(apply, Qt::AlignHCenter);
@@ -2587,18 +2585,18 @@ void ImageViewer::loadColors()
 
     QFile file(fileName);
     if (!file.open(QIODevice::ReadOnly)) {
-        QMessageBox::warning(this, "Load Colors", "Could not open file for reading.");
+        warning(this, "Load Colors", "Could not open file '" + fileName + "' for reading.");
         return;
     }
     QJsonParseError err;
     auto doc = QJsonDocument::fromJson(file.readAll(), &err);
     if (doc.isNull() || !doc.isObject()) {
-        QMessageBox::warning(this, "Load Colors", "Invalid JSON file: " + err.errorString());
+        warning(this, "Load Colors", "Invalid JSON file '" + fileName + "': " + err.errorString());
         return;
     }
     auto arr = doc.object().value("colors").toArray();
     if (arr.isEmpty()) {
-        QMessageBox::warning(this, "Load Colors", "JSON file contains no color entries.");
+        warning(this, "Load Colors", "JSON file '" + fileName + "' contains no color entries.");
         return;
     }
 
@@ -2633,7 +2631,7 @@ void ImageViewer::saveColors()
 
     QFile file(fileName);
     if (!file.open(QIODevice::WriteOnly)) {
-        QMessageBox::warning(this, "Save Colors", "Could not open file for writing.");
+        warning(this, "Save Colors", "Could not open file '" + fileName + "'for writing.");
         return;
     }
     file.write(QJsonDocument(root).toJson());

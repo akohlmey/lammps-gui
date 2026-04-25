@@ -38,7 +38,6 @@
 #include <QIntValidator>
 #include <QLabel>
 #include <QLineEdit>
-#include <QMessageBox>
 #include <QPushButton>
 #include <QRadioButton>
 #include <QSettings>

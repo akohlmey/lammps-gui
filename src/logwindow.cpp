@@ -28,7 +28,6 @@
 #include <QKeySequence>
 #include <QLabel>
 #include <QMenu>
-#include <QMessageBox>
 #include <QPushButton>
 #include <QRegularExpression>
 #include <QSettings>

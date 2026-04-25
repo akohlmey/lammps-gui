@@ -536,16 +536,16 @@ void LammpsGui::setupPlugin(QSettings &settings)
             settings.remove("plugin_path");
 
             QMessageBox mb(this);
-            mb.setWindowTitle("LAMMPS-GUI - No LAMMPS Library");
+            mb.setWindowTitle("LAMMPS-GUI - No LAMMPS Shared Library");
             mb.setWindowIcon(QIcon(GuiConstants::MAIN_ICON));
-            mb.setIcon(QMessageBox::Warning);
+            mb.setIconPixmap(QPixmap(":/icons/lammps-plugin.png").scaled(96, 96));
             mb.setText("No suitable LAMMPS shared library found.");
             mb.setInformativeText(
                 "<p align=\"justify\">Either the shared library path has been reset, the "
                 "configured or default library file was not found, or the selected library failed "
-                "to load.</p><p align=\"justify\">You may either download a pre-compiled LAMMPS "
-                "shared library file for your platform from the LAMMPS webserver, browse the "
-                "filesystem for a suitable LAMMPS library file, or exit LAMMPS-GUI now.</p>");
+                "to load.</p><p align=\"justify\">You may now either download a pre-compiled LAMMPS"
+                " shared library file for your platform from the LAMMPS webserver, browse the "
+                "filesystem for a suitable LAMMPS library file, or exit LAMMPS-GUI.</p>");
 
             auto *downloadBtn = mb.addButton("Download Library...", QMessageBox::ApplyRole);
             downloadBtn->setIcon(QIcon(":/icons/download-file.png"));
@@ -2144,7 +2144,7 @@ void LammpsGui::checkUpdate()
     if (!QFile::exists(libPath)) {
         information(this, "Check for LAMMPS Update",
                     "No pre-compiled LAMMPS library found in the configuration folder. "
-                    "Click on 'Download Library' in the plugin search dialog to download one.");
+                    "Click on 'Download Library' in the preferences dialog to download one.");
         return;
     }
 
