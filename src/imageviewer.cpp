@@ -1378,23 +1378,35 @@ void ImageViewer::globalSettings()
     lightlayout->setSpacing(LAYOUT_SPACING);
     lightlayout->addWidget(new QLabel("Lights: "), 3, Qt::AlignLeft);
     lightlayout->addWidget(new QLabel("Ambient: "), 2, Qt::AlignRight);
-    auto *ambient = new QLineEdit(QString::number(ambientlight));
-    ambient->setValidator(transvalidator);
+    auto *ambient = new QDoubleSpinBox;
+    ambient->setObjectName("ambient");
+    ambient->setRange(0.0, 1.0);
+    ambient->setSingleStep(0.05);
+    ambient->setValue(ambientlight);
     ambient->setMaximumWidth(fwidth);
     lightlayout->addWidget(ambient, 2);
     lightlayout->addWidget(new QLabel("Key: "), 2, Qt::AlignRight);
-    auto *key = new QLineEdit(QString::number(keylight));
-    key->setValidator(transvalidator);
+    auto *key = new QDoubleSpinBox;
+    key->setObjectName("key");
+    key->setRange(0.0, 1.0);
+    key->setSingleStep(0.05);
+    key->setValue(keylight);
     key->setMaximumWidth(fwidth);
     lightlayout->addWidget(key, 2);
     lightlayout->addWidget(new QLabel("Fill: "), 2, Qt::AlignRight);
-    auto *fill = new QLineEdit(QString::number(filllight));
-    fill->setValidator(transvalidator);
+    auto *fill = new QDoubleSpinBox;
+    fill->setObjectName("fill");
+    fill->setRange(0.0, 1.0);
+    fill->setSingleStep(0.05);
+    fill->setValue(filllight);
     fill->setMaximumWidth(fwidth);
     lightlayout->addWidget(fill, 2);
     lightlayout->addWidget(new QLabel("Back: "), 2, Qt::AlignRight);
-    auto *back = new QLineEdit(QString::number(backlight));
-    back->setValidator(transvalidator);
+    auto *back = new QDoubleSpinBox;
+    back->setObjectName("back");
+    back->setRange(0.0, 1.0);
+    back->setSingleStep(0.05);
+    back->setValue(backlight);
     back->setMaximumWidth(fwidth);
     lightlayout->addWidget(back, 2);
     // only allow modifying lights for LAMMPS versions after 30 March 2026
@@ -1477,10 +1489,10 @@ void ImageViewer::globalSettings()
     if (yval->hasAcceptableInput()) ycenter = yval->text().toDouble();
     if (zval->hasAcceptableInput()) zcenter = zval->text().toDouble();
 
-    if (ambient->hasAcceptableInput()) ambientlight = ambient->text().toDouble();
-    if (key->hasAcceptableInput()) keylight = key->text().toDouble();
-    if (fill->hasAcceptableInput()) filllight = fill->text().toDouble();
-    if (back->hasAcceptableInput()) backlight = back->text().toDouble();
+    ambientlight = ambient->value();
+    keylight     = key->value();
+    filllight    = fill->value();
+    backlight    = back->value();
 
     // update image with new settings
     createImage();
