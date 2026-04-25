@@ -23,6 +23,7 @@
 #include <QCheckBox>
 #include <QClipboard>
 #include <QColor>
+#include <QColorDialog>
 #include <QDesktopServices>
 #include <QDir>
 #include <QDoubleValidator>
@@ -2478,14 +2479,14 @@ void ImageViewer::colorSettings()
         t->setAlignment(Qt::AlignRight);
         layout->addWidget(t, idx, n++, Qt::AlignHCenter);
 
-        auto *icon = new QLabel("");
-        icon->setPixmap(color_icon(QColor::fromRgbF(red, green, blue)));
-        icon->setFrameStyle(QFrame::Panel | QFrame::Raised);
-
+        auto *icon = new QPushButton("");
+        icon->setIcon(color_icon(QColor::fromRgbF(red, green, blue)));
         auto iconhint = icon->minimumSizeHint();
+        auto isize    = iconhint.height();
+        iconhint.setWidth(isize);
+        icon->setIconSize(QSize(isize - 4, isize - 4));
         icon->setMinimumSize(iconhint);
         icon->setMaximumSize(iconhint);
-
         layout->addWidget(icon, idx, n++, Qt::AlignHCenter);
 
         auto *r = new QLineEdit(QString::number(red, 'f', 3));
@@ -2505,6 +2506,19 @@ void ImageViewer::colorSettings()
         b->setFixedSize(metrics.averageCharWidth() * 8, metrics.height() + 4);
         b->setObjectName(QString("blue%1").arg(i + 1));
         layout->addWidget(b, idx++, n++);
+
+        connect(icon, &QPushButton::released, [=, &colorview]() {
+            QColor initialColor =
+                QColor::fromRgbF(r->text().toDouble(), g->text().toDouble(), b->text().toDouble());
+            QColor selectedColor =
+                QColorDialog::getColor(initialColor, &colorview, "Select Atom Type Color");
+            if (selectedColor.isValid()) {
+                r->setText(QString::number(selectedColor.redF(), 'f', 3));
+                g->setText(QString::number(selectedColor.greenF(), 'f', 3));
+                b->setText(QString::number(selectedColor.blueF(), 'f', 3));
+                icon->setIcon(color_icon(selectedColor));
+            }
+        });
     }
 
     auto *scrollWidget = new QWidget;
