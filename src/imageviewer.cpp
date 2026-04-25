@@ -399,7 +399,7 @@ ImageViewer::ImageViewer(const QString &fileName, LammpsWrapper *_lammps, Lammps
     if (image_styles.open(QIODevice::ReadOnly | QIODevice::Text)) {
         while (!image_styles.atEnd()) {
             auto line  = QString(image_styles.readLine());
-            auto words = line.trimmed().replace('\t', ' ').split(' ');
+            auto words = line.trimmed().split(QRegularExpression("\\s+"), Qt::SkipEmptyParts);
             if (words.size() == 2) {
                 if (words.at(0) == "compute") {
                     image_computes << words.at(1);
@@ -420,7 +420,7 @@ ImageViewer::ImageViewer(const QString &fileName, LammpsWrapper *_lammps, Lammps
     if (help_index.open(QIODevice::ReadOnly | QIODevice::Text)) {
         while (!help_index.atEnd()) {
             auto line  = QString(help_index.readLine());
-            auto words = line.trimmed().replace('\t', ' ').split(' ');
+            auto words = line.trimmed().split(QRegularExpression("\\s+"), Qt::SkipEmptyParts);
             if (words.size() == 3) {
                 if (words.at(1) == "fix") {
                     if (image_fixes.contains(words.at(2))) fix_map[words.at(2)] = words.at(0);

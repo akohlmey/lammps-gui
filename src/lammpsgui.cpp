@@ -1097,7 +1097,7 @@ void LammpsGui::updateVariables()
         }
 
         // now split line into words and search for use of undefined variables
-        auto words = line.split(' ');
+        auto words = line.split(' ', Qt::SkipEmptyParts);
         for (const auto &word : words) {
             auto use = usevar.match(word);
             auto ref = refvar.match(word);
@@ -2625,7 +2625,7 @@ void LammpsGui::startLammps()
         if (!name.isEmpty() && !value.isEmpty()) {
             lammpsArgs.push_back("-var");
             lammpsArgs.push_back(name.toStdString());
-            for (const auto &v : value.split(' '))
+            for (const auto &v : value.split(' ', Qt::SkipEmptyParts))
                 lammpsArgs.push_back(v.toStdString());
         }
     }

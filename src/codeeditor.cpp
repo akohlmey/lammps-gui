@@ -89,8 +89,9 @@ CodeEditor::CodeEditor(QWidget *parent) :
     if (help_index.open(QIODevice::ReadOnly | QIODevice::Text)) {
         while (!help_index.atEnd()) {
             auto line  = QString(help_index.readLine());
-            auto words = line.trimmed().replace('\t', ' ').split(' ');
+            auto words = line.trimmed().split(QRegularExpression("\\s+"), Qt::SkipEmptyParts);
             if (words.size() > 2) {
+
                 if (words.at(1) == "pair_style") {
                     pairMap[words.at(2)] = words.at(0);
                 } else if (words.at(1) == "bond_style") {
@@ -649,7 +650,7 @@ void CodeEditor::contextMenuEvent(QContextMenuEvent *event)
         connect(action, &QAction::triggered, this, &CodeEditor::openHelp);
         // if we link to help with specific styles (fix, compute, pair, bond, ...)
         // also link to the docs for the primary command
-        auto words = help.split(' ');
+        auto words = help.split(' ', Qt::SkipEmptyParts);
         if (words.size() > 1) {
             help = words.at(0);
             page = words.at(0);
@@ -1127,7 +1128,7 @@ void CodeEditor::findHelp(QString &page, QString &help)
 
     // could not find a matching "style", now try the plain command
     if (page.isEmpty() && !text.isEmpty()) {
-        auto cmd = text.split(' ').at(0);
+        auto cmd = text.section(' ', 0, 0);
         help     = cmd;
         page     = cmdMap.value(cmd, QString());
     }

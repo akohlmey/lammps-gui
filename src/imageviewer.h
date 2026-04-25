@@ -101,8 +101,8 @@ private slots:
     void regionSettings();    ///< Configure region display
     void colorSettings();     ///< Customize colors
     void resetColors();       ///< Restore original color list
-    void loadColors();        ///< Load color list from JSON file
-    void saveColors();        ///< Save color list to JSON file
+    void loadColors();        ///< Load colors and lighting from JSON file
+    void saveColors();        ///< Save colors and lighting to JSON file
     void changeGroup(int);    ///< Change atom group selection
     void changeMolecule(int); ///< Change molecule selection
 
