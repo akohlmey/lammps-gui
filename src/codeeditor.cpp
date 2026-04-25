@@ -161,12 +161,11 @@ void CodeEditor::setCursor(int block)
 {
     // move cursor to given position
     auto cursor = textCursor();
-    int moves   = block - cursor.blockNumber();
-    if (moves < 0)
-        cursor.movePosition(QTextCursor::Up, QTextCursor::MoveAnchor, -moves);
-    else
-        cursor.movePosition(QTextCursor::Down, QTextCursor::MoveAnchor, moves);
-    setTextCursor(cursor);
+    auto bl     = document()->findBlockByNumber(block);
+    if (bl.isValid()) {
+        cursor.setPosition(bl.position());
+        setTextCursor(cursor);
+    }
 }
 
 void CodeEditor::setHighlight(int block, bool error)
