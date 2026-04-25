@@ -11,6 +11,7 @@
 
 #include "lammpswrapper.h"
 
+#include "constants.h"
 #include "helpers.h"
 
 #if defined(LAMMPS_GUI_USE_PLUGIN)
@@ -576,7 +577,7 @@ bool LammpsWrapper::loadLib(const char *libfile)
     if (ptr) lmpversion = ptr;
 
     // found a suitable version
-    if (!lmpversion.isEmpty() && (dateCompare(lmpversion, "30 Mar 2026") >= 0)) return true;
+    if (!lmpversion.isEmpty() && (dateCompare(lmpversion, GuiConstants::MIN_LAMMPS_VERSION_STR) >= 0)) return true;
     return false;
 }
 #else
