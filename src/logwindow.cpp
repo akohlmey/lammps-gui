@@ -39,6 +39,7 @@
 namespace {
 constexpr auto YAML_REGEX = R"(^(keywords:.*$|data:$|---$|\.\.\.$|  - \[.*\]$))";
 constexpr auto URL_REGEX  = "^.*(https://docs.lammps.org/err[0-9]+).*$";
+QRegularExpression is_yaml(YAML_REGEX, QRegularExpression::MultilineOption);
 } // namespace
 
 LogWindow::LogWindow(const QString &_filename, LammpsGui *_lammpsgui, QWidget *parent) :
@@ -184,11 +185,7 @@ void LogWindow::saveAs()
 
 bool LogWindow::checkYaml()
 {
-    QRegularExpression is_yaml(YAML_REGEX);
-    QStringList lines = toPlainText().split('\n');
-    for (const auto &line : lines)
-        if (is_yaml.match(line).hasMatch()) return true;
-    return false;
+    return document()->find(is_yaml).isNull() == false;
 }
 
 void LogWindow::extractYaml()
@@ -211,10 +208,9 @@ void LogWindow::extractYaml()
         return;
     }
 
-    QRegularExpression is_yaml(YAML_REGEX);
     QTextStream out(&file);
-    QStringList lines = toPlainText().split('\n');
-    for (const auto &line : lines) {
+    for (auto block = document()->begin(); block != document()->end(); block = block.next()) {
+        auto line = block.text();
         if (is_yaml.match(line).hasMatch()) out << line << '\n';
     }
     file.close();
