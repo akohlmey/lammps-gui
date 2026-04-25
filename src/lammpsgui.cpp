@@ -2139,7 +2139,7 @@ void LammpsGui::checkUpdate()
     const auto libName   = getLammpsLibName();
     const auto configDir = QStandardPaths::writableLocation(QStandardPaths::AppConfigLocation);
     auto libPath         = configDir + QDir::separator() + libName;
-    auto dlUrl           = QString("https://download.lammps.org/lammps-gui/%1").arg(libName);
+    auto dlUrl           = getLammpsDownloadUrl();
 
     if (!QFile::exists(libPath)) {
         information(this, "Check for LAMMPS Update",

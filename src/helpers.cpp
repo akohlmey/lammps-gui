@@ -256,6 +256,15 @@ QString getLammpsLibName()
 #endif
 }
 
+// platform specific shared library download URL
+
+QString getLammpsDownloadUrl()
+{
+    const QString libName = getLammpsLibName();
+    if (libName.isEmpty()) return libName;
+    return QStringLiteral("https://download.lammps.org/lammps-gui/") + libName;
+}
+
 // save image directly and if that fails, save to PNG and convert with ImageMagick
 void exportImage(QWidget *parent, QImage *image, const QString &title)
 {

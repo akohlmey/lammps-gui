@@ -475,13 +475,8 @@ void GeneralTab::newTextFont()
 void GeneralTab::downloadPlugin()
 {
     // set platform-specific library file name and config directory
-#if defined(Q_OS_MACOS)
-    const auto libName = "liblammps.0.dylib";
-#elif defined(Q_OS_WIN32)
-    const auto libName = "liblammps.dll";
-#else
-    const auto libName = "liblammps.so.0";
-#endif
+    const auto libName = getLammpsLibName();
+
     // store in the same config directory where QSettings stores preferences
     const auto configDir = QStandardPaths::writableLocation(QStandardPaths::AppConfigLocation);
     if (configDir.isEmpty() || !QDir().mkpath(configDir)) {
@@ -491,7 +486,7 @@ void GeneralTab::downloadPlugin()
         return;
     }
     auto libPath = configDir + QDir::separator() + libName;
-    auto dlUrl   = QString("https://download.lammps.org/lammps-gui/%1").arg(libName);
+    auto dlUrl   = getLammpsDownloadUrl();
 
     URLDownloader downloader(this);
     if (downloader.download(dlUrl, libPath, true)) {
