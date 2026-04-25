@@ -219,6 +219,83 @@ QPixmap color_icon(const QColor &color)
     return pixmap;
 }
 
+// read JSON color and light data from file
+QJsonObject loadJsonColors(QWidget *parent)
+{
+    QJsonObject obj;
+    QString fileName = QFileDialog::getOpenFileName(parent, "Load Colors from JSON", "",
+                                                    "JSON files (*.json);;All files (*)");
+    if (fileName.isEmpty()) return obj;
+
+    QFile file(fileName);
+    if (!file.open(QIODevice::ReadOnly)) {
+        warning(parent, "Load Colors", "Could not open file '" + fileName + "' for reading.");
+        return obj;
+    }
+
+    QJsonParseError err;
+    auto doc = QJsonDocument::fromJson(file.readAll(), &err);
+    if (doc.isNull() || !doc.isObject()) {
+        warning(parent, "Load Colors",
+                "Invalid JSON colors file '" + fileName + "': " + err.errorString());
+        return obj;
+    }
+    obj      = doc.object();
+    auto app = obj.value("application").toString();
+    auto key = obj.value("format").toString();
+    auto rev = obj.value("revision").toInt();
+    if ((app != "LAMMPS") || (key != "colors")) {
+        warning(parent, "Load Colors",
+                "JSON colors file '" + fileName + "' is not a LAMMPS colors file.");
+        return obj;
+    }
+    if (rev != 1) {
+        warning(parent, "Load Colors",
+                QString("JSON colors file '%1' has incompatible revision %2 instead of 1")
+                    .arg(fileName)
+                    .arg(rev));
+        return obj;
+    }
+
+    auto arr = obj.value("colors").toArray();
+    if (arr.isEmpty()) {
+        warning(parent, "Load Colors",
+                "JSON colors file '" + fileName + "' contains no colors entry");
+        return obj;
+    }
+
+    arr = obj.value("lights").toArray();
+    if (arr.isEmpty()) {
+        warning(parent, "Load Colors",
+                "JSON colors file '" + fileName + "' contains no lights entry");
+        return obj;
+    }
+    return obj;
+}
+
+// save JSON color and light data to file
+void saveJsonColors(QWidget *parent, const QJsonArray &colors, const QJsonObject &lights)
+{
+    QJsonObject root;
+    root["application"] = QStringLiteral("LAMMPS");
+    root["format"]      = QStringLiteral("colors");
+    root["revision"]    = 1;
+    root["schema"]      = QStringLiteral("https://download.lammps.org/json/color-schema.json");
+    root["colors"]      = colors;
+    root["lights"]      = lights;
+
+    QString fileName = QFileDialog::getSaveFileName(parent, "Save Colors to JSON", "",
+                                                    "JSON files (*.json);;All files (*)");
+    if (fileName.isEmpty()) return;
+
+    QFile file(fileName);
+    if (!file.open(QIODevice::WriteOnly)) {
+        warning(parent, "Save Colors", "Could not open file '" + fileName + "' for writing.");
+        return;
+    }
+    file.write(QJsonDocument(root).toJson());
+}
+
 QStringList defaultcolors = {"red",       "green",    "blue",       "yellow",   "cyan",
                              "magenta",   "orange",   "chartreuse", "brown",    "darkred",
                              "darkgreen", "darkblue", "darkyellow", "darkcyan", "darkmagenta",
@@ -752,10 +829,6 @@ void ImageViewer::readImageSettings()
     colormap       = settings.value("colormap", "BWR").toString();
     mapmin         = "auto";
     mapmax         = "auto";
-    ambientlight   = 0.0;
-    keylight       = 0.9;
-    filllight      = 0.45;
-    backlight      = 0.9;
 
     showatoms      = true;
     showbonds      = lammps->extractSetting("molecule_flag") == 1;
@@ -2462,27 +2535,13 @@ void ImageViewer::colorSettings()
 
     // Connect Load JSON button: read a JSON file and update dialog widgets
     connect(loadJson, &QPushButton::released, &colorview,
-            [&colorview, layout, colorstart, numtypes]() {
-                QString fileName = QFileDialog::getOpenFileName(
-                    &colorview, "Load Colors from JSON", "", "JSON files (*.json);;All files (*)");
-                if (fileName.isEmpty()) return;
+            [&colorview, layout, colorstart, numtypes, this]() {
+                // read and validate file
+                auto root = loadJsonColors(&colorview);
+                if (root.isEmpty()) return;
 
-                QFile file(fileName);
-                if (!file.open(QIODevice::ReadOnly)) {
-                    warning(&colorview, "Load Colors", "Could not open file for reading.");
-                    return;
-                }
-                QJsonParseError err;
-                auto doc = QJsonDocument::fromJson(file.readAll(), &err);
-                if (doc.isNull() || !doc.isObject()) {
-                    warning(&colorview, "Load Colors", "Invalid JSON file: " + err.errorString());
-                    return;
-                }
-                auto arr = doc.object().value("colors").toArray();
-                if (arr.isEmpty()) {
-                    warning(&colorview, "Load Colors", "JSON file contains no color entries.");
-                    return;
-                }
+                auto arr = root.value("colors").toArray();
+                if (arr.isEmpty()) return;
 
                 for (int i = 1; i <= numtypes; ++i) {
                     auto obj = arr[(i - 1) % arr.size()].toObject();
@@ -2504,16 +2563,19 @@ void ImageViewer::colorSettings()
                     if (auto *w = qobject_cast<QLineEdit *>(item ? item->widget() : nullptr))
                         w->setText(QString::number(b, 'f', 3));
                 }
+
+                auto lights = root.value("lights").toObject();
+                if (lights.isEmpty()) return;
+                ambientlight = lights.value("ambient").toDouble();
+                keylight     = lights.value("key").toDouble();
+                filllight    = lights.value("fill").toDouble();
+                backlight    = lights.value("back").toDouble();
             });
 
     // Connect Save JSON button: read current dialog widget values and save to JSON
     connect(saveJson, &QPushButton::released, &colorview,
-            [&colorview, layout, colorstart, numtypes]() {
-                QString fileName = QFileDialog::getSaveFileName(
-                    &colorview, "Save Colors to JSON", "", "JSON files (*.json);;All files (*)");
-                if (fileName.isEmpty()) return;
-
-                QJsonArray arr;
+            [&colorview, layout, colorstart, numtypes, this]() {
+                QJsonArray colors;
                 for (int i = 1; i <= numtypes; ++i) {
                     double r = 1.0, g = 1.0, b = 1.0;
                     auto *item = layout->itemAtPosition(i + colorstart, 2);
@@ -2529,18 +2591,18 @@ void ImageViewer::colorSettings()
                     obj["red"]   = r;
                     obj["green"] = g;
                     obj["blue"]  = b;
-                    arr.append(obj);
+                    colors.append(obj);
                 }
-                QJsonObject root;
-                root["colors"] = arr;
+                QJsonObject lights;
+                lights["ambient"] = ambientlight;
+                lights["key"]     = keylight;
+                lights["fill"]    = filllight;
+                lights["back"]    = backlight;
 
-                QFile file(fileName);
-                if (!file.open(QIODevice::WriteOnly)) {
-                    warning(&colorview, "Save Colors",
-                            "Could not open file '" + fileName + "' for writing.");
-                    return;
-                }
-                file.write(QJsonDocument(root).toJson());
+                QJsonObject root;
+                root["colors"] = colors;
+                root["lights"] = lights;
+                saveJsonColors(&colorview, colors, lights);
             });
 
     bottomlayout->addWidget(cancel, Qt::AlignHCenter);
@@ -2616,30 +2678,20 @@ void ImageViewer::resetColors()
     color_list.clear();
     for (const auto &rgb : DEFAULT_RGB)
         color_list.append(QColor::fromRgbF(rgb[0], rgb[1], rgb[2]));
+
+    ambientlight = 0.0;
+    keylight     = 0.9;
+    filllight    = 0.45;
+    backlight    = 0.9;
 }
 
 void ImageViewer::loadColors()
 {
-    QString fileName = QFileDialog::getOpenFileName(this, "Load Colors from JSON", "",
-                                                    "JSON files (*.json);;All files (*)");
-    if (fileName.isEmpty()) return;
+    auto root = loadJsonColors(this);
+    if (root.isEmpty()) return;
 
-    QFile file(fileName);
-    if (!file.open(QIODevice::ReadOnly)) {
-        warning(this, "Load Colors", "Could not open file '" + fileName + "' for reading.");
-        return;
-    }
-    QJsonParseError err;
-    auto doc = QJsonDocument::fromJson(file.readAll(), &err);
-    if (doc.isNull() || !doc.isObject()) {
-        warning(this, "Load Colors", "Invalid JSON file '" + fileName + "': " + err.errorString());
-        return;
-    }
-    auto arr = doc.object().value("colors").toArray();
-    if (arr.isEmpty()) {
-        warning(this, "Load Colors", "JSON file '" + fileName + "' contains no color entries.");
-        return;
-    }
+    auto arr = root["colors"].toArray();
+    if (arr.isEmpty()) return;
 
     color_list.clear();
     for (const auto &item : arr) {
@@ -2650,32 +2702,35 @@ void ImageViewer::loadColors()
         color_list.append(QColor::fromRgbF(r, g, b));
     }
     if (color_list.isEmpty()) resetColors();
+
+    auto lights = root.value("lights").toObject();
+    if (!lights.isEmpty()) {
+        ambientlight = lights.value("ambient").toDouble();
+        keylight     = lights.value("key").toDouble();
+        filllight    = lights.value("fill").toDouble();
+        backlight    = lights.value("back").toDouble();
+    }
+
     createImage();
 }
 
 void ImageViewer::saveColors()
 {
-    QString fileName = QFileDialog::getSaveFileName(this, "Save Colors to JSON", "",
-                                                    "JSON files (*.json);;All files (*)");
-    if (fileName.isEmpty()) return;
-
-    QJsonArray arr;
+    QJsonArray colors;
     for (const auto &c : color_list) {
         QJsonObject obj;
         obj["red"]   = c.redF();
         obj["green"] = c.greenF();
         obj["blue"]  = c.blueF();
-        arr.append(obj);
+        colors.append(obj);
     }
-    QJsonObject root;
-    root["colors"] = arr;
+    QJsonObject lights;
+    lights["ambient"] = ambientlight;
+    lights["key"]     = keylight;
+    lights["fill"]    = filllight;
+    lights["back"]    = backlight;
 
-    QFile file(fileName);
-    if (!file.open(QIODevice::WriteOnly)) {
-        warning(this, "Save Colors", "Could not open file '" + fileName + "'for writing.");
-        return;
-    }
-    file.write(QJsonDocument(root).toJson());
+    saveJsonColors(this, colors, lights);
 }
 
 void ImageViewer::changeGroup(int)
