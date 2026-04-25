@@ -26,6 +26,7 @@
 #include <QPalette>
 #include <QProcess>
 #include <QRegularExpression>
+#include <QStandardPaths>
 #include <QStringList>
 #include <QTemporaryFile>
 #include <QWidget>
@@ -324,31 +325,10 @@ void exportImage(QWidget *parent, QImage *image, const QString &title)
 }
 
 // find if executable is in path
-// https://stackoverflow.com/a/51041497
 
 bool hasExe(const QString &exe)
 {
-    QProcess findProcess;
-    QStringList arguments;
-    arguments << exe;
-#if defined(_WIN32)
-    findProcess.start("where", arguments);
-#else
-    findProcess.start("which", arguments);
-#endif
-    findProcess.setReadChannel(QProcess::ProcessChannel::StandardOutput);
-
-    if (!findProcess.waitForFinished()) return false; // Not found or which does not work
-
-    QString retStr(findProcess.readAll());
-
-    // truncate multi-line output to first line
-    auto idx = retStr.indexOf(QRegularExpression("[\n\r]"), 0);
-    if (idx > 0) retStr.truncate(idx);
-
-    QFile file(retStr.trimmed());
-    QFileInfo check_file(file);
-    return (check_file.exists() && check_file.isFile());
+    return !QStandardPaths::findExecutable(exe).isEmpty();
 }
 
 // recursively remove all contents from a directory
@@ -356,15 +336,11 @@ bool hasExe(const QString &exe)
 void purgeDirectory(const QString &dir)
 {
     QDir directory(dir);
-
-    directory.setFilter(QDir::AllEntries | QDir::NoDotAndDotDot);
-    const auto &entries = directory.entryList();
-    for (const auto &entry : entries) {
-        if (!directory.remove(entry)) {
-            if (directory.cd(entry)) {
-                directory.removeRecursively();
-                directory.cdUp();
-            }
+    for (const auto &entry : directory.entryInfoList(QDir::NoDotAndDotDot | QDir::AllEntries)) {
+        if (entry.isDir()) {
+            QDir(entry.absoluteFilePath()).removeRecursively();
+        } else {
+            QFile::remove(entry.absoluteFilePath());
         }
     }
 }
