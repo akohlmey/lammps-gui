@@ -19,9 +19,9 @@
 /**
  * @brief Syntax highlighter for LAMMPS input scripts
  *
- * This class provides syntax highlighting for LAMMPS input files in the
- * CodeEditor. It categorizes and colors different types of LAMMPS commands,
- * keywords, variables, numbers, strings, and comments.
+ * This class extends QSyntaxHighlighter to provide syntax highlighting
+ * for LAMMPS input files in the CodeEditor. It categorizes and styles
+ * commands, keywords, variables, numbers, strings, and comments.
  */
 class Highlighter : public QSyntaxHighlighter {
     Q_OBJECT

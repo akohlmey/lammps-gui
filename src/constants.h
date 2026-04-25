@@ -36,8 +36,8 @@ constexpr int NUM_RECENT_FILES = 5; ///< Number of entries in the recent files l
 constexpr int NUM_TUTORIALS    = 8; ///< Number of tutorials available
 
 // ---- LAMMPS version requirement ------------------------------------------
-constexpr int MIN_LAMMPS_VERSION = 20260330; ///< Minimum LAMMPS version (30 March 2026)
-inline const QString MIN_LAMMPS_VERSION_STR = QStringLiteral("30 Mar 2026");
+constexpr int MIN_LAMMPS_VERSION = 20260330; ///< Minimum LAMMPS version (30 March 2026) as YYYYMMDD format number
+inline const QString MIN_LAMMPS_VERSION_STR = QStringLiteral("30 Mar 2026"); ///< Minimum LAMMPS version (30 March 2026) as string
 
 // ---- Buffer thresholds ---------------------------------------------------
 constexpr double BUFFER_WARNING_THRESHOLD = 0.333; ///< Warn when capture buffer exceeds this

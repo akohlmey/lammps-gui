@@ -35,13 +35,13 @@ class QWidget;
  * @brief Custom text editor with LAMMPS syntax support and auto-completion
  *
  * The CodeEditor class extends QPlainTextEdit to provide specialized features
- * for editing LAMMPS input scripts, including:
+ * for editing LAMMPS input scripts:
  * - Line numbers in a margin area
- * - LAMMPS syntax highlighting via Highlighter
+ * - Syntax highlighting via Highlighter
  * - Context-aware auto-completion for LAMMPS commands
  * - Automatic indentation and formatting
  * - Context menu with LAMMPS-specific help
- * - Line highlighting for errors
+ * - Line highlighting for error visualization
  */
 class CodeEditor : public QPlainTextEdit {
     Q_OBJECT

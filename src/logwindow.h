@@ -19,13 +19,12 @@ class LammpsGui;
 class QLabel;
 
 /**
- * @brief Window for displaying LAMMPS log output with warning detection
+ * @brief Text viewer for LAMMPS log output with warning/error detection
  *
- * LogWindow provides a specialized text viewer for LAMMPS log files.
- * It highlights warnings and errors using FlagWarnings, supports
- * extraction of embedded YAML data, navigation to warnings, and
- * opening error documentation URLs. The window shows a summary
- * of detected warnings in the title bar.
+ * LogWindow specializes QPlainTextEdit for LAMMPS log viewing.
+ * It highlights warnings and errors, detects embedded YAML data for
+ * extraction, provides navigation between warnings, and makes error
+ * URLs clickable.
  */
 class LogWindow : public QPlainTextEdit {
     Q_OBJECT

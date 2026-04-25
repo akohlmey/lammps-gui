@@ -18,10 +18,10 @@
 /**
  * @brief C++ wrapper for the LAMMPS C library interface
  *
- * This class provides a C++ interface to the LAMMPS library. It wraps
- * the C library API functions and handles dynamic loading of the LAMMPS
- * library when built in plugin mode. All LAMMPS library function calls
- * are routed through this wrapper class.
+ * This class provides a C++-oriented interface to the LAMMPS library,
+ * routing all library calls through a unified API. It manages
+ * the LAMMPS instance and handles dynamic loading of the library
+ * when the application is built in plugin mode.
  */
 class LammpsWrapper {
 public:

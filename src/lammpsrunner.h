@@ -20,14 +20,12 @@ class LammpsWrapper;
 /**
  * @brief Worker thread for executing LAMMPS simulations
  *
- * This class provides a separate thread for running LAMMPS simulations
- * so that the GUI remains responsive during long-running calculations.
- * It executes LAMMPS commands or input files in the background and
- * emits a signal when complete.
+ * This class runs LAMMPS simulations in a background thread to maintain
+ * UI responsiveness during long calculations. It executes either a
+ * LAMMPS command string or a full input file and emits a signal upon
+ * completion.
  *
- * Input data is passed via setupRun() using std::string values that are
- * moved into this object, ensuring clear ownership without raw pointer
- * transfers.
+ * Input is passed using std::string, ensuring clean ownership transfer.
  */
 class LammpsRunner : public QThread {
     Q_OBJECT

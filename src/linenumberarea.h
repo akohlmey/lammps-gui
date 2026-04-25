@@ -16,10 +16,10 @@
 #include <QWidget>
 
 /**
- * @brief Widget for displaying line numbers alongside the code editor
+ * @brief Widget displaying line numbers alongside the code editor
  *
- * This class provides a custom widget that displays line numbers in the
- * margin of the CodeEditor. It delegates painting to the CodeEditor class.
+ * This widget is placed in the margin of the CodeEditor to show
+ * line numbers. All painting is delegated back to the CodeEditor class.
  */
 class LineNumberArea : public QWidget {
 public:

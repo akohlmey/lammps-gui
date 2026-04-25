@@ -22,10 +22,10 @@
  * and available styles in scrollable text areas. The dialog automatically
  * scrolls down when the content exceeds the visible area, pauses at the
  * bottom, and then returns back to the top.
- *
- * When available style information is available, the dialog allocates
- * 2/3rd of the combined scroll area space to the configuration information
- * text and 1/3rd to the style information text.
+ * When style information is available, the dialog allocates
+ * 2/3 of the combined scroll area space to the configuration information
+ * text and 1/3 to the style information text.
+
  * The style information text uses the configured fixed-width font from the
  * QSettings keys "monofamily" and "monosize" while the rest uses the
  * application's default (variable width) font. */

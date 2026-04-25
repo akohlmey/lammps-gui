@@ -20,13 +20,13 @@
 class QPaintEvent;
 
 /**
- * @brief Horizontal line widget for visual separation in dialogs
+ * @brief Horizontal line widget for visual separation
  *
- * QHline provides a simple horizontal line widget that can be
- * used to visually separate sections in forms and dialogs.
- * It's essentially a styled QFrame with a horizontal line shape.
+ * Provides a simple horizontal line widget for grouping UI elements
+ * in forms or dialogs.
  */
 class QHline : public QFrame {
+
 public:
     /**
      * @brief Constructor
@@ -38,9 +38,8 @@ public:
 /**
  * @brief Auto-completer for color name inputs
  *
- * QColorCompleter provides auto-completion for color names
- * in text input fields. It suggests valid color names from
- * Qt's color name list as the user types.
+ * Provides auto-completion for color names in text fields, suggesting
+ * valid color names for use with the LAMMPS dump image command.
  */
 class QColorCompleter : public QCompleter {
 public:
@@ -54,9 +53,8 @@ public:
 /**
  * @brief Validator for color name inputs
  *
- * QColorValidator validates color input fields to ensure they
- * contain valid color names or hex color codes. It can also
- * fix up partially entered color names to valid values.
+ * Ensures color inputs are valid color names or hex codes.
+ * Provides fix-up functionality for common typos.
  */
 class QColorValidator : public QValidator {
 public:
@@ -82,11 +80,10 @@ public:
 };
 
 /**
- * @brief Widget that displays text rotated 90 degrees counter-clockwise
+ * @brief Widget displaying text rotated 90 degrees counter-clockwise
  *
- * VerticalLabel renders text vertically, suitable for use as a y-axis
- * title in chart views where the built-in axis title positioning may
- * cause overlap with tick labels.
+ * Renders text vertically, optimized for y-axis titles in charts
+ * where horizontal space is limited.
  */
 class VerticalLabel : public QWidget {
 public:
