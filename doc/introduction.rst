@@ -22,19 +22,19 @@ LAMMPS_GUI_USE_PLUGIN=(ON|OFF)`` CMake configuration option.
 **Plugin Mode** (default)
   LAMMPS is loaded dynamically at runtime from a shared library file
   (.so, .dll, .dylib).  This allows using different LAMMPS builds with
-  different compilation setting and different LAMMPS versions without
+  different compilation settings and different LAMMPS versions without
   recompiling the GUI. The library loading is handled in
   :cpp:class:`LammpsWrapper` using platform-specific dynamic loading
   functions (``dlopen()`` on Unix/Linux/macOS, ``LoadLibrary()`` on
   Windows).  The path to the shared library file is auto-detected or
   configured via command line or preferences.
 
-**Linked Mode** LAMMPS library is linked at compile time.  Used by
+**Linked Mode** The LAMMPS library is linked at compile time.  Used by
   default when building LAMMPS-GUI as part of a LAMMPS CMake build with
-  ``-D BUILD_LAMMPS_GUI=on``.  For standalone builds also the ``-D
+  ``-D BUILD_LAMMPS_GUI=on``.  For standalone builds, the ``-D
   LAMMPS_SOURCE_DIR=<path to LAMMPS' src folder>`` and ``-D
   LAMMPS_LIBRARY=<path to LAMMPS shared or static library file>``
-  settings are required when configuring with CMake.  It may be needed
+  settings are also required when configuring with CMake.  It may be needed
   to adjust the environment variable to find shared libraries (``LD_LIBRARY_PATH``
   on Linux, ``DYLD_LIBRARY_PATH`` on macOS, or ``PATH`` on Windows)
   when linked to a shared library.
@@ -55,10 +55,9 @@ LAMMPS-GUI makes extensive use of Qt features:
 **Qt Models**
   Used for data display in various viewers and inspectors.
 
-LAMMPS-GUI requires Qt version 6.2 or later.
-
-For more details on Qt in general, see the `Qt Documentation
-<https://doc.qt.io/>`_.
+LAMMPS-GUI requires the Qt application development and GUI framework
+version 6.2 or later.  See the `Qt Documentation <https://doc.qt.io/>`_
+for more details.
 
 ------------------
 

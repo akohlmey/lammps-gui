@@ -21,10 +21,10 @@ text in the *Editor* window.
 The dialog can be opened either from the *Edit* menu or with the
 keyboard shortcut `Ctrl-F`. You can enter the text to search for.
 
-.. admonition:: Through three check-boxes the search behavior can be adjusted:
+.. admonition:: Through three checkboxes the search behavior can be adjusted:
 
-   - If checked, "Match case" does a case sensitive search; otherwise
-     the search is case insensitive.
+   - If checked, "Match case" does a case-sensitive search; otherwise
+     the search is case-insensitive.
 
    - If checked, "Wrap around" starts searching from the start of the
      document, if there is no match found from the current cursor position
@@ -107,10 +107,10 @@ General Settings:
    - **Replace image window on new render:** when checked, an existing
      chart window will be replaced when a new snapshot image is requested,
      otherwise each command will create a new image window.
-   - **Download tutorial solutions enabled** this controls whether the
+   - **Download tutorial solutions enabled:** this controls whether the
      "Download solutions" option is enabled by default when setting up
      a tutorial.
-   - **Open tutorial webpage enabled** this controls whether the "Open
+   - **Open tutorial webpage enabled:** this controls whether the "Open
      tutorial webpage in web browser" option is enabled by default when
      setting up a tutorial.
    - **Select Default Font:** Opens a font selection dialog where the type
@@ -118,31 +118,33 @@ General Settings:
      log) of the application can be set.
    - **Select Text Font:** Opens a font selection dialog where the type and
      size for the text editor and log font of the application can be set.
-   - **Data update interval:** Allows to set the time interval between data
-     updates during a LAMMPS run in milliseconds.  The default is to update
-     the data (for charts and output window) every 10 milliseconds.  This
-     is good for many cases.  Set this to 100 milliseconds or more if
-     LAMMPS-GUI consumes too many resources during a run.  For LAMMPS runs
-     that run *very* fast (for example in tutorial examples), however, data
-     may be missed and through lowering this interval, this can be
-     corrected.  However, this will make the GUI use more resources.  This
-     setting may be changed to a value between 1 and 1000 milliseconds.
-   - **Charts update interval:** Allows to set the time interval between redrawing
-     the plots in the :ref:`Charts window <charts>` in milliseconds.  The default is to
-     redraw the plots every 500 milliseconds.  This is just for the drawing,
-     data collection is managed with the previous setting.
-   - **HTTPS proxy setting:** Allows to enter a URL for an HTTPS proxy.  This
-     may be needed when the LAMMPS input contains `geturl commands
-     <https://docs.lammps.org/geturl.html>`_ or for downloading tutorial
-     files from the *Tutorials* menu.  If the ``https_proxy`` environment
-     variable was set externally, its value is displayed but cannot be
-     changed.
+   - **Data update interval:** Allows the user to set the time interval
+     between data updates during a LAMMPS run in milliseconds.  The default
+     is to update the data (for charts and output window) every 10
+     milliseconds.  This is good for many cases.  Set this to 100
+     milliseconds or more if LAMMPS-GUI consumes too many resources during
+     a run.  For LAMMPS runs that run *very* fast (for example in tutorial
+     examples), however, data may be missed; this can be corrected by
+     lowering this interval.  However, this will make the GUI use more
+     resources.  This setting may be changed to a value between 1 and 1000
+     milliseconds.
+   - **Charts update interval:** Allows the user to set the time interval
+     between redrawing the plots in the :ref:`Charts window <charts>` in
+     milliseconds.  The default is to redraw the plots every 500
+     milliseconds.  This is just for the drawing; data collection is
+     managed with the previous setting.
+   - **HTTPS proxy setting:** Allows the user to enter a URL for an HTTPS
+     proxy.  This may be needed when the LAMMPS input contains `geturl
+     commands <https://docs.lammps.org/geturl.html>`_ or for downloading
+     tutorial files from the *Tutorials* menu.  If the ``https_proxy``
+     environment variable was set externally, its value is displayed but
+     cannot be changed.
    - **Path to LAMMPS Shared Library File:** this option is only visible
-     when LAMMPS-GUI was compiled to load the LAMMPS library at run time
-     instead of being linked to it directly.  With the *Browse..* button
+     when LAMMPS-GUI was compiled to load the LAMMPS library at run-time
+     instead of being linked to it directly.  Using the *Browse..* button
      or by changing the text, a different shared library file with a
      different compilation of LAMMPS with different settings or from a
-     different version can be loaded.  After this setting was changed,
+     different version can be loaded.  After changing this setting,
      LAMMPS-GUI needs to be re-launched.
 
 Accelerators:
@@ -161,14 +163,13 @@ using the `-sf <https://docs.lammps.org/suffix.html>`_ and `-pk
 by the LAMMPS library and local hardware are available.  The `Number of
 threads` field allows setting the number of threads for the accelerator
 packages that support using threads (OPENMP, INTEL, KOKKOS, and GPU).
-Furthermore, the choice of precision mode (double, mixed, or single) for
-the INTEL package can be selected, and for the GPU package, whether the
-neighbor lists are built on the GPU or the host (required for `pair
-style hybrid <https://docs.lammps.org/pair_hybrid.html>`_) and whether
-only pair styles should be accelerated (i.e., run PPPM entirely on the
-CPU, which sometimes leads to better overall performance).  Whether
-settings can be changed depends on which accelerator package is chosen
-(or "None").
+Furthermore, the precision mode (double, mixed, or single) for the INTEL
+package can be selected, and for the GPU package, whether the neighbor
+lists are built on the GPU or the host (required for `pair style hybrid
+<https://docs.lammps.org/pair_hybrid.html>`_) and whether only pair
+styles should be accelerated (i.e., run PPPM entirely on the CPU, which
+sometimes leads to better overall performance).  Whether settings can be
+changed depends on which accelerator package is chosen (or "None").
 
 .. _image_preferences:
 
@@ -185,8 +186,8 @@ dimensions, the zoom factor, and view angles.  The **Antialias** switch
 will render images with double the number of pixels for width and height
 and then smoothly scale the image back to the requested size.  This
 produces higher quality images with smoother edges at the expense of
-requiring more CPU time to render a four times size initial image.  The
-**HQ Image mode** option turns on "Screen Space Ambient Occlusion
+requiring more CPU time to render an initial image four times the size.
+The **HQ Image mode** option turns on "Screen Space Ambient Occlusion
 (SSAO)" mode when rendering images.  This is also more time consuming,
 but produces a more 'spatial' representation of the system with shading
 of atoms by their depth.  The **Shiny Image mode** option will render
@@ -202,11 +203,11 @@ spheres when checked or by smaller spheres and sticks.  The **Dynamic
 Bonds** checkbox selects whether bonds between atoms shall be
 automatically determined from the atom distances (for instance to
 visualize simulations using force fields with implicit bonds), and the
-corresponding "Bond Cutoff" text field allow to set the cutoff used for
-that feature.  Finally, there are a couple of text fields to select the
-two **Background Colors**.  If the two colors differ, there will be a
-vertical background gradient starting with the "Background" color at the
-bottom and ending with the "Background2" color at the top.
+corresponding "Bond Cutoff" text field allows the user to set the cutoff
+used for that feature.  Finally, there are a couple of text fields to
+select the two **Background Colors**.  If the two colors differ, there
+will be a vertical background gradient starting with the "Background"
+color at the bottom and ending with the "Background2" color at the top.
 
 These settings correspond to the available settings for the LAMMPS `dump
 image and corresponding dump_modify commands
@@ -219,7 +220,7 @@ Editor Settings:
 .. index:: preferences; editor
 .. index:: code formatting preferences
 
-This tab allows tweaking settings of the :ref:`editor window <editor>`.
+This tab allows adjusting settings of the :ref:`editor window <editor>`.
 Specifically, the amount of padding to be added to LAMMPS commands,
 types or type ranges, IDs (e.g., for fixes), and names (e.g., for groups).
 The value set is the minimum width for the text element and it can be
@@ -228,7 +229,7 @@ chosen in the range between 1 and 32.
 The three settings which follow enable or disable the automatic
 reformatting when hitting the 'Enter' key, the automatic display of
 the completion pop-up window, and whether auto-save mode is enabled.
-In auto-save mode the editor buffer is saved before a run or before
+In auto-save mode, the editor buffer is saved before a run or before
 exiting LAMMPS-GUI.
 
 Charts Settings:
@@ -238,7 +239,7 @@ Charts Settings:
 .. index:: preferences; charts
 .. index:: plotting preferences
 
-This tab allows tweaking settings of the :ref:`Charts window <charts>`.
+This tab allows adjusting settings of the :ref:`Charts window <charts>`.
 Specifically, one can set the default chart title (if the title contains
 '%f' it will be replaced with the name of the current input file), one
 can select whether by default the raw data, the smoothed data, or both

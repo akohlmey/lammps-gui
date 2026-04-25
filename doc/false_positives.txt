@@ -5,6 +5,7 @@ backend
 backends
 camelCase
 cecill
+checkboxes
 CheckSize
 CMake
 cmake

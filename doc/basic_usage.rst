@@ -50,7 +50,7 @@ Launching LAMMPS-GUI
 ^^^^^^^^^^^^^^^^^^^^
 
 When LAMMPS-GUI starts, it shows the main window, labeled *Editor*, with
-either an empty buffer or the contents of the file used as argument. In
+either an empty buffer or the contents of the file used as argument.  In
 the latter case it may look like the following:
 
 .. |gui-main1| image:: JPG/lammps-gui-main.png
@@ -65,7 +65,7 @@ There is the typical menu bar at the top, then the main editor buffer,
 and a status bar at the bottom.  The input file contents are shown
 with line numbers on the left and the input is colored according to
 the LAMMPS input file syntax.  The status bar shows the status of
-LAMMPS execution on the left (e.g. "Ready." when idle) and the current
+LAMMPS execution on the left (e.g.  "Ready." when idle) and the current
 working directory on the right.  The name of the current file in the
 buffer is shown in the window title; the word `*modified*` is added if
 the buffer edits have not yet saved to a file.  The geometry of the main
@@ -84,10 +84,10 @@ arguments and then starts with an empty buffer in the *Editor* window.
 If a file argument is given, LAMMPS-GUI will use it as the file name for
 the *Editor* buffer and read its contents into the buffer, provided a
 file of that name exists; otherwise the buffer will be empty, but set up
-to save any added content to that file. Files can also be opened via the
+to save any added content to that file.  Files can also be opened via the
 *File* menu, the `Ctrl-O` (`Command-O` on macOS) keyboard shortcut or by
 drag-and-drop of a file from a graphical file manager into the editor
-window.  If a file extension (e.g. ``.lmp``) has been registered with
+window.  If a file extension (e.g.  ``.lmp``) has been registered with
 the graphical environment to launch LAMMPS-GUI, an existing input file
 can be launched with LAMMPS-GUI through double clicking.
 
@@ -95,8 +95,8 @@ Only one file can be edited at a time, so opening a new file with a file
 already loaded into the buffer closes that buffer.  If the buffer has
 unsaved modifications, you are asked to either cancel the operation,
 discard the changes, or save them.  A buffer with modifications can be
-saved any time from the "File" menu, by the keyboard shortcut `Ctrl-S`
-(`Command-S` on macOS), or by clicking on the "Save" button at the very
+saved any time from the *File* menu, by the keyboard shortcut `Ctrl-S`
+(`Command-S` on macOS), or by clicking on the *Save* button at the very
 left in the status bar.
 
 Running LAMMPS
@@ -109,7 +109,7 @@ Running LAMMPS
 From within the LAMMPS-GUI main window LAMMPS can be started either from
 the *Run* menu using the *Run LAMMPS from Editor Buffer* entry, by the
 keyboard shortcut `Ctrl-Enter` (`Command-Enter` on macOS), or by
-clicking on the green "Run" button in the status bar.  All of these
+clicking on the green *Run* button in the status bar.  All of these
 operations cause LAMMPS to process the entire input script in the
 editor buffer, which may contain multiple `run
 <https://docs.lammps.org/run.html>`_ or `minimize
@@ -117,7 +117,7 @@ editor buffer, which may contain multiple `run
 
 LAMMPS runs in a separate thread, so the GUI stays responsive and is
 able to interact with the running calculation and access data it
-produces.  It is important to note that running LAMMPS this way is using
+produces.  It is important to note that running LAMMPS this way uses
 the contents of the input buffer for the run (via the
 `lammps_commands_string
 <https://docs.lammps.org/Library_execute.html#_CPPv422lammps_commands_stringPvPKc>`_
@@ -140,7 +140,7 @@ green in the line number display for the *Editor* Window.
 
 While LAMMPS is running, the contents of the status bar change.  The
 text fields that normally show "Ready." and the current working
-directory, change into an area showing the CPU utilization in percent.
+directory change into an area showing the CPU utilization in percent.
 Next to it is a text indicating that LAMMPS is running, which also
 indicates the number of active threads (in case thread-parallel
 acceleration was selected in the *Preferences* dialog).  On the right
@@ -159,20 +159,20 @@ the current `run <https://docs.lammps.org/run.html>`_ or `minimize
    of threads like in the screenshot image above.  Since the GUI is
    running as a separate thread, the CPU utilization *may* be higher,
    for example when the GUI needs to work hard to keep up with the
-   output produced by the simulation; for example when there is frequent
-   thermo output or the simulation runs very fast.  In the *Preferences*
-   dialog, the polling interval for updating the *Output* and *Charts*
-   windows can be adjusted. The intervals may need to be lowered to not
-   miss data between *Charts* data updates or to avoid stalling when the
-   thermo output is not transferred to the *Output* window fast enough.
-   You could also make LAMMPS run slower by reducing or turning off
-   thread parallelization.  It is also possible to reduce the amount of
-   data by increasing the `thermo interval
+   output produced by the simulation.  This can occur when there is
+   frequent thermo output or the simulation runs very fast.  In the
+   *Preferences* dialog, the polling interval for updating the *Output*
+   and *Charts* windows can be adjusted.  The intervals may need to be
+   lowered to avoid missing data between *Chart* data updates or to
+   avoid stalling when the thermo output is not transferred to the
+   *Output* window fast enough.  You could also make LAMMPS run slower by
+   reducing or turning off thread parallelization.  It is also possible
+   to reduce the amount of data by increasing the `thermo interval
    <https://docs.lammps.org/thermo.html>`_.  LAMMPS-GUI detects if the
    associated I/O buffer is significantly full, and will print a warning
    *after* the run with suggested adjustments.  The CPU utilization can
-   also be lower than expected, when some significant parts of the code
-   paths in use are not multi-threaded, when the simulation is slowed
+   also be lower than expected when some significant parts of the code
+   paths in use are not multi-threaded, or when the simulation is slowed
    down by the GUI or other processes also running on the host computer
    and competing with LAMMPS-GUI for resources.
 

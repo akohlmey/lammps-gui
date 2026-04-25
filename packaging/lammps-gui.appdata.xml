@@ -54,6 +54,14 @@
   </provides>
 
   <releases>
+    <release version="2.0.6" timestamp="1777151498">
+      <description>
+        more refactoring for more efficiency and consistency
+        move some more redundant functionality to helper functions
+        read and parse color/lights JSON files consistent with LAMMPS
+        updates and improvements for the documentation
+      </description>
+    </release>
     <release version="2.0.5" timestamp="1776131328">
       <description>
         eliminate getMainWindow() function by passing pointer to main widget

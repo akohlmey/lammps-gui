@@ -16,7 +16,7 @@ LAMMPS-GUI can also be compiled as a standalone package and load the
 LAMMPS library dynamically at runtime.  This enables using LAMMPS-GUI
 with customized, patched, or extended LAMMPS versions containing
 features not available in the official LAMMPS distribution packages.  It
-also allows to use LAMMPS-GUI with LAMMPS shared libraries compiled
+also allows using LAMMPS-GUI with LAMMPS shared libraries compiled
 using the traditional makefile based build process (which does not
 support compiling LAMMPS-GUI directly).  Pre-compiled packages of
 standalone LAMMPS-GUI versions with a LAMMPS shared library included are
@@ -34,7 +34,7 @@ the `Qt GUI framework <https://www.qt.io/product/framework>`_.  As of
 LAMMPS-GUI version 2.0.0 Qt version 6.2 or later is required.
 LAMMPS-GUI can switch between a "light" and a "dark" theme according to
 the settings of the desktop environment.  Building LAMMPS-GUI from
-source requires CMake version 3.20 or later and suitable C++ compiler.
+source requires CMake version 3.20 or later and a suitable C++ compiler.
 
 .. admonition:: LAMMPS-GUI |version| has been successfully compiled and tested on:
 
@@ -322,7 +322,7 @@ version 6.10, LAMMPS-GUI includes an alternate implementation of the
 charts display based on the QtGraphs module.  This alternate version is
 enabled by default when compiling LAMMPS-GUI for Qt 6.10 and later.
 Setting ``-D LAMMPS_GUI_USE_QTCHARTS=yes`` will enforce using the
-QtCharts based chart display.
+QtCharts-based chart display.
 
 .. versionchanged:: 2.0.0
 
@@ -370,7 +370,7 @@ Platform notes
 macOS
 """""
 
-When building on macOS, the build procedure will try to manufacture a
+When building on macOS, the build procedure will try to create a
 drag-n-drop installer, ``LAMMPS-GUI-macOS-multiarch-<version>.dmg``,
 when using the 'dmg' target (i.e. ``cmake --build <build dir> --target
 dmg`` or ``make dmg``.
@@ -395,8 +395,8 @@ Linux.
 *Visual Studio*
 
 Using CMake and Ninja as build system are required.  Qt needs to be
-installed, tested was a binary Qt package downloaded from
-https://www.qt.io, which installs into the ``C:\\Qt`` folder by default.
+installed; a binary Qt package downloaded from https://www.qt.io was
+tested, which installs into the ``C:\\Qt`` folder by default.
 There is a custom `x64-GUI-MSVC` build configuration provided in the
 ``CMakeSettings.json`` file that Visual Studio uses to store different
 compilation settings for project.  Choosing this configuration will
@@ -417,8 +417,8 @@ By using the ``mingw64-cmake`` wrapper the CMake configuration will
 automatically include a suitable CMake toolchain file (the regular cmake
 command can be used after that to modify the configuration settings, if
 needed).  After building the libraries and executables, you can build
-the target 'nsis' (i.e. ``cmake --build <build dir> --target nsis`` or
-``make nsis`` to build an Nullsoft installer package executable that can
+the target 'nsis' (i.e.  ``cmake --build <build dir> --target nsis`` or
+``make nsis``) to build a Nullsoft installer package executable that can
 be executed on a Windows 10 or later machine with x86\_64 CPU and will
 then install LAMMPS-GUI including a basic LAMMPS shared library file and
 all required dependencies.

@@ -13,8 +13,8 @@ Overview
 The test suite uses CMake's CTest front end to select and run the
 tests. Tests implemented with GoogleTest are automatically discovered
 and can be run individually or as a complete suite for each test
-program.  Test running LAMMPS-GUI itself use the "virtual frame buffer"
-X server ``Xvfb`` and are written in Python using the ``unittest``
+program.  Tests running LAMMPS-GUI itself use the "virtual frame buffer"
+X server (Xvfb) and are written in Python using the ``unittest``
 Python module and the `PyAutoGUI module
 <https://pyautogui.readthedocs.io/>`_
 
@@ -25,7 +25,7 @@ Tests are built as part of the main project build when using ``-D
 ENABLE_TESTING=ON`` during CMake configuration (default setting is
 `OFF`).  Due to technical requirements, testing is currently only
 enabled for native Linux builds of LAMMPS-GUI.  In any other build
-environments the ``-D ENABLE_TESTING=ON`` setting is ignored.
+environment, the ``-D ENABLE_TESTING=ON`` setting is ignored.
 
 Quick Build
 ===========

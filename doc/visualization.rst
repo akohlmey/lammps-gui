@@ -79,7 +79,7 @@ and other features and the `LAMMPS Visualization Howto
 <https://docs.lammps.org/Howto_viz.html>`_ for more general discussions
 on how to generate advanced visualizations with LAMMPS directly.
 
-If elements cannot be detected the default sequence of colors of the
+If elements cannot be detected, the default sequence of colors of the
 `dump image <https://docs.lammps.org/dump_image.html>`_ command is
 assigned to the different atom types.
 
@@ -107,9 +107,9 @@ clipboard and pasted into a compatible application.
    Some visualization settings, especially enabling SSAO and FSAA (see
    below) or massively enlarging the image size, can significantly
    increase the time required for LAMMPS to render the image.  While in
-   most cases, the image will be updated in a fraction of a second,
+   most cases the image will be updated in a fraction of a second,
    complex visualizations may take multiple seconds.  While LAMMPS is
-   active to render an updated image, a small color palette icon in the
+   rendering an updated image, the small color palette icon in the
    menu bar is colored |palette| and will be grayed out |inactive| when
    rendering is complete.
 
