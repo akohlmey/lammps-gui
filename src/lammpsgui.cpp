@@ -702,8 +702,11 @@ LammpsGui::LammpsGui(QWidget *parent, const QString &filename, int width, int he
 #endif
     docver = "";
 
-    // minimize window so we don't see it while it is being constructed and configured
+#if !defined(Q_OS_MACOS)
+    // minimize window so we don't see it while it is being constructed and configured.
+    // this hack does not work as expected on macOS but it is also not really needed.
     showMinimized();
+#endif
 
     // restore and initialize settings
     QSettings settings;
