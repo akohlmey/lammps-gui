@@ -327,6 +327,16 @@ QStringList defaultcolors = {"red",       "green",    "blue",       "yellow",   
                              "darkgreen", "darkblue", "darkyellow", "darkcyan", "darkmagenta",
                              "silver",    "gray"};
 
+// same list as in dump image
+const QList<QPair<QString, QColor>> deftypecolors = {
+    {{"red"}, {255, 0, 0}},           {{"forestgreen"}, {34, 139, 34}},
+    {{"blue"}, {0, 0, 255}},          {{"gold"}, {255, 215, 0}},
+    {{"cyan"}, {0, 255, 255}},        {{"magenta"}, {255, 0, 255}},
+    {{"silver"}, {110, 110, 110}},    {{"orange"}, {255, 128, 0}},
+    {{"lime"}, {0, 255, 0}},          {{"gray"}, {128, 128, 128}},
+    {{"darkred"}, {139, 0, 0}},       {{"darkgreen"}, {0, 100, 0}},
+    {{"darkblue"}, {0, 0, 139}},      {{"darkcyan"}, {0, 139, 139}},
+    {{"darkmagenta"}, {139, 0, 139}}, {{"darkgray"}, {69, 69, 69}}};
 } // namespace
 
 /**
@@ -2445,7 +2455,7 @@ void ImageViewer::colorSettings()
     mainLayout->addWidget(new QHline);
 
     // Scrollable area: column headers + color-editing rows
-    constexpr int MAXCOLS = 5;
+    constexpr int MAXCOLS = 6;
 
     int idx      = 0;
     int n        = 0;
@@ -2454,6 +2464,7 @@ void ImageViewer::colorSettings()
 
     layout->addWidget(new QLabel("Type:"), idx, n++, Qt::AlignHCenter);
     layout->addWidget(new QLabel(""), idx, n++, Qt::AlignHCenter);
+    layout->addWidget(new QLabel("Name:"), idx, n++, Qt::AlignHCenter);
     layout->addWidget(new QLabel("Red:"), idx, n++, Qt::AlignHCenter);
     layout->addWidget(new QLabel("Green:"), idx, n++, Qt::AlignHCenter);
     layout->addWidget(new QLabel("Blue:"), idx++, n++, Qt::AlignHCenter);
@@ -2466,9 +2477,10 @@ void ImageViewer::colorSettings()
 
     for (int i = 0; i < numtypes; ++i) {
         int icolor = i % numcolors;
-        auto red   = color_list[icolor].redF();
-        auto green = color_list[icolor].greenF();
-        auto blue  = color_list[icolor].blueF();
+        auto cname = (i == icolor) ? color_list[icolor].first : QString("type%1").arg(i + 1);
+        auto red   = color_list[icolor].second.redF();
+        auto green = color_list[icolor].second.greenF();
+        auto blue  = color_list[icolor].second.blueF();
 
         n       = 0;
         auto *t = new QLabel(QString::number(i + 1));
@@ -2485,6 +2497,11 @@ void ImageViewer::colorSettings()
         icon->setMinimumSize(iconhint);
         icon->setMaximumSize(iconhint);
         layout->addWidget(icon, idx, n++, Qt::AlignHCenter);
+
+        auto *name = new QLineEdit(cname);
+        name->setFixedSize(metrics.averageCharWidth() * 14, metrics.height() + 4);
+        name->setObjectName(QString("type%1").arg(i + 1));
+        layout->addWidget(name, idx, n++);
 
         auto *r = new QLineEdit(QString::number(red, 'f', 3));
         r->setValidator(rgbvalidator);
@@ -2568,22 +2585,28 @@ void ImageViewer::colorSettings()
                 if (arr.isEmpty()) return;
 
                 for (int i = 1; i <= numtypes; ++i) {
-                    auto obj = arr[(i - 1) % arr.size()].toObject();
+                    auto obj  = arr[(i - 1) % arr.size()].toObject();
+                    QString n = obj.value("name").toString();
+                    if (n.isEmpty()) n = QString("type%1").arg(i);
                     double r = std::clamp(obj.value("red").toDouble(1.0), 0.0, 1.0);
                     double g = std::clamp(obj.value("green").toDouble(1.0), 0.0, 1.0);
                     double b = std::clamp(obj.value("blue").toDouble(1.0), 0.0, 1.0);
 
                     auto *iconItem = layout->itemAtPosition(i + colorstart, 1);
-                    if (auto *lbl = qobject_cast<QLabel *>(iconItem ? iconItem->widget() : nullptr))
-                        lbl->setPixmap(color_icon(QColor::fromRgbF(r, g, b)));
+                    if (auto *but =
+                            qobject_cast<QPushButton *>(iconItem ? iconItem->widget() : nullptr))
+                        but->setIcon(color_icon(QColor::fromRgbF(r, g, b)));
 
                     auto *item = layout->itemAtPosition(i + colorstart, 2);
                     if (auto *w = qobject_cast<QLineEdit *>(item ? item->widget() : nullptr))
-                        w->setText(QString::number(r, 'f', 3));
+                        w->setText(n);
                     item = layout->itemAtPosition(i + colorstart, 3);
                     if (auto *w = qobject_cast<QLineEdit *>(item ? item->widget() : nullptr))
-                        w->setText(QString::number(g, 'f', 3));
+                        w->setText(QString::number(r, 'f', 3));
                     item = layout->itemAtPosition(i + colorstart, 4);
+                    if (auto *w = qobject_cast<QLineEdit *>(item ? item->widget() : nullptr))
+                        w->setText(QString::number(g, 'f', 3));
+                    item = layout->itemAtPosition(i + colorstart, 5);
                     if (auto *w = qobject_cast<QLineEdit *>(item ? item->widget() : nullptr))
                         w->setText(QString::number(b, 'f', 3));
                 }
@@ -2602,16 +2625,21 @@ void ImageViewer::colorSettings()
                 QJsonArray colors;
                 for (int i = 1; i <= numtypes; ++i) {
                     double r = 1.0, g = 1.0, b = 1.0;
+                    QString n;
                     auto *item = layout->itemAtPosition(i + colorstart, 2);
                     if (auto *w = qobject_cast<QLineEdit *>(item ? item->widget() : nullptr))
-                        if (w->hasAcceptableInput()) r = w->text().toDouble();
+                        n = w->text();
                     item = layout->itemAtPosition(i + colorstart, 3);
                     if (auto *w = qobject_cast<QLineEdit *>(item ? item->widget() : nullptr))
-                        if (w->hasAcceptableInput()) g = w->text().toDouble();
+                        if (w->hasAcceptableInput()) r = w->text().toDouble();
                     item = layout->itemAtPosition(i + colorstart, 4);
+                    if (auto *w = qobject_cast<QLineEdit *>(item ? item->widget() : nullptr))
+                        if (w->hasAcceptableInput()) g = w->text().toDouble();
+                    item = layout->itemAtPosition(i + colorstart, 5);
                     if (auto *w = qobject_cast<QLineEdit *>(item ? item->widget() : nullptr))
                         if (w->hasAcceptableInput()) b = w->text().toDouble();
                     QJsonObject obj;
+                    obj["name"]  = n;
                     obj["red"]   = r;
                     obj["green"] = g;
                     obj["blue"]  = b;
@@ -2643,7 +2671,7 @@ void ImageViewer::colorSettings()
         int desiredHeight = rowHeight * (numtypes + 5) + 5 * (LAYOUT_SPACING + CONTENT_MARGIN);
         desiredHeight += title->sizeHint().height() + 2 * cancel->sizeHint().height();
         int desiredWidth = std::max(
-            MINIMUM_WIDTH, metrics.averageCharWidth() * 8 * 3 +
+            MINIMUM_WIDTH, metrics.averageCharWidth() * 10 * 4 +
                                scrollArea->verticalScrollBar()->sizeHint().width() + EXTRA_WIDTH);
         int maxWidth  = std::min(desiredWidth, screenSize.width() * 3 / 4);
         int maxHeight = std::min(desiredHeight, screenSize.height() * 4 / 5);
@@ -2667,42 +2695,37 @@ void ImageViewer::colorSettings()
             color_list.append(color_list[i % old_size]);
 
         for (int i = 1; i <= numtypes; ++i) {
-            double r = color_list[i - 1].redF();
-            double g = color_list[i - 1].greenF();
-            double b = color_list[i - 1].blueF();
+            QString n = color_list[i - 1].first;
+            double r  = color_list[i - 1].second.redF();
+            double g  = color_list[i - 1].second.greenF();
+            double b  = color_list[i - 1].second.blueF();
 
             auto *item = layout->itemAtPosition(i + colorstart, 2);
             auto *rgb  = item ? qobject_cast<QLineEdit *>(item->widget()) : nullptr;
-            if (rgb && rgb->hasAcceptableInput()) r = rgb->text().toDouble();
+            if (rgb) n = rgb->text();
 
             item = layout->itemAtPosition(i + colorstart, 3);
             rgb  = item ? qobject_cast<QLineEdit *>(item->widget()) : nullptr;
-            if (rgb && rgb->hasAcceptableInput()) g = rgb->text().toDouble();
+            if (rgb && rgb->hasAcceptableInput()) r = rgb->text().toDouble();
 
             item = layout->itemAtPosition(i + colorstart, 4);
             rgb  = item ? qobject_cast<QLineEdit *>(item->widget()) : nullptr;
+            if (rgb && rgb->hasAcceptableInput()) g = rgb->text().toDouble();
+
+            item = layout->itemAtPosition(i + colorstart, 5);
+            rgb  = item ? qobject_cast<QLineEdit *>(item->widget()) : nullptr;
             if (rgb && rgb->hasAcceptableInput()) b = rgb->text().toDouble();
 
-            color_list[i - 1] = QColor::fromRgbF(r, g, b);
+            color_list[i - 1] = {n, QColor::fromRgbF(r, g, b)};
         }
     }
     createImage();
 }
 
-// our custom list of default colors for per-type colors
-constexpr double DEFAULT_RGB[][3] = {
-    {0.9, 0.0, 0.0}, {0.0, 0.9, 0.0}, {0.0, 0.0, 0.9}, {0.9, 0.9, 0.0}, {0.0, 0.9, 0.9},
-    {0.9, 0.0, 0.9}, {0.9, 0.5, 0.0}, {0.5, 0.0, 0.9}, {0.8, 0.0, 0.4}, {0.0, 0.9, 0.5},
-    {0.5, 0.2, 0.2}, {0.0, 0.5, 0.0}, {0.1, 0.1, 0.5}, {0.6, 0.9, 0.0}, {0.0, 0.5, 0.9},
-    {0.5, 0.5, 0.0}, {0.0, 0.5, 0.5}, {0.5, 0.0, 0.5}, {0.9, 0.9, 0.9}, {0.5, 0.5, 0.5},
-    {0.2, 0.2, 0.2}};
-
 void ImageViewer::resetColors()
 {
     color_list.clear();
-    for (const auto &rgb : DEFAULT_RGB)
-        color_list.append(QColor::fromRgbF(rgb[0], rgb[1], rgb[2]));
-
+    color_list   = deftypecolors;
     ambientlight = 0.0;
     keylight     = 0.9;
     filllight    = 0.45;
@@ -2719,11 +2742,12 @@ void ImageViewer::loadColors()
 
     color_list.clear();
     for (const auto &item : arr) {
-        auto obj = item.toObject();
-        double r = std::clamp(obj.value("red").toDouble(1.0), 0.0, 1.0);
-        double g = std::clamp(obj.value("green").toDouble(1.0), 0.0, 1.0);
-        double b = std::clamp(obj.value("blue").toDouble(1.0), 0.0, 1.0);
-        color_list.append(QColor::fromRgbF(r, g, b));
+        auto obj  = item.toObject();
+        QString n = obj.value("name").toString();
+        double r  = std::clamp(obj.value("red").toDouble(1.0), 0.0, 1.0);
+        double g  = std::clamp(obj.value("green").toDouble(1.0), 0.0, 1.0);
+        double b  = std::clamp(obj.value("blue").toDouble(1.0), 0.0, 1.0);
+        color_list.append({n, QColor::fromRgbF(r, g, b)});
     }
     if (color_list.isEmpty()) resetColors();
 
@@ -2734,7 +2758,6 @@ void ImageViewer::loadColors()
         filllight    = lights.value("fill").toDouble();
         backlight    = lights.value("back").toDouble();
     }
-
     createImage();
 }
 
@@ -2743,9 +2766,10 @@ void ImageViewer::saveColors()
     QJsonArray colors;
     for (const auto &c : color_list) {
         QJsonObject obj;
-        obj["red"]   = c.redF();
-        obj["green"] = c.greenF();
-        obj["blue"]  = c.blueF();
+        obj["name"]  = c.first;
+        obj["red"]   = c.second.redF();
+        obj["green"] = c.second.greenF();
+        obj["blue"]  = c.second.blueF();
         colors.append(obj);
     }
     QJsonObject lights;
@@ -3153,18 +3177,15 @@ void ImageViewer::createImage()
     int numcolors = color_list.size();
 
     for (int i = 0; i < numcolors; ++i) {
-        auto namekey = QString("type%1").arg(i + 1);
         dumpcmd += QString(" color %1 %2 %3 %4")
-                       .arg(namekey)
-                       .arg(color_list[i].redF())
-                       .arg(color_list[i].greenF())
-                       .arg(color_list[i].blueF());
+                       .arg(color_list[i].first)
+                       .arg(color_list[i].second.redF())
+                       .arg(color_list[i].second.greenF())
+                       .arg(color_list[i].second.blueF());
     }
     int numtypes = lammps->extractSetting("ntypes");
     for (int i = 1; i <= numtypes; ++i) {
-        int icolor   = ((i - 1) % numcolors) + 1;
-        auto namekey = QString("type%1").arg(icolor);
-        dumpcmd += QString(" acolor %1 %2").arg(i).arg(namekey);
+        dumpcmd += QString(" acolor %1 %2").arg(i).arg(color_list[(i - 1) % numcolors].first);
     }
 
     dumpcmd += " boxcolor " + boxcolor;

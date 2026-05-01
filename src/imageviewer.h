@@ -18,6 +18,7 @@
 #include <QImage>
 #include <QList>
 #include <QMap>
+#include <QPair>
 #include <QString>
 #include <QStringList>
 #include <map>
@@ -212,7 +213,7 @@ private:
     std::map<std::string, ImageInfo *> computes; ///< Compute graphics settings
     std::map<std::string, ImageInfo *> fixes;    ///< Fix graphics settings
     std::map<std::string, RegionInfo *> regions; ///< Region settings
-    QList<QColor> color_list;                    ///< Per-type atom colors (not stored persistently)
+    QList<QPair<QString, QColor>> color_list;    ///< Per-type atom colors (not stored persistently)
     bool shutdown;                               ///< flag if class has entered the destructor
 };
 #endif
