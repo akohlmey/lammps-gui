@@ -2648,7 +2648,8 @@ void LammpsGui::startLammps()
     if (lammps.version() < GuiConstants::MIN_LAMMPS_VERSION) {
         critical(this, "LAMMPS-GUI Error", "Incompatible LAMMPS Version:",
                  "LAMMPS-GUI version " LAMMPS_GUI_VERSION " requires\n"
-                 "a LAMMPS version of at least " + GuiConstants::MIN_LAMMPS_VERSION_STR);
+                 "a LAMMPS version of at least " +
+                     GuiConstants::MIN_LAMMPS_VERSION_STR);
         exit(1);
     }
 
