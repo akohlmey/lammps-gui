@@ -147,6 +147,33 @@ constexpr double pte_vdw_radius[] = {
 };
 
 // clang-format on
+// constants
+const QString blank(" ");
+constexpr double VDW_ON           = 1.6;
+constexpr double VDW_OFF          = 0.5;
+constexpr double VDW_CUT          = 1.0;
+constexpr double SHINY_ON         = 0.6;
+constexpr double SHINY_OFF        = 0.2;
+constexpr double SHINY_CUT        = 0.4;
+constexpr int DEFAULT_BUFLEN      = 1024;
+constexpr int DEFAULT_NPOINTS     = 100000;
+constexpr double DEFAULT_DIAMETER = 0.2;
+constexpr double DEFAULT_OPACITY  = 0.5;
+constexpr int TITLE_MARGIN        = 10;
+constexpr int CONTENT_MARGIN      = 5;
+constexpr int LAYOUT_SPACING      = 6;
+constexpr int MINIMUM_WIDTH       = 400;
+constexpr int MINIMUM_HEIGHT      = 300;
+constexpr int EXTRA_WIDTH         = 150;
+constexpr int EXTRA_HEIGHT        = 100;
+constexpr int RESET_ALL_COLORS    = 10;
+constexpr int ICON_SIZE           = 48;
+
+enum { FRAME, FILLED, TRANSPARENT, POINTS };
+enum { TYPE, ELEMENT, CONSTANT };
+
+// needs to be kept in sync with the dump image tri flag values
+enum { NONE, TRIANGLES, CYLINDERS, BOTH };
 
 // helper functions:
 
@@ -162,8 +189,6 @@ int get_pte_from_mass(double mass)
     if ((mass < 61.24) && (mass > 58.8133)) idx = 27;
     return idx;
 }
-
-constexpr int ICON_SIZE = 48;
 
 // 2) create a color gradient icon
 QIcon gradient_icon(const QList<QColor> &colors)
@@ -302,33 +327,6 @@ QStringList defaultcolors = {"red",       "green",    "blue",       "yellow",   
                              "magenta",   "orange",   "chartreuse", "brown",    "darkred",
                              "darkgreen", "darkblue", "darkyellow", "darkcyan", "darkmagenta",
                              "silver",    "gray"};
-
-// constants
-const QString blank(" ");
-constexpr double VDW_ON           = 1.6;
-constexpr double VDW_OFF          = 0.5;
-constexpr double VDW_CUT          = 1.0;
-constexpr double SHINY_ON         = 0.6;
-constexpr double SHINY_OFF        = 0.2;
-constexpr double SHINY_CUT        = 0.4;
-constexpr int DEFAULT_BUFLEN      = 1024;
-constexpr int DEFAULT_NPOINTS     = 100000;
-constexpr double DEFAULT_DIAMETER = 0.2;
-constexpr double DEFAULT_OPACITY  = 0.5;
-constexpr int TITLE_MARGIN        = 10;
-constexpr int CONTENT_MARGIN      = 5;
-constexpr int LAYOUT_SPACING      = 6;
-constexpr int MINIMUM_WIDTH       = 400;
-constexpr int MINIMUM_HEIGHT      = 300;
-constexpr int EXTRA_WIDTH         = 150;
-constexpr int EXTRA_HEIGHT        = 100;
-constexpr int RESET_ALL_COLORS    = 10;
-
-enum { FRAME, FILLED, TRANSPARENT, POINTS };
-enum { TYPE, ELEMENT, CONSTANT };
-
-// needs to be kept in sync with the dump image tri flag values
-enum { NONE, TRIANGLES, CYLINDERS, BOTH };
 
 } // namespace
 
