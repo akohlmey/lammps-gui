@@ -291,8 +291,7 @@ QJsonObject loadJsonColors(QWidget *parent)
         return obj;
     }
 
-    arr = obj.value("lights").toArray();
-    if (arr.isEmpty()) {
+    if (obj.value("lights").toObject().isEmpty()) {
         warning(parent, "Load Colors",
                 "JSON colors file '" + fileName + "' contains no lights entry");
         return obj;
