@@ -26,7 +26,7 @@ extern std::unique_ptr<QFont> GUI_MONOFONT;
 extern std::unique_ptr<QFont> GUI_ALLFONT;
 
 /**
- * @brief Compare two date strings in "YYYY-MM-DD" format
+ * @brief Compare two date strings in LAMMPS "DD MMM YYYY" format (e.g. "22 Jul 2025")
  * @param one First date string
  * @param two Second date string
  * @return -1 if one < two, 0 if equal, 1 if one > two
