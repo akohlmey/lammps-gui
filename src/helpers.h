@@ -12,6 +12,9 @@
 #ifndef HELPERS_H
 #define HELPERS_H
 
+#include <QAction>
+#include <QIcon>
+#include <QMenu>
 #include <QString>
 #include <memory>
 #include <string>
@@ -179,6 +182,28 @@ public:
     StdoutSilencer &operator=(const StdoutSilencer &) = delete;
     StdoutSilencer &operator=(StdoutSilencer &&)      = delete;
 };
+
+/**
+ * @brief Append an action with an optional icon and a triggered() handler to a menu
+ * @param menu     Menu to append the new action to
+ * @param text     Action label text
+ * @param icon     Resource path for the action icon (empty for no icon)
+ * @param receiver Object that owns the slot/callable
+ * @param slot     Member function pointer or callable invoked on trigger
+ * @return The created action, for any further configuration by the caller (e.g. setData())
+ *
+ * Collapses the recurring "addAction() + setIcon() + connect()" idiom used when
+ * building context menus and tool menus across the widget classes.
+ */
+template <typename Recv, typename Func>
+QAction *addMenuAction(QMenu *menu, const QString &text, const QString &icon, Recv *receiver,
+                       Func slot)
+{
+    auto *action = menu->addAction(text);
+    if (!icon.isEmpty()) action->setIcon(QIcon(icon));
+    QObject::connect(action, &QAction::triggered, receiver, slot);
+    return action;
+}
 
 #endif
 // Local Variables:

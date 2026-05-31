@@ -3386,38 +3386,32 @@ void ImageViewer::createActions()
 {
     QMenu *fileMenu = menuBar->addMenu("&File");
 
-    saveAsAct = fileMenu->addAction("&Save As...", this, &ImageViewer::saveAs);
-    saveAsAct->setIcon(QIcon(":/icons/document-save-as.png"));
+    saveAsAct = addMenuAction(fileMenu, "&Save As...", ":/icons/document-save-as.png", this,
+                              &ImageViewer::saveAs);
     saveAsAct->setEnabled(false);
     saveAsAct->setShortcut(QKeySequence(Qt::CTRL | Qt::Key_S));
     fileMenu->addSeparator();
-    copyAct = fileMenu->addAction("Copy &Image", this, &ImageViewer::copy);
-    copyAct->setIcon(QIcon(":/icons/edit-copy.png"));
+    copyAct =
+        addMenuAction(fileMenu, "Copy &Image", ":/icons/edit-copy.png", this, &ImageViewer::copy);
     copyAct->setShortcut(QKeySequence::Copy);
     copyAct->setEnabled(false);
-    cmdAct = fileMenu->addAction("Copy &dump image command", this, &ImageViewer::cmdToClipboard);
-    cmdAct->setIcon(QIcon(":/icons/file-clipboard.png"));
+    cmdAct = addMenuAction(fileMenu, "Copy &dump image command", ":/icons/file-clipboard.png", this,
+                           &ImageViewer::cmdToClipboard);
     cmdAct->setShortcut(QKeySequence(Qt::CTRL | Qt::Key_D));
     fileMenu->addSeparator();
-    QAction *loadColorsAct =
-        fileMenu->addAction("&Load Colors from JSON...", this, &ImageViewer::loadColors);
-    loadColorsAct->setIcon(QIcon(":/icons/document-open.png"));
-    QAction *saveColorsAct =
-        fileMenu->addAction("S&ave Colors to JSON...", this, &ImageViewer::saveColors);
-    saveColorsAct->setIcon(QIcon(":/icons/document-save.png"));
-    QAction *resetColorsAct = fileMenu->addAction("&Reset Colors");
-    connect(resetColorsAct, &QAction::triggered, this, [this]() {
+    addMenuAction(fileMenu, "&Load Colors from JSON...", ":/icons/document-open.png", this,
+                  &ImageViewer::loadColors);
+    addMenuAction(fileMenu, "S&ave Colors to JSON...", ":/icons/document-save.png", this,
+                  &ImageViewer::saveColors);
+    addMenuAction(fileMenu, "&Reset Colors", ":/icons/system-restart.png", this, [this]() {
         resetColors();
         createImage();
     });
-    resetColorsAct->setIcon(QIcon(":/icons/system-restart.png"));
     fileMenu->addSeparator();
-    QAction *exitAct = fileMenu->addAction("&Close", this, &QWidget::close);
-    exitAct->setIcon(QIcon(":/icons/window-close.png"));
-    exitAct->setShortcut(QKeySequence(Qt::CTRL | Qt::Key_W));
-    QAction *quitAct = fileMenu->addAction("&Quit", this, &ImageViewer::quit);
-    quitAct->setIcon(QIcon(":/icons/application-exit.png"));
-    quitAct->setShortcut(QKeySequence(Qt::CTRL | Qt::Key_Q));
+    addMenuAction(fileMenu, "&Close", ":/icons/window-close.png", this, &QWidget::close)
+        ->setShortcut(QKeySequence(Qt::CTRL | Qt::Key_W));
+    addMenuAction(fileMenu, "&Quit", ":/icons/application-exit.png", this, &ImageViewer::quit)
+        ->setShortcut(QKeySequence(Qt::CTRL | Qt::Key_Q));
 }
 
 void ImageViewer::updateActions()

@@ -595,58 +595,45 @@ void CodeEditor::contextMenuEvent(QContextMenuEvent *event)
 
     auto *menu = createStandardContextMenu();
     menu->addSeparator();
+    auto *gui = qobject_cast<LammpsGui *>(parent());
     if (textCursor().hasSelection()) {
-        auto *action1 = menu->addAction("Comment out selection");
-        action1->setIcon(QIcon(":/icons/expand-text.png"));
-        connect(action1, &QAction::triggered, this, &CodeEditor::commentSelection);
-        auto *action2 = menu->addAction("Uncomment selection");
-        action2->setIcon(QIcon(":/icons/expand-text.png"));
-        connect(action2, &QAction::triggered, this, &CodeEditor::uncommentSelection);
+        addMenuAction(menu, "Comment out selection", ":/icons/expand-text.png", this,
+                      &CodeEditor::commentSelection);
+        addMenuAction(menu, "Uncomment selection", ":/icons/expand-text.png", this,
+                      &CodeEditor::uncommentSelection);
     } else {
-        auto *action1 = menu->addAction("Comment out line");
-        action1->setIcon(QIcon(":/icons/expand-text.png"));
-        connect(action1, &QAction::triggered, this, &CodeEditor::commentLine);
-        auto *action2 = menu->addAction("Uncomment line");
-        action2->setIcon(QIcon(":/icons/expand-text.png"));
-        connect(action2, &QAction::triggered, this, &CodeEditor::uncommentLine);
+        addMenuAction(menu, "Comment out line", ":/icons/expand-text.png", this,
+                      &CodeEditor::commentLine);
+        addMenuAction(menu, "Uncomment line", ":/icons/expand-text.png", this,
+                      &CodeEditor::uncommentLine);
     }
     menu->addSeparator();
-    LammpsWrapper *lammps = &qobject_cast<LammpsGui *>(parent())->lammps;
+    LammpsWrapper *lammps = &gui->lammps;
     if (lammps->isRunning()) {
-        auto *action1 = menu->addAction("Stop LAMMPS");
-        action1->setIcon(QIcon(":/icons/process-stop.png"));
-        connect(action1, &QAction::triggered, qobject_cast<LammpsGui *>(parent()),
-                &LammpsGui::stopRun);
+        addMenuAction(menu, "Stop LAMMPS", ":/icons/process-stop.png", gui, &LammpsGui::stopRun);
     } else {
-        auto *action1 = menu->addAction("Run LAMMPS from Editor Buffer");
-        action1->setIcon(QIcon(":/icons/system-run.png"));
-        connect(action1, &QAction::triggered, qobject_cast<LammpsGui *>(parent()),
-                &LammpsGui::runBuffer);
-        auto *action2 = menu->addAction("Run LAMMPS from File");
-        action2->setIcon(QIcon(":/icons/run-file.png"));
-        connect(action2, &QAction::triggered, qobject_cast<LammpsGui *>(parent()),
-                &LammpsGui::runFile);
+        addMenuAction(menu, "Run LAMMPS from Editor Buffer", ":/icons/system-run.png", gui,
+                      &LammpsGui::runBuffer);
+        addMenuAction(menu, "Run LAMMPS from File", ":/icons/run-file.png", gui,
+                      &LammpsGui::runFile);
     }
     menu->addSeparator();
 
     // print augmented context menu if an entry was found
     if (!help.isEmpty()) {
-        auto *action = menu->addAction(QString("Display available completions for '%1'").arg(help));
-        action->setIcon(QIcon(":/icons/expand-text.png"));
-        connect(action, &QAction::triggered, this, &CodeEditor::runCompletion);
+        addMenuAction(menu, QString("Display available completions for '%1'").arg(help),
+                      ":/icons/expand-text.png", this, &CodeEditor::runCompletion);
         menu->addSeparator();
     }
 
     if (!page.isEmpty()) {
-        auto *action = menu->addAction(QString("Reformat '%1' command").arg(help));
-        action->setIcon(QIcon(":/icons/format-indent-less-3.png"));
-        connect(action, &QAction::triggered, this, &CodeEditor::reformatCurrentLine);
+        addMenuAction(menu, QString("Reformat '%1' command").arg(help),
+                      ":/icons/format-indent-less-3.png", this, &CodeEditor::reformatCurrentLine);
 
         menu->addSeparator();
-        action = menu->addAction(QString("View Documentation for '%1'").arg(help));
-        action->setIcon(QIcon(":/icons/system-help.png"));
-        action->setData(page);
-        connect(action, &QAction::triggered, this, &CodeEditor::openHelp);
+        addMenuAction(menu, QString("View Documentation for '%1'").arg(help),
+                      ":/icons/system-help.png", this, &CodeEditor::openHelp)
+            ->setData(page);
         // if we link to help with specific styles (fix, compute, pair, bond, ...)
         // also link to the docs for the primary command
         auto words = help.split(' ', Qt::SkipEmptyParts);
@@ -654,10 +641,9 @@ void CodeEditor::contextMenuEvent(QContextMenuEvent *event)
             help = words.at(0);
             page = words.at(0);
             page += ".html";
-            auto *action2 = menu->addAction(QString("View Documentation for '%1'").arg(help));
-            action2->setIcon(QIcon(":/icons/system-help.png"));
-            action2->setData(page);
-            connect(action2, &QAction::triggered, this, &CodeEditor::openHelp);
+            addMenuAction(menu, QString("View Documentation for '%1'").arg(help),
+                          ":/icons/system-help.png", this, &CodeEditor::openHelp)
+                ->setData(page);
         }
     }
 
@@ -693,34 +679,29 @@ void CodeEditor::contextMenuEvent(QContextMenuEvent *event)
                     file.close();
                 }
                 if (strcmp(magic, LAMMPS_MAGIC) == 0) {
-                    auto *action = menu->addAction(QString("Inspect restart file '%1'").arg(word));
-                    action->setIcon(QIcon(":/icons/document-open.png"));
-                    action->setData(word);
-                    connect(action, &QAction::triggered, this, &CodeEditor::inspectFile);
+                    addMenuAction(menu, QString("Inspect restart file '%1'").arg(word),
+                                  ":/icons/document-open.png", this, &CodeEditor::inspectFile)
+                        ->setData(word);
                 } else {
-                    auto *action = menu->addAction(QString("View file '%1'").arg(word));
-                    action->setIcon(QIcon(":/icons/document-open.png"));
-                    action->setData(word);
-                    connect(action, &QAction::triggered, this, &CodeEditor::viewFile);
+                    addMenuAction(menu, QString("View file '%1'").arg(word),
+                                  ":/icons/document-open.png", this, &CodeEditor::viewFile)
+                        ->setData(word);
                 }
             }
         }
     }
 
-    auto *action = menu->addAction(QString("LAMMPS Commands Overview"));
-    action->setIcon(QIcon(":/icons/help-browser.png"));
-    action->setData(QString("/Commands_all.html"));
-    connect(action, &QAction::triggered, this, &CodeEditor::openHelp);
+    addMenuAction(menu, QString("LAMMPS Commands Overview"), ":/icons/help-browser.png", this,
+                  &CodeEditor::openHelp)
+        ->setData(QString("/Commands_all.html"));
 
-    action = menu->addAction(QString("LAMMPS Manual"));
-    action->setIcon(QIcon(":/icons/help-browser.png"));
-    action->setData(QString());
-    connect(action, &QAction::triggered, this, &CodeEditor::openHelp);
+    addMenuAction(menu, QString("LAMMPS Manual"), ":/icons/help-browser.png", this,
+                  &CodeEditor::openHelp)
+        ->setData(QString());
 
-    action = menu->addAction(QString("LAMMPS Tutorial"));
-    action->setIcon(QIcon(":/icons/help-tutorial.png"));
-    action->setData(QString("https://lammpstutorials.github.io/"));
-    connect(action, &QAction::triggered, this, &CodeEditor::openUrl);
+    addMenuAction(menu, QString("LAMMPS Tutorial"), ":/icons/help-tutorial.png", this,
+                  &CodeEditor::openUrl)
+        ->setData(QString("https://lammpstutorials.github.io/"));
 
     menu->exec(event->globalPos());
     delete menu;

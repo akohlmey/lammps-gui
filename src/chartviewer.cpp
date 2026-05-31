@@ -180,26 +180,25 @@ ChartWindow::ChartWindow(const QString &_filename, LammpsGui *_lammpsgui, QWidge
     row2->addWidget(new QLabel(" Smooth:"));
     row2->addWidget(window);
     row2->addWidget(order);
-    saveAsAct = file->addAction("&Save Graph As...", this, &ChartWindow::saveAs);
-    saveAsAct->setIcon(QIcon(":/icons/document-save-as.png"));
-    copyAct = file->addAction("Copy &Graph to Clipboard", this, &ChartWindow::copy);
-    copyAct->setIcon(QIcon(":/icons/edit-copy.png"));
+    saveAsAct = addMenuAction(file, "&Save Graph As...", ":/icons/document-save-as.png", this,
+                              &ChartWindow::saveAs);
+    copyAct   = addMenuAction(file, "Copy &Graph to Clipboard", ":/icons/edit-copy.png", this,
+                              &ChartWindow::copy);
     copyAct->setShortcut(QKeySequence(QKeySequence::Copy));
-    exportCsvAct = file->addAction("&Export data to CSV...", this, &ChartWindow::exportCsv);
-    exportCsvAct->setIcon(QIcon(":/icons/application-calc.png"));
-    exportDatAct = file->addAction("Export data to &Gnuplot...", this, &ChartWindow::exportDat);
-    exportDatAct->setIcon(QIcon(":/icons/application-plot.png"));
-    exportYamlAct = file->addAction("Export data to &YAML...", this, &ChartWindow::exportYaml);
-    exportYamlAct->setIcon(QIcon(":/icons/yaml-file-icon.png"));
+    exportCsvAct = addMenuAction(file, "&Export data to CSV...", ":/icons/application-calc.png",
+                                 this, &ChartWindow::exportCsv);
+    exportDatAct = addMenuAction(file, "Export data to &Gnuplot...", ":/icons/application-plot.png",
+                                 this, &ChartWindow::exportDat);
+    exportYamlAct = addMenuAction(file, "Export data to &YAML...", ":/icons/yaml-file-icon.png",
+                                  this, &ChartWindow::exportYaml);
     file->addSeparator();
-    stopAct = file->addAction("Stop &Run", this, &ChartWindow::stopRun);
-    stopAct->setIcon(QIcon(":/icons/process-stop.png"));
+    stopAct =
+        addMenuAction(file, "Stop &Run", ":/icons/process-stop.png", this, &ChartWindow::stopRun);
     stopAct->setShortcut(QKeySequence(Qt::CTRL | Qt::Key_Slash));
-    closeAct = file->addAction("&Close", this, &QWidget::close);
-    closeAct->setIcon(QIcon(":/icons/window-close.png"));
+    closeAct = addMenuAction(file, "&Close", ":/icons/window-close.png", this, &QWidget::close);
     closeAct->setShortcut(QKeySequence(Qt::CTRL | Qt::Key_W));
-    quitAct = file->addAction("&Quit", this, &ChartWindow::quit);
-    quitAct->setIcon(QIcon(":/icons/application-exit.png"));
+    quitAct =
+        addMenuAction(file, "&Quit", ":/icons/application-exit.png", this, &ChartWindow::quit);
     quitAct->setShortcut(QKeySequence(Qt::CTRL | Qt::Key_Q));
     auto *layout = new QVBoxLayout;
     layout->addLayout(top);
