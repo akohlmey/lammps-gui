@@ -11,6 +11,7 @@
 
 #include "imageviewer.h"
 
+#include "constants.h"
 #include "helpers.h"
 #include "lammpsgui.h"
 #include "lammpswrapper.h"
@@ -155,7 +156,6 @@ constexpr double VDW_CUT          = 1.0;
 constexpr double SHINY_ON         = 0.6;
 constexpr double SHINY_OFF        = 0.2;
 constexpr double SHINY_CUT        = 0.4;
-constexpr int DEFAULT_BUFLEN      = 1024;
 constexpr int DEFAULT_NPOINTS     = 100000;
 constexpr double DEFAULT_DIAMETER = 0.2;
 constexpr double DEFAULT_OPACITY  = 0.5;
@@ -3611,10 +3611,10 @@ void ImageViewer::updateRegions()
     }
 
     // add any new regions
-    char buffer[DEFAULT_BUFLEN];
+    char buffer[GuiConstants::DEFAULT_BUFLEN];
     int nregions = lammps->idCount("region");
     for (int i = 0; i < nregions; ++i) {
-        if (lammps->idName("region", i, buffer, DEFAULT_BUFLEN)) {
+        if (lammps->idName("region", i, buffer, GuiConstants::DEFAULT_BUFLEN)) {
             std::string id = buffer;
             if (regions.count(id) == 0) {
                 const auto &color = defaultcolors[i % defaultcolors.size()].toStdString();
