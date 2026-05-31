@@ -339,6 +339,13 @@ const QList<QPair<QString, QColor>> deftypecolors = {
     {{"darkmagenta"}, {139, 0, 139}}, {{"darkgray"}, {69, 69, 69}}};
 } // namespace
 
+// select the combo box entry matching the given text, if present (leave unchanged otherwise)
+static void selectComboItem(QComboBox *box, const QString &text)
+{
+    const int idx = box->findText(text);
+    if (idx >= 0) box->setCurrentIndex(idx);
+}
+
 /**
  * @brief Store settings for displaying graphics from a fix or compute in a LAMMPS snapshot image
  */
@@ -1064,15 +1071,12 @@ void ImageViewer::acolorSync()
     if (src && acolor && bcolor && ecolor && lcolor && tcolor) {
         if (src == acolor) {
             if (src->currentText() != "type") {
-                for (auto *box : {bcolor, ecolor, lcolor, tcolor}) {
-                    for (int idx = 0; idx < box->count(); ++idx)
-                        if (box->itemText(idx) == "atom") box->setCurrentIndex(idx);
-                }
+                for (auto *box : {bcolor, ecolor, lcolor, tcolor})
+                    selectComboItem(box, "atom");
             }
         } else {
             if (src->currentText() != "atom") {
-                for (int idx = 0; idx < acolor->count(); ++idx)
-                    if (acolor->itemText(idx) == "type") acolor->setCurrentIndex(idx);
+                selectComboItem(acolor, "type");
             }
         }
     }
@@ -1506,6 +1510,27 @@ void ImageViewer::globalSettings()
     createImage();
 }
 
+QComboBox *ImageViewer::makeColorCombo(const QString &current, const QString &name)
+{
+    auto *box = new QComboBox;
+    box->addItems({"atom", "type", "index"});
+    selectComboItem(box, current);
+    box->setObjectName(name);
+    connect(box, QOverload<int>::of(&QComboBox::currentIndexChanged), this,
+            &ImageViewer::acolorSync);
+    return box;
+}
+
+QRadioButton *ImageViewer::addShapeButton(QButtonGroup *group, const QString &label, bool checked,
+                                          QGridLayout *layout, int row, int &col)
+{
+    auto *button = new QRadioButton(label, this);
+    button->setChecked(checked);
+    group->addButton(button);
+    layout->addWidget(button, row, col++, 1, 1, Qt::AlignCenter);
+    return button;
+}
+
 void ImageViewer::atomSettings()
 {
     updatePeratom();
@@ -1547,11 +1572,8 @@ void ImageViewer::atomSettings()
     auto *acolor = new QComboBox;
     acolor->setObjectName("acolor");
     acolor->addItems(atom_properties);
-    if (atomcustom) { // select item that was selected the last time
-        for (int idx = 0; idx < acolor->count(); ++idx) {
-            if (acolor->itemText(idx) == atomcolor) acolor->setCurrentIndex(idx);
-        }
-    }
+    // select item that was selected the last time
+    if (atomcustom) selectComboItem(acolor, atomcolor);
     connect(acolor, QOverload<int>::of(&QComboBox::currentIndexChanged), this,
             &ImageViewer::acolorSync);
     layout->addWidget(acolor, idx, n++, 1, 1);
@@ -1576,11 +1598,8 @@ void ImageViewer::atomSettings()
     adiam->addItems(aditems);
     adiam->setEditable(true);
     adiam->setValidator(new QRegularExpressionValidator(validatom, this));
-    if (atomcustom) { // select item that was selected the last time
-        for (int idx = 0; idx < adiam->count(); ++idx) {
-            if (adiam->itemText(idx) == atomdiam) adiam->setCurrentIndex(idx);
-        }
-    }
+    // select item that was selected the last time
+    if (atomcustom) selectComboItem(adiam, atomdiam);
     layout->addWidget(adiam, idx, n++, 1, 1);
     layout->addWidget(new QLabel("Opacity: "), idx, n++, 1, 1, Qt::AlignVCenter | Qt::AlignRight);
     auto *atrans = new QLineEdit(QString::number(atomtrans));
@@ -1622,9 +1641,7 @@ void ImageViewer::atomSettings()
     amap->addItem(sequence_icon({"red", "cyan", "green", "black", "magenta", "blue", "yellow",
                                  "purple", "white", "orange"}), "Basic");
     // clang-format on
-    for (int idx = 0; idx < amap->count(); ++idx) {
-        if (amap->itemText(idx) == colormap) amap->setCurrentIndex(idx);
-    }
+    selectComboItem(amap, colormap);
     if ((atomcolor == "type") || (atomcolor == "element")) amap->setEnabled(false);
     QRegularExpression validminmax(
         R"((auto|min|max|[+-]?\d+\.?\d*|[+-]?\d*\.?\d+)|[+-]?\d+\.?\d*[eE][+-]?\d+|[+-]?\d*\.?\d+[eE][+-]?\d+)");
@@ -1653,9 +1670,7 @@ void ImageViewer::atomSettings()
         if (bondcolor == "none") {
             bondbutton->setChecked(false);
         } else {
-            for (int idx = 0; idx < bncolor->count(); ++idx) {
-                if (bncolor->itemText(idx) == bondcolor) bncolor->setCurrentIndex(idx);
-            }
+            selectComboItem(bncolor, bondcolor);
         }
     }
     layout->addWidget(bncolor, idx, n++, 1, 1);
@@ -1681,9 +1696,7 @@ void ImageViewer::atomSettings()
         if (bonddiam == "none") { // none means bonds are disabled
             bondbutton->setChecked(false);
         } else {
-            for (int idx = 0; idx < bndiam->count(); ++idx) {
-                if (bndiam->itemText(idx) == bonddiam) bndiam->setCurrentIndex(idx);
-            }
+            selectComboItem(bndiam, bonddiam);
         }
     }
     layout->addWidget(bndiam, idx, n++, 1, 1);
@@ -1724,31 +1737,16 @@ void ImageViewer::atomSettings()
     auto *bodybutton = new QCheckBox("Bodies ", this);
     bodybutton->setChecked(showbodies);
     layout->addWidget(bodybutton, idx, n++, 1, 1);
-    auto *bcolor = new QComboBox;
-    bcolor->addItems({"atom", "type", "index"});
-    for (int idx = 0; idx < bcolor->count(); ++idx) {
-        if (bcolor->itemText(idx) == bodycolor) bcolor->setCurrentIndex(idx);
-    }
-    bcolor->setObjectName("bcolor");
-    connect(bcolor, QOverload<int>::of(&QComboBox::currentIndexChanged), this,
-            &ImageViewer::acolorSync);
+    auto *bcolor = makeColorCombo(bodycolor, "bcolor");
     layout->addWidget(bcolor, idx, n++, 1, 1);
     auto *bgroup   = new QButtonGroup(this);
-    auto *bcbutton = new QRadioButton("Cylinders", this);
-    bcbutton->setChecked(bodyflag == CYLINDERS);
-    bgroup->addButton(bcbutton);
-    layout->addWidget(bcbutton, idx, n++, 1, 1, Qt::AlignCenter);
-    auto *bdiam = new QLineEdit(QString::number(bodydiam));
+    auto *bcbutton = addShapeButton(bgroup, "Cylinders", bodyflag == CYLINDERS, layout, idx, n);
+    auto *bdiam    = new QLineEdit(QString::number(bodydiam));
     bdiam->setValidator(diamvalidator);
     layout->addWidget(bdiam, idx, n++, 1, 1, Qt::AlignVCenter | Qt::AlignLeft);
-    auto *btbutton = new QRadioButton("Triangles", this);
-    btbutton->setChecked(bodyflag == TRIANGLES);
-    bgroup->addButton(btbutton);
-    layout->addWidget(btbutton, idx, n++, 1, 1, Qt::AlignCenter);
-    auto *bbbutton = new QRadioButton("Both", this);
-    bbbutton->setChecked(bodyflag == BOTH);
-    bgroup->addButton(bbbutton);
-    layout->addWidget(bbbutton, idx++, n++, 1, 1, Qt::AlignCenter);
+    auto *btbutton = addShapeButton(bgroup, "Triangles", bodyflag == TRIANGLES, layout, idx, n);
+    auto *bbbutton = addShapeButton(bgroup, "Both", bodyflag == BOTH, layout, idx, n);
+    ++idx;
     if (lammps->extractSetting("body_flag") != 1) {
         bodybutton->setEnabled(false);
         bodybutton->setChecked(false);
@@ -1764,27 +1762,16 @@ void ImageViewer::atomSettings()
     auto *ellipsoidbutton = new QCheckBox("Ellipsoids ", this);
     ellipsoidbutton->setChecked(showellipsoids);
     layout->addWidget(ellipsoidbutton, idx, n++, 1, 1);
-    auto *ecolor = new QComboBox;
-    ecolor->addItems({"atom", "type", "index"});
-    for (int idx = 0; idx < ecolor->count(); ++idx) {
-        if (ecolor->itemText(idx) == ellipsoidcolor) ecolor->setCurrentIndex(idx);
-    }
-    ecolor->setObjectName("ecolor");
-    connect(ecolor, QOverload<int>::of(&QComboBox::currentIndexChanged), this,
-            &ImageViewer::acolorSync);
+    auto *ecolor = makeColorCombo(ellipsoidcolor, "ecolor");
     layout->addWidget(ecolor, idx, n++, 1, 1);
-    auto *egroup   = new QButtonGroup(this);
-    auto *ecbutton = new QRadioButton("Cylinders", this);
-    ecbutton->setChecked(ellipsoidflag == CYLINDERS);
-    egroup->addButton(ecbutton);
-    layout->addWidget(ecbutton, idx, n++, 1, 1, Qt::AlignCenter);
+    auto *egroup = new QButtonGroup(this);
+    auto *ecbutton =
+        addShapeButton(egroup, "Cylinders", ellipsoidflag == CYLINDERS, layout, idx, n);
     auto *ediam = new QLineEdit(QString::number(ellipsoiddiam));
     ediam->setValidator(diamvalidator);
     layout->addWidget(ediam, idx, n++, 1, 1, Qt::AlignVCenter | Qt::AlignLeft);
-    auto *etbutton = new QRadioButton("Triangles", this);
-    etbutton->setChecked(ellipsoidflag == TRIANGLES);
-    egroup->addButton(etbutton);
-    layout->addWidget(etbutton, idx, n++, 1, 1, Qt::AlignCenter);
+    auto *etbutton =
+        addShapeButton(egroup, "Triangles", ellipsoidflag == TRIANGLES, layout, idx, n);
     // skip location for "Both" since ellipsoids don't need it
     ++n;
     auto *elevel = new QSpinBox;
@@ -1792,7 +1779,8 @@ void ImageViewer::atomSettings()
     elevel->setStepType(QAbstractSpinBox::DefaultStepType);
     elevel->setValue(ellipsoidlevel);
     elevel->setWrapping(false);
-    layout->addWidget(elevel, idx++, n++, 1, 1);
+    layout->addWidget(elevel, idx, n++, 1, 1);
+    ++idx;
     ++n;
     if (lammps->extractSetting("ellipsoid_flag") != 1) {
         ellipsoidbutton->setEnabled(false);
@@ -1809,19 +1797,13 @@ void ImageViewer::atomSettings()
     auto *linebutton = new QCheckBox("Lines ", this);
     linebutton->setChecked(showlines);
     layout->addWidget(linebutton, idx, n++, 1, 1);
-    auto *lcolor = new QComboBox;
-    lcolor->addItems({"atom", "type", "index"});
-    for (int idx = 0; idx < lcolor->count(); ++idx) {
-        if (lcolor->itemText(idx) == linecolor) lcolor->setCurrentIndex(idx);
-    }
-    lcolor->setObjectName("lcolor");
-    connect(lcolor, QOverload<int>::of(&QComboBox::currentIndexChanged), this,
-            &ImageViewer::acolorSync);
+    auto *lcolor = makeColorCombo(linecolor, "lcolor");
     layout->addWidget(lcolor, idx, n++, 1, 1);
     ++n;
     auto *ldiam = new QLineEdit(QString::number(linediam));
     ldiam->setValidator(diamvalidator);
-    layout->addWidget(ldiam, idx++, n++, 1, 1, Qt::AlignVCenter | Qt::AlignLeft);
+    layout->addWidget(ldiam, idx, n++, 1, 1, Qt::AlignVCenter | Qt::AlignLeft);
+    ++idx;
     if (lammps->extractSetting("line_flag") != 1) {
         linebutton->setEnabled(false);
         linebutton->setChecked(false);
@@ -1834,31 +1816,16 @@ void ImageViewer::atomSettings()
     auto *tributton = new QCheckBox("Triangles ", this);
     tributton->setChecked(showtris);
     layout->addWidget(tributton, idx, n++, 1, 1);
-    auto *tcolor = new QComboBox;
-    tcolor->addItems({"atom", "type", "index"});
-    for (int idx = 0; idx < tcolor->count(); ++idx) {
-        if (tcolor->itemText(idx) == tricolor) tcolor->setCurrentIndex(idx);
-    }
-    tcolor->setObjectName("tcolor");
-    connect(tcolor, QOverload<int>::of(&QComboBox::currentIndexChanged), this,
-            &ImageViewer::acolorSync);
+    auto *tcolor = makeColorCombo(tricolor, "tcolor");
     layout->addWidget(tcolor, idx, n++, 1, 1);
     auto *tgroup   = new QButtonGroup(this);
-    auto *tcbutton = new QRadioButton("Cylinders", this);
-    tcbutton->setChecked(triflag == CYLINDERS);
-    tgroup->addButton(tcbutton);
-    layout->addWidget(tcbutton, idx, n++, 1, 1, Qt::AlignCenter);
-    auto *tdiam = new QLineEdit(QString::number(tridiam));
+    auto *tcbutton = addShapeButton(tgroup, "Cylinders", triflag == CYLINDERS, layout, idx, n);
+    auto *tdiam    = new QLineEdit(QString::number(tridiam));
     tdiam->setValidator(diamvalidator);
     layout->addWidget(tdiam, idx, n++, 1, 1, Qt::AlignVCenter | Qt::AlignLeft);
-    auto *ttbutton = new QRadioButton("Triangles", this);
-    ttbutton->setChecked(triflag == TRIANGLES);
-    tgroup->addButton(ttbutton);
-    layout->addWidget(ttbutton, idx, n++, 1, 1, Qt::AlignCenter);
-    auto *tbbutton = new QRadioButton("Both", this);
-    tbbutton->setChecked(triflag == BOTH);
-    tgroup->addButton(tbbutton);
-    layout->addWidget(tbbutton, idx++, n++, 1, 1, Qt::AlignCenter);
+    auto *ttbutton = addShapeButton(tgroup, "Triangles", triflag == TRIANGLES, layout, idx, n);
+    auto *tbbutton = addShapeButton(tgroup, "Both", triflag == BOTH, layout, idx, n);
+    ++idx;
     ++n;
     if (lammps->extractSetting("tri_flag") != 1) {
         tributton->setEnabled(false);
@@ -2906,13 +2873,14 @@ void ImageViewer::createImage()
             xmid = ymid = zmid = 0.0;
         }
 
-        silenceStdout();
-        QString molcreate = "create_atoms 0 single %1 %2 %3 mol %4 312944 group %5 units box";
-        group             = "imgviewer_tmp_mol";
-        lammps->command(molcreate.arg(xmid).arg(ymid).arg(zmid).arg(molecule).arg(group));
-        lammps->command(QString("neigh_modify exclude group all %1").arg(group));
-        lammps->command("run 0 post no");
-        restoreStdout();
+        {
+            StdoutSilencer guard;
+            QString molcreate = "create_atoms 0 single %1 %2 %3 mol %4 312944 group %5 units box";
+            group             = "imgviewer_tmp_mol";
+            lammps->command(molcreate.arg(xmid).arg(ymid).arg(zmid).arg(molecule).arg(group));
+            lammps->command(QString("neigh_modify exclude group all %1").arg(group));
+            lammps->command("run 0 post no");
+        }
         if (lammps->hasError()) lammps->getLastErrorMessage(nullptr, 0);
     }
 
@@ -3316,19 +3284,19 @@ void ImageViewer::createImage()
         }
     }
 
-    silenceStdout();
-    last_dump_cmd = dumpcmd;
-    lammps->command(dumpcmd);
-    restoreStdout();
+    {
+        StdoutSilencer guard;
+        last_dump_cmd = dumpcmd;
+        lammps->command(dumpcmd);
+    }
 
     // display error message
-    if (lammps->hasError()) {
-        char errormesg[DEFAULT_BUFLEN];
-        lammps->getLastErrorMessage(errormesg, DEFAULT_BUFLEN);
+    const QString errmsg = lammps->lastErrorMessage();
+    if (!errmsg.isEmpty()) {
         // ignore "Invalid LAMMPS handle", but report other errors
-        if (!strstr(errormesg, "Invalid LAMMPS handle"))
-            warning(this, "Image Viewer File Creation Error", "LAMMPS failed to create the image:",
-                    QString("<code>%1</code>").arg(errormesg));
+        if (!errmsg.contains("Invalid LAMMPS handle"))
+            warning(this, "Image Viewer File Creation Error",
+                    "LAMMPS failed to create the image:", QString("<code>%1</code>").arg(errmsg));
         return;
     }
 
@@ -3486,7 +3454,7 @@ void ImageViewer::updatePeratom()
     atom_properties << "type";
 
     if (lammps) {
-        silenceStdout();
+        StdoutSilencer guard;
 
         if (lammps->extractSetting("molecule_flag")) atom_properties << "mol";
         if (lammps->extractSetting("q_flag")) atom_properties << "q";
@@ -3554,7 +3522,6 @@ void ImageViewer::updatePeratom()
             // clear error status, if needed:
             lammps->getLastErrorMessage(nullptr, 0);
         }
-        restoreStdout();
     }
     // some more general dump custom properties
     atom_properties << "id" << "mass" << "x" << "y" << "z" << "vx" << "vy" << "vz" << "fx"

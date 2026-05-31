@@ -160,6 +160,26 @@ extern bool isStdoutSilenced();
  */
 extern void notifyCaptureState(bool active);
 
+/**
+ * @brief RAII guard that silences stdout for the duration of its scope
+ *
+ * Calls silenceStdout() on construction and restoreStdout() on destruction,
+ * so stdout is restored on every exit path from the enclosing scope, including
+ * early returns and exceptions. Use in place of manual silenceStdout() /
+ * restoreStdout() pairs.
+ *
+ * @note Not thread-safe. Must only be used from the main thread.
+ */
+class StdoutSilencer {
+public:
+    StdoutSilencer() { silenceStdout(); }
+    ~StdoutSilencer() { restoreStdout(); }
+    StdoutSilencer(const StdoutSilencer &)            = delete;
+    StdoutSilencer(StdoutSilencer &&)                 = delete;
+    StdoutSilencer &operator=(const StdoutSilencer &) = delete;
+    StdoutSilencer &operator=(StdoutSilencer &&)      = delete;
+};
+
 #endif
 // Local Variables:
 // c-basic-offset: 4

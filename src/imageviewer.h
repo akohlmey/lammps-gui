@@ -25,9 +25,12 @@
 
 class QAction;
 class QMenuBar;
+class QButtonGroup;
 class QEvent;
+class QGridLayout;
 class QLabel;
 class QObject;
+class QRadioButton;
 class QScrollArea;
 class QStatusBar;
 class LammpsWrapper;
@@ -128,6 +131,27 @@ private:
     void updateRegions();     ///< Update region information
     void updatePeratom();     ///< Update per-atom information
     bool hasAutobonds();      ///< Check if autobonds are enabled
+
+    /**
+     * @brief Create an "atom/type/index" color selection combo box for a shape style
+     * @param current Color property to preselect
+     * @param name Object name used for later lookup via findChild()
+     * @return Combo box connected to the acolorSync() slot
+     */
+    QComboBox *makeColorCombo(const QString &current, const QString &name);
+
+    /**
+     * @brief Create a shape-style radio button and add it to a button group and grid layout
+     * @param group Button group the radio button joins
+     * @param label Button label text
+     * @param checked Whether the button starts checked
+     * @param layout Grid layout to place the button in
+     * @param row Grid row index
+     * @param col Grid column index (post-incremented)
+     * @return The created radio button
+     */
+    QRadioButton *addShapeButton(QButtonGroup *group, const QString &label, bool checked,
+                                 QGridLayout *layout, int row, int &col);
 
 private:
     QImage image;            ///< Currently displayed image

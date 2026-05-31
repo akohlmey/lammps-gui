@@ -428,6 +428,14 @@ int LammpsWrapper::getLastErrorMessage(char *buf, int buflen)
 #endif
 }
 
+QString LammpsWrapper::lastErrorMessage()
+{
+    if (!hasError()) return {};
+    char buf[GuiConstants::DEFAULT_BUFLEN];
+    getLastErrorMessage(buf, GuiConstants::DEFAULT_BUFLEN);
+    return QString::fromLocal8Bit(buf);
+}
+
 void LammpsWrapper::forceTimeout()
 {
 #if defined(LAMMPS_GUI_USE_PLUGIN)

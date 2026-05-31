@@ -295,6 +295,16 @@ public:
     int getLastErrorMessage(char *errorbuf, int buflen);
 
     /**
+     * @brief Get the last error message from LAMMPS as a string
+     * @return The error text, or an empty string if no error is pending
+     *
+     * Convenience wrapper around getLastErrorMessage() that manages the
+     * character buffer internally. Retrieving the message also clears the
+     * pending error state in LAMMPS.
+     */
+    QString lastErrorMessage();
+
+    /**
      * @brief Check if an accelerator package is available
      * @param package Package name
      * @param category Category name

@@ -341,6 +341,19 @@ private:
      */
     void setupAccelerators(QSettings &settings);
 
+    /**
+     * @brief Create a menu action with optional icon and shortcut and append it to a menu
+     * @param menu     Menu to append the new action to
+     * @param iconpath Resource path for the action icon (empty for no icon)
+     * @param text     Action label text
+     * @param shortcut Keyboard shortcut sequence (empty for none)
+     * @param slot     Member function pointer or callable invoked on trigger
+     * @return The created action, for any further configuration by the caller
+     */
+    template <typename Func>
+    QAction *addMenuAction(QMenu *menu, const QString &iconpath, const QString &text,
+                           const QString &shortcut, Func slot);
+
     /** @brief Create File menu actions and add them to the menu bar */
     void createFileMenu();
 

@@ -722,18 +722,10 @@ void AcceleratorTab::updateAccel()
     }
 
     auto *group = findChild<QGroupBox *>("intelprec");
-    if (choice == AcceleratorTab::Intel) {
-        group->setEnabled(true);
-    } else {
-        group->setEnabled(false);
-    }
+    group->setEnabled(choice == AcceleratorTab::Intel);
 
     group = findChild<QGroupBox *>("gpuchoice");
-    if (choice == AcceleratorTab::Gpu) {
-        group->setEnabled(true);
-    } else {
-        group->setEnabled(false);
-    }
+    group->setEnabled(choice == AcceleratorTab::Gpu);
 
     // The number of threads field is disabled and the value set to 1 for "None" and "Opt" choice
     auto *field = findChild<QLineEdit *>("nthreads");
@@ -779,86 +771,56 @@ SnapshotTab::SnapshotTab(QSettings *_settings, QWidget *parent) :
 
     settings->beginGroup("snapshot");
 
-    // left column values
-    auto *xval  = new QLineEdit(settings->value("xsize", "600").toString());
-    auto *yval  = new QLineEdit(settings->value("ysize", "600").toString());
-    auto *zval  = new QLineEdit(settings->value("zoom", "1.0").toString());
-    auto *hrval = new QLineEdit(settings->value("hrot", "60").toString());
-    auto *vrval = new QLineEdit(settings->value("vrot", "30").toString());
-    auto *aval  = new QCheckBox;
-    auto *sval  = new QCheckBox;
-    auto *hval  = new QCheckBox;
-
-    aval->setChecked(settings->value("antialias", false).toBool());
-    aval->setObjectName("anti");
-    sval->setChecked(settings->value("ssao", false).toBool());
-    sval->setObjectName("ssao");
-    hval->setChecked(settings->value("shinystyle", true).toBool());
-    hval->setObjectName("shiny");
-
-    auto *intval = new QIntValidator(100, 100000, this);
-    xval->setValidator(intval);
-    xval->setObjectName("xsize");
-    yval->setValidator(intval);
-    yval->setObjectName("ysize");
-    zval->setValidator(new QDoubleValidator(0.01, 100.0, 100, this));
-    zval->setObjectName("zoom");
-    hrval->setValidator(new QIntValidator(0, 360, this));
-    hrval->setObjectName("hrot");
-    vrval->setValidator(new QIntValidator(-180, 180, this));
-    vrval->setObjectName("vrot");
-
     auto *colorcompleter = new QColorCompleter();
     auto *colorvalidator = new QColorValidator();
     QFontMetrics metrics(fontMetrics());
+    auto *intval = new QIntValidator(100, 100000, this);
 
-    auto *background = new QLineEdit(settings->value("background", "black").toString());
-    background->setObjectName("background");
-    background->setCompleter(colorcompleter);
-    background->setValidator(colorvalidator);
-    background->setFixedSize(metrics.averageCharWidth() * 12, metrics.height() + 4);
+    // factory helpers for the repetitive snapshot widget setup
+    auto makeCheckBox = [&](const QString &key, const QString &name, bool def) {
+        auto *box = new QCheckBox;
+        box->setChecked(settings->value(key, def).toBool());
+        box->setObjectName(name);
+        return box;
+    };
+    auto makeNumEdit = [&](const QString &key, const QString &def, QValidator *validator) {
+        auto *edit = new QLineEdit(settings->value(key, def).toString());
+        edit->setValidator(validator);
+        edit->setObjectName(key);
+        return edit;
+    };
+    auto makeColorEdit = [&](const QString &key, const QString &def) {
+        auto *edit = new QLineEdit(settings->value(key, def).toString());
+        edit->setObjectName(key);
+        edit->setCompleter(colorcompleter);
+        edit->setValidator(colorvalidator);
+        edit->setFixedSize(metrics.averageCharWidth() * 12, metrics.height() + 4);
+        return edit;
+    };
 
-    auto *background2 = new QLineEdit(settings->value("background2", "white").toString());
-    background2->setObjectName("background2");
-    background2->setCompleter(colorcompleter);
-    background2->setValidator(colorvalidator);
-    background2->setFixedSize(metrics.averageCharWidth() * 12, metrics.height() + 4);
+    // left column values
+    auto *xval        = makeNumEdit("xsize", "600", intval);
+    auto *yval        = makeNumEdit("ysize", "600", intval);
+    auto *zval        = makeNumEdit("zoom", "1.0", new QDoubleValidator(0.01, 100.0, 100, this));
+    auto *hrval       = makeNumEdit("hrot", "60", new QIntValidator(0, 360, this));
+    auto *vrval       = makeNumEdit("vrot", "30", new QIntValidator(-180, 180, this));
+    auto *aval        = makeCheckBox("antialias", "anti", false);
+    auto *sval        = makeCheckBox("ssao", "ssao", false);
+    auto *hval        = makeCheckBox("shinystyle", "shiny", true);
+    auto *background  = makeColorEdit("background", "black");
+    auto *background2 = makeColorEdit("background2", "white");
 
     // right column values
-    auto *bval = new QCheckBox;
-    bval->setChecked(settings->value("box", true).toBool());
-    bval->setObjectName("box");
+    auto *bval     = makeCheckBox("box", "box", true);
+    auto *bdval    = makeNumEdit("boxdiam", "0.025", new QDoubleValidator(0.001, 1.0, 100, this));
+    auto *boxcolor = makeColorEdit("boxcolor", "yellow");
+    auto *eval     = makeCheckBox("axes", "axes", false);
+    auto *alval    = makeNumEdit("axeslen", "0.5", new QDoubleValidator(0.01, 10.0, 100, this));
+    auto *adval    = makeNumEdit("axesdiam", "0.05", new QDoubleValidator(0.001, 1.0, 100, this));
+    auto *vval     = makeCheckBox("vdwstyle", "vdwstyle", false);
+    auto *uval     = makeCheckBox("autobond", "autobond", false);
 
-    auto *bdval = new QLineEdit(settings->value("boxdiam", "0.025").toString());
-    bdval->setValidator(new QDoubleValidator(0.001, 1.0, 100, this));
-    bdval->setObjectName("boxdiam");
-
-    auto *boxcolor = new QLineEdit(settings->value("boxcolor", "yellow").toString());
-    boxcolor->setObjectName("boxcolor");
-    boxcolor->setCompleter(colorcompleter);
-    boxcolor->setValidator(colorvalidator);
-    boxcolor->setFixedSize(metrics.averageCharWidth() * 12, metrics.height() + 4);
-
-    auto *eval = new QCheckBox;
-    eval->setChecked(settings->value("axes", false).toBool());
-    eval->setObjectName("axes");
-
-    auto *alval = new QLineEdit(settings->value("axeslen", "0.5").toString());
-    alval->setValidator(new QDoubleValidator(0.01, 10.0, 100, this));
-    alval->setObjectName("axeslen");
-
-    auto *adval = new QLineEdit(settings->value("axesdiam", "0.05").toString());
-    adval->setValidator(new QDoubleValidator(0.001, 1.0, 100, this));
-    adval->setObjectName("axesdiam");
-
-    auto *vval = new QCheckBox;
-    vval->setChecked(settings->value("vdwstyle", false).toBool());
-    vval->setObjectName("vdwstyle");
-
-    auto *uval = new QCheckBox;
-    uval->setChecked(settings->value("autobond", false).toBool());
-    uval->setObjectName("autobond");
-
+    // bond cutoff has no input validator
     auto *bcut = new QLineEdit(settings->value("bondcut", "1.6").toString());
     bcut->setObjectName("bondcut");
 
