@@ -5,7 +5,7 @@ Testing
 The ``test`` directory contains some tests for the LAMMPS-GUI project
 using either the `GoogleTest framework
 <https://github.com/google/googletest/>`_ or the `Python unittest
-framework <https://docs.python.org/dev/library/unittest.html>`_
+framework <https://docs.python.org/dev/library/unittest.html>`_.
 
 Overview
 ^^^^^^^^
@@ -33,9 +33,9 @@ Quick Build
 For running the tests, it is not necessary to build the documentation,
 so its build can be skipped during configuration.
 
-.. code-block:: text
+.. code-block:: bash
 
-   cmake -S . -B build -D LAMMPS_GUI_USE_PLUGIN=yes -D BUILD_DOC=no -D ENABLE_TESTING=ON
+   cmake -S . -B build -D LAMMPS_GUI_USE_PLUGIN=ON -D BUILD_DOC=OFF -D ENABLE_TESTING=ON
    cmake --build build --parallel 2
 
 Disable Tests
@@ -44,7 +44,7 @@ Disable Tests
 Tests are disabled by default.  If they have been enabled during CMake configuration
 they can be disabled at a later point with:
 
-.. code-block:: text
+.. code-block:: bash
 
    cmake -S . -B build -D ENABLE_TESTING=OFF
 
@@ -52,19 +52,21 @@ Running Tests
 ^^^^^^^^^^^^^
 
 Below are some frequently used command line examples for running tests.
-These examples assume that LAMMPS-GUI was compiled in the folder ``build``
+These examples assume that LAMMPS-GUI was compiled in the folder ``build``.
+CTest can also be invoked from the top of the build tree (``--test-dir
+build``); both forms work and select the same set of tests.
 
 Run All Tests
 =============
 
-.. code-block:: text
+.. code-block:: bash
 
    ctest --test-dir build/test
 
 Run Tests with Verbose Output
 =============================
 
-.. code-block:: text
+.. code-block:: bash
 
    ctest --test-dir build/test -V
 
@@ -73,7 +75,7 @@ List Available Tests
 
 The list of the names of all available tests can be obtained with:
 
-.. code-block:: text
+.. code-block:: bash
 
    ctest --test-dir build/test -N
 
@@ -86,7 +88,7 @@ use of regular expressions to select (``-R``) or exclude (``-E``) tests.
 It is also possible to select tests by a range of Test numbers (``-I``)
 from the -N test list output. Examples:
 
-.. code-block:: text
+.. code-block:: bash
 
    ctest --test-dir build/test -R MyStrdup
    ctest --test-dir build/test -E Frame
@@ -187,6 +189,42 @@ the application.
   - Purging directory with files
   - Non-existent directory (no crash)
   - Empty directory
+
+test_stdcapture.cpp
+-------------------
+
+Tests for the :cpp:class:`StdCapture` class in
+``src/stdcapture.{h,cpp}``, which redirects the C-level stdout file
+descriptor through a pipe so that LAMMPS library output can be
+collected and displayed in the *Output* window.  Test cases cover:
+
+- Capturing simple single-line output
+- Capturing multiple lines of output
+- Behavior with empty output
+- Re-using a single ``StdCapture`` instance for several capture cycles
+- ``getChunk()`` returning incremental output while a capture is active
+- ``getChunk()`` returning an empty string when not capturing
+- Multiple successive ``getChunk()`` calls during one capture
+- ``endCapture()`` being a safe no-op when no capture is active
+- ``getBufferUse()`` reporting zero before any capture activity
+- ``getBufferUse()`` reflecting the size of the most recent chunk
+- The original ``stdout`` file descriptor being restored when capture ends
+
+test_flagwarnings.cpp
+---------------------
+
+Tests for the :cpp:class:`FlagWarnings` syntax highlighter used in
+the *Output* window to flag lines beginning with ``WARNING`` or
+``ERROR`` and to update a running count displayed in the summary
+label.  Test cases cover:
+
+- Constructor initializes the warning count to zero
+- ``WARNING`` and ``ERROR`` lines are correctly detected
+- Normal output lines are not flagged
+- The summary ``QLabel`` is updated when warnings appear
+- Empty documents produce no spurious warnings
+- Warnings are detected when they appear at the start of a line
+- The running count is correct for multiple warnings
 
 Command-Line Tests
 ==================
@@ -374,7 +412,9 @@ Test Fixtures and Utilities
 **HelpersTest Fixture**
   Base test fixture that creates a ``QCoreApplication`` instance for tests
   that require Qt functionality. The application is created once per test
-  suite and reused across tests for efficiency.
+  suite and reused across tests for efficiency.  Similar lightweight
+  fixtures (``StdCaptureTest``, ``FlagWarningsTest``) are used by the
+  matching unit test programs.
 
 **Platform-Specific Testing**
   Tests use conditional compilation (``#ifdef _WIN32``) to adapt to

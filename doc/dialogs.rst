@@ -83,30 +83,31 @@ General Settings:
 
 .. admonition:: The following settings are available in this tab:
 
-   - **Echo input to log:** when checked, all input commands, including
-     variable expansions, are echoed to the :ref:`Output window <logfile>`. This is
-     equivalent to using `-echo screen` at the command-line.  There is no
-     log *file* produced by default, since LAMMPS-GUI uses `-log none`.
-   - **Include citation details:** when checked full citation info will be
-     included to the log window.  This is equivalent to using `-cite
-     screen` on the command-line.
-   - **Show log window by default:** when checked, the screen output of a
-     LAMMPS run will be collected in a log window during the run
-   - **Show chart window by default:** when checked, the thermodynamic
-     output of a LAMMPS run will be collected and displayed in a chart
+   - **Echo input to output buffer:** when checked, all input commands,
+     including variable expansions, are echoed to the :ref:`Output window
+     <logfile>`. This is equivalent to using ``-echo screen`` at the
+     command-line.  There is no log *file* produced by default, since
+     LAMMPS-GUI uses ``-log none``.
+   - **Include citation details:** when checked, full citation info will be
+     included in the Output window.  This is equivalent to using ``-cite
+     screen`` on the command-line.
+   - **Show Output window by default:** when checked, the screen output of
+     a LAMMPS run will be collected in an Output window during the run.
+   - **Show Charts window by default:** when checked, the thermodynamic
+     output of a LAMMPS run will be collected and displayed in a Charts
      window as line graphs.
-   - **Show slide show window by default:** when checked, a slide show
+   - **Show Slide Show window by default:** when checked, a Slide Show
      window will be shown with images from a dump image command, if
      present, in the LAMMPS input.
-   - **Replace log window on new run:** when checked, an existing log
-     window will be replaced on a new LAMMPS run, otherwise each run will
-     create a new log window.
-   - **Replace chart window on new run:** when checked, an existing chart
-     window will be replaced on a new LAMMPS run, otherwise each run will
-     create a new chart window.
-   - **Replace image window on new render:** when checked, an existing
-     chart window will be replaced when a new snapshot image is requested,
-     otherwise each command will create a new image window.
+   - **Replace Output window on new run:** when checked, an existing
+     Output window will be replaced on a new LAMMPS run; otherwise each
+     run will create a new Output window.
+   - **Replace Charts window on new run:** when checked, an existing
+     Charts window will be replaced on a new LAMMPS run; otherwise each
+     run will create a new Charts window.
+   - **Replace Image window on new render:** when checked, an existing
+     Image window will be replaced when a new snapshot image is requested;
+     otherwise each command will create a new Image window.
    - **Download tutorial solutions enabled:** this controls whether the
      "Download solutions" option is enabled by default when setting up
      a tutorial.
@@ -118,19 +119,19 @@ General Settings:
      log) of the application can be set.
    - **Select Text Font:** Opens a font selection dialog where the type and
      size for the text editor and log font of the application can be set.
-   - **Data update interval:** Allows the user to set the time interval
-     between data updates during a LAMMPS run in milliseconds.  The default
-     is to update the data (for charts and output window) every 10
-     milliseconds.  This is good for many cases.  Set this to 100
+   - **Data update interval:** Allows the user to set, in milliseconds,
+     the time interval between data updates during a LAMMPS run.  The
+     default is to update the data (for the Charts and Output windows)
+     every 10 milliseconds.  This is good for many cases.  Set this to 100
      milliseconds or more if LAMMPS-GUI consumes too many resources during
      a run.  For LAMMPS runs that run *very* fast (for example in tutorial
      examples), however, data may be missed; this can be corrected by
      lowering this interval.  However, this will make the GUI use more
      resources.  This setting may be changed to a value between 1 and 1000
      milliseconds.
-   - **Charts update interval:** Allows the user to set the time interval
-     between redrawing the plots in the :ref:`Charts window <charts>` in
-     milliseconds.  The default is to redraw the plots every 500
+   - **Charts update interval:** Allows the user to set, in milliseconds,
+     the time interval between redrawing the plots in the :ref:`Charts
+     window <charts>`.  The default is to redraw the plots every 500
      milliseconds.  This is just for the drawing; data collection is
      managed with the previous setting.
    - **HTTPS proxy setting:** Allows the user to enter a URL for an HTTPS
@@ -141,11 +142,13 @@ General Settings:
      cannot be changed.
    - **Path to LAMMPS Shared Library File:** this option is only visible
      when LAMMPS-GUI was compiled to load the LAMMPS library at run-time
-     instead of being linked to it directly.  Using the *Browse..* button
+     instead of being linked to it directly.  Using the *Browse...* button
      or by changing the text, a different shared library file with a
      different compilation of LAMMPS with different settings or from a
-     different version can be loaded.  After changing this setting,
-     LAMMPS-GUI needs to be re-launched.
+     different version can be loaded.  The accompanying *Download LAMMPS
+     shared library...* button retrieves a pre-built LAMMPS shared library
+     from the LAMMPS web server.  After changing this setting, LAMMPS-GUI
+     needs to be re-launched.
 
 Accelerators:
 ^^^^^^^^^^^^^
@@ -233,7 +236,7 @@ In auto-save mode, the editor buffer is saved before a run or before
 exiting LAMMPS-GUI.
 
 Charts Settings:
-----------------
+^^^^^^^^^^^^^^^^
 
 .. index:: charts settings
 .. index:: preferences; charts

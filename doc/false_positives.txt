@@ -30,6 +30,7 @@ Doxygen
 dylib
 exe
 executables
+flagwarnings
 flatpak
 Framebuffer
 getChunk
@@ -91,6 +92,7 @@ Sonoma
 spinbox
 splitLine
 SSAO
+stdcapture
 stderr
 stdout
 Subclassed

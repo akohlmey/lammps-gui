@@ -72,7 +72,7 @@ customized (or disabled).
 It is also possible to visualize regions, graphics from computes and
 fixes, and have bonds computed dynamically for potentials, where the
 bonds are determined implicitly (like `AIREBO
-<https://docs.lammps.org/pair_airebo.html>`_.  Please see the
+<https://docs.lammps.org/pair_airebo.html>`_).  Please see the
 documentation of the `dump image command
 <https://docs.lammps.org/dump_image.html>`_ for more details on these
 and other features and the `LAMMPS Visualization Howto
@@ -143,7 +143,7 @@ have a `dump_modify loadcolors
 <https://docs.lammps.org/dump_image.html>`_ and *savecolors* command
 that can read and write files in the same format.  The second is the
 list of named colors that are maintained by the *dump image* command in
-LAMMMPS.  LAMMPS-GUI has the list of predefined color names and may
+LAMMPS.  LAMMPS-GUI has the list of predefined color names and may
 define additional colors as needed, but will give them names that are
 specific to LAMMPS-GUI and does not attempt to overwrite any of the
 predefined colors.
@@ -179,8 +179,8 @@ The **menu bar row** has:
      library become available.
    - **Copy Image** (`Ctrl-C`): Copy the rendered image to the clipboard
      for pasting it into another application.  This requires support
-     from the receiving applications, but many applications like
-     document editors or web browsers are.
+     from the receiving application, which is the case for many common
+     applications like document editors and web browsers.
    - **Copy dump image command** (`Ctrl-D`): Copy the current `dump image
      <https://docs.lammps.org/dump_image.html>`_ and `dump_modify
      <https://docs.lammps.org/dump_image.html>`_ commands to the clipboard
@@ -316,8 +316,8 @@ While some persistent default settings for the image output can be
 configured in the "Snapshot Image" tab of the :ref:`Preferences dialog
 <image_preferences>`, more fine-grained configuration is possible by
 opening the "Global image settings" dialog.  However, settings not
-stored by the preference are reset when the image viewer window is
-close.  This dialog is opened by pressing the "Global" button in the
+stored by the preferences are reset when the image viewer window is
+closed.  This dialog is opened by pressing the "Global" button in the
 settings panel or by using the `Alt-L` keyboard shortcut.  The settings
 in this dialog correspond to options of the LAMMPS `dump image and
 dump_modify commands <https://docs.lammps.org/dump_image.html>`_.
@@ -470,9 +470,9 @@ The dialog contains the following sections:
      *type* and *element*\ .  Currently available continuous colormaps
      are: *BWR* (blue-white-red), *RWB* (red-white-blue), *PWT*
      (purple-white-teal), *BWG* (blue-white-green), *BGR*
-     (blue-green-red), *Grayscale* (black-white), "Viridis" (from
-     matplotlib), "Plasma" (from matplotlib), "Inferno" (from
-     matplotlib), "Teal", and "Rainbow".  *Sequential*, *Landscape*, and
+     (blue-green-red), *Grayscale* (black-white), *Viridis* (from
+     matplotlib), *Plasma* (from matplotlib), *Inferno* (from
+     matplotlib), *Teal*, and *Rainbow*.  *Sequential*, *Landscape*, and
      *Basic* are maps with discrete colors.  These are pre-defined
      colormap settings and currently cannot be adjusted from LAMMPS-GUI
      directly.  As for *all* image settings, further customizations can
@@ -838,8 +838,8 @@ following controls, organized from left to right:
   become available.
 - **Copy to clipboard** (`Ctrl-C`): Copy the current image to the system
   clipboard for pasting it into another application.  This requires
-  support from the receiving applications, but many applications like
-  document editors or web browsers are.
+  support from the receiving application, which is the case for many
+  common applications like document editors and web browsers.
 - **Delete all images**: Remove all image files associated with the
   slide show.  Since the number of image files can be large for long
   simulations, this provides a safe way to clean up the working

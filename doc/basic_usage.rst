@@ -68,8 +68,8 @@ the LAMMPS input file syntax.  The status bar shows the status of
 LAMMPS execution on the left (e.g.  "Ready." when idle) and the current
 working directory on the right.  The name of the current file in the
 buffer is shown in the window title; the word `*modified*` is added if
-the buffer edits have not yet saved to a file.  The geometry of the main
-window is stored when exiting and restored when starting again.
+the buffer edits have not yet been saved to a file.  The geometry of the
+main window is stored when exiting and restored when starting again.
 
 Opening and saving files
 ^^^^^^^^^^^^^^^^^^^^^^^^
@@ -117,8 +117,8 @@ editor buffer, which may contain multiple `run
 
 LAMMPS runs in a separate thread, so the GUI stays responsive and is
 able to interact with the running calculation and access data it
-produces.  It is important to note that running LAMMPS this way uses
-the contents of the input buffer for the run (via the
+produces.  It is important to note that running LAMMPS this way uses the
+contents of the input buffer for the run (internally by calling the
 `lammps_commands_string
 <https://docs.lammps.org/Library_execute.html#_CPPv422lammps_commands_stringPvPKc>`_
 function of the LAMMPS C-library interface), and **not** the original
@@ -181,7 +181,7 @@ If an error occurs (in the example below the command `label
 <https://docs.lammps.org/label.html>`_ was incorrectly capitalized as
 "Label"), an error message dialog is shown and the line of the input
 which triggered the error is highlighted in red.  The state of LAMMPS in
-the status bar is set to "Failed."  instead of "Ready."
+the status bar is set to "Failed." instead of "Ready."
 
 .. image:: JPG/lammps-gui-run-error.png
    :align: center

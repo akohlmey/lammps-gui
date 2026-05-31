@@ -58,9 +58,26 @@ See :doc:`installation` for detailed build instructions. For development:
 .. code-block:: bash
 
    # Debug build with Qt6
-   cmake -S . -B build -DCMAKE_BUILD_TYPE=Debug \\
-         -DLAMMPS_GUI_USE_PLUGIN=yes -DBUILD_DOC=no
+   cmake -S . -B build -DCMAKE_BUILD_TYPE=Debug \
+         -DLAMMPS_GUI_USE_PLUGIN=ON -DBUILD_DOC=OFF
    cmake --build build --parallel 2
+
+Before submitting a pull request, run ``clang-format`` on any modified
+source files so they conform to the project's ``.clang-format``
+configuration:
+
+.. code-block:: bash
+
+   clang-format -i src/*.cpp src/*.h
+
+When adding new ``.cpp`` or ``.h`` files to ``src/``, also add them to
+the ``PROJECT_SOURCES`` list in the top-level ``CMakeLists.txt`` so
+they are picked up by the build (Qt's ``AUTOMOC`` handles ``moc``
+generation automatically once the file is listed).
+
+All documentation should be written in American English using plain
+ASCII characters (no typographic quotes, em-dashes written as ``--``,
+etc.).
 
 Contributing
 ============
@@ -76,7 +93,8 @@ To contribute to LAMMPS-GUI:
 
 All contributions must:
 
-- Follow the existing code style
+- Follow the existing code style and pass ``clang-format``
 - Include Doxygen documentation for new public APIs
+- Register new source files in ``PROJECT_SOURCES`` in ``CMakeLists.txt``
 - Not break existing functionality
 - Have GPG-signed commits

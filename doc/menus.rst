@@ -11,7 +11,7 @@ The menu bar has entries *File*, *Edit*, *Run*, *View*, and
 menus can also be activated by hitting the `Alt` key together with the
 corresponding underlined letter, that is `Alt-F` activates the
 *File* menu.  For the corresponding activated sub-menus, the key
-corresponding the underlined letters can be used to select entries
+corresponding to the underlined letters can be used to select entries
 instead of using the mouse.
 
 File
@@ -73,8 +73,9 @@ separate thread.
 
 Specifically, a LAMMPS instance will be created by calling
 `lammps_open_no_mpi
-<https://docs.lammps.org/Library_create.html#_CPPv418lammps_open_no_mpiiPPcPPv>`_.
-The buffer contents are then executed by calling `lammps_commands_string
+<https://docs.lammps.org/Library_create.html#_CPPv418lammps_open_no_mpiiPPcPPv>`_
+(through the ``LammpsWrapper`` C++ adapter).  The buffer contents are
+then executed by calling `lammps_commands_string
 <https://docs.lammps.org/Library_execute.html#_CPPv422lammps_commands_stringPvPKc>`_.
 Certain commands and features are only available after a LAMMPS instance
 is created.  Its presence is indicated by a small LAMMPS ``L`` logo in
@@ -99,10 +100,10 @@ instance.  This is usually not needed, since LAMMPS-GUI tries to detect
 when this is needed and does it automatically.  This is available
 in case it missed something and LAMMPS behaves in unexpected ways.
 
-The *Set Variables...* entry opens a dialog box where
-`index style variables <https://docs.lammps.org/variable.html>`_ can be set. Those variables
-are passed to the LAMMPS instance when it is created and are thus
-set *before* a run is started.
+The *Set Variables...* entry opens a dialog box where `index style
+variables <https://docs.lammps.org/variable.html>`_ can be set. Those
+variables are passed to the LAMMPS instance when it is created and are
+thus set *before* a run is started.
 
 .. image:: JPG/lammps-gui-variables.png
    :align: center
@@ -150,9 +151,10 @@ Tutorials
 .. index:: LAMMPS tutorials
 
 The *Tutorials* menu is to support the set of LAMMPS tutorials for
-beginners and intermediate LAMMPS users documented in (:ref:`Gravelle1
-<Gravelle1>`).  From the drop down menu you can select which of the
-eight currently available tutorial sessions you want to begin.  This
+beginners and intermediate LAMMPS users documented in
+:ref:`Gravelle1 <Gravelle1>`.  From the drop down menu you can select
+which of the eight currently available tutorial sessions you want to
+begin.  This
 opens a 'wizard' dialog where you can choose in which folder you want to
 work, whether you want that folder to be wiped from *any* files, whether
 you want to download the solution files (which can be large) to a

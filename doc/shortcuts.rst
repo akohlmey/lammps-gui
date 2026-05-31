@@ -106,4 +106,15 @@ case of conflicts the list above takes precedence.
 
 All other windows only support a subset of keyboard shortcuts listed
 above.  Typically, the shortcuts `Ctrl-/` (Stop Run), `Ctrl-W` (Close
-Window), and `Ctrl-Q` (Quit Application) are supported.
+Window), and `Ctrl-Q` (Quit Application) are supported.  Some sub-windows
+also rebind shortcuts for window-specific actions:
+
+- *Output* window: `Ctrl-N` jumps to the next warning or error,
+  `Ctrl-S` saves the captured log to a file, `Ctrl-Y` exports any
+  embedded YAML data, `Ctrl-Enter` runs the current input buffer.
+- *Image Viewer* window: `Ctrl-S` saves the rendered image,
+  `Ctrl-C` copies it to the clipboard, `Ctrl-D` copies the
+  ``dump image`` / ``dump_modify`` commands to the clipboard.
+- *Slide Show* window: `Ctrl-S` saves the currently displayed image,
+  `Ctrl-C` copies it to the clipboard, `Ctrl-E` exports the
+  image sequence to a movie file.

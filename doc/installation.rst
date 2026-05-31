@@ -38,15 +38,15 @@ source requires CMake version 3.20 or later and a suitable C++ compiler.
 
 .. admonition:: LAMMPS-GUI |version| has been successfully compiled and tested on:
 
-   - Ubuntu Linux 22.04LTS x86_64 using GCC 11, Qt version 6.2
-   - Ubuntu Linux 24.04LTS x86_64 using GCC 13, Qt version 6.4
+   - Ubuntu Linux 22.04LTS x86\_64 using GCC 11, Qt version 6.2
+   - Ubuntu Linux 24.04LTS x86\_64 using GCC 13, Qt version 6.4
    - Fedora Linux 43 x86\_64 using Clang 21, Qt version 6.10
    - Fedora Linux 43 x86\_64 using GCC 15, Qt version 6.10
    - Apple macOS 12 (Monterey) with Xcode 14.2 / AppleClang 14 on arm64 and x86\_64, Qt version 6.5
    - Apple macOS 14 (Sonoma) with Xcode 16.4 / AppleClang 17 on arm64, Qt version 6.8
-   - Windows Server 2025 x86_64 with Visual Studio 2022 and Visual C++ 14.40, Qt version 6.8
-   - Windows 11 x86_64 with Visual Studio 2026 and Visual C++ 14.50, Qt version 6.10
-   - Windows 11 x86_64 with MinGW / GCC 15.2 cross-compiler on Fedora 43, Qt version 6.10
+   - Windows Server 2025 x86\_64 with Visual Studio 2022 and Visual C++ 14.40, Qt version 6.8
+   - Windows 11 x86\_64 with Visual Studio 2026 and Visual C++ 14.50, Qt version 6.10
+   - Windows 11 x86\_64 with MinGW / GCC 15.2 cross-compiler on Fedora 43, Qt version 6.10
 
 Pre-compiled executables
 ^^^^^^^^^^^^^^^^^^^^^^^^
@@ -223,7 +223,7 @@ you can switch into the "LAMMPS_GUI" folder and execute
 .. code-block:: bash
 
    $ cd ~/Downloads
-   $ tar -xzvvf LAMMPS-Linux-x86_64-GUI-22Jul2025.tar.gz
+   $ tar -xzvvf LAMMPS-Linux-x86_64-GUI-30Mar2026.tar.gz
    $ cd LAMMPS_GUI
    $ ./lammps-gui &
 
@@ -243,7 +243,7 @@ automatically.
 
       qt.qpa.plugin: Could not load the Qt platform plugin "xcb" in "" even though it was found.
 
-   On Ubuntu 24.04 for example, those libraries are in the packages
+   On Ubuntu 24.04, for example, those libraries are in the packages
    ``libxcb-xinput0`` and ``libxcb-xinerama0`` which are not installed
    by default.  Using the flatpak bundle (see below) avoids these kind
    of issues by compiling and running the application in a standardized
@@ -293,29 +293,31 @@ Compilation from source
 .. index:: compilation; from source
 .. index:: CMake configuration
 
-The source for LAMMPS-GUI was included with the LAMMPS source code
-distribution until LAMMPS version 22 July 2025 in the folder
-``tools/lammps-gui``.  Starting with LAMMPS-GUI version 1.8.0 and LAMMPS
-version 10 September 2025 the LAMMPS-GUI sources are distributed
-separately through its own git repository at
-https://github.com/akohlmey/lammps-gui.
+.. admonition:: History
 
-LAMMPS-GUI can still be built as part of a regular LAMMPS compilation.
-It will be automatically downloaded from its git repository and
-configured.  This is usually the most convenient way to compile and
-install it.  Since `CMake <https://docs.lammps.org/Howto_cmake.html>`_
-is *required* to build LAMMPS-GUI, you need to build LAMMPS with CMake
-as well.  To enable its compilation during compiling LAMMPS, the CMake
-variable ``-D BUILD_LAMMPS_GUI=on`` must be set when creating the CMake
-configuration.  All other settings (compiler, flags, compile type) for
-LAMMPS-GUI are then inherited from the regular LAMMPS build.  If the Qt
-library is installed as packaged for Linux distributions, then its
-location is typically auto-detected since the required CMake
-configuration files are stored in a location where CMake can find them
-without additional help.  Otherwise, the location of the Qt library
-installation must be indicated by setting ``-D
-Qt6_DIR=/path/to/qt6/lib/cmake/Qt6``, which is a path to a folder inside
-the Qt installation that contains the file ``Qt6Config.cmake``.
+   The source for LAMMPS-GUI was included with the LAMMPS source code
+   distribution until LAMMPS version 22 July 2025 in the folder
+   ``tools/lammps-gui``.  Starting with LAMMPS-GUI version 1.8.0 and
+   LAMMPS version 10 September 2025 the LAMMPS-GUI sources are
+   distributed separately through its own git repository at
+   https://github.com/akohlmey/lammps-gui.
+
+LAMMPS-GUI can be built as part of a regular LAMMPS compilation.  It
+will be automatically downloaded from its git repository and configured.
+This is usually the most convenient way to compile and install it.
+Since `CMake <https://docs.lammps.org/Howto_cmake.html>`_ is *required*
+to build LAMMPS-GUI, you need to build LAMMPS with CMake as well.  To
+enable its compilation during compiling LAMMPS, the CMake variable ``-D
+BUILD_LAMMPS_GUI=on`` must be set when creating the CMake configuration.
+All other settings (compiler, flags, compile type) for LAMMPS-GUI are
+then inherited from the regular LAMMPS build.  If the Qt library is
+installed as packaged for Linux distributions, then its location is
+typically auto-detected since the required CMake configuration files are
+stored in a location where CMake can find them without additional help.
+Otherwise, the location of the Qt library installation must be indicated
+by setting ``-D Qt6_DIR=/path/to/qt6/lib/cmake/Qt6``, which is a path to
+a folder inside the Qt installation that contains the file
+``Qt6Config.cmake``.
 
 Since the QtCharts module of the Qt library has been deprecated with Qt
 version 6.10, LAMMPS-GUI includes an alternate implementation of the

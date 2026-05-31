@@ -16,8 +16,8 @@ concerns between different components:
 ==================
 
 LAMMPS-GUI can operate in two modes: **Plugin Mode** and **Linked
-Mode**.  The mode is controlled by the ``-D
-LAMMPS_GUI_USE_PLUGIN=(ON|OFF)`` CMake configuration option.
+Mode**.  The mode is controlled by the
+``-D LAMMPS_GUI_USE_PLUGIN=(ON|OFF)`` CMake configuration option.
 
 **Plugin Mode** (default)
   LAMMPS is loaded dynamically at runtime from a shared library file
@@ -29,15 +29,16 @@ LAMMPS_GUI_USE_PLUGIN=(ON|OFF)`` CMake configuration option.
   Windows).  The path to the shared library file is auto-detected or
   configured via command line or preferences.
 
-**Linked Mode** The LAMMPS library is linked at compile time.  Used by
-  default when building LAMMPS-GUI as part of a LAMMPS CMake build with
-  ``-D BUILD_LAMMPS_GUI=on``.  For standalone builds, the ``-D
-  LAMMPS_SOURCE_DIR=<path to LAMMPS' src folder>`` and ``-D
-  LAMMPS_LIBRARY=<path to LAMMPS shared or static library file>``
-  settings are also required when configuring with CMake.  It may be needed
-  to adjust the environment variable to find shared libraries (``LD_LIBRARY_PATH``
-  on Linux, ``DYLD_LIBRARY_PATH`` on macOS, or ``PATH`` on Windows)
-  when linked to a shared library.
+**Linked Mode**
+  The LAMMPS library is linked at compile time.  Used by default when
+  building LAMMPS-GUI as part of a LAMMPS CMake build with
+  ``-D BUILD_LAMMPS_GUI=on``.  For standalone builds, the
+  ``-D LAMMPS_SOURCE_DIR=<path to LAMMPS' src folder>`` and
+  ``-D LAMMPS_LIBRARY=<path to LAMMPS shared or static library file>``
+  settings are also required when configuring with CMake.  It may be
+  necessary to adjust environment variables to find shared libraries
+  (``LD_LIBRARY_PATH`` on Linux, ``DYLD_LIBRARY_PATH`` on macOS, or
+  ``PATH`` on Windows) when linked to a shared library.
 
 ================
  Qt Integration
@@ -80,12 +81,12 @@ Main Window
   manages the editor, handles file operations, controls LAMMPS
   execution, and manages the overall application state. This is the
   central hub of the application that integrates all other components.
-  The UI is built programmatically in ``setupUi()``, which is decomposed
-  into ``createFileMenu()``, ``createEditMenu()``, ``createRunMenu()``,
-  ``createViewMenu()``, ``createTutorialMenu()``, ``createAboutMenu()``,
-  ``createStatusBar()``, and ``connectSignalsAndSlots()``.  Sub-windows
-  (log, image, chart, slideshow) are configured via the shared helper
-  ``configureSubWindow()``.
+  The UI is built programmatically in ``setupUi()``, which delegates
+  menu construction to ``createFileMenu()``, ``createEditMenu()``,
+  ``createRunMenu()``, ``createViewMenu()``, ``createTutorialMenu()``,
+  ``createAboutMenu()``, and the status bar to ``createStatusBar()``.
+  Plugin discovery and accelerator setup are handled by
+  ``setupPlugin()`` and ``setupAccelerators()``.
   See :cpp:class:`LammpsGui`
 
 Editor Components
@@ -109,9 +110,9 @@ Editor Components
   Qt's QSyntaxHighlighter framework.  See :cpp:class:`Highlighter`
 
 **FindAndReplace (findandreplace.h/.cpp)**
-  Dialog for searching and replacing text in the editor. Supports case
-  sensitivity and whole word matching options.  See
-  :cpp:class:`FindAndReplace`
+  Dialog for searching and replacing text in the editor. Supports
+  case-sensitive search, wrap-around search, and whole-word matching
+  options.  See :cpp:class:`FindAndReplace`
 
 LAMMPS Interface
 ----------------
@@ -241,9 +242,10 @@ Support Components
   See :cpp:class:`URLDownloader`
 
 **StdCapture (stdcapture.h/.cpp)**
-  Utility class that captures stdout and stderr output from LAMMPS.
-  Redirects C-level file descriptors to allow capturing output from
-  the LAMMPS library.  See :cpp:class:`StdCapture`
+  Utility class that captures stdout output from LAMMPS.  Redirects
+  the C-level stdout file descriptor through a pipe to allow capturing
+  output from the LAMMPS library without blocking the GUI thread.
+  See :cpp:class:`StdCapture`
 
 **FlagWarnings (flagwarnings.h/.cpp)**
   Syntax highlighter for LAMMPS warning and error messages in log
