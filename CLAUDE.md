@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-LAMMPS-GUI (v2.0.6) is a Qt6-based graphical interface for the LAMMPS molecular dynamics simulation software. It provides a code editor with syntax highlighting and auto-completion, live LAMMPS simulation execution, log/chart/image visualization, and an integrated tutorial system. The project is GPLv2+ licensed (note: `src/rangeslider.{cpp,h}` is third-party under the CeCILL-A license).
+LAMMPS-GUI (v2.x) is a Qt6-based graphical interface for the LAMMPS molecular dynamics simulation software. It provides a code editor with syntax highlighting and auto-completion, live LAMMPS simulation execution, log/chart/image visualization, and an integrated tutorial system. The project is GPLv2+ licensed (note: `src/rangeslider.{cpp,h}` is third-party under the CeCILL-A license).
 
 - Online documentation: https://lammps-gui.lammps.org/
 - C++17, CMake ≥ 3.20, Qt6 (minimum 6.2; 6.10+ enables QtGraphs backend)
@@ -135,6 +135,35 @@ main.cpp
 **Dialog widget wiring.** `ImageViewer` and the `Preferences` tabs connect widgets to slots via `setObjectName("...")` + later `findChild<T>("...")` rather than stored member pointers. Preserve object names exactly when refactoring these dialogs (a wrong/renamed name fails the lookup silently, with no compile error).
 
 **Shared helpers (prefer over re-rolling).** Use the `StdoutSilencer` RAII guard (`helpers.h`) instead of manual `silenceStdout()`/`restoreStdout()` pairs; `LammpsWrapper::lastErrorMessage()` instead of a hand-managed `getLastErrorMessage()` buffer; `LammpsGui::addMenuAction()` to build menu actions.
+
+## AI-assistant feature (exploratory — temporary feature branch)
+
+We are adding an AI assistant to the GUI frontend of this physics-simulation
+software. Work is exploratory: build a **minimal** implementation first to probe
+workflow options, then decide a fuller architecture and implement interactively.
+
+**Before working on this feature, read `docs/ai-assistant-design.md`** — it is
+the durable design memory (provider abstraction, RAG, reliability via
+verification, tool-calling file generation, the wizard/expert-system model, the
+probe verify-repair loop, and the case-based learning approach). Treat its
+decisions and caveats as binding unless we explicitly revise them here.
+
+### Non-negotiables for this feature
+
+- The assistant produces a **starting point, not a validated solution.**
+- Structural correctness comes from **vetted templates** and **executable
+  verification (the simulator as oracle)** — never from the model's unaided
+  judgment.
+- **Treat all model-generated files as untrusted**; validate before loading.
+- **Never hardcode or commit API keys.**
+- Prefer **deterministic checks/lookup tables** for known cases; use the LLM for
+  the fuzzy long tail and explanation.
+
+### Workflow notes
+
+- This is a feature branch for exploration — favor small, reversible commits.
+- Update `doc/ai-assistant-design.md` whenever a design decision firms up;
+  it is the source of truth, not chat history.
 
 ### Source file map
 
