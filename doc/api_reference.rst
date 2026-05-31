@@ -328,6 +328,15 @@ Qt Helper Widgets
 
 -----
 
+StdoutSilencer Class
+--------------------
+
+.. doxygenclass:: StdoutSilencer
+   :members:
+   :protected-members:
+
+-----
+
 .. _helper_functions:
 
 Helper Functions

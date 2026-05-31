@@ -282,7 +282,8 @@ used throughout the application:
 - UI utilities (``isLightTheme`` for theme detection,
   ``showUnsavedChangesDialog`` for standardized unsaved-changes prompts)
 - Stdout management (``silenceStdout``/``restoreStdout`` for suppressing
-  LAMMPS library output, coordinated with :cpp:class:`StdCapture` via
+  LAMMPS library output, with the :cpp:class:`StdoutSilencer` RAII guard
+  for scope-based silencing, coordinated with :cpp:class:`StdCapture` via
   ``isStdoutSilenced`` and ``notifyCaptureState``)
 
 **Constants (constants.h)**
