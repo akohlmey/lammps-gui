@@ -25,11 +25,11 @@
  */
 class LammpsWrapper {
 public:
-    ///! Constants for variable styles
+    /// Constants for variable styles
     enum StyleConst { EQUAL_STYLE = 0, ATOM_STYLE, VECTOR_STYLE, STRING_STYLE };
-    ///! Constants for data scopes
+    /// Constants for data scopes
     enum ScopeConst { GLOBAL_STYLE = 0, DUMMY /* = ATOM_STYLE */, LOCAL_STYLE };
-    ///! Constants for data types
+    /// Constants for data types
     enum TypeConst { SCALAR_TYPE = 0, VECTOR_TYPE, ARRAY_TYPE, NUM_ROWS, NUM_COLS };
 
     /**
@@ -38,7 +38,10 @@ public:
     LammpsWrapper();
 
     /**
-     * @brief Destructor - cleans up LAMMPS instance if open
+     * @brief Destructor (defaulted)
+     *
+     * Does not close an open LAMMPS instance. Callers must invoke close()
+     * explicitly before destroying the wrapper.
      */
     ~LammpsWrapper() = default;
 

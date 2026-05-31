@@ -25,10 +25,11 @@
  * When style information is available, the dialog allocates
  * 2/3 of the combined scroll area space to the configuration information
  * text and 1/3 to the style information text.
-
+ *
  * The style information text uses the configured fixed-width font from the
  * QSettings keys "monofamily" and "monosize" while the rest uses the
- * application's default (variable width) font. */
+ * application's default (variable width) font.
+ */
 
 class AboutDialog : public QDialog {
     Q_OBJECT
@@ -56,10 +57,15 @@ public:
 protected:
     /**
      * @brief Event handler for widget show events; implements the auto-scroll functionality.
+     * @param event The show event
      */
     void showEvent(QShowEvent *event) override;
 
 private:
+    /**
+     * @brief Configure and start the auto-scroll animation for a scroll area
+     * @param area The scroll area to animate
+     */
     void setupAutoScroll(QScrollArea *area);
 
     QScrollArea *infoScrollArea;    ///< Scroll area for LAMMPS configuration info
