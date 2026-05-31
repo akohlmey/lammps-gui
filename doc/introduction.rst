@@ -281,6 +281,9 @@ used throughout the application:
 - System utilities (``hasExe`` for executable detection)
 - UI utilities (``isLightTheme`` for theme detection,
   ``showUnsavedChangesDialog`` for standardized unsaved-changes prompts)
+- Menu construction (``addMenuAction`` builds a menu action with an
+  optional icon and a ``triggered()`` handler in one call; used to build
+  the context and tool menus across the widget classes)
 - Stdout management (``silenceStdout``/``restoreStdout`` for suppressing
   LAMMPS library output, with the :cpp:class:`StdoutSilencer` RAII guard
   for scope-based silencing, coordinated with :cpp:class:`StdCapture` via
