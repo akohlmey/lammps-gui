@@ -1203,7 +1203,6 @@ void LammpsGui::openFile(const QString &fileName)
 
     updateVariables();
     silenceStdout();
-    lammps.close();
     restoreStdout();
 }
 
@@ -1395,21 +1394,12 @@ void LammpsGui::saveAs()
 
 void LammpsGui::quit()
 {
-    removeEventFilter(this);
-
     if (lammps.isRunning()) {
         stopRun();
         runner->wait();
         runner->deleteLater();
         runner = nullptr;
     }
-
-    // close LAMMPS instance
-    silenceStdout();
-    lammps.close();
-    restoreStdout();
-    lammpsstatus->hide();
-    lammps.finalize();
 
     autoSave();
     if (textEdit->document()->isModified()) {
@@ -1440,6 +1430,15 @@ void LammpsGui::quit()
 #if QT_CONFIG(clipboard)
     if (auto *clip = QGuiApplication::clipboard()) clip->clear();
 #endif
+
+    // tear down LAMMPS-GUI and close / finalize LAMMPS instance
+
+    removeEventFilter(this);
+    silenceStdout();
+    lammps.finalize();
+    restoreStdout();
+    lammpsstatus->hide();
+
     // quit application
     QCoreApplication::quit();
 }
