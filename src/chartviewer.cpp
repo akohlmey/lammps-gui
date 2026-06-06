@@ -11,6 +11,7 @@
 
 #include "chartviewer.h"
 
+#include "constants.h"
 #include "helpers.h"
 #include "lammpsgui.h"
 #include "qaddon.h"
@@ -124,13 +125,13 @@ ChartWindow::ChartWindow(const QString &_filename, LammpsGui *_lammpsgui, QWidge
     smooth->addItem("Both");
     smooth->setCurrentIndex(smoothchoice);
     window = new QSpinBox;
-    window->setRange(5, 999);
-    window->setValue(settings.value("smoothwindow", 10).toInt());
+    window->setRange(GuiConstants::SMOOTH_WINDOW_MIN, GuiConstants::SMOOTH_WINDOW_MAX);
+    window->setValue(settings.value("smoothwindow", GuiConstants::SMOOTH_WINDOW_DEFAULT).toInt());
     window->setEnabled(true);
     window->setToolTip("Smoothing Window Size");
     order = new QSpinBox;
-    order->setRange(1, 20);
-    order->setValue(settings.value("smoothorder", 4).toInt());
+    order->setRange(GuiConstants::SMOOTH_ORDER_MIN, GuiConstants::SMOOTH_ORDER_MAX);
+    order->setValue(settings.value("smoothorder", GuiConstants::SMOOTH_ORDER_DEFAULT).toInt());
     order->setEnabled(true);
     order->setToolTip("Smoothing Order");
     settings.endGroup();
@@ -615,7 +616,8 @@ void ChartViewer::addData(int step, double data)
 
         QSettings settings;
         // update the chart display only after at least updchart milliseconds have passed
-        if (lastUpdate.msecsTo(QTime::currentTime()) > settings.value("updchart", "500").toInt()) {
+        if (lastUpdate.msecsTo(QTime::currentTime()) >
+            settings.value("updchart", GuiConstants::CHART_UPDATE_INTERVAL_DEFAULT).toInt()) {
             lastUpdate = QTime::currentTime();
             updateSmooth();
             resetZoom();

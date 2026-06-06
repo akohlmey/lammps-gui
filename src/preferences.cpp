@@ -12,6 +12,7 @@
 #include "preferences.h"
 
 #include "codeeditor.h"
+#include "constants.h"
 #include "helpers.h"
 #include "lammpsgui.h"
 #include "lammpswrapper.h"
@@ -84,7 +85,7 @@ Preferences::Preferences(LammpsWrapper *_lammps, LammpsGui *_lammpsgui, QWidget 
     setLayout(layout);
     setWindowIcon(QIcon(":/icons/lammps-gui-icon-128x128.png"));
     setWindowTitle("LAMMPS-GUI - Preferences");
-    resize(700, 500);
+    resize(GuiConstants::PREFERENCES_WIDTH, GuiConstants::PREFERENCES_HEIGHT);
 }
 
 Preferences::~Preferences()
@@ -329,16 +330,20 @@ GeneralTab::GeneralTab(QSettings *_settings, LammpsWrapper *_lammps, LammpsGui *
 
     auto *freqlabel = new QLabel("Data update interval (ms):");
     auto *freqval   = new QSpinBox;
-    freqval->setRange(1, 1000);
+    freqval->setRange(GuiConstants::DATA_UPDATE_INTERVAL_MIN,
+                      GuiConstants::DATA_UPDATE_INTERVAL_MAX);
     freqval->setStepType(QAbstractSpinBox::AdaptiveDecimalStepType);
-    freqval->setValue(settings->value("updfreq", "10").toInt());
+    freqval->setValue(
+        settings->value("updfreq", GuiConstants::DATA_UPDATE_INTERVAL_DEFAULT).toInt());
     freqval->setObjectName("updfreq");
 
     auto *chartlabel = new QLabel("Charts update interval (ms):");
     auto *chartval   = new QSpinBox;
-    chartval->setRange(1, 5000);
+    chartval->setRange(GuiConstants::CHART_UPDATE_INTERVAL_MIN,
+                       GuiConstants::CHART_UPDATE_INTERVAL_MAX);
     chartval->setStepType(QAbstractSpinBox::AdaptiveDecimalStepType);
-    chartval->setValue(settings->value("updchart", "500").toInt());
+    chartval->setValue(
+        settings->value("updchart", GuiConstants::CHART_UPDATE_INTERVAL_DEFAULT).toInt());
     chartval->setObjectName("updchart");
 
     int nrow = 0;
@@ -932,16 +937,16 @@ EditorTab::EditorTab(QSettings *_settings, QWidget *parent) : QWidget(parent), s
     auto *autoval  = new QCheckBox;
     auto *savval   = new QCheckBox;
     cmdval->setObjectName("cmdval");
-    cmdval->setRange(1, 32);
+    cmdval->setRange(GuiConstants::COMPLETION_CHARS_MIN, GuiConstants::COMPLETION_CHARS_MAX);
     cmdval->setValue(settings->value("command", "16").toInt());
     typeval->setObjectName("typeval");
-    typeval->setRange(1, 32);
+    typeval->setRange(GuiConstants::COMPLETION_CHARS_MIN, GuiConstants::COMPLETION_CHARS_MAX);
     typeval->setValue(settings->value("type", "4").toInt());
     idval->setObjectName("idval");
-    idval->setRange(1, 32);
+    idval->setRange(GuiConstants::COMPLETION_CHARS_MIN, GuiConstants::COMPLETION_CHARS_MAX);
     idval->setValue(settings->value("id", "8").toInt());
     nameval->setObjectName("nameval");
-    nameval->setRange(1, 32);
+    nameval->setRange(GuiConstants::COMPLETION_CHARS_MIN, GuiConstants::COMPLETION_CHARS_MAX);
     nameval->setValue(settings->value("name", "8").toInt());
     retval->setObjectName("retval");
     retval->setChecked(settings->value("return", false).toBool());
@@ -1016,14 +1021,15 @@ ChartsTab::ChartsTab(QSettings *_settings, QWidget *parent) : QWidget(parent), s
 
     auto *smwindlbl = new QLabel("Default smoothing window:");
     auto *smwindval = new QSpinBox;
-    smwindval->setRange(5, 999);
-    smwindval->setValue(settings->value("smoothwindow", 10).toInt());
+    smwindval->setRange(GuiConstants::SMOOTH_WINDOW_MIN, GuiConstants::SMOOTH_WINDOW_MAX);
+    smwindval->setValue(
+        settings->value("smoothwindow", GuiConstants::SMOOTH_WINDOW_DEFAULT).toInt());
     smwindval->setObjectName("smoothwindow");
 
     auto *smordrlbl = new QLabel("Default smoothing order:");
     auto *smordrval = new QSpinBox;
-    smordrval->setRange(1, 20);
-    smordrval->setValue(settings->value("smoothorder", 4).toInt());
+    smordrval->setRange(GuiConstants::SMOOTH_ORDER_MIN, GuiConstants::SMOOTH_ORDER_MAX);
+    smordrval->setValue(settings->value("smoothorder", GuiConstants::SMOOTH_ORDER_DEFAULT).toInt());
     smordrval->setObjectName("smoothorder");
 
     auto *gridlbl = new QLabel("Draw major grid:");
@@ -1038,12 +1044,12 @@ ChartsTab::ChartsTab(QSettings *_settings, QWidget *parent) : QWidget(parent), s
 
     auto *chartxlbl = new QLabel("Chart default width:");
     auto *chartxval = new QSpinBox;
-    chartxval->setRange(400, 40000);
+    chartxval->setRange(GuiConstants::CHART_WIDTH_MIN, GuiConstants::CHART_WIDTH_MAX);
     chartxval->setValue(settings->value("chartx", 500).toInt());
     chartxval->setObjectName("chartx");
     auto *chartylbl = new QLabel("Chart default height:");
     auto *chartyval = new QSpinBox;
-    chartyval->setRange(300, 30000);
+    chartyval->setRange(GuiConstants::CHART_HEIGHT_MIN, GuiConstants::CHART_HEIGHT_MAX);
     chartyval->setValue(settings->value("charty", 320).toInt());
     chartyval->setObjectName("charty");
 
