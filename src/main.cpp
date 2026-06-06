@@ -59,7 +59,7 @@ int main(int argc, char *argv[])
         "for monitoring, visualization, plotting, and capturing console output.");
 #if defined(LAMMPS_GUI_USE_PLUGIN)
     description += QString("\n\nCurrent LAMMPS plugin path setting:\n  %1")
-                       .arg(QSettings().value("plugin_path", "").toString());
+                       .arg(QSettings().value(Keys::PLUGIN_PATH, "").toString());
 #endif
     parser.setApplicationDescription(description);
 

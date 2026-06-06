@@ -10,6 +10,7 @@
 ////////////////////////////////////////////////////////////////////////////////////////
 
 #include "urldownloader.h"
+#include "constants.h"
 #include "helpers.h"
 
 #include <QByteArray>
@@ -43,7 +44,7 @@ void URLDownloader::configureProxy()
 {
     // prefer environment variable, then fall back to preferences value
     auto https_proxy = QString::fromLocal8Bit(qgetenv("https_proxy"));
-    if (https_proxy.isEmpty()) https_proxy = QSettings().value("https_proxy", "").toString();
+    if (https_proxy.isEmpty()) https_proxy = QSettings().value(Keys::HTTPS_PROXY, "").toString();
 
     if (!https_proxy.isEmpty()) {
         QUrl proxyUrl(https_proxy);

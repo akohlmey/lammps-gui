@@ -1519,14 +1519,14 @@ void LammpsGui::updateSlideShow()
 
     if (!slideshow) {
         slideshow = new SlideShow(currentFile, this);
-        if (QSettings().value("viewslide", true).toBool())
+        if (QSettings().value(Keys::VIEWSLIDE, true).toBool())
             slideshow->show();
         else
             slideshow->hide();
     } else {
         slideshow->setWindowTitle(
             QString("LAMMPS-GUI - Slide Show - %1 - Run %2").arg(currentFile).arg(runCounter));
-        if (QSettings().value("viewslide", true).toBool()) slideshow->show();
+        if (QSettings().value(Keys::VIEWSLIDE, true).toBool()) slideshow->show();
     }
     slideshow->addImage(imagefile);
 }
@@ -1551,7 +1551,7 @@ void LammpsGui::warnHighBufferUsage()
         int thermo_val = lammps.extractSetting("thermo_every");
         int thermo_suggest =
             Cfg::THERMO_SUGGEST_MULTIPLIER * static_cast<int>(round(bufferuse * thermo_val));
-        int update_val     = QSettings().value("updfreq", 100).toInt();
+        int update_val     = QSettings().value(Keys::UPDFREQ, 100).toInt();
         int update_suggest = std::max(1, update_val / 5);
 
         QString mesg1("<p align=\"justified\">The I/O buffer for capturing the LAMMPS screen "
@@ -1839,7 +1839,7 @@ void LammpsGui::renderImage()
             }
         }
         // if configured, delete old image window before opening new one
-        if (QSettings().value("imagereplace", true).toBool()) delete imagewindow;
+        if (QSettings().value(Keys::IMAGEREPLACE, true).toBool()) delete imagewindow;
         imagewindow = new ImageViewer(currentFile, &lammps, this);
         imagewindow->setMinimumSize(Cfg::MINIMUM_WIDTH, Cfg::MINIMUM_HEIGHT);
     } else {
