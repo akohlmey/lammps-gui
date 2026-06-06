@@ -216,8 +216,11 @@ PlotData parsePlotYaml(const QString &text, QString *error)
         if (line.startsWith("keywords:")) {
             const QStringList toks = bracketContents(line).split(',');
             names.clear();
-            for (const QString &t : toks)
-                names << unquote(t);
+            for (const QString &t : toks) {
+                const QString name = unquote(t);
+                // tolerate the trailing comma LAMMPS writes (e.g. "..., 'Press', ]")
+                if (!name.isEmpty()) names << name;
+            }
             ncol = names.size();
         } else if (line.startsWith('-')) {
             const QString inside = bracketContents(line);
@@ -226,8 +229,11 @@ PlotData parsePlotYaml(const QString &text, QString *error)
             std::vector<double> row;
             bool ok = true;
             for (const QString &t : toks) {
+                const QString tok = t.trimmed();
+                // tolerate the trailing comma LAMMPS writes (e.g. "..., -837.0, ]")
+                if (tok.isEmpty()) continue;
                 bool good      = false;
-                const double v = t.trimmed().toDouble(&good);
+                const double v = tok.toDouble(&good);
                 if (!good) {
                     ok = false;
                     break;

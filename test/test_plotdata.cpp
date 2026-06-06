@@ -114,6 +114,25 @@ TEST(PlotDataYaml, KeywordsAndData)
     EXPECT_DOUBLE_EQ(d.column(0)[1], 1.0);
 }
 
+TEST(PlotDataYaml, LammpsTrailingComma)
+{
+    // native LAMMPS thermo YAML writes a trailing comma before each closing
+    // bracket; the parser must not treat the resulting empty field as data
+    const QString text = "---\n"
+                         "keywords: ['Step', 'Temp', 'Press', ]\n"
+                         "data:\n"
+                         "  - [0, 300, 1.0, ]\n"
+                         "  - [50, 310, 1.1, ]\n"
+                         "...\n";
+    const PlotData d   = parsePlotYaml(text);
+    ASSERT_EQ(d.columnCount(), 3);
+    ASSERT_EQ(d.rowCount(), 2);
+    EXPECT_EQ(d.columnName(0), "Step");
+    EXPECT_EQ(d.columnName(2), "Press");
+    EXPECT_DOUBLE_EQ(d.column(0)[1], 50.0);
+    EXPECT_DOUBLE_EQ(d.column(2)[1], 1.1);
+}
+
 TEST(PlotDataJson, ArrayOfRows)
 {
     const QByteArray json = "[[0,300,1.0],[1,310,1.1]]";
