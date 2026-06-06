@@ -331,6 +331,9 @@ private:
     /** @brief Append any newly rendered dump image to the slideshow */
     void updateSlideShow();
 
+    /** @brief Append accelerator-package command-line arguments to lammpsArgs */
+    void appendAcceleratorArgs(int accel, QSettings &settings);
+
     /**
      * @brief Create all menu actions, menus, and status bar
      * @param settings application settings class instance

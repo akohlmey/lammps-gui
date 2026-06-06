@@ -2420,18 +2420,8 @@ void LammpsGui::preferences()
     }
 }
 
-void LammpsGui::startLammps()
+void LammpsGui::appendAcceleratorArgs(int accel, QSettings &settings)
 {
-    // temporary extend lammpsArgs with additional arguments
-    int initial_narg = lammpsArgs.size();
-    QSettings settings;
-    int accel = settings.value(Keys::ACCELERATOR, AcceleratorTab::None).toInt();
-    // if non-threaded accelerator selected reset threads
-    if ((accel == AcceleratorTab::None) || (accel == AcceleratorTab::Opt)) {
-        nthreads = 1;
-    }
-    qputenv("OMP_NUM_THREADS", QByteArray::number(nthreads));
-
     if (accel == AcceleratorTab::Opt) {
         lammpsArgs.push_back("-suffix");
         lammpsArgs.push_back("opt");
@@ -2503,6 +2493,22 @@ void LammpsGui::startLammps()
         lammpsArgs.push_back("-suffix");
         lammpsArgs.push_back("kk");
     }
+}
+
+void LammpsGui::startLammps()
+{
+    // temporary extend lammpsArgs with additional arguments
+    int initial_narg = lammpsArgs.size();
+    QSettings settings;
+    int accel = settings.value(Keys::ACCELERATOR, AcceleratorTab::None).toInt();
+    // if non-threaded accelerator selected reset threads
+    if ((accel == AcceleratorTab::None) || (accel == AcceleratorTab::Opt)) {
+        nthreads = 1;
+    }
+    qputenv("OMP_NUM_THREADS", QByteArray::number(nthreads));
+
+    appendAcceleratorArgs(accel, settings);
+
     if (settings.value(Keys::ECHO, false).toBool()) {
         lammpsArgs.push_back("-echo");
         lammpsArgs.push_back("screen");
