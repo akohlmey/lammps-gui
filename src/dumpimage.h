@@ -86,12 +86,14 @@ struct DumpImageParams {
     double bondcutoff; ///< autobond distance cutoff
 
     // ---- view / image ----
-    int xsize, ysize;   ///< rendered image dimensions in pixels
+    int xsize;          ///< rendered image width in pixels
+    int ysize;          ///< rendered image height in pixels
     double zoom;        ///< zoom level
     double shinyfactor; ///< shininess / specular factor
     bool antialias;     ///< enable full-scene antialiasing
     int dimension;      ///< system dimension (2 or 3)
-    int hrot, vrot;     ///< horizontal and vertical rotation angles
+    int hrot;           ///< horizontal rotation angle
+    int vrot;           ///< vertical rotation angle
     bool usessao;       ///< enable screen-space ambient occlusion
     double ssaoval;     ///< SSAO strength
 
@@ -106,7 +108,9 @@ struct DumpImageParams {
     double axesdiam;   ///< axes diameter
 
     // ---- view center ----
-    double xcenter, ycenter, zcenter; ///< view center coordinates
+    double xcenter; ///< view center x coordinate
+    double ycenter; ///< view center y coordinate
+    double zcenter; ///< view center z coordinate
 
     // ---- colors / lighting ----
     int ntypes;                               ///< number of atom types

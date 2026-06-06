@@ -136,6 +136,24 @@ ImageViewer Class
 
 -----
 
+Dump Image Command Builder
+--------------------------
+
+The ``DumpImageParams`` struct and the ``buildDumpImageCommand()`` free
+function (``src/dumpimage.h``) form a GUI-free, unit-testable core that
+assembles the LAMMPS ``write_dump ... image ...`` command from a snapshot of
+the viewer state.  ``ImageViewer`` populates the struct (resolving all LAMMPS
+queries up front) and then calls the pure builder.
+
+.. doxygenstruct:: DumpImageParams
+   :members:
+
+-----
+
+.. doxygenfunction:: buildDumpImageCommand
+
+-----
+
 SlideShow Class
 ---------------
 

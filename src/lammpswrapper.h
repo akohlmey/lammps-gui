@@ -181,6 +181,8 @@ public:
      * @brief Extract data from a compute from LAMMPS
      * @overload
      * @param id compute id as a QString
+     * @param style style of data to extract
+     * @param type type of data to extract
      */
     void *extractCompute(const QString &id, int style, int type)
     {
@@ -202,6 +204,10 @@ public:
      * @brief Extract data from a fix from LAMMPS
      * @overload
      * @param id fix id as a QString
+     * @param style style of data to extract
+     * @param type type of data to extract
+     * @param nrow row index (only for global)
+     * @param ncol column index (only for global)
      */
     void *extractFix(const QString &id, int style, int type, int nrow, int ncol)
     {
