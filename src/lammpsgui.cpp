@@ -364,9 +364,9 @@ void LammpsGui::createStatusBar()
     statusbar->addWidget(progress);
 }
 
+#if defined(LAMMPS_GUI_USE_PLUGIN)
 void LammpsGui::setupPlugin(QSettings &settings)
 {
-#if defined(LAMMPS_GUI_USE_PLUGIN)
     // first try to load from existing setting
     pluginPath = settings.value(Keys::PLUGIN_PATH, "").toString();
     if (!pluginPath.isEmpty()) {
@@ -530,8 +530,11 @@ void LammpsGui::setupPlugin(QSettings &settings)
             }
         }
     }
-#endif
 }
+#else
+// dummy function when linking against library directly
+void LammpsGui::setupPlugin(QSettings &) {}
+#endif
 
 void LammpsGui::setupAccelerators(QSettings &settings)
 {
