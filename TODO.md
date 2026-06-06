@@ -373,10 +373,22 @@ display with a small style dialog, and a post-processing/fitting dialog.
     verifiable live path up front, to maximize testability and minimize
     churn to untested code.
 
-- **Layer 1 -- file import.** Reuse the inverse of the existing CSV/YAML/DAT
-  formatters. Minimal import dialog: detect delimiter + optional header row,
-  preview columns, pick X column and one-or-more Y columns. JSON limited to
-  the simple array-of-rows / object-of-arrays shapes.
+- **Layer 1 -- file import. DONE.** Reuse the inverse of the existing
+  CSV/YAML/DAT formatters. Minimal import dialog: detect delimiter + optional
+  header row, preview columns, pick X column and one-or-more Y columns. JSON
+  limited to the simple array-of-rows / object-of-arrays shapes.
+  - Done: (8.1a) `plotdata.{cpp,h}` -- the deferred `PlotData` column model
+    (named `std::vector<double>` columns, leastsquares-ready) plus parsers for
+    CSV, whitespace/`.dat`, LAMMPS YAML (`keywords:`/`data:`), and JSON
+    (array-of-rows / object-of-arrays), with `loadPlotData()` dispatching by
+    extension; round-trips the existing exporters; 12 unit tests. (8.1b)
+    `ChartWindow::loadData()` + `ChartViewer::setPoints()`/`setXLabel()` --
+    bulk file load bypassing the live monotonic-x guard. (8.1c) `PlotDataDialog`
+    (x combo + y checkboxes + row preview) and a Run-menu "Plot Data File..."
+    entry opening a standalone, self-deleting file-mode `ChartWindow`. Format
+    auto-detection by extension/content replaced the planned explicit
+    delimiter/header controls (simpler, no UI needed). 94/94 ctest, zero
+    Doxygen warnings, both configs build.
 
 - **Layer 2 -- series styling (lines / points / lines+points).** Extend
   `ChartBackend` with `QScatterSeries` support (both QtCharts and QtGraphs
