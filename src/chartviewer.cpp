@@ -11,6 +11,7 @@
 
 #include "chartviewer.h"
 
+#include "analysis.h"
 #include "constants.h"
 #include "helpers.h"
 #include "lammpsgui.h"
@@ -33,6 +34,7 @@
 #include <QFileDialog>
 #include <QFormLayout>
 #include <QHBoxLayout>
+#include <QIcon>
 #include <QKeySequence>
 #include <QLabel>
 #include <QLayout>
@@ -202,6 +204,8 @@ ChartWindow::ChartWindow(const QString &_filename, LammpsGui *_lammpsgui, QWidge
     file->addSeparator();
     addMenuAction(file, "Chart &Style...", ":/icons/preferences-desktop-personal.png", this,
                   &ChartWindow::changeStyle);
+    addMenuAction(file, "&Postprocess...", ":/icons/application-plot.png", this,
+                  &ChartWindow::postProcess);
     file->addSeparator();
     stopAct =
         addMenuAction(file, "Stop &Run", ":/icons/process-stop.png", this, &ChartWindow::stopRun);
@@ -428,6 +432,72 @@ void ChartWindow::changeStyle()
         const auto mode = static_cast<ChartDisplayMode>(modebox->currentData().toInt());
         chart->setDisplayStyle(mode, chosen, widthspin->value());
     }
+}
+
+void ChartWindow::postProcess()
+{
+    if (charts.empty()) return;
+
+    // the chart currently shown in the combo box
+    const int choice   = columns->currentData().toInt();
+    ChartViewer *chart = nullptr;
+    for (auto &c : charts)
+        if (c->getIndex() == choice) chart = c;
+    if (!chart) chart = charts.first();
+
+    const int npoints = chart->getCount();
+    if (npoints < 2) {
+        warning(this, "Postprocess", "Not enough data points to analyze.");
+        return;
+    }
+
+    QDialog dialog(this);
+    dialog.setWindowTitle("Postprocess Chart Data");
+    auto *form = new QFormLayout(&dialog);
+
+    auto *analysisbox = new QComboBox;
+    analysisbox->addItem("Autocorrelation");
+    form->addRow("Analysis:", analysisbox);
+
+    auto *lagspin = new QSpinBox;
+    lagspin->setRange(1, npoints - 1);
+    lagspin->setValue(qMin(npoints - 1, npoints / 2));
+    lagspin->setToolTip("Maximum lag for the autocorrelation");
+    form->addRow("Max lag:", lagspin);
+
+    auto *buttons = new QDialogButtonBox(QDialogButtonBox::Ok | QDialogButtonBox::Cancel);
+    connect(buttons, &QDialogButtonBox::accepted, &dialog, &QDialog::accept);
+    connect(buttons, &QDialogButtonBox::rejected, &dialog, &QDialog::reject);
+    form->addRow(buttons);
+
+    if (dialog.exec() != QDialog::Accepted) return;
+
+    // gather the y values of the selected chart
+    std::vector<double> y;
+    y.reserve(npoints);
+    for (int i = 0; i < npoints; ++i)
+        y.push_back(chart->getData(i));
+
+    const std::vector<double> acf = autocorrelation(y, lagspin->value());
+    if (acf.empty()) {
+        warning(this, "Postprocess",
+                "Could not compute the autocorrelation (constant or insufficient data).");
+        return;
+    }
+
+    // assemble the result as a (lag, ACF) table and open it in a new window
+    PlotData result;
+    result.setColumnNames({"lag", "ACF: " + chart->getTitle()});
+    for (std::size_t k = 0; k < acf.size(); ++k)
+        result.appendRow({static_cast<double>(k), acf[k]});
+
+    auto *win = new ChartWindow(filename + " (ACF)", nullptr);
+    win->setAttribute(Qt::WA_DeleteOnClose);
+    win->setWindowTitle("Autocorrelation - LAMMPS-GUI");
+    win->setWindowIcon(QIcon(Cfg::MAIN_ICON));
+    win->setMinimumSize(Cfg::MINIMUM_WIDTH, Cfg::MINIMUM_HEIGHT);
+    win->loadData(result, 0, {1});
+    win->show();
 }
 
 void ChartWindow::selectSmooth(int)
