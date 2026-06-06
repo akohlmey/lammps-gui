@@ -1386,57 +1386,8 @@ void LammpsGui::stopRun()
 
 void LammpsGui::logUpdate()
 {
-    double t_elapsed, t_remain, t_total;
-    int completed = 1000;
+    progress->setValue(updateRunStatus());
 
-    // estimate completion percentage
-    if (lammps.isRunning()) {
-        t_elapsed = lammps.getThermo("cpu");
-        t_remain  = lammps.getThermo("cpuremain");
-        t_total   = t_elapsed + t_remain + 1.0e-10;
-        completed = t_elapsed / t_total * 1000.0;
-        // update cpu usage
-        int percent_cpu = (int)lammps.getThermo("cpuuse");
-        // clear any pending error messages from polling those thermo keywords
-        lammps.getLastErrorMessage(nullptr, 0);
-
-        cpuuse->setText(QString("%1%CPU").arg(percent_cpu, 4));
-        if (percent_cpu < 25.0 * nthreads) {
-            cpuuse->setStyleSheet("QLabel {background-color: black; color: white;}");
-        } else if (percent_cpu < 50.0 * nthreads) {
-            cpuuse->setStyleSheet("QLabel {background-color: darkblue; color: white;}");
-        } else if (percent_cpu > 100.0 * nthreads + 50.0) {
-            cpuuse->setStyleSheet("QLabel {background-color: firebrick; color: white;}");
-        } else if (percent_cpu < 100.0 * nthreads - 50.0) {
-            cpuuse->setStyleSheet("QLabel {background-color: firebrick; color: white;}");
-        } else if (percent_cpu > 100.0 * nthreads + 20.0) {
-            cpuuse->setStyleSheet("QLabel {background-color: gold; color: black;}");
-        } else if (percent_cpu < 100.0 * nthreads - 20.0) {
-            cpuuse->setStyleSheet("QLabel {background-color: gold; color: black;}");
-        } else {
-            cpuuse->setStyleSheet("QLabel {background-color: forestgreen; color: white;}");
-        }
-
-        int nline = -1;
-        void *ptr = lammps.lastThermo("line", 0);
-        if (ptr) {
-            nline = *((int *)ptr);
-            textEdit->setHighlight(nline, false);
-        }
-
-        if (varwindow) {
-            int nvar = lammps.idCount("variable");
-            QString varinfo("\n");
-            for (int i = 0; i < nvar; ++i)
-                varinfo += lammps.variableInfo(i);
-            if (nvar == 0) varinfo += "  (none)  ";
-
-            varwindow->setText(varinfo);
-            varwindow->adjustSize();
-        }
-    }
-
-    progress->setValue(completed);
     if (logwindow) {
         const auto text = capturer->getChunk();
         if (!text.empty()) {
@@ -1461,70 +1412,123 @@ void LammpsGui::logUpdate()
 
         lammps.lastThermo("lock", 0);
         const int ncols = lammps.lastThermoAs<int>("num", 0);
-        if (ncols > 0) {
-
-            // check if the column assignment has changed
-            // if yes, delete charts and start over
-            if (chartwindow->numCharts() > 0) {
-                int count     = 0;
-                bool do_reset = false;
-                if (step < chartwindow->getStep()) do_reset = true;
-                for (int i = 0, idx = 0; i < ncols; ++i) {
-                    QString label = lammps.lastThermoString("keyword", i);
-                    // no need to store the timestep column
-                    if (label == "Step") continue;
-                    if (!chartwindow->hasTitle(label, idx)) {
-                        do_reset = true;
-                    } else {
-                        ++count;
-                    }
-                    ++idx;
-                }
-                if (chartwindow->numCharts() != count) do_reset = true;
-                if (do_reset) chartwindow->resetCharts();
-            }
-
-            if (chartwindow->numCharts() == 0) {
-                for (int i = 0; i < ncols; ++i) {
-                    QString label = lammps.lastThermoString("keyword", i);
-                    // no need to store the timestep column
-                    if (label == "Step") continue;
-                    chartwindow->addChart(label, i);
-                }
-            }
-
-            for (int i = 0; i < ncols; ++i) {
-                const int datatype = lammps.lastThermoAs<int>("type", i);
-                double data        = 0.0;
-                if (datatype == 0) // int
-                    data = lammps.lastThermoAs<int>("data", i);
-                else if (datatype == 2) // double
-                    data = lammps.lastThermoAs<double>("data", i);
-                else if (datatype == 4) // bigint
-                    data = static_cast<double>(lammps.lastThermoAs<int64_t>("data", i));
-                chartwindow->addData(step, data, i);
-            }
-        }
+        if (ncols > 0) updateChartData(step, ncols);
         lammps.lastThermo("unlock", 0);
     }
 
-    // update list of available image file names
+    updateSlideShow();
+}
 
-    QString imagefile = lammps.lastThermoString("imagename", 0);
-    if (!imagefile.isEmpty()) {
-        if (!slideshow) {
-            slideshow = new SlideShow(currentFile, this);
-            if (QSettings().value("viewslide", true).toBool())
-                slideshow->show();
-            else
-                slideshow->hide();
-        } else {
-            slideshow->setWindowTitle(
-                QString("LAMMPS-GUI - Slide Show - %1 - Run %2").arg(currentFile).arg(runCounter));
-            if (QSettings().value("viewslide", true).toBool()) slideshow->show();
-        }
-        slideshow->addImage(imagefile);
+int LammpsGui::updateRunStatus()
+{
+    if (!lammps.isRunning()) return 1000;
+
+    // estimate completion percentage
+    double t_elapsed = lammps.getThermo("cpu");
+    double t_remain  = lammps.getThermo("cpuremain");
+    double t_total   = t_elapsed + t_remain + 1.0e-10;
+    int completed    = t_elapsed / t_total * 1000.0;
+    // update cpu usage
+    int percent_cpu = (int)lammps.getThermo("cpuuse");
+    // clear any pending error messages from polling those thermo keywords
+    lammps.getLastErrorMessage(nullptr, 0);
+
+    cpuuse->setText(QString("%1%CPU").arg(percent_cpu, 4));
+    if (percent_cpu < 25.0 * nthreads) {
+        cpuuse->setStyleSheet("QLabel {background-color: black; color: white;}");
+    } else if (percent_cpu < 50.0 * nthreads) {
+        cpuuse->setStyleSheet("QLabel {background-color: darkblue; color: white;}");
+    } else if (percent_cpu > 100.0 * nthreads + 50.0) {
+        cpuuse->setStyleSheet("QLabel {background-color: firebrick; color: white;}");
+    } else if (percent_cpu < 100.0 * nthreads - 50.0) {
+        cpuuse->setStyleSheet("QLabel {background-color: firebrick; color: white;}");
+    } else if (percent_cpu > 100.0 * nthreads + 20.0) {
+        cpuuse->setStyleSheet("QLabel {background-color: gold; color: black;}");
+    } else if (percent_cpu < 100.0 * nthreads - 20.0) {
+        cpuuse->setStyleSheet("QLabel {background-color: gold; color: black;}");
+    } else {
+        cpuuse->setStyleSheet("QLabel {background-color: forestgreen; color: white;}");
     }
+
+    void *ptr = lammps.lastThermo("line", 0);
+    if (ptr) textEdit->setHighlight(*static_cast<int *>(ptr), false);
+
+    if (varwindow) {
+        int nvar = lammps.idCount("variable");
+        QString varinfo("\n");
+        for (int i = 0; i < nvar; ++i)
+            varinfo += lammps.variableInfo(i);
+        if (nvar == 0) varinfo += "  (none)  ";
+
+        varwindow->setText(varinfo);
+        varwindow->adjustSize();
+    }
+    return completed;
+}
+
+void LammpsGui::updateChartData(int step, int ncols)
+{
+    // check if the column assignment has changed
+    // if yes, delete charts and start over
+    if (chartwindow->numCharts() > 0) {
+        int count     = 0;
+        bool do_reset = false;
+        if (step < chartwindow->getStep()) do_reset = true;
+        for (int i = 0, idx = 0; i < ncols; ++i) {
+            QString label = lammps.lastThermoString("keyword", i);
+            // no need to store the timestep column
+            if (label == "Step") continue;
+            if (!chartwindow->hasTitle(label, idx)) {
+                do_reset = true;
+            } else {
+                ++count;
+            }
+            ++idx;
+        }
+        if (chartwindow->numCharts() != count) do_reset = true;
+        if (do_reset) chartwindow->resetCharts();
+    }
+
+    if (chartwindow->numCharts() == 0) {
+        for (int i = 0; i < ncols; ++i) {
+            QString label = lammps.lastThermoString("keyword", i);
+            // no need to store the timestep column
+            if (label == "Step") continue;
+            chartwindow->addChart(label, i);
+        }
+    }
+
+    for (int i = 0; i < ncols; ++i) {
+        const int datatype = lammps.lastThermoAs<int>("type", i);
+        double data        = 0.0;
+        if (datatype == 0) // int
+            data = lammps.lastThermoAs<int>("data", i);
+        else if (datatype == 2) // double
+            data = lammps.lastThermoAs<double>("data", i);
+        else if (datatype == 4) // bigint
+            data = static_cast<double>(lammps.lastThermoAs<int64_t>("data", i));
+        chartwindow->addData(step, data, i);
+    }
+}
+
+void LammpsGui::updateSlideShow()
+{
+    // update list of available image file names
+    QString imagefile = lammps.lastThermoString("imagename", 0);
+    if (imagefile.isEmpty()) return;
+
+    if (!slideshow) {
+        slideshow = new SlideShow(currentFile, this);
+        if (QSettings().value("viewslide", true).toBool())
+            slideshow->show();
+        else
+            slideshow->hide();
+    } else {
+        slideshow->setWindowTitle(
+            QString("LAMMPS-GUI - Slide Show - %1 - Run %2").arg(currentFile).arg(runCounter));
+        if (QSettings().value("viewslide", true).toBool()) slideshow->show();
+    }
+    slideshow->addImage(imagefile);
 }
 
 void LammpsGui::modified()
