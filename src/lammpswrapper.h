@@ -138,7 +138,7 @@ public:
      * @brief Get LAMMPS version number
      * @return Version number as integer (YYYYMMDD format)
      */
-    int version();
+    [[nodiscard]] int version();
 
     /**
      * @brief Extract a global setting from LAMMPS
@@ -320,19 +320,19 @@ public:
      * @brief Check if LAMMPS instance is open
      * @return true if LAMMPS is initialized, false otherwise
      */
-    bool isOpen() const { return lammps_handle != nullptr; }
+    [[nodiscard]] bool isOpen() const { return lammps_handle != nullptr; }
 
     /**
      * @brief Check if LAMMPS is currently executing a run
      * @return true if running, false otherwise
      */
-    bool isRunning();
+    [[nodiscard]] bool isRunning();
 
     /**
      * @brief Check if LAMMPS has encountered an error
      * @return true if error occurred, false otherwise
      */
-    bool hasError() const;
+    [[nodiscard]] bool hasError() const;
 
     /**
      * @brief Get the last error message from LAMMPS
@@ -359,44 +359,45 @@ public:
      * @param setting Setting name
      * @return true if available, false otherwise
      */
-    bool configAccelerator(const char *package, const char *category, const char *setting) const;
+    [[nodiscard]] bool configAccelerator(const char *package, const char *category,
+                                         const char *setting) const;
 
     /**
      * @brief Check if a package is included in LAMMPS build
      * @param pkg Package name
      * @return true if included, false otherwise
      */
-    bool configHasPackage(const char *pkg) const;
+    [[nodiscard]] bool configHasPackage(const char *pkg) const;
 
     /**
      * @brief Check if LAMMPS was built with CURL support
      * @return true if CURL is available, false otherwise
      */
-    bool configHasCurlSupport() const;
+    [[nodiscard]] bool configHasCurlSupport() const;
 
     /**
      * @brief Check if LAMMPS was built with OpenMP support
      * @return true if OpenMP is available, false otherwise
      */
-    bool configHasOmpSupport() const;
+    [[nodiscard]] bool configHasOmpSupport() const;
 
     /**
      * @brief Check if LAMMPS was compiled with PNG format image support
      * @return true if PNG image format support is available, false if not
      */
-    bool configHasPngSupport() const;
+    [[nodiscard]] bool configHasPngSupport() const;
 
     /**
      * @brief Check if LAMMPS was compiled with JPEG format image support
      * @return true if JPEG image format support is available, false if not
      */
-    bool configHasJpegSupport() const;
+    [[nodiscard]] bool configHasJpegSupport() const;
 
     /**
      * @brief Check if GPU device is available for GPU package
      * @return true if GPU device found, false otherwise
      */
-    bool hasGpuDevice() const;
+    [[nodiscard]] bool hasGpuDevice() const;
 
     /**
      * @brief Load LAMMPS shared library (plugin mode)
@@ -416,7 +417,7 @@ public:
      * @brief Check if running in plugin mode
      * @return true if plugin mode enabled, false if linked mode
      */
-    bool hasPlugin() const;
+    [[nodiscard]] bool hasPlugin() const;
 
 private:
     /// @name Low-level char-buffer variants behind the QString-returning overloads

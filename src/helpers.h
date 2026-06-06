@@ -107,7 +107,7 @@ extern void exportImage(QWidget *parent, QImage *image, const QString &title);
  * @param exe The executable name to search for
  * @return true if executable is found in PATH, false otherwise
  */
-extern bool hasExe(const QString &exe);
+[[nodiscard]] extern bool hasExe(const QString &exe);
 
 /**
  * @brief Recursively delete all files in a directory
@@ -119,7 +119,7 @@ extern void purgeDirectory(const QString &dir);
  * @brief Determine if the current Qt theme is light or dark
  * @return true if light theme, false if dark theme
  */
-extern bool isLightTheme();
+[[nodiscard]] extern bool isLightTheme();
 
 /**
  * @brief Show a standardized "unsaved changes" confirmation dialog
