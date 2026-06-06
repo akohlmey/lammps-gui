@@ -156,15 +156,25 @@ ChartWindow::ChartWindow(const QString &_filename, LammpsGui *_lammpsgui, QWidge
     row1->addWidget(chartTitle, 2);
     row1->addWidget(new QLabel("Y-Axis:"));
     row1->addWidget(chartYlabel, 1);
-    row1->addWidget(new QLabel("Units:"));
+    auto *unitsLabel = new QLabel("Units:");
+    row1->addWidget(unitsLabel);
     units = new QLabel("[lj]");
     units->setFrameStyle(QFrame::Panel | QFrame::Raised);
     row1->addWidget(units);
-    row1->addWidget(new QLabel("Norm:"));
+    auto *normLabel = new QLabel("Norm:");
+    row1->addWidget(normLabel);
     norm = new QCheckBox("");
     norm->setChecked(false);
     norm->setEnabled(false);
     row1->addWidget(norm);
+    // units and normalization are LAMMPS thermo settings we do not know when
+    // plotting external data files (no live simulation), so hide them then
+    if (!lammpsgui) {
+        unitsLabel->hide();
+        units->hide();
+        normLabel->hide();
+        norm->hide();
+    }
     row1->addWidget(new QLabel(" Data:"));
     row1->addWidget(columns, 1);
 
@@ -214,7 +224,7 @@ ChartWindow::ChartWindow(const QString &_filename, LammpsGui *_lammpsgui, QWidge
         addMenuAction(file, "Stop &Run", ":/icons/process-stop.png", this, &ChartWindow::stopRun);
     stopAct->setShortcut(QKeySequence(Qt::CTRL | Qt::Key_Slash));
     // without a live simulation there is nothing to stop
-    if (!lammpsgui) stopAct->setEnabled(false);
+    if (!lammpsgui) stopAct->setVisible(false); // no live simulation to stop
     closeAct = addMenuAction(file, "&Close", ":/icons/window-close.png", this, &QWidget::close);
     closeAct->setShortcut(QKeySequence(Qt::CTRL | Qt::Key_W));
     quitAct =
@@ -372,7 +382,12 @@ void ChartWindow::copy()
 
 void ChartWindow::quit()
 {
-    if (lammpsgui) lammpsgui->quit();
+    // in the live chart window Quit exits the whole application; a standalone
+    // file-plot window (no LammpsGui) has nothing to quit, so just close it
+    if (lammpsgui)
+        lammpsgui->quit();
+    else
+        close();
 }
 
 void ChartWindow::stopRun()
