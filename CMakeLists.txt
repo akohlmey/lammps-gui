@@ -107,6 +107,8 @@ if (NOT BUILD_DOC_ONLY)
     ${CMAKE_SOURCE_DIR}/src/fileviewer.h
     ${CMAKE_SOURCE_DIR}/src/findandreplace.cpp
     ${CMAKE_SOURCE_DIR}/src/findandreplace.h
+    ${CMAKE_SOURCE_DIR}/src/fitting.cpp
+    ${CMAKE_SOURCE_DIR}/src/fitting.h
     ${CMAKE_SOURCE_DIR}/src/flagwarnings.cpp
     ${CMAKE_SOURCE_DIR}/src/flagwarnings.h
     ${CMAKE_SOURCE_DIR}/src/helpers.cpp

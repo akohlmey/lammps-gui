@@ -155,6 +155,18 @@ target_link_libraries(test_analysis PRIVATE GTest::gtest_main)
 
 gtest_discover_tests(test_analysis)
 
+# Test executable for the curve fits (Qt-free; depends on the leastsquares core)
+add_executable(test_fitting
+  test_fitting.cpp
+  ${CMAKE_SOURCE_DIR}/src/fitting.cpp
+  ${CMAKE_SOURCE_DIR}/src/leastsquares.cpp
+)
+
+target_include_directories(test_fitting PRIVATE ${CMAKE_SOURCE_DIR}/src)
+target_link_libraries(test_fitting PRIVATE GTest::gtest_main)
+
+gtest_discover_tests(test_fitting)
+
 ########################################################################
 # Tests that check the GUI environment and the GUI
 # IMPORTANT NOTE: we must use a different display number for the -n flag

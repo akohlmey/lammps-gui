@@ -396,6 +396,17 @@ by the chart post-processing dialog.
 
 -----
 
+Curve Fitting
+-------------
+
+Linear-least-squares curve fits (``src/fitting.h``) -- polynomial and
+4-parameter Birch-Murnaghan equation of state -- built on the leastsquares
+toolkit and used by the chart post-processing dialog.
+
+.. doxygenfile:: fitting.h
+
+-----
+
 .. _helper_functions:
 
 Helper Functions
