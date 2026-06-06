@@ -165,7 +165,7 @@ overloads and `lastErrorMessage()` are the templates to follow.
   *temporaries* (e.g. `"viewslide"`, `"updfreq"`) were missed by Stage 1b's
   `settings`-object-anchored sweep -- a small Stage 1b completion.
 
-- [~] **5b. Break up the giant dialog builders in `imageviewer.cpp`.**
+- [x] **5b. Break up the giant dialog builders in `imageviewer.cpp`.**
   Chosen approach: HYBRID -- TU-split the `*Settings` dialog builders,
   decompose `createImage` in-place, and only lightly decompose the
   `findChild`-free dialogs. Rationale: `atomSettings`/`globalSettings`
@@ -177,15 +177,16 @@ overloads and `lastErrorMessage()` are the templates to follow.
     `appendRegionArgs`, `appendFixComputeStyles`, `appendColorMapArgs`,
     `appendFixComputeColors`. Command-assembly order preserved; both
     configs build, 58/58 tests.
-  - [ ] **TU split of the five `*Settings` builders -- needs an internal
-    header first.** They use ~20 file-local constants, 3 enums,
-    `deftypecolors`, `selectComboItem`, and the `ImageInfo`/`RegionInfo`
-    classes (all in `imageviewer.cpp`'s anonymous namespace), *unqualified*.
-    Moving the methods to `imageviewersettings.cpp` first requires hoisting
-    those shared symbols into a shared header (`inline constexpr` / `inline`
-    / class defs) and choosing namespacing (global-in-internal-header vs.
-    private nested members). Behavior-neutral and compiler-verifiable in
-    both configs, but a careful ~200-line move, not a mechanical relocation.
+  - [x] **TU split of the five `*Settings` builders.** Done in two steps:
+    (1) created `imageviewer_internal.h` holding the shared constants
+    (`inline constexpr`), enums, `deftypecolors`, `ImageInfo`/`RegionInfo`,
+    and declarations of the free helpers `color_icon`/`gradient_icon`/
+    `sequence_icon`/`loadJsonColors`/`saveJsonColors`/`selectComboItem`
+    (definitions stayed in `imageviewer.cpp`, moved out of the anonymous
+    namespace; the pte tables / `get_pte_from_mass` / `defaultcolors` stay
+    file-local); (2) moved the five builders + their exclusive helpers
+    (a contiguous 1422-line block) into a new `imageviewersettings.cpp`.
+    `imageviewer.cpp` shrank 3604 -> 2099 lines. Both configs build, 58/58.
   - [x] Light in-place decomposition of `fixSettings`/`regionSettings`/
     `colorSettings` (0 `findChild` each). `fixSettings` 231 -> 89 via shared
     `buildFixComputeRows`/`readFixComputeRows` (the compute and fix halves
