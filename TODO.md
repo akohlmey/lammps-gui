@@ -316,6 +316,15 @@ decomposition is a stepping stone but its helpers would be reshaped here.
 
 ## Stage 8 -- Reusable ChartViewer for external-data plotting + post-processing (feature, high-level)
 
+**CURRENT STATUS (paused here):** Layers 0, 1, 2, 3, and 4a are DONE and
+committed on branch `refactor/cleanup` (108/108 unit tests; builds in
+plugin/QtGraphs, plugin/QtCharts, and linked configs; zero Doxygen warnings;
+nothing pushed). **Layer 4b (Lepton + Levenberg-Marquardt) is intentionally
+DEFERRED** -- resume after testing the current feature set and gathering
+feedback on what nonlinear/custom-function fitting is actually wanted. See the
+Layer 4b note below for the Lepton symbol-clash constraint that must be solved
+when it is picked back up.
+
 Make the chart code a reusable component (mirroring how the log/file
 viewer was generalized to display arbitrary text files and restart-explore
 output) so it can plot data from external structured files (CSV, whitespace
@@ -455,21 +464,30 @@ display with a small style dialog, and a post-processing/fitting dialog.
       coefficient matrix's column count); only `invert()`'s square RHS had ever
       exercised it. Fixed to use `a.nr_cols()`, with a multi-column-RHS
       regression test.
-  - *4b nonlinear (extension):* vendor a compact Levenberg-Marquardt
-    routine. Combined with a vendored Lepton library this realizes the
-    "custom EOS as a predefined expression" idea: the EOS becomes an
-    expression string + named params (with initial guesses/bounds); Lepton
-    parses it and supplies analytic derivatives for the Jacobian; LM
-    iterates (the Grace non-linear fit popup is the UI template). Custom
-    function *plotting* (evaluate an expression over the X range) is a
-    trivial subset worth shipping before fitting.
+  - *4b nonlinear (extension): DEFERRED -- on hold pending real-world use.*
+    Stop here for now: ship Layers 0-4a, gather experience and user feedback
+    on what custom-function / nonlinear fitting is actually wanted before
+    building this. When resumed: vendor a compact Levenberg-Marquardt routine.
+    Combined with a vendored Lepton subset this realizes the "custom EOS as a
+    predefined expression" idea: the EOS becomes an expression string + named
+    params (with initial guesses/bounds); Lepton parses it and supplies
+    analytic derivatives for the Jacobian; LM iterates (the Grace non-linear
+    fit popup is the UI template). Custom function *plotting* (evaluate an
+    expression over the X range) is a trivial subset worth shipping first.
 
-**Lepton vendoring note.** Lepton (LAMMPS `lib/lepton`, OpenMM-origin,
-permissive/MIT-style license -- verify the header notice; GPLv2+-compatible)
-must be bundled into LAMMPS-GUI like `rangeslider`, because plugin-mode has
-no link-time LAMMPS dependency and cannot borrow the loaded `liblammps`
-symbols. Add it to `PROJECT_SOURCES` / a `thirdparty` group with its
-license recorded.
+**Lepton vendoring note -- IMPORTANT symbol-clash constraint.** Lepton (LAMMPS
+`lib/lepton`, OpenMM-origin, permissive/MIT-style license -- verify the header
+notice; GPLv2+-compatible) cannot simply be bundled wholesale: LAMMPS already
+contains Lepton, so in BOTH build modes (linked, and plugin via `dlopen`) the
+GUI would end up with **two copies of the same Lepton symbols** -- an ODR
+violation / symbol clash that is very bad (undefined behavior, wrong vtables,
+crashes). Mitigation: import only a **lightweight subset** of Lepton (drop the
+JIT/`ExpressionProgram` compilation path -- we only need parse + evaluate +
+differentiate) and place it in a **dedicated namespace** (e.g.
+`lammpsgui::lepton`) so its symbols cannot collide with the LAMMPS-provided
+ones. Add it to `PROJECT_SOURCES` / a `thirdparty` group with its license
+recorded. This namespacing + subsetting is itself part of the Layer 4b work
+and a reason it is non-trivial.
 
 **Minimalist guardrails -- deliberately NOT in scope:** multiple Y axes;
 log/log or date axes; spreadsheet/data editing; annotations or
