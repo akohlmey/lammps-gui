@@ -125,6 +125,8 @@ if (NOT BUILD_DOC_ONLY)
     ${CMAKE_SOURCE_DIR}/src/logwindow.h
     ${CMAKE_SOURCE_DIR}/src/plotdata.cpp
     ${CMAKE_SOURCE_DIR}/src/plotdata.h
+    ${CMAKE_SOURCE_DIR}/src/plotdatadialog.cpp
+    ${CMAKE_SOURCE_DIR}/src/plotdatadialog.h
     ${CMAKE_SOURCE_DIR}/src/preferences.cpp
     ${CMAKE_SOURCE_DIR}/src/preferences.h
     ${CMAKE_SOURCE_DIR}/src/qaddon.cpp

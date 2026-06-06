@@ -184,6 +184,15 @@ SetVariables Class
 
 -----
 
+PlotDataDialog Class
+--------------------
+
+.. doxygenclass:: PlotDataDialog
+   :members:
+   :protected-members:
+
+-----
+
 Preferences Class
 -----------------
 

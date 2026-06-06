@@ -21,6 +21,8 @@
 #include "imageviewer.h"
 #include "lammpsrunner.h"
 #include "logwindow.h"
+#include "plotdata.h"
+#include "plotdatadialog.h"
 #include "preferences.h"
 #include "setvariables.h"
 #include "slideshow.h"
@@ -232,6 +234,8 @@ void LammpsGui::createRunMenu()
 
     addMenuAction(menu, ":/icons/emblem-photos.png", "Create &Image", "Ctrl+I",
                   &LammpsGui::renderImage);
+    addMenuAction(menu, ":/icons/x-office-drawing.png", "&Plot Data File...", "",
+                  &LammpsGui::plotDataFile);
     menu->addSeparator();
 
     auto *ovito = addMenuAction(menu, ":/icons/ovito.png", "View in &OVITO", "Ctrl+Shift+O",
@@ -1778,6 +1782,39 @@ void LammpsGui::doRun(bool use_buffer)
     logupdater = new QTimer(this);
     connect(logupdater, &QTimer::timeout, this, &LammpsGui::logUpdate);
     logupdater->start(settings.value(Keys::UPDFREQ, "10").toInt());
+}
+
+void LammpsGui::plotDataFile()
+{
+    QString fileName = QFileDialog::getOpenFileName(
+        this, "Open Data File to Plot", QString(),
+        "Data files (*.dat *.csv *.yaml *.yml *.json *.txt);;All files (*)");
+    if (fileName.isEmpty()) return;
+
+    QString error;
+    PlotData data = loadPlotData(fileName, &error);
+    if (data.isEmpty()) {
+        critical(this, "Plot Data File",
+                 "Could not read data from file:", error.isEmpty() ? fileName : error);
+        return;
+    }
+
+    PlotDataDialog dialog(data, this);
+    if (dialog.exec() != QDialog::Accepted) return;
+    const QList<int> ycols = dialog.yColumns();
+    if (ycols.isEmpty()) {
+        warning(this, "Plot Data File", "No data columns were selected to plot.");
+        return;
+    }
+
+    // standalone chart window (no live simulation); cleans itself up on close
+    auto *win = new ChartWindow(fileName, nullptr);
+    win->setAttribute(Qt::WA_DeleteOnClose);
+    win->setWindowTitle(QString("Plot: %1 - LAMMPS-GUI").arg(QFileInfo(fileName).fileName()));
+    win->setWindowIcon(QIcon(Cfg::MAIN_ICON));
+    win->setMinimumSize(Cfg::MINIMUM_WIDTH, Cfg::MINIMUM_HEIGHT);
+    win->loadData(data, dialog.xColumn(), ycols);
+    win->show();
 }
 
 void LammpsGui::renderImage()

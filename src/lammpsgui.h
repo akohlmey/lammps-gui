@@ -268,6 +268,9 @@ private slots:
     /** @brief Render an image from a dump file */
     void renderImage();
 
+    /** @brief Open an external data file and plot selected columns */
+    void plotDataFile();
+
     /** @brief View a slideshow of images */
     void viewSlides();
 
