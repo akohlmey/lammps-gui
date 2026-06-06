@@ -24,9 +24,14 @@
 #include <QCheckBox>
 #include <QClipboard>
 #include <QCloseEvent>
+#include <QColorDialog>
 #include <QComboBox>
+#include <QDialog>
+#include <QDialogButtonBox>
+#include <QDoubleSpinBox>
 #include <QEvent>
 #include <QFileDialog>
+#include <QFormLayout>
 #include <QHBoxLayout>
 #include <QKeySequence>
 #include <QLabel>
@@ -194,6 +199,9 @@ ChartWindow::ChartWindow(const QString &_filename, LammpsGui *_lammpsgui, QWidge
                                  this, &ChartWindow::exportDat);
     exportYamlAct = addMenuAction(file, "Export data to &YAML...", ":/icons/yaml-file-icon.png",
                                   this, &ChartWindow::exportYaml);
+    file->addSeparator();
+    addMenuAction(file, "Chart &Style...", ":/icons/preferences-desktop-personal.png", this,
+                  &ChartWindow::changeStyle);
     file->addSeparator();
     stopAct =
         addMenuAction(file, "Stop &Run", ":/icons/process-stop.png", this, &ChartWindow::stopRun);
@@ -363,6 +371,63 @@ void ChartWindow::quit()
 void ChartWindow::stopRun()
 {
     if (lammpsgui) lammpsgui->stopRun();
+}
+
+void ChartWindow::changeStyle()
+{
+    if (charts.empty()) return;
+
+    // the chart currently shown in the combo box
+    const int choice   = columns->currentData().toInt();
+    ChartViewer *chart = nullptr;
+    for (auto &c : charts)
+        if (c->getIndex() == choice) chart = c;
+    if (!chart) chart = charts.first();
+
+    QDialog dialog(this);
+    dialog.setWindowTitle("Chart Style");
+    auto *form = new QFormLayout(&dialog);
+
+    auto *modebox = new QComboBox;
+    modebox->addItem("Lines", static_cast<int>(ChartDisplayMode::Lines));
+    modebox->addItem("Points", static_cast<int>(ChartDisplayMode::Points));
+    modebox->addItem("Lines + Points", static_cast<int>(ChartDisplayMode::LinesAndPoints));
+    modebox->setCurrentIndex(static_cast<int>(chart->displayMode()));
+    form->addRow("Display:", modebox);
+
+    QColor chosen = chart->displayColor();
+    if (!chosen.isValid()) chosen = QColor(100, 150, 255); // default raw brush color
+    auto *colorbtn   = new QPushButton;
+    auto setBtnColor = [colorbtn](const QColor &c) {
+        colorbtn->setText(c.name());
+        colorbtn->setStyleSheet(QString("background-color: %1; color: %2;")
+                                    .arg(c.name(), (c.lightness() < 128) ? "white" : "black"));
+    };
+    setBtnColor(chosen);
+    connect(colorbtn, &QPushButton::clicked, &dialog, [&]() {
+        const QColor c = QColorDialog::getColor(chosen, &dialog, "Series Color");
+        if (c.isValid()) {
+            chosen = c;
+            setBtnColor(c);
+        }
+    });
+    form->addRow("Color:", colorbtn);
+
+    auto *widthspin = new QDoubleSpinBox;
+    widthspin->setRange(0.5, 20.0);
+    widthspin->setSingleStep(0.5);
+    widthspin->setValue(chart->displayWidth());
+    form->addRow("Line width:", widthspin);
+
+    auto *buttons = new QDialogButtonBox(QDialogButtonBox::Ok | QDialogButtonBox::Cancel);
+    connect(buttons, &QDialogButtonBox::accepted, &dialog, &QDialog::accept);
+    connect(buttons, &QDialogButtonBox::rejected, &dialog, &QDialog::reject);
+    form->addRow(buttons);
+
+    if (dialog.exec() == QDialog::Accepted) {
+        const auto mode = static_cast<ChartDisplayMode>(modebox->currentData().toInt());
+        chart->setDisplayStyle(mode, chosen, widthspin->value());
+    }
 }
 
 void ChartWindow::selectSmooth(int)

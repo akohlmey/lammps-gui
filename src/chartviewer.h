@@ -140,6 +140,7 @@ public:
 private slots:
     void quit();                          ///< Close window and quit
     void stopRun();                       ///< Stop running simulation
+    void changeStyle();                   ///< Edit the current chart's display style
     void selectSmooth(int selection);     ///< Select smoothing algorithm
     void updateSmooth();                  ///< Update smoothing parameters
     void updateTLabel();                  ///< Update chart title
