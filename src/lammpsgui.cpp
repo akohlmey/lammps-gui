@@ -2572,6 +2572,93 @@ static const QString tutorialBaseUrl =
     "https://raw.githubusercontent.com/lammpstutorials/"
     "lammpstutorials-article/refs/heads/main/files/tutorial%1/%2";
 
+void LammpsGui::openTutorialWebpage(int tutno)
+{
+    QString weburl = "https://lammpstutorials.github.io/sphinx/build/html/tutorial%1/%2.html";
+    switch (tutno) {
+        case 1:
+            weburl = weburl.arg(tutno).arg("lennard-jones-fluid");
+            break;
+        case 2:
+            weburl = weburl.arg(tutno).arg("breaking-a-carbon-nanotube");
+            break;
+        case 3:
+            weburl = weburl.arg(tutno).arg("polymer-in-water");
+            break;
+        case 4:
+            weburl = weburl.arg(tutno).arg("nanosheared-electrolyte");
+            break;
+        case 5:
+            weburl = weburl.arg(tutno).arg("reactive-silicon-dioxide");
+            break;
+        case 6:
+            weburl = weburl.arg(tutno).arg("water-adsorption-in-silica");
+            break;
+        case 7:
+            weburl = weburl.arg(tutno).arg("free-energy-calculation");
+            break;
+        case 8:
+            weburl = weburl.arg(tutno).arg("reactive-molecular-dynamics");
+            break;
+        default:
+            weburl = "https://lammpstutorials.github.io/";
+    }
+    QDesktopServices::openUrl(QUrl(weburl));
+}
+
+bool LammpsGui::downloadTutorialFiles(const QString &dir, const QList<DownloadItem> &downloads,
+                                      URLDownloader &downloader)
+{
+    int i   = 0;
+    int num = downloads.size();
+    if (!num) num = 1;
+
+    progress->setValue(0);
+    progress->show();
+    dirstatus->hide();
+
+    for (const auto &item : downloads) {
+        ++i;
+        status->setText(QString("Downloading file %1 of %2").arg(i).arg(num));
+        progress->setValue((int)((double)i / ((double)num) * 1000.0));
+        status->repaint();
+
+        QString localPath = dir + QDir::separator() + item.fname;
+        if (!downloader.download(tutorialBaseUrl.arg(item.ntutorial).arg(item.fname), localPath)) {
+            // download failed. abort, restore status line, and launch error dialog
+            status->setText("Error.");
+            progress->hide();
+            dirstatus->show();
+            status->repaint();
+            critical(this, "LAMMPS-GUI Error",
+                     "Tutorial files download error:", downloader.errorString());
+            return false;
+        }
+
+        // check if download is a placeholder for a symbolic link and make a copy instead.
+        QFile dlfile(localPath);
+        QFileInfo dlpath(localPath);
+        if (dlfile.open(QIODevice::ReadOnly)) {
+            QString line = (const char *)dlfile.readLine();
+            line         = line.trimmed();
+            dlfile.close();
+
+            if (line == QString("../") + dlpath.fileName()) {
+                // the file is a symbolic link placeholder: copy the referenced file instead
+                QString srcFile = dir + QDir::separator() + dlpath.fileName();
+                QFile::remove(localPath);
+                QFile::copy(srcFile, localPath);
+            }
+        }
+    }
+    progress->setValue(Cfg::PROGRESS_MAXIMUM);
+    status->setText(Cfg::STATUS_READY);
+    progress->hide();
+    dirstatus->show();
+    status->repaint();
+    return true;
+}
+
 void LammpsGui::setupTutorial(int tutno, const QString &dir, bool purgedir, bool getsolution,
                               bool openwebpage)
 {
@@ -2579,38 +2666,7 @@ void LammpsGui::setupTutorial(int tutno, const QString &dir, bool purgedir, bool
     directory.cd(dir);
 
     // open web page of the corresponding online tutorial
-    if (openwebpage) {
-        QString weburl = "https://lammpstutorials.github.io/sphinx/build/html/tutorial%1/%2.html";
-        switch (tutno) {
-            case 1:
-                weburl = weburl.arg(tutno).arg("lennard-jones-fluid");
-                break;
-            case 2:
-                weburl = weburl.arg(tutno).arg("breaking-a-carbon-nanotube");
-                break;
-            case 3:
-                weburl = weburl.arg(tutno).arg("polymer-in-water");
-                break;
-            case 4:
-                weburl = weburl.arg(tutno).arg("nanosheared-electrolyte");
-                break;
-            case 5:
-                weburl = weburl.arg(tutno).arg("reactive-silicon-dioxide");
-                break;
-            case 6:
-                weburl = weburl.arg(tutno).arg("water-adsorption-in-silica");
-                break;
-            case 7:
-                weburl = weburl.arg(tutno).arg("free-energy-calculation");
-                break;
-            case 8:
-                weburl = weburl.arg(tutno).arg("reactive-molecular-dynamics");
-                break;
-            default:
-                weburl = "https://lammpstutorials.github.io/";
-        }
-        QDesktopServices::openUrl(QUrl(weburl));
-    }
+    if (openwebpage) openTutorialWebpage(tutno);
 
     if (purgedir) purgeDirectory(dir);
     if (getsolution) directory.mkpath("solution");
@@ -2628,12 +2684,6 @@ void LammpsGui::setupTutorial(int tutno, const QString &dir, bool purgedir, bool
 
     QFile manifest(manifestPath);
     QString line, first;
-    struct DownloadItem {
-        DownloadItem(int _n, const QString &_f) : ntutorial(_n), fname(_f) {}
-
-        int ntutorial;
-        QString fname;
-    };
 
     QList<DownloadItem> downloads;
     if (manifest.open(QIODevice::ReadOnly)) {
@@ -2659,53 +2709,8 @@ void LammpsGui::setupTutorial(int tutno, const QString &dir, bool purgedir, bool
         manifest.remove();
     }
 
-    int i   = 0;
-    int num = downloads.size();
-    if (!num) num = 1;
+    if (!downloadTutorialFiles(dir, downloads, downloader)) return;
 
-    progress->setValue(0);
-    progress->show();
-    dirstatus->hide();
-
-    for (const auto &item : downloads) {
-        ++i;
-        status->setText(QString("Downloading file %1 of %2").arg(i).arg(num));
-        progress->setValue((int)((double)i / ((double)num) * 1000.0));
-        status->repaint();
-
-        QString localPath = dir + QDir::separator() + item.fname;
-        if (!downloader.download(tutorialBaseUrl.arg(item.ntutorial).arg(item.fname), localPath)) {
-            // download failed. abort, restore status line, and launch error dialog
-            status->setText("Error.");
-            progress->hide();
-            dirstatus->show();
-            status->repaint();
-            critical(this, "LAMMPS-GUI Error",
-                     "Tutorial files download error:", downloader.errorString());
-            return;
-        }
-
-        // check if download is a placeholder for a symbolic link and make a copy instead.
-        QFile dlfile(localPath);
-        QFileInfo dlpath(localPath);
-        if (dlfile.open(QIODevice::ReadOnly)) {
-            line = (const char *)dlfile.readLine();
-            line = line.trimmed();
-            dlfile.close();
-
-            if (line == QString("../") + dlpath.fileName()) {
-                // the file is a symbolic link placeholder: copy the referenced file instead
-                QString srcFile = dir + QDir::separator() + dlpath.fileName();
-                QFile::remove(localPath);
-                QFile::copy(srcFile, localPath);
-            }
-        }
-    }
-    progress->setValue(Cfg::PROGRESS_MAXIMUM);
-    status->setText(Cfg::STATUS_READY);
-    progress->hide();
-    dirstatus->show();
-    status->repaint();
     if (!first.isEmpty()) openFile(dir + QDir::separator() + first);
 }
 

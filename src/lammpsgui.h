@@ -54,6 +54,7 @@ class Preferences;
 class SlideShow;
 class StdCapture;
 class TutorialWizard;
+class URLDownloader;
 
 /**
  * @brief Main application window for LAMMPS-GUI
@@ -333,6 +334,20 @@ private:
 
     /** @brief Append accelerator-package command-line arguments to lammpsArgs */
     void appendAcceleratorArgs(int accel, QSettings &settings);
+
+    /** @brief Open the online web page for the given tutorial number */
+    void openTutorialWebpage(int tutno);
+
+    /** @brief One file to fetch for a tutorial: tutorial number and relative filename */
+    struct DownloadItem {
+        DownloadItem(int _n, const QString &_f) : ntutorial(_n), fname(_f) {}
+        int ntutorial;
+        QString fname;
+    };
+
+    /** @brief Download the listed tutorial files with progress; false on error (dialog shown) */
+    bool downloadTutorialFiles(const QString &dir, const QList<DownloadItem> &downloads,
+                               URLDownloader &downloader);
 
     /**
      * @brief Create all menu actions, menus, and status bar
