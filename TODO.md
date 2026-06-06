@@ -350,18 +350,28 @@ display with a small style dialog, and a post-processing/fitting dialog.
 
 **Layered strategy (each layer independently shippable + testable):**
 
-- **Layer 0 -- decouple the data source (pure refactor, no UI change).**
-  Introduce a column-oriented model: `PlotData` (named `double` columns +
-  units) and `PlotSeries` (x-col index, y-col index, style). The live run
-  becomes one adapter that appends rows; a file loader is another adapter
-  that fills columns. `ChartWindow` renders from `PlotData`; the
-  `LammpsGui*`/`stopRun` wiring is confined to the live adapter (nullable
-  callback, not a hard dependency). Generalize `addData(int step,...)` ->
-  `addPoint(double x, double y)`. Also extract the LU least-squares code
-  into `leastsquares.{cpp,h}` -- reusable for polynomial/EOS fits and
-  unit-testable (same testability win as Stage 7's `dumpimage`).
+- **Layer 0 -- decouple the data source (pure refactor, no UI change). DONE
+  (incremental).** Introduce a column-oriented model: `PlotData` (named
+  `double` columns + units) and `PlotSeries` (x-col index, y-col index,
+  style). The live run becomes one adapter that appends rows; a file loader
+  is another adapter that fills columns. `ChartWindow` renders from
+  `PlotData`; the `LammpsGui*`/`stopRun` wiring is confined to the live
+  adapter (nullable callback, not a hard dependency). Generalize
+  `addData(int step,...)` -> `addPoint(double x, double y)`. Also extract the
+  LU least-squares code into `leastsquares.{cpp,h}` -- reusable for
+  polynomial/EOS fits and unit-testable (same testability win as Stage 7's
+  `dumpimage`).
   - Alternatives considered: a "file mode" flag with branches (A1, rots);
     a sibling class for files (A3, duplication). Column model (A2) chosen.
+  - Done so far: (8.0a) extracted `leastsquares.{cpp,h}` (Qt-free LU solver +
+    Savitzky-Golay) with 8 GoogleTest cases and an api_reference entry;
+    (8.0b, incremental per decision) generalized `addData` -> `addPoint`
+    (double abscissa, monotonic-x guard preserved) and made `ChartWindow`
+    usable with a null `LammpsGui*` (Stop action disabled when absent). The
+    `PlotData`/`PlotSeries` model itself was deferred to Layer 1, where the
+    file loader first needs it -- chosen over reworking the build-only-
+    verifiable live path up front, to maximize testability and minimize
+    churn to untested code.
 
 - **Layer 1 -- file import.** Reuse the inverse of the existing CSV/YAML/DAT
   formatters. Minimal import dialog: detect delimiter + optional header row,
