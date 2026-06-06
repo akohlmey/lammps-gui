@@ -160,10 +160,11 @@ overloads and `lastErrorMessage()` are the templates to follow.
   - `doRun()` -> `createLogWindow()`, `createChartWindow()`.
   - `runDone()` -> `warnHighBufferUsage()`, `finalizeChartData()`.
 
-  Follow-ups noted: `setupPlugin()` (~165 lines) is also over the limit but
-  was not in the original list; and several `QSettings().value("literal")`
-  *temporaries* (e.g. `"viewslide"`, `"updfreq"`) were missed by Stage 1b's
-  `settings`-object-anchored sweep -- a small Stage 1b completion.
+  Follow-ups: `setupPlugin()` (~165 lines) is also over the limit but was
+  not in the original list (still open). The six `QSettings().value(...)`
+  *temporaries* that Stage 1b's `settings`-object-anchored sweep missed
+  (`plugin_path`, `https_proxy`, `viewslide` x2, `updfreq`, `imagereplace`)
+  are now routed through `Keys::` -- DONE; no literal settings keys remain.
 
 - [x] **5b. Break up the giant dialog builders in `imageviewer.cpp`.**
   Chosen approach: HYBRID -- TU-split the `*Settings` dialog builders,
