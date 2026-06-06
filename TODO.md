@@ -150,12 +150,26 @@ overloads and `lastErrorMessage()` are the templates to follow.
 
 ## Stage 5 -- Decompose oversized methods and files
 
-- [ ] **5a. Break up large methods in `lammpsgui.cpp`.** `logUpdate()`
-  (154), `setupTutorial()` (135), `startLammps()` (132), `doRun()` (108),
-  `runDone()` (105). Suggested extractions: `logUpdate()` -> chart-update
-  and image-update loops; `setupTutorial()` -> download-and-extract step;
-  `startLammps()` -> argument-building step. One method per commit,
-  tests after each.
+- [x] **5a. Break up large methods in `lammpsgui.cpp`.** Done, one method
+  per commit (each built in plugin + linked and 58/58 tests):
+  - `logUpdate()` -> `updateRunStatus()`, `updateChartData()`,
+    `updateSlideShow()` (setup early-return kept in `logUpdate`).
+  - `startLammps()` -> `appendAcceleratorArgs()`.
+  - `setupTutorial()` -> `openTutorialWebpage()`, `downloadTutorialFiles()`
+    (local `DownloadItem` promoted to a private nested struct).
+  - `doRun()` -> `createLogWindow()`, `createChartWindow()`.
+  - `runDone()` -> `warnHighBufferUsage()`, `finalizeChartData()`.
+
+  Follow-ups noted: `setupPlugin()` (~165 lines) is also over the limit but
+  was not in the original list; and several `QSettings().value("literal")`
+  *temporaries* (e.g. `"viewslide"`, `"updfreq"`) were missed by Stage 1b's
+  `settings`-object-anchored sweep -- a small Stage 1b completion.
+
+- [ ] **5b. Break up the giant dialog builders in `imageviewer.cpp`.**
+  `atomSettings()` (~497), `createImage()` (~476), `colorSettings()`
+  (~293), `globalSettings()` (~288), `fixSettings()` (~231). Extract
+  per-section builder helpers; consider moving the settings-dialog
+  construction into its own translation unit to shrink the 3636-line file.
 
 - [ ] **5b. Break up the giant dialog builders in `imageviewer.cpp`.**
   `atomSettings()` (~497), `createImage()` (~476), `colorSettings()`
