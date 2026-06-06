@@ -196,33 +196,42 @@ overloads and `lastErrorMessage()` are the templates to follow.
 
 ## Stage 6 -- Interface simplification and modern-C++ polish (breadth pass)
 
-- [ ] **6a. Replace old-style connects.** Two string-based
-  `SIGNAL()/SLOT()` connects remain (`chartviewer.cpp:210,215`); convert
-  to the function-pointer `connect()` form used everywhere else.
+- [x] **6a. Replace old-style connects.** Done: the two `SIGNAL()/SLOT()`
+  connects in `chartviewer.cpp` are now function-pointer connects.
 
-- [ ] **6b. `enum class` for internal enumerations.** Convert enums that
-  do not need implicit int interop: `AccelType`/`AccelPrec`
-  (`preferences.h`), `PIPES` (`stdcapture.h`). Leave the `LammpsWrapper`
-  `StyleConst`/`ScopeConst`/`TypeConst` enums as plain enums where they
-  map onto LAMMPS integer constants (or scope them and cast explicitly).
+- [~] **6b. `enum class` for internal enumerations.** Assessed, not done:
+  `AccelType`/`AccelPrec` are persisted in QSettings (read via `.toInt()`,
+  compared in `switch`/`==` against `int`, passed as `QVariant` defaults)
+  and `PIPES` is used as array indices -- all genuinely need int interop,
+  so `enum class` would only add `static_cast` noise and degrade them. The
+  `LammpsWrapper` `StyleConst`/`ScopeConst`/`TypeConst` likewise map to
+  LAMMPS ints. No suitable candidate; intentionally left as plain enums.
 
-- [ ] **6c. `static_cast` over C-style casts.** Replace remaining
-  `(int)`/`(double)` numeric casts in touched code.
+- [x] **6c. `static_cast` over C-style casts.** Done: ~35 numeric and
+  `void*`->`T*` C-style casts across the touched files are now
+  `static_cast`. Left the `execl` `(char *)nullptr` varargs sentinels and
+  the `QByteArray` `readLine()` conversions as-is.
 
-- [ ] **6d. Add `[[nodiscard]]`** to pure query methods whose result must
-  not be ignored (`LammpsWrapper::isOpen/hasError/version/configHas*`,
-  `hasExe`, `isLightTheme`, etc.).
+- [x] **6d. Add `[[nodiscard]]`.** Done on `LammpsWrapper` state/config
+  queries (`version`, `isOpen`, `isRunning`, `hasError`, `hasPlugin`,
+  `hasGpuDevice`, `configHasPackage`, `configAccelerator`,
+  `configHas{Curl,Omp,Png,Jpeg}Support`) and `helpers` `hasExe`/
+  `isLightTheme`.
 
-- [ ] **6e. Audit dialog `findChild`/`setObjectName` wiring** (137 / 113
-  uses, concentrated in `imageviewer.cpp` and `preferences.cpp`). Where a
-  tab is already being rewritten in Stage 5b, replace string-keyed lookups
-  with typed member pointers (or a small struct) to remove the
-  silent-failure-on-rename hazard; elsewhere leave as-is but keep object
-  names exact.
+- [~] **6e. Audit dialog `findChild`/`setObjectName` wiring** (137 / 113
+  uses). Left as-is by design: the Stage 5b TU split *moved* the dialog
+  builders but did not rewrite their wiring, and replacing the
+  `findChild`-based readback with typed member pointers is exactly the
+  silent-failure-on-rename operation that is unsafe to do here (only a real
+  GUI run, not `build`/tests, would catch a mistake). Object names were
+  kept exact. Revisit alongside Stage 7 (when the renderer becomes
+  testable).
 
-- [ ] **6f. General API hygiene.** const-correctness on query methods,
-  pass-by-const-ref for non-trivial parameters, `explicit` on
-  single-argument constructors, in classes touched by earlier stages.
+- [x] **6f. General API hygiene.** Audited: all single-argument
+  constructors in the project are already `explicit`, query methods are
+  already `const`, and non-trivial parameters already pass by const-ref --
+  the codebase was disciplined here from the start, so no changes were
+  needed. (Marked done to reflect the audit; revisit opportunistically.)
 
 ## Stage 7 -- Extract createImage into a standalone, struct-driven renderer (high-level)
 
