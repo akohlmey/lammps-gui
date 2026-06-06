@@ -160,11 +160,17 @@ overloads and `lastErrorMessage()` are the templates to follow.
   - `doRun()` -> `createLogWindow()`, `createChartWindow()`.
   - `runDone()` -> `warnHighBufferUsage()`, `finalizeChartData()`.
 
-  Follow-ups: `setupPlugin()` (~165 lines) is also over the limit but was
-  not in the original list (still open). The six `QSettings().value(...)`
-  *temporaries* that Stage 1b's `settings`-object-anchored sweep missed
-  (`plugin_path`, `https_proxy`, `viewslide` x2, `updfreq`, `imagereplace`)
-  are now routed through `Keys::` -- DONE; no literal settings keys remain.
+  Follow-ups: `setupPlugin()` (~165 lines) is over the limit but is left
+  undecomposed by design -- it is a one-off, linear, plugin-only startup
+  routine whose length is dialog boilerplate plus an `exit`/`execl`/`while`
+  flow that resists clean extraction; decomposing it would add indirection
+  for no reuse. Instead the genuine smell there -- the `execl` re-exec-self
+  sequence duplicated 4x across `lammpsgui.cpp`/`preferences.cpp` plus the
+  duplicated Windows `_execl` shim -- was factored into a shared
+  `relaunchApplication()` helper (DONE). The six `QSettings().value(...)`
+  *temporaries* Stage 1b missed (`plugin_path`, `https_proxy`,
+  `viewslide` x2, `updfreq`, `imagereplace`) are now routed through
+  `Keys::` -- DONE; no literal settings keys remain anywhere.
 
 - [x] **5b. Break up the giant dialog builders in `imageviewer.cpp`.**
   Chosen approach: HYBRID -- TU-split the `*Settings` dialog builders,
