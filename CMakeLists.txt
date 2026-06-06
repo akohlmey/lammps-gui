@@ -99,6 +99,8 @@ if (NOT BUILD_DOC_ONLY)
     ${CMAKE_SOURCE_DIR}/src/codeeditor.cpp
     ${CMAKE_SOURCE_DIR}/src/codeeditor.h
     ${CMAKE_SOURCE_DIR}/src/constants.h
+    ${CMAKE_SOURCE_DIR}/src/dumpimage.cpp
+    ${CMAKE_SOURCE_DIR}/src/dumpimage.h
     ${CMAKE_SOURCE_DIR}/src/fileviewer.cpp
     ${CMAKE_SOURCE_DIR}/src/fileviewer.h
     ${CMAKE_SOURCE_DIR}/src/findandreplace.cpp

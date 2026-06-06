@@ -37,6 +37,7 @@ class LammpsWrapper;
 class LammpsGui;
 class ImageInfo;
 class RegionInfo;
+struct DumpImageParams;
 
 /**
  * @brief Dialog for viewing and manipulating LAMMPS snapshot images
@@ -132,12 +133,12 @@ private:
     void updatePeratom();     ///< Update per-atom information
     bool hasAutobonds();      ///< Check if autobonds are enabled
 
-    /// @name dump-image command builders used by createImage()
+    /// @name dump-image command preparation used by createImage()
     /// @{
-    void appendRegionArgs(QString &cmd);        ///< Append region visualization args
-    bool appendFixComputeStyles(QString &cmd);  ///< Append fix/compute draw args; true if any active
-    void appendColorMapArgs(QString &cmd);      ///< Append the selected color map definition
-    void appendFixComputeColors(QString &cmd);  ///< Append per fix/compute color and transparency
+    /// Gather widget state and LAMMPS-derived data into a DumpImageParams snapshot
+    DumpImageParams gatherDumpImageParams(const QString &dumpfilename);
+    /// Show/hide the atom-size widgets to match the resolved element/diameter state
+    void syncAtomSizeWidgets();
     /// @}
 
     /// @name dialog row builders/readers used by the *Settings() slots

@@ -11,6 +11,7 @@
 
 #include "imageviewer.h"
 
+#include "dumpimage.h"
 #include "imageviewer_internal.h"
 
 #include "constants.h"
@@ -1293,207 +1294,202 @@ bool ImageViewer::eventFilter(QObject *watched, QEvent *event)
 // After rendering the image, the atoms and group are deleted.
 // to update bond data, we also need to issue a "run 0" command.
 
-void ImageViewer::appendRegionArgs(QString &cmd)
+// Collect all widget state and LAMMPS-derived data required to assemble the
+// dump-image command into a plain struct, so the command itself is built by
+// the pure (GUI-free, testable) buildDumpImageCommand().  As a side effect
+// this updates the useelements/usediameter/usesigma/atomcolor members that the
+// settings dialogs and syncAtomSizeWidgets() rely on.
+DumpImageParams ImageViewer::gatherDumpImageParams(const QString &dumpfilename)
 {
-    if (regions.size() > 0) {
-        for (const auto &reg : regions) {
-            if (reg.second->enabled) {
-                QString id(reg.first.c_str());
-                QString color(reg.second->color.c_str());
-                switch (reg.second->style) {
-                    case FRAME:
-                        cmd += " region " + id + blank + color;
-                        cmd += " frame " + QString::number(reg.second->diameter);
-                        if (lammps->version() > 20260330)
-                            cmd += " hull_points " + QString::number(reg.second->npoints);
-                        break;
-                    case FILLED:
-                        cmd += " region " + id + blank + color + " filled";
-                        if (lammps->version() > 20260330)
-                            cmd += " hull_points " + QString::number(reg.second->npoints);
-                        break;
-                    case TRANSPARENT:
-                        cmd += " region " + id + blank + color;
-                        cmd += " transparent " + QString::number(reg.second->opacity);
-                        if (lammps->version() > 20260330)
-                            cmd += " hull_points " + QString::number(reg.second->npoints);
-                        break;
-                    case POINTS:
-                    default:
-                        cmd += " region " + id + blank + color;
-                        cmd += " points " + QString::number(reg.second->npoints);
-                        cmd += blank + QString::number(reg.second->diameter);
-                        break;
-                }
-                cmd += blank;
+    DumpImageParams p;
+
+    p.group    = group;
+    p.dumpfile = dumpfilename;
+
+    // determine elements from masses and set their covalent radii
+    const int ntypes       = lammps->extractSetting("ntypes");
+    const int nbondtypes   = lammps->extractSetting("nbondtypes");
+    auto *masses           = static_cast<double *>(lammps->extractAtom("mass"));
+    const char *pair_style = static_cast<const char *>(lammps->extractGlobal("pair_style"));
+    QString units          = static_cast<const char *>(lammps->extractGlobal("units"));
+    QString elements{"element "};
+    QString adiams;
+
+    // detect if we can use element information, otherwise set atom color to "type" by default
+    useelements = false;
+    if (masses && ((units == "real") || (units == "metal"))) {
+        useelements = true;
+        if (!atomcustom) atomcolor = "element";
+        for (int i = 1; i <= ntypes; ++i) {
+            int idx = get_pte_from_mass(masses[i]);
+            if (idx == 0) useelements = false;
+            elements += QString(pte_label[idx]) + blank;
+            adiams += QString("adiam %1 %2 ").arg(i).arg(vdwfactor * pte_vdw_radius[idx]);
+        }
+    } else {
+        if (!atomcustom) atomcolor = "type";
+    }
+
+    usediameter = lammps->extractSetting("radius_flag") != 0;
+    usesigma    = false;
+    // if we cannot use element info or diameter data, try to use Lennard-Jones sigma for radius
+    if (!useelements && !usediameter && pair_style && (strncmp(pair_style, "lj/", 3) == 0)) {
+        auto **sigma = static_cast<double **>(lammps->extractPair("sigma"));
+        if (sigma) {
+            usesigma = true;
+            for (int i = 1; i <= ntypes; ++i) {
+                if (sigma[i][i] > 0.0)
+                    adiams += QString("adiam %1 %2 ").arg(i).arg(vdwfactor * sigma[i][i]);
             }
         }
     }
+
+    // resolve the final adiams string depending on the atom-size handling; this
+    // mirrors the show/hide decisions made in syncAtomSizeWidgets()
+    if (showatoms) {
+        if (atomcustom && (atomdiam != "element") && (atomdiam != "diameter") &&
+            (atomdiam != "sigma")) {
+            adiams.clear();
+            for (int i = 1; i <= ntypes; ++i)
+                adiams += QString("adiam %1 %2 ").arg(i).arg(vdwfactor * atomSize);
+        }
+    } else {
+        adiams.clear();
+    }
+
+    // LAMMPS-derived state
+    p.ntypes       = ntypes;
+    p.nbondtypes   = nbondtypes;
+    p.elements     = elements;
+    p.adiams       = adiams;
+    p.useelements  = useelements;
+    p.usediameter  = usediameter;
+    p.usesigma     = usesigma;
+    p.haspairstyle = pair_style && (strcmp(pair_style, "none") != 0);
+
+    p.body_flag      = lammps->extractSetting("body_flag");
+    p.line_flag      = lammps->extractSetting("line_flag");
+    p.tri_flag       = lammps->extractSetting("tri_flag");
+    p.ellipsoid_flag = lammps->extractSetting("ellipsoid_flag");
+    p.bond_flag      = lammps->extractSetting("bond_flag");
+    p.dimension      = lammps->extractSetting("dimension");
+    p.version        = lammps->version();
+
+    // atom appearance
+    p.atomcustom = atomcustom;
+    p.showatoms  = showatoms;
+    p.atomcolor  = atomcolor;
+    p.atomdiam   = atomdiam;
+    p.vdwfactor  = vdwfactor;
+    p.atomSize   = atomSize;
+
+    // shaped particles
+    p.showbodies     = showbodies;
+    p.bodycolor      = bodycolor;
+    p.bodydiam       = bodydiam;
+    p.bodyflag       = bodyflag;
+    p.showlines      = showlines;
+    p.linecolor      = linecolor;
+    p.linediam       = linediam;
+    p.showtris       = showtris;
+    p.tricolor       = tricolor;
+    p.triflag        = triflag;
+    p.tridiam        = tridiam;
+    p.showellipsoids = showellipsoids;
+    p.ellipsoidcolor = ellipsoidcolor;
+    p.ellipsoidflag  = ellipsoidflag;
+    p.ellipsoidlevel = ellipsoidlevel;
+    p.ellipsoiddiam  = ellipsoiddiam;
+
+    // bonds
+    p.showbonds  = showbonds;
+    p.bondcolor  = bondcolor;
+    p.bonddiam   = bonddiam;
+    p.autobond   = autobond;
+    p.bondcutoff = bondcutoff;
+
+    // view / image
+    p.xsize       = xsize;
+    p.ysize       = ysize;
+    p.zoom        = zoom;
+    p.shinyfactor = shinyfactor;
+    p.antialias   = antialias;
+    p.hrot        = hrot;
+    p.vrot        = vrot;
+    p.usessao     = usessao;
+    p.ssaoval     = ssaoval;
+
+    // box / axes
+    p.showbox    = showbox;
+    p.boxdiam    = boxdiam;
+    p.showsubbox = showsubbox;
+    p.subboxdiam = subboxdiam;
+    p.showaxes   = showaxes;
+    p.axesloc    = axesloc;
+    p.axeslen    = axeslen;
+    p.axesdiam   = axesdiam;
+
+    // view center
+    p.xcenter = xcenter;
+    p.ycenter = ycenter;
+    p.zcenter = zcenter;
+
+    // colors / lighting
+    p.color_list   = color_list;
+    p.boxcolor     = boxcolor;
+    p.backcolor    = backcolor;
+    p.backcolor2   = backcolor2;
+    p.axestrans    = axestrans;
+    p.boxtrans     = boxtrans;
+    p.atomtrans    = atomtrans;
+    p.ambientlight = ambientlight;
+    p.keylight     = keylight;
+    p.filllight    = filllight;
+    p.backlight    = backlight;
+
+    // colormap
+    p.colormap = colormap;
+    p.mapmin   = mapmin;
+    p.mapmax   = mapmax;
+
+    // regions / fixes / computes (non-owning pointer copies)
+    p.computes = computes;
+    p.fixes    = fixes;
+    p.regions  = regions;
+
+    return p;
 }
 
-bool ImageViewer::appendFixComputeStyles(QString &cmd)
+// Show or hide the atom-size line edit and label and enable the VDW button to
+// match the resolved element/diameter/sigma state.  This is the GUI-only
+// counterpart to the adiams handling in gatherDumpImageParams() and must be
+// called after it so the use* members are up to date.
+void ImageViewer::syncAtomSizeWidgets()
 {
-    bool dofixes = false;
-    if (computes.size() > 0) {
-        for (const auto &comp : computes) {
-            if (comp.second->enabled) {
-                dofixes = true;
-                QString id(comp.first.c_str());
-                switch (comp.second->colorstyle) {
-                    case TYPE:
-                        cmd += " compute " + id + blank + "type ";
-                        break;
-                    case ELEMENT:
-                        cmd += " compute " + id + blank + "element ";
-                        break;
-                    case CONSTANT: // FALLTHROUGH
-                    default:
-                        cmd += " compute " + id + blank + "const ";
-                        break;
-                }
-                cmd += QString::number(comp.second->flag1) + blank +
-                       QString::number(comp.second->flag2) + blank;
-            }
-        }
-    }
-    if (fixes.size() > 0) {
-        for (const auto &fix : fixes) {
-            if (fix.second->enabled) {
-                dofixes = true;
-                QString id(fix.first.c_str());
-                switch (fix.second->colorstyle) {
-                    case TYPE:
-                        cmd += " fix " + id + blank + "type ";
-                        break;
-                    case ELEMENT:
-                        cmd += " fix " + id + blank + "element ";
-                        break;
-                    case CONSTANT: // FALLTHROUGH
-                    default:
-                        cmd += " fix " + id + blank + "const ";
-                        break;
-                }
-                cmd += QString::number(fix.second->flag1) + blank +
-                       QString::number(fix.second->flag2) + blank;
-            }
-        }
-    }
-    return dofixes;
-}
+    auto *edit   = findChild<QLineEdit *>("atomSize");
+    auto *label  = findChild<QLabel *>("AtomLabel");
+    auto *button = findChild<QPushButton *>("vdw");
+    if (!(edit && label && button)) return;
 
-void ImageViewer::appendColorMapArgs(QString &cmd)
-{
-    QString mmin = mapmin;
-    if (mmin == "auto") mmin = "min";
-    QString mmax = mapmax;
-    if (mmax == "auto") mmax = "max";
-    if (colormap == "RWB") {
-        cmd += " color map1 0.459 0.055 0.075";
-        cmd += " color map2 0.000 0.227 0.427";
-        cmd += QString(" amap %1 %2 cf 0.0 ").arg(mmin).arg(mmax);
-        cmd += "5 min map1 0.1 map1 0.5 white 0.9 map2 max map2";
-    } else if (colormap == "PWT") {
-        cmd += " color map1 0.286 0.114 0.553";
-        cmd += " color map2 0.000 0.255 0.267";
-        cmd += QString(" amap %1 %2 cf 0.0 ").arg(mmin).arg(mmax);
-        cmd += "5 min map1 0.1 map1 0.5 white 0.9 map2 max map2";
-    } else if (colormap == "BGR") {
-        cmd += QString(" amap %1 %2 cf 0.0 ").arg(mmin).arg(mmax);
-        cmd += "5 min blue 0.05 blue 0.5 green 0.95 red max red";
-    } else if (colormap == "BWG") {
-        cmd += QString(" amap %1 %2 cf 0.0 ").arg(mmin).arg(mmax);
-        cmd += "5 min blue 0.1 blue 0.5 white 0.9 green max green";
-    } else if (colormap == "Grayscale") {
-        cmd += QString(" amap %1 %2 cf 0.0 ").arg(mmin).arg(mmax);
-        cmd += "2 min black max white";
-    } else if (colormap == "Rainbow") {
-        cmd += QString(" amap %1 %2 cf 0.0 ").arg(mmin).arg(mmax);
-        cmd += "6 min red 0.25 yellow 0.45 green 0.65 cyan 0.85 blue max purple";
-    } else if (colormap == "Sequential") {
-        cmd += " color map1 0.808 0.808 0.808";
-        cmd += " color map2 0.647 0.349 0.667";
-        cmd += " color map3 0.349 0.659 0.612";
-        cmd += " color map4 0.941 0.772 0.443";
-        cmd += " color map5 0.878 0.169 0.208";
-        cmd += " color map6 0.031 0.165 0.329";
-        cmd += QString(" amap %1 %2 sa 1.0 ").arg(mmin).arg(mmax);
-        cmd += "6 map1 map2 map3 map4 map5 map6";
-    } else if (colormap == "Landscape") {
-        cmd += " color map0 0.145 0.400 0.463";
-        cmd += " color map1 0.392 0.867 0.588";
-        cmd += " color map2 0.572 0.192 0.141";
-        cmd += " color map3 0.392 0.831 0.992";
-        cmd += " color map4 0.020 0.431 0.071";
-        cmd += " color map5 0.992 0.349 0.145";
-        cmd += " color map6 0.275 0.953 0.243";
-        cmd += " color map7 0.729 0.525 0.361";
-        cmd += " color map8 0.780 0.867 0.529";
-        cmd += " color map9 0.243 0.298 0.078";
-        cmd += QString(" amap %1 %2 sa 1.0 ").arg(mmin).arg(mmax);
-        cmd += "10 map0 map1 map2 map3 map4 map5 map6 map7 map8 map9";
-    } else if (colormap == "Basic") {
-        cmd += QString(" amap %1 %2 sa 1.0 ").arg(mmin).arg(mmax);
-        cmd += "10 red cyan green black magenta blue yellow purple white orange";
-    } else if (colormap == "Teal") {
-        cmd += " color map1 0.071 0.153 0.251";
-        cmd += " color map2 0.106 0.282 0.369";
-        cmd += " color map3 0.337 0.545 0.529";
-        cmd += " color map4 0.710 0.820 0.682";
-        cmd += QString(" amap %1 %2 cf 0.0 ").arg(mmin).arg(mmax);
-        cmd += "4 min map1 0.25 map2 0.5 map3 max map4";
-    } else if (colormap == "Viridis") {
-        cmd += " color map1 0.282 0.129 0.451";
-        cmd += " color map2 0.435 0.435 0.556";
-        cmd += " color map3 0.161 0.686 0.498";
-        cmd += " color map4 0.741 0.875 0.149";
-        cmd += QString(" amap %1 %2 cf 0.0 ").arg(mmin).arg(mmax);
-        cmd += "4 min map1 0.333 map2 0.667 map3 max map4";
-    } else if (colormap == "Inferno") {
-        cmd += " color map1 0.032 0.032 0.048";
-        cmd += " color map2 0.318 0.071 0.486";
-        cmd += " color map3 0.718 0.216 0.475";
-        cmd += " color map4 0.988 0.537 0.380";
-        cmd += " color map5 0.988 0.992 0.749";
-        cmd += QString(" amap %1 %2 cf 0.0 ").arg(mmin).arg(mmax);
-        cmd += "5 min map1 0.25 map2 0.5 map3 0.75 map4 max map5";
-    } else if (colormap == "Plasma") {
-        cmd += " color map1 0.051 0.031 0.529";
-        cmd += " color map2 0.612 0.090 0.620";
-        cmd += " color map3 0.929 0.475 0.325";
-        cmd += " color map4 0.941 0.976 0.129";
-        cmd += QString(" amap %1 %2 cf 0.0 ").arg(mmin).arg(mmax);
-        cmd += "4 min map1 0.333 map2 0.667 map3 max map4";
-    } else { // default is "BWR"
-        cmd += " color map1 0.000 0.227 0.427";
-        cmd += " color map2 0.459 0.055 0.075";
-        cmd += QString(" amap %1 %2 cf 0.0 ").arg(mmin).arg(mmax);
-        cmd += "3 min map1 0.5 white max map2";
-    }
-}
+    button->setEnabled(true);
 
-void ImageViewer::appendFixComputeColors(QString &cmd)
-{
-    if (computes.size() > 0) {
-        for (const auto &comp : computes) {
-            if (comp.second->enabled) {
-                QString id(comp.first.c_str());
-                QString color(comp.second->color.c_str());
-                cmd += " ccolor " + id + blank + color;
-                cmd += " ctrans " + id + blank + QString::number(comp.second->opacity);
-                cmd += blank;
-            }
-        }
+    bool showsize;
+    if (!showatoms) {
+        showsize = false;
+    } else if (atomcustom) {
+        showsize = (atomdiam != "element") && (atomdiam != "diameter") && (atomdiam != "sigma");
+    } else {
+        showsize = !(useelements || usediameter || usesigma);
     }
-    if (fixes.size() > 0) {
-        for (const auto &fix : fixes) {
-            if (fix.second->enabled) {
-                QString id(fix.first.c_str());
-                QString color(fix.second->color.c_str());
-                cmd += " fcolor " + id + blank + color;
-                cmd += " ftrans " + id + blank + QString::number(fix.second->opacity);
-                cmd += blank;
-            }
-        }
+
+    edit->setEnabled(showsize);
+    label->setEnabled(showsize);
+    if (showsize) {
+        edit->show();
+        label->show();
+    } else {
+        edit->hide();
+        label->hide();
     }
 }
 
@@ -1531,222 +1527,17 @@ void ImageViewer::createImage()
         if (lammps->hasError()) lammps->getLastErrorMessage(nullptr, 0);
     }
 
-    QSettings settings;
     // attempt to clean up if a previous write_dump command failed
     lammps->command("if $(is_defined(dump,WRITE_DUMP)) then 'undump WRITE_DUMP'");
-    QString dumpcmd = QString("write_dump ") + group + " image ";
+
     QDir dumpdir(QDir::tempPath());
     QFile dumpfile(dumpdir.absoluteFilePath(filename + ".ppm"));
-    dumpcmd += "'" + dumpfile.fileName() + "'";
 
-    int hhrot = (hrot > 180) ? 360 - hrot : hrot;
-
-    // determine elements from masses and set their covalent radii
-    int ntypes             = lammps->extractSetting("ntypes");
-    int nbondtypes         = lammps->extractSetting("nbondtypes");
-    auto *masses           = static_cast<double *>(lammps->extractAtom("mass"));
-    const char *pair_style = static_cast<const char *>(lammps->extractGlobal("pair_style"));
-    QString units          = static_cast<const char *>(lammps->extractGlobal("units"));
-    QString elements{"element "};
-    QString adiams;
-
-    // detect if we can use element information, otherwise set atom color to "type" by default
-    useelements = false;
-    if (masses && ((units == "real") || (units == "metal"))) {
-        useelements = true;
-        if (!atomcustom) atomcolor = "element";
-        for (int i = 1; i <= ntypes; ++i) {
-            int idx = get_pte_from_mass(masses[i]);
-            if (idx == 0) useelements = false;
-            elements += QString(pte_label[idx]) + blank;
-            adiams += QString("adiam %1 %2 ").arg(i).arg(vdwfactor * pte_vdw_radius[idx]);
-        }
-    } else {
-        if (!atomcustom) atomcolor = "type";
-    }
-
-    usediameter = lammps->extractSetting("radius_flag") != 0;
-    usesigma    = false;
-    // if we cannot use element info or diameter data, try to use Lennard-Jones sigma for radius
-    if (!useelements && !usediameter && pair_style && (strncmp(pair_style, "lj/", 3) == 0)) {
-        auto **sigma = static_cast<double **>(lammps->extractPair("sigma"));
-        if (sigma) {
-            usesigma = true;
-            for (int i = 1; i <= ntypes; ++i) {
-                if (sigma[i][i] > 0.0)
-                    adiams += QString("adiam %1 %2 ").arg(i).arg(vdwfactor * sigma[i][i]);
-            }
-        }
-    }
-
-    // adjust atomsize setting and pushbutton state and reset adiams string, if needed
-    if (showatoms) {
-        auto *edit   = findChild<QLineEdit *>("atomSize");
-        auto *label  = findChild<QLabel *>("AtomLabel");
-        auto *button = findChild<QPushButton *>("vdw");
-        if (edit && label && button) {
-            button->setEnabled(true);
-            if (atomcustom) {
-                if ((atomdiam != "element") && (atomdiam != "diameter") && (atomdiam != "sigma")) {
-                    edit->setEnabled(true);
-                    edit->show();
-                    label->setEnabled(true);
-                    label->show();
-                    adiams.clear();
-                    for (int i = 1; i <= ntypes; ++i) {
-                        adiams += QString("adiam %1 %2 ").arg(i).arg(vdwfactor * atomSize);
-                    }
-                } else {
-                    edit->setEnabled(false);
-                    edit->hide();
-                    label->setEnabled(false);
-                    label->hide();
-                }
-            } else {
-                if (useelements || usediameter || usesigma) {
-                    edit->setEnabled(false);
-                    edit->hide();
-                    label->setEnabled(false);
-                    label->hide();
-                } else {
-                    edit->setEnabled(true);
-                    edit->show();
-                    label->setEnabled(true);
-                    label->show();
-                }
-            }
-        }
-    } else {
-        adiams.clear();
-        auto *edit   = findChild<QLineEdit *>("atomSize");
-        auto *label  = findChild<QLabel *>("AtomLabel");
-        auto *button = findChild<QPushButton *>("vdw");
-        if (edit && label && button) {
-            button->setEnabled(true);
-            edit->setEnabled(false);
-            edit->hide();
-            label->setEnabled(false);
-            label->hide();
-        }
-    }
-
-    // atom color for dump
-    if (!atomcustom && useelements)
-        dumpcmd += blank + "element";
-    else
-        dumpcmd += blank + atomcolor;
-
-    bool do_vdw = vdwfactor > VDW_CUT;
-    // atom diameter for dump
-    if (!atomcustom) {
-        if (usediameter && do_vdw)
-            dumpcmd += blank + "diameter";
-        else
-            dumpcmd += " type";
-    } else {
-        if ((atomdiam == "diameter") && usediameter && do_vdw)
-            dumpcmd += blank + "diameter";
-        else
-            dumpcmd += " type";
-    }
-
-    if (!showatoms) dumpcmd += " atom no";
-    if (showbodies && (lammps->extractSetting("body_flag") == 1)) {
-        dumpcmd += QString(" body %1 %2 %3").arg(bodycolor).arg(bodydiam).arg(bodyflag);
-    } else if (showlines && (lammps->extractSetting("line_flag") == 1))
-        dumpcmd += QString(" line %1 %2").arg(linecolor).arg(linediam);
-    else if (showtris && (lammps->extractSetting("tri_flag") == 1))
-        dumpcmd += QString(" tri %1 %2 %3").arg(tricolor).arg(triflag).arg(tridiam);
-    else if (showellipsoids && (lammps->extractSetting("ellipsoid_flag") == 1)) {
-        dumpcmd += QString(" ellipsoid %1 %2 %3 %4")
-                       .arg(ellipsoidcolor)
-                       .arg(ellipsoidflag)
-                       .arg(ellipsoidlevel)
-                       .arg(ellipsoiddiam);
-    }
-    dumpcmd += QString(" size %1 %2").arg(xsize).arg(ysize);
-    dumpcmd += QString(" zoom %1").arg(zoom);
-    dumpcmd += QString(" shiny %1 ").arg(shinyfactor);
-    dumpcmd += QString(" fsaa %1").arg(antialias ? "yes" : "no");
-    if (nbondtypes > 0) {
-        if (do_vdw || !showbonds)
-            dumpcmd += " bond none none ";
-        else
-            dumpcmd += QString(" bond %1 %2 ").arg(bondcolor).arg(bonddiam);
-    }
-    if (lammps->extractSetting("dimension") == 3) {
-        dumpcmd += QString(" view %1 %2").arg(hhrot).arg(vrot);
-    }
-    if (usessao) dumpcmd += QString(" ssao yes 453983 %1").arg(ssaoval);
-    if (showbox)
-        dumpcmd += QString(" box yes %1").arg(boxdiam);
-    else
-        dumpcmd += " box no 0.0";
-    if (showsubbox)
-        dumpcmd += QString(" subbox yes %1").arg(subboxdiam);
-    else
-        dumpcmd += " subbox no 0.0";
-
-    if (showaxes)
-        dumpcmd += QString(" axes %1 %2 %3").arg(axesloc).arg(axeslen).arg(axesdiam);
-    else
-        dumpcmd += " axes no 0.0 0.0";
-
-    if (autobond && pair_style && (strcmp(pair_style, "none") != 0)) {
-        // use custom bond diameter value, if present
-        QRegularExpression validnum(R"((^\d+\.?\d*|^\d*\.?\d+))");
-        auto match = validnum.match(bonddiam);
-        if (match.hasMatch()) {
-            dumpcmd += blank + "autobond" + blank + QString::number(bondcutoff) + blank + bonddiam;
-        } else {
-            dumpcmd += blank + "autobond" + blank + QString::number(bondcutoff) + " 0.5";
-        }
-    }
-
-    appendRegionArgs(dumpcmd);
-
-    bool dofixes = appendFixComputeStyles(dumpcmd);
-
-    dumpcmd += QString(" center s %1 %2 %3").arg(xcenter).arg(ycenter).arg(zcenter);
-    if (!dofixes) dumpcmd += " noinit";
-    dumpcmd += " modify";
-
-    // must change global colors first so they apply everywhere
-    int numcolors = color_list.size();
-
-    for (int i = 0; i < numcolors; ++i) {
-        dumpcmd += QString(" color %1 %2 %3 %4")
-                       .arg(color_list[i].first)
-                       .arg(color_list[i].second.redF())
-                       .arg(color_list[i].second.greenF())
-                       .arg(color_list[i].second.blueF());
-    }
-    int numtypes = lammps->extractSetting("ntypes");
-    for (int i = 1; i <= numtypes; ++i) {
-        dumpcmd += QString(" acolor %1 %2").arg(i).arg(color_list[(i - 1) % numcolors].first);
-    }
-
-    dumpcmd += " boxcolor " + boxcolor;
-    dumpcmd += " backcolor " + backcolor;
-    dumpcmd += " backcolor2 " + backcolor2;
-    dumpcmd += QString(" axestrans %1").arg(axestrans);
-    dumpcmd += QString(" boxtrans %1").arg(boxtrans);
-    dumpcmd += QString(" atrans * %1").arg(atomtrans);
-    if (lammps->extractSetting("bond_flag") == 1) dumpcmd += QString(" btrans * %1").arg(atomtrans);
-    if (lammps->version() > 20260330)
-        dumpcmd += QString(" lights %1 %2 %3 %4")
-                       .arg(ambientlight)
-                       .arg(keylight)
-                       .arg(filllight)
-                       .arg(backlight);
-
-    if (useelements) dumpcmd += blank + elements + blank + adiams + blank;
-    if (usesigma) dumpcmd += blank + adiams + blank;
-    if (!useelements && !usesigma && (atomSize != 1.0)) dumpcmd += blank + adiams + blank;
-    // apply selected colormap
-    appendColorMapArgs(dumpcmd);
-
-    appendFixComputeColors(dumpcmd);
+    // gather parameters (also refreshes use* members), then sync the atom-size
+    // widgets and assemble the dump-image command from the gathered snapshot
+    const DumpImageParams params = gatherDumpImageParams(dumpfile.fileName());
+    syncAtomSizeWidgets();
+    const QString dumpcmd = buildDumpImageCommand(params);
 
     {
         StdoutSilencer guard;

@@ -1,0 +1,297 @@
+// Unit tests for the pure dump-image command builder (src/dumpimage.cpp).
+//
+// These tests exercise buildDumpImageCommand() without a GUI or a live LAMMPS
+// instance: a DumpImageParams struct is populated with representative values
+// and the resulting "write_dump ... image ..." command string is checked for
+// the expected fragments.
+
+#include "dumpimage.h"
+
+#include <QColor>
+#include <QString>
+
+#include "gtest/gtest.h"
+
+namespace {
+
+// Build a DumpImageParams with sensible, neutral defaults that individual
+// tests then tweak. With these defaults no fix/compute/region is active,
+// do_vdw is false (vdwfactor < VDW_CUT), and the version is at the minimum so
+// the version-gated features (lights, hull_points) stay off.
+DumpImageParams makeParams()
+{
+    DumpImageParams p;
+
+    p.group    = "all";
+    p.dumpfile = "/tmp/foo.ppm";
+
+    p.atomcustom  = false;
+    p.useelements = false;
+    p.usediameter = false;
+    p.usesigma    = false;
+    p.showatoms   = true;
+    p.atomcolor   = "type";
+    p.atomdiam    = "type";
+    p.vdwfactor   = 0.5; // do_vdw == false
+    p.atomSize    = 1.0;
+    p.elements    = "element ";
+    p.adiams      = "";
+
+    p.showbodies     = false;
+    p.body_flag      = 0;
+    p.bodycolor      = "red";
+    p.bodydiam       = 1.0;
+    p.bodyflag       = 1;
+    p.showlines      = false;
+    p.line_flag      = 0;
+    p.linecolor      = "red";
+    p.linediam       = 1.0;
+    p.showtris       = false;
+    p.tri_flag       = 0;
+    p.tricolor       = "red";
+    p.triflag        = 1;
+    p.tridiam        = 1.0;
+    p.showellipsoids = false;
+    p.ellipsoid_flag = 0;
+    p.ellipsoidcolor = "red";
+    p.ellipsoidflag  = 1;
+    p.ellipsoidlevel = 2;
+    p.ellipsoiddiam  = 1.0;
+
+    p.nbondtypes   = 0;
+    p.bond_flag    = 0;
+    p.showbonds    = true;
+    p.bondcolor    = "gray";
+    p.bonddiam     = "0.2";
+    p.autobond     = false;
+    p.haspairstyle = true;
+    p.bondcutoff   = 2.0;
+
+    p.xsize       = 800;
+    p.ysize       = 600;
+    p.zoom        = 1.5;
+    p.shinyfactor = 0.6;
+    p.antialias   = true;
+    p.dimension   = 3;
+    p.hrot        = 30;
+    p.vrot        = 20;
+    p.usessao     = false;
+    p.ssaoval     = 0.6;
+
+    p.showbox    = true;
+    p.boxdiam    = 0.05;
+    p.showsubbox = false;
+    p.subboxdiam = 0.0;
+    p.showaxes   = false;
+    p.axesloc    = "0.0 0.0";
+    p.axeslen    = 0.2;
+    p.axesdiam   = 0.1;
+
+    p.xcenter = 0.5;
+    p.ycenter = 0.5;
+    p.zcenter = 0.5;
+
+    p.ntypes       = 2;
+    p.color_list   = {{"red", QColor(255, 0, 0)}, {"blue", QColor(0, 0, 255)}};
+    p.boxcolor     = "white";
+    p.backcolor    = "black";
+    p.backcolor2   = "gray";
+    p.axestrans    = 0.0;
+    p.boxtrans     = 0.0;
+    p.atomtrans    = 1.0;
+    p.ambientlight = 0.2;
+    p.keylight     = 0.7;
+    p.filllight    = 0.3;
+    p.backlight    = 0.2;
+    p.version      = 20260330; // not greater than threshold -> no lights/hull
+
+    p.colormap = "BWR";
+    p.mapmin   = "auto";
+    p.mapmax   = "auto";
+
+    return p;
+}
+
+TEST(DumpImageCommand, BasicStructure)
+{
+    const QString cmd = buildDumpImageCommand(makeParams());
+
+    EXPECT_TRUE(cmd.startsWith("write_dump all image '/tmp/foo.ppm'")) << cmd.toStdString();
+    EXPECT_TRUE(cmd.contains(" size 800 600"));
+    EXPECT_TRUE(cmd.contains(" zoom 1.5"));
+    EXPECT_TRUE(cmd.contains(" shiny 0.6 "));
+    EXPECT_TRUE(cmd.contains(" fsaa yes"));
+    EXPECT_TRUE(cmd.contains(" view 30 20"));
+    EXPECT_TRUE(cmd.contains(" box yes 0.05"));
+    EXPECT_TRUE(cmd.contains(" subbox no 0.0"));
+    EXPECT_TRUE(cmd.contains(" axes no 0.0 0.0"));
+    EXPECT_TRUE(cmd.contains(" center s 0.5 0.5 0.5"));
+    EXPECT_TRUE(cmd.contains(" modify"));
+    EXPECT_TRUE(cmd.contains(" noinit")); // no active fix/compute
+    EXPECT_TRUE(cmd.contains(" boxcolor white"));
+    EXPECT_TRUE(cmd.contains(" backcolor black"));
+    EXPECT_TRUE(cmd.contains(" backcolor2 gray"));
+    EXPECT_FALSE(cmd.contains(" lights ")); // version not greater than threshold
+}
+
+TEST(DumpImageCommand, ColorTable)
+{
+    const QString cmd = buildDumpImageCommand(makeParams());
+
+    EXPECT_TRUE(cmd.contains(" color red 1 0 0")) << cmd.toStdString();
+    EXPECT_TRUE(cmd.contains(" color blue 0 0 1"));
+    EXPECT_TRUE(cmd.contains(" acolor 1 red"));
+    EXPECT_TRUE(cmd.contains(" acolor 2 blue"));
+}
+
+TEST(DumpImageCommand, DefaultColormapIsBWR)
+{
+    const QString cmd = buildDumpImageCommand(makeParams());
+
+    // "auto" min/max are translated to "min"/"max"
+    EXPECT_TRUE(cmd.contains(" color map1 0.000 0.227 0.427"));
+    EXPECT_TRUE(cmd.contains(" color map2 0.459 0.055 0.075"));
+    EXPECT_TRUE(cmd.contains(" amap min max cf 0.0 3 min map1 0.5 white max map2"))
+        << cmd.toStdString();
+}
+
+TEST(DumpImageCommand, ExplicitColormapRange)
+{
+    auto p            = makeParams();
+    p.mapmin          = "0.0";
+    p.mapmax          = "1.0";
+    const QString cmd = buildDumpImageCommand(p);
+    EXPECT_TRUE(cmd.contains(" amap 0.0 1.0 cf 0.0 ")) << cmd.toStdString();
+}
+
+TEST(DumpImageCommand, NamedColormap)
+{
+    auto p            = makeParams();
+    p.colormap        = "Grayscale";
+    const QString cmd = buildDumpImageCommand(p);
+    EXPECT_TRUE(cmd.contains(" amap min max cf 0.0 2 min black max white")) << cmd.toStdString();
+}
+
+TEST(DumpImageCommand, ElementColoring)
+{
+    auto p        = makeParams();
+    p.useelements = true;
+    p.atomcustom  = false;
+    p.elements    = "element C H ";
+    p.adiams      = "adiam 1 1.7 adiam 2 1.2 ";
+
+    const QString cmd = buildDumpImageCommand(p);
+    EXPECT_TRUE(cmd.contains(" element")); // atom-color token
+    EXPECT_TRUE(cmd.contains("element C H"));
+    EXPECT_TRUE(cmd.contains("adiam 1 1.7"));
+}
+
+TEST(DumpImageCommand, NoAtoms)
+{
+    auto p            = makeParams();
+    p.showatoms       = false;
+    const QString cmd = buildDumpImageCommand(p);
+    EXPECT_TRUE(cmd.contains(" atom no"));
+}
+
+TEST(DumpImageCommand, BondNoneWhenVdwActive)
+{
+    auto p            = makeParams();
+    p.nbondtypes      = 1;
+    p.vdwfactor       = 2.0; // do_vdw true -> bonds suppressed
+    const QString cmd = buildDumpImageCommand(p);
+    EXPECT_TRUE(cmd.contains(" bond none none "));
+}
+
+TEST(DumpImageCommand, BondDrawnWhenRequested)
+{
+    auto p            = makeParams();
+    p.nbondtypes      = 1;
+    p.vdwfactor       = 0.5; // do_vdw false
+    p.showbonds       = true;
+    p.bondcolor       = "gray";
+    p.bonddiam        = "0.2";
+    const QString cmd = buildDumpImageCommand(p);
+    EXPECT_TRUE(cmd.contains(" bond gray 0.2 ")) << cmd.toStdString();
+}
+
+TEST(DumpImageCommand, AutobondAppended)
+{
+    auto p            = makeParams();
+    p.autobond        = true;
+    p.haspairstyle    = true;
+    p.bondcutoff      = 2.0;
+    p.bonddiam        = "0.3";
+    const QString cmd = buildDumpImageCommand(p);
+    EXPECT_TRUE(cmd.contains(" autobond 2 0.3")) << cmd.toStdString();
+}
+
+TEST(DumpImageCommand, AutobondSkippedWithoutPairStyle)
+{
+    auto p            = makeParams();
+    p.autobond        = true;
+    p.haspairstyle    = false;
+    const QString cmd = buildDumpImageCommand(p);
+    EXPECT_FALSE(cmd.contains(" autobond "));
+}
+
+TEST(DumpImageCommand, ActiveFixSuppressesNoinit)
+{
+    auto p = makeParams();
+    ImageInfo fix(true, "ave/time", CONSTANT, "blue", 0.5, 1.0, 2.0);
+    p.fixes["myfix"] = &fix;
+
+    const QString cmd = buildDumpImageCommand(p);
+    EXPECT_TRUE(cmd.contains(" fix myfix const 1 2")) << cmd.toStdString();
+    EXPECT_TRUE(cmd.contains(" fcolor myfix blue"));
+    EXPECT_TRUE(cmd.contains(" ftrans myfix 0.5"));
+    EXPECT_FALSE(cmd.contains(" noinit"));
+}
+
+TEST(DumpImageCommand, DisabledFixIgnored)
+{
+    auto p = makeParams();
+    ImageInfo fix(false, "ave/time", CONSTANT, "blue", 0.5, 1.0, 2.0);
+    p.fixes["myfix"] = &fix;
+
+    const QString cmd = buildDumpImageCommand(p);
+    EXPECT_FALSE(cmd.contains("myfix"));
+    EXPECT_TRUE(cmd.contains(" noinit")); // no active fix/compute
+}
+
+TEST(DumpImageCommand, RegionPoints)
+{
+    auto p = makeParams();
+    RegionInfo reg(true, POINTS, "red", 0.2, 0.5, 100);
+    p.regions["myreg"] = &reg;
+
+    const QString cmd = buildDumpImageCommand(p);
+    EXPECT_TRUE(cmd.contains(" region myreg red points 100 0.2")) << cmd.toStdString();
+}
+
+TEST(DumpImageCommand, RegionFrameHullPointsGatedByVersion)
+{
+    auto p = makeParams();
+    RegionInfo reg(true, FRAME, "blue", 0.3, 0.5, 250);
+    p.regions["box"] = &reg;
+
+    // at the threshold: no hull_points keyword
+    QString cmd = buildDumpImageCommand(p);
+    EXPECT_TRUE(cmd.contains(" region box blue frame 0.3")) << cmd.toStdString();
+    EXPECT_FALSE(cmd.contains("hull_points"));
+
+    // newer version: hull_points appended
+    p.version = 20260331;
+    cmd       = buildDumpImageCommand(p);
+    EXPECT_TRUE(cmd.contains("hull_points 250")) << cmd.toStdString();
+}
+
+TEST(DumpImageCommand, LightsGatedByVersion)
+{
+    auto p            = makeParams();
+    p.version         = 20260331;
+    const QString cmd = buildDumpImageCommand(p);
+    EXPECT_TRUE(cmd.contains(" lights 0.2 0.7 0.3 0.2")) << cmd.toStdString();
+}
+
+} // namespace

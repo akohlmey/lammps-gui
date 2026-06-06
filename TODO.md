@@ -240,7 +240,36 @@ overloads and `lastErrorMessage()` are the templates to follow.
   the codebase was disciplined here from the start, so no changes were
   needed. (Marked done to reflect the audit; revisit opportunistically.)
 
-## Stage 7 -- Extract createImage into a standalone, struct-driven renderer (high-level)
+## Stage 7 -- Extract createImage into a standalone, struct-driven renderer (DONE)
+
+Done: the command-assembly core was extracted into a new, GUI-free
+translation unit `src/dumpimage.{cpp,h}`. `DumpImageParams` (in
+`dumpimage.h`) is a plain struct holding every command-relevant value with
+all LAMMPS-derived data (`ntypes`, `*_flag`, `dimension`, `version`,
+element/sigma detection results, etc.) pre-resolved; `QString
+buildDumpImageCommand(const DumpImageParams&)` is a pure function with no
+GUI or LAMMPS access. The four `append*` helpers moved there as file-static
+free functions. `ImageViewer::createImage()` now: (1) gathers the struct via
+the new `gatherDumpImageParams()` (which still refreshes the
+`useelements`/`usediameter`/`usesigma`/`atomcolor` members the settings
+dialogs read), (2) syncs the atom-size widgets via the new GUI-only
+`syncAtomSizeWidgets()` -- separating concern 2 (widget side effects) from
+concern 1/3 (the adiams string + command), (3) calls the pure builder, then
+(4) does the temp-atom/write_dump/render orchestration. `imageviewer.cpp`
+shed ~400 net lines. A new GoogleTest suite `test/test_dumpimage.cpp` (16
+cases) exercises the builder directly -- the first test coverage of the
+image code, which was previously only build-verifiable. Builds clean in both
+plugin and linked configs; 74/74 ctest pass.
+
+Design choices settled during the work:
+- The builder takes the fully pre-captured struct (no `LammpsWrapper*`), so
+  it is genuinely pure/testable; all LAMMPS queries stay in the gather step.
+- `DumpImageParams` holds the `regions`/`computes`/`fixes` maps as non-owning
+  pointer copies and `color_list` by value; the struct is short-lived.
+- Concern 4 (orchestration) stays in `ImageViewer` -- moving it out would
+  only relocate GUI/LAMMPS coupling without improving testability.
+
+Original plan (for reference):
 
 Turn `ImageViewer::createImage()` into a free function in its own
 `.cpp`/`.h` (e.g. `dumpimage.{cpp,h}`), fed by a plain parameter struct

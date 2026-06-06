@@ -111,6 +111,17 @@ target_link_libraries(test_flagwarnings PRIVATE GTest::gtest_main Qt6::Widgets)
 
 gtest_discover_tests(test_flagwarnings)
 
+# Test executable for the dump-image command builder
+add_executable(test_dumpimage
+  test_dumpimage.cpp
+  ${CMAKE_SOURCE_DIR}/src/dumpimage.cpp
+)
+
+target_include_directories(test_dumpimage PRIVATE ${CMAKE_SOURCE_DIR}/src)
+target_link_libraries(test_dumpimage PRIVATE GTest::gtest_main Qt6::Widgets)
+
+gtest_discover_tests(test_dumpimage)
+
 ########################################################################
 # Tests that check the GUI environment and the GUI
 # IMPORTANT NOTE: we must use a different display number for the -n flag
