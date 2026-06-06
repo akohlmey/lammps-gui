@@ -429,7 +429,7 @@ void SlideShow::movie()
             }
             concatfile.close();
 
-            const auto fps = QString::number(1.0 / ((double)timerDelay / 1000.0));
+            const auto fps = QString::number(1.0 / (static_cast<double>(timerDelay) / 1000.0));
             QStringList args;
             args << "-y";
             args << "-safe"

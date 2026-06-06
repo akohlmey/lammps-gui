@@ -147,7 +147,7 @@ std::string StdCapture::getChunk()
 
 double StdCapture::getBufferUse() const
 {
-    return (double)maxread / (double)(bufSize - 1);
+    return static_cast<double>(maxread) / static_cast<double>(bufSize - 1);
 }
 
 std::string StdCapture::getCapture()

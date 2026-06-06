@@ -1429,7 +1429,7 @@ int LammpsGui::updateRunStatus()
     double t_total   = t_elapsed + t_remain + 1.0e-10;
     int completed    = t_elapsed / t_total * 1000.0;
     // update cpu usage
-    int percent_cpu = (int)lammps.getThermo("cpuuse");
+    int percent_cpu = static_cast<int>(lammps.getThermo("cpuuse"));
     // clear any pending error messages from polling those thermo keywords
     lammps.getLastErrorMessage(nullptr, 0);
 
@@ -1548,8 +1548,9 @@ void LammpsGui::warnHighBufferUsage()
 
     double bufferuse = capturer->getBufferUse();
     if (bufferuse > Cfg::BUFFER_WARNING_THRESHOLD) {
-        int thermo_val     = lammps.extractSetting("thermo_every");
-        int thermo_suggest = Cfg::THERMO_SUGGEST_MULTIPLIER * (int)round(bufferuse * thermo_val);
+        int thermo_val = lammps.extractSetting("thermo_every");
+        int thermo_suggest =
+            Cfg::THERMO_SUGGEST_MULTIPLIER * static_cast<int>(round(bufferuse * thermo_val));
         int update_val     = QSettings().value("updfreq", 100).toInt();
         int update_suggest = std::max(1, update_val / 5);
 
@@ -1562,7 +1563,7 @@ void LammpsGui::warnHighBufferUsage()
                       "preferences from %3 to %4, or something similar.</p>");
 
         critical(this, "LAMMPS-GUI Warning: High I/O Buffer Usage",
-                 mesg1.arg((int)(100.0 * bufferuse)),
+                 mesg1.arg(static_cast<int>(100.0 * bufferuse)),
                  mesg2.arg(thermo_val).arg(thermo_suggest).arg(update_val).arg(update_suggest));
     }
 }
@@ -1696,7 +1697,7 @@ void LammpsGui::createChartWindow(QSettings &settings)
     chartwindow->setWindowIcon(QIcon(Cfg::MAIN_ICON));
     chartwindow->setMinimumSize(Cfg::MINIMUM_WIDTH, Cfg::MINIMUM_HEIGHT);
 
-    const auto *unitptr = (const char *)lammps.extractGlobal("units");
+    const auto *unitptr = static_cast<const char *>(lammps.extractGlobal("units"));
     if (unitptr) chartwindow->setUnits(QString("%1").arg(unitptr));
     auto normflag = lammps.extractSetting("thermo_norm");
     chartwindow->setNorm(normflag != 0);
@@ -1913,7 +1914,7 @@ void LammpsGui::viewVariables()
 
 void LammpsGui::setDocver()
 {
-    QString git_branch = (const char *)lammps.extractGlobal("git_branch");
+    QString git_branch = static_cast<const char *>(lammps.extractGlobal("git_branch"));
     if ((git_branch == "stable") || (git_branch == "maintenance")) {
         docver = "/stable/";
     } else if (git_branch == "release") {
@@ -2640,7 +2641,8 @@ bool LammpsGui::downloadTutorialFiles(const QString &dir, const QList<DownloadIt
     for (const auto &item : downloads) {
         ++i;
         status->setText(QString("Downloading file %1 of %2").arg(i).arg(num));
-        progress->setValue((int)((double)i / ((double)num) * 1000.0));
+        progress->setValue(
+            static_cast<int>(static_cast<double>(i) / static_cast<double>(num) * 1000.0));
         status->repaint();
 
         QString localPath = dir + QDir::separator() + item.fname;

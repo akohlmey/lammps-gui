@@ -942,7 +942,7 @@ void ImageViewer::readFixComputeRows(QGridLayout *layout, int offset,
                                      std::map<std::string, ImageInfo *> &items)
 {
     int n = 0;
-    for (int idx = offset; idx < offset + (int)items.size(); ++idx) {
+    for (int idx = offset; idx < offset + static_cast<int>(items.size()); ++idx) {
         n          = 0;
         auto *item = layout->itemAtPosition(idx, n++);
         if (!item) continue;
@@ -1066,7 +1066,7 @@ void ImageViewer::fixSettings()
 void ImageViewer::readRegionRows(QGridLayout *layout)
 {
     int n = 0;
-    for (int idx = 4; idx < (int)regions.size() + 4; ++idx) {
+    for (int idx = 4; idx < static_cast<int>(regions.size()) + 4; ++idx) {
         n                    = 0;
         auto *item           = layout->itemAtPosition(idx, n++);
         auto *label          = qobject_cast<QLabel *>(item->widget());

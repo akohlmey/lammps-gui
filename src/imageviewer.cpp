@@ -369,7 +369,7 @@ ImageViewer::ImageViewer(const QString &fileName, LammpsWrapper *_lammps, Lammps
 
     readImageSettings();
     // initialize atomSize with lattice spacing
-    const auto *xlattice = (const double *)lammps->extractGlobal("xlattice");
+    const auto *xlattice = static_cast<const double *>(lammps->extractGlobal("xlattice"));
     if (xlattice) atomSize = *xlattice;
 
     auto pix   = QPixmap(":/icons/emblem-photos.png");
@@ -996,7 +996,7 @@ void ImageViewer::setBondcut()
 {
     auto *cutoff = findChild<QLineEdit *>("bondcut");
     if (cutoff) {
-        auto *dptr            = (double *)lammps->extractGlobal("neigh_cutmax");
+        auto *dptr            = static_cast<double *>(lammps->extractGlobal("neigh_cutmax"));
         double max_bondcutoff = (dptr) ? *dptr : 0.0;
         double new_bondcutoff = cutoff->text().toDouble();
 
@@ -1510,8 +1510,8 @@ void ImageViewer::createImage()
     if (molecule != "none") {
         // get center of box
         double *boxlo, *boxhi, xmid, ymid, zmid;
-        boxlo = (double *)lammps->extractGlobal("boxlo");
-        boxhi = (double *)lammps->extractGlobal("boxhi");
+        boxlo = static_cast<double *>(lammps->extractGlobal("boxlo"));
+        boxhi = static_cast<double *>(lammps->extractGlobal("boxhi"));
         if (boxlo && boxhi) {
             xmid = 0.5 * (boxhi[0] + boxlo[0]);
             ymid = 0.5 * (boxhi[1] + boxlo[1]);
@@ -1544,9 +1544,9 @@ void ImageViewer::createImage()
     // determine elements from masses and set their covalent radii
     int ntypes             = lammps->extractSetting("ntypes");
     int nbondtypes         = lammps->extractSetting("nbondtypes");
-    auto *masses           = (double *)lammps->extractAtom("mass");
-    const char *pair_style = (const char *)lammps->extractGlobal("pair_style");
-    QString units          = (const char *)lammps->extractGlobal("units");
+    auto *masses           = static_cast<double *>(lammps->extractAtom("mass"));
+    const char *pair_style = static_cast<const char *>(lammps->extractGlobal("pair_style"));
+    QString units          = static_cast<const char *>(lammps->extractGlobal("units"));
     QString elements{"element "};
     QString adiams;
 
@@ -1569,7 +1569,7 @@ void ImageViewer::createImage()
     usesigma    = false;
     // if we cannot use element info or diameter data, try to use Lennard-Jones sigma for radius
     if (!useelements && !usediameter && pair_style && (strncmp(pair_style, "lj/", 3) == 0)) {
-        auto **sigma = (double **)lammps->extractPair("sigma");
+        auto **sigma = static_cast<double **>(lammps->extractPair("sigma"));
         if (sigma) {
             usesigma = true;
             for (int i = 1; i <= ntypes; ++i) {
@@ -1821,7 +1821,7 @@ void ImageViewer::getHelp()
         QString page   = src->objectName();
         QString docver = "/";
         if (lammps) {
-            QString git_branch = (const char *)lammps->extractGlobal("git_branch");
+            QString git_branch = static_cast<const char *>(lammps->extractGlobal("git_branch"));
             if ((git_branch == "stable") || (git_branch == "maintenance")) {
                 docver = "/stable/";
             } else if (git_branch == "release") {
@@ -1945,7 +1945,7 @@ void ImageViewer::updatePeratom()
             if (ptr) {
                 ptr  = lammps->extractCompute(name, LammpsWrapper::ATOM_STYLE,
                                               LammpsWrapper::NUM_COLS);
-                type = *(int *)ptr;
+                type = *static_cast<int *>(ptr);
                 for (int col = 1; col <= type; ++col) {
                     atom_properties << QString("c_%1[%2]").arg(name).arg(col);
                 }
@@ -1965,7 +1965,7 @@ void ImageViewer::updatePeratom()
             if (ptr) {
                 ptr  = lammps->extractFix(name, LammpsWrapper::ATOM_STYLE, LammpsWrapper::NUM_COLS,
                                           -1, -1);
-                type = *(int *)ptr;
+                type = *static_cast<int *>(ptr);
                 if (type == 0) {
                     atom_properties << QString("f_%1").arg(name);
                 } else {
@@ -2089,7 +2089,7 @@ void ImageViewer::updateRegions()
 bool ImageViewer::hasAutobonds()
 {
     if (!lammps) return false;
-    const auto *pair_style = (const char *)lammps->extractGlobal("pair_style");
+    const auto *pair_style = static_cast<const char *>(lammps->extractGlobal("pair_style"));
     if (!pair_style) return false;
     return strcmp(pair_style, "none") != 0;
 }

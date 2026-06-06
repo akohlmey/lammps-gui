@@ -213,7 +213,7 @@ double LammpsWrapper::extractVariable(const char *keyword)
     if (lammps_handle) {
         ptr = LMPFN(extract_variable)(lammps_handle, keyword, nullptr);
     }
-    double val = (ptr) ? *((double *)ptr) : 0.0;
+    double val = (ptr) ? *(static_cast<double *>(ptr)) : 0.0;
     LMPFN(free)(ptr);
     return val;
 }
@@ -465,7 +465,7 @@ bool LammpsWrapper::loadLib(const char *libfile)
 
     // check minimum required version
     QString lmpversion;
-    auto *ptr = (const char *)lmp->extract_global(nullptr, "lammps_version");
+    auto *ptr = static_cast<const char *>(lmp->extract_global(nullptr, "lammps_version"));
     if (ptr) lmpversion = ptr;
 
     // found a suitable version

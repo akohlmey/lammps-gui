@@ -54,7 +54,7 @@ namespace {
 
 // Set RangeSlider resolution to 1000 steps
 constexpr int SLIDER_RANGE       = 1000;
-constexpr double SLIDER_FRACTION = 1.0 / (double)SLIDER_RANGE;
+constexpr double SLIDER_FRACTION = 1.0 / static_cast<double>(SLIDER_RANGE);
 constexpr int LAYOUT_SPACING     = 6;
 
 // brush color index must be kept in sync with preferences
@@ -227,7 +227,7 @@ int ChartWindow::getStep() const
     if (!charts.empty()) {
         auto *v = charts[0];
         if (v) {
-            return (int)v->getStep(v->getCount() - 1);
+            return static_cast<int>(v->getStep(v->getCount() - 1));
         }
     }
     return -1;
@@ -384,8 +384,10 @@ void ChartWindow::updateXRange(int low, int high)
         if (c->isVisible()) {
             auto axes   = c->getAxes();
             auto ranges = c->getMinMax();
-            double xmin = ranges.left() + (double)low * SLIDER_FRACTION * ranges.width();
-            double xmax = ranges.left() + (double)high * SLIDER_FRACTION * ranges.width();
+            double xmin =
+                ranges.left() + static_cast<double>(low) * SLIDER_FRACTION * ranges.width();
+            double xmax =
+                ranges.left() + static_cast<double>(high) * SLIDER_FRACTION * ranges.width();
             axes[0]->setRange(xmin, xmax);
         }
     }
@@ -397,8 +399,10 @@ void ChartWindow::updateYRange(int low, int high)
         if (c->isVisible()) {
             auto axes   = c->getAxes();
             auto ranges = c->getMinMax();
-            double ymin = ranges.bottom() - (double)low * SLIDER_FRACTION * ranges.height();
-            double ymax = ranges.bottom() - (double)high * SLIDER_FRACTION * ranges.height();
+            double ymin =
+                ranges.bottom() - static_cast<double>(low) * SLIDER_FRACTION * ranges.height();
+            double ymax =
+                ranges.bottom() - static_cast<double>(high) * SLIDER_FRACTION * ranges.height();
             axes[1]->setRange(ymin, ymax);
         }
     }
@@ -958,7 +962,7 @@ void lu_backsubst(float_mat &A, float_mat &a, bool diag = false)
  * place.  A is not modified, and the solution, b, is returned in a. */
 void lu_forwsubst(float_mat &A, float_mat &a, bool diag = true)
 {
-    for (int r = 0; r < (int)A.nr_rows(); ++r) {
+    for (int r = 0; r < static_cast<int>(A.nr_rows()); ++r) {
         for (int c = 0; c < r; ++c) {
             for (std::size_t k = 0; k < A.nr_cols(); ++k) {
                 a[r][k] -= A[r][c] * a[c][k];
