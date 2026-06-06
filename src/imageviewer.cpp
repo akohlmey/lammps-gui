@@ -2020,6 +2020,94 @@ void ImageViewer::atomSettings()
     createImage();
 }
 
+void ImageViewer::buildFixComputeRows(QGridLayout *layout, int &idx,
+                                      const std::map<std::string, ImageInfo *> &items,
+                                      const QMap<QString, QString> &helpmap)
+{
+    auto *colorcompleter = new QColorCompleter(this);
+    auto *colorvalidator = new QColorValidator(this);
+    auto *transvalidator = new QDoubleValidator(0.0, 1.0, 3, this);
+    QFontMetrics metrics(fontMetrics());
+    int n = 0;
+    for (const auto &item : items) {
+        n = 0;
+
+        auto *label = new QLabel(item.first.c_str());
+        layout->addWidget(label, idx, n++);
+        layout->addWidget(new QLabel(item.second->style), idx, n++);
+        auto *check = new QCheckBox("");
+        check->setChecked(item.second->enabled);
+        layout->addWidget(check, idx, n++, Qt::AlignHCenter);
+        auto *cstyle = new QComboBox;
+        cstyle->setEditable(false);
+        cstyle->addItem("type");
+        cstyle->addItem("element");
+        cstyle->addItem("const");
+        cstyle->setCurrentIndex(item.second->colorstyle);
+        layout->addWidget(cstyle, idx, n++);
+        auto *color = new QLineEdit(item.second->color.c_str());
+        color->setCompleter(colorcompleter);
+        color->setValidator(colorvalidator);
+        color->setFixedSize(metrics.averageCharWidth() * 12, metrics.height() + 4);
+        color->setText(item.second->color.c_str());
+        layout->addWidget(color, idx, n++);
+        auto *trans = new QLineEdit(QString::number(item.second->opacity));
+        trans->setValidator(transvalidator);
+        trans->setFixedSize(metrics.averageCharWidth() * 8, metrics.height() + 4);
+        trans->setText(QString::number(item.second->opacity));
+        layout->addWidget(trans, idx, n++);
+        auto *flag1 = new QLineEdit(QString::number(item.second->flag1));
+        flag1->setFixedSize(metrics.averageCharWidth() * 8, metrics.height() + 4);
+        flag1->setText(QString::number(item.second->flag1));
+        layout->addWidget(flag1, idx, n++);
+        auto *flag2 = new QLineEdit(QString::number(item.second->flag2));
+        flag2->setFixedSize(metrics.averageCharWidth() * 8, metrics.height() + 4);
+        flag2->setText(QString::number(item.second->flag2));
+        layout->addWidget(flag2, idx, n++);
+        auto *help = new QPushButton(QIcon(":/icons/system-help.png"), "");
+        help->setObjectName(helpmap.value(item.second->style, QString()));
+        layout->addWidget(help, idx, n++);
+        connect(help, &QPushButton::released, this, &ImageViewer::getHelp);
+        ++idx;
+    }
+}
+
+void ImageViewer::readFixComputeRows(QGridLayout *layout, int offset,
+                                     std::map<std::string, ImageInfo *> &items)
+{
+    int n = 0;
+    for (int idx = offset; idx < offset + (int)items.size(); ++idx) {
+        n          = 0;
+        auto *item = layout->itemAtPosition(idx, n++);
+        if (!item) continue;
+        auto *label = qobject_cast<QLabel *>(item->widget());
+
+        auto id = label->text().toStdString();
+        // compute ID is not registered with a widget; skip rest to avoid segfault
+        if (items.count(id) == 0) continue;
+
+        ++n; // nothing to do with label for style name
+        item                  = layout->itemAtPosition(idx, n++);
+        auto *box             = qobject_cast<QCheckBox *>(item->widget());
+        items[id]->enabled    = (box->isChecked());
+        item                  = layout->itemAtPosition(idx, n++);
+        auto *combo           = qobject_cast<QComboBox *>(item->widget());
+        items[id]->colorstyle = combo->currentIndex();
+        item                  = layout->itemAtPosition(idx, n++);
+        auto *line            = qobject_cast<QLineEdit *>(item->widget());
+        if (line && line->hasAcceptableInput()) items[id]->color = line->text().toStdString();
+        item = layout->itemAtPosition(idx, n++);
+        line = qobject_cast<QLineEdit *>(item->widget());
+        if (line && line->hasAcceptableInput()) items[id]->opacity = line->text().toDouble();
+        item = layout->itemAtPosition(idx, n++);
+        line = qobject_cast<QLineEdit *>(item->widget());
+        if (line && line->hasAcceptableInput()) items[id]->flag1 = line->text().toDouble();
+        item = layout->itemAtPosition(idx, n++);
+        line = qobject_cast<QLineEdit *>(item->widget());
+        if (line && line->hasAcceptableInput()) items[id]->flag2 = line->text().toDouble();
+    }
+}
+
 void ImageViewer::fixSettings()
 {
     updateFixes();
@@ -2034,11 +2122,6 @@ void ImageViewer::fixSettings()
     title->setFrameStyle(QFrame::Panel | QFrame::Raised);
     title->setLineWidth(1);
     title->setMargin(TITLE_MARGIN);
-
-    auto *colorcompleter = new QColorCompleter(this);
-    auto *colorvalidator = new QColorValidator(this);
-    auto *transvalidator = new QDoubleValidator(0.0, 1.0, 3, this);
-    QFontMetrics metrics(fixview.fontMetrics());
 
     int idx               = 0;
     int n                 = 0;
@@ -2064,47 +2147,7 @@ void ImageViewer::fixSettings()
         layout->addWidget(new QLabel("Help:"), idx++, n++, Qt::AlignHCenter);
         layout->addWidget(new QHline, idx++, 0, 1, MAXCOLS);
 
-        for (const auto &comp : computes) {
-            n = 0;
-
-            auto *label = new QLabel(comp.first.c_str());
-            layout->addWidget(label, idx, n++);
-            layout->addWidget(new QLabel(comp.second->style), idx, n++);
-            auto *check = new QCheckBox("");
-            check->setChecked(comp.second->enabled);
-            layout->addWidget(check, idx, n++, Qt::AlignHCenter);
-            auto *cstyle = new QComboBox;
-            cstyle->setEditable(false);
-            cstyle->addItem("type");
-            cstyle->addItem("element");
-            cstyle->addItem("const");
-            cstyle->setCurrentIndex(comp.second->colorstyle);
-            layout->addWidget(cstyle, idx, n++);
-            auto *color = new QLineEdit(comp.second->color.c_str());
-            color->setCompleter(colorcompleter);
-            color->setValidator(colorvalidator);
-            color->setFixedSize(metrics.averageCharWidth() * 12, metrics.height() + 4);
-            color->setText(comp.second->color.c_str());
-            layout->addWidget(color, idx, n++);
-            auto *trans = new QLineEdit(QString::number(comp.second->opacity));
-            trans->setValidator(transvalidator);
-            trans->setFixedSize(metrics.averageCharWidth() * 8, metrics.height() + 4);
-            trans->setText(QString::number(comp.second->opacity));
-            layout->addWidget(trans, idx, n++);
-            auto *flag1 = new QLineEdit(QString::number(comp.second->flag1));
-            flag1->setFixedSize(metrics.averageCharWidth() * 8, metrics.height() + 4);
-            flag1->setText(QString::number(comp.second->flag1));
-            layout->addWidget(flag1, idx, n++);
-            auto *flag2 = new QLineEdit(QString::number(comp.second->flag2));
-            flag2->setFixedSize(metrics.averageCharWidth() * 8, metrics.height() + 4);
-            flag2->setText(QString::number(comp.second->flag2));
-            layout->addWidget(flag2, idx, n++);
-            auto *help = new QPushButton(QIcon(":/icons/system-help.png"), "");
-            help->setObjectName(compute_map.value(comp.second->style, QString()));
-            layout->addWidget(help, idx, n++);
-            connect(help, &QPushButton::released, this, &ImageViewer::getHelp);
-            ++idx;
-        }
+        buildFixComputeRows(layout, idx, computes, compute_map);
         layout->addWidget(new QHline, idx++, 0, 1, MAXCOLS);
     }
 
@@ -2122,47 +2165,7 @@ void ImageViewer::fixSettings()
         layout->addWidget(new QLabel("Flag #2:"), idx++, n++, Qt::AlignHCenter);
         layout->addWidget(new QHline, idx++, 0, 1, MAXCOLS);
 
-        for (const auto &fix : fixes) {
-            n = 0;
-
-            auto *label = new QLabel(fix.first.c_str());
-            layout->addWidget(label, idx, n++);
-            layout->addWidget(new QLabel(fix.second->style), idx, n++);
-            auto *check = new QCheckBox("");
-            check->setChecked(fix.second->enabled);
-            layout->addWidget(check, idx, n++, Qt::AlignHCenter);
-            auto *cstyle = new QComboBox;
-            cstyle->setEditable(false);
-            cstyle->addItem("type");
-            cstyle->addItem("element");
-            cstyle->addItem("const");
-            cstyle->setCurrentIndex(fix.second->colorstyle);
-            layout->addWidget(cstyle, idx, n++);
-            auto *color = new QLineEdit(fix.second->color.c_str());
-            color->setCompleter(colorcompleter);
-            color->setValidator(colorvalidator);
-            color->setFixedSize(metrics.averageCharWidth() * 12, metrics.height() + 4);
-            color->setText(fix.second->color.c_str());
-            layout->addWidget(color, idx, n++);
-            auto *trans = new QLineEdit(QString::number(fix.second->opacity));
-            trans->setValidator(transvalidator);
-            trans->setFixedSize(metrics.averageCharWidth() * 8, metrics.height() + 4);
-            trans->setText(QString::number(fix.second->opacity));
-            layout->addWidget(trans, idx, n++);
-            auto *flag1 = new QLineEdit(QString::number(fix.second->flag1));
-            flag1->setFixedSize(metrics.averageCharWidth() * 8, metrics.height() + 4);
-            flag1->setText(QString::number(fix.second->flag1));
-            layout->addWidget(flag1, idx, n++);
-            auto *flag2 = new QLineEdit(QString::number(fix.second->flag2));
-            flag2->setFixedSize(metrics.averageCharWidth() * 8, metrics.height() + 4);
-            flag2->setText(QString::number(fix.second->flag2));
-            layout->addWidget(flag2, idx, n++);
-            auto *help = new QPushButton(QIcon(":/icons/system-help.png"), "");
-            help->setObjectName(fix_map.value(fix.second->style, QString()));
-            layout->addWidget(help, idx, n++);
-            connect(help, &QPushButton::released, this, &ImageViewer::getHelp);
-            ++idx;
-        }
+        buildFixComputeRows(layout, idx, fixes, fix_map);
         layout->addWidget(new QHline, idx++, 0, 1, MAXCOLS);
     }
 
@@ -2187,68 +2190,40 @@ void ImageViewer::fixSettings()
     if (!rv) return;
 
     // retrieve compute data from dialog and store in map
-    for (int idx = computes_offset; idx < computes_offset + (int)computes.size(); ++idx) {
-        n          = 0;
-        auto *item = layout->itemAtPosition(idx, n++);
-        if (!item) continue;
-        auto *label = qobject_cast<QLabel *>(item->widget());
-
-        auto id = label->text().toStdString();
-        // compute ID is not registered with a widget; skip rest to avoid segfault
-        if (computes.count(id) == 0) continue;
-
-        ++n; // nothing to do with label for style name
-        item                     = layout->itemAtPosition(idx, n++);
-        auto *box                = qobject_cast<QCheckBox *>(item->widget());
-        computes[id]->enabled    = (box->isChecked());
-        item                     = layout->itemAtPosition(idx, n++);
-        auto *combo              = qobject_cast<QComboBox *>(item->widget());
-        computes[id]->colorstyle = combo->currentIndex();
-        item                     = layout->itemAtPosition(idx, n++);
-        auto *line               = qobject_cast<QLineEdit *>(item->widget());
-        if (line && line->hasAcceptableInput()) computes[id]->color = line->text().toStdString();
-        item = layout->itemAtPosition(idx, n++);
-        line = qobject_cast<QLineEdit *>(item->widget());
-        if (line && line->hasAcceptableInput()) computes[id]->opacity = line->text().toDouble();
-        item = layout->itemAtPosition(idx, n++);
-        line = qobject_cast<QLineEdit *>(item->widget());
-        if (line && line->hasAcceptableInput()) computes[id]->flag1 = line->text().toDouble();
-        item = layout->itemAtPosition(idx, n++);
-        line = qobject_cast<QLineEdit *>(item->widget());
-        if (line && line->hasAcceptableInput()) computes[id]->flag2 = line->text().toDouble();
-    }
+    readFixComputeRows(layout, computes_offset, computes);
 
     // retrieve fix data from dialog and store in map
-    for (int idx = fixes_offset; idx < fixes_offset + (int)fixes.size(); ++idx) {
-        n          = 0;
-        auto *item = layout->itemAtPosition(idx, n++);
-        if (!item) continue;
-        auto *label = qobject_cast<QLabel *>(item->widget());
-        auto id     = label->text().toStdString();
-        // fix ID is not registered with a widget; skip rest to avoid segfault
-        if (fixes.count(id) == 0) continue;
-        ++n; // skip over label for style name
-
-        item                  = layout->itemAtPosition(idx, n++);
-        auto *box             = qobject_cast<QCheckBox *>(item->widget());
-        fixes[id]->enabled    = (box->isChecked());
-        item                  = layout->itemAtPosition(idx, n++);
-        auto *combo           = qobject_cast<QComboBox *>(item->widget());
-        fixes[id]->colorstyle = combo->currentIndex();
-        item                  = layout->itemAtPosition(idx, n++);
-        auto *line            = qobject_cast<QLineEdit *>(item->widget());
-        if (line && line->hasAcceptableInput()) fixes[id]->color = line->text().toStdString();
-        item = layout->itemAtPosition(idx, n++);
-        line = qobject_cast<QLineEdit *>(item->widget());
-        if (line && line->hasAcceptableInput()) fixes[id]->opacity = line->text().toDouble();
-        item = layout->itemAtPosition(idx, n++);
-        line = qobject_cast<QLineEdit *>(item->widget());
-        if (line && line->hasAcceptableInput()) fixes[id]->flag1 = line->text().toDouble();
-        item = layout->itemAtPosition(idx, n++);
-        line = qobject_cast<QLineEdit *>(item->widget());
-        if (line && line->hasAcceptableInput()) fixes[id]->flag2 = line->text().toDouble();
-    }
+    readFixComputeRows(layout, fixes_offset, fixes);
     createImage();
+}
+
+void ImageViewer::readRegionRows(QGridLayout *layout)
+{
+    int n = 0;
+    for (int idx = 4; idx < (int)regions.size() + 4; ++idx) {
+        n                    = 0;
+        auto *item           = layout->itemAtPosition(idx, n++);
+        auto *label          = qobject_cast<QLabel *>(item->widget());
+        auto id              = label->text().toStdString();
+        item                 = layout->itemAtPosition(idx, n++);
+        auto *box            = qobject_cast<QCheckBox *>(item->widget());
+        regions[id]->enabled = box->isChecked();
+        item                 = layout->itemAtPosition(idx, n++);
+        auto *combo          = qobject_cast<QComboBox *>(item->widget());
+        regions[id]->style   = combo->currentIndex();
+        item                 = layout->itemAtPosition(idx, n++);
+        auto *line           = qobject_cast<QLineEdit *>(item->widget());
+        if (line && line->hasAcceptableInput()) regions[id]->color = line->text().toStdString();
+        item = layout->itemAtPosition(idx, n++);
+        line = qobject_cast<QLineEdit *>(item->widget());
+        if (line && line->hasAcceptableInput()) regions[id]->diameter = line->text().toDouble();
+        item = layout->itemAtPosition(idx, n++);
+        line = qobject_cast<QLineEdit *>(item->widget());
+        if (line && line->hasAcceptableInput()) regions[id]->npoints = line->text().toInt();
+        item = layout->itemAtPosition(idx, n++);
+        line = qobject_cast<QLineEdit *>(item->widget());
+        if (line && line->hasAcceptableInput()) regions[id]->opacity = line->text().toDouble();
+    }
 }
 
 void ImageViewer::regionSettings()
@@ -2360,32 +2335,41 @@ void ImageViewer::regionSettings()
     // return immediately on cancel
     if (!rv) return;
 
-    // retrieve data from dialog and store in map
-    for (int idx = 4; idx < (int)regions.size() + 4; ++idx) {
-        n                    = 0;
-        auto *item           = layout->itemAtPosition(idx, n++);
-        auto *label          = qobject_cast<QLabel *>(item->widget());
-        auto id              = label->text().toStdString();
-        item                 = layout->itemAtPosition(idx, n++);
-        auto *box            = qobject_cast<QCheckBox *>(item->widget());
-        regions[id]->enabled = box->isChecked();
-        item                 = layout->itemAtPosition(idx, n++);
-        auto *combo          = qobject_cast<QComboBox *>(item->widget());
-        regions[id]->style   = combo->currentIndex();
-        item                 = layout->itemAtPosition(idx, n++);
-        auto *line           = qobject_cast<QLineEdit *>(item->widget());
-        if (line && line->hasAcceptableInput()) regions[id]->color = line->text().toStdString();
-        item = layout->itemAtPosition(idx, n++);
-        line = qobject_cast<QLineEdit *>(item->widget());
-        if (line && line->hasAcceptableInput()) regions[id]->diameter = line->text().toDouble();
-        item = layout->itemAtPosition(idx, n++);
-        line = qobject_cast<QLineEdit *>(item->widget());
-        if (line && line->hasAcceptableInput()) regions[id]->npoints = line->text().toInt();
-        item = layout->itemAtPosition(idx, n++);
-        line = qobject_cast<QLineEdit *>(item->widget());
-        if (line && line->hasAcceptableInput()) regions[id]->opacity = line->text().toDouble();
-    }
+    readRegionRows(layout);
     createImage();
+}
+
+void ImageViewer::readColorRows(QGridLayout *layout, int colorstart, int numtypes)
+{
+    // expand color_list if more types than existing colors
+    int old_size = color_list.size();
+    for (int i = color_list.size(); i < numtypes; ++i)
+        color_list.append(color_list[i % old_size]);
+
+    for (int i = 1; i <= numtypes; ++i) {
+        QString n = color_list[i - 1].first;
+        double r  = color_list[i - 1].second.redF();
+        double g  = color_list[i - 1].second.greenF();
+        double b  = color_list[i - 1].second.blueF();
+
+        auto *item = layout->itemAtPosition(i + colorstart, 2);
+        auto *rgb  = item ? qobject_cast<QLineEdit *>(item->widget()) : nullptr;
+        if (rgb) n = rgb->text();
+
+        item = layout->itemAtPosition(i + colorstart, 3);
+        rgb  = item ? qobject_cast<QLineEdit *>(item->widget()) : nullptr;
+        if (rgb && rgb->hasAcceptableInput()) r = rgb->text().toDouble();
+
+        item = layout->itemAtPosition(i + colorstart, 4);
+        rgb  = item ? qobject_cast<QLineEdit *>(item->widget()) : nullptr;
+        if (rgb && rgb->hasAcceptableInput()) g = rgb->text().toDouble();
+
+        item = layout->itemAtPosition(i + colorstart, 5);
+        rgb  = item ? qobject_cast<QLineEdit *>(item->widget()) : nullptr;
+        if (rgb && rgb->hasAcceptableInput()) b = rgb->text().toDouble();
+
+        color_list[i - 1] = {n, QColor::fromRgbF(r, g, b)};
+    }
 }
 
 void ImageViewer::colorSettings()
@@ -2648,35 +2632,7 @@ void ImageViewer::colorSettings()
     if (cv == RESET_ALL_COLORS) {
         resetColors();
     } else {
-        // expand color_list if more types than existing colors
-        int old_size = color_list.size();
-        for (int i = color_list.size(); i < numtypes; ++i)
-            color_list.append(color_list[i % old_size]);
-
-        for (int i = 1; i <= numtypes; ++i) {
-            QString n = color_list[i - 1].first;
-            double r  = color_list[i - 1].second.redF();
-            double g  = color_list[i - 1].second.greenF();
-            double b  = color_list[i - 1].second.blueF();
-
-            auto *item = layout->itemAtPosition(i + colorstart, 2);
-            auto *rgb  = item ? qobject_cast<QLineEdit *>(item->widget()) : nullptr;
-            if (rgb) n = rgb->text();
-
-            item = layout->itemAtPosition(i + colorstart, 3);
-            rgb  = item ? qobject_cast<QLineEdit *>(item->widget()) : nullptr;
-            if (rgb && rgb->hasAcceptableInput()) r = rgb->text().toDouble();
-
-            item = layout->itemAtPosition(i + colorstart, 4);
-            rgb  = item ? qobject_cast<QLineEdit *>(item->widget()) : nullptr;
-            if (rgb && rgb->hasAcceptableInput()) g = rgb->text().toDouble();
-
-            item = layout->itemAtPosition(i + colorstart, 5);
-            rgb  = item ? qobject_cast<QLineEdit *>(item->widget()) : nullptr;
-            if (rgb && rgb->hasAcceptableInput()) b = rgb->text().toDouble();
-
-            color_list[i - 1] = {n, QColor::fromRgbF(r, g, b)};
-        }
+        readColorRows(layout, colorstart, numtypes);
     }
     createImage();
 }

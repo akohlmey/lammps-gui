@@ -140,6 +140,21 @@ private:
     void appendFixComputeColors(QString &cmd);  ///< Append per fix/compute color and transparency
     /// @}
 
+    /// @name dialog row builders/readers used by the *Settings() slots
+    /// @{
+    /// Build one compute/fix table row per map entry (shared by fixSettings)
+    void buildFixComputeRows(QGridLayout *layout, int &idx,
+                             const std::map<std::string, ImageInfo *> &items,
+                             const QMap<QString, QString> &helpmap);
+    /// Read back a compute/fix table section starting at grid row @p offset
+    void readFixComputeRows(QGridLayout *layout, int offset,
+                            std::map<std::string, ImageInfo *> &items);
+    /// Read back the region table rows into the regions map
+    void readRegionRows(QGridLayout *layout);
+    /// Read back the atom-type color table rows into color_list
+    void readColorRows(QGridLayout *layout, int colorstart, int numtypes);
+    /// @}
+
     /**
      * @brief Create an "atom/type/index" color selection combo box for a shape style
      * @param current Color property to preselect
