@@ -437,11 +437,24 @@ display with a small style dialog, and a post-processing/fitting dialog.
     Doxygen warnings.
 
 - **Layer 4 -- fitting.**
-  - *4a linear-in-params (first):* polynomial + 4-parameter Birch-Murnaghan
-    EOS, which is linear in its coefficients
+  - *4a linear-in-params (first): DONE.* polynomial + 4-parameter
+    Birch-Murnaghan EOS, which is linear in its coefficients
     (`E(V)=a+b*V^(-2/3)+c*V^(-4/3)+d*V^(-2)`) and so fits with the extracted
     LU solver -- no nonlinear code needed for the headline energy-vs-volume
     case. V0/E0/B0/B0' are closed-form in a,b,c,d.
+    - Done: `fitting.{cpp,h}` (`polynomialFit`, `birchMurnaghanFit`,
+      `evalPolynomial`/`evalBirchMurnaghan`) on top of the leastsquares LU
+      solver; V0 is the physical root of `3d u^2 + 2c u + b = 0` (u=V^-2/3) and
+      B0=V0 E''(V0), B0'=-1-V0 E'''/E'' from the analytic derivatives. 7 unit
+      tests incl. an exact-recovery BM model. The Postprocess dialog gained
+      "Polynomial fit" (degree) and "Birch-Murnaghan EOS fit" options that
+      overlay the fit curve on the current chart (new `ChartViewer::setFitCurve`)
+      and show a results readout (coeffs / V0,E0,B0,B0' / RMS).
+    - **Latent bug fixed along the way:** the extracted `lin_solve` mishandled
+      non-square right-hand sides (it iterated the RHS columns over the
+      coefficient matrix's column count); only `invert()`'s square RHS had ever
+      exercised it. Fixed to use `a.nr_cols()`, with a multi-column-RHS
+      regression test.
   - *4b nonlinear (extension):* vendor a compact Levenberg-Marquardt
     routine. Combined with a vendored Lepton library this realizes the
     "custom EOS as a predefined expression" idea: the EOS becomes an
