@@ -2842,6 +2842,210 @@ bool ImageViewer::eventFilter(QObject *watched, QEvent *event)
 // After rendering the image, the atoms and group are deleted.
 // to update bond data, we also need to issue a "run 0" command.
 
+void ImageViewer::appendRegionArgs(QString &cmd)
+{
+    if (regions.size() > 0) {
+        for (const auto &reg : regions) {
+            if (reg.second->enabled) {
+                QString id(reg.first.c_str());
+                QString color(reg.second->color.c_str());
+                switch (reg.second->style) {
+                    case FRAME:
+                        cmd += " region " + id + blank + color;
+                        cmd += " frame " + QString::number(reg.second->diameter);
+                        if (lammps->version() > 20260330)
+                            cmd += " hull_points " + QString::number(reg.second->npoints);
+                        break;
+                    case FILLED:
+                        cmd += " region " + id + blank + color + " filled";
+                        if (lammps->version() > 20260330)
+                            cmd += " hull_points " + QString::number(reg.second->npoints);
+                        break;
+                    case TRANSPARENT:
+                        cmd += " region " + id + blank + color;
+                        cmd += " transparent " + QString::number(reg.second->opacity);
+                        if (lammps->version() > 20260330)
+                            cmd += " hull_points " + QString::number(reg.second->npoints);
+                        break;
+                    case POINTS:
+                    default:
+                        cmd += " region " + id + blank + color;
+                        cmd += " points " + QString::number(reg.second->npoints);
+                        cmd += blank + QString::number(reg.second->diameter);
+                        break;
+                }
+                cmd += blank;
+            }
+        }
+    }
+}
+
+bool ImageViewer::appendFixComputeStyles(QString &cmd)
+{
+    bool dofixes = false;
+    if (computes.size() > 0) {
+        for (const auto &comp : computes) {
+            if (comp.second->enabled) {
+                dofixes = true;
+                QString id(comp.first.c_str());
+                switch (comp.second->colorstyle) {
+                    case TYPE:
+                        cmd += " compute " + id + blank + "type ";
+                        break;
+                    case ELEMENT:
+                        cmd += " compute " + id + blank + "element ";
+                        break;
+                    case CONSTANT: // FALLTHROUGH
+                    default:
+                        cmd += " compute " + id + blank + "const ";
+                        break;
+                }
+                cmd += QString::number(comp.second->flag1) + blank +
+                       QString::number(comp.second->flag2) + blank;
+            }
+        }
+    }
+    if (fixes.size() > 0) {
+        for (const auto &fix : fixes) {
+            if (fix.second->enabled) {
+                dofixes = true;
+                QString id(fix.first.c_str());
+                switch (fix.second->colorstyle) {
+                    case TYPE:
+                        cmd += " fix " + id + blank + "type ";
+                        break;
+                    case ELEMENT:
+                        cmd += " fix " + id + blank + "element ";
+                        break;
+                    case CONSTANT: // FALLTHROUGH
+                    default:
+                        cmd += " fix " + id + blank + "const ";
+                        break;
+                }
+                cmd += QString::number(fix.second->flag1) + blank +
+                       QString::number(fix.second->flag2) + blank;
+            }
+        }
+    }
+    return dofixes;
+}
+
+void ImageViewer::appendColorMapArgs(QString &cmd)
+{
+    QString mmin = mapmin;
+    if (mmin == "auto") mmin = "min";
+    QString mmax = mapmax;
+    if (mmax == "auto") mmax = "max";
+    if (colormap == "RWB") {
+        cmd += " color map1 0.459 0.055 0.075";
+        cmd += " color map2 0.000 0.227 0.427";
+        cmd += QString(" amap %1 %2 cf 0.0 ").arg(mmin).arg(mmax);
+        cmd += "5 min map1 0.1 map1 0.5 white 0.9 map2 max map2";
+    } else if (colormap == "PWT") {
+        cmd += " color map1 0.286 0.114 0.553";
+        cmd += " color map2 0.000 0.255 0.267";
+        cmd += QString(" amap %1 %2 cf 0.0 ").arg(mmin).arg(mmax);
+        cmd += "5 min map1 0.1 map1 0.5 white 0.9 map2 max map2";
+    } else if (colormap == "BGR") {
+        cmd += QString(" amap %1 %2 cf 0.0 ").arg(mmin).arg(mmax);
+        cmd += "5 min blue 0.05 blue 0.5 green 0.95 red max red";
+    } else if (colormap == "BWG") {
+        cmd += QString(" amap %1 %2 cf 0.0 ").arg(mmin).arg(mmax);
+        cmd += "5 min blue 0.1 blue 0.5 white 0.9 green max green";
+    } else if (colormap == "Grayscale") {
+        cmd += QString(" amap %1 %2 cf 0.0 ").arg(mmin).arg(mmax);
+        cmd += "2 min black max white";
+    } else if (colormap == "Rainbow") {
+        cmd += QString(" amap %1 %2 cf 0.0 ").arg(mmin).arg(mmax);
+        cmd += "6 min red 0.25 yellow 0.45 green 0.65 cyan 0.85 blue max purple";
+    } else if (colormap == "Sequential") {
+        cmd += " color map1 0.808 0.808 0.808";
+        cmd += " color map2 0.647 0.349 0.667";
+        cmd += " color map3 0.349 0.659 0.612";
+        cmd += " color map4 0.941 0.772 0.443";
+        cmd += " color map5 0.878 0.169 0.208";
+        cmd += " color map6 0.031 0.165 0.329";
+        cmd += QString(" amap %1 %2 sa 1.0 ").arg(mmin).arg(mmax);
+        cmd += "6 map1 map2 map3 map4 map5 map6";
+    } else if (colormap == "Landscape") {
+        cmd += " color map0 0.145 0.400 0.463";
+        cmd += " color map1 0.392 0.867 0.588";
+        cmd += " color map2 0.572 0.192 0.141";
+        cmd += " color map3 0.392 0.831 0.992";
+        cmd += " color map4 0.020 0.431 0.071";
+        cmd += " color map5 0.992 0.349 0.145";
+        cmd += " color map6 0.275 0.953 0.243";
+        cmd += " color map7 0.729 0.525 0.361";
+        cmd += " color map8 0.780 0.867 0.529";
+        cmd += " color map9 0.243 0.298 0.078";
+        cmd += QString(" amap %1 %2 sa 1.0 ").arg(mmin).arg(mmax);
+        cmd += "10 map0 map1 map2 map3 map4 map5 map6 map7 map8 map9";
+    } else if (colormap == "Basic") {
+        cmd += QString(" amap %1 %2 sa 1.0 ").arg(mmin).arg(mmax);
+        cmd += "10 red cyan green black magenta blue yellow purple white orange";
+    } else if (colormap == "Teal") {
+        cmd += " color map1 0.071 0.153 0.251";
+        cmd += " color map2 0.106 0.282 0.369";
+        cmd += " color map3 0.337 0.545 0.529";
+        cmd += " color map4 0.710 0.820 0.682";
+        cmd += QString(" amap %1 %2 cf 0.0 ").arg(mmin).arg(mmax);
+        cmd += "4 min map1 0.25 map2 0.5 map3 max map4";
+    } else if (colormap == "Viridis") {
+        cmd += " color map1 0.282 0.129 0.451";
+        cmd += " color map2 0.435 0.435 0.556";
+        cmd += " color map3 0.161 0.686 0.498";
+        cmd += " color map4 0.741 0.875 0.149";
+        cmd += QString(" amap %1 %2 cf 0.0 ").arg(mmin).arg(mmax);
+        cmd += "4 min map1 0.333 map2 0.667 map3 max map4";
+    } else if (colormap == "Inferno") {
+        cmd += " color map1 0.032 0.032 0.048";
+        cmd += " color map2 0.318 0.071 0.486";
+        cmd += " color map3 0.718 0.216 0.475";
+        cmd += " color map4 0.988 0.537 0.380";
+        cmd += " color map5 0.988 0.992 0.749";
+        cmd += QString(" amap %1 %2 cf 0.0 ").arg(mmin).arg(mmax);
+        cmd += "5 min map1 0.25 map2 0.5 map3 0.75 map4 max map5";
+    } else if (colormap == "Plasma") {
+        cmd += " color map1 0.051 0.031 0.529";
+        cmd += " color map2 0.612 0.090 0.620";
+        cmd += " color map3 0.929 0.475 0.325";
+        cmd += " color map4 0.941 0.976 0.129";
+        cmd += QString(" amap %1 %2 cf 0.0 ").arg(mmin).arg(mmax);
+        cmd += "4 min map1 0.333 map2 0.667 map3 max map4";
+    } else { // default is "BWR"
+        cmd += " color map1 0.000 0.227 0.427";
+        cmd += " color map2 0.459 0.055 0.075";
+        cmd += QString(" amap %1 %2 cf 0.0 ").arg(mmin).arg(mmax);
+        cmd += "3 min map1 0.5 white max map2";
+    }
+}
+
+void ImageViewer::appendFixComputeColors(QString &cmd)
+{
+    if (computes.size() > 0) {
+        for (const auto &comp : computes) {
+            if (comp.second->enabled) {
+                QString id(comp.first.c_str());
+                QString color(comp.second->color.c_str());
+                cmd += " ccolor " + id + blank + color;
+                cmd += " ctrans " + id + blank + QString::number(comp.second->opacity);
+                cmd += blank;
+            }
+        }
+    }
+    if (fixes.size() > 0) {
+        for (const auto &fix : fixes) {
+            if (fix.second->enabled) {
+                QString id(fix.first.c_str());
+                QString color(fix.second->color.c_str());
+                cmd += " fcolor " + id + blank + color;
+                cmd += " ftrans " + id + blank + QString::number(fix.second->opacity);
+                cmd += blank;
+            }
+        }
+    }
+}
+
 void ImageViewer::createImage()
 {
     // no point in trying to update the image when triggered after the destructor started
@@ -3048,86 +3252,9 @@ void ImageViewer::createImage()
         }
     }
 
-    if (regions.size() > 0) {
-        for (const auto &reg : regions) {
-            if (reg.second->enabled) {
-                QString id(reg.first.c_str());
-                QString color(reg.second->color.c_str());
-                switch (reg.second->style) {
-                    case FRAME:
-                        dumpcmd += " region " + id + blank + color;
-                        dumpcmd += " frame " + QString::number(reg.second->diameter);
-                        if (lammps->version() > 20260330)
-                            dumpcmd += " hull_points " + QString::number(reg.second->npoints);
-                        break;
-                    case FILLED:
-                        dumpcmd += " region " + id + blank + color + " filled";
-                        if (lammps->version() > 20260330)
-                            dumpcmd += " hull_points " + QString::number(reg.second->npoints);
-                        break;
-                    case TRANSPARENT:
-                        dumpcmd += " region " + id + blank + color;
-                        dumpcmd += " transparent " + QString::number(reg.second->opacity);
-                        if (lammps->version() > 20260330)
-                            dumpcmd += " hull_points " + QString::number(reg.second->npoints);
-                        break;
-                    case POINTS:
-                    default:
-                        dumpcmd += " region " + id + blank + color;
-                        dumpcmd += " points " + QString::number(reg.second->npoints);
-                        dumpcmd += blank + QString::number(reg.second->diameter);
-                        break;
-                }
-                dumpcmd += blank;
-            }
-        }
-    }
+    appendRegionArgs(dumpcmd);
 
-    bool dofixes = false;
-    if (computes.size() > 0) {
-        for (const auto &comp : computes) {
-            if (comp.second->enabled) {
-                dofixes = true;
-                QString id(comp.first.c_str());
-                switch (comp.second->colorstyle) {
-                    case TYPE:
-                        dumpcmd += " compute " + id + blank + "type ";
-                        break;
-                    case ELEMENT:
-                        dumpcmd += " compute " + id + blank + "element ";
-                        break;
-                    case CONSTANT: // FALLTHROUGH
-                    default:
-                        dumpcmd += " compute " + id + blank + "const ";
-                        break;
-                }
-                dumpcmd += QString::number(comp.second->flag1) + blank +
-                           QString::number(comp.second->flag2) + blank;
-            }
-        }
-    }
-    if (fixes.size() > 0) {
-        for (const auto &fix : fixes) {
-            if (fix.second->enabled) {
-                dofixes = true;
-                QString id(fix.first.c_str());
-                switch (fix.second->colorstyle) {
-                    case TYPE:
-                        dumpcmd += " fix " + id + blank + "type ";
-                        break;
-                    case ELEMENT:
-                        dumpcmd += " fix " + id + blank + "element ";
-                        break;
-                    case CONSTANT: // FALLTHROUGH
-                    default:
-                        dumpcmd += " fix " + id + blank + "const ";
-                        break;
-                }
-                dumpcmd += QString::number(fix.second->flag1) + blank +
-                           QString::number(fix.second->flag2) + blank;
-            }
-        }
-    }
+    bool dofixes = appendFixComputeStyles(dumpcmd);
 
     dumpcmd += QString(" center s %1 %2 %3").arg(xcenter).arg(ycenter).arg(zcenter);
     if (!dofixes) dumpcmd += " noinit";
@@ -3166,115 +3293,9 @@ void ImageViewer::createImage()
     if (usesigma) dumpcmd += blank + adiams + blank;
     if (!useelements && !usesigma && (atomSize != 1.0)) dumpcmd += blank + adiams + blank;
     // apply selected colormap
-    QString mmin = mapmin;
-    if (mmin == "auto") mmin = "min";
-    QString mmax = mapmax;
-    if (mmax == "auto") mmax = "max";
-    if (colormap == "RWB") {
-        dumpcmd += " color map1 0.459 0.055 0.075";
-        dumpcmd += " color map2 0.000 0.227 0.427";
-        dumpcmd += QString(" amap %1 %2 cf 0.0 ").arg(mmin).arg(mmax);
-        dumpcmd += "5 min map1 0.1 map1 0.5 white 0.9 map2 max map2";
-    } else if (colormap == "PWT") {
-        dumpcmd += " color map1 0.286 0.114 0.553";
-        dumpcmd += " color map2 0.000 0.255 0.267";
-        dumpcmd += QString(" amap %1 %2 cf 0.0 ").arg(mmin).arg(mmax);
-        dumpcmd += "5 min map1 0.1 map1 0.5 white 0.9 map2 max map2";
-    } else if (colormap == "BGR") {
-        dumpcmd += QString(" amap %1 %2 cf 0.0 ").arg(mmin).arg(mmax);
-        dumpcmd += "5 min blue 0.05 blue 0.5 green 0.95 red max red";
-    } else if (colormap == "BWG") {
-        dumpcmd += QString(" amap %1 %2 cf 0.0 ").arg(mmin).arg(mmax);
-        dumpcmd += "5 min blue 0.1 blue 0.5 white 0.9 green max green";
-    } else if (colormap == "Grayscale") {
-        dumpcmd += QString(" amap %1 %2 cf 0.0 ").arg(mmin).arg(mmax);
-        dumpcmd += "2 min black max white";
-    } else if (colormap == "Rainbow") {
-        dumpcmd += QString(" amap %1 %2 cf 0.0 ").arg(mmin).arg(mmax);
-        dumpcmd += "6 min red 0.25 yellow 0.45 green 0.65 cyan 0.85 blue max purple";
-    } else if (colormap == "Sequential") {
-        dumpcmd += " color map1 0.808 0.808 0.808";
-        dumpcmd += " color map2 0.647 0.349 0.667";
-        dumpcmd += " color map3 0.349 0.659 0.612";
-        dumpcmd += " color map4 0.941 0.772 0.443";
-        dumpcmd += " color map5 0.878 0.169 0.208";
-        dumpcmd += " color map6 0.031 0.165 0.329";
-        dumpcmd += QString(" amap %1 %2 sa 1.0 ").arg(mmin).arg(mmax);
-        dumpcmd += "6 map1 map2 map3 map4 map5 map6";
-    } else if (colormap == "Landscape") {
-        dumpcmd += " color map0 0.145 0.400 0.463";
-        dumpcmd += " color map1 0.392 0.867 0.588";
-        dumpcmd += " color map2 0.572 0.192 0.141";
-        dumpcmd += " color map3 0.392 0.831 0.992";
-        dumpcmd += " color map4 0.020 0.431 0.071";
-        dumpcmd += " color map5 0.992 0.349 0.145";
-        dumpcmd += " color map6 0.275 0.953 0.243";
-        dumpcmd += " color map7 0.729 0.525 0.361";
-        dumpcmd += " color map8 0.780 0.867 0.529";
-        dumpcmd += " color map9 0.243 0.298 0.078";
-        dumpcmd += QString(" amap %1 %2 sa 1.0 ").arg(mmin).arg(mmax);
-        dumpcmd += "10 map0 map1 map2 map3 map4 map5 map6 map7 map8 map9";
-    } else if (colormap == "Basic") {
-        dumpcmd += QString(" amap %1 %2 sa 1.0 ").arg(mmin).arg(mmax);
-        dumpcmd += "10 red cyan green black magenta blue yellow purple white orange";
-    } else if (colormap == "Teal") {
-        dumpcmd += " color map1 0.071 0.153 0.251";
-        dumpcmd += " color map2 0.106 0.282 0.369";
-        dumpcmd += " color map3 0.337 0.545 0.529";
-        dumpcmd += " color map4 0.710 0.820 0.682";
-        dumpcmd += QString(" amap %1 %2 cf 0.0 ").arg(mmin).arg(mmax);
-        dumpcmd += "4 min map1 0.25 map2 0.5 map3 max map4";
-    } else if (colormap == "Viridis") {
-        dumpcmd += " color map1 0.282 0.129 0.451";
-        dumpcmd += " color map2 0.435 0.435 0.556";
-        dumpcmd += " color map3 0.161 0.686 0.498";
-        dumpcmd += " color map4 0.741 0.875 0.149";
-        dumpcmd += QString(" amap %1 %2 cf 0.0 ").arg(mmin).arg(mmax);
-        dumpcmd += "4 min map1 0.333 map2 0.667 map3 max map4";
-    } else if (colormap == "Inferno") {
-        dumpcmd += " color map1 0.032 0.032 0.048";
-        dumpcmd += " color map2 0.318 0.071 0.486";
-        dumpcmd += " color map3 0.718 0.216 0.475";
-        dumpcmd += " color map4 0.988 0.537 0.380";
-        dumpcmd += " color map5 0.988 0.992 0.749";
-        dumpcmd += QString(" amap %1 %2 cf 0.0 ").arg(mmin).arg(mmax);
-        dumpcmd += "5 min map1 0.25 map2 0.5 map3 0.75 map4 max map5";
-    } else if (colormap == "Plasma") {
-        dumpcmd += " color map1 0.051 0.031 0.529";
-        dumpcmd += " color map2 0.612 0.090 0.620";
-        dumpcmd += " color map3 0.929 0.475 0.325";
-        dumpcmd += " color map4 0.941 0.976 0.129";
-        dumpcmd += QString(" amap %1 %2 cf 0.0 ").arg(mmin).arg(mmax);
-        dumpcmd += "4 min map1 0.333 map2 0.667 map3 max map4";
-    } else { // default is "BWR"
-        dumpcmd += " color map1 0.000 0.227 0.427";
-        dumpcmd += " color map2 0.459 0.055 0.075";
-        dumpcmd += QString(" amap %1 %2 cf 0.0 ").arg(mmin).arg(mmax);
-        dumpcmd += "3 min map1 0.5 white max map2";
-    }
+    appendColorMapArgs(dumpcmd);
 
-    if (computes.size() > 0) {
-        for (const auto &comp : computes) {
-            if (comp.second->enabled) {
-                QString id(comp.first.c_str());
-                QString color(comp.second->color.c_str());
-                dumpcmd += " ccolor " + id + blank + color;
-                dumpcmd += " ctrans " + id + blank + QString::number(comp.second->opacity);
-                dumpcmd += blank;
-            }
-        }
-    }
-    if (fixes.size() > 0) {
-        for (const auto &fix : fixes) {
-            if (fix.second->enabled) {
-                QString id(fix.first.c_str());
-                QString color(fix.second->color.c_str());
-                dumpcmd += " fcolor " + id + blank + color;
-                dumpcmd += " ftrans " + id + blank + QString::number(fix.second->opacity);
-                dumpcmd += blank;
-            }
-        }
-    }
+    appendFixComputeColors(dumpcmd);
 
     {
         StdoutSilencer guard;

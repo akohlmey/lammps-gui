@@ -132,6 +132,14 @@ private:
     void updatePeratom();     ///< Update per-atom information
     bool hasAutobonds();      ///< Check if autobonds are enabled
 
+    /// @name dump-image command builders used by createImage()
+    /// @{
+    void appendRegionArgs(QString &cmd);        ///< Append region visualization args
+    bool appendFixComputeStyles(QString &cmd);  ///< Append fix/compute draw args; true if any active
+    void appendColorMapArgs(QString &cmd);      ///< Append the selected color map definition
+    void appendFixComputeColors(QString &cmd);  ///< Append per fix/compute color and transparency
+    /// @}
+
     /**
      * @brief Create an "atom/type/index" color selection combo box for a shape style
      * @param current Color property to preselect
