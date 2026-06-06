@@ -355,6 +355,17 @@ StdoutSilencer Class
 
 -----
 
+PlotData and File Parsers
+-------------------------
+
+Column-oriented numeric data model (``src/plotdata.h``) and the parsers for
+external data files (whitespace/``.dat``, CSV, LAMMPS YAML, and JSON) used to
+plot data from files.
+
+.. doxygenfile:: plotdata.h
+
+-----
+
 Least-Squares Toolkit
 ---------------------
 
