@@ -121,8 +121,9 @@ overloads and `lastErrorMessage()` are the templates to follow.
   `lammpswrapper.cpp` shrank 628 -> 490 lines. The `loadLib` ABI check and
   `CHECKSYM` validation are untouched. Each expansion reproduces the exact
   prior call, so both build configurations are unchanged (the transform
-  required the plugin and linked sides to match before rewriting). Only
-  plugin mode is buildable here; linked mode verified by construction.
+  required the plugin and linked sides to match before rewriting).
+  Confirmed by compiling both configurations: plugin mode (`build-gui`,
+  58/58 tests) and linked mode (`build-lib`, `-DLAMMPS_GUI_USE_PLUGIN=off`).
   Note: a function-like dispatch macro is the right tool here (compile-time
   symbol selection, like `CHECKSYM`'s stringification) -- distinct from the
   logic-hiding macros that Stage 6 removes.
