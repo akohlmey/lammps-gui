@@ -65,6 +65,33 @@ TEST(LeastSquares, LinSolve)
     EXPECT_NEAR(x[1][0], 0.6, 1.0e-12);
 }
 
+TEST(LeastSquares, LinSolveMultiColumnRhs)
+{
+    // Solve A X = B with a non-square (2-column) right-hand side. This is the
+    // general case (the back/forward substitution must iterate the RHS columns,
+    // not the coefficient-matrix columns).
+    //   col 0: 2x+y=1, x+3y=2  -> (0.2, 0.6)
+    //   col 1: 2x+y=0, x+3y=5  -> (-1.0, 2.0)
+    float_mat A(2, 2);
+    A[0][0] = 2.0;
+    A[0][1] = 1.0;
+    A[1][0] = 1.0;
+    A[1][1] = 3.0;
+    float_mat rhs(2, 2);
+    rhs[0][0] = 1.0;
+    rhs[0][1] = 0.0;
+    rhs[1][0] = 2.0;
+    rhs[1][1] = 5.0;
+
+    const float_mat x = lin_solve(A, rhs);
+    ASSERT_EQ(x.nr_rows(), 2u);
+    ASSERT_EQ(x.nr_cols(), 2u);
+    EXPECT_NEAR(x[0][0], 0.2, 1.0e-12);
+    EXPECT_NEAR(x[1][0], 0.6, 1.0e-12);
+    EXPECT_NEAR(x[0][1], -1.0, 1.0e-12);
+    EXPECT_NEAR(x[1][1], 2.0, 1.0e-12);
+}
+
 TEST(LeastSquares, Invert)
 {
     // inverse of [[2,1],[1,3]] = (1/5)[[3,-1],[-1,2]]

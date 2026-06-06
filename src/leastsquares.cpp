@@ -128,12 +128,12 @@ void lu_backsubst(float_mat &A, float_mat &a, bool diag = false)
 {
     for (int r = (A.nr_rows() - 1); r >= 0; --r) {
         for (int c = (A.nr_cols() - 1); c > r; --c) {
-            for (std::size_t k = 0; k < A.nr_cols(); ++k) {
+            for (std::size_t k = 0; k < a.nr_cols(); ++k) {
                 a[r][k] -= A[r][c] * a[c][k];
             }
         }
         if (!diag) {
-            for (std::size_t k = 0; k < A.nr_cols(); ++k) {
+            for (std::size_t k = 0; k < a.nr_cols(); ++k) {
                 a[r][k] /= A[r][r];
             }
         }
@@ -151,12 +151,12 @@ void lu_forwsubst(float_mat &A, float_mat &a, bool diag = true)
 {
     for (int r = 0; r < static_cast<int>(A.nr_rows()); ++r) {
         for (int c = 0; c < r; ++c) {
-            for (std::size_t k = 0; k < A.nr_cols(); ++k) {
+            for (std::size_t k = 0; k < a.nr_cols(); ++k) {
                 a[r][k] -= A[r][c] * a[c][k];
             }
         }
         if (!diag) {
-            for (std::size_t k = 0; k < A.nr_cols(); ++k) {
+            for (std::size_t k = 0; k < a.nr_cols(); ++k) {
                 a[r][k] /= A[r][r];
             }
         }
