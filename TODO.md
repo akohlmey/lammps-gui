@@ -414,14 +414,27 @@ display with a small style dialog, and a post-processing/fitting dialog.
     `build-charts` dir) -- a real bug-surface that `build-gui`/`build-lib`
     miss.
 
-- **Layer 3 -- post-processing / analysis.** Generalize today's "smooth"
-  into a tiny `Transform` interface (source series -> derived series +
-  optional parameter report). Concrete transforms: Savitzky-Golay (exists),
-  autocorrelation (direct or FFT; lag vs ACF), EOS fit, custom-function fit.
-  Single "Postprocess..." dialog whose transform selector swaps in the
-  relevant parameter widgets (the Grace pattern). Fits overlay a fit curve
-  and show a small results readout (params + derived quantities + RMS
-  residual).
+- **Layer 3 -- post-processing / analysis. DONE (autocorrelation; fits are
+  Layer 4a).** Generalize today's "smooth" into a tiny `Transform` interface
+  (source series -> derived series + optional parameter report). Concrete
+  transforms: Savitzky-Golay (exists), autocorrelation (direct or FFT; lag vs
+  ACF), EOS fit, custom-function fit. Single "Postprocess..." dialog whose
+  transform selector swaps in the relevant parameter widgets (the Grace
+  pattern). Fits overlay a fit curve and show a small results readout (params
+  + derived quantities + RMS residual).
+  - Done: (8.3a) `analysis.{cpp,h}` -- a Qt-free post-processing core with a
+    normalized `autocorrelation()` (6 unit tests, api_reference entry). (8.3b)
+    a "Postprocess..." entry on the chart window's File menu with an analysis
+    selector (currently Autocorrelation) + max-lag parameter; it computes the
+    ACF of the current chart and opens the (lag, ACF) result in a new
+    standalone file-mode `ChartWindow` (reusing the Layer 1 plumbing, since
+    the abscissa changes to lag).
+  - Deferred by design: the formal `Transform` interface was not introduced
+    (premature for one analysis; the dialog dispatches directly). EOS /
+    polynomial / custom-function **fits land in Layer 4a/4b** and will extend
+    the same Postprocess dialog (selector + parameter area + results readout +
+    fit-curve overlay). All three backend configs build; 100/100 ctest; zero
+    Doxygen warnings.
 
 - **Layer 4 -- fitting.**
   - *4a linear-in-params (first):* polynomial + 4-parameter Birch-Murnaghan
