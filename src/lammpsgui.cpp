@@ -720,39 +720,37 @@ LammpsGui::LammpsGui(QWidget *parent, const QString &filename, int width, int he
 
     textEdit->setFileList();
 
-#define ADD_STYLES(keyword, Type)                                                          \
-    style_list.clear();                                                                    \
-    if ((std::string(#keyword) == "pair") || (std::string(#keyword) == "bond") ||          \
-        (std::string(#keyword) == "angle") || (std::string(#keyword) == "dihedral") ||     \
-        (std::string(#keyword) == "improper") || (std::string(#keyword) == "kspace"))      \
-        style_list << QString("none");                                                     \
-    ncmds = lammps.styleCount(#keyword);                                                   \
-    for (int i = 0; i < ncmds; ++i) {                                                      \
-        const QString style = lammps.styleName(#keyword, i);                               \
-        if (style.isEmpty()) continue;                                                     \
-        if (style.endsWith("/gpu") || style.endsWith("/intel") || style.endsWith("/kk") || \
-            style.endsWith("/kk/device") || style.endsWith("/kk/host") ||                  \
-            style.endsWith("/omp") || style.endsWith("/opt"))                              \
-            continue;                                                                      \
-        style_list << style;                                                               \
-    }                                                                                      \
-    style_list.sort();                                                                     \
-    textEdit->set##Type##List(style_list)
+    // build a sorted, accelerator-suffix-filtered style list for one category
+    auto styleList = [&](const char *keyword, bool withNone) {
+        QStringList list;
+        if (withNone) list << QStringLiteral("none");
+        const int nstyles = lammps.styleCount(keyword);
+        for (int i = 0; i < nstyles; ++i) {
+            const QString style = lammps.styleName(keyword, i);
+            if (style.isEmpty()) continue;
+            if (style.endsWith("/gpu") || style.endsWith("/intel") || style.endsWith("/kk") ||
+                style.endsWith("/kk/device") || style.endsWith("/kk/host") ||
+                style.endsWith("/omp") || style.endsWith("/opt"))
+                continue;
+            list << style;
+        }
+        list.sort();
+        return list;
+    };
 
-    ADD_STYLES(fix, Fix);
-    ADD_STYLES(compute, Compute);
-    ADD_STYLES(dump, Dump);
-    ADD_STYLES(atom, Atom);
-    ADD_STYLES(pair, Pair);
-    ADD_STYLES(bond, Bond);
-    ADD_STYLES(angle, Angle);
-    ADD_STYLES(dihedral, Dihedral);
-    ADD_STYLES(improper, Improper);
-    ADD_STYLES(kspace, Kspace);
-    ADD_STYLES(region, Region);
-    ADD_STYLES(integrate, Integrate);
-    ADD_STYLES(minimize, Minimize);
-#undef ADD_STYLES
+    textEdit->setFixList(styleList("fix", false));
+    textEdit->setComputeList(styleList("compute", false));
+    textEdit->setDumpList(styleList("dump", false));
+    textEdit->setAtomList(styleList("atom", false));
+    textEdit->setPairList(styleList("pair", true));
+    textEdit->setBondList(styleList("bond", true));
+    textEdit->setAngleList(styleList("angle", true));
+    textEdit->setDihedralList(styleList("dihedral", true));
+    textEdit->setImproperList(styleList("improper", true));
+    textEdit->setKspaceList(styleList("kspace", true));
+    textEdit->setRegionList(styleList("region", false));
+    textEdit->setIntegrateList(styleList("integrate", false));
+    textEdit->setMinimizeList(styleList("minimize", false));
 
     settings.beginGroup(Keys::GROUP_REFORMAT);
     textEdit->setReformatOnReturn(settings.value(Keys::RETURN, false).toBool());
