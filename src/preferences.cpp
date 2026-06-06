@@ -50,16 +50,6 @@
 #include <QVBoxLayout>
 #include <QValidator>
 
-#if defined(_WIN32)
-#ifndef WIN32_LEAN_AND_MEAN
-#define WIN32_LEAN_AND_MEAN
-#endif
-#include <process.h>
-#define execl(exe, arg0, arg1) _execl(exe, arg0, arg1)
-#else
-#include <unistd.h>
-#endif
-
 Preferences::Preferences(LammpsWrapper *_lammps, LammpsGui *_lammpsgui, QWidget *parent) :
     QDialog(parent), tabWidget(new QTabWidget),
     buttonBox(new QDialogButtonBox(QDialogButtonBox::Ok | QDialogButtonBox::Cancel)),
@@ -229,9 +219,7 @@ void Preferences::accept()
     if (needRelaunch) {
         warning(this, "Relaunching LAMMPS-GUI", "LAMMPS library plugin path was changed.",
                 "LAMMPS-GUI must be relaunched to activate it.");
-        const auto path = QCoreApplication::applicationFilePath().toStdString();
-        const auto arg0 = QCoreApplication::arguments().at(0).toStdString();
-        execl(path.c_str(), arg0.c_str(), (char *)nullptr);
+        relaunchApplication();
     }
 
     // reformatting settings

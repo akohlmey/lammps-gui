@@ -69,16 +69,6 @@
 #include <cstring>
 #include <string>
 
-#if defined(_WIN32)
-#ifndef WIN32_LEAN_AND_MEAN
-#define WIN32_LEAN_AND_MEAN
-#endif
-#include <process.h>
-#define execl(exe, arg0, arg1) _execl(exe, arg0, arg1)
-#else
-#include <unistd.h>
-#endif
-
 #include "constants.h"
 
 namespace {
@@ -476,9 +466,7 @@ void LammpsGui::setupPlugin(QSettings &settings)
                     settings.setValue(Keys::PLUGIN_PATH, canonical);
                     settings.sync();
                     // must re-launch LAMMPS-GUI to cleanly load the selected new plugin
-                    const auto path = QCoreApplication::applicationFilePath().toStdString();
-                    const auto arg0 = QCoreApplication::arguments().at(0).toStdString();
-                    execl(path.c_str(), arg0.c_str(), (char *)nullptr);
+                    relaunchApplication();
                     // This should not happen...
                     critical(this, "LAMMPS-GUI Error", "Relaunching LAMMPS-GUI failed.",
                              "LAMMPS-GUI must be restarted to correctly load the selected "
@@ -508,9 +496,7 @@ void LammpsGui::setupPlugin(QSettings &settings)
                         settings.setValue(Keys::PLUGIN_PATH, pluginPath);
                         settings.sync();
                         // must re-launch LAMMPS-GUI to cleanly load the selected new plugin
-                        const auto path = QCoreApplication::applicationFilePath().toStdString();
-                        const auto arg0 = QCoreApplication::arguments().at(0).toStdString();
-                        execl(path.c_str(), arg0.c_str(), (char *)nullptr);
+                        relaunchApplication();
                         // This should not happen...
                         critical(this, "LAMMPS-GUI Error", "Relaunching LAMMPS-GUI failed.",
                                  "LAMMPS-GUI must be restarted to correctly load the selected "
@@ -2095,9 +2081,7 @@ void LammpsGui::checkUpdate()
                 warning(this, "LAMMPS Shared Library Updated",
                         "The latest LAMMPS library has been downloaded successfully. "
                         "LAMMPS-GUI must be relaunched to activate it.");
-                const auto path = QCoreApplication::applicationFilePath().toStdString();
-                const auto arg0 = QCoreApplication::arguments().at(0).toStdString();
-                execl(path.c_str(), arg0.c_str(), (char *)nullptr);
+                relaunchApplication();
             } else {
                 critical(this, "Check for LAMMPS Update",
                          "Failed to download LAMMPS shared library.", downloader.errorString());

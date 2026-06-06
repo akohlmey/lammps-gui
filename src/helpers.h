@@ -110,6 +110,15 @@ extern void exportImage(QWidget *parent, QImage *image, const QString &title);
 [[nodiscard]] extern bool hasExe(const QString &exe);
 
 /**
+ * @brief Re-exec the current LAMMPS-GUI process in place (e.g. to reload the plugin)
+ *
+ * Replaces the running process with a fresh launch of the same executable.
+ * On success it does not return; it returns only if the re-exec failed, so
+ * callers must handle that case (typically warn and/or exit).
+ */
+extern void relaunchApplication();
+
+/**
  * @brief Recursively delete all files in a directory
  * @param dir The directory to purge
  */

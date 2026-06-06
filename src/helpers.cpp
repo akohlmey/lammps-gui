@@ -16,6 +16,7 @@
 #include <QApplication>
 #include <QBrush>
 #include <QColor>
+#include <QCoreApplication>
 #include <QDir>
 #include <QFile>
 #include <QFileDialog>
@@ -37,12 +38,14 @@
 // define consistent function aliases to avoid complications from pre-processing
 #ifdef _WIN32
 #include <io.h>
+#include <process.h>
 
 const auto &mydup    = _dup;
 const auto &mydup2   = _dup2;
 const auto &myfileno = _fileno;
 const auto &myclose  = _close;
 const auto &myopen   = _open;
+const auto &myexecl  = _execl;
 #else
 #include <unistd.h>
 const auto &mydup    = dup;
@@ -50,6 +53,7 @@ const auto &mydup2   = dup2;
 const auto &myfileno = fileno;
 const auto &myclose  = close;
 const auto &myopen   = open;
+const auto &myexecl  = execl;
 #endif
 
 namespace {
@@ -71,6 +75,14 @@ bool capture_is_active = false;
 // will be allocated and initialized in main() to avoid segfault on macOS
 std::unique_ptr<QFont> GUI_MONOFONT;
 std::unique_ptr<QFont> GUI_ALLFONT;
+
+// re-exec the current process in place; returns only if the re-exec failed
+void relaunchApplication()
+{
+    const auto path = QCoreApplication::applicationFilePath().toStdString();
+    const auto arg0 = QCoreApplication::arguments().at(0).toStdString();
+    myexecl(path.c_str(), arg0.c_str(), static_cast<char *>(nullptr));
+}
 
 // compare two date strings return -1 if first is older than second, 0 if same, or 1 if
 // otherwise
