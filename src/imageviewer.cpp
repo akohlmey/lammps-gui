@@ -11,6 +11,8 @@
 
 #include "imageviewer.h"
 
+#include "imageviewer_internal.h"
+
 #include "constants.h"
 #include "helpers.h"
 #include "lammpsgui.h"
@@ -148,34 +150,6 @@ constexpr double pte_vdw_radius[] = {
 };
 
 // clang-format on
-// constants
-const QString blank(" ");
-constexpr double VDW_ON           = 1.6;
-constexpr double VDW_OFF          = 0.5;
-constexpr double VDW_CUT          = 1.0;
-constexpr double SHINY_ON         = 0.6;
-constexpr double SHINY_OFF        = 0.2;
-constexpr double SHINY_CUT        = 0.4;
-constexpr int DEFAULT_NPOINTS     = 100000;
-constexpr double DEFAULT_DIAMETER = 0.2;
-constexpr double DEFAULT_OPACITY  = 0.5;
-constexpr int TITLE_MARGIN        = 10;
-constexpr int CONTENT_MARGIN      = 5;
-constexpr int LAYOUT_SPACING      = 6;
-constexpr int MINIMUM_WIDTH       = 400;
-constexpr int MINIMUM_HEIGHT      = 300;
-constexpr int EXTRA_WIDTH         = 150;
-constexpr int EXTRA_HEIGHT        = 100;
-constexpr int RESET_ALL_COLORS    = 10;
-constexpr int ICON_SIZE           = 48;
-
-enum { FRAME, FILLED, TRANSPARENT, POINTS };
-enum { TYPE, ELEMENT, CONSTANT };
-
-// needs to be kept in sync with the dump image tri flag values
-enum { NONE, TRIANGLES, CYLINDERS, BOTH };
-
-// helper functions:
 
 // 1) find element in periodic table from their mass
 int get_pte_from_mass(double mass)
@@ -189,6 +163,12 @@ int get_pte_from_mass(double mass)
     if ((mass < 61.24) && (mass > 58.8133)) idx = 27;
     return idx;
 }
+
+QStringList defaultcolors = {"red",       "green",    "blue",       "yellow",   "cyan",
+                             "magenta",   "orange",   "chartreuse", "brown",    "darkred",
+                             "darkgreen", "darkblue", "darkyellow", "darkcyan", "darkmagenta",
+                             "silver",    "gray"};
+} // namespace
 
 // 2) create a color gradient icon
 QIcon gradient_icon(const QList<QColor> &colors)
@@ -322,74 +302,12 @@ void saveJsonColors(QWidget *parent, const QJsonArray &colors, const QJsonObject
     file.write(QJsonDocument(root).toJson());
 }
 
-QStringList defaultcolors = {"red",       "green",    "blue",       "yellow",   "cyan",
-                             "magenta",   "orange",   "chartreuse", "brown",    "darkred",
-                             "darkgreen", "darkblue", "darkyellow", "darkcyan", "darkmagenta",
-                             "silver",    "gray"};
-
-// same list as in dump image
-const QList<QPair<QString, QColor>> deftypecolors = {
-    {{"red"}, {255, 0, 0}},           {{"forestgreen"}, {34, 139, 34}},
-    {{"blue"}, {0, 0, 255}},          {{"gold"}, {255, 215, 0}},
-    {{"cyan"}, {0, 255, 255}},        {{"magenta"}, {255, 0, 255}},
-    {{"silver"}, {110, 110, 110}},    {{"orange"}, {255, 128, 0}},
-    {{"lime"}, {0, 255, 0}},          {{"gray"}, {128, 128, 128}},
-    {{"darkred"}, {139, 0, 0}},       {{"darkgreen"}, {0, 100, 0}},
-    {{"darkblue"}, {0, 0, 139}},      {{"darkcyan"}, {0, 139, 139}},
-    {{"darkmagenta"}, {139, 0, 139}}, {{"darkgray"}, {69, 69, 69}}};
-} // namespace
-
 // select the combo box entry matching the given text, if present (leave unchanged otherwise)
-static void selectComboItem(QComboBox *box, const QString &text)
+void selectComboItem(QComboBox *box, const QString &text)
 {
     const int idx = box->findText(text);
     if (idx >= 0) box->setCurrentIndex(idx);
 }
-
-/**
- * @brief Store settings for displaying graphics from a fix or compute in a LAMMPS snapshot image
- */
-class ImageInfo {
-public:
-    ImageInfo() = delete;
-    /** Custom constructor */
-    ImageInfo(bool _enabled, const QString &_style, int _colorstyle, const std::string &_color,
-              double _opacity, double _flag1, double _flag2) :
-        enabled(_enabled), style(_style), colorstyle(_colorstyle), color(_color), opacity(_opacity),
-        flag1(_flag1), flag2(_flag2)
-    {
-    }
-
-    bool enabled;      ///< display graphics if true
-    QString style;     ///< name of style
-    int colorstyle;    ///< color style for graphics: TYPE, ELEMENT, CONSTANT
-    std::string color; ///< custom color of graphics objects for style == CONSTANT
-    double opacity;    ///< opacity of graphics objects for style == CONSTANT
-    double flag1;      ///< Flag #1 for graphics
-    double flag2;      ///< Flag #2 for graphics
-};
-
-/**
- * @brief Store settings for displaying a region in a LAMMPS snapshot image
- */
-class RegionInfo {
-public:
-    RegionInfo() = delete;
-    /** Custom constructor */
-    RegionInfo(bool _enabled, int _style, const std::string &_color, double _diameter,
-               double _opacity, int _npoints) :
-        enabled(_enabled), style(_style), color(_color), diameter(_diameter), opacity(_opacity),
-        npoints(_npoints)
-    {
-    }
-
-    bool enabled;      ///< display region if true
-    int style;         ///< style of region object: FRAME, FILLED, TRANSPARENT, or POINTS
-    std::string color; ///< color of region display
-    double diameter;   ///< diameter value for POINTS and FRAME
-    double opacity;    ///< opacity for TRANSPARENT
-    int npoints;       ///< number of points to be used for POINTS style region display
-};
 
 ImageViewer::ImageViewer(const QString &fileName, LammpsWrapper *_lammps, LammpsGui *_lammpsgui,
                          QWidget *parent) :
