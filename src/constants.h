@@ -107,6 +107,12 @@ inline const QString TITLE_PREFIX = QStringLiteral("LAMMPS-GUI - ");
  */
 namespace Keys {
 
+// The settings-key constants below are intentionally self-describing -- each
+// constant name mirrors its string value -- so they are excluded from the
+// generated API docs by the conditional section below instead of carrying
+// redundant per-member documentation comments. See the namespace brief above.
+/// @cond
+
 // ---- groups (QSettings::beginGroup) --------------------------------------
 inline const QString GROUP_CHARTS   = QStringLiteral("charts");
 inline const QString GROUP_REFORMAT = QStringLiteral("reformat");
@@ -186,6 +192,7 @@ inline const QString WEBPAGE      = QStringLiteral("webpage");
 inline const QString XSIZE        = QStringLiteral("xsize");
 inline const QString YSIZE        = QStringLiteral("ysize");
 inline const QString ZOOM         = QStringLiteral("zoom");
+/// @endcond
 
 } // namespace Keys
 
