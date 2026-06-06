@@ -16,6 +16,7 @@
 #include <QChart>
 #include <QPen>
 #include <QSettings>
+#include <QXYSeries>
 
 QtChartsBackend::QtChartsBackend() :
     chart(nullptr), chartView(nullptr), xaxis(nullptr), yaxis(nullptr)
@@ -82,20 +83,28 @@ void QtChartsBackend::resetZoom(double xmin, double xmax, double ymin, double ym
     yaxis->setRange(ymin, ymax);
 }
 
-void QtChartsBackend::addSeries(QLineSeries *s, const QColor &color, qreal width)
+void QtChartsBackend::addSeries(QXYSeries *s, const QColor &color, qreal width)
 {
-    s->setPen(QPen(QBrush(color), width, Qt::SolidLine, Qt::RoundCap));
+    styleSeries(s, color, width);
     chart->addSeries(s);
     s->attachAxis(xaxis);
     s->attachAxis(yaxis);
 }
 
-void QtChartsBackend::removeSeries(QLineSeries *s)
+void QtChartsBackend::styleSeries(QXYSeries *s, const QColor &color, qreal width)
+{
+    if (auto *line = qobject_cast<QLineSeries *>(s))
+        line->setPen(QPen(QBrush(color), width, Qt::SolidLine, Qt::RoundCap));
+    else
+        s->setColor(color);
+}
+
+void QtChartsBackend::removeSeries(QXYSeries *s)
 {
     chart->removeSeries(s);
 }
 
-bool QtChartsBackend::hasSeries(QLineSeries *s) const
+bool QtChartsBackend::hasSeries(QXYSeries *s) const
 {
     return chart->series().contains(s);
 }

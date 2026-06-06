@@ -19,6 +19,7 @@
 
 class QAbstractAxis;
 class QLineSeries;
+class QXYSeries;
 class QValueAxis;
 class QWidget;
 
@@ -76,25 +77,33 @@ public:
     virtual void resetZoom(double xmin, double xmax, double ymin, double ymax) = 0;
 
     /**
-     * @brief Add a series to the chart display
-     * @param s Series to add
+     * @brief Add a series (line or scatter) to the chart display
+     * @param s Series to add (a QLineSeries or QScatterSeries)
      * @param color Color for the series
-     * @param width Line width
+     * @param width Line width (applied only to line series)
      */
-    virtual void addSeries(QLineSeries *s, const QColor &color, qreal width) = 0;
+    virtual void addSeries(QXYSeries *s, const QColor &color, qreal width) = 0;
+
+    /**
+     * @brief Update the appearance of an already-added series
+     * @param s Series to restyle (a QLineSeries or QScatterSeries)
+     * @param color New color
+     * @param width New line width (applied only to line series)
+     */
+    virtual void styleSeries(QXYSeries *s, const QColor &color, qreal width) = 0;
 
     /**
      * @brief Remove a series from the chart display
      * @param s Series to remove
      */
-    virtual void removeSeries(QLineSeries *s) = 0;
+    virtual void removeSeries(QXYSeries *s) = 0;
 
     /**
      * @brief Check if a series is currently displayed
      * @param s Series to check
      * @return true if series is in the chart
      */
-    virtual bool hasSeries(QLineSeries *s) const = 0;
+    virtual bool hasSeries(QXYSeries *s) const = 0;
 
     /**
      * @brief Set the chart title

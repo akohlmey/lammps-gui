@@ -608,7 +608,8 @@ bool ChartWindow::eventFilter(QObject *watched, QEvent *event)
 
 ChartViewer::ChartViewer(const QString &title, int _index, QWidget *parent) :
     QWidget(parent), lastX(-1.0), index(_index), window(10), order(4), series(new QLineSeries),
-    smooth(nullptr), doRaw(true), doSmooth(false)
+    smooth(nullptr), scatter(nullptr), doRaw(true), doSmooth(false),
+    dispmode(ChartDisplayMode::Lines), rawColor(), rawWidth(3.0)
 {
 #ifdef LAMMPS_GUI_USE_QTGRAPHS
     backend = std::make_unique<QtGraphsBackend>();
@@ -811,6 +812,17 @@ void ChartViewer::setPoints(const QList<QPointF> &points)
     resetZoom();
 }
 
+/* -------------------------------------------------------------------- */
+
+void ChartViewer::setDisplayStyle(ChartDisplayMode mode, const QColor &color, qreal width)
+{
+    dispmode = mode;
+    rawColor = color;
+    rawWidth = width;
+    updateSmooth();
+    resetZoom();
+}
+
 // local Savitzky-Golay smoothing wrapper around the least-squares core
 
 namespace {
@@ -855,10 +867,30 @@ void ChartViewer::updateSmooth()
     if ((smoothidx < 0) || (smoothidx >= mybrushes.size())) smoothidx = 0;
     settings.endGroup();
 
+    const QColor rawcolor = rawColor.isValid() ? rawColor : mybrushes[rawidx].color();
+    const bool wantLines  = (dispmode != ChartDisplayMode::Points);
+    const bool wantPoints = (dispmode != ChartDisplayMode::Lines);
+
     if (doRaw) {
-        // add raw data if not in chart
-        if (!backend->hasSeries(series)) backend->addSeries(series, mybrushes[rawidx].color(), 3.0);
-        series->setVisible(true);
+        // raw data as a line series
+        if (!backend->hasSeries(series))
+            backend->addSeries(series, rawcolor, rawWidth);
+        else
+            backend->styleSeries(series, rawcolor, rawWidth);
+        series->setVisible(wantLines);
+
+        // raw data as points, created on demand and kept in sync with the line
+        if (wantPoints) {
+            if (!scatter) scatter = new QScatterSeries;
+            scatter->replace(series->points());
+            if (!backend->hasSeries(scatter))
+                backend->addSeries(scatter, rawcolor, rawWidth);
+            else
+                backend->styleSeries(scatter, rawcolor, rawWidth);
+            scatter->setVisible(true);
+        } else if (scatter) {
+            scatter->setVisible(false);
+        }
     }
 
     if (doSmooth) {

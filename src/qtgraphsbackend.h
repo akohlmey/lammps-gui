@@ -41,9 +41,10 @@ public:
     QValueAxis *xAxis() const override { return xaxis; }
     QValueAxis *yAxis() const override { return yaxis; }
     void resetZoom(double xmin, double xmax, double ymin, double ymax) override;
-    void addSeries(QLineSeries *s, const QColor &color, qreal width) override;
-    void removeSeries(QLineSeries *s) override;
-    bool hasSeries(QLineSeries *s) const override;
+    void addSeries(QXYSeries *s, const QColor &color, qreal width) override;
+    void styleSeries(QXYSeries *s, const QColor &color, qreal width) override;
+    void removeSeries(QXYSeries *s) override;
+    bool hasSeries(QXYSeries *s) const override;
     void setTLabel(const QString &tlabel) override;
     QString getTLabel() const override;
     void setYLabel(const QString &ylabel) override;

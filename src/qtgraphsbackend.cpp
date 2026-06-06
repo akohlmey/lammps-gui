@@ -25,6 +25,7 @@
 #include <QtGraphs/QGraphsTheme>
 #include <QtGraphs/QLineSeries>
 #include <QtGraphs/QValueAxis>
+#include <QtGraphs/QXYSeries>
 
 #include <cmath>
 
@@ -187,20 +188,27 @@ void QtGraphsBackend::resetZoom(double xmin, double xmax, double ymin, double ym
     yaxis->setTickInterval(niceInterval(yspan));
 }
 
-void QtGraphsBackend::addSeries(QLineSeries *s, const QColor &color, qreal width)
+void QtGraphsBackend::addSeries(QXYSeries *s, const QColor &color, qreal width)
 {
-    s->setColor(color);
-    s->setWidth(width);
-    s->setCapStyle(Qt::RoundCap);
+    styleSeries(s, color, width);
     if (graphsView) QMetaObject::invokeMethod(graphsView, "addSeries", Q_ARG(QObject *, s));
 }
 
-void QtGraphsBackend::removeSeries(QLineSeries *s)
+void QtGraphsBackend::styleSeries(QXYSeries *s, const QColor &color, qreal width)
+{
+    s->setColor(color);
+    if (auto *line = qobject_cast<QLineSeries *>(s)) {
+        line->setWidth(width);
+        line->setCapStyle(Qt::RoundCap);
+    }
+}
+
+void QtGraphsBackend::removeSeries(QXYSeries *s)
 {
     if (graphsView) QMetaObject::invokeMethod(graphsView, "removeSeries", Q_ARG(QObject *, s));
 }
 
-bool QtGraphsBackend::hasSeries(QLineSeries *s) const
+bool QtGraphsBackend::hasSeries(QXYSeries *s) const
 {
     bool result = false;
     if (graphsView)

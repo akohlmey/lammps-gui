@@ -194,15 +194,27 @@ private:
 #ifdef LAMMPS_GUI_USE_QTGRAPHS
 #include <QtGraphs/QAbstractAxis>
 #include <QtGraphs/QLineSeries>
+#include <QtGraphs/QScatterSeries>
 #include <QtGraphs/QValueAxis>
 #else
 #include <QLineSeries>
+#include <QScatterSeries>
 #include <QValueAxis>
 #endif
 
+#include <QColor>
 #include <memory>
 
 class ChartBackend;
+
+/**
+ * @brief How a chart's raw data series is drawn
+ */
+enum class ChartDisplayMode {
+    Lines,          ///< connect data points with lines only
+    Points,         ///< draw data points as markers only
+    LinesAndPoints, ///< draw both lines and markers
+};
 
 /**
  * @brief Individual chart viewer for displaying a single time-series
@@ -338,6 +350,21 @@ public:
     void setPoints(const QList<QPointF> &points);
 
     /**
+     * @brief Set how the raw data series is displayed
+     * @param mode  Lines, points, or both
+     * @param color Series color (invalid color falls back to the theme default)
+     * @param width Line width (used for the line and lines+points modes)
+     */
+    void setDisplayStyle(ChartDisplayMode mode, const QColor &color, qreal width);
+
+    /** @brief Current display mode */
+    ChartDisplayMode displayMode() const { return dispmode; }
+    /** @brief Current series color (may be invalid, meaning the theme default) */
+    QColor displayColor() const { return rawColor; }
+    /** @brief Current line width */
+    qreal displayWidth() const { return rawWidth; }
+
+    /**
      * @brief Get current chart title
      * @return Chart title
      */
@@ -361,8 +388,12 @@ private:
     int index;                             ///< Chart index
     int window, order;                     ///< Smoothing window and polynomial order
     QLineSeries *series, *smooth;          ///< Raw and smoothed data series
+    QScatterSeries *scatter;               ///< Raw data drawn as points (created on demand)
     QTime lastUpdate;                      ///< Time of last chart update
     bool doRaw, doSmooth;                  ///< Flags for showing raw/smoothed data
+    ChartDisplayMode dispmode;             ///< How the raw series is drawn
+    QColor rawColor;                       ///< Raw series color override (invalid = theme default)
+    qreal rawWidth;                        ///< Raw series line width
 };
 #endif
 
