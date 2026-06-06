@@ -93,6 +93,8 @@ if (NOT BUILD_DOC_ONLY)
     ${CMAKE_SOURCE_DIR}/src/lammpsgui.h
     ${CMAKE_SOURCE_DIR}/src/aboutdialog.cpp
     ${CMAKE_SOURCE_DIR}/src/aboutdialog.h
+    ${CMAKE_SOURCE_DIR}/src/analysis.cpp
+    ${CMAKE_SOURCE_DIR}/src/analysis.h
     ${CMAKE_SOURCE_DIR}/src/chartviewer.cpp
     ${CMAKE_SOURCE_DIR}/src/chartviewer.h
     ${CMAKE_SOURCE_DIR}/src/chartbackend.h

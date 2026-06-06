@@ -386,6 +386,16 @@ polynomial and equation-of-state fits.
 
 -----
 
+Post-Processing Analyses
+------------------------
+
+Self-contained (Qt-free) post-processing analyses (``src/analysis.h``) used
+by the chart post-processing dialog.
+
+.. doxygenfile:: analysis.h
+
+-----
+
 .. _helper_functions:
 
 Helper Functions

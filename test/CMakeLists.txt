@@ -144,6 +144,17 @@ target_link_libraries(test_plotdata PRIVATE GTest::gtest_main Qt6::Core)
 
 gtest_discover_tests(test_plotdata)
 
+# Test executable for the post-processing analyses (Qt-free)
+add_executable(test_analysis
+  test_analysis.cpp
+  ${CMAKE_SOURCE_DIR}/src/analysis.cpp
+)
+
+target_include_directories(test_analysis PRIVATE ${CMAKE_SOURCE_DIR}/src)
+target_link_libraries(test_analysis PRIVATE GTest::gtest_main)
+
+gtest_discover_tests(test_analysis)
+
 ########################################################################
 # Tests that check the GUI environment and the GUI
 # IMPORTANT NOTE: we must use a different display number for the -n flag
