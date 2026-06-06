@@ -15,6 +15,7 @@
 #include "helpers.h"
 #include "lammpsgui.h"
 #include "leastsquares.h"
+#include "plotdata.h"
 #include "qaddon.h"
 #include "rangeslider.h"
 
@@ -298,6 +299,35 @@ void ChartWindow::setRangeEnabled(bool enabled)
     smooth->setEnabled(enabled);
     window->setEnabled(enabled && doSmooth);
     order->setEnabled(enabled && doSmooth);
+}
+
+void ChartWindow::loadData(const PlotData &data, int xcol, const QList<int> &ycols)
+{
+    resetCharts();
+    if (data.isEmpty() || ycols.isEmpty()) return;
+    if ((xcol < 0) || (xcol >= data.columnCount())) return;
+
+    const std::vector<double> &xvals = data.column(xcol);
+    const int nrow                   = data.rowCount();
+    const QString xlabel             = data.columnName(xcol);
+
+    int idx = 0;
+    for (int ycol : ycols) {
+        if ((ycol < 0) || (ycol >= data.columnCount())) continue;
+        addChart(data.columnName(ycol), idx);
+        auto *chart                      = charts.last();
+        const std::vector<double> &yvals = data.column(ycol);
+        QList<QPointF> points;
+        points.reserve(nrow);
+        for (int r = 0; r < nrow; ++r)
+            points.append(QPointF(xvals[r], yvals[r]));
+        chart->setPoints(points);
+        chart->setXLabel(xlabel);
+        ++idx;
+    }
+    if (!data.units().isEmpty()) setUnits(data.units());
+    setRangeEnabled(true);
+    resetZoom();
 }
 
 void ChartWindow::copy()
@@ -762,6 +792,23 @@ void ChartViewer::setTLabel(const QString &tlabel)
 void ChartViewer::setYLabel(const QString &ylabel)
 {
     backend->setYLabel(ylabel);
+}
+
+/* -------------------------------------------------------------------- */
+
+void ChartViewer::setXLabel(const QString &xlabel)
+{
+    if (backend->xAxis()) backend->xAxis()->setTitleText(xlabel);
+}
+
+/* -------------------------------------------------------------------- */
+
+void ChartViewer::setPoints(const QList<QPointF> &points)
+{
+    series->replace(points);
+    lastX = points.isEmpty() ? -1.0 : points.last().x();
+    updateSmooth();
+    resetZoom();
 }
 
 // local Savitzky-Golay smoothing wrapper around the least-squares core

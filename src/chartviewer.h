@@ -32,6 +32,7 @@ class RangeSlider;
 
 class ChartViewer;
 class LammpsGui;
+class PlotData;
 
 /**
  * @brief Window for displaying and managing multiple time-series charts
@@ -123,6 +124,18 @@ public:
      * @param enabled  true to enable sliders and false to disable them
      */
     void setRangeEnabled(bool enabled);
+
+    /**
+     * @brief Populate the window from an external data table (file plotting)
+     * @param data  Parsed column data
+     * @param xcol  Index of the column to use as the shared x axis
+     * @param ycols Indices of the columns to plot, one chart each
+     *
+     * Replaces any existing charts; each selected y column becomes a chart
+     * titled by its column name, with the x axis labeled by the x column.
+     * Unlike the live thermo feed this loads all rows in one shot.
+     */
+    void loadData(const PlotData &data, int xcol, const QList<int> &ycols);
 
 private slots:
     void quit();                          ///< Close window and quit
@@ -308,6 +321,21 @@ public:
      * @param ylabel New Y-axis label
      */
     void setYLabel(const QString &ylabel);
+
+    /**
+     * @brief Set the X-axis label
+     * @param xlabel New X-axis label
+     */
+    void setXLabel(const QString &xlabel);
+
+    /**
+     * @brief Replace all chart data with the given points in one shot
+     * @param points New (x, y) data points
+     *
+     * Bulk loader for file plotting; bypasses the monotonic-x guard and the
+     * throttled live-update path used by addPoint().
+     */
+    void setPoints(const QList<QPointF> &points);
 
     /**
      * @brief Get current chart title
