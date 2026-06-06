@@ -208,12 +208,12 @@ ChartWindow::ChartWindow(const QString &_filename, LammpsGui *_lammpsgui, QWidge
 
     connect(chartTitle, &QLineEdit::editingFinished, this, &ChartWindow::updateTLabel);
     connect(chartYlabel, &QLineEdit::editingFinished, this, &ChartWindow::updateYLabel);
-    connect(smooth, SIGNAL(currentIndexChanged(int)), this, SLOT(selectSmooth(int)));
+    connect(smooth, &QComboBox::currentIndexChanged, this, &ChartWindow::selectSmooth);
     connect(window, &QAbstractSpinBox::editingFinished, this, &ChartWindow::updateSmooth);
     connect(order, &QAbstractSpinBox::editingFinished, this, &ChartWindow::updateSmooth);
     connect(window, QOverload<int>::of(&QSpinBox::valueChanged), this, &ChartWindow::updateSmooth);
     connect(order, QOverload<int>::of(&QSpinBox::valueChanged), this, &ChartWindow::updateSmooth);
-    connect(columns, SIGNAL(currentIndexChanged(int)), this, SLOT(changeChart(int)));
+    connect(columns, &QComboBox::currentIndexChanged, this, &ChartWindow::changeChart);
     connect(xrange, &RangeSlider::sliderMoved, this, &ChartWindow::updateXRange);
     connect(yrange, &RangeSlider::sliderMoved, this, &ChartWindow::updateYRange);
 
