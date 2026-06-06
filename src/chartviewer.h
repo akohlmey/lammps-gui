@@ -48,10 +48,12 @@ public:
     /**
      * @brief Constructor
      * @param filename Path to the log file containing the data
-     * @param lammpsgui Pointer to LammpsGui for sending signals
+     * @param lammpsgui Pointer to LammpsGui for sending signals (optional;
+     *                  nullptr for a standalone window with no live simulation)
      * @param parent Parent widget
      */
-    explicit ChartWindow(const QString &filename, LammpsGui *lammpsgui, QWidget *parent = nullptr);
+    explicit ChartWindow(const QString &filename, LammpsGui *lammpsgui = nullptr,
+                         QWidget *parent = nullptr);
 
     /**
      * @brief Get the number of charts currently displayed
@@ -223,11 +225,14 @@ public:
     ChartViewer &operator=(ChartViewer &&)      = delete;
 
     /**
-     * @brief Add a data point to the chart
-     * @param step Simulation step number
-     * @param data Data value for this step
+     * @brief Append an (x, y) data point to the chart
+     * @param x X value (e.g. the simulation step, or an arbitrary abscissa)
+     * @param y Y value
+     *
+     * The point is appended only if @p x is greater than the last appended x;
+     * this keeps the live thermo feed monotonic in the step number.
      */
-    void addData(int step, double data);
+    void addPoint(double x, double y);
 
     /**
      * @brief Get the min/max bounds of the data
@@ -324,7 +329,8 @@ public:
 
 private:
     std::unique_ptr<ChartBackend> backend; ///< Rendering backend (QtGraphs or QtCharts)
-    int lastStep, index;                   ///< Last step processed, chart index
+    double lastX;                          ///< Last (largest) x value appended
+    int index;                             ///< Chart index
     int window, order;                     ///< Smoothing window and polynomial order
     QLineSeries *series, *smooth;          ///< Raw and smoothed data series
     QTime lastUpdate;                      ///< Time of last chart update

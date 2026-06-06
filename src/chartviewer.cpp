@@ -197,6 +197,8 @@ ChartWindow::ChartWindow(const QString &_filename, LammpsGui *_lammpsgui, QWidge
     stopAct =
         addMenuAction(file, "Stop &Run", ":/icons/process-stop.png", this, &ChartWindow::stopRun);
     stopAct->setShortcut(QKeySequence(Qt::CTRL | Qt::Key_Slash));
+    // without a live simulation there is nothing to stop
+    if (!lammpsgui) stopAct->setEnabled(false);
     closeAct = addMenuAction(file, "&Close", ":/icons/window-close.png", this, &QWidget::close);
     closeAct->setShortcut(QKeySequence(Qt::CTRL | Qt::Key_W));
     quitAct =
@@ -276,7 +278,7 @@ void ChartWindow::addChart(const QString &title, int index)
 void ChartWindow::addData(int step, double data, int index)
 {
     for (auto &c : charts)
-        if (c->getIndex() == index) c->addData(step, data);
+        if (c->getIndex() == index) c->addPoint(step, data);
 }
 
 void ChartWindow::setUnits(const QString &_units)
@@ -575,7 +577,7 @@ bool ChartWindow::eventFilter(QObject *watched, QEvent *event)
 /* -------------------------------------------------------------------- */
 
 ChartViewer::ChartViewer(const QString &title, int _index, QWidget *parent) :
-    QWidget(parent), lastStep(-1), index(_index), window(10), order(4), series(new QLineSeries),
+    QWidget(parent), lastX(-1.0), index(_index), window(10), order(4), series(new QLineSeries),
     smooth(nullptr), doRaw(true), doSmooth(false)
 {
 #ifdef LAMMPS_GUI_USE_QTGRAPHS
@@ -614,11 +616,11 @@ ChartViewer::~ChartViewer()
 
 /* -------------------------------------------------------------------- */
 
-void ChartViewer::addData(int step, double data)
+void ChartViewer::addPoint(double x, double y)
 {
-    if (lastStep < step) {
-        lastStep = step;
-        series->append(step, data);
+    if (lastX < x) {
+        lastX = x;
+        series->append(x, y);
 
         QSettings settings;
         // update the chart display only after at least updchart milliseconds have passed
