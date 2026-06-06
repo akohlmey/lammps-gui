@@ -218,3 +218,48 @@ overloads and `lastErrorMessage()` are the templates to follow.
 - [ ] **6f. General API hygiene.** const-correctness on query methods,
   pass-by-const-ref for non-trivial parameters, `explicit` on
   single-argument constructors, in classes touched by earlier stages.
+
+## Stage 7 -- Extract createImage into a standalone, struct-driven renderer (high-level)
+
+Turn `ImageViewer::createImage()` into a free function in its own
+`.cpp`/`.h` (e.g. `dumpimage.{cpp,h}`), fed by a plain parameter struct
+(e.g. `DumpImageParams`) that `ImageViewer` populates before the call,
+rather than the function reaching into ~50 `ImageViewer` members directly.
+
+**Primary payoff:** the dump-image command generation becomes a *pure*
+`QString buildDumpImageCommand(const DumpImageParams&)` that can be
+**unit-tested without a GUI or a live LAMMPS** -- closing the single
+biggest verification gap in this codebase (the image/dialog code is
+otherwise only `build`-verifiable, never exercised by the test suite).
+Secondary: shrinks `imageviewer.cpp` by ~290 lines and makes the
+ImageViewer/renderer boundary explicit.
+
+**This step MUST be preceded by an assessment of the intra-function
+refactoring it forces**, because `createImage` currently interleaves four
+concerns that have to be separated first:
+  1. *Parameter gathering* -- ~50 members plus LAMMPS queries
+     (`ntypes`, `nbondtypes`, `mass`, `pair_style`, `units`, `dimension`,
+     the various `*_flag` settings, `version`) and derived data (element
+     detection from masses, sigma fallback). These become the struct's
+     fields, computed by `ImageViewer` (or a gather step) before the call.
+  2. *UI widget side effects* -- it shows/hides/enables the atom-size
+     `QLineEdit`/`QLabel`/`vdw` button via `findChild` based on
+     `useelements`/`usediameter`/`atomcustom`. This is GUI-only and must be
+     pulled back into `ImageViewer` (e.g. a `syncAtomSizeWidgets()`),
+     otherwise the function cannot be GUI-free/testable.
+  3. *Pure command assembly* -- the `dumpcmd` building (already partly
+     factored into `appendRegionArgs/appendFixComputeStyles/`
+     `appendColorMapArgs/appendFixComputeColors`, which would be
+     re-parameterized to take the struct instead of `this`). This is the
+     testable core.
+  4. *Rendering/orchestration* -- temp-atom creation for molecule view,
+     `write_dump`, error handling, reading the PPM, updating `imageLabel`.
+     Thin glue; can stay in `ImageViewer` or move with the function (it
+     still needs `LammpsWrapper`).
+
+**Open design questions for the assessment:** whether the function takes
+`LammpsWrapper*` (simpler) or the struct fully pre-captures all LAMMPS
+data (purer/more testable); whether `DumpImageParams` owns copies of the
+`regions`/`computes`/`fixes`/`color_list` data or references them; and how
+much of (4) moves vs. stays. The Stage 5b in-place `createImage`
+decomposition is a stepping stone but its helpers would be reshaped here.
