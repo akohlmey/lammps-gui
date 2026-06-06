@@ -57,11 +57,13 @@ constexpr int CHART_UPDATE_INTERVAL_MIN     = 1;    ///< Min chart update interv
 constexpr int CHART_UPDATE_INTERVAL_MAX     = 5000; ///< Max chart update interval
 constexpr int CHART_UPDATE_INTERVAL_DEFAULT = 500;  ///< Default chart update interval
 
-// ---- Chart dimension ranges (pixels) -------------------------------------
-constexpr int CHART_WIDTH_MIN  = 400;   ///< Min configurable chart width
-constexpr int CHART_WIDTH_MAX  = 40000; ///< Max configurable chart width
-constexpr int CHART_HEIGHT_MIN = 300;   ///< Min configurable chart height
-constexpr int CHART_HEIGHT_MAX = 30000; ///< Max configurable chart height
+// ---- Chart dimension ranges and defaults (pixels) ------------------------
+constexpr int CHART_WIDTH_MIN      = 400;   ///< Min configurable chart width
+constexpr int CHART_WIDTH_MAX      = 40000; ///< Max configurable chart width
+constexpr int CHART_HEIGHT_MIN     = 300;   ///< Min configurable chart height
+constexpr int CHART_HEIGHT_MAX     = 30000; ///< Max configurable chart height
+constexpr int CHART_DEFAULT_WIDTH  = 640;   ///< Default chart width
+constexpr int CHART_DEFAULT_HEIGHT = 480;   ///< Default chart height
 
 // ---- Chart smoothing (Savitzky-Golay) ------------------------------------
 constexpr int SMOOTH_WINDOW_MIN     = 5;   ///< Min smoothing window size

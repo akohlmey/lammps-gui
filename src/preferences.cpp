@@ -1054,12 +1054,14 @@ ChartsTab::ChartsTab(QSettings *_settings, QWidget *parent) : QWidget(parent), s
     auto *chartxlbl = new QLabel("Chart default width:");
     auto *chartxval = new QSpinBox;
     chartxval->setRange(GuiConstants::CHART_WIDTH_MIN, GuiConstants::CHART_WIDTH_MAX);
-    chartxval->setValue(settings->value(SettingsKeys::CHARTX, 500).toInt());
+    chartxval->setValue(
+        settings->value(SettingsKeys::CHARTX, GuiConstants::CHART_DEFAULT_WIDTH).toInt());
     chartxval->setObjectName("chartx");
     auto *chartylbl = new QLabel("Chart default height:");
     auto *chartyval = new QSpinBox;
     chartyval->setRange(GuiConstants::CHART_HEIGHT_MIN, GuiConstants::CHART_HEIGHT_MAX);
-    chartyval->setValue(settings->value(SettingsKeys::CHARTY, 320).toInt());
+    chartyval->setValue(
+        settings->value(SettingsKeys::CHARTY, GuiConstants::CHART_DEFAULT_HEIGHT).toInt());
     chartyval->setObjectName("charty");
 
     int i = 0;

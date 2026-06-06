@@ -221,8 +221,8 @@ ChartWindow::ChartWindow(const QString &_filename, LammpsGui *_lammpsgui, QWidge
     connect(yrange, &RangeSlider::sliderMoved, this, &ChartWindow::updateYRange);
 
     installEventFilter(this);
-    resize(settings.value(SettingsKeys::CHARTX, 640).toInt(),
-           settings.value(SettingsKeys::CHARTY, 480).toInt());
+    resize(settings.value(SettingsKeys::CHARTX, GuiConstants::CHART_DEFAULT_WIDTH).toInt(),
+           settings.value(SettingsKeys::CHARTY, GuiConstants::CHART_DEFAULT_HEIGHT).toInt());
 }
 
 int ChartWindow::getStep() const
