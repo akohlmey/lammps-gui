@@ -136,6 +136,42 @@ main.cpp
 
 **Shared helpers (prefer over re-rolling).** Use the `StdoutSilencer` RAII guard (`helpers.h`) instead of manual `silenceStdout()`/`restoreStdout()` pairs; `LammpsWrapper::lastErrorMessage()` instead of a hand-managed `getLastErrorMessage()` buffer; `LammpsGui::addMenuAction()` to build menu actions.
 
+### String handling & modern C++ conventions
+
+These are the settled conventions for new and refactored code. A staged
+plan for bringing existing code into line lives under "Refactoring status
+and recommendations" in `TODO.md`.
+
+**QString is the canonical internal string type.** It already dominates
+(~350 declarations vs. ~25 `std::string`). Keep `char *` and `std::string`
+out of internal interfaces; pass and return `QString`.
+
+**Confine all string conversions to `LammpsWrapper`** (the LAMMPS C API is
+the only place `char *` is unavoidable). Do not sprinkle `toStdString()` /
+`.c_str()` / `char buf[N]` at call sites. Two patterns already in the
+wrapper are the templates to copy:
+- *Input:* provide three overloads -- `const char *`, `const QString &`,
+  `const std::string &` -- as `command()`, `file()`, and
+  `commandsString()` do, so callers pass whatever they hold.
+- *Output:* return a `QString` and manage the buffer internally, as
+  `lastErrorMessage()` does. Prefer this over `char *`-out-param APIs
+  (`idName`, `styleName`, `variableInfo`, `getLastErrorMessage`), which are
+  legacy and slated for QString-returning overloads.
+
+Avoid `QString -> std::string -> QString` round-trips (the `splitLine`
+call sites are the current offenders).
+
+**Match the existing modern-C++ baseline.** This code already uses
+`nullptr`, `auto`, range-based `for`, `override`, `constexpr`, `= default`,
+and an explicit Rule-of-5 (`= delete` / `= default` for all five special
+members) on essentially every class; mirror that on new classes. Prefer
+`std::make_unique` and smart pointers for owned non-QObject resources
+(QObject parent/child ownership via `new` with a parent is still the Qt
+idiom and is fine). Use `static_cast` rather than C-style casts, the
+function-pointer `connect()` form (never `SIGNAL()`/`SLOT()` strings), and
+`enum class` for new internal enumerations that do not need implicit `int`
+interop with the LAMMPS API.
+
 ### Source file map
 
 | File(s) | Responsibility |
