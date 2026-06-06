@@ -186,8 +186,12 @@ overloads and `lastErrorMessage()` are the templates to follow.
     / class defs) and choosing namespacing (global-in-internal-header vs.
     private nested members). Behavior-neutral and compiler-verifiable in
     both configs, but a careful ~200-line move, not a mechanical relocation.
-  - [ ] Light in-place decomposition of `fixSettings`/`regionSettings`/
-    `colorSettings` (0 `findChild` each -> safer to split internally).
+  - [x] Light in-place decomposition of `fixSettings`/`regionSettings`/
+    `colorSettings` (0 `findChild` each). `fixSettings` 231 -> 89 via shared
+    `buildFixComputeRows`/`readFixComputeRows` (the compute and fix halves
+    were near-identical); `regionSettings` 137 -> 113 and `colorSettings`
+    293 -> 265 via `readRegionRows`/`readColorRows` readback helpers. Both
+    configs build, 58/58 tests.
 
 ## Stage 6 -- Interface simplification and modern-C++ polish (breadth pass)
 
