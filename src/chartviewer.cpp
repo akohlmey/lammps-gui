@@ -13,6 +13,7 @@
 
 #include "analysis.h"
 #include "constants.h"
+#include "fitting.h"
 #include "helpers.h"
 #include "lammpsgui.h"
 #include "leastsquares.h"
@@ -36,6 +37,7 @@
 #include <QHBoxLayout>
 #include <QIcon>
 #include <QKeySequence>
+
 #include <QLabel>
 #include <QLayout>
 #include <QList>
@@ -49,6 +51,7 @@
 #include <QTime>
 #include <QVBoxLayout>
 #include <QVariant>
+#include <algorithm>
 
 #include "chartbackend.h"
 #ifdef LAMMPS_GUI_USE_QTGRAPHS
@@ -457,13 +460,33 @@ void ChartWindow::postProcess()
 
     auto *analysisbox = new QComboBox;
     analysisbox->addItem("Autocorrelation");
+    analysisbox->addItem("Polynomial fit");
+    analysisbox->addItem("Birch-Murnaghan EOS fit");
     form->addRow("Analysis:", analysisbox);
 
-    auto *lagspin = new QSpinBox;
-    lagspin->setRange(1, npoints - 1);
-    lagspin->setValue(qMin(npoints - 1, npoints / 2));
-    lagspin->setToolTip("Maximum lag for the autocorrelation");
-    form->addRow("Max lag:", lagspin);
+    auto *paramLabel = new QLabel;
+    auto *paramSpin  = new QSpinBox;
+    form->addRow(paramLabel, paramSpin);
+
+    // swap the parameter widget to match the selected analysis
+    auto configure = [=](int idx) {
+        if (idx == 1) { // polynomial degree
+            paramLabel->setText("Degree:");
+            paramSpin->setVisible(true);
+            paramSpin->setRange(1, qMin(npoints - 1, 8));
+            paramSpin->setValue(qMin(3, qMin(npoints - 1, 8)));
+        } else if (idx == 2) { // EOS has no free parameters
+            paramLabel->setText("(no parameters)");
+            paramSpin->setVisible(false);
+        } else { // autocorrelation max lag
+            paramLabel->setText("Max lag:");
+            paramSpin->setVisible(true);
+            paramSpin->setRange(1, npoints - 1);
+            paramSpin->setValue(qMin(npoints - 1, npoints / 2));
+        }
+    };
+    configure(0);
+    connect(analysisbox, &QComboBox::currentIndexChanged, &dialog, configure);
 
     auto *buttons = new QDialogButtonBox(QDialogButtonBox::Ok | QDialogButtonBox::Cancel);
     connect(buttons, &QDialogButtonBox::accepted, &dialog, &QDialog::accept);
@@ -472,32 +495,91 @@ void ChartWindow::postProcess()
 
     if (dialog.exec() != QDialog::Accepted) return;
 
-    // gather the y values of the selected chart
-    std::vector<double> y;
-    y.reserve(npoints);
-    for (int i = 0; i < npoints; ++i)
-        y.push_back(chart->getData(i));
+    // gather the (x, y) data of the selected chart
+    std::vector<double> xs, ys;
+    xs.reserve(npoints);
+    ys.reserve(npoints);
+    for (int i = 0; i < npoints; ++i) {
+        xs.push_back(chart->getStep(i));
+        ys.push_back(chart->getData(i));
+    }
 
-    const std::vector<double> acf = autocorrelation(y, lagspin->value());
-    if (acf.empty()) {
-        warning(this, "Postprocess",
-                "Could not compute the autocorrelation (constant or insufficient data).");
+    const int which = analysisbox->currentIndex();
+
+    if (which == 0) { // autocorrelation -> new window (the abscissa becomes lag)
+        const std::vector<double> acf = autocorrelation(ys, paramSpin->value());
+        if (acf.empty()) {
+            warning(this, "Postprocess",
+                    "Could not compute the autocorrelation (constant or insufficient data).");
+            return;
+        }
+        PlotData result;
+        result.setColumnNames({"lag", "ACF: " + chart->getTitle()});
+        for (std::size_t k = 0; k < acf.size(); ++k)
+            result.appendRow({static_cast<double>(k), acf[k]});
+
+        auto *win = new ChartWindow(filename + " (ACF)", nullptr);
+        win->setAttribute(Qt::WA_DeleteOnClose);
+        win->setWindowTitle("Autocorrelation - LAMMPS-GUI");
+        win->setWindowIcon(QIcon(Cfg::MAIN_ICON));
+        win->setMinimumSize(Cfg::MINIMUM_WIDTH, Cfg::MINIMUM_HEIGHT);
+        win->loadData(result, 0, {1});
+        win->show();
         return;
     }
 
-    // assemble the result as a (lag, ACF) table and open it in a new window
-    PlotData result;
-    result.setColumnNames({"lag", "ACF: " + chart->getTitle()});
-    for (std::size_t k = 0; k < acf.size(); ++k)
-        result.appendRow({static_cast<double>(k), acf[k]});
+    // fits: build a smooth curve over the data x range and overlay it
+    const auto mm        = std::minmax_element(xs.begin(), xs.end());
+    const double xmin    = *mm.first;
+    const double xmax    = *mm.second;
+    constexpr int Ncurve = 200;
 
-    auto *win = new ChartWindow(filename + " (ACF)", nullptr);
-    win->setAttribute(Qt::WA_DeleteOnClose);
-    win->setWindowTitle("Autocorrelation - LAMMPS-GUI");
-    win->setWindowIcon(QIcon(Cfg::MAIN_ICON));
-    win->setMinimumSize(Cfg::MINIMUM_WIDTH, Cfg::MINIMUM_HEIGHT);
-    win->loadData(result, 0, {1});
-    win->show();
+    if (which == 1) { // polynomial fit
+        const PolynomialFit f = polynomialFit(xs, ys, paramSpin->value());
+        if (!f.ok) {
+            warning(this, "Postprocess", "Polynomial fit failed (too few points).");
+            return;
+        }
+        QList<QPointF> curve;
+        for (int k = 0; k <= Ncurve; ++k) {
+            const double x = xmin + (xmax - xmin) * k / Ncurve;
+            curve.append(QPointF(x, evalPolynomial(f.coeffs, x)));
+        }
+        chart->setFitCurve(curve);
+
+        QString report =
+            QString("Polynomial fit of degree %1\n\n").arg(static_cast<int>(f.coeffs.size()) - 1);
+        for (int i = 0; i < static_cast<int>(f.coeffs.size()); ++i)
+            report += QString("  c[%1] = %2\n").arg(i).arg(f.coeffs[i], 0, 'g', 8);
+        report += QString("\n  RMS residual = %1").arg(f.rms, 0, 'g', 6);
+        information(this, "Polynomial Fit", report);
+        return;
+    }
+
+    // Birch-Murnaghan EOS fit (x = volume, y = energy)
+    const EosFit f = birchMurnaghanFit(xs, ys);
+    if (!f.ok) {
+        warning(this, "Postprocess",
+                "Birch-Murnaghan fit failed (needs >= 4 points, positive volumes, "
+                "and a minimum within the data).");
+        return;
+    }
+    QList<QPointF> curve;
+    for (int k = 0; k <= Ncurve; ++k) {
+        const double x = xmin + (xmax - xmin) * k / Ncurve;
+        if (x > 0.0) curve.append(QPointF(x, evalBirchMurnaghan(f, x)));
+    }
+    chart->setFitCurve(curve);
+
+    const QString report = QString("Birch-Murnaghan EOS fit\n\n"
+                                   "  V0  = %1\n  E0  = %2\n  B0  = %3\n  B0' = %4\n\n"
+                                   "  RMS residual = %5")
+                               .arg(f.v0, 0, 'g', 8)
+                               .arg(f.e0, 0, 'g', 8)
+                               .arg(f.b0, 0, 'g', 8)
+                               .arg(f.b0prime, 0, 'g', 6)
+                               .arg(f.rms, 0, 'g', 6);
+    information(this, "Birch-Murnaghan EOS Fit", report);
 }
 
 void ChartWindow::selectSmooth(int)
@@ -743,7 +825,7 @@ bool ChartWindow::eventFilter(QObject *watched, QEvent *event)
 
 ChartViewer::ChartViewer(const QString &title, int _index, QWidget *parent) :
     QWidget(parent), lastX(-1.0), index(_index), window(10), order(4), series(new QLineSeries),
-    smooth(nullptr), scatter(nullptr), doRaw(true), doSmooth(false),
+    smooth(nullptr), scatter(nullptr), fit(nullptr), doRaw(true), doSmooth(false),
     dispmode(ChartDisplayMode::Lines), rawColor(), rawWidth(3.0)
 {
 #ifdef LAMMPS_GUI_USE_QTGRAPHS
@@ -955,6 +1037,19 @@ void ChartViewer::setDisplayStyle(ChartDisplayMode mode, const QColor &color, qr
     rawColor = color;
     rawWidth = width;
     updateSmooth();
+    resetZoom();
+}
+
+/* -------------------------------------------------------------------- */
+
+void ChartViewer::setFitCurve(const QList<QPointF> &points)
+{
+    if (!fit) {
+        fit = new QLineSeries;
+        backend->addSeries(fit, QColor(220, 30, 30), 2.0); // distinct fit-curve color
+    }
+    fit->replace(points);
+    fit->setVisible(true);
     resetZoom();
 }
 

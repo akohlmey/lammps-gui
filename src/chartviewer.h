@@ -367,6 +367,13 @@ public:
     qreal displayWidth() const { return rawWidth; }
 
     /**
+     * @brief Overlay a fit curve on the chart
+     * @param points Curve points (x, y) drawn as an overlay line; created on
+     *               the first call and replaced on subsequent calls
+     */
+    void setFitCurve(const QList<QPointF> &points);
+
+    /**
      * @brief Get current chart title
      * @return Chart title
      */
@@ -391,6 +398,7 @@ private:
     int window, order;                     ///< Smoothing window and polynomial order
     QLineSeries *series, *smooth;          ///< Raw and smoothed data series
     QScatterSeries *scatter;               ///< Raw data drawn as points (created on demand)
+    QLineSeries *fit;                      ///< Optional fit-curve overlay (created on demand)
     QTime lastUpdate;                      ///< Time of last chart update
     bool doRaw, doSmooth;                  ///< Flags for showing raw/smoothed data
     ChartDisplayMode dispmode;             ///< How the raw series is drawn
