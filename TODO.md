@@ -83,26 +83,31 @@ overloads and `lastErrorMessage()` are the templates to follow.
     `setObjectName()` / `findChild<>()` strings that were intentionally
     left as literals here. Consolidating them is folded into Stage 6e.
 
-## Stage 2 -- String-handling consolidation at the wrapper boundary (core)
+## Stage 2 -- String-handling consolidation at the wrapper boundary (DONE)
 
-- [ ] **2a. Add QString-returning overloads for the char-buffer wrapper
-  APIs.** `idName`, `styleName`, and `variableInfo` still force every
-  caller to declare `char buf[N]` (+ `memset` + reconstruction) at ~11
-  sites (`codeeditor.cpp:324`, `lammpsgui.cpp:688/735/970/1439`,
-  `imageviewer.cpp:619/626/637/3460/3465/3473/3499/3611`). Add QString
-  overloads modeled on the existing `lastErrorMessage()`; keep the raw
-  char* signatures private or thin. Then replace the call sites.
+- [x] **2a. QString-returning overloads for the char-buffer wrapper APIs.**
+  Done: `idName`, `styleName`, `variableInfo` now return `QString` (empty
+  on failure, modeled on `lastErrorMessage()`); the char-buffer variants
+  are private. Added QString overloads for `extractCompute`, `extractFix`,
+  `extractVariableDatatype` so callers pass QString ids. All 11 call sites
+  in codeeditor/lammpsgui/imageviewer lost their `char buf[N]` + `memset`
+  + `strlen` boilerplate.
 
-- [ ] **2b. Add a QString/QStringList-native `splitLine` overload.**
-  `helpers::splitLine(std::string)` currently forces
-  QString -> std::string -> QString round-trips
-  (`codeeditor.cpp:303,341`). Provide a QString overload returning
-  QStringList and drop the `.toStdString()` / `.c_str()` churn.
+- [x] **2b. QStringList-native `splitLine` overload.** Done: added
+  `splitLine(const QString&) -> QStringList` (wraps the tested quote-aware
+  std::string implementation) and switched all 8 call sites, removing the
+  QString -> std::string -> QString round-trips. `cmdToClipboard` now
+  builds a QString so the clipboard write drops `.c_str()`.
 
-- [ ] **2c. Sweep remaining conversions.** Audit the ~46 `toStdString` and
-  ~66 `.c_str()` uses; eliminate those that exist only to cross an
-  internal interface, pushing any genuinely required conversion down into
-  `LammpsWrapper`.
+- [x] **2c. Sweep remaining conversions.** Done: removed the four
+  `.toStdString().c_str()` double-conversions (`loadLib` now uses
+  `toLocal8Bit().constData()`; three `fprintf` sites use `qPrintable`).
+  The remaining `toStdString`/`.c_str()` uses were reviewed and kept as
+  deliberate boundaries: building `char**` argv for `execl`/LAMMPS,
+  `LammpsRunner::setupRun` (std::string by value for clean cross-thread
+  ownership -- see `lammpsrunner.h`), and the std::string-keyed image
+  data model (`computes`/`fixes`/`regions` maps and their colors).
+  Converting the data model is a larger change, not a string sweep.
 
 ## Stage 3 -- Reduce LammpsWrapper plugin/linked dispatch duplication (structural)
 

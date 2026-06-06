@@ -422,10 +422,10 @@ ImageViewer::ImageViewer(const QString &fileName, LammpsWrapper *_lammps, Lammps
                 } else if (words.at(0) == "fix") {
                     image_fixes << words.at(1);
                 } else {
-                    fprintf(stderr, "unhandled image style: %s\n", line.toStdString().c_str());
+                    fprintf(stderr, "unhandled image style: %s\n", qPrintable(line));
                 }
             } else {
-                fprintf(stderr, "unhandled image style: %s\n", line.toStdString().c_str());
+                fprintf(stderr, "unhandled image style: %s\n", qPrintable(line));
             }
         }
         image_styles.close();

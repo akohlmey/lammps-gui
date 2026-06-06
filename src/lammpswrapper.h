@@ -379,7 +379,7 @@ public:
      * @param fname Library filename (QString version)
      * @return true on success, false on failure
      */
-    bool loadLib(const QString &fname) { return loadLib(fname.toStdString().c_str()); }
+    bool loadLib(const QString &fname) { return loadLib(fname.toLocal8Bit().constData()); }
 
     /**
      * @brief Load LAMMPS shared library (plugin mode)
