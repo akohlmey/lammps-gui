@@ -91,6 +91,97 @@ inline const QString TITLE_PREFIX = QStringLiteral("LAMMPS-GUI - ");
 
 } // namespace GuiConstants
 
+/**
+ * @brief Centralized QSettings key and group names
+ *
+ * One named constant per persisted QSettings key so a typo becomes a compile
+ * error instead of a silently mismatched (and therefore lost) setting.  The
+ * string value of each constant must match the original literal exactly.
+ */
+namespace SettingsKeys {
+
+// ---- groups (QSettings::beginGroup) --------------------------------------
+inline const QString GROUP_CHARTS   = QStringLiteral("charts");
+inline const QString GROUP_REFORMAT = QStringLiteral("reformat");
+inline const QString GROUP_SNAPSHOT = QStringLiteral("snapshot");
+inline const QString GROUP_TUTORIAL = QStringLiteral("tutorial");
+
+// ---- keys ----------------------------------------------------------------
+inline const QString ACCELERATOR  = QStringLiteral("accelerator");
+inline const QString ALLFAMILY    = QStringLiteral("allfamily");
+inline const QString ALLSIZE      = QStringLiteral("allsize");
+inline const QString ANTIALIAS    = QStringLiteral("antialias");
+inline const QString AUTOBOND     = QStringLiteral("autobond");
+inline const QString AUTOMATIC    = QStringLiteral("automatic");
+inline const QString AUTOSAVE     = QStringLiteral("autosave");
+inline const QString AXES         = QStringLiteral("axes");
+inline const QString AXESDIAM     = QStringLiteral("axesdiam");
+inline const QString AXESLEN      = QStringLiteral("axeslen");
+inline const QString BACKCOLOR    = QStringLiteral("backcolor");
+inline const QString BACKCOLOR2   = QStringLiteral("backcolor2");
+inline const QString BACKGROUND   = QStringLiteral("background");
+inline const QString BACKGROUND2  = QStringLiteral("background2");
+inline const QString BONDCOLOR    = QStringLiteral("bondcolor");
+inline const QString BONDCUT      = QStringLiteral("bondcut");
+inline const QString BONDCUTOFF   = QStringLiteral("bondcutoff");
+inline const QString BONDDIAM     = QStringLiteral("bonddiam");
+inline const QString BOX          = QStringLiteral("box");
+inline const QString BOXCOLOR     = QStringLiteral("boxcolor");
+inline const QString BOXDIAM      = QStringLiteral("boxdiam");
+inline const QString CHARTREPLACE = QStringLiteral("chartreplace");
+inline const QString CHARTX       = QStringLiteral("chartx");
+inline const QString CHARTY       = QStringLiteral("charty");
+inline const QString CITE         = QStringLiteral("cite");
+inline const QString COLOR        = QStringLiteral("color");
+inline const QString COLORMAP     = QStringLiteral("colormap");
+inline const QString COMMAND      = QStringLiteral("command");
+inline const QString DIAMETER     = QStringLiteral("diameter");
+inline const QString ECHO         = QStringLiteral("echo");
+inline const QString GPUNEIGH     = QStringLiteral("gpuneigh");
+inline const QString GPUPAIRONLY  = QStringLiteral("gpupaironly");
+inline const QString GRID         = QStringLiteral("grid");
+inline const QString HROT         = QStringLiteral("hrot");
+inline const QString HTTPS_PROXY  = QStringLiteral("https_proxy");
+inline const QString ID           = QStringLiteral("id");
+inline const QString IMAGEREPLACE = QStringLiteral("imagereplace");
+inline const QString INTELPREC    = QStringLiteral("intelprec");
+inline const QString LOGREPLACE   = QStringLiteral("logreplace");
+inline const QString LOGX         = QStringLiteral("logx");
+inline const QString LOGY         = QStringLiteral("logy");
+inline const QString MAINX        = QStringLiteral("mainx");
+inline const QString MAINY        = QStringLiteral("mainy");
+inline const QString MINORGRID    = QStringLiteral("minorgrid");
+inline const QString MONOFAMILY   = QStringLiteral("monofamily");
+inline const QString MONOSIZE     = QStringLiteral("monosize");
+inline const QString NAME         = QStringLiteral("name");
+inline const QString NTHREADS     = QStringLiteral("nthreads");
+inline const QString PLUGIN_PATH  = QStringLiteral("plugin_path");
+inline const QString RAWBRUSH     = QStringLiteral("rawbrush");
+inline const QString RECENT       = QStringLiteral("recent");
+inline const QString RETURN       = QStringLiteral("return");
+inline const QString SHINYSTYLE   = QStringLiteral("shinystyle");
+inline const QString SMOOTHBRUSH  = QStringLiteral("smoothbrush");
+inline const QString SMOOTHCHOICE = QStringLiteral("smoothchoice");
+inline const QString SMOOTHORDER  = QStringLiteral("smoothorder");
+inline const QString SMOOTHWINDOW = QStringLiteral("smoothwindow");
+inline const QString SOLUTION     = QStringLiteral("solution");
+inline const QString SSAO         = QStringLiteral("ssao");
+inline const QString TITLE        = QStringLiteral("title");
+inline const QString TYPE         = QStringLiteral("type");
+inline const QString UPDCHART     = QStringLiteral("updchart");
+inline const QString UPDFREQ      = QStringLiteral("updfreq");
+inline const QString VDWSTYLE     = QStringLiteral("vdwstyle");
+inline const QString VIEWCHART    = QStringLiteral("viewchart");
+inline const QString VIEWLOG      = QStringLiteral("viewlog");
+inline const QString VIEWSLIDE    = QStringLiteral("viewslide");
+inline const QString VROT         = QStringLiteral("vrot");
+inline const QString WEBPAGE      = QStringLiteral("webpage");
+inline const QString XSIZE        = QStringLiteral("xsize");
+inline const QString YSIZE        = QStringLiteral("ysize");
+inline const QString ZOOM         = QStringLiteral("zoom");
+
+} // namespace SettingsKeys
+
 #endif // CONSTANTS_H
 
 // Local Variables:

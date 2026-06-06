@@ -10,6 +10,7 @@
 ////////////////////////////////////////////////////////////////////////////////////////
 
 #include "qtgraphsbackend.h"
+#include "constants.h"
 #include "qaddon.h"
 
 #include <QHBoxLayout>
@@ -44,7 +45,7 @@ void QtGraphsBackend::init(QWidget *parent, const QString &title, QLineSeries *s
     yaxis = new QValueAxis(parent);
 
     QSettings settings;
-    settings.beginGroup("charts");
+    settings.beginGroup(SettingsKeys::GROUP_CHARTS);
 
     xaxis->setTitleText("Time step");
     xaxis->setLabelFormat("%.0f");
@@ -64,14 +65,14 @@ void QtGraphsBackend::init(QWidget *parent, const QString &title, QLineSeries *s
     theme->setPlotAreaBackgroundVisible(true);
     theme->setPlotAreaBackgroundColor(Qt::white);
     QGraphsLine gridLine;
-    if (settings.value("grid", true).toBool()) {
+    if (settings.value(SettingsKeys::GRID, true).toBool()) {
         gridLine.setMainColor(QColor(160, 160, 160));
         gridLine.setMainWidth(2.0);
     } else {
         gridLine.setMainColor(Qt::white);
         gridLine.setMainWidth(0.0);
     }
-    if (settings.value("minorgrid", true).toBool()) {
+    if (settings.value(SettingsKeys::MINORGRID, true).toBool()) {
         gridLine.setSubColor(QColor(192, 192, 192));
         gridLine.setSubWidth(1.0);
     } else {

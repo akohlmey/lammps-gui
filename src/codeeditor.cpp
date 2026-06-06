@@ -10,6 +10,7 @@
 ////////////////////////////////////////////////////////////////////////////////////////
 
 #include "codeeditor.h"
+#include "constants.h"
 #include "fileviewer.h"
 #include "helpers.h"
 #include "lammpsgui.h"
@@ -189,11 +190,11 @@ QString CodeEditor::reformatLine(const QString &line)
     auto words = splitLine(line.toStdString());
     QString newtext;
     QSettings settings;
-    settings.beginGroup("reformat");
-    int cmdsize  = settings.value("command", "16").toInt();
-    int typesize = settings.value("type", "4").toInt();
-    int idsize   = settings.value("id", "4").toInt();
-    int namesize = settings.value("name", "8").toInt();
+    settings.beginGroup(SettingsKeys::GROUP_REFORMAT);
+    int cmdsize  = settings.value(SettingsKeys::COMMAND, "16").toInt();
+    int typesize = settings.value(SettingsKeys::TYPE, "4").toInt();
+    int idsize   = settings.value(SettingsKeys::ID, "4").toInt();
+    int namesize = settings.value(SettingsKeys::NAME, "8").toInt();
     settings.endGroup();
 
     bool rebuildGroupComp     = false;
@@ -447,7 +448,7 @@ void CodeEditor::keyPressEvent(QKeyEvent *event)
 
     // automatically reformat when hitting the return or enter key
     QSettings settings;
-    reformatOnReturn = settings.value("return", false).toBool();
+    reformatOnReturn = settings.value(SettingsKeys::RETURN, false).toBool();
     if (reformatOnReturn && ((key == Qt::Key_Return) || (key == Qt::Key_Enter))) {
         reformatCurrentLine();
     }
@@ -456,7 +457,7 @@ void CodeEditor::keyPressEvent(QKeyEvent *event)
     QPlainTextEdit::keyPressEvent(event);
 
     // if enabled, try pop up completion automatically after 2 characters
-    automaticCompletion = settings.value("automatic", true).toBool();
+    automaticCompletion = settings.value(SettingsKeys::AUTOMATIC, true).toBool();
     if (automaticCompletion) {
         auto cursor = textCursor();
         auto line   = cursor.block().text();

@@ -133,8 +133,10 @@ void LammpsGui::setupUi(QSettings &settings, QFont &allFont, QFont &monoFont)
     // use default so the background logo is fully shown
     // use last values unless overridden from command-line
     // do not accept a geometry smaller than minimum, revert to default instead
-    if (mainx < GuiConstants::MINIMUM_WIDTH) mainx = settings.value("mainx", 1024).toInt();
-    if (mainy < GuiConstants::MINIMUM_HEIGHT) mainy = settings.value("mainy", 512).toInt();
+    if (mainx < GuiConstants::MINIMUM_WIDTH)
+        mainx = settings.value(SettingsKeys::MAINX, 1024).toInt();
+    if (mainy < GuiConstants::MINIMUM_HEIGHT)
+        mainy = settings.value(SettingsKeys::MAINY, 512).toInt();
     resize(mainx, mainy);
 
     varwindow = new QLabel(QString());
@@ -369,14 +371,14 @@ void LammpsGui::setupPlugin(QSettings &settings)
 {
 #if defined(LAMMPS_GUI_USE_PLUGIN)
     // first try to load from existing setting
-    pluginPath = settings.value("plugin_path", "").toString();
+    pluginPath = settings.value(SettingsKeys::PLUGIN_PATH, "").toString();
     if (!pluginPath.isEmpty()) {
         // make canonical and try loading; reset to empty string if loading failed
         pluginPath = QFileInfo(pluginPath).canonicalFilePath();
         if (!lammps.loadLib(pluginPath)) {
             pluginPath.clear();
             // could not load successfully -> remove any existing setting.
-            settings.remove("plugin_path");
+            settings.remove(SettingsKeys::PLUGIN_PATH);
         }
     }
 
@@ -427,7 +429,7 @@ void LammpsGui::setupPlugin(QSettings &settings)
         for (const auto &libpath : choices) {
             if (lammps.loadLib(libpath)) {
                 pluginPath = libpath;
-                settings.setValue("plugin_path", pluginPath);
+                settings.setValue(SettingsKeys::PLUGIN_PATH, pluginPath);
                 settings.sync();
                 break;
             }
@@ -439,7 +441,7 @@ void LammpsGui::setupPlugin(QSettings &settings)
         // 2) Browse the filesystem for a suitable shared library file
         while (pluginPath.isEmpty()) {
             // remove key for path to the plugin so we won't get stuck in a loop reading a bad file
-            settings.remove("plugin_path");
+            settings.remove(SettingsKeys::PLUGIN_PATH);
 
             QMessageBox mb(this);
             mb.setWindowTitle("LAMMPS-GUI - No LAMMPS Shared Library");
@@ -474,7 +476,7 @@ void LammpsGui::setupPlugin(QSettings &settings)
                     QFileDialog::DontResolveSymlinks | QFileDialog::ReadOnly);
                 if (!pluginfile.isEmpty() && pluginfile.contains("liblammps", Qt::CaseSensitive)) {
                     auto canonical = QFileInfo(pluginfile).canonicalFilePath();
-                    settings.setValue("plugin_path", canonical);
+                    settings.setValue(SettingsKeys::PLUGIN_PATH, canonical);
                     settings.sync();
                     // must re-launch LAMMPS-GUI to cleanly load the selected new plugin
                     const auto path = QCoreApplication::applicationFilePath().toStdString();
@@ -506,7 +508,7 @@ void LammpsGui::setupPlugin(QSettings &settings)
                     // try loading the downloaded library
                     if (lammps.loadLib(libPath)) {
                         pluginPath = libPath;
-                        settings.setValue("plugin_path", pluginPath);
+                        settings.setValue(SettingsKeys::PLUGIN_PATH, pluginPath);
                         settings.sync();
                         // must re-launch LAMMPS-GUI to cleanly load the selected new plugin
                         const auto path = QCoreApplication::applicationFilePath().toStdString();
@@ -538,7 +540,7 @@ void LammpsGui::setupAccelerators(QSettings &settings)
 {
     // default accelerator package is OPENMP, but we switch the configured accelerator to
     // "none" if the selected package is not available to have an option that always works
-    int accel = settings.value("accelerator", AcceleratorTab::OpenMP).toInt();
+    int accel = settings.value(SettingsKeys::ACCELERATOR, AcceleratorTab::OpenMP).toInt();
     switch (accel) {
         case AcceleratorTab::Opt:
             if (!lammps.configHasPackage("OPT")) accel = AcceleratorTab::None;
@@ -559,18 +561,18 @@ void LammpsGui::setupAccelerators(QSettings &settings)
         default:                   // do nothing
             break;
     }
-    settings.setValue("accelerator", accel);
+    settings.setValue(SettingsKeys::ACCELERATOR, accel);
 
     // Check and initialize some settings for individual accelerator packages and commit
     // GPU neighbor list on GPU versus host
-    bool gpuneigh = settings.value("gpuneigh", true).toBool();
-    settings.setValue("gpuneigh", gpuneigh);
+    bool gpuneigh = settings.value(SettingsKeys::GPUNEIGH, true).toBool();
+    settings.setValue(SettingsKeys::GPUNEIGH, gpuneigh);
     // accelerate only pair style (i.e. run PPPM completely on host)
-    bool gpupaironly = settings.value("gpupaironly", false).toBool();
-    settings.setValue("gpupaironly", gpupaironly);
+    bool gpupaironly = settings.value(SettingsKeys::GPUPAIRONLY, false).toBool();
+    settings.setValue(SettingsKeys::GPUPAIRONLY, gpupaironly);
     // INTEL package precision
-    int intelprec = settings.value("intelprec", AcceleratorTab::Mixed).toInt();
-    settings.setValue("intelprec", intelprec);
+    int intelprec = settings.value(SettingsKeys::INTELPREC, AcceleratorTab::Mixed).toInt();
+    settings.setValue(SettingsKeys::INTELPREC, intelprec);
 
     // Check and initialize nthreads setting for when OpenMP support is compiled in.
     // Default is to use OMP_NUM_THREADS setting, if that is not available, thenhalf of max
@@ -581,7 +583,7 @@ void LammpsGui::setupAccelerators(QSettings &settings)
     default_threads = std::max(default_threads, 1);
     if (qEnvironmentVariableIsSet("OMP_NUM_THREADS"))
         default_threads = qEnvironmentVariable("OMP_NUM_THREADS").toInt();
-    nthreads = settings.value("nthreads", default_threads).toInt();
+    nthreads = settings.value(SettingsKeys::NTHREADS, default_threads).toInt();
 
     // reset nthreads if accelerator does not support threads
     if ((accel == AcceleratorTab::Opt) || (accel == AcceleratorTab::None)) nthreads = 1;
@@ -620,20 +622,20 @@ LammpsGui::LammpsGui(QWidget *parent, const QString &filename, int width, int he
     // configure fonts
     QFont allFont;
     QFontInfo allInfo(*GUI_ALLFONT);
-    allFont.setFamily(settings.value("allfamily", allInfo.family()).toString());
-    allFont.setPointSize(settings.value("allsize", allInfo.pointSize()).toInt());
+    allFont.setFamily(settings.value(SettingsKeys::ALLFAMILY, allInfo.family()).toString());
+    allFont.setPointSize(settings.value(SettingsKeys::ALLSIZE, allInfo.pointSize()).toInt());
     allFont.setStyleHint(GUI_ALLFONT->styleHint());
-    settings.setValue("allfamily", allFont.family());
-    settings.setValue("allsize", allFont.pointSize());
+    settings.setValue(SettingsKeys::ALLFAMILY, allFont.family());
+    settings.setValue(SettingsKeys::ALLSIZE, allFont.pointSize());
 
     QFont monoFont;
     QFontInfo monoInfo(*GUI_MONOFONT);
-    monoFont.setFamily(settings.value("monofamily", monoInfo.family()).toString());
-    monoFont.setPointSize(settings.value("monosize", monoInfo.pointSize()).toInt());
+    monoFont.setFamily(settings.value(SettingsKeys::MONOFAMILY, monoInfo.family()).toString());
+    monoFont.setPointSize(settings.value(SettingsKeys::MONOSIZE, monoInfo.pointSize()).toInt());
     monoFont.setStyleHint(GUI_MONOFONT->styleHint());
     monoFont.setFixedPitch(true);
-    settings.setValue("monofamily", monoFont.family());
-    settings.setValue("monosize", monoFont.pointSize());
+    settings.setValue(SettingsKeys::MONOFAMILY, monoFont.family());
+    settings.setValue(SettingsKeys::MONOSIZE, monoFont.pointSize());
 
     // create and connect GUI elements
     setupUi(settings, allFont, monoFont);
@@ -759,14 +761,15 @@ LammpsGui::LammpsGui(QWidget *parent, const QString &filename, int width, int he
     ADD_STYLES(minimize, Minimize);
 #undef ADD_STYLES
 
-    settings.beginGroup("reformat");
-    textEdit->setReformatOnReturn(settings.value("return", false).toBool());
-    textEdit->setAutoComplete(settings.value("automatic", true).toBool());
+    settings.beginGroup(SettingsKeys::GROUP_REFORMAT);
+    textEdit->setReformatOnReturn(settings.value(SettingsKeys::RETURN, false).toBool());
+    textEdit->setAutoComplete(settings.value(SettingsKeys::AUTOMATIC, true).toBool());
     settings.endGroup();
 
     // apply https proxy setting: prefer environment variable or fall back to preferences value
     auto https_proxy = QString::fromLocal8Bit(qgetenv("https_proxy"));
-    if (https_proxy.isEmpty()) https_proxy = settings.value("https_proxy", "").toString();
+    if (https_proxy.isEmpty())
+        https_proxy = settings.value(SettingsKeys::HTTPS_PROXY, "").toString();
     if (!https_proxy.isEmpty()) lammps.command(QString("shell putenv https_proxy=") + https_proxy);
 
     // finally show the window
@@ -930,7 +933,8 @@ void LammpsGui::startExe()
 void LammpsGui::updateRecents(const QString &filename)
 {
     QSettings settings;
-    if (settings.contains("recent")) recent = settings.value("recent").value<QList<QString>>();
+    if (settings.contains(SettingsKeys::RECENT))
+        recent = settings.value(SettingsKeys::RECENT).value<QList<QString>>();
 
     for (int i = 0; i < recent.size(); ++i) {
         QFileInfo fi(recent[i]);
@@ -943,9 +947,9 @@ void LammpsGui::updateRecents(const QString &filename)
     if (!filename.isEmpty() && !recent.contains(filename)) recent.prepend(filename);
     if (recent.size() > 5) recent.removeLast();
     if (!recent.empty())
-        settings.setValue("recent", QVariant::fromValue(recent));
+        settings.setValue(SettingsKeys::RECENT, QVariant::fromValue(recent));
     else
-        settings.remove("recent");
+        settings.remove(SettingsKeys::RECENT);
 
     for (int i = 0; i < GuiConstants::NUM_RECENT_FILES; ++i) {
         recentActions[i]->setVisible(false);
@@ -1332,8 +1336,8 @@ void LammpsGui::quit()
     // store some global settings
     QSettings settings;
     if (!isMaximized()) {
-        settings.setValue("mainx", width());
-        settings.setValue("mainy", height());
+        settings.setValue(SettingsKeys::MAINX, width());
+        settings.setValue(SettingsKeys::MAINY, height());
     }
     settings.sync();
 
@@ -1708,7 +1712,7 @@ void LammpsGui::doRun(bool use_buffer)
     cpuuse->show();
 
     int numthreads = nthreads;
-    int accel      = settings.value("accelerator", AcceleratorTab::OpenMP).toInt();
+    int accel      = settings.value(SettingsKeys::ACCELERATOR, AcceleratorTab::OpenMP).toInt();
     if ((accel != AcceleratorTab::OpenMP) && (accel != AcceleratorTab::Intel) &&
         (accel != AcceleratorTab::Kokkos) && (accel != AcceleratorTab::Gpu))
         numthreads = 1;
@@ -1739,7 +1743,8 @@ void LammpsGui::doRun(bool use_buffer)
 
     // apply https proxy setting: prefer environment variable or fall back to preferences value
     auto https_proxy = QString::fromLocal8Bit(qgetenv("https_proxy"));
-    if (https_proxy.isEmpty()) https_proxy = settings.value("https_proxy", "").toString();
+    if (https_proxy.isEmpty())
+        https_proxy = settings.value(SettingsKeys::HTTPS_PROXY, "").toString();
     if (!https_proxy.isEmpty()) lammps.command(QString("shell putenv https_proxy=") + https_proxy);
 
     connect(runner, &LammpsRunner::resultReady, this, &LammpsGui::runDone);
@@ -1747,7 +1752,7 @@ void LammpsGui::doRun(bool use_buffer)
     runner->start();
 
     // if configured, delete old log window before opening new one
-    if (settings.value("logreplace", true).toBool()) delete logwindow;
+    if (settings.value(SettingsKeys::LOGREPLACE, true).toBool()) delete logwindow;
     logwindow = new LogWindow(currentFile, this);
     logwindow->setReadOnly(true);
     logwindow->setCenterOnScroll(true);
@@ -1757,13 +1762,13 @@ void LammpsGui::doRun(bool use_buffer)
         QString("LAMMPS-GUI - Output - %1 - Run %2").arg(currentFile).arg(runCounter));
     logwindow->setWindowIcon(QIcon(GuiConstants::MAIN_ICON));
     logwindow->setMinimumSize(GuiConstants::MINIMUM_WIDTH, GuiConstants::MINIMUM_HEIGHT);
-    if (settings.value("viewlog", true).toBool())
+    if (settings.value(SettingsKeys::VIEWLOG, true).toBool())
         logwindow->show();
     else
         logwindow->hide();
 
     // if configured, delete old chart window before opening new one
-    if (settings.value("chartreplace", true).toBool()) delete chartwindow;
+    if (settings.value(SettingsKeys::CHARTREPLACE, true).toBool()) delete chartwindow;
     chartwindow = new ChartWindow(currentFile, this);
     chartwindow->setWindowTitle(
         QString("LAMMPS-GUI - Charts - %1 - Run %2").arg(currentFile).arg(runCounter));
@@ -1776,7 +1781,7 @@ void LammpsGui::doRun(bool use_buffer)
     chartwindow->setNorm(normflag != 0);
     chartwindow->setRangeEnabled(false);
 
-    if (settings.value("viewchart", true).toBool())
+    if (settings.value(SettingsKeys::VIEWCHART, true).toBool())
         chartwindow->show();
     else
         chartwindow->hide();
@@ -1789,7 +1794,7 @@ void LammpsGui::doRun(bool use_buffer)
 
     logupdater = new QTimer(this);
     connect(logupdater, &QTimer::timeout, this, &LammpsGui::logUpdate);
-    logupdater->start(settings.value("updfreq", "10").toInt());
+    logupdater->start(settings.value(SettingsKeys::UPDFREQ, "10").toInt());
 }
 
 void LammpsGui::renderImage()
@@ -1866,10 +1871,10 @@ void LammpsGui::viewChart()
     if (chartwindow) {
         if (chartwindow->isVisible()) {
             chartwindow->hide();
-            settings.setValue("viewchart", false);
+            settings.setValue(SettingsKeys::VIEWCHART, false);
         } else {
             chartwindow->show();
-            settings.setValue("viewchart", true);
+            settings.setValue(SettingsKeys::VIEWCHART, true);
         }
     }
 }
@@ -1880,10 +1885,10 @@ void LammpsGui::viewLog()
     if (logwindow) {
         if (logwindow->isVisible()) {
             logwindow->hide();
-            settings.setValue("viewlog", false);
+            settings.setValue(SettingsKeys::VIEWLOG, false);
         } else {
             logwindow->show();
-            settings.setValue("viewlog", true);
+            settings.setValue(SettingsKeys::VIEWLOG, true);
         }
     }
 }
@@ -1932,8 +1937,8 @@ void LammpsGui::autoSave()
     // check preference
     bool autosave = false;
     QSettings settings;
-    settings.beginGroup("reformat");
-    autosave = settings.value("autosave", false).toBool();
+    settings.beginGroup(SettingsKeys::GROUP_REFORMAT);
+    autosave = settings.value(SettingsKeys::AUTOSAVE, false).toBool();
     settings.endGroup();
 
     if (autosave) writeFile(fileName);
@@ -2205,7 +2210,7 @@ QWizardPage *LammpsGui::tutorialIntro(const int ntutorial, const QString &infote
 QWizardPage *LammpsGui::tutorialDirectory(const int ntutorial)
 {
     QSettings settings;
-    settings.beginGroup("tutorial");
+    settings.beginGroup(SettingsKeys::GROUP_TUTORIAL);
     auto *page = new QWizardPage;
     page->setTitle(QString("Select Directory for Tutorial %1").arg(ntutorial));
     page->setPixmap(QWizard::WatermarkPixmap,
@@ -2262,7 +2267,7 @@ QWizardPage *LammpsGui::tutorialDirectory(const int ntutorial)
     purgeval->setObjectName("t_dirpurge");
     layout->addWidget(purgeval, Qt::AlignVCenter | Qt::AlignLeft);
 
-    solval->setChecked(settings.value("solution", false).toBool());
+    solval->setChecked(settings.value(SettingsKeys::SOLUTION, false).toBool());
     solval->setObjectName("t_getsolution");
     layout->addWidget(solval, Qt::AlignVCenter | Qt::AlignLeft);
 
@@ -2271,7 +2276,7 @@ QWizardPage *LammpsGui::tutorialDirectory(const int ntutorial)
     QCheckBox *webval = nullptr;
     if ((ntutorial > 0) && (ntutorial < 9)) {
         webval = new QCheckBox("&Open tutorial webpage in web browser");
-        webval->setChecked(settings.value("webpage", true).toBool());
+        webval->setChecked(settings.value(SettingsKeys::WEBPAGE, true).toBool());
         webval->setObjectName("t_webopen");
         layout->addWidget(webval, Qt::AlignVCenter | Qt::AlignLeft);
     }
@@ -2389,13 +2394,13 @@ void LammpsGui::preferences()
 {
     // default settings are committed to QSettings during initialization of LAMMPS-GUI
     QSettings settings;
-    int oldthreads   = settings.value("nthreads", 1).toInt();
-    int oldaccel     = settings.value("accelerator", AcceleratorTab::None).toInt();
-    bool oldecho     = settings.value("echo", false).toBool();
-    bool oldcite     = settings.value("cite", false).toBool();
-    int oldiprec     = settings.value("intelprec", AcceleratorTab::Mixed).toInt();
-    bool oldgpuneigh = settings.value("gpuneigh", true).toBool();
-    bool oldgpupair  = settings.value("gpupaironly", false).toBool();
+    int oldthreads   = settings.value(SettingsKeys::NTHREADS, 1).toInt();
+    int oldaccel     = settings.value(SettingsKeys::ACCELERATOR, AcceleratorTab::None).toInt();
+    bool oldecho     = settings.value(SettingsKeys::ECHO, false).toBool();
+    bool oldcite     = settings.value(SettingsKeys::CITE, false).toBool();
+    int oldiprec     = settings.value(SettingsKeys::INTELPREC, AcceleratorTab::Mixed).toInt();
+    bool oldgpuneigh = settings.value(SettingsKeys::GPUNEIGH, true).toBool();
+    bool oldgpupair  = settings.value(SettingsKeys::GPUPAIRONLY, false).toBool();
 
     Preferences prefs(&lammps, this);
     prefs.setFont(font());
@@ -2404,14 +2409,14 @@ void LammpsGui::preferences()
         // must delete LAMMPS instance after preferences have changed that require
         // using different command line flags when creating the LAMMPS instance like
         // suffixes or package commands
-        int newthreads = settings.value("nthreads", nthreads).toInt();
-        int newaccel   = settings.value("accelerator", AcceleratorTab::None).toInt();
-        int newiprec   = settings.value("intelprec", AcceleratorTab::Mixed).toInt();
+        int newthreads = settings.value(SettingsKeys::NTHREADS, nthreads).toInt();
+        int newaccel   = settings.value(SettingsKeys::ACCELERATOR, AcceleratorTab::None).toInt();
+        int newiprec   = settings.value(SettingsKeys::INTELPREC, AcceleratorTab::Mixed).toInt();
         if ((oldaccel != newaccel) || (oldthreads != newthreads) || (oldiprec != newiprec) ||
-            (oldecho != settings.value("echo", false).toBool()) ||
-            (oldcite != settings.value("cite", false).toBool()) ||
-            (oldgpuneigh != settings.value("gpuneigh", true).toBool()) ||
-            (oldgpupair != settings.value("gpupaironly", false).toBool())) {
+            (oldecho != settings.value(SettingsKeys::ECHO, false).toBool()) ||
+            (oldcite != settings.value(SettingsKeys::CITE, false).toBool()) ||
+            (oldgpuneigh != settings.value(SettingsKeys::GPUNEIGH, true).toBool()) ||
+            (oldgpupair != settings.value(SettingsKeys::GPUPAIRONLY, false).toBool())) {
             if (lammps.isRunning()) {
                 stopRun();
                 runner->wait();
@@ -2432,9 +2437,9 @@ void LammpsGui::preferences()
             qputenv("OMP_NUM_THREADS", QByteArray::number(nthreads));
         }
         if (imagewindow) imagewindow->createImage();
-        settings.beginGroup("reformat");
-        textEdit->setReformatOnReturn(settings.value("return", false).toBool());
-        textEdit->setAutoComplete(settings.value("automatic", true).toBool());
+        settings.beginGroup(SettingsKeys::GROUP_REFORMAT);
+        textEdit->setReformatOnReturn(settings.value(SettingsKeys::RETURN, false).toBool());
+        textEdit->setAutoComplete(settings.value(SettingsKeys::AUTOMATIC, true).toBool());
         settings.endGroup();
     }
 }
@@ -2444,7 +2449,7 @@ void LammpsGui::startLammps()
     // temporary extend lammpsArgs with additional arguments
     int initial_narg = lammpsArgs.size();
     QSettings settings;
-    int accel = settings.value("accelerator", AcceleratorTab::None).toInt();
+    int accel = settings.value(SettingsKeys::ACCELERATOR, AcceleratorTab::None).toInt();
     // if non-threaded accelerator selected reset threads
     if ((accel == AcceleratorTab::None) || (accel == AcceleratorTab::Opt)) {
         nthreads = 1;
@@ -2478,7 +2483,7 @@ void LammpsGui::startLammps()
         lammpsArgs.push_back("omp");
         lammpsArgs.push_back(std::to_string(nthreads));
         lammpsArgs.push_back("mode");
-        int iprec = settings.value("intelprec", AcceleratorTab::Mixed).toInt();
+        int iprec = settings.value(SettingsKeys::INTELPREC, AcceleratorTab::Mixed).toInt();
         if (iprec == AcceleratorTab::Double)
             lammpsArgs.push_back("double");
         else if (iprec == AcceleratorTab::Mixed)
@@ -2505,12 +2510,12 @@ void LammpsGui::startLammps()
         lammpsArgs.push_back("omp");
         lammpsArgs.push_back(std::to_string(nthreads));
         lammpsArgs.push_back("neigh");
-        if (settings.value("gpuneigh", true).toBool())
+        if (settings.value(SettingsKeys::GPUNEIGH, true).toBool())
             lammpsArgs.push_back("yes");
         else
             lammpsArgs.push_back("no");
         lammpsArgs.push_back("pair/only");
-        if (settings.value("gpupaironly", false).toBool())
+        if (settings.value(SettingsKeys::GPUPAIRONLY, false).toBool())
             lammpsArgs.push_back("on");
         else
             lammpsArgs.push_back("off");
@@ -2522,11 +2527,11 @@ void LammpsGui::startLammps()
         lammpsArgs.push_back("-suffix");
         lammpsArgs.push_back("kk");
     }
-    if (settings.value("echo", false).toBool()) {
+    if (settings.value(SettingsKeys::ECHO, false).toBool()) {
         lammpsArgs.push_back("-echo");
         lammpsArgs.push_back("screen");
     }
-    if (settings.value("cite", false).toBool()) {
+    if (settings.value(SettingsKeys::CITE, false).toBool()) {
         lammpsArgs.push_back("-cite");
         lammpsArgs.push_back("screen");
     }

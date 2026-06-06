@@ -9,6 +9,7 @@
 // This software is distributed under the GNU General Public License version 2 or later.
 ////////////////////////////////////////////////////////////////////////////////////////
 
+#include "constants.h"
 #include "helpers.h"
 #include "lammpsgui.h"
 
@@ -83,11 +84,12 @@ int main(int argc, char *argv[])
         QStringList pluginPath = parser.values(plugindir);
         QSettings settings;
         if (pluginPath.length() > 0) {
-            settings.setValue("plugin_path", QFileInfo(pluginPath.at(0)).canonicalFilePath());
+            settings.setValue(SettingsKeys::PLUGIN_PATH,
+                              QFileInfo(pluginPath.at(0)).canonicalFilePath());
             settings.sync();
         } else {
             // empty string provided -> delete any old setting
-            settings.remove("plugin_path");
+            settings.remove(SettingsKeys::PLUGIN_PATH);
         }
     }
 #endif

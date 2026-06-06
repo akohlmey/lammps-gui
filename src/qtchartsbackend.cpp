@@ -11,6 +11,8 @@
 
 #include "qtchartsbackend.h"
 
+#include "constants.h"
+
 #include <QChart>
 #include <QPen>
 #include <QSettings>
@@ -34,7 +36,7 @@ void QtChartsBackend::init(QWidget *parent, const QString &title, QLineSeries *s
     yaxis = new QValueAxis;
 
     QSettings settings;
-    settings.beginGroup("charts");
+    settings.beginGroup(SettingsKeys::GROUP_CHARTS);
 
     chart->legend()->hide();
     chart->addAxis(xaxis, Qt::AlignBottom);
@@ -44,15 +46,15 @@ void QtChartsBackend::init(QWidget *parent, const QString &title, QLineSeries *s
     xaxis->setTickCount(5);
     xaxis->setLabelFormat("%d");
     yaxis->setTickCount(5);
-    xaxis->setGridLineVisible(settings.value("grid", true).toBool());
-    xaxis->setMinorGridLineVisible(settings.value("minorgrid", true).toBool());
+    xaxis->setGridLineVisible(settings.value(SettingsKeys::GRID, true).toBool());
+    xaxis->setMinorGridLineVisible(settings.value(SettingsKeys::MINORGRID, true).toBool());
     xaxis->setMinorGridLineColor(QColor(192, 192, 192));
     xaxis->setGridLineColor(QColor(160, 160, 160));
     xaxis->setMinorTickCount(4);
     yaxis->setMinorTickCount(4);
     yaxis->setTitleText(title);
-    yaxis->setGridLineVisible(settings.value("grid", true).toBool());
-    yaxis->setMinorGridLineVisible(settings.value("minorgrid", true).toBool());
+    yaxis->setGridLineVisible(settings.value(SettingsKeys::GRID, true).toBool());
+    yaxis->setMinorGridLineVisible(settings.value(SettingsKeys::MINORGRID, true).toBool());
     yaxis->setMinorGridLineColor(QColor(192, 192, 192));
     yaxis->setGridLineColor(QColor(160, 160, 160));
 
