@@ -58,26 +58,30 @@ overloads and `lastErrorMessage()` are the templates to follow.
 - Cleanup commits must not change behavior; build with
   `-DENABLE_TESTING=ON` and keep `ctest` green after each stage.
 
-## Stage 1 -- Centralize constants and settings keys (low risk, mechanical)
+## Stage 1 -- Centralize constants and settings keys (DONE)
 
-- [ ] **1a. Move remaining magic numbers to constants.h.** Hardcoded
-  defaults remain in `preferences.cpp` (e.g. `resize(700, 500)`,
-  `setRange(1, 1000)`, `setRange(1, 5000)`, `setRange(5, 999)`,
-  `(400, 40000)`, `(300, 30000)`) and `chartviewer.cpp`
-  (`settings.value("updchart", "500")`). Centralizing these in
-  `GuiConstants` improves discoverability and reduces duplication.
-  **Strategy**: audit every `resize()`, `setRange()`, and
-  `settings.value(..., <default>)` call; introduce a named constant for
-  each default.
+- [x] **1a. Move remaining magic numbers to constants.h.** Done: chart /
+  preferences UI ranges, sizes, and update-interval defaults moved into
+  `GuiConstants` (deduplicating the smoothing window/order ranges and the
+  chart update-interval default that were repeated in `preferences.cpp`
+  and `chartviewer.cpp`). No behavior change.
 
-- [ ] **1b. Centralize QSettings key strings.** ~215 `value()/setValue()`
-  calls use bare string literals, many repeated across files (e.g.
-  `"updchart"`, `"xsize"`, `"ysize"`, `"zoom"`, `"accelerator"`,
-  `"monosize"` in `imageviewer.cpp`, `chartviewer.cpp`,
-  `preferences.cpp`). A typo silently reads/writes the wrong key with no
-  compile error. **Strategy**: define `namespace SettingsKeys { ... }` in
-  `constants.h` with one `inline const QString` per key; replace all bare
-  literals in a single sweep, one file per commit.
+- [x] **1b. Centralize QSettings key strings.** Done: 272 bare key/group
+  literals across 12 files replaced with a new `SettingsKeys` namespace
+  (`constants.h`, 4 groups + 72 keys). Anchored strictly on the
+  `settings` object plus the SnapshotTab factory lambdas, so non-settings
+  `value()/contains()/remove()` calls (e.g. `"Program Files"`,
+  `"system32"`) were left untouched. No behavior change.
+
+  Follow-ups uncovered during Stage 1:
+  - **Chart default size discrepancy:** `preferences.cpp` defaults the
+    chart size to 500x320 while `chartviewer.cpp` reads the same
+    `chartx`/`charty` keys with defaults 640x480. Left as literals (not
+    centralized) to avoid changing behavior; needs a decision on the
+    intended default, then a single `CHART_DEFAULT_WIDTH/HEIGHT` constant.
+  - **Widget objectName / findChild wiring:** many settings keys double as
+    `setObjectName()` / `findChild<>()` strings that were intentionally
+    left as literals here. Consolidating them is folded into Stage 6e.
 
 ## Stage 2 -- String-handling consolidation at the wrapper boundary (core)
 
