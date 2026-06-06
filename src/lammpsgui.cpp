@@ -1542,24 +1542,8 @@ void LammpsGui::modified()
         setWindowTitle(title);
 }
 
-void LammpsGui::runDone()
+void LammpsGui::warnHighBufferUsage()
 {
-    if (logupdater) {
-        logupdater->stop();
-        delete logupdater;
-        logupdater = nullptr;
-    }
-    progress->setValue(Cfg::PROGRESS_MAXIMUM);
-    textEdit->setHighlight(CodeEditor::NO_HIGHLIGHT, false);
-
-    capturer->endCapture();
-
-    if (logwindow) {
-        auto log = capturer->getCapture();
-        logwindow->insertPlainText(log.c_str());
-        logwindow->moveCursor(QTextCursor::End);
-    }
-
     // check stdout capture buffer utilization and print warning message if large
 
     double bufferuse = capturer->getBufferUse();
@@ -1581,7 +1565,10 @@ void LammpsGui::runDone()
                  mesg1.arg((int)(100.0 * bufferuse)),
                  mesg2.arg(thermo_val).arg(thermo_suggest).arg(update_val).arg(update_suggest));
     }
+}
 
+void LammpsGui::finalizeChartData()
+{
     if (chartwindow) {
         int step = 0;
         if (lammps.extractSetting("bigint") == 4)
@@ -1609,6 +1596,29 @@ void LammpsGui::runDone()
         chartwindow->resetZoom();
         chartwindow->setRangeEnabled(true);
     }
+}
+
+void LammpsGui::runDone()
+{
+    if (logupdater) {
+        logupdater->stop();
+        delete logupdater;
+        logupdater = nullptr;
+    }
+    progress->setValue(Cfg::PROGRESS_MAXIMUM);
+    textEdit->setHighlight(CodeEditor::NO_HIGHLIGHT, false);
+
+    capturer->endCapture();
+
+    if (logwindow) {
+        auto log = capturer->getCapture();
+        logwindow->insertPlainText(log.c_str());
+        logwindow->moveCursor(QTextCursor::End);
+    }
+
+    warnHighBufferUsage();
+
+    finalizeChartData();
 
     bool success         = true;
     bool valid           = true;
@@ -1626,7 +1636,7 @@ void LammpsGui::runDone()
     int nline = CodeEditor::NO_HIGHLIGHT;
     if (valid) {
         void *ptr = lammps.lastThermo("line", 0);
-        if (ptr) nline = *((int *)ptr);
+        if (ptr) nline = *static_cast<int *>(ptr);
     }
 
     if (success) {
@@ -1656,6 +1666,47 @@ void LammpsGui::restartLammps()
         lammps.close();
     }
 };
+
+void LammpsGui::createLogWindow(QSettings &settings)
+{
+    // if configured, delete old log window before opening new one
+    if (settings.value(Keys::LOGREPLACE, true).toBool()) delete logwindow;
+    logwindow = new LogWindow(currentFile, this);
+    logwindow->setReadOnly(true);
+    logwindow->setCenterOnScroll(true);
+    logwindow->moveCursor(QTextCursor::End);
+    logwindow->setLineWrapMode(LogWindow::NoWrap);
+    logwindow->setWindowTitle(
+        QString("LAMMPS-GUI - Output - %1 - Run %2").arg(currentFile).arg(runCounter));
+    logwindow->setWindowIcon(QIcon(Cfg::MAIN_ICON));
+    logwindow->setMinimumSize(Cfg::MINIMUM_WIDTH, Cfg::MINIMUM_HEIGHT);
+    if (settings.value(Keys::VIEWLOG, true).toBool())
+        logwindow->show();
+    else
+        logwindow->hide();
+}
+
+void LammpsGui::createChartWindow(QSettings &settings)
+{
+    // if configured, delete old chart window before opening new one
+    if (settings.value(Keys::CHARTREPLACE, true).toBool()) delete chartwindow;
+    chartwindow = new ChartWindow(currentFile, this);
+    chartwindow->setWindowTitle(
+        QString("LAMMPS-GUI - Charts - %1 - Run %2").arg(currentFile).arg(runCounter));
+    chartwindow->setWindowIcon(QIcon(Cfg::MAIN_ICON));
+    chartwindow->setMinimumSize(Cfg::MINIMUM_WIDTH, Cfg::MINIMUM_HEIGHT);
+
+    const auto *unitptr = (const char *)lammps.extractGlobal("units");
+    if (unitptr) chartwindow->setUnits(QString("%1").arg(unitptr));
+    auto normflag = lammps.extractSetting("thermo_norm");
+    chartwindow->setNorm(normflag != 0);
+    chartwindow->setRangeEnabled(false);
+
+    if (settings.value(Keys::VIEWCHART, true).toBool())
+        chartwindow->show();
+    else
+        chartwindow->hide();
+}
 
 void LammpsGui::doRun(bool use_buffer)
 {
@@ -1727,40 +1778,9 @@ void LammpsGui::doRun(bool use_buffer)
     connect(runner, &LammpsRunner::finished, runner, &QObject::deleteLater);
     runner->start();
 
-    // if configured, delete old log window before opening new one
-    if (settings.value(Keys::LOGREPLACE, true).toBool()) delete logwindow;
-    logwindow = new LogWindow(currentFile, this);
-    logwindow->setReadOnly(true);
-    logwindow->setCenterOnScroll(true);
-    logwindow->moveCursor(QTextCursor::End);
-    logwindow->setLineWrapMode(LogWindow::NoWrap);
-    logwindow->setWindowTitle(
-        QString("LAMMPS-GUI - Output - %1 - Run %2").arg(currentFile).arg(runCounter));
-    logwindow->setWindowIcon(QIcon(Cfg::MAIN_ICON));
-    logwindow->setMinimumSize(Cfg::MINIMUM_WIDTH, Cfg::MINIMUM_HEIGHT);
-    if (settings.value(Keys::VIEWLOG, true).toBool())
-        logwindow->show();
-    else
-        logwindow->hide();
+    createLogWindow(settings);
 
-    // if configured, delete old chart window before opening new one
-    if (settings.value(Keys::CHARTREPLACE, true).toBool()) delete chartwindow;
-    chartwindow = new ChartWindow(currentFile, this);
-    chartwindow->setWindowTitle(
-        QString("LAMMPS-GUI - Charts - %1 - Run %2").arg(currentFile).arg(runCounter));
-    chartwindow->setWindowIcon(QIcon(Cfg::MAIN_ICON));
-    chartwindow->setMinimumSize(Cfg::MINIMUM_WIDTH, Cfg::MINIMUM_HEIGHT);
-
-    const auto *unitptr = (const char *)lammps.extractGlobal("units");
-    if (unitptr) chartwindow->setUnits(QString("%1").arg(unitptr));
-    auto normflag = lammps.extractSetting("thermo_norm");
-    chartwindow->setNorm(normflag != 0);
-    chartwindow->setRangeEnabled(false);
-
-    if (settings.value(Keys::VIEWCHART, true).toBool())
-        chartwindow->show();
-    else
-        chartwindow->hide();
+    createChartWindow(settings);
 
     if (slideshow) {
         slideshow->setWindowTitle(QString("LAMMPS-GUI - Slide Show - " + currentFile));

@@ -349,6 +349,18 @@ private:
     bool downloadTutorialFiles(const QString &dir, const QList<DownloadItem> &downloads,
                                URLDownloader &downloader);
 
+    /** @brief Create and show/hide the output log window for a run */
+    void createLogWindow(QSettings &settings);
+
+    /** @brief Create and show/hide the thermo chart window for a run */
+    void createChartWindow(QSettings &settings);
+
+    /** @brief Warn (modal) if the stdout capture buffer usage was high */
+    void warnHighBufferUsage();
+
+    /** @brief Append the final thermo data point to the charts at run end */
+    void finalizeChartData();
+
     /**
      * @brief Create all menu actions, menus, and status bar
      * @param settings application settings class instance
