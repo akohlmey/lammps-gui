@@ -178,6 +178,16 @@ public:
     void *extractCompute(const char *id, int style, int type);
 
     /**
+     * @brief Extract data from a compute from LAMMPS
+     * @overload
+     * @param id compute id as a QString
+     */
+    void *extractCompute(const QString &id, int style, int type)
+    {
+        return extractCompute(id.toLocal8Bit().constData(), style, type);
+    }
+
+    /**
      * @brief Extract data from a fix from LAMMPS
      * @param id fix id to extract
      * @param style style of data to extract
@@ -187,6 +197,16 @@ public:
      * @return data cast to a void pointer. Must be freed for global elements
      */
     void *extractFix(const char *id, int style, int type, int nrow, int ncol);
+
+    /**
+     * @brief Extract data from a fix from LAMMPS
+     * @overload
+     * @param id fix id as a QString
+     */
+    void *extractFix(const QString &id, int style, int type, int nrow, int ncol)
+    {
+        return extractFix(id.toLocal8Bit().constData(), style, type, nrow, ncol);
+    }
 
     /**
      * @brief Extract a variable value from LAMMPS
@@ -201,6 +221,16 @@ public:
      * @return Value type of variable as integer
      */
     int extractVariableDatatype(const char *keyword);
+
+    /**
+     * @brief Extract style of a variable from LAMMPS
+     * @overload
+     * @param keyword variable name as a QString
+     */
+    int extractVariableDatatype(const QString &keyword)
+    {
+        return extractVariableDatatype(keyword.toLocal8Bit().constData());
+    }
 
     /**
      * @brief Check if a compute/fix/variable ID exists
@@ -218,14 +248,12 @@ public:
     int idCount(const char *idtype);
 
     /**
-     * @brief Get name of an ID by index
-     * @param idtype Type of ID
+     * @brief Get the name of an ID by index
+     * @param idtype Type of ID ("compute", "fix", "variable", "group", ...)
      * @param idx Index of the ID
-     * @param buf Buffer to store the name
-     * @param buflen Length of buffer
-     * @return 0 on success, -1 on error
+     * @return The ID name, or an empty string on error
      */
-    int idName(const char *idtype, int idx, char *buf, int buflen);
+    QString idName(const char *idtype, int idx);
 
     /**
      * @brief Get count of styles of a specific type
@@ -235,23 +263,19 @@ public:
     int styleCount(const char *keyword);
 
     /**
-     * @brief Get name of a style by index
-     * @param keyword Type of style
+     * @brief Get the name of a style by index
+     * @param keyword Type of style ("command", "pair", "fix", ...)
      * @param idx Index of the style
-     * @param buf Buffer to store the name
-     * @param buflen Length of buffer
-     * @return 0 on success, -1 on error
+     * @return The style name, or an empty string on error
      */
-    int styleName(const char *keyword, int idx, char *buf, int buflen);
+    QString styleName(const char *keyword, int idx);
 
     /**
-     * @brief Get information about a variable by index
+     * @brief Get the name of a variable by index
      * @param idx Variable index
-     * @param buf Buffer to store variable info
-     * @param buflen Length of buffer
-     * @return Variable type code
+     * @return The variable name, or an empty string on error
      */
-    int variableInfo(int idx, char *buf, int buflen);
+    QString variableInfo(int idx);
 
     /**
      * @brief Get current value of a thermodynamic quantity
@@ -371,6 +395,13 @@ public:
     bool hasPlugin() const;
 
 private:
+    /// @name Low-level char-buffer variants behind the QString-returning overloads
+    /// @{
+    int idName(const char *idtype, int idx, char *buf, int buflen);
+    int styleName(const char *keyword, int idx, char *buf, int buflen);
+    int variableInfo(int idx, char *buf, int buflen);
+    /// @}
+
     void *lammps_handle; ///< Handle to LAMMPS instance
 #if defined(LAMMPS_GUI_USE_PLUGIN)
     void *plugin_handle; ///< Handle to dynamically loaded LAMMPS library

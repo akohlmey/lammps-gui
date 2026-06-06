@@ -673,7 +673,6 @@ LammpsGui::LammpsGui(QWidget *parent, const QString &filename, int width, int he
     // start LAMMPS and initialize command completion
     startLammps();
     QStringList style_list;
-    char buf[Cfg::DEFAULT_BUFLEN];
     QFile internal_commands(":/lammps_internal_commands.txt");
     if (internal_commands.open(QIODevice::ReadOnly | QIODevice::Text)) {
         while (!internal_commands.atEnd()) {
@@ -683,13 +682,12 @@ LammpsGui::LammpsGui(QWidget *parent, const QString &filename, int width, int he
     internal_commands.close();
     int ncmds = lammps.styleCount("command");
     for (int i = 0; i < ncmds; ++i) {
-        if (lammps.styleName("command", i, buf, Cfg::DEFAULT_BUFLEN)) {
-            // skip suffixed names
-            const QString style(buf);
-            if (style.endsWith("/kk/host") || style.endsWith("/kk/device") || style.endsWith("/kk"))
-                continue;
-            style_list << style;
-        }
+        const QString style = lammps.styleName("command", i);
+        if (style.isEmpty()) continue;
+        // skip suffixed names
+        if (style.endsWith("/kk/host") || style.endsWith("/kk/device") || style.endsWith("/kk"))
+            continue;
+        style_list << style;
     }
     style_list.sort();
     textEdit->setCommandList(style_list);
@@ -722,24 +720,23 @@ LammpsGui::LammpsGui(QWidget *parent, const QString &filename, int width, int he
 
     textEdit->setFileList();
 
-#define ADD_STYLES(keyword, Type)                                                              \
-    style_list.clear();                                                                        \
-    if ((std::string(#keyword) == "pair") || (std::string(#keyword) == "bond") ||              \
-        (std::string(#keyword) == "angle") || (std::string(#keyword) == "dihedral") ||         \
-        (std::string(#keyword) == "improper") || (std::string(#keyword) == "kspace"))          \
-        style_list << QString("none");                                                         \
-    ncmds = lammps.styleCount(#keyword);                                                       \
-    for (int i = 0; i < ncmds; ++i) {                                                          \
-        if (lammps.styleName(#keyword, i, buf, Cfg::DEFAULT_BUFLEN)) {                         \
-            const QString style(buf);                                                          \
-            if (style.endsWith("/gpu") || style.endsWith("/intel") || style.endsWith("/kk") || \
-                style.endsWith("/kk/device") || style.endsWith("/kk/host") ||                  \
-                style.endsWith("/omp") || style.endsWith("/opt"))                              \
-                continue;                                                                      \
-            style_list << style;                                                               \
-        }                                                                                      \
-    }                                                                                          \
-    style_list.sort();                                                                         \
+#define ADD_STYLES(keyword, Type)                                                          \
+    style_list.clear();                                                                    \
+    if ((std::string(#keyword) == "pair") || (std::string(#keyword) == "bond") ||          \
+        (std::string(#keyword) == "angle") || (std::string(#keyword) == "dihedral") ||     \
+        (std::string(#keyword) == "improper") || (std::string(#keyword) == "kspace"))      \
+        style_list << QString("none");                                                     \
+    ncmds = lammps.styleCount(#keyword);                                                   \
+    for (int i = 0; i < ncmds; ++i) {                                                      \
+        const QString style = lammps.styleName(#keyword, i);                               \
+        if (style.isEmpty()) continue;                                                     \
+        if (style.endsWith("/gpu") || style.endsWith("/intel") || style.endsWith("/kk") || \
+            style.endsWith("/kk/device") || style.endsWith("/kk/host") ||                  \
+            style.endsWith("/omp") || style.endsWith("/opt"))                              \
+            continue;                                                                      \
+        style_list << style;                                                               \
+    }                                                                                      \
+    style_list.sort();                                                                     \
     textEdit->set##Type##List(style_list)
 
     ADD_STYLES(fix, Fix);
@@ -961,13 +958,11 @@ void LammpsGui::updateRecents(const QString &filename)
 void LammpsGui::clearVariables()
 {
     int nvar = lammps.idCount("variable");
-    char buffer[Cfg::DEFAULT_BUFLEN];
 
     // delete from back so they are not re-indexed
     for (int i = nvar - 1; i >= 0; --i) {
-        memset(buffer, 0, Cfg::DEFAULT_BUFLEN);
-        if (lammps.idName("variable", i, buffer, Cfg::DEFAULT_BUFLEN))
-            lammps.command(QString("variable %1 delete").arg(buffer));
+        const QString name = lammps.idName("variable", i);
+        if (!name.isEmpty()) lammps.command(QString("variable %1 delete").arg(name));
     }
 }
 
@@ -1430,12 +1425,9 @@ void LammpsGui::logUpdate()
 
         if (varwindow) {
             int nvar = lammps.idCount("variable");
-            char buffer[Cfg::DEFAULT_BUFLEN];
             QString varinfo("\n");
-            for (int i = 0; i < nvar; ++i) {
-                memset(buffer, 0, Cfg::DEFAULT_BUFLEN);
-                if (lammps.variableInfo(i, buffer, Cfg::DEFAULT_BUFLEN)) varinfo += buffer;
-            }
+            for (int i = 0; i < nvar; ++i)
+                varinfo += lammps.variableInfo(i);
             if (nvar == 0) varinfo += "  (none)  ";
 
             varwindow->setText(varinfo);

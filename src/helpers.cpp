@@ -190,6 +190,14 @@ std::vector<std::string> splitLine(const std::string &text)
     return list;
 }
 
+QStringList splitLine(const QString &text)
+{
+    QStringList list;
+    for (const auto &word : splitLine(text.toStdString()))
+        list << QString::fromStdString(word);
+    return list;
+}
+
 // customized information dialog
 
 void information(QWidget *parent, const QString &title, const QString &text1, const QString &text2)

@@ -187,7 +187,7 @@ void CodeEditor::setHighlight(int block, bool error)
 
 QString CodeEditor::reformatLine(const QString &line)
 {
-    auto words = splitLine(line.toStdString());
+    auto words = splitLine(line);
     QString newtext;
     QSettings settings;
     settings.beginGroup(Keys::GROUP_REFORMAT);
@@ -202,12 +202,12 @@ QString CodeEditor::reformatLine(const QString &line)
     bool rebuildComputeIDComp = false;
     bool rebuildFixIDComp     = false;
 
-    if (!words.empty()) {
+    if (!words.isEmpty()) {
         // commented line. do nothing
         if (words[0][0] == '#') return line;
 
         // start with LAMMPS command plus padding if another word follows
-        newtext = words[0].c_str();
+        newtext = words[0];
         if (words.size() > 1) {
             for (int i = words[0].size() + 1; i < cmdsize; ++i)
                 newtext += ' ';
@@ -222,9 +222,9 @@ QString CodeEditor::reformatLine(const QString &line)
         }
 
         // append remaining words with just a single blank added.
-        for (std::size_t i = 1; i < words.size(); ++i) {
+        for (int i = 1; i < words.size(); ++i) {
             newtext += ' ';
-            newtext += words[i].c_str();
+            newtext += words[i];
 
             // special cases
 
@@ -301,8 +301,8 @@ void CodeEditor::setGroupList()
     cursor.movePosition(QTextCursor::Start);
     setTextCursor(cursor);
     while (find(groupcmd)) {
-        auto words = splitLine(textCursor().block().text().replace('\t', ' ').toStdString());
-        if ((words.size() > 1) && !groups.contains(words[1].c_str())) groups << words[1].c_str();
+        auto words = splitLine(textCursor().block().text().replace('\t', ' '));
+        if ((words.size() > 1) && !groups.contains(words[1])) groups << words[1];
     }
     groups.sort();
     groups.prepend(QStringLiteral("all"));
@@ -321,14 +321,12 @@ void CodeEditor::setVarNameList()
 
     LammpsWrapper *lammps = &qobject_cast<LammpsGui *>(parent())->lammps;
     int nvar              = lammps->idCount("variable");
-    constexpr int BUFLEN  = 256;
-    char buffer[BUFLEN];
     for (int i = 0; i < nvar; ++i) {
-        memset(buffer, 0, BUFLEN);
-        if (lammps->variableInfo(i, buffer, BUFLEN)) {
-            if (strlen(buffer) == 1) vars << QString("$%1").arg(buffer);
-            vars << QString("${%1}").arg(buffer);
-            vars << QString("v_%1").arg(buffer);
+        const QString name = lammps->variableInfo(i);
+        if (!name.isEmpty()) {
+            if (name.size() == 1) vars << QString("$%1").arg(name);
+            vars << QString("${%1}").arg(name);
+            vars << QString("v_%1").arg(name);
         }
     }
 
@@ -339,13 +337,13 @@ void CodeEditor::setVarNameList()
     cursor.movePosition(QTextCursor::Start);
     setTextCursor(cursor);
     while (find(varcmd)) {
-        auto words = splitLine(textCursor().block().text().replace('\t', ' ').toStdString());
+        auto words = splitLine(textCursor().block().text().replace('\t', ' '));
         if ((words.size() > 1)) {
-            QString w = QString("$%1").arg(words[1].c_str());
+            QString w = QString("$%1").arg(words[1]);
             if ((words[1].size() == 1) && !vars.contains(w)) vars << w;
-            w = QString("${%1}").arg(words[1].c_str());
+            w = QString("${%1}").arg(words[1]);
             if (!vars.contains(w)) vars << w;
-            w = QString("v_%1").arg(words[1].c_str());
+            w = QString("v_%1").arg(words[1]);
             if (!vars.contains(w)) vars << w;
         }
     }
@@ -366,11 +364,11 @@ void CodeEditor::setComputeIDList()
     cursor.movePosition(QTextCursor::Start);
     setTextCursor(cursor);
     while (find(compcmd)) {
-        auto words = splitLine(textCursor().block().text().replace('\t', ' ').toStdString());
+        auto words = splitLine(textCursor().block().text().replace('\t', ' '));
         if ((words.size() > 1)) {
-            QString w = QString("c_%1").arg(words[1].c_str());
+            QString w = QString("c_%1").arg(words[1]);
             if (!compid.contains(w)) compid << w;
-            w = QString("C_%1").arg(words[1].c_str());
+            w = QString("C_%1").arg(words[1]);
             if (!compid.contains(w)) compid << w;
         }
     }
@@ -391,11 +389,11 @@ void CodeEditor::setFixIDList()
     cursor.movePosition(QTextCursor::Start);
     setTextCursor(cursor);
     while (find(fixcmd)) {
-        auto words = splitLine(textCursor().block().text().replace('\t', ' ').toStdString());
+        auto words = splitLine(textCursor().block().text().replace('\t', ' '));
         if ((words.size() > 1)) {
-            QString w = QString("f_%1").arg(words[1].c_str());
+            QString w = QString("f_%1").arg(words[1]);
             if (!fixid.contains(w)) fixid << w;
-            w = QString("F_%1").arg(words[1].c_str());
+            w = QString("F_%1").arg(words[1]);
             if (!fixid.contains(w)) fixid << w;
         }
     }
@@ -805,7 +803,7 @@ void CodeEditor::runCompletion()
     auto line   = cursor.block().text().trimmed();
     // no completion possible on empty lines
     if (line.isEmpty()) return;
-    auto words = splitLine(line.toStdString());
+    auto words = splitLine(line);
 
     // QTextCursor::WordUnderCursor is unusable here since it recognizes '/' as word boundary.
     // Work around it by manually searching for the beginning and end position of the word
@@ -824,16 +822,16 @@ void CodeEditor::runCompletion()
     const auto selected = line.mid(begin, end - begin);
 
     // if on first word, try to complete command
-    if ((!words.empty()) && (words[0] == selected.toStdString())) {
+    if ((!words.isEmpty()) && (words[0] == selected)) {
         // no completion on comment lines
         if (words[0][0] == '#') return;
 
         currentComp = commandComp;
-        currentComp->setCompletionPrefix(words[0].c_str());
+        currentComp->setCompletionPrefix(words[0]);
         if (popup && (popup != currentComp->popup())) popup->hide();
         popup = currentComp->popup();
         // if the command is already a complete command, remove existing popup
-        if (words[0] == currentComp->currentCompletion().toStdString()) {
+        if (words[0] == currentComp->currentCompletion()) {
             if (popup->isVisible()) {
                 popup->hide();
                 currentComp = nullptr;
@@ -846,7 +844,7 @@ void CodeEditor::runCompletion()
         currentComp->complete(cr);
 
         // completions for second word
-    } else if ((words.size() > 1) && (words[1] == selected.toStdString())) {
+    } else if ((words.size() > 1) && (words[1] == selected)) {
         // no completion on comment lines
         if (words[0][0] == '#') return;
 
@@ -889,11 +887,11 @@ void CodeEditor::runCompletion()
             currentComp = fixidComp;
 
         if (currentComp) {
-            currentComp->setCompletionPrefix(words[1].c_str());
+            currentComp->setCompletionPrefix(words[1]);
             if (popup && (popup != currentComp->popup())) popup->hide();
             popup = currentComp->popup();
             // if the command is already a complete command, remove existing popup
-            if (words[1] == currentComp->currentCompletion().toStdString()) {
+            if (words[1] == currentComp->currentCompletion()) {
                 if (popup->isVisible()) popup->hide();
                 return;
             }
@@ -904,7 +902,7 @@ void CodeEditor::runCompletion()
             currentComp->complete(cr);
         }
         // completions for third word
-    } else if ((words.size() > 2) && (words[2] == selected.toStdString())) {
+    } else if ((words.size() > 2) && (words[2] == selected)) {
         // no completion on comment lines
         if (words[0][0] == '#') return;
 
@@ -930,11 +928,11 @@ void CodeEditor::runCompletion()
                 currentComp = fileComp;
         }
         if (currentComp) {
-            currentComp->setCompletionPrefix(words[2].c_str());
+            currentComp->setCompletionPrefix(words[2]);
             if (popup && (popup != currentComp->popup())) popup->hide();
             popup = currentComp->popup();
             // if the command is already a complete command, remove existing popup
-            if (words[2] == currentComp->currentCompletion().toStdString()) {
+            if (words[2] == currentComp->currentCompletion()) {
                 if (popup->isVisible()) popup->hide();
                 return;
             }
@@ -945,7 +943,7 @@ void CodeEditor::runCompletion()
             currentComp->complete(cr);
         }
         // completions for fourth word
-    } else if ((words.size() > 3) && (words[3] == selected.toStdString())) {
+    } else if ((words.size() > 3) && (words[3] == selected)) {
         // no completion on comment lines
         if (words[0][0] == '#') return;
 
@@ -971,11 +969,11 @@ void CodeEditor::runCompletion()
             currentComp = extraComp;
 
         if (currentComp) {
-            currentComp->setCompletionPrefix(words[3].c_str());
+            currentComp->setCompletionPrefix(words[3]);
             if (popup && (popup != currentComp->popup())) popup->hide();
             popup = currentComp->popup();
             // if the command is already a complete command, remove existing popup
-            if (words[3] == currentComp->currentCompletion().toStdString()) {
+            if (words[3] == currentComp->currentCompletion()) {
                 if (popup->isVisible()) popup->hide();
                 return;
             }

@@ -296,6 +296,13 @@ int LammpsWrapper::idName(const char *keyword, int idx, char *buf, int len)
     return val;
 }
 
+QString LammpsWrapper::idName(const char *keyword, int idx)
+{
+    char buf[Cfg::DEFAULT_BUFLEN];
+    if (idName(keyword, idx, buf, Cfg::DEFAULT_BUFLEN)) return QString::fromLocal8Bit(buf);
+    return {};
+}
+
 int LammpsWrapper::styleCount(const char *keyword)
 {
     int val = 0;
@@ -323,6 +330,13 @@ int LammpsWrapper::styleName(const char *keyword, int idx, char *buf, int len)
     return val;
 }
 
+QString LammpsWrapper::styleName(const char *keyword, int idx)
+{
+    char buf[Cfg::DEFAULT_BUFLEN];
+    if (styleName(keyword, idx, buf, Cfg::DEFAULT_BUFLEN)) return QString::fromLocal8Bit(buf);
+    return {};
+}
+
 int LammpsWrapper::variableInfo(int idx, char *buf, int len)
 {
     int val = 0;
@@ -334,6 +348,13 @@ int LammpsWrapper::variableInfo(int idx, char *buf, int len)
 #endif
     }
     return val;
+}
+
+QString LammpsWrapper::variableInfo(int idx)
+{
+    char buf[Cfg::DEFAULT_BUFLEN];
+    if (variableInfo(idx, buf, Cfg::DEFAULT_BUFLEN)) return QString::fromLocal8Bit(buf);
+    return {};
 }
 
 double LammpsWrapper::getThermo(const char *keyword)

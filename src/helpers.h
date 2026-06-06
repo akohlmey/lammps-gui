@@ -16,6 +16,7 @@
 #include <QIcon>
 #include <QMenu>
 #include <QString>
+#include <QStringList>
 #include <memory>
 #include <string>
 #include <vector>
@@ -42,6 +43,14 @@ extern int dateCompare(const QString &one, const QString &two);
  * @return Vector of words extracted from the string
  */
 extern std::vector<std::string> splitLine(const std::string &text);
+
+/**
+ * @brief Split a string into words while respecting quotes
+ * @overload
+ * @param text The string to split
+ * @return List of words extracted from the string
+ */
+extern QStringList splitLine(const QString &text);
 
 /**
  * @brief Provide standardized information dialog

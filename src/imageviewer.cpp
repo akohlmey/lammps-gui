@@ -615,28 +615,20 @@ ImageViewer::ImageViewer(const QString &fileName, LammpsWrapper *_lammps, Lammps
     help->setToolTip("Open online help");
     help->setObjectName("visualization.html");
 
-    constexpr int BUFLEN = 256;
-    char gname[BUFLEN];
     auto *combo = new QComboBox;
     combo->setToolTip("Select group to display");
     combo->setObjectName("group");
     int ngroup = lammps->idCount("group");
-    for (int i = 0; i < ngroup; ++i) {
-        memset(gname, 0, BUFLEN);
-        lammps->idName("group", i, gname, BUFLEN);
-        combo->addItem(gname);
-    }
+    for (int i = 0; i < ngroup; ++i)
+        combo->addItem(lammps->idName("group", i));
 
     auto *molbox = new QComboBox;
     molbox->setToolTip("Select molecule to display");
     molbox->setObjectName("molecule");
     molbox->addItem("none");
     int nmols = lammps->idCount("molecule");
-    for (int i = 0; i < nmols; ++i) {
-        memset(gname, 0, BUFLEN);
-        lammps->idName("molecule", i, gname, BUFLEN);
-        molbox->addItem(gname);
-    }
+    for (int i = 0; i < nmols; ++i)
+        molbox->addItem(lammps->idName("molecule", i));
 
     auto *menuLayout   = new QHBoxLayout;
     auto *buttonLayout = new QHBoxLayout;
@@ -1181,7 +1173,7 @@ void ImageViewer::doRecenter()
 
 void ImageViewer::cmdToClipboard()
 {
-    auto words = splitLine(last_dump_cmd.toStdString());
+    auto words = splitLine(last_dump_cmd);
     int modidx = 0;
     int maxidx = words.size();
     for (int i = 0; i < maxidx; ++i) {
@@ -1191,7 +1183,7 @@ void ImageViewer::cmdToClipboard()
         }
     }
 
-    std::string dumpcmd = "dump viz ";
+    QString dumpcmd = "dump viz ";
     dumpcmd += words[1];
 
     if (lammps->configHasPngSupport()) {
@@ -1213,10 +1205,10 @@ void ImageViewer::cmdToClipboard()
 #if QT_CONFIG(clipboard)
     auto *clip = QGuiApplication::clipboard();
     if (clip) {
-        clip->setText(dumpcmd.c_str(), QClipboard::Clipboard);
-        if (clip->supportsSelection()) clip->setText(dumpcmd.c_str(), QClipboard::Selection);
+        clip->setText(dumpcmd, QClipboard::Clipboard);
+        if (clip->supportsSelection()) clip->setText(dumpcmd, QClipboard::Selection);
     } else
-        fprintf(stderr, "# customized dump image command:\n%s", dumpcmd.c_str());
+        fprintf(stderr, "# customized dump image command:\n%s", qPrintable(dumpcmd));
 #else
     fprintf(stderr, "# customized dump image command:\n%s", dumpcmd.c_str());
 #endif
@@ -3457,20 +3449,19 @@ void ImageViewer::updatePeratom()
 
         void *ptr = nullptr;
         int type  = 0;
-        char name[256];
 
         // add atom style variables to the list
         int num = lammps->idCount("variable");
         for (int idx = 0; idx < num; ++idx) {
-            lammps->idName("variable", idx, name, 256);
-            type = lammps->extractVariableDatatype(name);
+            const QString name = lammps->idName("variable", idx);
+            type               = lammps->extractVariableDatatype(name);
             if (type == LammpsWrapper::ATOM_STYLE) atom_properties << QString("v_%1").arg(name);
         }
 
         // add compatible computes to the list
         num = lammps->idCount("compute");
         for (int idx = 0; idx < num; ++idx) {
-            lammps->idName("compute", idx, name, 256);
+            const QString name = lammps->idName("compute", idx);
             ptr =
                 lammps->extractCompute(name, LammpsWrapper::ATOM_STYLE, LammpsWrapper::VECTOR_TYPE);
             if (ptr) {
@@ -3496,7 +3487,7 @@ void ImageViewer::updatePeratom()
         // add compatible fixes to the list
         num = lammps->idCount("fix");
         for (int idx = 0; idx < num; ++idx) {
-            lammps->idName("fix", idx, name, 256);
+            const QString name = lammps->idName("fix", idx);
             ptr = lammps->extractFix(name, LammpsWrapper::ATOM_STYLE, LammpsWrapper::ARRAY_TYPE, -1,
                                      -1);
             if (ptr) {
@@ -3605,11 +3596,11 @@ void ImageViewer::updateRegions()
     }
 
     // add any new regions
-    char buffer[Cfg::DEFAULT_BUFLEN];
     int nregions = lammps->idCount("region");
     for (int i = 0; i < nregions; ++i) {
-        if (lammps->idName("region", i, buffer, Cfg::DEFAULT_BUFLEN)) {
-            std::string id = buffer;
+        const QString name = lammps->idName("region", i);
+        if (!name.isEmpty()) {
+            std::string id = name.toStdString();
             if (regions.count(id) == 0) {
                 const auto &color = defaultcolors[i % defaultcolors.size()].toStdString();
                 auto *reginfo     = new RegionInfo(false, FRAME, color, DEFAULT_DIAMETER,
