@@ -293,6 +293,30 @@ public:
     void *lastThermo(const char *keyword, int idx);
 
     /**
+     * @brief Typed read of a cached last-thermo value
+     * @tparam T scalar type the thermo value points to (int, int64_t, double)
+     * @param keyword Thermo keyword ("step", "num", "type", "data", ...)
+     * @param idx Index for vector quantities
+     * @return The dereferenced value, or a value-initialized T if the query returns null
+     */
+    template <typename T> T lastThermoAs(const char *keyword, int idx)
+    {
+        void *ptr = lastThermo(keyword, idx);
+        return ptr ? *static_cast<T *>(ptr) : T{};
+    }
+
+    /**
+     * @brief Read a string-valued cached last-thermo entry
+     * @param keyword Thermo keyword that returns text (e.g. "keyword", "imagename")
+     * @param idx Index for vector quantities
+     * @return The value as a QString (empty if unavailable)
+     */
+    QString lastThermoString(const char *keyword, int idx)
+    {
+        return QString::fromLocal8Bit(static_cast<const char *>(lastThermo(keyword, idx)));
+    }
+
+    /**
      * @brief Check if LAMMPS instance is open
      * @return true if LAMMPS is initialized, false otherwise
      */

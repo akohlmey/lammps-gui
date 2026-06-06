@@ -128,15 +128,25 @@ overloads and `lastErrorMessage()` are the templates to follow.
   symbol selection, like `CHECKSYM`'s stringification) -- distinct from the
   logic-hiding macros that Stage 6 removes.
 
-## Stage 4 -- Typed data-extraction helpers (cast consolidation)
+## Stage 4 -- Typed data-extraction helpers (DONE)
 
-- [ ] **4. Wrap the `void*`-returning extract APIs in typed accessors.**
-  `extractGlobal`, `extractAtom`, `lastThermo`, etc. produce the
-  `*(int *)ptr` / `*(double *)ptr` / `(double)*(int64_t *)ptr` cast
-  clusters in `lammpsgui.cpp` (~lines 1429-1648). Add small typed
-  template helpers (e.g. `template <typename T> T lastThermoAs(...)`) on
-  `LammpsWrapper` so the reinterpretation lives in one audited place and
-  call sites lose their C-style casts.
+- [x] **4. Typed accessors for the `lastThermo` cast clusters.** Added
+  `template <typename T> T lastThermoAs(keyword, idx)` (null-safe deref,
+  returns `T{}` on null) and `QString lastThermoString(keyword, idx)` to
+  `LammpsWrapper`. Both `lammpsgui.cpp` thermo-extraction clusters now use
+  them, removing all `*(int *)ptr` / `*(double *)ptr` /
+  `(double)*(int64_t *)ptr` / `(const char *)lastThermo(...)` casts and the
+  raw `void *ptr` plumbing. Verified equivalent: the only divergence would
+  be a null `type` with a non-null `data` (impossible for valid columns,
+  and the existing second cluster already dereferenced `type` unguarded).
+  Compiles in both plugin (`build-gui`, 58/58 tests) and linked
+  (`build-lib`) configs.
+
+  Scope note: `extractGlobal`/`extractAtom`/`extractCompute`/`extractFix`
+  return pointers used as **arrays or strings** (`boxlo`, `mass`, `units`,
+  ...), not scalars, so a scalar-deref template does not fit them; their
+  remaining C-style pointer casts are left for the Stage 6c `static_cast`
+  sweep.
 
 ## Stage 5 -- Decompose oversized methods and files
 

@@ -1448,25 +1448,20 @@ void LammpsGui::logUpdate()
     }
 
     // get timestep
-    int step  = 0;
-    void *ptr = lammps.lastThermo("step", 0);
-    if (ptr) {
-        if (lammps.extractSetting("bigint") == 4)
-            step = *(int *)ptr;
-        else
-            step = (int)*(int64_t *)ptr;
-    }
+    int step = 0;
+    if (lammps.extractSetting("bigint") == 4)
+        step = lammps.lastThermoAs<int>("step", 0);
+    else
+        step = static_cast<int>(lammps.lastThermoAs<int64_t>("step", 0));
 
     // extract cached thermo data when LAMMPS is executing a minimize or run command
     if (chartwindow && lammps.isRunning()) {
         // thermo data is not yet valid during setup
-        void *ptr = lammps.lastThermo("setup", 0);
-        if (ptr && *(int *)ptr) return;
+        if (lammps.lastThermoAs<int>("setup", 0)) return;
 
         lammps.lastThermo("lock", 0);
-        ptr = lammps.lastThermo("num", 0);
-        if (ptr) {
-            int ncols = *(int *)ptr;
+        const int ncols = lammps.lastThermoAs<int>("num", 0);
+        if (ncols > 0) {
 
             // check if the column assignment has changed
             // if yes, delete charts and start over
@@ -1475,7 +1470,7 @@ void LammpsGui::logUpdate()
                 bool do_reset = false;
                 if (step < chartwindow->getStep()) do_reset = true;
                 for (int i = 0, idx = 0; i < ncols; ++i) {
-                    QString label = (const char *)lammps.lastThermo("keyword", i);
+                    QString label = lammps.lastThermoString("keyword", i);
                     // no need to store the timestep column
                     if (label == "Step") continue;
                     if (!chartwindow->hasTitle(label, idx)) {
@@ -1491,7 +1486,7 @@ void LammpsGui::logUpdate()
 
             if (chartwindow->numCharts() == 0) {
                 for (int i = 0; i < ncols; ++i) {
-                    QString label = (const char *)lammps.lastThermo("keyword", i);
+                    QString label = lammps.lastThermoString("keyword", i);
                     // no need to store the timestep column
                     if (label == "Step") continue;
                     chartwindow->addChart(label, i);
@@ -1499,19 +1494,14 @@ void LammpsGui::logUpdate()
             }
 
             for (int i = 0; i < ncols; ++i) {
-                int datatype = -1;
-                double data  = 0.0;
-                void *ptr    = lammps.lastThermo("type", i);
-                if (ptr) datatype = *(int *)ptr;
-                ptr = lammps.lastThermo("data", i);
-                if (ptr) {
-                    if (datatype == 0) // int
-                        data = *(int *)ptr;
-                    else if (datatype == 2) // double
-                        data = *(double *)ptr;
-                    else if (datatype == 4) // bigint
-                        data = (double)*(int64_t *)ptr;
-                }
+                const int datatype = lammps.lastThermoAs<int>("type", i);
+                double data        = 0.0;
+                if (datatype == 0) // int
+                    data = lammps.lastThermoAs<int>("data", i);
+                else if (datatype == 2) // double
+                    data = lammps.lastThermoAs<double>("data", i);
+                else if (datatype == 4) // bigint
+                    data = static_cast<double>(lammps.lastThermoAs<int64_t>("data", i));
                 chartwindow->addData(step, data, i);
             }
         }
@@ -1520,7 +1510,7 @@ void LammpsGui::logUpdate()
 
     // update list of available image file names
 
-    QString imagefile = (const char *)lammps.lastThermo("imagename", 0);
+    QString imagefile = lammps.lastThermoString("imagename", 0);
     if (!imagefile.isEmpty()) {
         if (!slideshow) {
             slideshow = new SlideShow(currentFile, this);
@@ -1589,31 +1579,28 @@ void LammpsGui::runDone()
     }
 
     if (chartwindow) {
-        void *ptr = lammps.lastThermo("step", 0);
-        if (ptr) {
-            int step = 0;
-            if (lammps.extractSetting("bigint") == 4)
-                step = *(int *)ptr;
-            else
-                step = (int)*(int64_t *)ptr;
-            int ncols = *(int *)lammps.lastThermo("num", 0);
-            for (int i = 0; i < ncols; ++i) {
-                if (chartwindow->numCharts() == 0) {
-                    QString label = (const char *)lammps.lastThermo("keyword", i);
-                    // no need to store the timestep column
-                    if (label == "Step") continue;
-                    chartwindow->addChart(label, i);
-                }
-                int datatype = *(int *)lammps.lastThermo("type", i);
-                double data  = 0.0;
-                if (datatype == 0) // int
-                    data = *(int *)lammps.lastThermo("data", i);
-                else if (datatype == 2) // double
-                    data = *(double *)lammps.lastThermo("data", i);
-                else if (datatype == 4) // bigint
-                    data = (double)*(int64_t *)lammps.lastThermo("data", i);
-                chartwindow->addData(step, data, i);
+        int step = 0;
+        if (lammps.extractSetting("bigint") == 4)
+            step = lammps.lastThermoAs<int>("step", 0);
+        else
+            step = static_cast<int>(lammps.lastThermoAs<int64_t>("step", 0));
+        const int ncols = lammps.lastThermoAs<int>("num", 0);
+        for (int i = 0; i < ncols; ++i) {
+            if (chartwindow->numCharts() == 0) {
+                QString label = lammps.lastThermoString("keyword", i);
+                // no need to store the timestep column
+                if (label == "Step") continue;
+                chartwindow->addChart(label, i);
             }
+            const int datatype = lammps.lastThermoAs<int>("type", i);
+            double data        = 0.0;
+            if (datatype == 0) // int
+                data = lammps.lastThermoAs<int>("data", i);
+            else if (datatype == 2) // double
+                data = lammps.lastThermoAs<double>("data", i);
+            else if (datatype == 4) // bigint
+                data = static_cast<double>(lammps.lastThermoAs<int64_t>("data", i));
+            chartwindow->addData(step, data, i);
         }
         chartwindow->resetZoom();
         chartwindow->setRangeEnabled(true);
