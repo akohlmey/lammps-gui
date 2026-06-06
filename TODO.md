@@ -390,12 +390,29 @@ display with a small style dialog, and a post-processing/fitting dialog.
     delimiter/header controls (simpler, no UI needed). 94/94 ctest, zero
     Doxygen warnings, both configs build.
 
-- **Layer 2 -- series styling (lines / points / lines+points).** Extend
-  `ChartBackend` with `QScatterSeries` support (both QtCharts and QtGraphs
-  provide it) and a `SeriesStyle` {mode, color, marker shape, marker size,
-  line width} + a compact style dialog. This is the only change touching
-  *both* backends, so it is the riskiest piece -- scope to exactly those
-  properties.
+- **Layer 2 -- series styling (lines / points / lines+points). DONE
+  (minimalist).** Extend `ChartBackend` with `QScatterSeries` support (both
+  QtCharts and QtGraphs provide it) and a `SeriesStyle` {mode, color, marker
+  shape, marker size, line width} + a compact style dialog. This is the only
+  change touching *both* backends, so it is the riskiest piece.
+  - Done: `ChartBackend` `addSeries`/`styleSeries`/`removeSeries`/`hasSeries`
+    generalized to the common `QXYSeries` base (line or scatter), with
+    `styleSeries()` (re)applying color and, for lines, width; both backends
+    updated. `ChartViewer` gained a `ChartDisplayMode` enum and
+    `setDisplayStyle(mode, color, width)` -- an on-demand `QScatterSeries`
+    mirror of the raw data is kept in sync and shown/hidden per mode, with
+    defaults reproducing the prior line behavior. A compact "Chart Style..."
+    dialog (mode / color / line width) was added to the chart window's File
+    menu.
+  - **Marker shape and size were dropped** (decision): QtGraphs (the default
+    Qt 6.10+ backend) has no C++ marker API -- shape/size are reachable only
+    via a QML `pointDelegate`. Per the minimalist goal, points use each
+    backend's default marker; the `SeriesStyle` is {mode, color, line width}.
+    Cross-session style persistence also deferred. **Build note:** the
+    QtCharts backend is normally not compiled (QtGraphs is default on 6.10+),
+    so changes here must also build with `-DLAMMPS_GUI_USE_QTCHARTS=ON` (the
+    `build-charts` dir) -- a real bug-surface that `build-gui`/`build-lib`
+    miss.
 
 - **Layer 3 -- post-processing / analysis.** Generalize today's "smooth"
   into a tiny `Transform` interface (source series -> derived series +
