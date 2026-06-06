@@ -37,6 +37,7 @@
 // define consistent function aliases to avoid complications from pre-processing
 #ifdef _WIN32
 #include <io.h>
+
 const auto &mydup    = _dup;
 const auto &mydup2   = _dup2;
 const auto &myfileno = _fileno;
@@ -199,7 +200,7 @@ void information(QWidget *parent, const QString &title, const QString &text1, co
     if (!text2.isEmpty()) mb.setInformativeText(QString("<p>%1</p>").arg(text2));
     mb.setIcon(QMessageBox::Information);
     mb.setStandardButtons(QMessageBox::Close);
-    mb.setWindowIcon(QIcon(GuiConstants::MAIN_ICON));
+    mb.setWindowIcon(QIcon(Cfg::MAIN_ICON));
     // customize button icon
     auto *button = mb.button(QMessageBox::Close);
     button->setIcon(QIcon(":/icons/window-close.png"));

@@ -85,7 +85,7 @@ Preferences::Preferences(LammpsWrapper *_lammps, LammpsGui *_lammpsgui, QWidget 
     setLayout(layout);
     setWindowIcon(QIcon(":/icons/lammps-gui-icon-128x128.png"));
     setWindowTitle("LAMMPS-GUI - Preferences");
-    resize(GuiConstants::PREFERENCES_WIDTH, GuiConstants::PREFERENCES_HEIGHT);
+    resize(Cfg::PREFERENCES_WIDTH, Cfg::PREFERENCES_HEIGHT);
 }
 
 Preferences::~Preferences()
@@ -117,9 +117,9 @@ void Preferences::accept()
         if (anyButton->isChecked()) {
             const auto &button = anyButton->objectName();
             if (buttonToChoice.contains(button)) {
-                settings->setValue(SettingsKeys::ACCELERATOR, buttonToChoice.value(button));
+                settings->setValue(Keys::ACCELERATOR, buttonToChoice.value(button));
             } else if (buttonToPrecision.contains(button)) {
-                settings->setValue(SettingsKeys::INTELPREC, buttonToPrecision.value(button));
+                settings->setValue(Keys::INTELPREC, buttonToPrecision.value(button));
             }
         }
     }
@@ -129,105 +129,102 @@ void Preferences::accept()
     // store number of threads, reset to 1 for "None" and "Opt" settings
     field = tabWidget->findChild<QLineEdit *>("nthreads");
     if (field && lammpsgui) {
-        int accel = settings->value(SettingsKeys::ACCELERATOR, AcceleratorTab::None).toInt();
+        int accel = settings->value(Keys::ACCELERATOR, AcceleratorTab::None).toInt();
         if ((accel == AcceleratorTab::None) || (accel == AcceleratorTab::Opt)) {
             lammpsgui->nthreads = 1;
         } else if (field->hasAcceptableInput()) {
-            settings->setValue(SettingsKeys::NTHREADS, field->text());
-            lammpsgui->nthreads = settings->value(SettingsKeys::NTHREADS, 1).toInt();
+            settings->setValue(Keys::NTHREADS, field->text());
+            lammpsgui->nthreads = settings->value(Keys::NTHREADS, 1).toInt();
         }
     }
 
     // store setting for GPU package
     auto *box = tabWidget->findChild<QCheckBox *>("gpuneigh");
-    if (box) settings->setValue(SettingsKeys::GPUNEIGH, box->isChecked());
+    if (box) settings->setValue(Keys::GPUNEIGH, box->isChecked());
     box = tabWidget->findChild<QCheckBox *>("gpupaironly");
-    if (box) settings->setValue(SettingsKeys::GPUPAIRONLY, box->isChecked());
+    if (box) settings->setValue(Keys::GPUPAIRONLY, box->isChecked());
 
     // store image width, height, zoom, and rendering settings
 
-    settings->beginGroup(SettingsKeys::GROUP_SNAPSHOT);
+    settings->beginGroup(Keys::GROUP_SNAPSHOT);
     field = tabWidget->findChild<QLineEdit *>("xsize");
     if (field)
-        if (field->hasAcceptableInput()) settings->setValue(SettingsKeys::XSIZE, field->text());
+        if (field->hasAcceptableInput()) settings->setValue(Keys::XSIZE, field->text());
     field = tabWidget->findChild<QLineEdit *>("ysize");
     if (field)
-        if (field->hasAcceptableInput()) settings->setValue(SettingsKeys::YSIZE, field->text());
+        if (field->hasAcceptableInput()) settings->setValue(Keys::YSIZE, field->text());
     field = tabWidget->findChild<QLineEdit *>("zoom");
     if (field)
-        if (field->hasAcceptableInput()) settings->setValue(SettingsKeys::ZOOM, field->text());
+        if (field->hasAcceptableInput()) settings->setValue(Keys::ZOOM, field->text());
     field = tabWidget->findChild<QLineEdit *>("hrot");
     if (field)
-        if (field->hasAcceptableInput()) settings->setValue(SettingsKeys::HROT, field->text());
+        if (field->hasAcceptableInput()) settings->setValue(Keys::HROT, field->text());
     field = tabWidget->findChild<QLineEdit *>("vrot");
     if (field)
-        if (field->hasAcceptableInput()) settings->setValue(SettingsKeys::VROT, field->text());
+        if (field->hasAcceptableInput()) settings->setValue(Keys::VROT, field->text());
     box = tabWidget->findChild<QCheckBox *>("anti");
-    if (box) settings->setValue(SettingsKeys::ANTIALIAS, box->isChecked());
+    if (box) settings->setValue(Keys::ANTIALIAS, box->isChecked());
     box = tabWidget->findChild<QCheckBox *>("ssao");
-    if (box) settings->setValue(SettingsKeys::SSAO, box->isChecked());
+    if (box) settings->setValue(Keys::SSAO, box->isChecked());
     box = tabWidget->findChild<QCheckBox *>("shiny");
-    if (box) settings->setValue(SettingsKeys::SHINYSTYLE, box->isChecked());
+    if (box) settings->setValue(Keys::SHINYSTYLE, box->isChecked());
     box = tabWidget->findChild<QCheckBox *>("box");
-    if (box) settings->setValue(SettingsKeys::BOX, box->isChecked());
+    if (box) settings->setValue(Keys::BOX, box->isChecked());
     field = tabWidget->findChild<QLineEdit *>("boxdiam");
     if (field)
-        if (field->hasAcceptableInput()) settings->setValue(SettingsKeys::BOXDIAM, field->text());
+        if (field->hasAcceptableInput()) settings->setValue(Keys::BOXDIAM, field->text());
     box = tabWidget->findChild<QCheckBox *>("axes");
-    if (box) settings->setValue(SettingsKeys::AXES, box->isChecked());
+    if (box) settings->setValue(Keys::AXES, box->isChecked());
     field = tabWidget->findChild<QLineEdit *>("axeslen");
     if (field)
-        if (field->hasAcceptableInput()) settings->setValue(SettingsKeys::AXESLEN, field->text());
+        if (field->hasAcceptableInput()) settings->setValue(Keys::AXESLEN, field->text());
     field = tabWidget->findChild<QLineEdit *>("axesdiam");
     if (field)
-        if (field->hasAcceptableInput()) settings->setValue(SettingsKeys::AXESDIAM, field->text());
+        if (field->hasAcceptableInput()) settings->setValue(Keys::AXESDIAM, field->text());
     box = tabWidget->findChild<QCheckBox *>("vdwstyle");
-    if (box) settings->setValue(SettingsKeys::VDWSTYLE, box->isChecked());
+    if (box) settings->setValue(Keys::VDWSTYLE, box->isChecked());
     box = tabWidget->findChild<QCheckBox *>("autobond");
-    if (box) settings->setValue(SettingsKeys::AUTOBOND, box->isChecked());
+    if (box) settings->setValue(Keys::AUTOBOND, box->isChecked());
     field = tabWidget->findChild<QLineEdit *>("background");
-    if (field && field->hasAcceptableInput())
-        settings->setValue(SettingsKeys::BACKGROUND, field->text());
+    if (field && field->hasAcceptableInput()) settings->setValue(Keys::BACKGROUND, field->text());
     field = tabWidget->findChild<QLineEdit *>("background2");
-    if (field && field->hasAcceptableInput())
-        settings->setValue(SettingsKeys::BACKGROUND2, field->text());
+    if (field && field->hasAcceptableInput()) settings->setValue(Keys::BACKGROUND2, field->text());
     field = tabWidget->findChild<QLineEdit *>("boxcolor");
-    if (field && field->hasAcceptableInput())
-        settings->setValue(SettingsKeys::BOXCOLOR, field->text());
+    if (field && field->hasAcceptableInput()) settings->setValue(Keys::BOXCOLOR, field->text());
     settings->endGroup();
 
     // general settings
     box = tabWidget->findChild<QCheckBox *>("echo");
-    if (box) settings->setValue(SettingsKeys::ECHO, box->isChecked());
+    if (box) settings->setValue(Keys::ECHO, box->isChecked());
     box = tabWidget->findChild<QCheckBox *>("cite");
-    if (box) settings->setValue(SettingsKeys::CITE, box->isChecked());
+    if (box) settings->setValue(Keys::CITE, box->isChecked());
     box = tabWidget->findChild<QCheckBox *>("logreplace");
-    if (box) settings->setValue(SettingsKeys::LOGREPLACE, box->isChecked());
+    if (box) settings->setValue(Keys::LOGREPLACE, box->isChecked());
     box = tabWidget->findChild<QCheckBox *>("chartreplace");
-    if (box) settings->setValue(SettingsKeys::CHARTREPLACE, box->isChecked());
+    if (box) settings->setValue(Keys::CHARTREPLACE, box->isChecked());
     box = tabWidget->findChild<QCheckBox *>("imagereplace");
-    if (box) settings->setValue(SettingsKeys::IMAGEREPLACE, box->isChecked());
+    if (box) settings->setValue(Keys::IMAGEREPLACE, box->isChecked());
     box = tabWidget->findChild<QCheckBox *>("viewlog");
-    if (box) settings->setValue(SettingsKeys::VIEWLOG, box->isChecked());
+    if (box) settings->setValue(Keys::VIEWLOG, box->isChecked());
     box = tabWidget->findChild<QCheckBox *>("viewchart");
-    if (box) settings->setValue(SettingsKeys::VIEWCHART, box->isChecked());
+    if (box) settings->setValue(Keys::VIEWCHART, box->isChecked());
     box = tabWidget->findChild<QCheckBox *>("viewslide");
-    if (box) settings->setValue(SettingsKeys::VIEWSLIDE, box->isChecked());
+    if (box) settings->setValue(Keys::VIEWSLIDE, box->isChecked());
 
-    settings->beginGroup(SettingsKeys::GROUP_TUTORIAL);
+    settings->beginGroup(Keys::GROUP_TUTORIAL);
     box = tabWidget->findChild<QCheckBox *>("solution");
-    if (box) settings->setValue(SettingsKeys::SOLUTION, box->isChecked());
+    if (box) settings->setValue(Keys::SOLUTION, box->isChecked());
     box = tabWidget->findChild<QCheckBox *>("webpage");
-    if (box) settings->setValue(SettingsKeys::WEBPAGE, box->isChecked());
+    if (box) settings->setValue(Keys::WEBPAGE, box->isChecked());
     settings->endGroup();
 
     auto *spin = tabWidget->findChild<QSpinBox *>("updfreq");
-    if (spin) settings->setValue(SettingsKeys::UPDFREQ, spin->value());
+    if (spin) settings->setValue(Keys::UPDFREQ, spin->value());
     spin = tabWidget->findChild<QSpinBox *>("updchart");
-    if (spin) settings->setValue(SettingsKeys::UPDCHART, spin->value());
+    if (spin) settings->setValue(Keys::UPDCHART, spin->value());
 
     field = tabWidget->findChild<QLineEdit *>("proxyval");
-    if (field) settings->setValue(SettingsKeys::HTTPS_PROXY, field->text());
+    if (field) settings->setValue(Keys::HTTPS_PROXY, field->text());
 
     if (needRelaunch) {
         warning(this, "Relaunching LAMMPS-GUI", "LAMMPS library plugin path was changed.",
@@ -239,47 +236,47 @@ void Preferences::accept()
 
     // reformatting settings
 
-    settings->beginGroup(SettingsKeys::GROUP_REFORMAT);
+    settings->beginGroup(Keys::GROUP_REFORMAT);
     spin = tabWidget->findChild<QSpinBox *>("cmdval");
-    if (spin) settings->setValue(SettingsKeys::COMMAND, spin->value());
+    if (spin) settings->setValue(Keys::COMMAND, spin->value());
     spin = tabWidget->findChild<QSpinBox *>("typeval");
-    if (spin) settings->setValue(SettingsKeys::TYPE, spin->value());
+    if (spin) settings->setValue(Keys::TYPE, spin->value());
     spin = tabWidget->findChild<QSpinBox *>("idval");
-    if (spin) settings->setValue(SettingsKeys::ID, spin->value());
+    if (spin) settings->setValue(Keys::ID, spin->value());
     spin = tabWidget->findChild<QSpinBox *>("nameval");
-    if (spin) settings->setValue(SettingsKeys::NAME, spin->value());
+    if (spin) settings->setValue(Keys::NAME, spin->value());
     box = tabWidget->findChild<QCheckBox *>("retval");
-    if (box) settings->setValue(SettingsKeys::RETURN, box->isChecked());
+    if (box) settings->setValue(Keys::RETURN, box->isChecked());
     box = tabWidget->findChild<QCheckBox *>("autoval");
-    if (box) settings->setValue(SettingsKeys::AUTOMATIC, box->isChecked());
+    if (box) settings->setValue(Keys::AUTOMATIC, box->isChecked());
     box = tabWidget->findChild<QCheckBox *>("savval");
-    if (box) settings->setValue(SettingsKeys::AUTOSAVE, box->isChecked());
+    if (box) settings->setValue(Keys::AUTOSAVE, box->isChecked());
     settings->endGroup();
 
     // chart window settings
 
-    settings->beginGroup(SettingsKeys::GROUP_CHARTS);
+    settings->beginGroup(Keys::GROUP_CHARTS);
     field = tabWidget->findChild<QLineEdit *>("title");
-    if (field) settings->setValue(SettingsKeys::TITLE, field->text());
+    if (field) settings->setValue(Keys::TITLE, field->text());
     auto *combo = tabWidget->findChild<QComboBox *>("smoothchoice");
-    if (combo) settings->setValue(SettingsKeys::SMOOTHCHOICE, combo->currentIndex());
+    if (combo) settings->setValue(Keys::SMOOTHCHOICE, combo->currentIndex());
     combo = tabWidget->findChild<QComboBox *>("rawbrush");
-    if (combo) settings->setValue(SettingsKeys::RAWBRUSH, combo->currentIndex());
+    if (combo) settings->setValue(Keys::RAWBRUSH, combo->currentIndex());
     combo = tabWidget->findChild<QComboBox *>("smoothbrush");
-    if (combo) settings->setValue(SettingsKeys::SMOOTHBRUSH, combo->currentIndex());
+    if (combo) settings->setValue(Keys::SMOOTHBRUSH, combo->currentIndex());
     spin = tabWidget->findChild<QSpinBox *>("smoothwindow");
-    if (spin) settings->setValue(SettingsKeys::SMOOTHWINDOW, spin->value());
+    if (spin) settings->setValue(Keys::SMOOTHWINDOW, spin->value());
     spin = tabWidget->findChild<QSpinBox *>("smoothorder");
-    if (spin) settings->setValue(SettingsKeys::SMOOTHORDER, spin->value());
+    if (spin) settings->setValue(Keys::SMOOTHORDER, spin->value());
     auto *check = tabWidget->findChild<QCheckBox *>("grid");
-    if (check) settings->setValue(SettingsKeys::GRID, check->isChecked());
+    if (check) settings->setValue(Keys::GRID, check->isChecked());
     check = tabWidget->findChild<QCheckBox *>("minorgrid");
-    if (check) settings->setValue(SettingsKeys::MINORGRID, check->isChecked());
+    if (check) settings->setValue(Keys::MINORGRID, check->isChecked());
     settings->endGroup();
     spin = tabWidget->findChild<QSpinBox *>("chartx");
-    if (spin) settings->setValue(SettingsKeys::CHARTX, spin->value());
+    if (spin) settings->setValue(Keys::CHARTX, spin->value());
     spin = tabWidget->findChild<QSpinBox *>("charty");
-    if (spin) settings->setValue(SettingsKeys::CHARTY, spin->value());
+    if (spin) settings->setValue(Keys::CHARTY, spin->value());
 
     QDialog::accept();
 }
@@ -292,36 +289,36 @@ GeneralTab::GeneralTab(QSettings *_settings, LammpsWrapper *_lammps, LammpsGui *
 
     auto *echo = new QCheckBox("Echo input to output buffer");
     echo->setObjectName("echo");
-    echo->setChecked(settings->value(SettingsKeys::ECHO, false).toBool());
+    echo->setChecked(settings->value(Keys::ECHO, false).toBool());
     auto *cite = new QCheckBox("Include citation details");
     cite->setObjectName("cite");
-    cite->setChecked(settings->value(SettingsKeys::CITE, false).toBool());
+    cite->setChecked(settings->value(Keys::CITE, false).toBool());
     auto *logv = new QCheckBox("Show Output window by default");
     logv->setObjectName("viewlog");
-    logv->setChecked(settings->value(SettingsKeys::VIEWLOG, true).toBool());
+    logv->setChecked(settings->value(Keys::VIEWLOG, true).toBool());
     auto *pltv = new QCheckBox("Show Charts window by default");
     pltv->setObjectName("viewchart");
-    pltv->setChecked(settings->value(SettingsKeys::VIEWCHART, true).toBool());
+    pltv->setChecked(settings->value(Keys::VIEWCHART, true).toBool());
     auto *sldv = new QCheckBox("Show Slide Show window by default");
     sldv->setObjectName("viewslide");
-    sldv->setChecked(settings->value(SettingsKeys::VIEWSLIDE, true).toBool());
+    sldv->setChecked(settings->value(Keys::VIEWSLIDE, true).toBool());
     auto *logr = new QCheckBox("Replace Output window on new run");
     logr->setObjectName("logreplace");
-    logr->setChecked(settings->value(SettingsKeys::LOGREPLACE, true).toBool());
+    logr->setChecked(settings->value(Keys::LOGREPLACE, true).toBool());
     auto *imgr = new QCheckBox("Replace Image window on new render");
     imgr->setObjectName("imagereplace");
-    imgr->setChecked(settings->value(SettingsKeys::IMAGEREPLACE, true).toBool());
+    imgr->setChecked(settings->value(Keys::IMAGEREPLACE, true).toBool());
     auto *pltr = new QCheckBox("Replace Charts window on new run");
     pltr->setObjectName("chartreplace");
-    pltr->setChecked(settings->value(SettingsKeys::CHARTREPLACE, true).toBool());
+    pltr->setChecked(settings->value(Keys::CHARTREPLACE, true).toBool());
 
-    settings->beginGroup(SettingsKeys::GROUP_TUTORIAL);
+    settings->beginGroup(Keys::GROUP_TUTORIAL);
     auto *solution = new QCheckBox("Download tutorial solutions enabled");
     solution->setObjectName("solution");
-    solution->setChecked(settings->value(SettingsKeys::SOLUTION, false).toBool());
+    solution->setChecked(settings->value(Keys::SOLUTION, false).toBool());
     auto *webpage = new QCheckBox("Open tutorial webpage enabled");
     webpage->setObjectName("webpage");
-    webpage->setChecked(settings->value(SettingsKeys::WEBPAGE, true).toBool());
+    webpage->setChecked(settings->value(Keys::WEBPAGE, true).toBool());
     settings->endGroup();
 
     auto *getallfont =
@@ -333,21 +330,16 @@ GeneralTab::GeneralTab(QSettings *_settings, LammpsWrapper *_lammps, LammpsGui *
 
     auto *freqlabel = new QLabel("Data update interval (ms):");
     auto *freqval   = new QSpinBox;
-    freqval->setRange(GuiConstants::DATA_UPDATE_INTERVAL_MIN,
-                      GuiConstants::DATA_UPDATE_INTERVAL_MAX);
+    freqval->setRange(Cfg::DATA_UPDATE_INTERVAL_MIN, Cfg::DATA_UPDATE_INTERVAL_MAX);
     freqval->setStepType(QAbstractSpinBox::AdaptiveDecimalStepType);
-    freqval->setValue(
-        settings->value(SettingsKeys::UPDFREQ, GuiConstants::DATA_UPDATE_INTERVAL_DEFAULT).toInt());
+    freqval->setValue(settings->value(Keys::UPDFREQ, Cfg::DATA_UPDATE_INTERVAL_DEFAULT).toInt());
     freqval->setObjectName("updfreq");
 
     auto *chartlabel = new QLabel("Charts update interval (ms):");
     auto *chartval   = new QSpinBox;
-    chartval->setRange(GuiConstants::CHART_UPDATE_INTERVAL_MIN,
-                       GuiConstants::CHART_UPDATE_INTERVAL_MAX);
+    chartval->setRange(Cfg::CHART_UPDATE_INTERVAL_MIN, Cfg::CHART_UPDATE_INTERVAL_MAX);
     chartval->setStepType(QAbstractSpinBox::AdaptiveDecimalStepType);
-    chartval->setValue(
-        settings->value(SettingsKeys::UPDCHART, GuiConstants::CHART_UPDATE_INTERVAL_DEFAULT)
-            .toInt());
+    chartval->setValue(settings->value(Keys::UPDCHART, Cfg::CHART_UPDATE_INTERVAL_DEFAULT).toInt());
     chartval->setObjectName("updchart");
 
     int nrow = 0;
@@ -379,7 +371,7 @@ GeneralTab::GeneralTab(QSettings *_settings, LammpsWrapper *_lammps, LammpsGui *
 
     auto https_proxy = QString::fromLocal8Bit(qgetenv("https_proxy"));
     if (https_proxy.isEmpty()) {
-        https_proxy     = settings->value(SettingsKeys::HTTPS_PROXY, "").toString();
+        https_proxy     = settings->value(Keys::HTTPS_PROXY, "").toString();
         auto *proxyedit = new QLineEdit(https_proxy);
         proxyedit->setObjectName("proxyval");
         layout->addWidget(proxyedit, nrow++, 1);
@@ -391,7 +383,7 @@ GeneralTab::GeneralTab(QSettings *_settings, LammpsWrapper *_lammps, LammpsGui *
     layout->addWidget(new QHline, nrow++, 0, 1, 2);
     auto *pluginlabel = new QLabel("Path to LAMMPS Shared Library File:");
     auto *pluginedit =
-        new QLineEdit(settings->value(SettingsKeys::PLUGIN_PATH, "liblammpsplugin.so").toString());
+        new QLineEdit(settings->value(Keys::PLUGIN_PATH, "liblammpsplugin.so").toString());
     auto *plugindownload = new QPushButton("Download &LAMMPS shared library...");
     auto *pluginbrowse   = new QPushButton("&Browse...");
     plugindownload->setIcon(QIcon(":/icons/download-file.png"));
@@ -437,14 +429,14 @@ void GeneralTab::newAllFont()
 {
     QFont all_font;
     QFontInfo all_info(*GUI_ALLFONT);
-    all_font.setFamily(settings->value(SettingsKeys::ALLFAMILY, all_info.family()).toString());
-    all_font.setPointSize(settings->value(SettingsKeys::ALLSIZE, all_info.pointSize()).toInt());
+    all_font.setFamily(settings->value(Keys::ALLFAMILY, all_info.family()).toString());
+    all_font.setPointSize(settings->value(Keys::ALLSIZE, all_info.pointSize()).toInt());
     all_font.setStyleHint(GUI_ALLFONT->styleHint());
 
     QFont mono_font;
     QFontInfo mono_info(*GUI_MONOFONT);
-    mono_font.setFamily(settings->value(SettingsKeys::MONOFAMILY, mono_info.family()).toString());
-    mono_font.setPointSize(settings->value(SettingsKeys::MONOSIZE, mono_info.pointSize()).toInt());
+    mono_font.setFamily(settings->value(Keys::MONOFAMILY, mono_info.family()).toString());
+    mono_font.setPointSize(settings->value(Keys::MONOSIZE, mono_info.pointSize()).toInt());
     mono_font.setStyleHint(GUI_MONOFONT->styleHint());
     mono_font.setFixedPitch(true);
 
@@ -452,8 +444,8 @@ void GeneralTab::newAllFont()
     QFont new_font = QFontDialog::getFont(&font_ok, all_font, this, QString("Select Default Font"));
     if (font_ok) updateFonts(new_font, mono_font);
 
-    settings->setValue(SettingsKeys::ALLFAMILY, new_font.family());
-    settings->setValue(SettingsKeys::ALLSIZE, new_font.pointSize());
+    settings->setValue(Keys::ALLFAMILY, new_font.family());
+    settings->setValue(Keys::ALLSIZE, new_font.pointSize());
     settings->sync();
 }
 
@@ -461,14 +453,14 @@ void GeneralTab::newTextFont()
 {
     QFont all_font;
     QFontInfo all_info(*GUI_ALLFONT);
-    all_font.setFamily(settings->value(SettingsKeys::ALLFAMILY, all_info.family()).toString());
-    all_font.setPointSize(settings->value(SettingsKeys::ALLSIZE, all_info.pointSize()).toInt());
+    all_font.setFamily(settings->value(Keys::ALLFAMILY, all_info.family()).toString());
+    all_font.setPointSize(settings->value(Keys::ALLSIZE, all_info.pointSize()).toInt());
     all_font.setStyleHint(GUI_ALLFONT->styleHint());
 
     QFont mono_font;
     QFontInfo mono_info(*GUI_MONOFONT);
-    mono_font.setFamily(settings->value(SettingsKeys::MONOFAMILY, mono_info.family()).toString());
-    mono_font.setPointSize(settings->value(SettingsKeys::MONOSIZE, mono_info.pointSize()).toInt());
+    mono_font.setFamily(settings->value(Keys::MONOFAMILY, mono_info.family()).toString());
+    mono_font.setPointSize(settings->value(Keys::MONOSIZE, mono_info.pointSize()).toInt());
     mono_font.setStyleHint(GUI_MONOFONT->styleHint());
     mono_font.setFixedPitch(true);
 
@@ -476,8 +468,8 @@ void GeneralTab::newTextFont()
     QFont new_font = QFontDialog::getFont(&font_ok, mono_font, this, QString("Select Text Font"));
     if (font_ok) updateFonts(all_font, new_font);
 
-    settings->setValue(SettingsKeys::MONOFAMILY, new_font.family());
-    settings->setValue(SettingsKeys::MONOSIZE, new_font.pointSize());
+    settings->setValue(Keys::MONOFAMILY, new_font.family());
+    settings->setValue(Keys::MONOSIZE, new_font.pointSize());
     settings->sync();
 }
 
@@ -500,7 +492,7 @@ void GeneralTab::downloadPlugin()
     URLDownloader downloader(this);
     if (downloader.download(dlUrl, libPath, true)) {
         auto canonical = QFileInfo(libPath).canonicalFilePath();
-        settings->setValue(SettingsKeys::PLUGIN_PATH, canonical);
+        settings->setValue(Keys::PLUGIN_PATH, canonical);
         auto *field = findChild<QLineEdit *>("pluginedit");
         if (field) field->setText(canonical);
         settings->sync();
@@ -532,7 +524,7 @@ void GeneralTab::pluginPath()
 
         if (!pluginfile.isEmpty() && pluginfile.contains("liblammps", Qt::CaseSensitive)) {
             auto canonical = QFileInfo(pluginfile).canonicalFilePath();
-            settings->setValue(SettingsKeys::PLUGIN_PATH, canonical);
+            settings->setValue(Keys::PLUGIN_PATH, canonical);
             field->setText(canonical);
             settings->sync();
 
@@ -602,8 +594,8 @@ AcceleratorTab::AcceleratorTab(QSettings *_settings, LammpsWrapper *_lammps, QWi
         maxthreads     = std::max(maxthreads, 1);
         maxthreads     = std::max(maxthreads, qEnvironmentVariable("OMP_NUM_THREADS").toInt());
 
-        ntlabel  = new QLabel(QString("Number of threads (max %1):").arg(maxthreads));
-        ntchoice = new QLineEdit(settings->value(SettingsKeys::NTHREADS, maxthreads).toString());
+        ntlabel      = new QLabel(QString("Number of threads (max %1):").arg(maxthreads));
+        ntchoice     = new QLineEdit(settings->value(Keys::NTHREADS, maxthreads).toString());
         auto *intval = new QIntValidator(1, maxthreads, this);
         ntchoice->setValidator(intval);
     } else {
@@ -645,10 +637,10 @@ AcceleratorTab::AcceleratorTab(QSettings *_settings, LammpsWrapper *_lammps, QWi
     auto *gpupaironly = new QCheckBox("Pair st&yles only");
     gpuLayout->addWidget(gpuneigh);
     gpuneigh->setObjectName("gpuneigh");
-    gpuneigh->setChecked(settings->value(SettingsKeys::GPUNEIGH, true).toBool());
+    gpuneigh->setChecked(settings->value(Keys::GPUNEIGH, true).toBool());
     gpuLayout->addWidget(gpupaironly);
     gpupaironly->setObjectName("gpupaironly");
-    gpupaironly->setChecked(settings->value(SettingsKeys::GPUPAIRONLY, false).toBool());
+    gpupaironly->setChecked(settings->value(Keys::GPUPAIRONLY, false).toBool());
     gpuchoice->setLayout(gpuLayout);
     gpuchoice->setObjectName("gpuchoice");
     gpuchoice->setEnabled(false);
@@ -665,8 +657,8 @@ AcceleratorTab::AcceleratorTab(QSettings *_settings, LammpsWrapper *_lammps, QWi
 
     // trigger update of nthreads line editor field depending on accelerator choice
     // fall back on None, if configured accelerator package is no longer available
-    int choice = settings->value(SettingsKeys::ACCELERATOR, AcceleratorTab::None).toInt();
-    int iprec  = settings->value(SettingsKeys::INTELPREC, AcceleratorTab::Mixed).toInt();
+    int choice = settings->value(Keys::ACCELERATOR, AcceleratorTab::None).toInt();
+    int iprec  = settings->value(Keys::INTELPREC, AcceleratorTab::Mixed).toInt();
     if (iprec == AcceleratorTab::Double)
         inteldouble->setChecked(true);
     else if (iprec == AcceleratorTab::Mixed)
@@ -744,7 +736,7 @@ void AcceleratorTab::updateAccel()
             field->setText("1");
             field->setEnabled(false);
         } else {
-            field->setText(settings->value(SettingsKeys::NTHREADS, 1).toString());
+            field->setText(settings->value(Keys::NTHREADS, 1).toString());
             field->setEnabled(true);
         }
     }
@@ -778,7 +770,7 @@ SnapshotTab::SnapshotTab(QSettings *_settings, QWidget *parent) :
     auto *bond   = new QLabel("Dynamic Bonds:");
     auto *bclbl  = new QLabel("Bond Cutoff:");
 
-    settings->beginGroup(SettingsKeys::GROUP_SNAPSHOT);
+    settings->beginGroup(Keys::GROUP_SNAPSHOT);
 
     auto *colorcompleter = new QColorCompleter();
     auto *colorvalidator = new QColorValidator();
@@ -808,33 +800,29 @@ SnapshotTab::SnapshotTab(QSettings *_settings, QWidget *parent) :
     };
 
     // left column values
-    auto *xval = makeNumEdit(SettingsKeys::XSIZE, "600", intval);
-    auto *yval = makeNumEdit(SettingsKeys::YSIZE, "600", intval);
-    auto *zval =
-        makeNumEdit(SettingsKeys::ZOOM, "1.0", new QDoubleValidator(0.01, 100.0, 100, this));
-    auto *hrval       = makeNumEdit(SettingsKeys::HROT, "60", new QIntValidator(0, 360, this));
-    auto *vrval       = makeNumEdit(SettingsKeys::VROT, "30", new QIntValidator(-180, 180, this));
-    auto *aval        = makeCheckBox(SettingsKeys::ANTIALIAS, "anti", false);
-    auto *sval        = makeCheckBox(SettingsKeys::SSAO, "ssao", false);
-    auto *hval        = makeCheckBox(SettingsKeys::SHINYSTYLE, "shiny", true);
-    auto *background  = makeColorEdit(SettingsKeys::BACKGROUND, "black");
-    auto *background2 = makeColorEdit(SettingsKeys::BACKGROUND2, "white");
+    auto *xval       = makeNumEdit(Keys::XSIZE, "600", intval);
+    auto *yval       = makeNumEdit(Keys::YSIZE, "600", intval);
+    auto *zval       = makeNumEdit(Keys::ZOOM, "1.0", new QDoubleValidator(0.01, 100.0, 100, this));
+    auto *hrval      = makeNumEdit(Keys::HROT, "60", new QIntValidator(0, 360, this));
+    auto *vrval      = makeNumEdit(Keys::VROT, "30", new QIntValidator(-180, 180, this));
+    auto *aval       = makeCheckBox(Keys::ANTIALIAS, "anti", false);
+    auto *sval       = makeCheckBox(Keys::SSAO, "ssao", false);
+    auto *hval       = makeCheckBox(Keys::SHINYSTYLE, "shiny", true);
+    auto *background = makeColorEdit(Keys::BACKGROUND, "black");
+    auto *background2 = makeColorEdit(Keys::BACKGROUND2, "white");
 
     // right column values
-    auto *bval = makeCheckBox(SettingsKeys::BOX, "box", true);
-    auto *bdval =
-        makeNumEdit(SettingsKeys::BOXDIAM, "0.025", new QDoubleValidator(0.001, 1.0, 100, this));
-    auto *boxcolor = makeColorEdit(SettingsKeys::BOXCOLOR, "yellow");
-    auto *eval     = makeCheckBox(SettingsKeys::AXES, "axes", false);
-    auto *alval =
-        makeNumEdit(SettingsKeys::AXESLEN, "0.5", new QDoubleValidator(0.01, 10.0, 100, this));
-    auto *adval =
-        makeNumEdit(SettingsKeys::AXESDIAM, "0.05", new QDoubleValidator(0.001, 1.0, 100, this));
-    auto *vval = makeCheckBox(SettingsKeys::VDWSTYLE, "vdwstyle", false);
-    auto *uval = makeCheckBox(SettingsKeys::AUTOBOND, "autobond", false);
+    auto *bval  = makeCheckBox(Keys::BOX, "box", true);
+    auto *bdval = makeNumEdit(Keys::BOXDIAM, "0.025", new QDoubleValidator(0.001, 1.0, 100, this));
+    auto *boxcolor = makeColorEdit(Keys::BOXCOLOR, "yellow");
+    auto *eval     = makeCheckBox(Keys::AXES, "axes", false);
+    auto *alval    = makeNumEdit(Keys::AXESLEN, "0.5", new QDoubleValidator(0.01, 10.0, 100, this));
+    auto *adval = makeNumEdit(Keys::AXESDIAM, "0.05", new QDoubleValidator(0.001, 1.0, 100, this));
+    auto *vval  = makeCheckBox(Keys::VDWSTYLE, "vdwstyle", false);
+    auto *uval  = makeCheckBox(Keys::AUTOBOND, "autobond", false);
 
     // bond cutoff has no input validator
-    auto *bcut = new QLineEdit(settings->value(SettingsKeys::BONDCUT, "1.6").toString());
+    auto *bcut = new QLineEdit(settings->value(Keys::BONDCUT, "1.6").toString());
     bcut->setObjectName("bondcut");
 
     settings->endGroup();
@@ -927,7 +915,7 @@ void SnapshotTab::chooseBond()
 
 EditorTab::EditorTab(QSettings *_settings, QWidget *parent) : QWidget(parent), settings(_settings)
 {
-    settings->beginGroup(SettingsKeys::GROUP_REFORMAT);
+    settings->beginGroup(Keys::GROUP_REFORMAT);
     auto *grid     = new QGridLayout;
     auto *reformat = new QLabel("Tab Reformatting settings:");
     auto *cmdlbl   = new QLabel("Command width:");
@@ -945,23 +933,23 @@ EditorTab::EditorTab(QSettings *_settings, QWidget *parent) : QWidget(parent), s
     auto *autoval  = new QCheckBox;
     auto *savval   = new QCheckBox;
     cmdval->setObjectName("cmdval");
-    cmdval->setRange(GuiConstants::COMPLETION_CHARS_MIN, GuiConstants::COMPLETION_CHARS_MAX);
-    cmdval->setValue(settings->value(SettingsKeys::COMMAND, "16").toInt());
+    cmdval->setRange(Cfg::COMPLETION_CHARS_MIN, Cfg::COMPLETION_CHARS_MAX);
+    cmdval->setValue(settings->value(Keys::COMMAND, "16").toInt());
     typeval->setObjectName("typeval");
-    typeval->setRange(GuiConstants::COMPLETION_CHARS_MIN, GuiConstants::COMPLETION_CHARS_MAX);
-    typeval->setValue(settings->value(SettingsKeys::TYPE, "4").toInt());
+    typeval->setRange(Cfg::COMPLETION_CHARS_MIN, Cfg::COMPLETION_CHARS_MAX);
+    typeval->setValue(settings->value(Keys::TYPE, "4").toInt());
     idval->setObjectName("idval");
-    idval->setRange(GuiConstants::COMPLETION_CHARS_MIN, GuiConstants::COMPLETION_CHARS_MAX);
-    idval->setValue(settings->value(SettingsKeys::ID, "8").toInt());
+    idval->setRange(Cfg::COMPLETION_CHARS_MIN, Cfg::COMPLETION_CHARS_MAX);
+    idval->setValue(settings->value(Keys::ID, "8").toInt());
     nameval->setObjectName("nameval");
-    nameval->setRange(GuiConstants::COMPLETION_CHARS_MIN, GuiConstants::COMPLETION_CHARS_MAX);
-    nameval->setValue(settings->value(SettingsKeys::NAME, "8").toInt());
+    nameval->setRange(Cfg::COMPLETION_CHARS_MIN, Cfg::COMPLETION_CHARS_MAX);
+    nameval->setValue(settings->value(Keys::NAME, "8").toInt());
     retval->setObjectName("retval");
-    retval->setChecked(settings->value(SettingsKeys::RETURN, false).toBool());
+    retval->setChecked(settings->value(Keys::RETURN, false).toBool());
     autoval->setObjectName("autoval");
-    autoval->setChecked(settings->value(SettingsKeys::AUTOMATIC, true).toBool());
+    autoval->setChecked(settings->value(Keys::AUTOMATIC, true).toBool());
     savval->setObjectName("savval");
-    savval->setChecked(settings->value(SettingsKeys::AUTOSAVE, false).toBool());
+    savval->setChecked(settings->value(Keys::AUTOSAVE, false).toBool());
     settings->endGroup();
 
     int i = 0;
@@ -993,9 +981,9 @@ ChartsTab::ChartsTab(QSettings *_settings, QWidget *parent) : QWidget(parent), s
     auto *grid     = new QGridLayout;
     auto *chartlbl = new QLabel("Charts default settings:");
 
-    settings->beginGroup(SettingsKeys::GROUP_CHARTS);
+    settings->beginGroup(Keys::GROUP_CHARTS);
     auto *titlelbl = new QLabel("Default chart title:");
-    auto *titletxt = new QLineEdit(settings->value(SettingsKeys::TITLE, "Thermo: %f").toString());
+    auto *titletxt = new QLineEdit(settings->value(Keys::TITLE, "Thermo: %f").toString());
     auto *titlehlp = new QLabel("(use %f for current input file)");
 
     // list of choices must be kepy in sync with list in chartviewer
@@ -1005,7 +993,7 @@ ChartsTab::ChartsTab(QSettings *_settings, QWidget *parent) : QWidget(parent), s
     smoothval->addItem("Smooth");
     smoothval->addItem("Both");
     smoothval->setObjectName("smoothchoice");
-    smoothval->setCurrentIndex(settings->value(SettingsKeys::SMOOTHCHOICE, 0).toInt());
+    smoothval->setCurrentIndex(settings->value(Keys::SMOOTHCHOICE, 0).toInt());
 
     auto *rawbrlbl = new QLabel("Raw plot color:");
     auto *rawbrush = new QComboBox;
@@ -1015,7 +1003,7 @@ ChartsTab::ChartsTab(QSettings *_settings, QWidget *parent) : QWidget(parent), s
     rawbrush->addItem("Green");
     rawbrush->addItem("Gray");
     rawbrush->setObjectName("rawbrush");
-    rawbrush->setCurrentIndex(settings->value(SettingsKeys::RAWBRUSH, 1).toInt());
+    rawbrush->setCurrentIndex(settings->value(Keys::RAWBRUSH, 1).toInt());
 
     auto *smoothbrlbl = new QLabel("Smooth plot color:");
     auto *smoothbrush = new QComboBox;
@@ -1025,43 +1013,39 @@ ChartsTab::ChartsTab(QSettings *_settings, QWidget *parent) : QWidget(parent), s
     smoothbrush->addItem("Green");
     smoothbrush->addItem("Gray");
     smoothbrush->setObjectName("smoothbrush");
-    smoothbrush->setCurrentIndex(settings->value(SettingsKeys::SMOOTHBRUSH, 2).toInt());
+    smoothbrush->setCurrentIndex(settings->value(Keys::SMOOTHBRUSH, 2).toInt());
 
     auto *smwindlbl = new QLabel("Default smoothing window:");
     auto *smwindval = new QSpinBox;
-    smwindval->setRange(GuiConstants::SMOOTH_WINDOW_MIN, GuiConstants::SMOOTH_WINDOW_MAX);
-    smwindval->setValue(
-        settings->value(SettingsKeys::SMOOTHWINDOW, GuiConstants::SMOOTH_WINDOW_DEFAULT).toInt());
+    smwindval->setRange(Cfg::SMOOTH_WINDOW_MIN, Cfg::SMOOTH_WINDOW_MAX);
+    smwindval->setValue(settings->value(Keys::SMOOTHWINDOW, Cfg::SMOOTH_WINDOW_DEFAULT).toInt());
     smwindval->setObjectName("smoothwindow");
 
     auto *smordrlbl = new QLabel("Default smoothing order:");
     auto *smordrval = new QSpinBox;
-    smordrval->setRange(GuiConstants::SMOOTH_ORDER_MIN, GuiConstants::SMOOTH_ORDER_MAX);
-    smordrval->setValue(
-        settings->value(SettingsKeys::SMOOTHORDER, GuiConstants::SMOOTH_ORDER_DEFAULT).toInt());
+    smordrval->setRange(Cfg::SMOOTH_ORDER_MIN, Cfg::SMOOTH_ORDER_MAX);
+    smordrval->setValue(settings->value(Keys::SMOOTHORDER, Cfg::SMOOTH_ORDER_DEFAULT).toInt());
     smordrval->setObjectName("smoothorder");
 
     auto *gridlbl = new QLabel("Draw major grid:");
     auto *usegrid = new QCheckBox;
-    usegrid->setChecked(settings->value(SettingsKeys::GRID, true).toBool());
+    usegrid->setChecked(settings->value(Keys::GRID, true).toBool());
     usegrid->setObjectName("grid");
     auto *minorlbl = new QLabel("Draw minor grid:");
     auto *useminor = new QCheckBox;
-    useminor->setChecked(settings->value(SettingsKeys::MINORGRID, true).toBool());
+    useminor->setChecked(settings->value(Keys::MINORGRID, true).toBool());
     useminor->setObjectName("minorgrid");
     settings->endGroup();
 
     auto *chartxlbl = new QLabel("Chart default width:");
     auto *chartxval = new QSpinBox;
-    chartxval->setRange(GuiConstants::CHART_WIDTH_MIN, GuiConstants::CHART_WIDTH_MAX);
-    chartxval->setValue(
-        settings->value(SettingsKeys::CHARTX, GuiConstants::CHART_DEFAULT_WIDTH).toInt());
+    chartxval->setRange(Cfg::CHART_WIDTH_MIN, Cfg::CHART_WIDTH_MAX);
+    chartxval->setValue(settings->value(Keys::CHARTX, Cfg::CHART_DEFAULT_WIDTH).toInt());
     chartxval->setObjectName("chartx");
     auto *chartylbl = new QLabel("Chart default height:");
     auto *chartyval = new QSpinBox;
-    chartyval->setRange(GuiConstants::CHART_HEIGHT_MIN, GuiConstants::CHART_HEIGHT_MAX);
-    chartyval->setValue(
-        settings->value(SettingsKeys::CHARTY, GuiConstants::CHART_DEFAULT_HEIGHT).toInt());
+    chartyval->setRange(Cfg::CHART_HEIGHT_MIN, Cfg::CHART_HEIGHT_MAX);
+    chartyval->setValue(settings->value(Keys::CHARTY, Cfg::CHART_DEFAULT_HEIGHT).toInt());
     chartyval->setObjectName("charty");
 
     int i = 0;

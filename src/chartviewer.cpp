@@ -96,14 +96,13 @@ ChartWindow::ChartWindow(const QString &_filename, LammpsGui *_lammpsgui, QWidge
     dummy->hide();
 
     // plot title and axis labels
-    settings.beginGroup(SettingsKeys::GROUP_CHARTS);
-    auto mytitle =
-        settings.value(SettingsKeys::TITLE, "Thermo: %f").toString().replace("%f", filename);
-    chartTitle  = new QLineEdit(mytitle);
-    chartYlabel = new QLineEdit("");
+    settings.beginGroup(Keys::GROUP_CHARTS);
+    auto mytitle = settings.value(Keys::TITLE, "Thermo: %f").toString().replace("%f", filename);
+    chartTitle   = new QLineEdit(mytitle);
+    chartYlabel  = new QLineEdit("");
 
     // plot smoothing
-    int smoothchoice = settings.value(SettingsKeys::SMOOTHCHOICE, 0).toInt();
+    int smoothchoice = settings.value(Keys::SMOOTHCHOICE, 0).toInt();
     switch (smoothchoice) {
         case 0:
             doRaw    = true;
@@ -126,15 +125,13 @@ ChartWindow::ChartWindow(const QString &_filename, LammpsGui *_lammpsgui, QWidge
     smooth->addItem("Both");
     smooth->setCurrentIndex(smoothchoice);
     window = new QSpinBox;
-    window->setRange(GuiConstants::SMOOTH_WINDOW_MIN, GuiConstants::SMOOTH_WINDOW_MAX);
-    window->setValue(
-        settings.value(SettingsKeys::SMOOTHWINDOW, GuiConstants::SMOOTH_WINDOW_DEFAULT).toInt());
+    window->setRange(Cfg::SMOOTH_WINDOW_MIN, Cfg::SMOOTH_WINDOW_MAX);
+    window->setValue(settings.value(Keys::SMOOTHWINDOW, Cfg::SMOOTH_WINDOW_DEFAULT).toInt());
     window->setEnabled(true);
     window->setToolTip("Smoothing Window Size");
     order = new QSpinBox;
-    order->setRange(GuiConstants::SMOOTH_ORDER_MIN, GuiConstants::SMOOTH_ORDER_MAX);
-    order->setValue(
-        settings.value(SettingsKeys::SMOOTHORDER, GuiConstants::SMOOTH_ORDER_DEFAULT).toInt());
+    order->setRange(Cfg::SMOOTH_ORDER_MIN, Cfg::SMOOTH_ORDER_MAX);
+    order->setValue(settings.value(Keys::SMOOTHORDER, Cfg::SMOOTH_ORDER_DEFAULT).toInt());
     order->setEnabled(true);
     order->setToolTip("Smoothing Order");
     settings.endGroup();
@@ -221,8 +218,8 @@ ChartWindow::ChartWindow(const QString &_filename, LammpsGui *_lammpsgui, QWidge
     connect(yrange, &RangeSlider::sliderMoved, this, &ChartWindow::updateYRange);
 
     installEventFilter(this);
-    resize(settings.value(SettingsKeys::CHARTX, GuiConstants::CHART_DEFAULT_WIDTH).toInt(),
-           settings.value(SettingsKeys::CHARTY, GuiConstants::CHART_DEFAULT_HEIGHT).toInt());
+    resize(settings.value(Keys::CHARTX, Cfg::CHART_DEFAULT_WIDTH).toInt(),
+           settings.value(Keys::CHARTY, Cfg::CHART_DEFAULT_HEIGHT).toInt());
 }
 
 int ChartWindow::getStep() const
@@ -544,8 +541,8 @@ void ChartWindow::closeEvent(QCloseEvent *event)
 {
     QSettings settings;
     if (!isMaximized()) {
-        settings.setValue(SettingsKeys::CHARTX, width());
-        settings.setValue(SettingsKeys::CHARTY, height());
+        settings.setValue(Keys::CHARTX, width());
+        settings.setValue(Keys::CHARTY, height());
     }
     QWidget::closeEvent(event);
 }
@@ -621,8 +618,7 @@ void ChartViewer::addData(int step, double data)
         QSettings settings;
         // update the chart display only after at least updchart milliseconds have passed
         if (lastUpdate.msecsTo(QTime::currentTime()) >
-            settings.value(SettingsKeys::UPDCHART, GuiConstants::CHART_UPDATE_INTERVAL_DEFAULT)
-                .toInt()) {
+            settings.value(Keys::UPDCHART, Cfg::CHART_UPDATE_INTERVAL_DEFAULT).toInt()) {
             lastUpdate = QTime::currentTime();
             updateSmooth();
             resetZoom();
@@ -1174,9 +1170,9 @@ float_vect sg_smooth(const float_vect &v, const std::size_t width, const int deg
 void ChartViewer::updateSmooth()
 {
     QSettings settings;
-    settings.beginGroup(SettingsKeys::GROUP_CHARTS);
-    int rawidx    = settings.value(SettingsKeys::RAWBRUSH, 1).toInt();
-    int smoothidx = settings.value(SettingsKeys::SMOOTHBRUSH, 2).toInt();
+    settings.beginGroup(Keys::GROUP_CHARTS);
+    int rawidx    = settings.value(Keys::RAWBRUSH, 1).toInt();
+    int smoothidx = settings.value(Keys::SMOOTHBRUSH, 2).toInt();
     if ((rawidx < 0) || (rawidx >= mybrushes.size())) rawidx = 0;
     if ((smoothidx < 0) || (smoothidx >= mybrushes.size())) smoothidx = 0;
     settings.endGroup();

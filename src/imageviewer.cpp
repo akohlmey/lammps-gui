@@ -806,43 +806,43 @@ ImageViewer::~ImageViewer()
 void ImageViewer::readImageSettings()
 {
     QSettings settings;
-    settings.beginGroup(SettingsKeys::GROUP_SNAPSHOT);
-    xsize          = settings.value(SettingsKeys::XSIZE, "600").toInt();
-    ysize          = settings.value(SettingsKeys::YSIZE, "600").toInt();
-    zoom           = settings.value(SettingsKeys::ZOOM, 1.0).toDouble();
-    hrot           = settings.value(SettingsKeys::HROT, 60).toInt();
-    vrot           = settings.value(SettingsKeys::VROT, 30).toInt();
-    shinyfactor    = settings.value(SettingsKeys::SHINYSTYLE, true).toBool() ? SHINY_ON : SHINY_OFF;
-    vdwfactor      = settings.value(SettingsKeys::VDWSTYLE, false).toBool() ? VDW_ON : VDW_OFF;
-    autobond       = settings.value(SettingsKeys::AUTOBOND, false).toBool();
-    bondcutoff     = settings.value(SettingsKeys::BONDCUTOFF, 1.6).toDouble();
-    showbox        = settings.value(SettingsKeys::BOX, true).toBool();
+    settings.beginGroup(Keys::GROUP_SNAPSHOT);
+    xsize          = settings.value(Keys::XSIZE, "600").toInt();
+    ysize          = settings.value(Keys::YSIZE, "600").toInt();
+    zoom           = settings.value(Keys::ZOOM, 1.0).toDouble();
+    hrot           = settings.value(Keys::HROT, 60).toInt();
+    vrot           = settings.value(Keys::VROT, 30).toInt();
+    shinyfactor    = settings.value(Keys::SHINYSTYLE, true).toBool() ? SHINY_ON : SHINY_OFF;
+    vdwfactor      = settings.value(Keys::VDWSTYLE, false).toBool() ? VDW_ON : VDW_OFF;
+    autobond       = settings.value(Keys::AUTOBOND, false).toBool();
+    bondcutoff     = settings.value(Keys::BONDCUTOFF, 1.6).toDouble();
+    showbox        = settings.value(Keys::BOX, true).toBool();
     showsubbox     = false;
-    boxdiam        = settings.value(SettingsKeys::BOXDIAM, 0.025).toDouble();
+    boxdiam        = settings.value(Keys::BOXDIAM, 0.025).toDouble();
     subboxdiam     = boxdiam;
-    boxcolor       = settings.value(SettingsKeys::BOXCOLOR, "yellow").toString();
-    showaxes       = settings.value(SettingsKeys::AXES, false).toBool();
-    usessao        = settings.value(SettingsKeys::SSAO, false).toBool();
-    antialias      = settings.value(SettingsKeys::ANTIALIAS, false).toBool();
-    axeslen        = settings.value(SettingsKeys::AXESLEN, 0.5).toDouble();
-    axesdiam       = settings.value(SettingsKeys::AXESDIAM, 0.05).toDouble();
+    boxcolor       = settings.value(Keys::BOXCOLOR, "yellow").toString();
+    showaxes       = settings.value(Keys::AXES, false).toBool();
+    usessao        = settings.value(Keys::SSAO, false).toBool();
+    antialias      = settings.value(Keys::ANTIALIAS, false).toBool();
+    axeslen        = settings.value(Keys::AXESLEN, 0.5).toDouble();
+    axesdiam       = settings.value(Keys::AXESDIAM, 0.05).toDouble();
     axestrans      = 1.0;
     axesloc        = "yes"; // = "lowerleft"
     boxtrans       = 1.0;
-    backcolor      = settings.value(SettingsKeys::BACKCOLOR, "black").toString();
-    backcolor2     = settings.value(SettingsKeys::BACKCOLOR2, "white").toString();
+    backcolor      = settings.value(Keys::BACKCOLOR, "black").toString();
+    backcolor2     = settings.value(Keys::BACKCOLOR2, "white").toString();
     ssaoval        = 0.6;
     atomcustom     = false;
     atomtrans      = 1.0;
-    atomcolor      = settings.value(SettingsKeys::COLOR, "type").toString();
-    atomdiam       = settings.value(SettingsKeys::DIAMETER, "type").toString();
-    bondcolor      = settings.value(SettingsKeys::BONDCOLOR, "atom").toString();
-    bonddiam       = settings.value(SettingsKeys::BONDDIAM, "type").toString();
+    atomcolor      = settings.value(Keys::COLOR, "type").toString();
+    atomdiam       = settings.value(Keys::DIAMETER, "type").toString();
+    bondcolor      = settings.value(Keys::BONDCOLOR, "atom").toString();
+    bonddiam       = settings.value(Keys::BONDDIAM, "type").toString();
     bodycolor      = "atom";
     ellipsoidcolor = "atom";
     linecolor      = "atom";
     tricolor       = "atom";
-    colormap       = settings.value(SettingsKeys::COLORMAP, "BWR").toString();
+    colormap       = settings.value(Keys::COLORMAP, "BWR").toString();
     mapmin         = "auto";
     mapmax         = "auto";
 
@@ -3605,10 +3605,10 @@ void ImageViewer::updateRegions()
     }
 
     // add any new regions
-    char buffer[GuiConstants::DEFAULT_BUFLEN];
+    char buffer[Cfg::DEFAULT_BUFLEN];
     int nregions = lammps->idCount("region");
     for (int i = 0; i < nregions; ++i) {
-        if (lammps->idName("region", i, buffer, GuiConstants::DEFAULT_BUFLEN)) {
+        if (lammps->idName("region", i, buffer, Cfg::DEFAULT_BUFLEN)) {
             std::string id = buffer;
             if (regions.count(id) == 0) {
                 const auto &color = defaultcolors[i % defaultcolors.size()].toStdString();

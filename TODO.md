@@ -62,12 +62,12 @@ overloads and `lastErrorMessage()` are the templates to follow.
 
 - [x] **1a. Move remaining magic numbers to constants.h.** Done: chart /
   preferences UI ranges, sizes, and update-interval defaults moved into
-  `GuiConstants` (deduplicating the smoothing window/order ranges and the
-  chart update-interval default that were repeated in `preferences.cpp`
+  the `Cfg` namespace (deduplicating the smoothing window/order ranges and
+  the chart update-interval default that were repeated in `preferences.cpp`
   and `chartviewer.cpp`). No behavior change.
 
 - [x] **1b. Centralize QSettings key strings.** Done: 272 bare key/group
-  literals across 12 files replaced with a new `SettingsKeys` namespace
+  literals across 12 files replaced with the `Keys` namespace
   (`constants.h`, 4 groups + 72 keys). Anchored strictly on the
   `settings` object plus the SnapshotTab factory lambdas, so non-settings
   `value()/contains()/remove()` calls (e.g. `"Program Files"`,

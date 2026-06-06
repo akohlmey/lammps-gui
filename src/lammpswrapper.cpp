@@ -431,8 +431,8 @@ int LammpsWrapper::getLastErrorMessage(char *buf, int buflen)
 QString LammpsWrapper::lastErrorMessage()
 {
     if (!hasError()) return {};
-    char buf[GuiConstants::DEFAULT_BUFLEN];
-    getLastErrorMessage(buf, GuiConstants::DEFAULT_BUFLEN);
+    char buf[Cfg::DEFAULT_BUFLEN];
+    getLastErrorMessage(buf, Cfg::DEFAULT_BUFLEN);
     return QString::fromLocal8Bit(buf);
 }
 
@@ -585,8 +585,7 @@ bool LammpsWrapper::loadLib(const char *libfile)
     if (ptr) lmpversion = ptr;
 
     // found a suitable version
-    if (!lmpversion.isEmpty() &&
-        (dateCompare(lmpversion, GuiConstants::MIN_LAMMPS_VERSION_STR) >= 0))
+    if (!lmpversion.isEmpty() && (dateCompare(lmpversion, Cfg::MIN_LAMMPS_VERSION_STR) >= 0))
         return true;
     return false;
 }

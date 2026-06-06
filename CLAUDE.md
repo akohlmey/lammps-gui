@@ -128,9 +128,9 @@ main.cpp
 
 **Resources.** `resources/lammpsgui.qrc` embeds icons, `help_index.table` (maps LAMMPS commands to doc URLs), `image_style.table` (dump image options), and `lammps_internal_commands.txt`. The `.table` files are plain text and have companion shell scripts (`update-help-index.sh`, `update-image-styles.sh`) to regenerate them from a LAMMPS source tree.
 
-**Constants.** Application-wide magic numbers and repeated string literals live in `src/constants.h` inside `namespace GuiConstants`. New hardcoded values should go there. QSettings key strings are currently bare literals (a known refactoring item — see `TODO.md`).
+**Constants and settings keys.** `src/constants.h` holds two intentionally short, internal namespaces: `Cfg` (application-wide magic numbers and repeated string literals -- UI dimensions, update intervals, resource paths, version constants) and `Keys` (every persisted QSettings key and group name). New hardcoded values and any new QSettings key go there. Reference them qualified -- `Cfg::PREFERENCES_WIDTH`, `Keys::ZOOM` -- never via `using namespace`/aliases: the namespaces are deliberately terse so the qualifier stays cheap, and the `Keys::` prefix keeps the generic key names (e.g. `NAME`, `TYPE`, `ID`) readable and collision-free. A mistyped settings key is then a compile error, not a silently lost setting.
 
-**Minimum LAMMPS version.** `GuiConstants::MIN_LAMMPS_VERSION` (currently `20260330`) is enforced at startup; the GUI warns and may refuse to run with older LAMMPS builds.
+**Minimum LAMMPS version.** `Cfg::MIN_LAMMPS_VERSION` (currently `20260330`) is enforced at startup; the GUI warns and may refuse to run with older LAMMPS builds.
 
 **Dialog widget wiring.** `ImageViewer` and the `Preferences` tabs connect widgets to slots via `setObjectName("...")` + later `findChild<T>("...")` rather than stored member pointers. Preserve object names exactly when refactoring these dialogs (a wrong/renamed name fails the lookup silently, with no compile error).
 
@@ -202,7 +202,7 @@ interop with the LAMMPS API.
 | `src/helpers.{cpp,h}` | Platform utilities, dialog helpers, stdout silence/restore |
 | `src/qaddon.{cpp,h}` | Utility widgets: `QHline`, `QColorCompleter`, `QColorValidator`, `VerticalLabel` |
 | `src/rangeslider.{cpp,h}` | Dual-handle range slider widget (third-party, **CeCILL-A license**) |
-| `src/constants.h` | `GuiConstants` namespace: all magic numbers and string constants |
+| `src/constants.h` | `Cfg` namespace (magic numbers, string constants) and `Keys` namespace (QSettings keys) |
 | `plugin/liblammpsplugin.{c,h}` | C shim for dynamic LAMMPS library loading |
 | `resources/` | Qt resources: icons, help tables, commands list |
 | `test/` | Unit tests (GoogleTest) and Python GUI tests (PyAutoGUI/Xvfb) |

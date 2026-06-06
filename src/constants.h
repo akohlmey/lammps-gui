@@ -20,8 +20,12 @@
  * Centralizes magic numbers and repeated string literals that were previously
  * scattered across the codebase.  Grouping by category makes maintenance easier
  * and reduces the risk of typos from duplicated literals.
+ *
+ * The namespace name is deliberately short: these constants are internal, not
+ * an exported interface, so call sites read @c Cfg::NAME directly without a
+ * @c using directive or alias.
  */
-namespace GuiConstants {
+namespace Cfg {
 
 // ---- UI dimensions -------------------------------------------------------
 constexpr int DEFAULT_BUFLEN      = 1024; ///< Default buffer length for error messages
@@ -91,7 +95,7 @@ inline const QString STATUS_READY = QStringLiteral("Ready.");
 /** window title prefix string for LAMMPS-GUI windows */
 inline const QString TITLE_PREFIX = QStringLiteral("LAMMPS-GUI - ");
 
-} // namespace GuiConstants
+} // namespace Cfg
 
 /**
  * @brief Centralized QSettings key and group names
@@ -99,8 +103,9 @@ inline const QString TITLE_PREFIX = QStringLiteral("LAMMPS-GUI - ");
  * One named constant per persisted QSettings key so a typo becomes a compile
  * error instead of a silently mismatched (and therefore lost) setting.  The
  * string value of each constant must match the original literal exactly.
+ * Like @ref Cfg, the namespace name is kept short for direct @c Keys::NAME use.
  */
-namespace SettingsKeys {
+namespace Keys {
 
 // ---- groups (QSettings::beginGroup) --------------------------------------
 inline const QString GROUP_CHARTS   = QStringLiteral("charts");
@@ -182,7 +187,7 @@ inline const QString XSIZE        = QStringLiteral("xsize");
 inline const QString YSIZE        = QStringLiteral("ysize");
 inline const QString ZOOM         = QStringLiteral("zoom");
 
-} // namespace SettingsKeys
+} // namespace Keys
 
 #endif // CONSTANTS_H
 

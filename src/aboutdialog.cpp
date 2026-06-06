@@ -79,10 +79,8 @@ AboutDialog::AboutDialog(const QString &version, const QString &info, const QStr
         QSettings settings;
         QFont mono_font;
         QFontInfo mono_info(*GUI_MONOFONT);
-        mono_font.setFamily(
-            settings.value(SettingsKeys::MONOFAMILY, mono_info.family()).toString());
-        mono_font.setPointSize(
-            settings.value(SettingsKeys::MONOSIZE, mono_info.pointSize()).toInt());
+        mono_font.setFamily(settings.value(Keys::MONOFAMILY, mono_info.family()).toString());
+        mono_font.setPointSize(settings.value(Keys::MONOSIZE, mono_info.pointSize()).toInt());
         mono_font.setStyleHint(GUI_MONOFONT->styleHint());
         mono_font.setFixedPitch(true);
         detailsLabel->setFont(mono_font);

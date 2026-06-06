@@ -84,12 +84,11 @@ int main(int argc, char *argv[])
         QStringList pluginPath = parser.values(plugindir);
         QSettings settings;
         if (pluginPath.length() > 0) {
-            settings.setValue(SettingsKeys::PLUGIN_PATH,
-                              QFileInfo(pluginPath.at(0)).canonicalFilePath());
+            settings.setValue(Keys::PLUGIN_PATH, QFileInfo(pluginPath.at(0)).canonicalFilePath());
             settings.sync();
         } else {
             // empty string provided -> delete any old setting
-            settings.remove(SettingsKeys::PLUGIN_PATH);
+            settings.remove(Keys::PLUGIN_PATH);
         }
     }
 #endif
