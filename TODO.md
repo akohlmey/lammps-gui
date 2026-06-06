@@ -313,3 +313,113 @@ data (purer/more testable); whether `DumpImageParams` owns copies of the
 `regions`/`computes`/`fixes`/`color_list` data or references them; and how
 much of (4) moves vs. stays. The Stage 5b in-place `createImage`
 decomposition is a stepping stone but its helpers would be reshaped here.
+
+## Stage 8 -- Reusable ChartViewer for external-data plotting + post-processing (feature, high-level)
+
+Make the chart code a reusable component (mirroring how the log/file
+viewer was generalized to display arbitrary text files and restart-explore
+output) so it can plot data from external structured files (CSV, whitespace
+`.dat`, YAML, JSON) -- including files LAMMPS itself wrote via LAMMPS-GUI --
+and run a small set of post-processing/fitting analyses on them. New entry
+point under the Run menu (e.g. "Plot data file..."), opening a standalone
+`ChartWindow` the same way `FileViewer` is opened for arbitrary files
+(`lammpsgui.cpp:1107,1216`).
+
+This MUST stay deliberately minimalist: it is not a plotting program. The
+existing capabilities (select data columns, apply a post-process, show,
+rename axis labels / plot title, export) are nearly the whole feature set.
+The only genuinely new user-facing pieces are file import, line/points/both
+display with a small style dialog, and a post-processing/fitting dialog.
+
+**Current coupling to remove (refactor prerequisite).**
+- `ChartWindow(filename, LammpsGui*)` is *push-fed* live thermo data during
+  a run (`addChart`/`addData` at `lammpsgui.cpp:1478-1496,1559-1583`); the
+  window never reads data itself.
+- X is hardwired to the integer step: `ChartViewer::addData(int step,
+  double)`. External data needs an arbitrary `double` X column.
+- Hard `LammpsGui` deps: `stopRun()`, `setUnits()`, `setNorm()`,
+  `getStep()`.
+- `ChartBackend` only handles `QLineSeries` (`addSeries(QLineSeries*,
+  color, width)`) -- lines only, no markers.
+- Reusable assets already in tree: the self-contained LU least-squares
+  solver behind Savitzky-Golay (`float_mat`/`lu_factorize`, approx.
+  `chartviewer.cpp:833-1174`), the export formatters (PNG/CSV/YAML/DAT),
+  and the existing "one single-series chart per column, switch via combo"
+  model -- which maps cleanly onto "pick one X column, each selected Y
+  column becomes a chart."
+
+**Layered strategy (each layer independently shippable + testable):**
+
+- **Layer 0 -- decouple the data source (pure refactor, no UI change).**
+  Introduce a column-oriented model: `PlotData` (named `double` columns +
+  units) and `PlotSeries` (x-col index, y-col index, style). The live run
+  becomes one adapter that appends rows; a file loader is another adapter
+  that fills columns. `ChartWindow` renders from `PlotData`; the
+  `LammpsGui*`/`stopRun` wiring is confined to the live adapter (nullable
+  callback, not a hard dependency). Generalize `addData(int step,...)` ->
+  `addPoint(double x, double y)`. Also extract the LU least-squares code
+  into `leastsquares.{cpp,h}` -- reusable for polynomial/EOS fits and
+  unit-testable (same testability win as Stage 7's `dumpimage`).
+  - Alternatives considered: a "file mode" flag with branches (A1, rots);
+    a sibling class for files (A3, duplication). Column model (A2) chosen.
+
+- **Layer 1 -- file import.** Reuse the inverse of the existing CSV/YAML/DAT
+  formatters. Minimal import dialog: detect delimiter + optional header row,
+  preview columns, pick X column and one-or-more Y columns. JSON limited to
+  the simple array-of-rows / object-of-arrays shapes.
+
+- **Layer 2 -- series styling (lines / points / lines+points).** Extend
+  `ChartBackend` with `QScatterSeries` support (both QtCharts and QtGraphs
+  provide it) and a `SeriesStyle` {mode, color, marker shape, marker size,
+  line width} + a compact style dialog. This is the only change touching
+  *both* backends, so it is the riskiest piece -- scope to exactly those
+  properties.
+
+- **Layer 3 -- post-processing / analysis.** Generalize today's "smooth"
+  into a tiny `Transform` interface (source series -> derived series +
+  optional parameter report). Concrete transforms: Savitzky-Golay (exists),
+  autocorrelation (direct or FFT; lag vs ACF), EOS fit, custom-function fit.
+  Single "Postprocess..." dialog whose transform selector swaps in the
+  relevant parameter widgets (the Grace pattern). Fits overlay a fit curve
+  and show a small results readout (params + derived quantities + RMS
+  residual).
+
+- **Layer 4 -- fitting.**
+  - *4a linear-in-params (first):* polynomial + 4-parameter Birch-Murnaghan
+    EOS, which is linear in its coefficients
+    (`E(V)=a+b*V^(-2/3)+c*V^(-4/3)+d*V^(-2)`) and so fits with the extracted
+    LU solver -- no nonlinear code needed for the headline energy-vs-volume
+    case. V0/E0/B0/B0' are closed-form in a,b,c,d.
+  - *4b nonlinear (extension):* vendor a compact Levenberg-Marquardt
+    routine. Combined with a vendored Lepton library this realizes the
+    "custom EOS as a predefined expression" idea: the EOS becomes an
+    expression string + named params (with initial guesses/bounds); Lepton
+    parses it and supplies analytic derivatives for the Jacobian; LM
+    iterates (the Grace non-linear fit popup is the UI template). Custom
+    function *plotting* (evaluate an expression over the X range) is a
+    trivial subset worth shipping before fitting.
+
+**Lepton vendoring note.** Lepton (LAMMPS `lib/lepton`, OpenMM-origin,
+permissive/MIT-style license -- verify the header notice; GPLv2+-compatible)
+must be bundled into LAMMPS-GUI like `rangeslider`, because plugin-mode has
+no link-time LAMMPS dependency and cannot borrow the loaded `liblammps`
+symbols. Add it to `PROJECT_SOURCES` / a `thirdparty` group with its
+license recorded.
+
+**Minimalist guardrails -- deliberately NOT in scope:** multiple Y axes;
+log/log or date axes; spreadsheet/data editing; annotations or
+legend-as-objects; many-dataset overlay management beyond raw+derived;
+3D/surface/bar/pie; session files. (These are exactly where Veusz/LabPlot
+earn their complexity.)
+
+**Suggested phasing:** Layer 0 refactor -> Layer 1 import (first visible
+payoff) -> Layer 2 styling -> Layer 3 + 4a (autocorrelation + linear/BM4
+fit, no new third-party code) -> Layer 4b (Lepton + LM). Phases 1-4a need
+no new third-party dependency.
+
+**Survey references (minimalist scientific plotting + fitting + EOS):**
+Grace/Xmgrace (non-linear fit popup with named params a0..a9 + bounds +
+tolerance is the UI template; per-set line/symbol appearance);
+SciDAVis/LabPlot/Veusz (ASCII import -> columns -> fit flow to borrow, depth
+to avoid); BM4 EOS linear form (DFTTK, murnaghan2017); Lepton expression
+syntax + analytic differentiation (LAMMPS/OpenMM docs).
