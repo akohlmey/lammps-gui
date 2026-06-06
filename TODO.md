@@ -165,17 +165,29 @@ overloads and `lastErrorMessage()` are the templates to follow.
   *temporaries* (e.g. `"viewslide"`, `"updfreq"`) were missed by Stage 1b's
   `settings`-object-anchored sweep -- a small Stage 1b completion.
 
-- [ ] **5b. Break up the giant dialog builders in `imageviewer.cpp`.**
-  `atomSettings()` (~497), `createImage()` (~476), `colorSettings()`
-  (~293), `globalSettings()` (~288), `fixSettings()` (~231). Extract
-  per-section builder helpers; consider moving the settings-dialog
-  construction into its own translation unit to shrink the 3636-line file.
+- [~] **5b. Break up the giant dialog builders in `imageviewer.cpp`.**
+  Chosen approach: HYBRID -- TU-split the `*Settings` dialog builders,
+  decompose `createImage` in-place, and only lightly decompose the
+  `findChild`-free dialogs. Rationale: `atomSettings`/`globalSettings`
+  read settings back via `findChild` after `exec()`, so in-place widget
+  extraction risks a silent (compile-clean, runtime-lost) setting if an
+  object name is dropped -- only a real run, not `build`/tests, catches it.
 
-- [ ] **5b. Break up the giant dialog builders in `imageviewer.cpp`.**
-  `atomSettings()` (~497), `createImage()` (~476), `colorSettings()`
-  (~293), `globalSettings()` (~288), `fixSettings()` (~231). Extract
-  per-section builder helpers; consider moving the settings-dialog
-  construction into its own translation unit to shrink the 3636-line file.
+  - [x] `createImage()` (476 -> 293) decomposed in-place into
+    `appendRegionArgs`, `appendFixComputeStyles`, `appendColorMapArgs`,
+    `appendFixComputeColors`. Command-assembly order preserved; both
+    configs build, 58/58 tests.
+  - [ ] **TU split of the five `*Settings` builders -- needs an internal
+    header first.** They use ~20 file-local constants, 3 enums,
+    `deftypecolors`, `selectComboItem`, and the `ImageInfo`/`RegionInfo`
+    classes (all in `imageviewer.cpp`'s anonymous namespace), *unqualified*.
+    Moving the methods to `imageviewersettings.cpp` first requires hoisting
+    those shared symbols into a shared header (`inline constexpr` / `inline`
+    / class defs) and choosing namespacing (global-in-internal-header vs.
+    private nested members). Behavior-neutral and compiler-verifiable in
+    both configs, but a careful ~200-line move, not a mechanical relocation.
+  - [ ] Light in-place decomposition of `fixSettings`/`regionSettings`/
+    `colorSettings` (0 `findChild` each -> safer to split internally).
 
 ## Stage 6 -- Interface simplification and modern-C++ polish (breadth pass)
 
