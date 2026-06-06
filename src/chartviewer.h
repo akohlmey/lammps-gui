@@ -305,10 +305,14 @@ public:
     int getCount() const { return series->count(); }
 
     /**
-     * @brief Get chart title
-     * @return Title string
+     * @brief Get the series (data column) name
+     * @return The property/column name this chart was created with
+     *
+     * This is the per-column identifier (e.g. the thermo keyword), distinct
+     * from the shared plot title returned by getTLabel(). Used for data-export
+     * column headers.
      */
-    QString getTitle() const;
+    QString getName() const;
 
     /**
      * @brief Get step number at given index

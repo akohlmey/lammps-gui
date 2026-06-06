@@ -514,7 +514,7 @@ void ChartWindow::postProcess()
             return;
         }
         PlotData result;
-        result.setColumnNames({"lag", "ACF: " + chart->getTitle()});
+        result.setColumnNames({"lag", "ACF: " + chart->getName()});
         for (std::size_t k = 0; k < acf.size(); ++k)
             result.appendRow({static_cast<double>(k), acf[k]});
 
@@ -690,7 +690,7 @@ void ChartWindow::exportDat()
             out << "# Thermodynamic data from " << filename << "\n";
             out << "#          Step";
             for (auto &c : charts)
-                out << qSetFieldWidth(0) << ' ' << qSetFieldWidth(fw) << c->getTitle();
+                out << qSetFieldWidth(0) << ' ' << qSetFieldWidth(fw) << c->getName();
             out << qSetFieldWidth(0) << '\n';
 
             int lines = charts[0]->getCount();
@@ -721,7 +721,7 @@ void ChartWindow::exportCsv()
 
             out << "Step";
             for (auto &c : charts)
-                out << ',' << c->getTitle();
+                out << ',' << c->getName();
             out << '\n';
 
             int lines = charts[0]->getCount();
@@ -752,7 +752,7 @@ void ChartWindow::exportYaml()
 
             out << "keywords: ['Step'";
             for (auto &c : charts)
-                out << ", " << c->getTitle();
+                out << ", '" << c->getName() << "'";
             out << "]\n";
 
             out << "data: \n";
@@ -890,9 +890,9 @@ QList<QAbstractAxis *> ChartViewer::getAxes() const
 
 /* -------------------------------------------------------------------- */
 
-QString ChartViewer::getTitle() const
+QString ChartViewer::getName() const
 {
-    return backend->getTLabel();
+    return series->name();
 }
 
 /* -------------------------------------------------------------------- */
