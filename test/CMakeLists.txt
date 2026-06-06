@@ -122,6 +122,17 @@ target_link_libraries(test_dumpimage PRIVATE GTest::gtest_main Qt6::Widgets)
 
 gtest_discover_tests(test_dumpimage)
 
+# Test executable for the least-squares / linear-algebra toolkit (Qt-free)
+add_executable(test_leastsquares
+  test_leastsquares.cpp
+  ${CMAKE_SOURCE_DIR}/src/leastsquares.cpp
+)
+
+target_include_directories(test_leastsquares PRIVATE ${CMAKE_SOURCE_DIR}/src)
+target_link_libraries(test_leastsquares PRIVATE GTest::gtest_main)
+
+gtest_discover_tests(test_leastsquares)
+
 ########################################################################
 # Tests that check the GUI environment and the GUI
 # IMPORTANT NOTE: we must use a different display number for the -n flag

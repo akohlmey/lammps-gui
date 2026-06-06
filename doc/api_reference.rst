@@ -355,6 +355,17 @@ StdoutSilencer Class
 
 -----
 
+Least-Squares Toolkit
+---------------------
+
+Self-contained (Qt-free) dense linear-algebra and least-squares routines
+(``src/leastsquares.h``) used by the chart smoothing and reusable for
+polynomial and equation-of-state fits.
+
+.. doxygenfile:: leastsquares.h
+
+-----
+
 .. _helper_functions:
 
 Helper Functions

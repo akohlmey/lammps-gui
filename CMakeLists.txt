@@ -118,6 +118,8 @@ if (NOT BUILD_DOC_ONLY)
     ${CMAKE_SOURCE_DIR}/src/lammpsrunner.h
     ${CMAKE_SOURCE_DIR}/src/lammpswrapper.cpp
     ${CMAKE_SOURCE_DIR}/src/lammpswrapper.h
+    ${CMAKE_SOURCE_DIR}/src/leastsquares.cpp
+    ${CMAKE_SOURCE_DIR}/src/leastsquares.h
     ${CMAKE_SOURCE_DIR}/src/linenumberarea.h
     ${CMAKE_SOURCE_DIR}/src/logwindow.cpp
     ${CMAKE_SOURCE_DIR}/src/logwindow.h
