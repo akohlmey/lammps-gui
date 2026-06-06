@@ -109,16 +109,23 @@ overloads and `lastErrorMessage()` are the templates to follow.
   data model (`computes`/`fixes`/`regions` maps and their colors).
   Converting the data model is a larger change, not a string sweep.
 
-## Stage 3 -- Reduce LammpsWrapper plugin/linked dispatch duplication (structural)
+## Stage 3 -- Reduce LammpsWrapper plugin/linked dispatch duplication (DONE)
 
-- [ ] **3. Collapse the 38 `#ifdef LAMMPS_GUI_USE_PLUGIN` blocks /
-  37 `((liblammpsplugin_t *)plugin_handle)->fn(...)` repetitions** in
-  `lammpswrapper.cpp` into one mechanism. Options: store a typed
-  `liblammpsplugin_t *` member instead of a `void *`, and introduce a
-  single dispatch macro/inline helper so each method body appears once.
-  Preserve the ABI check and the `CHECKSYM` required-symbol validation in
-  `loadLib()`. Highest-duplication target; review carefully because it is
-  the central abstraction.
+- [x] **3. Collapsed the dispatch duplication via an `LMPFN` macro.** A
+  single `LMPFN(fn)` macro resolves to the loaded plugin function table
+  (`plugin_handle->fn`) or the `lammps_##fn` symbol at compile time; the 33
+  straightforward dispatch methods plus `finalize()` now route through it.
+  `#if defined(LAMMPS_GUI_USE_PLUGIN)` blocks dropped from 38 to 5
+  (includes, the macro, the plugin-only `plugin_handle` init, `close()`
+  which needs a different guard, and the `hasPlugin`/`loadLib` block);
+  `lammpswrapper.cpp` shrank 628 -> 490 lines. The `loadLib` ABI check and
+  `CHECKSYM` validation are untouched. Each expansion reproduces the exact
+  prior call, so both build configurations are unchanged (the transform
+  required the plugin and linked sides to match before rewriting). Only
+  plugin mode is buildable here; linked mode verified by construction.
+  Note: a function-like dispatch macro is the right tool here (compile-time
+  symbol selection, like `CHECKSYM`'s stringification) -- distinct from the
+  logic-hiding macros that Stage 6 removes.
 
 ## Stage 4 -- Typed data-extraction helpers (cast consolidation)
 
