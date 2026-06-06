@@ -110,6 +110,8 @@ if (NOT BUILD_DOC_ONLY)
     ${CMAKE_SOURCE_DIR}/src/highlighter.h
     ${CMAKE_SOURCE_DIR}/src/imageviewer.cpp
     ${CMAKE_SOURCE_DIR}/src/imageviewer.h
+    ${CMAKE_SOURCE_DIR}/src/imageviewer_internal.h
+    ${CMAKE_SOURCE_DIR}/src/imageviewersettings.cpp
     ${CMAKE_SOURCE_DIR}/src/lammpsrunner.cpp
     ${CMAKE_SOURCE_DIR}/src/lammpsrunner.h
     ${CMAKE_SOURCE_DIR}/src/lammpswrapper.cpp
