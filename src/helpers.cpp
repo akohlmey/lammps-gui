@@ -23,6 +23,7 @@
 #include <QFileInfo>
 #include <QIcon>
 #include <QImage>
+#include <QImageReader>
 #include <QMessageBox>
 #include <QPalette>
 #include <QProcess>
@@ -350,6 +351,21 @@ void exportImage(QWidget *parent, QImage *image, const QString &title)
 bool hasExe(const QString &exe)
 {
     return !QStandardPaths::findExecutable(exe).isEmpty();
+}
+
+bool isImageFile(const QString &filename)
+{
+    // known image extensions, including formats Qt cannot read natively but
+    // that ImageMagick can convert for display (tga, eps, sgi, ...)
+    static const QStringList imageExtensions = {"png", "jpg", "jpeg", "bmp", "ppm", "pgm", "pbm",
+                                                "gif", "tif", "tiff", "tga", "eps", "sgi", "webp",
+                                                "xpm", "ico", "svg",  "jp2", "heic"};
+    const QString suffix                     = QFileInfo(filename).suffix().toLower();
+    if (imageExtensions.contains(suffix)) return true;
+
+    // otherwise let Qt sniff the contents, but only for a file that exists
+    if (!QFileInfo::exists(filename)) return false;
+    return !QImageReader::imageFormat(filename).isEmpty();
 }
 
 // recursively remove all contents from a directory

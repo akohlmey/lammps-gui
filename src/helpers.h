@@ -110,6 +110,17 @@ extern void exportImage(QWidget *parent, QImage *image, const QString &title);
 [[nodiscard]] extern bool hasExe(const QString &exe);
 
 /**
+ * @brief Check whether a file is (likely) an image
+ * @param filename Path to the file
+ * @return true if the extension is a known image type, or the file exists and
+ *         QImageReader recognizes its contents as an image
+ *
+ * Recognizes the formats Qt can decode plus common ImageMagick-only formats
+ * (e.g. tga, eps, sgi) so callers can route them through a conversion step.
+ */
+[[nodiscard]] extern bool isImageFile(const QString &filename);
+
+/**
  * @brief Re-exec the current LAMMPS-GUI process in place (e.g. to reload the plugin)
  *
  * Replaces the running process with a fresh launch of the same executable.

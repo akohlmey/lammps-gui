@@ -453,3 +453,19 @@ TEST_F(HelpersTest, HasExeBash)
     EXPECT_TRUE(hasExe("bash"));
 #endif
 }
+
+// isImageFile recognizes images by extension (case-insensitive), including
+// ImageMagick-only formats; non-image / unknown extensions are rejected
+TEST_F(HelpersTest, IsImageFileByExtension)
+{
+    EXPECT_TRUE(isImageFile("snapshot.png"));
+    EXPECT_TRUE(isImageFile("/path/to/Render.JPEG"));
+    EXPECT_TRUE(isImageFile("dump.0.ppm"));
+    EXPECT_TRUE(isImageFile("frame.tga")); // ImageMagick-only
+    EXPECT_TRUE(isImageFile("a.tiff"));
+
+    EXPECT_FALSE(isImageFile("in.peptide"));
+    EXPECT_FALSE(isImageFile("log.lammps"));
+    EXPECT_FALSE(isImageFile("data.yaml"));
+    EXPECT_FALSE(isImageFile("noextension"));
+}
