@@ -266,6 +266,7 @@ ChartWindow::ChartWindow(const QString &_filename, LammpsGui *_lammpsgui, QWidge
     stopAct->setShortcut(QKeySequence(Qt::CTRL | Qt::Key_Slash));
     // without a live simulation there is nothing to stop
     if (!lammpsgui) stopAct->setVisible(false); // no live simulation to stop
+    if (!lammpsgui) quitAct->setVisible(false); // quit == close in standalone mode
     closeAct = addMenuAction(file, "&Close", ":/icons/window-close.png", this, &QWidget::close);
     closeAct->setShortcut(QKeySequence(Qt::CTRL | Qt::Key_W));
     quitAct =
