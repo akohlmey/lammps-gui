@@ -1106,15 +1106,11 @@ void LammpsGui::openFile(const QString &fileName)
 // open file in read-only mode for viewing in separate window
 void LammpsGui::viewFile(const QString &fileName)
 {
-    // image files would be garbage in the text viewer; show them in the
-    // standalone snapshot viewer instead (which converts via ImageMagick if
-    // needed)
     if (isImageFile(fileName)) {
-        auto *viewer = new SlideShow(fileName);
-        viewer->setAttribute(Qt::WA_DeleteOnClose);
-        viewer->setWindowIcon(QIcon(Cfg::MAIN_ICON));
-        viewer->addImage(fileName);
-        viewer->show();
+        warning(this, "Cannot View Image as Text",
+                "\"" + QFileInfo(fileName).fileName()
+                    + "\" is an image file and cannot be displayed in the text viewer.\n"
+                      "Use \"View Image File(s)...\" (Ctrl+Shift+J) to open it.");
         return;
     }
 
