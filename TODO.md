@@ -337,16 +337,19 @@ decomposition is a stepping stone but its helpers would be reshaped here.
 ## Stage 8 -- Reusable ChartViewer for external-data plotting + post-processing (feature, high-level)
 
 **CURRENT STATUS (paused here):** Layers 0, 1, 2, 3, and 4a are DONE and
-committed on branch `refactor/cleanup` (121/121 unit tests; builds in
+committed on branch `refactor/cleanup` (130/130 unit tests; builds in
 plugin/QtGraphs, plugin/QtCharts, and linked configs; zero Doxygen warnings;
 nothing pushed). **Layer 4b (Lepton + Levenberg-Marquardt) is IN PROGRESS:**
 the JIT-less Lepton subset is vendored, namespaced `LeptonMini`, built as a
 `lepton_mini` static library, linked into the GUI, and covered by
-`test/test_lepton.cpp` (5 `Lepton.*` tests pass in both backends). What remains
-is vendoring a compact Levenberg-Marquardt routine and wiring custom-function
-plotting + nonlinear fitting into the Postprocess dialog. See the Layer 4b note
-below for the Lepton symbol-clash constraint that drove the `LeptonMini`
-namespacing.
+`test/test_lepton.cpp` (5 `Lepton.*` tests). **Custom-function plotting is now
+wired in** -- the Postprocess dialog has a "Custom function" option that
+evaluates a user-typed f(x) over the chart's x range and overlays it, backed by
+the new `customfunc.{cpp,h}` module (QString-boundary wrapper around LeptonMini)
+with `test/test_customfunc.cpp` (10 cases). What remains is vendoring a compact
+Levenberg-Marquardt routine and wiring nonlinear *fitting* into the Postprocess
+dialog. See the Layer 4b note below for the Lepton symbol-clash constraint that
+drove the `LeptonMini` namespacing.
 
 Make the chart code a reusable component (mirroring how the log/file
 viewer was generalized to display arbitrary text files and restart-explore
@@ -491,13 +494,16 @@ display with a small style dialog, and a post-processing/fitting dialog.
     place (see note below): `thirdparty/lepton_mini/`, namespace `LeptonMini`,
     built as the `lepton_mini` static library and linked into the GUI, with
     `test/test_lepton.cpp` covering parse / evaluate / optimize / differentiate
-    / custom functions. Remaining work: vendor a compact Levenberg-Marquardt
-    routine. Combined with LeptonMini this realizes the "custom EOS as a
-    predefined expression" idea: the EOS becomes an expression string + named
-    params (with initial guesses/bounds); LeptonMini parses it and supplies
-    analytic derivatives for the Jacobian; LM iterates (the Grace non-linear
-    fit popup is the UI template). Custom function *plotting* (evaluate an
-    expression over the X range) is a trivial subset worth shipping first.
+    / custom functions. DONE: custom-function *plotting* -- the `customfunc`
+    module (`evalCustomCurve`, QString-boundary wrapper around LeptonMini) plus
+    the "Custom function" choice in the Postprocess dialog, which evaluates a
+    user-typed f(x) over the chart's x range and overlays it via setFitCurve.
+    Remaining work: vendor a compact Levenberg-Marquardt routine. Combined with
+    LeptonMini this realizes the "custom EOS as a predefined expression" idea:
+    the EOS becomes an expression string + named params (with initial
+    guesses/bounds); LeptonMini parses it and supplies analytic derivatives for
+    the Jacobian; LM iterates (the Grace non-linear fit popup is the UI
+    template).
 
 **Lepton vendoring note -- IMPORTANT symbol-clash constraint.** Lepton (LAMMPS
 `lib/lepton`, OpenMM-origin, permissive/MIT-style license -- verify the header
