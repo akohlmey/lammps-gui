@@ -73,6 +73,23 @@ QString bracketContents(const QString &s)
     return s.mid(a + 1, b - a - 1);
 }
 
+// Heuristic: does the text contain a LAMMPS thermo YAML block? Such a block
+// has a "keywords:" line, possibly embedded in surrounding log output.
+bool looksLikeYaml(const QString &text)
+{
+    const QStringList lines = text.split('\n');
+    for (const QString &line : lines)
+        if (line.trimmed().startsWith("keywords:")) return true;
+    return false;
+}
+
+// Heuristic: does the text start like a JSON document?
+bool looksLikeJson(const QString &text)
+{
+    const QString t = text.trimmed();
+    return t.startsWith('[') || t.startsWith('{');
+}
+
 } // namespace
 
 /* -------------------------------------------------------------------- */
@@ -353,12 +370,20 @@ PlotData loadPlotData(const QString &filename, QString *error)
     const QByteArray bytes = f.readAll();
     f.close();
 
+    const QString text = QString::fromUtf8(bytes);
+
+    // an explicit, known extension wins
     const QString suffix = QFileInfo(filename).suffix().toLower();
-    if (suffix == "csv") return parsePlotCsv(QString::fromUtf8(bytes), error);
+    if (suffix == "csv") return parsePlotCsv(text, error);
     if (suffix == "json") return parsePlotJson(bytes, error);
-    if ((suffix == "yaml") || (suffix == "yml"))
-        return parsePlotYaml(QString::fromUtf8(bytes), error);
-    return parsePlotWhitespace(QString::fromUtf8(bytes), error);
+    if ((suffix == "yaml") || (suffix == "yml")) return parsePlotYaml(text, error);
+
+    // otherwise detect the format from the content: a LAMMPS .log/.dat may
+    // embed a YAML thermo block (interleaved with other log output), or the
+    // file may actually be JSON
+    if (looksLikeYaml(text)) return parsePlotYaml(text, error);
+    if (looksLikeJson(text)) return parsePlotJson(bytes, error);
+    return parsePlotWhitespace(text, error);
 }
 
 // Local Variables:

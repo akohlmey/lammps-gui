@@ -133,6 +133,55 @@ TEST(PlotDataYaml, LammpsTrailingComma)
     EXPECT_DOUBLE_EQ(d.column(2)[1], 1.1);
 }
 
+TEST(PlotDataYaml, IgnoresInterleavedLogLines)
+{
+    // a LAMMPS log can interleave other output (SHAKE/Bond/Angle stats, timing)
+    // between the YAML thermo data rows; those lines must be ignored
+    const QString text = "Per MPI rank memory allocation = 22 Mbytes\n"
+                         "---\n"
+                         "keywords: ['Step', 'Temp', ]\n"
+                         "data:\n"
+                         "  - [0, 300, ]\n"
+                         "SHAKE stats (type/ave/delta/count) on step 100\n"
+                         "Bond:    4   1.111     7.8e-07        9\n"
+                         "Angle:  31   104.52    0.0005       640\n"
+                         "  - [100, 310, ]\n"
+                         "...\n"
+                         "Loop time of 4.0 on 8 procs\n";
+    const PlotData d   = parsePlotYaml(text);
+    ASSERT_EQ(d.columnCount(), 2);
+    ASSERT_EQ(d.rowCount(), 2);
+    EXPECT_EQ(d.columnName(0), "Step");
+    EXPECT_EQ(d.columnName(1), "Temp");
+    EXPECT_DOUBLE_EQ(d.column(0)[1], 100.0);
+    EXPECT_DOUBLE_EQ(d.column(1)[1], 310.0);
+}
+
+TEST(LoadPlotData, DetectsYamlInLogByContent)
+{
+    // a .log extension is not an explicit format, so the YAML thermo block must
+    // be detected from the file content
+    QTemporaryFile f(QDir::tempPath() + "/plotdataXXXXXX.log");
+    ASSERT_TRUE(f.open());
+    f.write("LAMMPS run log preamble\n"
+            "---\n"
+            "keywords: ['Step', 'Temp', ]\n"
+            "data:\n"
+            "  - [0, 300, ]\n"
+            "  - [50, 310, ]\n"
+            "...\n"
+            "Loop time of 4.0 on 8 procs\n");
+    f.flush();
+
+    QString err;
+    const PlotData d = loadPlotData(f.fileName(), &err);
+    EXPECT_TRUE(err.isEmpty()) << err.toStdString();
+    ASSERT_EQ(d.columnCount(), 2);
+    ASSERT_EQ(d.rowCount(), 2);
+    EXPECT_EQ(d.columnName(1), "Temp");
+    EXPECT_DOUBLE_EQ(d.column(0)[1], 50.0);
+}
+
 TEST(PlotDataJson, ArrayOfRows)
 {
     const QByteArray json = "[[0,300,1.0],[1,310,1.1]]";
