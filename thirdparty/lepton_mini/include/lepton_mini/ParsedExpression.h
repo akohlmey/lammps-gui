@@ -37,7 +37,7 @@
 #include <map>
 #include <string>
 
-namespace Lepton {
+namespace LeptonMini {
 
 class ExpressionProgram;
 
@@ -121,6 +121,6 @@ LEPTON_EXPORT std::ostream& operator<<(std::ostream& out, const ExpressionTreeNo
 
 LEPTON_EXPORT std::ostream& operator<<(std::ostream& out, const ParsedExpression& exp);
 
-} // namespace Lepton
+} // namespace LeptonMini
 
 #endif /*LEPTON_PARSED_EXPRESSION_H_*/

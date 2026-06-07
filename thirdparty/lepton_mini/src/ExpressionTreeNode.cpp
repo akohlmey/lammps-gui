@@ -29,12 +29,12 @@
  * USE OR OTHER DEALINGS IN THE SOFTWARE.                                     *
  * -------------------------------------------------------------------------- */
 
-#include "lepton/ExpressionTreeNode.h"
-#include "lepton/Exception.h"
-#include "lepton/Operation.h"
+#include "lepton_mini/ExpressionTreeNode.h"
+#include "lepton_mini/Exception.h"
+#include "lepton_mini/Operation.h"
 #include <utility>
 
-using namespace Lepton;
+using namespace LeptonMini;
 using namespace std;
 
 ExpressionTreeNode::ExpressionTreeNode(Operation* operation, const vector<ExpressionTreeNode>& children) : operation(operation), children(children) {

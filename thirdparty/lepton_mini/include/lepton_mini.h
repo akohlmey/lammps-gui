@@ -1,5 +1,5 @@
-#ifndef LMP_LEPTON_H_
-#define LMP_LEPTON_H_
+#ifndef LEPTON_MINI_H_
+#define LEPTON_MINI_H_
 
 /* -------------------------------------------------------------------------- *
  *                                   Lepton                                   *
@@ -32,11 +32,11 @@
  * USE OR OTHER DEALINGS IN THE SOFTWARE.                                     *
  * -------------------------------------------------------------------------- */
 
-#include "lepton/CustomFunction.h"
-#include "lepton/ExpressionProgram.h"
-#include "lepton/ExpressionTreeNode.h"
-#include "lepton/Operation.h"
-#include "lepton/ParsedExpression.h"
-#include "lepton/Parser.h"
+#include "lepton_mini/CustomFunction.h"
+#include "lepton_mini/ExpressionProgram.h"
+#include "lepton_mini/ExpressionTreeNode.h"
+#include "lepton_mini/Operation.h"
+#include "lepton_mini/ParsedExpression.h"
+#include "lepton_mini/Parser.h"
 
-#endif /*LMP_LEPTON_H_*/
+#endif /*LEPTON_MINI_H_*/

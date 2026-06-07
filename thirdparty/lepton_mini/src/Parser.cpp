@@ -29,16 +29,16 @@
  * USE OR OTHER DEALINGS IN THE SOFTWARE.                                     *
  * -------------------------------------------------------------------------- */
 
-#include "lepton/Parser.h"
-#include "lepton/CustomFunction.h"
-#include "lepton/Exception.h"
-#include "lepton/ExpressionTreeNode.h"
-#include "lepton/Operation.h"
-#include "lepton/ParsedExpression.h"
+#include "lepton_mini/Parser.h"
+#include "lepton_mini/CustomFunction.h"
+#include "lepton_mini/Exception.h"
+#include "lepton_mini/ExpressionTreeNode.h"
+#include "lepton_mini/Operation.h"
+#include "lepton_mini/ParsedExpression.h"
 #include <cctype>
 #include <iostream>
 
-using namespace Lepton;
+using namespace LeptonMini;
 using namespace std;
 
 static const string Digits = "0123456789";
@@ -47,7 +47,7 @@ static const bool LeftAssociative[] = {true, true, true, true, false};
 static const int Precedence[] = {0, 0, 1, 1, 3};
 static const Operation::Id OperationId[] = {Operation::ADD, Operation::SUBTRACT, Operation::MULTIPLY, Operation::DIVIDE, Operation::POWER};
 
-class Lepton::ParseToken {
+class LeptonMini::ParseToken {
 public:
     enum Type {Number, Operator, Variable, Function, LeftParen, RightParen, Comma, Whitespace};
 

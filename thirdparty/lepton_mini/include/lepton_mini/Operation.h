@@ -42,7 +42,7 @@
 #include <sstream>
 #include <algorithm>
 
-namespace Lepton {
+namespace LeptonMini {
 
 class ExpressionTreeNode;
 
@@ -1192,6 +1192,6 @@ public:
     ExpressionTreeNode differentiate(const std::vector<ExpressionTreeNode>& children, const std::vector<ExpressionTreeNode>& childDerivs, const std::string& variable) const;
 };
 
-} // namespace Lepton
+} // namespace LeptonMini
 
 #endif /*LEPTON_OPERATION_H_*/

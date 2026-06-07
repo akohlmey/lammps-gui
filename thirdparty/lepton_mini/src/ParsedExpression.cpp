@@ -29,13 +29,13 @@
  * USE OR OTHER DEALINGS IN THE SOFTWARE.                                     *
  * -------------------------------------------------------------------------- */
 
-#include "lepton/ParsedExpression.h"
-#include "lepton/ExpressionProgram.h"
-#include "lepton/Operation.h"
+#include "lepton_mini/ParsedExpression.h"
+#include "lepton_mini/ExpressionProgram.h"
+#include "lepton_mini/Operation.h"
 #include <limits>
 #include <vector>
 
-using namespace Lepton;
+using namespace LeptonMini;
 using namespace std;
 
 ParsedExpression::ParsedExpression() : rootNode(ExpressionTreeNode()) {
@@ -393,7 +393,7 @@ ExpressionTreeNode ParsedExpression::renameNodeVariables(const ExpressionTreeNod
     return ExpressionTreeNode(node.getOperation().clone(), children);
 }
 
-ostream& Lepton::operator<<(ostream& out, const ExpressionTreeNode& node) {
+ostream& LeptonMini::operator<<(ostream& out, const ExpressionTreeNode& node) {
     if (node.getOperation().isInfixOperator() && node.getChildren().size() == 2) {
         out << "(" << node.getChildren()[0] << ")" << node.getOperation().getName() << "(" << node.getChildren()[1] << ")";
     }
@@ -415,7 +415,7 @@ ostream& Lepton::operator<<(ostream& out, const ExpressionTreeNode& node) {
     return out;
 }
 
-ostream& Lepton::operator<<(ostream& out, const ParsedExpression& exp) {
+ostream& LeptonMini::operator<<(ostream& out, const ParsedExpression& exp) {
     out << exp.getRootNode();
     return out;
 }

@@ -1,5 +1,5 @@
-#ifndef LEPTON_EXPRESSION_PROGRAM_H_
-#define LEPTON_EXPRESSION_PROGRAM_H_
+#ifndef LEPTON_CUSTOM_FUNCTION_H_
+#define LEPTON_CUSTOM_FUNCTION_H_
 
 /* -------------------------------------------------------------------------- *
  *                                   Lepton                                   *
@@ -9,7 +9,7 @@
  * Biological Structures at Stanford, funded under the NIH Roadmap for        *
  * Medical Research, grant U54 GM072970. See https://simtk.org.               *
  *                                                                            *
- * Portions copyright (c) 2009-2018 Stanford University and the Authors.      *
+ * Portions copyright (c) 2009 Stanford University and the Authors.           *
  * Authors: Peter Eastman                                                     *
  * Contributors:                                                              *
  *                                                                            *
@@ -32,72 +32,78 @@
  * USE OR OTHER DEALINGS IN THE SOFTWARE.                                     *
  * -------------------------------------------------------------------------- */
 
-#include "ExpressionTreeNode.h"
 #include "windowsIncludes.h"
-#include <map>
-#include <string>
-#include <vector>
 
-namespace Lepton {
-
-class ParsedExpression;
+namespace LeptonMini {
 
 /**
- * An ExpressionProgram is a linear sequence of Operations for evaluating an expression.  The evaluation
- * is done with a stack.  The arguments to each Operation are first taken off the stack in order, then it is
- * evaluated and the result is pushed back onto the stack.  At the end, the stack contains a single value,
- * which is the value of the expression.
- *
- * An ExpressionProgram is created by calling createProgram() on a ParsedExpression.
+ * This class is the interface for defining your own function that may be included in expressions.
+ * To use it, create a concrete subclass that implements all of the virtual methods for each new function
+ * you want to define.  Then when you call Parser::parse() to parse an expression, pass a map of
+ * function names to CustomFunction objects.
  */
 
-class LEPTON_EXPORT ExpressionProgram {
+class LEPTON_EXPORT CustomFunction {
 public:
-    ExpressionProgram();
-    ExpressionProgram(const ExpressionProgram& program);
-    ~ExpressionProgram();
-    ExpressionProgram& operator=(const ExpressionProgram& program);
+    virtual ~CustomFunction() {
+    }
     /**
-     * Get the number of Operations that make up this program.
+     * Get the number of arguments this function expects.
      */
-    int getNumOperations() const;
+    virtual int getNumArguments() const = 0;
     /**
-     * Get an Operation in this program.
-     */
-    const Operation& getOperation(int index) const;
-    /**
-     * Change an Operation in this program.
+     * Evaluate the function.
      *
-     * The Operation must have been allocated on the heap with the "new" operator.
-     * The ExpressionProgram assumes ownership of it and will delete it when it
-     * is no longer needed.
+     * @param arguments    the array of argument values
      */
-    void setOperation(int index, Operation* operation);
+    virtual double evaluate(const double* arguments) const = 0;
     /**
-     * Get the size of the stack needed to execute this program.  This is the largest number of elements present
-     * on the stack at any point during evaluation.
-     */
-    int getStackSize() const;
-    /**
-     * Evaluate the expression.  If the expression involves any variables, this method will throw an exception.
-     */
-    double evaluate() const;
-    /**
-     * Evaluate the expression.
+     * Evaluate a derivative of the function.
      *
-     * @param variables    a map specifying the values of all variables that appear in the expression.  If any
-     *                     variable appears in the expression but is not included in this map, an exception
-     *                     will be thrown.
+     * @param arguments    the array of argument values
+     * @param derivOrder   an array specifying the number of times the function has been differentiated
+     *                     with respect to each of its arguments.  For example, the array {0, 2} indicates
+     *                     a second derivative with respect to the second argument.
      */
-    double evaluate(const std::map<std::string, double>& variables) const;
-private:
-    friend class ParsedExpression;
-    ExpressionProgram(const ParsedExpression& expression);
-    void buildProgram(const ExpressionTreeNode& node);
-    std::vector<Operation*> operations;
-    int maxArgs, stackSize;
+    virtual double evaluateDerivative(const double* arguments, const int* derivOrder) const = 0;
+    /**
+     * Create a new duplicate of this object on the heap using the "new" operator.
+     */
+    virtual CustomFunction* clone() const = 0;
 };
 
-} // namespace Lepton
+/**
+ * This class is an implementation of CustomFunction that does no computation.  It just returns
+ * 0 for the value and derivatives.  This is useful when using the parser to analyze expressions
+ * rather than to evaluate them.  You can just create PlaceholderFunctions to represent any custom
+ * functions that may appear in expressions.
+ */
 
-#endif /*LEPTON_EXPRESSION_PROGRAM_H_*/
+class LEPTON_EXPORT PlaceholderFunction : public CustomFunction {
+public:
+    /**
+     * Create a Placeholder function.
+     *
+     * @param numArgs    the number of arguments the function expects
+     */
+    PlaceholderFunction(int numArgs) : numArgs(numArgs) {
+    }
+    int getNumArguments() const {
+        return numArgs;
+    }
+    double evaluate(const double* ) const {
+        return 0.0;
+    }
+    double evaluateDerivative(const double* , const int* ) const {
+        return 0.0;
+    }
+    CustomFunction* clone() const {
+        return new PlaceholderFunction(numArgs);
+    };
+private:
+    int numArgs;
+};
+
+} // namespace LeptonMini
+
+#endif /*LEPTON_CUSTOM_FUNCTION_H_*/

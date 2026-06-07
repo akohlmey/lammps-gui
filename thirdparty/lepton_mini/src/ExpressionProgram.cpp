@@ -29,11 +29,11 @@
  * USE OR OTHER DEALINGS IN THE SOFTWARE.                                     *
  * -------------------------------------------------------------------------- */
 
-#include "lepton/ExpressionProgram.h"
-#include "lepton/Operation.h"
-#include "lepton/ParsedExpression.h"
+#include "lepton_mini/ExpressionProgram.h"
+#include "lepton_mini/Operation.h"
+#include "lepton_mini/ParsedExpression.h"
 
-using namespace Lepton;
+using namespace LeptonMini;
 using namespace std;
 
 ExpressionProgram::ExpressionProgram() : maxArgs(0), stackSize(0) {

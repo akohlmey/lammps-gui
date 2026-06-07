@@ -1,4 +1,4 @@
-# Lepton (vendored subset)
+# LeptonMini (vendored Lepton subset)
 
 This is a reduced, vendored copy of the [Lepton](https://github.com/openmm/openmm)
 expression parser, taken from the copy bundled with LAMMPS at `lib/lepton/`
@@ -7,6 +7,9 @@ expression parser, taken from the copy bundled with LAMMPS at `lib/lepton/`
 It is used by LAMMPS-GUI for parsing, evaluating, and symbolically
 differentiating user-supplied mathematical expressions (e.g. custom
 plot functions and custom fit models).
+
+The umbrella header is `lepton_mini.h` and everything lives in the
+**`LeptonMini`** namespace (see "Namespace" below).
 
 ## License
 
@@ -31,14 +34,25 @@ evaluation and symbolic differentiation, not native code generation:
 - `CompiledExpression` and `CompiledVectorExpression` (the asmjit-based
   just-in-time evaluators)
 
-Accordingly, `Lepton.h` no longer includes `CompiledExpression.h`, and the
-`ParsedExpression::createCompiledExpression()` /
+Accordingly, the umbrella header no longer includes `CompiledExpression.h`, and
+the `ParsedExpression::createCompiledExpression()` /
 `createCompiledVectorExpression()` methods were dropped from
-`ParsedExpression.{h,cpp}`. No other source was modified.
+`ParsedExpression.{h,cpp}`.
+
+## Namespace
+
+LAMMPS itself contains a (full) copy of Lepton in its original `Lepton`
+namespace. To avoid duplicate-symbol / ODR clashes when the GUI is linked
+against or dynamically loads `liblammps`, this subset has been moved into the
+dedicated **`LeptonMini`** namespace. The folder, the umbrella header
+(`lepton_mini.h`), and the internal include subdirectory (`lepton_mini/`) were
+renamed to match. These (the namespace rename, the dropped JIT path, and the
+renames) are the only deviations from the upstream source.
 
 ## TODO before use in the GUI build
 
-LAMMPS itself contains a (full) copy of Lepton. To avoid duplicate-symbol /
-ODR clashes when the GUI is linked against or dynamically loads `liblammps`,
-this subset must be moved into a dedicated namespace (e.g. `lammpsgui::lepton`)
-before it is added to the GUI build.
+- Add to the CMake build (compile the `src/*.cpp`, expose `include/` on the
+  include path).
+- Vendor a compact least-squares / Levenberg-Marquardt routine for nonlinear
+  fits, and wire custom-function plotting and fitting into the chart
+  post-processing dialog.

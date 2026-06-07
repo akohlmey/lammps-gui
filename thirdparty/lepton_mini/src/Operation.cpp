@@ -30,11 +30,11 @@
  * USE OR OTHER DEALINGS IN THE SOFTWARE.                                     *
  * -------------------------------------------------------------------------- */
 
-#include "lepton/Operation.h"
-#include "lepton/ExpressionTreeNode.h"
+#include "lepton_mini/Operation.h"
+#include "lepton_mini/ExpressionTreeNode.h"
 #include "MSVC_erfc.h"
 
-using namespace Lepton;
+using namespace LeptonMini;
 using namespace std;
 
 static bool isZero(const ExpressionTreeNode& node) {

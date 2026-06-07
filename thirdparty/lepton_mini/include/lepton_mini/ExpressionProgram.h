@@ -1,5 +1,5 @@
-#ifndef LEPTON_PARSER_H_
-#define LEPTON_PARSER_H_
+#ifndef LEPTON_EXPRESSION_PROGRAM_H_
+#define LEPTON_EXPRESSION_PROGRAM_H_
 
 /* -------------------------------------------------------------------------- *
  *                                   Lepton                                   *
@@ -9,7 +9,7 @@
  * Biological Structures at Stanford, funded under the NIH Roadmap for        *
  * Medical Research, grant U54 GM072970. See https://simtk.org.               *
  *                                                                            *
- * Portions copyright (c) 2009 Stanford University and the Authors.           *
+ * Portions copyright (c) 2009-2018 Stanford University and the Authors.      *
  * Authors: Peter Eastman                                                     *
  * Contributors:                                                              *
  *                                                                            *
@@ -32,46 +32,72 @@
  * USE OR OTHER DEALINGS IN THE SOFTWARE.                                     *
  * -------------------------------------------------------------------------- */
 
+#include "ExpressionTreeNode.h"
 #include "windowsIncludes.h"
 #include <map>
 #include <string>
 #include <vector>
 
-namespace Lepton {
+namespace LeptonMini {
 
-class CustomFunction;
-class ExpressionTreeNode;
-class Operation;
 class ParsedExpression;
-class ParseToken;
 
 /**
- * This class provides the main interface for parsing expressions.
+ * An ExpressionProgram is a linear sequence of Operations for evaluating an expression.  The evaluation
+ * is done with a stack.  The arguments to each Operation are first taken off the stack in order, then it is
+ * evaluated and the result is pushed back onto the stack.  At the end, the stack contains a single value,
+ * which is the value of the expression.
+ *
+ * An ExpressionProgram is created by calling createProgram() on a ParsedExpression.
  */
 
-class LEPTON_EXPORT Parser {
+class LEPTON_EXPORT ExpressionProgram {
 public:
+    ExpressionProgram();
+    ExpressionProgram(const ExpressionProgram& program);
+    ~ExpressionProgram();
+    ExpressionProgram& operator=(const ExpressionProgram& program);
     /**
-     * Parse a mathematical expression and return a representation of it as an abstract syntax tree.
+     * Get the number of Operations that make up this program.
      */
-    static ParsedExpression parse(const std::string& expression);
+    int getNumOperations() const;
     /**
-     * Parse a mathematical expression and return a representation of it as an abstract syntax tree.
+     * Get an Operation in this program.
+     */
+    const Operation& getOperation(int index) const;
+    /**
+     * Change an Operation in this program.
      *
-     * @param customFunctions   a map specifying user defined functions that may appear in the expression.
-     *                          The key are function names, and the values are corresponding CustomFunction objects.
+     * The Operation must have been allocated on the heap with the "new" operator.
+     * The ExpressionProgram assumes ownership of it and will delete it when it
+     * is no longer needed.
      */
-    static ParsedExpression parse(const std::string& expression, const std::map<std::string, CustomFunction*>& customFunctions);
+    void setOperation(int index, Operation* operation);
+    /**
+     * Get the size of the stack needed to execute this program.  This is the largest number of elements present
+     * on the stack at any point during evaluation.
+     */
+    int getStackSize() const;
+    /**
+     * Evaluate the expression.  If the expression involves any variables, this method will throw an exception.
+     */
+    double evaluate() const;
+    /**
+     * Evaluate the expression.
+     *
+     * @param variables    a map specifying the values of all variables that appear in the expression.  If any
+     *                     variable appears in the expression but is not included in this map, an exception
+     *                     will be thrown.
+     */
+    double evaluate(const std::map<std::string, double>& variables) const;
 private:
-    static std::string trim(const std::string& expression);
-    static std::vector<ParseToken> tokenize(const std::string& expression);
-    static ParseToken getNextToken(const std::string& expression, int start);
-    static ExpressionTreeNode parsePrecedence(const std::vector<ParseToken>& tokens, int& pos, const std::map<std::string, CustomFunction*>& customFunctions,
-            const std::map<std::string, ExpressionTreeNode>& subexpressionDefs, int precedence);
-    static Operation* getOperatorOperation(const std::string& name);
-    static Operation* getFunctionOperation(const std::string& name, const std::map<std::string, CustomFunction*>& customFunctions);
+    friend class ParsedExpression;
+    ExpressionProgram(const ParsedExpression& expression);
+    void buildProgram(const ExpressionTreeNode& node);
+    std::vector<Operation*> operations;
+    int maxArgs, stackSize;
 };
 
-} // namespace Lepton
+} // namespace LeptonMini
 
-#endif /*LEPTON_PARSER_H_*/
+#endif /*LEPTON_EXPRESSION_PROGRAM_H_*/
