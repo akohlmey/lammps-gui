@@ -336,20 +336,21 @@ decomposition is a stepping stone but its helpers would be reshaped here.
 
 ## Stage 8 -- Reusable ChartViewer for external-data plotting + post-processing (feature, high-level)
 
-**CURRENT STATUS (paused here):** Layers 0, 1, 2, 3, and 4a are DONE and
-committed on branch `refactor/cleanup` (130/130 unit tests; builds in
-plugin/QtGraphs, plugin/QtCharts, and linked configs; zero Doxygen warnings;
-nothing pushed). **Layer 4b (Lepton + Levenberg-Marquardt) is IN PROGRESS:**
-the JIT-less Lepton subset is vendored, namespaced `LeptonMini`, built as a
-`lepton_mini` static library, linked into the GUI, and covered by
-`test/test_lepton.cpp` (5 `Lepton.*` tests). **Custom-function plotting is now
-wired in** -- the Postprocess dialog has a "Custom function" option that
-evaluates a user-typed f(x) over the chart's x range and overlays it, backed by
-the new `customfunc.{cpp,h}` module (QString-boundary wrapper around LeptonMini)
-with `test/test_customfunc.cpp` (10 cases). What remains is vendoring a compact
-Levenberg-Marquardt routine and wiring nonlinear *fitting* into the Postprocess
-dialog. See the Layer 4b note below for the Lepton symbol-clash constraint that
-drove the `LeptonMini` namespacing.
+**CURRENT STATUS:** Layers 0, 1, 2, 3, 4a, and **4b are DONE** and committed on
+branch `refactor/cleanup` (142/142 unit tests; builds in plugin/QtGraphs,
+plugin/QtCharts, and linked configs; zero Doxygen warnings; nothing pushed).
+Layer 4b shipped: the JIT-less Lepton subset is vendored, namespaced
+`LeptonMini`, built as a `lepton_mini` static library, linked into the GUI, and
+covered by `test/test_lepton.cpp`. The Postprocess dialog now offers **"Custom
+function"** (evaluate a user-typed f(x) over the chart's x range and overlay it)
+and **"Custom fit"** (nonlinear least-squares fit of f(x) with named parameters
++ initial guesses and an optional curve label). These are backed by
+`customfunc.{cpp,h}` (`evalCustomCurve` / `fitCustomCurve`, the QString-boundary
+wrapper around LeptonMini) and the Qt-free `levmar.{cpp,h}` Levenberg-Marquardt
+solver (Jacobian from LeptonMini analytic derivatives), with
+`test/test_customfunc.cpp` and `test/test_levmar.cpp`. See the Layer 4b note
+below for the Lepton symbol-clash constraint that drove the `LeptonMini`
+namespacing. Remaining Stage 8 polish is optional (see "Possible follow-ups").
 
 Make the chart code a reusable component (mirroring how the log/file
 viewer was generalized to display arbitrary text files and restart-explore
@@ -490,20 +491,22 @@ display with a small style dialog, and a post-processing/fitting dialog.
       coefficient matrix's column count); only `invert()`'s square RHS had ever
       exercised it. Fixed to use `a.nr_cols()`, with a multi-column-RHS
       regression test.
-  - *4b nonlinear (extension): IN PROGRESS.* The vendored Lepton subset is in
-    place (see note below): `thirdparty/lepton_mini/`, namespace `LeptonMini`,
-    built as the `lepton_mini` static library and linked into the GUI, with
+  - *4b nonlinear (extension): DONE.* The vendored Lepton subset is in place
+    (see note below): `thirdparty/lepton_mini/`, namespace `LeptonMini`, built as
+    the `lepton_mini` static library and linked into the GUI, with
     `test/test_lepton.cpp` covering parse / evaluate / optimize / differentiate
-    / custom functions. DONE: custom-function *plotting* -- the `customfunc`
-    module (`evalCustomCurve`, QString-boundary wrapper around LeptonMini) plus
-    the "Custom function" choice in the Postprocess dialog, which evaluates a
-    user-typed f(x) over the chart's x range and overlays it via setFitCurve.
-    Remaining work: vendor a compact Levenberg-Marquardt routine. Combined with
-    LeptonMini this realizes the "custom EOS as a predefined expression" idea:
-    the EOS becomes an expression string + named params (with initial
-    guesses/bounds); LeptonMini parses it and supplies analytic derivatives for
-    the Jacobian; LM iterates (the Grace non-linear fit popup is the UI
-    template).
+    / custom functions. Custom-function *plotting* is the `customfunc` module's
+    `evalCustomCurve` + the "Custom function" dialog choice (evaluate f(x) over
+    the chart's x range and overlay it). Nonlinear *fitting* is `customfunc`'s
+    `fitCustomCurve` + the "Custom fit" dialog choice: a user expression with
+    named parameters and initial guesses is fitted by the new Qt-free
+    `levmar.{cpp,h}` Levenberg-Marquardt solver, whose Jacobian comes from
+    LeptonMini analytic derivatives (one per parameter); the fitted curve is
+    overlaid and the parameters / RMS / iteration count are reported. This
+    realizes the "custom EOS as a predefined expression" idea (the Grace
+    non-linear fit popup was the UI template). Not yet done: parameter *bounds*
+    (the solver is currently unconstrained) and a visible legend for the
+    nameable fit-curve overlay -- see "Possible follow-ups".
 
 **Lepton vendoring note -- IMPORTANT symbol-clash constraint.** Lepton (LAMMPS
 `lib/lepton`, OpenMM-origin, permissive/MIT-style license -- verify the header
@@ -520,6 +523,20 @@ It lives under `thirdparty/lepton_mini/` (umbrella header `lepton_mini.h`,
 internal include subdir `lepton_mini/`) with its MIT license recorded, built as
 the `lepton_mini` static library rather than added to `PROJECT_SOURCES`. This
 namespacing + subsetting was itself part of the Layer 4b work.
+
+**Possible follow-ups (optional polish; Stage 8 core is complete):**
+- *Custom-fit parameter bounds.* `levmar` is currently unconstrained; the Grace
+  template offers per-parameter bounds. Add box constraints (projected steps or
+  a transform) and a bounds column to the "Custom fit" parameters input.
+- *Visible legend for overlays.* The fit/overlay curve is now nameable
+  (`ChartViewer::setFitCurve(points, name)`), but both backends hide the legend
+  (`chart->legend()->hide()` in QtCharts). Optionally expose a legend so the
+  custom-fit "Label", smoothed/raw series, and fit curve are identified.
+- *Reusing fitted models.* Offer "plot this fit's expression with the fitted
+  parameters" or send fitted params back into a "Custom function" plot.
+- *User docs.* Document the Postprocess analyses (autocorrelation, polynomial /
+  BM4 EOS / custom function / custom fit) in the Sphinx manual; only the API
+  reference covers them today.
 
 **Minimalist guardrails -- deliberately NOT in scope:** multiple Y axes;
 log/log or date axes; spreadsheet/data editing; annotations or
