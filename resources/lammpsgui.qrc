@@ -19,6 +19,7 @@
     <file>lammps_internal_commands.txt</file>
     <file>icons/antialias.png</file>
     <file>icons/autobonds.png</file>
+    <file>icons/birch-murnaghan-eos.png</file>
     <file>icons/application-calc.png</file>
     <file>icons/application-exit.png</file>
     <file>icons/application-plot.png</file>

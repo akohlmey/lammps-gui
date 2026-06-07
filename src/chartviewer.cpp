@@ -111,6 +111,16 @@ QList<FitParam> parseFitParams(const QString &text, bool *ok)
 
 } // namespace
 
+/* -------------------------------------------------------------------- */
+
+ChartViewer *ChartWindow::currentChart()
+{
+    const int choice = columns->currentData().toInt();
+    for (auto &c : charts)
+        if (c->getIndex() == choice) return c;
+    return charts.isEmpty() ? nullptr : charts.first();
+}
+
 ChartWindow::ChartWindow(const QString &_filename, LammpsGui *_lammpsgui, QWidget *parent) :
     QWidget(parent), lammpsgui(_lammpsgui), menu(new QMenuBar), file(new QMenu("&File")),
     saveAsAct(nullptr), copyAct(nullptr), exportCsvAct(nullptr), exportDatAct(nullptr),
@@ -169,12 +179,12 @@ ChartWindow::ChartWindow(const QString &_filename, LammpsGui *_lammpsgui, QWidge
     window = new QSpinBox;
     window->setRange(Cfg::SMOOTH_WINDOW_MIN, Cfg::SMOOTH_WINDOW_MAX);
     window->setValue(settings.value(Keys::SMOOTHWINDOW, Cfg::SMOOTH_WINDOW_DEFAULT).toInt());
-    window->setEnabled(true);
+    window->setEnabled(doSmooth);
     window->setToolTip("Smoothing Window Size");
     order = new QSpinBox;
     order->setRange(Cfg::SMOOTH_ORDER_MIN, Cfg::SMOOTH_ORDER_MAX);
     order->setValue(settings.value(Keys::SMOOTHORDER, Cfg::SMOOTH_ORDER_DEFAULT).toInt());
-    order->setEnabled(true);
+    order->setEnabled(doSmooth);
     order->setToolTip("Smoothing Order");
     settings.endGroup();
 
@@ -570,25 +580,34 @@ void ChartWindow::postProcess()
     fitLabelEdit->setMinimumWidth(Cfg::POSTPROCESS_EXPR_WIDTH);
     form->addRow(fitLabelLabel, fitLabelEdit);
 
+    // BM-specific: x-axis confirmation row
+    const QString xLabel = chart->getXLabel();
+    auto *eosXConfLabel  = new QLabel(QStringLiteral("\"%1\" is volume per atom:").arg(xLabel));
+    auto *eosXCheck      = new QCheckBox;
+    eosXCheck->setChecked(true);
+    form->addRow(eosXConfLabel, eosXCheck);
+
     // swap the parameter widgets to match the selected analysis
     auto configure = [=, &dialog](int idx) {
         const bool plot = (idx == 3); // custom-function plotting
         const bool fit  = (idx == 4); // custom-function nonlinear fit
         const bool expr = plot || fit;
+        const bool eos  = (idx == 2);
         exprLabel->setVisible(expr);
         exprEdit->setVisible(expr);
         paramsLabel->setVisible(fit);
         paramsEdit->setVisible(fit);
         fitLabelLabel->setVisible(fit);
         fitLabelEdit->setVisible(fit);
-        paramLabel->setVisible(!expr);
+        paramLabel->setVisible(!expr && !eos);
+        eosXConfLabel->setVisible(eos);
+        eosXCheck->setVisible(eos);
         if (idx == 1) { // polynomial degree
             paramLabel->setText("Degree:");
             paramSpin->setVisible(true);
             paramSpin->setRange(1, qMin(npoints - 1, 8));
             paramSpin->setValue(qMin(3, qMin(npoints - 1, 8)));
-        } else if (idx == 2) { // EOS has no free parameters
-            paramLabel->setText("(no parameters)");
+        } else if (eos) { // EOS: only show the x-axis confirmation
             paramSpin->setVisible(false);
         } else if (expr) { // custom function/fit: expression field(s) only
             paramSpin->setVisible(false);
@@ -724,6 +743,12 @@ void ChartWindow::postProcess()
     }
 
     // Birch-Murnaghan EOS fit (x = volume, y = energy)
+    if (!eosXCheck->isChecked()) {
+        warning(this, "Birch-Murnaghan EOS Fit",
+                "Fit cancelled: the Birch-Murnaghan EOS requires volume per atom on the x-axis.\n"
+                "Please check your column assignments and try again.");
+        return;
+    }
     const EosFit f = birchMurnaghanFit(xs, ys);
     if (!f.ok) {
         warning(this, "Postprocess",
@@ -736,17 +761,45 @@ void ChartWindow::postProcess()
         const double x = xmin + (xmax - xmin) * k / Ncurve;
         if (x > 0.0) curve.append(QPointF(x, evalBirchMurnaghan(f, x)));
     }
-    chart->setFitCurve(curve);
+    // EOS fit: hide in Raw mode, visible in EOS-fit/Both modes; raw data as points
+    chart->setFitCurve(curve, "EOS fit", /* eosMode= */ true);
+    chart->setDisplayStyle(ChartDisplayMode::Points, chart->displayColor(), chart->displayWidth());
+    smooth->setItemText(1, "EOS fit");
+    smooth->setCurrentIndex(2); // "Both" = raw points + EOS fit line
 
-    const QString report = QString("Birch-Murnaghan EOS fit\n\n"
-                                   "  V0  = %1\n  E0  = %2\n  B0  = %3\n  B0' = %4\n\n"
-                                   "  RMS residual = %5")
-                               .arg(f.v0, 0, 'g', 8)
-                               .arg(f.e0, 0, 'g', 8)
-                               .arg(f.b0, 0, 'g', 8)
-                               .arg(f.b0prime, 0, 'g', 6)
-                               .arg(f.rms, 0, 'g', 6);
-    information(this, "Birch-Murnaghan EOS Fit", report);
+    // Show the result in a dialog with the rendered formula (falling back to text)
+    auto *resultDlg = new QDialog(this);
+    resultDlg->setWindowTitle("Birch-Murnaghan EOS Fit");
+    resultDlg->setAttribute(Qt::WA_DeleteOnClose);
+    auto *dlgLayout = new QVBoxLayout(resultDlg);
+
+    auto *fmtLabel = new QLabel;
+    fmtLabel->setPixmap(QPixmap(":/icons/birch-murnaghan-eos.png"));
+    fmtLabel->setAlignment(Qt::AlignCenter);
+    dlgLayout->addWidget(fmtLabel);
+
+    auto *resultForm = new QFormLayout;
+    auto makeVal     = [](double v, int prec) {
+        auto *l = new QLabel(QString::number(v, 'g', prec));
+        l->setTextInteractionFlags(Qt::TextSelectableByMouse);
+        return l;
+    };
+    resultForm->addRow(
+        "<b>V<sub>0</sub></b> &mdash; Equilibrium volume per atom:", makeVal(f.v0, 8));
+    resultForm->addRow(
+        "<b>E<sub>0</sub></b> &mdash; Cohesive energy at V<sub>0</sub>:", makeVal(f.e0, 8));
+    resultForm->addRow(
+        "<b>B<sub>0</sub></b> &mdash; Bulk modulus (&minus;V dP/dV at V<sub>0</sub>):", makeVal(f.b0, 8));
+    resultForm->addRow(
+        "<b>B<sub>0</sub>'</b> &mdash; Pressure derivative dB/dP at P=0:", makeVal(f.b0prime, 6));
+    resultForm->addRow("RMS residual:", makeVal(f.rms, 6));
+    dlgLayout->addLayout(resultForm);
+
+    auto *closeBtn = new QDialogButtonBox(QDialogButtonBox::Close);
+    connect(closeBtn, &QDialogButtonBox::rejected, resultDlg, &QDialog::accept);
+    dlgLayout->addWidget(closeBtn);
+
+    resultDlg->exec();
 }
 
 void ChartWindow::selectSmooth(int)
@@ -766,8 +819,12 @@ void ChartWindow::selectSmooth(int)
             doSmooth = true;
             break;
     }
-    window->setEnabled(doSmooth);
-    order->setEnabled(doSmooth);
+    const bool isEos = currentChart() && currentChart()->isEosFit();
+    smooth->setItemText(1, isEos ? "EOS fit" : "Smoothed");
+    // SG smooth parameters are only relevant when smoothing without a fit overlay
+    const bool sgEnabled = doSmooth && !isEos;
+    window->setEnabled(sgEnabled);
+    order->setEnabled(sgEnabled);
     updateSmooth();
 }
 
@@ -911,6 +968,13 @@ void ChartWindow::changeChart(int)
         }
     }
 
+    // sync "Smoothed"/"EOS fit" label and SG parameter spinbox state
+    const bool isEos = currentChart() && currentChart()->isEosFit();
+    smooth->setItemText(1, isEos ? "EOS fit" : "Smoothed");
+    const bool sgEnabled = doSmooth && !isEos;
+    window->setEnabled(sgEnabled);
+    order->setEnabled(sgEnabled);
+
     // reset plot range selection
     xrange->setLow(0);
     xrange->setHigh(SLIDER_RANGE);
@@ -953,7 +1017,7 @@ bool ChartWindow::eventFilter(QObject *watched, QEvent *event)
 ChartViewer::ChartViewer(const QString &title, int _index, QWidget *parent) :
     QWidget(parent), lastX(-1.0), index(_index), window(10), order(4), series(new QLineSeries),
     smooth(nullptr), scatter(nullptr), smoothScatter(nullptr), fit(nullptr), doRaw(true),
-    doSmooth(false), dispmode(ChartDisplayMode::Lines), rawColor(), rawWidth(3.0),
+    doSmooth(false), eosMode(false), dispmode(ChartDisplayMode::Lines), rawColor(), rawWidth(3.0),
     smoothmode(ChartDisplayMode::Lines), smoothcolor(), smoothwidth(3.0)
 {
 #ifdef LAMMPS_GUI_USE_QTGRAPHS
@@ -1120,6 +1184,7 @@ void ChartViewer::smoothParam(bool _doRaw, bool _doSmooth, int _window, int _ord
     if (!_doSmooth) {
         if (smooth) smooth->setVisible(false);
         if (smoothScatter) smoothScatter->setVisible(false);
+        if (eosMode && fit) fit->setVisible(false);
     }
     doRaw    = _doRaw;
     doSmooth = _doSmooth;
@@ -1183,15 +1248,21 @@ void ChartViewer::setSmoothStyle(ChartDisplayMode mode, const QColor &color, qre
 
 /* -------------------------------------------------------------------- */
 
-void ChartViewer::setFitCurve(const QList<QPointF> &points, const QString &name)
+void ChartViewer::setFitCurve(const QList<QPointF> &points, const QString &name, bool eos)
 {
+    eosMode = eos;
     if (!fit) {
         fit = new QLineSeries;
         backend->addSeries(fit, QColor(220, 30, 30), 2.0); // distinct fit-curve color
     }
     if (!name.isEmpty()) fit->setName(name);
     fit->replace(points);
-    fit->setVisible(true);
+    if (eosMode) {
+        // visibility follows doSmooth: updateSmooth will show/hide it correctly
+        updateSmooth();
+    } else {
+        fit->setVisible(true);
+    }
     resetZoom();
 }
 
@@ -1272,11 +1343,19 @@ void ChartViewer::updateSmooth()
     if (doRaw) renderSeries(series, scatter, dispmode, rawcol, rawWidth);
 
     if (doSmooth) {
-        if (series->count() > (2 * window)) {
+        if (eosMode && fit && !fit->points().isEmpty()) {
+            // EOS fit acts as the "processed" series; suppress the SG smooth
+            fit->setVisible(true);
+            if (smooth) smooth->setVisible(false);
+            if (smoothScatter) smoothScatter->setVisible(false);
+        } else if (!eosMode && series->count() > (2 * window)) {
+            if (fit) fit->setVisible(false);
             if (!smooth) smooth = new QLineSeries;
             smooth->replace(calc_sgsmooth(series->points(), window, order));
             renderSeries(smooth, smoothScatter, smoothmode, smcol, smoothwidth);
         }
+    } else {
+        if (eosMode && fit) fit->setVisible(false);
     }
 }
 
