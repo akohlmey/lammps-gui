@@ -153,10 +153,25 @@ target_link_libraries(test_lepton PRIVATE GTest::gtest_main lepton_mini)
 
 gtest_discover_tests(test_lepton)
 
-# Test executable for the custom-function evaluator (LeptonMini + Qt Core)
+# Test executable for the Levenberg-Marquardt solver (Qt-free; uses leastsquares)
+add_executable(test_levmar
+  test_levmar.cpp
+  ${CMAKE_SOURCE_DIR}/src/levmar.cpp
+  ${CMAKE_SOURCE_DIR}/src/leastsquares.cpp
+)
+
+target_include_directories(test_levmar PRIVATE ${CMAKE_SOURCE_DIR}/src)
+target_link_libraries(test_levmar PRIVATE GTest::gtest_main)
+
+gtest_discover_tests(test_levmar)
+
+# Test executable for the custom-function evaluator and nonlinear fit
+# (LeptonMini + the Levenberg-Marquardt / leastsquares core + Qt Core)
 add_executable(test_customfunc
   test_customfunc.cpp
   ${CMAKE_SOURCE_DIR}/src/customfunc.cpp
+  ${CMAKE_SOURCE_DIR}/src/levmar.cpp
+  ${CMAKE_SOURCE_DIR}/src/leastsquares.cpp
 )
 
 target_include_directories(test_customfunc PRIVATE ${CMAKE_SOURCE_DIR}/src)

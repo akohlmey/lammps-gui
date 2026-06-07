@@ -393,8 +393,11 @@ public:
      * @brief Overlay a fit curve on the chart
      * @param points Curve points (x, y) drawn as an overlay line; created on
      *               the first call and replaced on subsequent calls
+     * @param name   Optional series name for the overlay (e.g. the fitted
+     *               expression or a user label); shown wherever series names
+     *               are surfaced
      */
-    void setFitCurve(const QList<QPointF> &points);
+    void setFitCurve(const QList<QPointF> &points, const QString &name = QString());
 
     /**
      * @brief Get current chart title

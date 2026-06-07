@@ -49,6 +49,7 @@
 #include <QSettings>
 #include <QSpacerItem>
 #include <QSpinBox>
+#include <QStringList>
 #include <QTextStream>
 #include <QTime>
 #include <QVBoxLayout>
@@ -80,6 +81,33 @@ const QList<QBrush> mybrushes = {
     QBrush(QColor(100, 200, 100)), // green
     QBrush(QColor(120, 120, 120)), // grey
 };
+
+// Parse a "name=value, name=value, ..." string of nonlinear-fit parameters and
+// their initial guesses into an ordered list. Sets *ok to false on any empty or
+// malformed token (so the caller can report a usage hint).
+QList<FitParam> parseFitParams(const QString &text, bool *ok)
+{
+    QList<FitParam> params;
+    *ok                      = true;
+    const QStringList tokens = text.split(',', Qt::SkipEmptyParts);
+    for (const QString &token : tokens) {
+        const QStringList kv = token.split('=');
+        if (kv.size() != 2) {
+            *ok = false;
+            return {};
+        }
+        const QString name = kv[0].trimmed();
+        bool valueOk       = false;
+        const double value = kv[1].trimmed().toDouble(&valueOk);
+        if (name.isEmpty() || !valueOk) {
+            *ok = false;
+            return {};
+        }
+        params.append(FitParam{name, value});
+    }
+    if (params.isEmpty()) *ok = false;
+    return params;
+}
 
 } // namespace
 
@@ -515,25 +543,45 @@ void ChartWindow::postProcess()
     analysisbox->addItem("Polynomial fit");
     analysisbox->addItem("Birch-Murnaghan EOS fit");
     analysisbox->addItem("Custom function");
+    analysisbox->addItem("Custom fit");
     form->addRow("Analysis:", analysisbox);
 
     auto *paramLabel = new QLabel;
     auto *paramSpin  = new QSpinBox;
     form->addRow(paramLabel, paramSpin);
 
-    // expression field, shown only for the custom-function plot
+    // expression field, shown for both the custom-function plot and fit
     auto *exprLabel = new QLabel("f(x) =");
     auto *exprEdit  = new QLineEdit;
     exprEdit->setPlaceholderText("e.g. 2*x^2 + 3*sin(x)");
     exprEdit->setMinimumWidth(Cfg::POSTPROCESS_EXPR_WIDTH);
     form->addRow(exprLabel, exprEdit);
 
+    // parameter (initial-guess) and label fields, shown only for the custom fit
+    auto *paramsLabel = new QLabel("Parameters:");
+    auto *paramsEdit  = new QLineEdit;
+    paramsEdit->setPlaceholderText("name=guess, e.g. a=1, b=0.5");
+    paramsEdit->setMinimumWidth(Cfg::POSTPROCESS_EXPR_WIDTH);
+    form->addRow(paramsLabel, paramsEdit);
+
+    auto *fitLabelLabel = new QLabel("Label:");
+    auto *fitLabelEdit  = new QLineEdit;
+    fitLabelEdit->setPlaceholderText("optional name for the fitted curve");
+    fitLabelEdit->setMinimumWidth(Cfg::POSTPROCESS_EXPR_WIDTH);
+    form->addRow(fitLabelLabel, fitLabelEdit);
+
     // swap the parameter widgets to match the selected analysis
     auto configure = [=, &dialog](int idx) {
-        const bool custom = (idx == 3);
-        exprLabel->setVisible(custom);
-        exprEdit->setVisible(custom);
-        paramLabel->setVisible(!custom);
+        const bool plot = (idx == 3); // custom-function plotting
+        const bool fit  = (idx == 4); // custom-function nonlinear fit
+        const bool expr = plot || fit;
+        exprLabel->setVisible(expr);
+        exprEdit->setVisible(expr);
+        paramsLabel->setVisible(fit);
+        paramsEdit->setVisible(fit);
+        fitLabelLabel->setVisible(fit);
+        fitLabelEdit->setVisible(fit);
+        paramLabel->setVisible(!expr);
         if (idx == 1) { // polynomial degree
             paramLabel->setText("Degree:");
             paramSpin->setVisible(true);
@@ -542,7 +590,7 @@ void ChartWindow::postProcess()
         } else if (idx == 2) { // EOS has no free parameters
             paramLabel->setText("(no parameters)");
             paramSpin->setVisible(false);
-        } else if (custom) { // custom function: expression field only
+        } else if (expr) { // custom function/fit: expression field(s) only
             paramSpin->setVisible(false);
         } else { // autocorrelation max lag
             paramLabel->setText("Max lag:");
@@ -614,12 +662,42 @@ void ChartWindow::postProcess()
                     "The expression did not produce a usable curve over the data range.");
             return;
         }
-        chart->setFitCurve(result.points);
+        chart->setFitCurve(result.points, expr);
         information(this, "Custom Function",
                     QString("Plotted f(x) = %1\nover x in [%2, %3].")
                         .arg(expr)
                         .arg(xmin, 0, 'g', 6)
                         .arg(xmax, 0, 'g', 6));
+        return;
+    }
+
+    if (which == 4) { // custom nonlinear least-squares fit of f(x) to the data
+        const QString expr            = exprEdit->text().trimmed();
+        bool paramsOk                 = false;
+        const QList<FitParam> initial = parseFitParams(paramsEdit->text(), &paramsOk);
+        if (!paramsOk) {
+            warning(this, "Custom Fit",
+                    "Enter fit parameters as name=guess pairs, e.g. \"a=1, b=0.5\".");
+            return;
+        }
+        const CustomFit fit = fitCustomCurve(expr, initial, xs, ys, xmin, xmax, Ncurve);
+        if (!fit.ok) {
+            warning(this, "Custom Fit",
+                    QString("The fit could not be completed:\n%1").arg(fit.error));
+            return;
+        }
+        const QString label = fitLabelEdit->text().trimmed();
+        chart->setFitCurve(fit.curve, label.isEmpty() ? expr : label);
+
+        QString report = QString("Custom fit of  f(x) = %1\n").arg(expr);
+        if (!label.isEmpty()) report += QString("(%1)\n").arg(label);
+        report += "\n";
+        for (const auto &p : fit.params)
+            report += QString("  %1 = %2\n").arg(p.name).arg(p.value, 0, 'g', 8);
+        report += QString("\n  RMS residual = %1\n  iterations   = %2")
+                      .arg(fit.rms, 0, 'g', 6)
+                      .arg(fit.iterations);
+        information(this, "Custom Fit", report);
         return;
     }
 
@@ -1105,12 +1183,13 @@ void ChartViewer::setSmoothStyle(ChartDisplayMode mode, const QColor &color, qre
 
 /* -------------------------------------------------------------------- */
 
-void ChartViewer::setFitCurve(const QList<QPointF> &points)
+void ChartViewer::setFitCurve(const QList<QPointF> &points, const QString &name)
 {
     if (!fit) {
         fit = new QLineSeries;
         backend->addSeries(fit, QColor(220, 30, 30), 2.0); // distinct fit-curve color
     }
+    if (!name.isEmpty()) fit->setName(name);
     fit->replace(points);
     fit->setVisible(true);
     resetZoom();

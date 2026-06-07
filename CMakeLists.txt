@@ -126,6 +126,8 @@ if (NOT BUILD_DOC_ONLY)
     ${CMAKE_SOURCE_DIR}/src/lammpswrapper.h
     ${CMAKE_SOURCE_DIR}/src/leastsquares.cpp
     ${CMAKE_SOURCE_DIR}/src/leastsquares.h
+    ${CMAKE_SOURCE_DIR}/src/levmar.cpp
+    ${CMAKE_SOURCE_DIR}/src/levmar.h
     ${CMAKE_SOURCE_DIR}/src/linenumberarea.h
     ${CMAKE_SOURCE_DIR}/src/logwindow.cpp
     ${CMAKE_SOURCE_DIR}/src/logwindow.h

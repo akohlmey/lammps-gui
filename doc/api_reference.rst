@@ -407,12 +407,28 @@ toolkit and used by the chart post-processing dialog.
 
 -----
 
-Custom-Function Evaluation
---------------------------
+Nonlinear Least Squares
+-----------------------
 
-Evaluation of user-supplied mathematical expressions (``src/customfunc.h``) via
-the vendored LeptonMini parser, used for custom-function plotting in the chart
-post-processing dialog.
+Compact, self-contained (Qt-free) Levenberg-Marquardt solver
+(``src/levmar.h``) for nonlinear least-squares fits. The model is supplied as a
+residual/Jacobian callback, so the core is independent of how the model is
+expressed; it is driven by the custom-fit code with LeptonMini expressions and
+their symbolic derivatives, and solves the damped normal equations with the
+leastsquares LU solver.
+
+.. doxygenfile:: levmar.h
+
+-----
+
+Custom-Function Evaluation and Fitting
+--------------------------------------
+
+Evaluation and nonlinear fitting of user-supplied mathematical expressions
+(``src/customfunc.h``) via the vendored LeptonMini parser, used for
+custom-function plotting and custom curve fits in the chart post-processing
+dialog. The fit builds its Jacobian from LeptonMini's analytic derivatives and
+minimizes with the Levenberg-Marquardt solver.
 
 .. doxygenfile:: customfunc.h
 
