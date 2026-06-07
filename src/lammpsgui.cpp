@@ -1114,6 +1114,13 @@ void LammpsGui::viewFile(const QString &fileName)
         return;
     }
 
+    if (looksLikeBinaryFile(fileName)) {
+        warning(this, "Cannot View Binary File as Text",
+                "\"" + QFileInfo(fileName).fileName()
+                    + "\" appears to be a binary file and cannot be displayed in the text viewer.");
+        return;
+    }
+
     QFile file(fileName);
     if (!file.open(QIODevice::ReadOnly | QFile::Text)) {
         warning(this, "LAMMPS-GUI Warning", "Cannot open file " + fileName + ":",
