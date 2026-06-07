@@ -389,6 +389,7 @@ void ChartWindow::loadData(const PlotData &data, int xcol, const QList<int> &yco
             points.append(QPointF(xvals[r], yvals[r]));
         chart->setPoints(points);
         chart->setXLabel(xlabel);
+        chart->setXLabelFormat("%.6g");
         ++idx;
     }
     if (!data.units().isEmpty()) setUnits(data.units());
@@ -1130,10 +1131,20 @@ QRectF ChartViewer::getMinMax() const
         ymax = qMax(ymax, p.y());
     }
 
-    // if plotting the smoothed plot, check for its min/max values, too
+    // if plotting the smoothed data, include its range too
     if (doSmooth && smooth) {
         auto spoints = smooth->points();
         for (auto &p : spoints) {
+            xmin = qMin(xmin, p.x());
+            xmax = qMax(xmax, p.x());
+            ymin = qMin(ymin, p.y());
+            ymax = qMax(ymax, p.y());
+        }
+    }
+
+    // include any visible fit/overlay curve (EOS, polynomial, custom)
+    if (fit && fit->isVisible() && !fit->points().isEmpty()) {
+        for (auto &p : fit->points()) {
             xmin = qMin(xmin, p.x());
             xmax = qMax(xmax, p.x());
             ymin = qMin(ymin, p.y());
@@ -1216,6 +1227,13 @@ void ChartViewer::setYLabel(const QString &ylabel)
 void ChartViewer::setXLabel(const QString &xlabel)
 {
     if (backend->xAxis()) backend->xAxis()->setTitleText(xlabel);
+}
+
+/* -------------------------------------------------------------------- */
+
+void ChartViewer::setXLabelFormat(const QString &fmt)
+{
+    if (backend->xAxis()) backend->xAxis()->setLabelFormat(fmt);
 }
 
 /* -------------------------------------------------------------------- */

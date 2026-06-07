@@ -354,6 +354,17 @@ public:
     void setXLabel(const QString &xlabel);
 
     /**
+     * @brief Set the X-axis tick label format
+     * @param fmt printf-style format string (e.g. "%.6g" for floating-point,
+     *            "%d" for integer steps)
+     *
+     * Call after setXLabel() when the x-axis carries non-integer data (e.g.
+     * lattice constants from a Plot Data file).  The thermo live-feed path
+     * leaves the default integer format in place.
+     */
+    void setXLabelFormat(const QString &fmt);
+
+    /**
      * @brief Replace all chart data with the given points in one shot
      * @param points New (x, y) data points
      *
