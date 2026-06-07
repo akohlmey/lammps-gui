@@ -165,20 +165,24 @@ QAction *LammpsGui::addMenuAction(QMenu *menu, const QString &iconpath, const QS
 void LammpsGui::createFileMenu()
 {
     auto *menu = menubar->addMenu("&File");
-    addMenuAction(menu, ":/icons/document-new.png", "&New", "Ctrl+N", &LammpsGui::newDocument);
-    menu->addSeparator();
-
-    addMenuAction(menu, ":/icons/document-open.png", "&Open", "Ctrl+O", &LammpsGui::open);
-    addMenuAction(menu, ":/icons/document-open.png", "&View", "Ctrl+Shift+F", &LammpsGui::view);
-    addMenuAction(menu, ":/icons/image-x-generic.png", "Open &Image File(s)...", "",
-                  &LammpsGui::openImages);
-    addMenuAction(menu, ":/icons/document-open.png", "Inspect &Restart", "Ctrl+Shift+R",
-                  &LammpsGui::inspect);
-    menu->addSeparator();
-
-    addMenuAction(menu, ":/icons/document-save.png", "&Save", "Ctrl+S", &LammpsGui::save);
-    addMenuAction(menu, ":/icons/document-save-as.png", "Save &As", "Ctrl+Shift+S",
+    addMenuAction(menu, ":/icons/document-new.png", "&New Input File", "Ctrl+N",
+                  &LammpsGui::newDocument);
+    addMenuAction(menu, ":/icons/document-open.png", "&Open Input File", "Ctrl+O",
+                  &LammpsGui::open);
+    addMenuAction(menu, ":/icons/document-save.png", "&Save Input File", "Ctrl+S",
+                  &LammpsGui::save);
+    addMenuAction(menu, ":/icons/document-save-as.png", "Save Input File &As", "Ctrl+Shift+S",
                   &LammpsGui::saveAs);
+    menu->addSeparator();
+
+    addMenuAction(menu, ":/icons/document-open.png", "&View Text File", "Ctrl+Shift+F",
+                  &LammpsGui::view);
+    addMenuAction(menu, ":/icons/image-x-generic.png", "View &Image File(s)...", "",
+                  &LammpsGui::openImages);
+    addMenuAction(menu, ":/icons/x-office-drawing.png", "&Plot Data File...", "",
+                  &LammpsGui::plotDataFile);
+    addMenuAction(menu, ":/icons/document-open.png", "Inspect &Restart File", "Ctrl+Shift+R",
+                  &LammpsGui::inspect);
     menu->addSeparator();
 
     recentActions.resize(Cfg::NUM_RECENT_FILES);
@@ -236,8 +240,6 @@ void LammpsGui::createRunMenu()
 
     addMenuAction(menu, ":/icons/emblem-photos.png", "Create &Image", "Ctrl+I",
                   &LammpsGui::renderImage);
-    addMenuAction(menu, ":/icons/x-office-drawing.png", "&Plot Data File...", "",
-                  &LammpsGui::plotDataFile);
     menu->addSeparator();
 
     auto *ovito = addMenuAction(menu, ":/icons/ovito.png", "View in &OVITO", "Ctrl+Shift+O",
