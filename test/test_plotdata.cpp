@@ -157,6 +157,23 @@ TEST(PlotDataYaml, IgnoresInterleavedLogLines)
     EXPECT_DOUBLE_EQ(d.column(1)[1], 310.0);
 }
 
+TEST(PlotDataYaml, SequenceOfMaps)
+{
+    // generic YAML sequence-of-maps format: - {key: val, key: val, ...}
+    // column names come from the keys of the first entry
+    const QString text = "# energy-volume curve\n"
+                         "- {volume: 14.83, energy: -3.481}\n"
+                         "- {volume: 15.12, energy: -3.507}\n"
+                         "- {volume: 16.00, energy: -3.561}\n";
+    const PlotData d   = parsePlotYaml(text);
+    ASSERT_EQ(d.columnCount(), 2);
+    ASSERT_EQ(d.rowCount(), 3);
+    EXPECT_EQ(d.columnName(0), "volume");
+    EXPECT_EQ(d.columnName(1), "energy");
+    EXPECT_DOUBLE_EQ(d.column(0)[2], 16.00);
+    EXPECT_DOUBLE_EQ(d.column(1)[0], -3.481);
+}
+
 TEST(LoadPlotData, DetectsYamlInLogByContent)
 {
     // a .log extension is not an explicit format, so the YAML thermo block must
