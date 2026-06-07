@@ -176,6 +176,23 @@ if (NOT BUILD_DOC_ONLY)
     endif()
   endif()
 
+  # vendored, JIT-less subset of the Lepton expression parser (namespace
+  # LeptonMini) used for custom-function plotting and nonlinear fits.
+  add_library(lepton_mini STATIC
+    ${CMAKE_SOURCE_DIR}/thirdparty/lepton_mini/src/ExpressionProgram.cpp
+    ${CMAKE_SOURCE_DIR}/thirdparty/lepton_mini/src/ExpressionTreeNode.cpp
+    ${CMAKE_SOURCE_DIR}/thirdparty/lepton_mini/src/Operation.cpp
+    ${CMAKE_SOURCE_DIR}/thirdparty/lepton_mini/src/ParsedExpression.cpp
+    ${CMAKE_SOURCE_DIR}/thirdparty/lepton_mini/src/Parser.cpp
+  )
+  target_include_directories(lepton_mini PUBLIC
+    ${CMAKE_SOURCE_DIR}/thirdparty/lepton_mini/include)
+  # on Windows: build/consume as a static library (no dllexport/dllimport)
+  target_compile_definitions(lepton_mini
+    PRIVATE LEPTON_BUILDING_STATIC_LIBRARY
+    PUBLIC LEPTON_USE_STATIC_LIBRARIES)
+  set_target_properties(lepton_mini PROPERTIES POSITION_INDEPENDENT_CODE ON)
+
   qt_add_executable(lammps-gui
     MANUAL_FINALIZATION
     ${MACOSX_ICON_FILE}
@@ -209,6 +226,7 @@ if (NOT BUILD_DOC_ONLY)
     target_link_libraries(lammps-gui PRIVATE ${LAMMPS_LIBRARY})
   endif()
   target_include_directories(lammps-gui PRIVATE ${CMAKE_SOURCE_DIR}/src)
+  target_link_libraries(lammps-gui PRIVATE lepton_mini)
   target_compile_definitions(lammps-gui PRIVATE LAMMPS_GUI_VERSION="${PROJECT_VERSION}")
   if(LAMMPS_GUI_USE_QTGRAPHS)
     target_compile_definitions(lammps-gui PRIVATE LAMMPS_GUI_USE_QTGRAPHS)

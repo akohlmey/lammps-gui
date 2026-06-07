@@ -49,10 +49,16 @@ dedicated **`LeptonMini`** namespace. The folder, the umbrella header
 renamed to match. These (the namespace rename, the dropped JIT path, and the
 renames) are the only deviations from the upstream source.
 
-## TODO before use in the GUI build
+## Build integration
 
-- Add to the CMake build (compile the `src/*.cpp`, expose `include/` on the
-  include path).
+The top-level `CMakeLists.txt` builds these sources into a `lepton_mini`
+STATIC library (with `include/` exposed as a PUBLIC include directory) and
+links it into `lammps-gui`. The `test/test_lepton` unit test exercises the
+vendored subset (parsing, evaluation, optimization, symbolic differentiation,
+and custom functions).
+
+## TODO before use in the GUI
+
 - Vendor a compact least-squares / Levenberg-Marquardt routine for nonlinear
   fits, and wire custom-function plotting and fitting into the chart
   post-processing dialog.

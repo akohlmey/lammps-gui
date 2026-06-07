@@ -144,6 +144,15 @@ target_link_libraries(test_plotdata PRIVATE GTest::gtest_main Qt6::Core)
 
 gtest_discover_tests(test_plotdata)
 
+# Test executable for the vendored LeptonMini expression parser (Qt-free)
+add_executable(test_lepton
+  test_lepton.cpp
+)
+
+target_link_libraries(test_lepton PRIVATE GTest::gtest_main lepton_mini)
+
+gtest_discover_tests(test_lepton)
+
 # Test executable for the post-processing analyses (Qt-free)
 add_executable(test_analysis
   test_analysis.cpp
