@@ -13,6 +13,7 @@
 
 #include "analysis.h"
 #include "constants.h"
+#include "customfunc.h"
 #include "fitting.h"
 #include "helpers.h"
 #include "lammpsgui.h"
@@ -513,14 +514,26 @@ void ChartWindow::postProcess()
     analysisbox->addItem("Autocorrelation");
     analysisbox->addItem("Polynomial fit");
     analysisbox->addItem("Birch-Murnaghan EOS fit");
+    analysisbox->addItem("Custom function");
     form->addRow("Analysis:", analysisbox);
 
     auto *paramLabel = new QLabel;
     auto *paramSpin  = new QSpinBox;
     form->addRow(paramLabel, paramSpin);
 
-    // swap the parameter widget to match the selected analysis
-    auto configure = [=](int idx) {
+    // expression field, shown only for the custom-function plot
+    auto *exprLabel = new QLabel("f(x) =");
+    auto *exprEdit  = new QLineEdit;
+    exprEdit->setPlaceholderText("e.g. 2*x^2 + 3*sin(x)");
+    exprEdit->setMinimumWidth(Cfg::POSTPROCESS_EXPR_WIDTH);
+    form->addRow(exprLabel, exprEdit);
+
+    // swap the parameter widgets to match the selected analysis
+    auto configure = [=, &dialog](int idx) {
+        const bool custom = (idx == 3);
+        exprLabel->setVisible(custom);
+        exprEdit->setVisible(custom);
+        paramLabel->setVisible(!custom);
         if (idx == 1) { // polynomial degree
             paramLabel->setText("Degree:");
             paramSpin->setVisible(true);
@@ -529,12 +542,15 @@ void ChartWindow::postProcess()
         } else if (idx == 2) { // EOS has no free parameters
             paramLabel->setText("(no parameters)");
             paramSpin->setVisible(false);
+        } else if (custom) { // custom function: expression field only
+            paramSpin->setVisible(false);
         } else { // autocorrelation max lag
             paramLabel->setText("Max lag:");
             paramSpin->setVisible(true);
             paramSpin->setRange(1, npoints - 1);
             paramSpin->setValue(qMin(npoints - 1, npoints / 2));
         }
+        dialog.adjustSize();
     };
     configure(0);
     connect(analysisbox, &QComboBox::currentIndexChanged, &dialog, configure);
@@ -584,6 +600,28 @@ void ChartWindow::postProcess()
     const double xmin    = *mm.first;
     const double xmax    = *mm.second;
     constexpr int Ncurve = 200;
+
+    if (which == 3) { // custom function f(x) evaluated over the data x range
+        const QString expr       = exprEdit->text().trimmed();
+        const CustomCurve result = evalCustomCurve(expr, xmin, xmax, Ncurve);
+        if (!result.ok) {
+            warning(this, "Custom Function",
+                    QString("Could not evaluate the expression:\n%1").arg(result.error));
+            return;
+        }
+        if (result.points.size() < 2) {
+            warning(this, "Custom Function",
+                    "The expression did not produce a usable curve over the data range.");
+            return;
+        }
+        chart->setFitCurve(result.points);
+        information(this, "Custom Function",
+                    QString("Plotted f(x) = %1\nover x in [%2, %3].")
+                        .arg(expr)
+                        .arg(xmin, 0, 'g', 6)
+                        .arg(xmax, 0, 'g', 6));
+        return;
+    }
 
     if (which == 1) { // polynomial fit
         const PolynomialFit f = polynomialFit(xs, ys, paramSpin->value());

@@ -69,6 +69,9 @@ constexpr int CHART_HEIGHT_MAX     = 30000; ///< Max configurable chart height
 constexpr int CHART_DEFAULT_WIDTH  = 640;   ///< Default chart width
 constexpr int CHART_DEFAULT_HEIGHT = 480;   ///< Default chart height
 
+// ---- Chart post-processing dialog ----------------------------------------
+constexpr int POSTPROCESS_EXPR_WIDTH = 260; ///< Min width of the custom-function expression field
+
 // ---- Chart smoothing (Savitzky-Golay) ------------------------------------
 constexpr int SMOOTH_WINDOW_MIN     = 5;   ///< Min smoothing window size
 constexpr int SMOOTH_WINDOW_MAX     = 999; ///< Max smoothing window size

@@ -407,6 +407,17 @@ toolkit and used by the chart post-processing dialog.
 
 -----
 
+Custom-Function Evaluation
+--------------------------
+
+Evaluation of user-supplied mathematical expressions (``src/customfunc.h``) via
+the vendored LeptonMini parser, used for custom-function plotting in the chart
+post-processing dialog.
+
+.. doxygenfile:: customfunc.h
+
+-----
+
 .. _helper_functions:
 
 Helper Functions

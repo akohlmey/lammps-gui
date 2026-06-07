@@ -153,6 +153,17 @@ target_link_libraries(test_lepton PRIVATE GTest::gtest_main lepton_mini)
 
 gtest_discover_tests(test_lepton)
 
+# Test executable for the custom-function evaluator (LeptonMini + Qt Core)
+add_executable(test_customfunc
+  test_customfunc.cpp
+  ${CMAKE_SOURCE_DIR}/src/customfunc.cpp
+)
+
+target_include_directories(test_customfunc PRIVATE ${CMAKE_SOURCE_DIR}/src)
+target_link_libraries(test_customfunc PRIVATE GTest::gtest_main Qt6::Core lepton_mini)
+
+gtest_discover_tests(test_customfunc)
+
 # Test executable for the post-processing analyses (Qt-free)
 add_executable(test_analysis
   test_analysis.cpp
