@@ -47,6 +47,35 @@
 namespace {
 constexpr int LAYOUT_SPACING = 6;
 constexpr int EXTRA_HEIGHT   = 130;
+
+// Read an image file. If Qt cannot decode the format directly, and ImageMagick
+// (magick/convert) is available, convert it to a temporary PNG and read that.
+QImage readImageFile(const QString &filename)
+{
+    QImageReader reader(filename);
+    reader.setAutoTransform(true);
+    QImage img = reader.read();
+    if (!img.isNull()) return img;
+
+    // Qt could not read it: fall back to ImageMagick if present
+    if (!hasExe("magick") && !hasExe("convert")) return img; // still null
+    const QString cmd = hasExe("magick") ? "magick" : "convert";
+
+    QTemporaryFile tmp(QDir::tempPath() + "/lammpsgui_imgXXXXXX.png");
+    if (!tmp.open()) return img;
+    const QString pngname = tmp.fileName();
+    tmp.close();
+
+    QProcess proc;
+    proc.start(cmd, {filename, pngname});
+    if (proc.waitForFinished(-1) && (proc.exitStatus() == QProcess::NormalExit) &&
+        (proc.exitCode() == 0)) {
+        QImageReader pngreader(pngname);
+        pngreader.setAutoTransform(true);
+        img = pngreader.read();
+    }
+    return img;
+}
 } // namespace
 
 SlideShow::SlideShow(const QString &fileName, LammpsGui *_lammpsgui, QWidget *parent) :
@@ -140,6 +169,13 @@ SlideShow::SlideShow(const QString &fileName, LammpsGui *_lammpsgui, QWidget *pa
     totrash->setToolTip("Delete all image files");
     totrash->setMinimumSize(buttonhint);
     totrash->setMaximumSize(buttonhint);
+
+    // a standalone slideshow (no live simulation) has no run to stop, and must
+    // not offer to delete the user's own image files
+    if (!lammpsgui) {
+        stoprun->hide();
+        totrash->hide();
+    }
 
     auto *empty = new QLabel("");
     empty->setMinimumSize(buttonhint);
@@ -361,9 +397,7 @@ void SlideShow::loadImage(int idx)
     if ((idx < 0) || (idx >= imagefiles.size())) return;
 
     do {
-        QImageReader reader(imagefiles[idx]);
-        reader.setAutoTransform(true);
-        const QImage newImage = reader.read();
+        const QImage newImage = readImageFile(imagefiles[idx]);
 
         // There was an error reading the image file. Try reading the previous image instead.
         if (newImage.isNull()) {

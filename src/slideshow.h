@@ -39,10 +39,12 @@ public:
     /**
      * @brief Constructor
      * @param fileName Path to first image file
-     * @param lammpsgui Pointer to LammpsGui for sending signals
+     * @param lammpsgui Pointer to LammpsGui for sending signals (optional;
+     *                  nullptr for a standalone viewer with no live simulation)
      * @param parent Parent widget
      */
-    explicit SlideShow(const QString &fileName, LammpsGui *lammpsgui, QWidget *parent = nullptr);
+    explicit SlideShow(const QString &fileName, LammpsGui *lammpsgui = nullptr,
+                       QWidget *parent = nullptr);
 
     /**
      * @brief Destructor
