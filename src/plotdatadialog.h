@@ -16,15 +16,15 @@
 #include <QList>
 
 class QCheckBox;
-class QComboBox;
 class PlotData;
 
 /**
  * @brief Dialog to choose which columns of a PlotData to plot
  *
- * Presents the parsed columns of an external data file and lets the user pick
- * one column for the shared x axis and any number of columns to plot against
- * it, with a small preview of the first rows.
+ * Presents the parsed columns of an external data file and lets the user
+ * select which columns to plot on the y-axis via checkboxes.  The first
+ * unselected (unchecked) column is automatically used as the shared x-axis.
+ * A small preview of the first rows is shown to help identify column content.
  */
 class PlotDataDialog : public QDialog {
     Q_OBJECT
@@ -45,19 +45,21 @@ public:
     PlotDataDialog &operator=(PlotDataDialog &&)      = delete;
 
     /**
-     * @brief Index of the column chosen for the x axis
+     * @brief Index of the column used as the x-axis
+     *
+     * Returns the index of the first unchecked (unselected) column.
+     * Falls back to 0 if all columns are checked.
      * @return Column index
      */
     int xColumn() const;
 
     /**
-     * @brief Indices of the columns selected to plot (excluding the x column)
-     * @return List of column indices
+     * @brief Indices of the columns selected to plot on the y-axis
+     * @return List of column indices (all checked columns)
      */
     QList<int> yColumns() const;
 
 private:
-    QComboBox *xcombo;          ///< x-axis column selector
     QList<QCheckBox *> ychecks; ///< per-column y selection checkboxes
 };
 

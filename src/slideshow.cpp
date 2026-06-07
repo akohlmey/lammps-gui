@@ -81,8 +81,9 @@ QImage readImageFile(const QString &filename)
 SlideShow::SlideShow(const QString &fileName, LammpsGui *_lammpsgui, QWidget *parent) :
     QDialog(parent), lammpsgui(_lammpsgui), playtimer(nullptr), imageLabel(new QLabel),
     scrollArea(new QScrollArea), scrollBar(new QSlider),
-    imageCounter(new QLabel("Image   0 /   0 :")), imageName(new QLabel("(none)")), timerDelay(100),
-    doLoop(true), imageRotation(0), imageFlipH(false), imageFlipV(false)
+    imageCounter(new QLabel("Image   0 /   0 :")), imageName(new QLabel("(none)")),
+    current(0), maxwidth(0), maxheight(0), timerDelay(100), doLoop(true), imageRotation(0),
+    imageFlipH(false), imageFlipV(false)
 {
     imageLabel->setBackgroundRole(QPalette::Base);
     imageLabel->setSizePolicy(QSizePolicy::Minimum, QSizePolicy::Minimum);
@@ -353,12 +354,27 @@ SlideShow::SlideShow(const QString &fileName, LammpsGui *_lammpsgui, QWidget *pa
 
 void SlideShow::addImage(const QString &filename)
 {
-    if (!imagefiles.contains(filename)) {
-        int lastidx = imagefiles.size();
-        imagefiles.append(filename);
+    if (imagefiles.contains(filename)) return;
+
+    // update max dimensions from header only — no full decode needed
+    const QSize sz = QImageReader(filename).size();
+    if (sz.isValid()) {
+        maxwidth  = qMax(maxwidth, sz.width());
+        maxheight = qMax(maxheight, sz.height());
+    }
+
+    const int lastidx = imagefiles.size();
+    imagefiles.append(filename);
+    scrollBar->setMaximum(lastidx);
+
+    if (lammpsgui || lastidx == 0) {
+        // live mode: display every incoming image; or first image in any mode
         loadImage(lastidx);
-        scrollBar->setMaximum(lastidx);
         scrollBar->setValue(lastidx);
+    } else {
+        // viewer mode, non-first image: dimensions already captured above;
+        // resize the window to the running maximum without reloading the display
+        adjustWindowSize();
     }
 }
 
@@ -404,6 +420,8 @@ void SlideShow::loadImage(int idx)
             --idx;
         } else {
             rawImage = newImage;
+            maxwidth  = qMax(maxwidth, newImage.width());
+            maxheight = qMax(maxheight, newImage.height());
             applyImageTransform();
             imageCounter->setText(
                 QString("Image %1 / %2 :").arg(idx + 1, 3).arg(imagefiles.size(), 3));
@@ -623,11 +641,11 @@ void SlideShow::scaleImage(double factor)
 
 void SlideShow::adjustWindowSize()
 {
-    if (image.isNull()) return;
+    if (maxwidth == 0 || maxheight == 0) return;
     auto *hbar        = scrollArea->horizontalScrollBar();
     auto *vbar        = scrollArea->verticalScrollBar();
-    int desiredWidth  = image.width() + 2 + (vbar->isVisible() ? vbar->width() : 0);
-    int desiredHeight = image.height() + 2 + (hbar->isVisible() ? hbar->height() : 0);
+    int desiredWidth  = maxwidth + 2 + (vbar->isVisible() ? vbar->width() : 0);
+    int desiredHeight = maxheight + 2 + (hbar->isVisible() ? hbar->height() : 0);
 
     // make sure the scroll area is not resized beyond a certain fraction of the screen
     auto *screen = QGuiApplication::primaryScreen();

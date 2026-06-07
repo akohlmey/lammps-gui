@@ -121,6 +121,18 @@ extern void exportImage(QWidget *parent, QImage *image, const QString &title);
 [[nodiscard]] extern bool isImageFile(const QString &filename);
 
 /**
+ * @brief Heuristic check whether a file is binary rather than text
+ * @param filename Path to the file
+ * @return true if the first 8 KB of the file contains a null byte
+ *
+ * Null bytes are essentially absent from text (ASCII, UTF-8, Latin-1) but
+ * ubiquitous in binary formats (IEEE floats, packed integers, padding).
+ * This is the same heuristic used by git, grep, and the POSIX file utility.
+ * Returns false for files that cannot be opened (callers handle that separately).
+ */
+[[nodiscard]] extern bool looksLikeBinaryFile(const QString &filename);
+
+/**
  * @brief Re-exec the current LAMMPS-GUI process in place (e.g. to reload the plugin)
  *
  * Replaces the running process with a fresh launch of the same executable.

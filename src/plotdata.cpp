@@ -73,13 +73,17 @@ QString bracketContents(const QString &s)
     return s.mid(a + 1, b - a - 1);
 }
 
-// Heuristic: does the text contain a LAMMPS thermo YAML block? Such a block
-// has a "keywords:" line, possibly embedded in surrounding log output.
+// Heuristic: does the text look like YAML tabular data?  We accept either the
+// LAMMPS thermo format (has a "keywords:" line) or a generic sequence of maps
+// (has a "- {key: value, ...}" line with at least one colon inside the braces).
 bool looksLikeYaml(const QString &text)
 {
     const QStringList lines = text.split('\n');
-    for (const QString &line : lines)
-        if (line.trimmed().startsWith("keywords:")) return true;
+    for (const QString &line : lines) {
+        const QString t = line.trimmed();
+        if (t.startsWith("keywords:")) return true;
+        if (t.startsWith("- {") && t.endsWith('}') && t.contains(':')) return true;
+    }
     return false;
 }
 
@@ -240,24 +244,65 @@ PlotData parsePlotYaml(const QString &text, QString *error)
             }
             ncol = names.size();
         } else if (line.startsWith('-')) {
+            // Format 1: - [val, val, ...]  (LAMMPS thermo YAML, keywords already parsed)
             const QString inside = bracketContents(line);
-            if (inside.isEmpty()) continue;
-            const QStringList toks = inside.split(',');
-            std::vector<double> row;
-            bool ok = true;
-            for (const QString &t : toks) {
-                const QString tok = t.trimmed();
-                // tolerate the trailing comma LAMMPS writes (e.g. "..., -837.0, ]")
-                if (tok.isEmpty()) continue;
-                bool good      = false;
-                const double v = tok.toDouble(&good);
-                if (!good) {
-                    ok = false;
-                    break;
+            if (!inside.isEmpty()) {
+                const QStringList toks = inside.split(',');
+                std::vector<double> row;
+                bool ok = true;
+                for (const QString &t : toks) {
+                    const QString tok = t.trimmed();
+                    // tolerate the trailing comma LAMMPS writes (e.g. "..., -837.0, ]")
+                    if (tok.isEmpty()) continue;
+                    bool good      = false;
+                    const double v = tok.toDouble(&good);
+                    if (!good) {
+                        ok = false;
+                        break;
+                    }
+                    row.push_back(v);
                 }
-                row.push_back(v);
+                if (ok && !row.empty()) rows.push_back(std::move(row));
+                continue;
             }
-            if (ok && !row.empty()) rows.push_back(std::move(row));
+            // Format 2: - {key: val, key: val, ...}  (generic YAML sequence of maps)
+            QString rest = line.mid(1).trimmed();
+            if (rest.startsWith('{') && rest.endsWith('}')) {
+                rest                   = rest.mid(1, rest.size() - 2).trimmed();
+                const QStringList pairs = rest.split(',');
+                if (names.isEmpty()) {
+                    // first entry: derive column names from the keys
+                    for (const QString &pair : pairs) {
+                        const int colon = pair.indexOf(':');
+                        if (colon < 0) {
+                            names.clear();
+                            break;
+                        }
+                        const QString key = pair.left(colon).trimmed();
+                        if (!key.isEmpty()) names << key;
+                    }
+                    ncol = names.size();
+                }
+                if (ncol <= 0) continue;
+                std::vector<double> row;
+                bool ok = true;
+                for (const QString &pair : pairs) {
+                    const int colon = pair.indexOf(':');
+                    if (colon < 0) {
+                        ok = false;
+                        break;
+                    }
+                    const QString val = pair.mid(colon + 1).trimmed();
+                    bool good         = false;
+                    const double v    = val.toDouble(&good);
+                    if (!good) {
+                        ok = false;
+                        break;
+                    }
+                    row.push_back(v);
+                }
+                if (ok && !row.empty()) rows.push_back(std::move(row));
+            }
         }
     }
 

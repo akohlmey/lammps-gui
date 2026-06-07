@@ -177,6 +177,9 @@ private:
     /// column per chart) for the data exporters.
     PlotData chartsToPlotData() const;
 
+    /// Return the chart currently selected in the columns combo box.
+    ChartViewer *currentChart();
+
     LammpsGui *lammpsgui; ///< Main widget pointer for receiving signals
     bool doRaw, doSmooth; ///< Flags for displaying raw/smoothed data
     QMenuBar *menu;       ///< Menu bar
@@ -351,6 +354,17 @@ public:
     void setXLabel(const QString &xlabel);
 
     /**
+     * @brief Set the X-axis tick label format
+     * @param fmt printf-style format string (e.g. "%.6g" for floating-point,
+     *            "%d" for integer steps)
+     *
+     * Call after setXLabel() when the x-axis carries non-integer data (e.g.
+     * lattice constants from a Plot Data file).  The thermo live-feed path
+     * leaves the default integer format in place.
+     */
+    void setXLabelFormat(const QString &fmt);
+
+    /**
      * @brief Replace all chart data with the given points in one shot
      * @param points New (x, y) data points
      *
@@ -391,13 +405,21 @@ public:
 
     /**
      * @brief Overlay a fit curve on the chart
-     * @param points Curve points (x, y) drawn as an overlay line; created on
-     *               the first call and replaced on subsequent calls
-     * @param name   Optional series name for the overlay (e.g. the fitted
-     *               expression or a user label); shown wherever series names
-     *               are surfaced
+     * @param points  Curve points (x, y) drawn as an overlay line; created on
+     *                the first call and replaced on subsequent calls
+     * @param name    Optional series name for the overlay (e.g. the fitted
+     *                expression or a user label); shown wherever series names
+     *                are surfaced
+     * @param eosFit  When true the curve is treated as an EOS fit: its
+     *                visibility follows the doSmooth flag (hidden in Raw mode,
+     *                visible in Smoothed/Both mode) and it replaces the
+     *                Savitzky-Golay series while active.
      */
-    void setFitCurve(const QList<QPointF> &points, const QString &name = QString());
+    void setFitCurve(const QList<QPointF> &points, const QString &name = QString(),
+                     bool eosFit = false);
+
+    /** @brief True when the current fit overlay is a Birch-Murnaghan EOS fit */
+    bool isEosFit() const { return eosMode && fit && !fit->points().isEmpty(); }
 
     /**
      * @brief Get current chart title
@@ -433,6 +455,7 @@ private:
     QLineSeries *fit;                      ///< Optional fit-curve overlay (created on demand)
     QTime lastUpdate;                      ///< Time of last chart update
     bool doRaw, doSmooth;                  ///< Flags for showing raw/smoothed data
+    bool eosMode;                          ///< True when fit is a BM EOS overlay (visibility follows doSmooth)
     ChartDisplayMode dispmode;             ///< How the raw series is drawn
     QColor rawColor;                       ///< Raw series color override (invalid = theme default)
     qreal rawWidth;                        ///< Raw series line width

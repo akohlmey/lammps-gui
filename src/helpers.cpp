@@ -353,6 +353,14 @@ bool hasExe(const QString &exe)
     return !QStandardPaths::findExecutable(exe).isEmpty();
 }
 
+bool looksLikeBinaryFile(const QString &filename)
+{
+    QFile f(filename);
+    if (!f.open(QIODevice::ReadOnly)) return false;
+    const QByteArray chunk = f.read(8192);
+    return chunk.contains('\0');
+}
+
 bool isImageFile(const QString &filename)
 {
     // known image extensions, including formats Qt cannot read natively but
