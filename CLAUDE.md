@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-LAMMPS-GUI (v2.0.6) is a Qt6-based graphical interface for the LAMMPS molecular dynamics simulation software. It provides a code editor with syntax highlighting and auto-completion, live LAMMPS simulation execution, log/chart/image visualization, and an integrated tutorial system. The project is GPLv2+ licensed (note: `thirdparty/rangeslider/rangeslider.{cpp,h}` is third-party under the CeCILL-A license, and `thirdparty/lepton_mini/` is a vendored subset of the MIT-licensed Lepton expression parser).
+LAMMPS-GUI (v2.x) is a Qt6-based graphical interface for the LAMMPS molecular dynamics simulation software. It provides a code editor with syntax highlighting and auto-completion, live LAMMPS simulation execution, log/chart/image visualization, and an integrated tutorial system. The project is GPLv2+ licensed (note: `src/rangeslider.{cpp,h}` is third-party under the CeCILL-A license).
 
 - Online documentation: https://lammps-gui.lammps.org/
 - C++17, CMake ≥ 3.20, Qt6 (minimum 6.2; 6.10+ enables QtGraphs backend)
@@ -171,6 +171,29 @@ idiom and is fine). Use `static_cast` rather than C-style casts, the
 function-pointer `connect()` form (never `SIGNAL()`/`SLOT()` strings), and
 `enum class` for new internal enumerations that do not need implicit `int`
 interop with the LAMMPS API.
+
+## AI-assistant feature (exploratory — temporary feature branch)
+
+We are adding an AI assistant to the GUI frontend of this physics-simulation
+software. Work is exploratory: build a **minimal** implementation first to probe
+workflow options, then decide a fuller architecture and implement interactively.
+
+**Before working on this feature, read `docs/ai-assistant-design.md`** — it is
+the durable design memory (provider abstraction, RAG, reliability via
+verification, tool-calling file generation, the wizard/expert-system model, the
+probe verify-repair loop, and the case-based learning approach). Treat its
+decisions and caveats as binding unless we explicitly revise them here.
+
+### Non-negotiables for this feature
+
+- The assistant produces a **starting point, not a validated solution.**
+- Structural correctness comes from **vetted templates** and **executable
+  verification (the simulator as oracle)** — never from the model's unaided
+  judgment.
+- **Treat all model-generated files as untrusted**; validate before loading.
+- **Never hardcode or commit API keys.**
+- Prefer **deterministic checks/lookup tables** for known cases; use the LLM for
+  the fuzzy long tail and explanation.
 
 ### Source file map
 
