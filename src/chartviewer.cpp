@@ -42,6 +42,7 @@
 
 #include <QLabel>
 #include <QLayout>
+#include <QMessageBox>
 #include <QList>
 #include <QMenu>
 #include <QMenuBar>
@@ -580,13 +581,6 @@ void ChartWindow::postProcess()
     fitLabelEdit->setMinimumWidth(Cfg::POSTPROCESS_EXPR_WIDTH);
     form->addRow(fitLabelLabel, fitLabelEdit);
 
-    // BM-specific: x-axis confirmation row
-    const QString xLabel = chart->getXLabel();
-    auto *eosXConfLabel  = new QLabel(QStringLiteral("\"%1\" is volume per atom:").arg(xLabel));
-    auto *eosXCheck      = new QCheckBox;
-    eosXCheck->setChecked(true);
-    form->addRow(eosXConfLabel, eosXCheck);
-
     // swap the parameter widgets to match the selected analysis
     auto configure = [=, &dialog](int idx) {
         const bool plot = (idx == 3); // custom-function plotting
@@ -600,8 +594,6 @@ void ChartWindow::postProcess()
         fitLabelLabel->setVisible(fit);
         fitLabelEdit->setVisible(fit);
         paramLabel->setVisible(!expr && !eos);
-        eosXConfLabel->setVisible(eos);
-        eosXCheck->setVisible(eos);
         if (idx == 1) { // polynomial degree
             paramLabel->setText("Degree:");
             paramSpin->setVisible(true);
@@ -742,17 +734,29 @@ void ChartWindow::postProcess()
         return;
     }
 
-    // Birch-Murnaghan EOS fit (x = volume, y = energy)
-    if (!eosXCheck->isChecked()) {
-        warning(this, "Birch-Murnaghan EOS Fit",
-                "Fit cancelled: the Birch-Murnaghan EOS requires volume per atom on the x-axis.\n"
-                "Please check your column assignments and try again.");
-        return;
+    // Birch-Murnaghan EOS fit (x = lattice constant, y = cohesive energy)
+    {
+        const QString xLabel = chart->getXLabel();
+        const QString yLabel = chart->getYLabel().isEmpty() ? chart->getName() : chart->getYLabel();
+        const QString msg =
+            QString("The Birch-Murnaghan EOS fit requires:\n"
+                    "  x-axis: lattice constant\n"
+                    "  y-axis: cohesive energy\n\n"
+                    "This chart has:\n"
+                    "  x: %1\n"
+                    "  y: %2\n\n"
+                    "Click OK to proceed, or Cancel to select a different property.")
+                .arg(xLabel)
+                .arg(yLabel);
+        if (QMessageBox::question(this, "Birch-Murnaghan EOS Fit", msg,
+                                  QMessageBox::Ok | QMessageBox::Cancel)
+            != QMessageBox::Ok)
+            return;
     }
     const EosFit f = birchMurnaghanFit(xs, ys);
     if (!f.ok) {
         warning(this, "Postprocess",
-                "Birch-Murnaghan fit failed (needs >= 4 points, positive volumes, "
+                "Birch-Murnaghan fit failed (needs >= 4 points, positive lattice constants, "
                 "and a minimum within the data).");
         return;
     }
@@ -785,9 +789,9 @@ void ChartWindow::postProcess()
         return l;
     };
     resultForm->addRow(
-        "<b>V<sub>0</sub></b> &mdash; Equilibrium volume per atom:", makeVal(f.v0, 8));
+        "<b>a<sub>0</sub></b> &mdash; Equilibrium lattice constant:", makeVal(f.v0, 8));
     resultForm->addRow(
-        "<b>E<sub>0</sub></b> &mdash; Cohesive energy at V<sub>0</sub>:", makeVal(f.e0, 8));
+        "<b>E<sub>0</sub></b> &mdash; Cohesive energy at a<sub>0</sub>:", makeVal(f.e0, 8));
     resultForm->addRow(
         "<b>B<sub>0</sub></b> &mdash; Bulk modulus (&minus;V dP/dV at V<sub>0</sub>):", makeVal(f.b0, 8));
     resultForm->addRow(

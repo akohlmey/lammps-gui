@@ -15,7 +15,6 @@
 
 #include <QAbstractItemView>
 #include <QCheckBox>
-#include <QComboBox>
 #include <QDialogButtonBox>
 #include <QGroupBox>
 #include <QHBoxLayout>
@@ -27,8 +26,7 @@
 #include <QTableWidgetItem>
 #include <QVBoxLayout>
 
-PlotDataDialog::PlotDataDialog(const PlotData &data, QWidget *parent) :
-    QDialog(parent), xcombo(new QComboBox)
+PlotDataDialog::PlotDataDialog(const PlotData &data, QWidget *parent) : QDialog(parent)
 {
     setWindowTitle("Select Columns to Plot");
     const int ncol = data.columnCount();
@@ -36,17 +34,11 @@ PlotDataDialog::PlotDataDialog(const PlotData &data, QWidget *parent) :
 
     auto *layout = new QVBoxLayout(this);
     layout->addWidget(new QLabel(QString("%1 rows, %2 columns").arg(nrow).arg(ncol)));
-
-    // x-axis column selector
-    for (int c = 0; c < ncol; ++c)
-        xcombo->addItem(data.columnName(c), c);
-    auto *xrow = new QHBoxLayout;
-    xrow->addWidget(new QLabel("X axis column:"));
-    xrow->addWidget(xcombo, 1);
-    layout->addLayout(xrow);
+    layout->addWidget(
+        new QLabel("The first unselected column will be used as the x-axis."));
 
     // y-column selection checkboxes (default: every column but the first)
-    auto *ybox = new QGroupBox("Y columns to plot");
+    auto *ybox = new QGroupBox("Columns to plot (uncheck the x-axis column)");
     auto *yl   = new QVBoxLayout(ybox);
     for (int c = 0; c < ncol; ++c) {
         auto *cb = new QCheckBox(data.columnName(c));
@@ -88,15 +80,16 @@ PlotDataDialog::PlotDataDialog(const PlotData &data, QWidget *parent) :
 
 int PlotDataDialog::xColumn() const
 {
-    return xcombo->currentData().toInt();
+    for (int i = 0; i < ychecks.size(); ++i)
+        if (!ychecks[i]->isChecked()) return i;
+    return 0;
 }
 
 QList<int> PlotDataDialog::yColumns() const
 {
     QList<int> result;
-    const int xcol = xColumn();
     for (int i = 0; i < ychecks.size(); ++i)
-        if (ychecks[i]->isChecked() && (i != xcol)) result.append(i);
+        if (ychecks[i]->isChecked()) result.append(i);
     return result;
 }
 
