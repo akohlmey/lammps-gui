@@ -177,9 +177,9 @@ void LammpsGui::createFileMenu()
 
     addMenuAction(menu, ":/icons/document-open.png", "&View Text File", "Ctrl+Shift+F",
                   &LammpsGui::view);
-    addMenuAction(menu, ":/icons/image-x-generic.png", "View &Image File(s)...", "",
+    addMenuAction(menu, ":/icons/image-x-generic.png", "View &Image File(s)...", "Ctrl+Shift+J",
                   &LammpsGui::openImages);
-    addMenuAction(menu, ":/icons/x-office-drawing.png", "&Plot Data File...", "",
+    addMenuAction(menu, ":/icons/x-office-drawing.png", "&Plot Data File...", "Ctrl+Shift+P",
                   &LammpsGui::plotDataFile);
     addMenuAction(menu, ":/icons/document-open.png", "Inspect &Restart File", "Ctrl+Shift+R",
                   &LammpsGui::inspect);
