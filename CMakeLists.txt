@@ -139,8 +139,8 @@ if (NOT BUILD_DOC_ONLY)
     ${CMAKE_SOURCE_DIR}/src/preferences.h
     ${CMAKE_SOURCE_DIR}/src/qaddon.cpp
     ${CMAKE_SOURCE_DIR}/src/qaddon.h
-    ${CMAKE_SOURCE_DIR}/src/rangeslider.cpp
-    ${CMAKE_SOURCE_DIR}/src/rangeslider.h
+    ${CMAKE_SOURCE_DIR}/thirdparty/rangeslider/rangeslider.cpp
+    ${CMAKE_SOURCE_DIR}/thirdparty/rangeslider/rangeslider.h
     ${CMAKE_SOURCE_DIR}/src/setvariables.cpp
     ${CMAKE_SOURCE_DIR}/src/setvariables.h
     ${CMAKE_SOURCE_DIR}/src/slideshow.cpp
@@ -230,6 +230,7 @@ if (NOT BUILD_DOC_ONLY)
     target_link_libraries(lammps-gui PRIVATE ${LAMMPS_LIBRARY})
   endif()
   target_include_directories(lammps-gui PRIVATE ${CMAKE_SOURCE_DIR}/src)
+  target_include_directories(lammps-gui PRIVATE ${CMAKE_SOURCE_DIR}/thirdparty/rangeslider)
   target_link_libraries(lammps-gui PRIVATE lepton_mini)
   target_compile_definitions(lammps-gui PRIVATE LAMMPS_GUI_VERSION="${PROJECT_VERSION}")
   if(LAMMPS_GUI_USE_QTGRAPHS)

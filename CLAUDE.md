@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-LAMMPS-GUI (v2.0.6) is a Qt6-based graphical interface for the LAMMPS molecular dynamics simulation software. It provides a code editor with syntax highlighting and auto-completion, live LAMMPS simulation execution, log/chart/image visualization, and an integrated tutorial system. The project is GPLv2+ licensed (note: `src/rangeslider.{cpp,h}` is third-party under the CeCILL-A license).
+LAMMPS-GUI (v2.0.6) is a Qt6-based graphical interface for the LAMMPS molecular dynamics simulation software. It provides a code editor with syntax highlighting and auto-completion, live LAMMPS simulation execution, log/chart/image visualization, and an integrated tutorial system. The project is GPLv2+ licensed (note: `thirdparty/rangeslider/rangeslider.{cpp,h}` is third-party under the CeCILL-A license, and `thirdparty/lepton_mini/` is a vendored subset of the MIT-licensed Lepton expression parser).
 
 - Online documentation: https://lammps-gui.lammps.org/
 - C++17, CMake ≥ 3.20, Qt6 (minimum 6.2; 6.10+ enables QtGraphs backend)
@@ -191,6 +191,13 @@ interop with the LAMMPS API.
 | `src/chartbackend.h` | Abstract chart backend interface |
 | `src/qtchartsbackend.{cpp,h}` | QtCharts concrete backend |
 | `src/qtgraphsbackend.{cpp,h}` | QtGraphs concrete backend |
+| `src/plotdata.{cpp,h}` | Column-oriented numeric data model + CSV/`.dat`/YAML/JSON parsers and writers |
+| `src/plotdatadialog.{cpp,h}` | Column-picker dialog for plotting an external data file |
+| `src/analysis.{cpp,h}` | Qt-free post-processing analyses (autocorrelation) |
+| `src/leastsquares.{cpp,h}` | Qt-free dense LU solver + Savitzky-Golay smoothing |
+| `src/fitting.{cpp,h}` | Qt-free polynomial + Birch-Murnaghan EOS fits (on `leastsquares`) |
+| `src/levmar.{cpp,h}` | Qt-free Levenberg-Marquardt nonlinear least-squares solver |
+| `src/customfunc.{cpp,h}` | Evaluate/fit user expressions via `LeptonMini` (custom-function plot + nonlinear fit) |
 | `src/imageviewer.{cpp,h}` | Dump-image viewer with interactive re-render controls |
 | `src/slideshow.{cpp,h}` | Slideshow viewer for sequences of dump images with playback controls |
 | `src/preferences.{cpp,h}` | Tabbed settings dialog (general, accelerators, editor, charts, images) |
@@ -201,8 +208,9 @@ interop with the LAMMPS API.
 | `src/urldownloader.{cpp,h}` | HTTPS file downloader (respects `https_proxy` setting) |
 | `src/helpers.{cpp,h}` | Platform utilities, dialog helpers, stdout silence/restore |
 | `src/qaddon.{cpp,h}` | Utility widgets: `QHline`, `QColorCompleter`, `QColorValidator`, `VerticalLabel` |
-| `src/rangeslider.{cpp,h}` | Dual-handle range slider widget (third-party, **CeCILL-A license**) |
 | `src/constants.h` | `Cfg` namespace (magic numbers, string constants) and `Keys` namespace (QSettings keys) |
+| `thirdparty/rangeslider/rangeslider.{cpp,h}` | Dual-handle range slider widget (third-party, **CeCILL-A license**) |
+| `thirdparty/lepton_mini/` | Vendored JIT-less subset of the Lepton expression parser, namespace `LeptonMini` (MIT); built as the `lepton_mini` static library |
 | `plugin/liblammpsplugin.{c,h}` | C shim for dynamic LAMMPS library loading |
 | `resources/` | Qt resources: icons, help tables, commands list |
 | `test/` | Unit tests (GoogleTest) and Python GUI tests (PyAutoGUI/Xvfb) |
