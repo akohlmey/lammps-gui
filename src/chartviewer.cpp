@@ -783,6 +783,11 @@ void ChartWindow::postProcess()
     fmtLabel->setAlignment(Qt::AlignCenter);
     dlgLayout->addWidget(fmtLabel);
 
+    auto *legend = new QLabel("where <i>V</i> is the unit cell volume "
+                              "and <i>V</i><sub>0</sub> the equilibrium volume.");
+    legend->setAlignment(Qt::AlignCenter);
+    dlgLayout->addWidget(legend);
+
     auto *resultForm = new QFormLayout;
     auto makeVal     = [](double v, int prec) {
         auto *l = new QLabel(QString::number(v, 'g', prec));
@@ -794,7 +799,8 @@ void ChartWindow::postProcess()
     resultForm->addRow(
         "<b>E<sub>0</sub></b> &mdash; Cohesive energy at a<sub>0</sub>:", makeVal(f.e0, 8));
     resultForm->addRow(
-        "<b>B<sub>0</sub></b> &mdash; Bulk modulus (&minus;V dP/dV at V<sub>0</sub>):", makeVal(f.b0, 8));
+        "<b>B<sub>0</sub></b> &mdash; Bulk modulus (&minus;V<sub>0</sub> dP/dV at a<sub>0</sub>):",
+        makeVal(f.b0, 8));
     resultForm->addRow(
         "<b>B<sub>0</sub>'</b> &mdash; Pressure derivative dB/dP at P=0:", makeVal(f.b0prime, 6));
     resultForm->addRow("RMS residual:", makeVal(f.rms, 6));
