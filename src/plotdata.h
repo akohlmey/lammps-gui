@@ -152,6 +152,32 @@ PlotData parsePlotJson(const QByteArray &bytes, QString *error = nullptr);
  */
 PlotData loadPlotData(const QString &filename, QString *error = nullptr);
 
+/**
+ * @brief Format a PlotData as comma-separated values
+ * @param data Table to format
+ * @return CSV text: a header row of column names, then one row per data point
+ *
+ * Round-trips through parsePlotCsv().
+ */
+QString writePlotCsv(const PlotData &data);
+
+/**
+ * @brief Format a PlotData as whitespace-separated columns (gnuplot style)
+ * @param data   Table to format
+ * @param source Optional description placed in the leading comment line
+ * @return Text with a `#` comment header carrying the column names, then the
+ *         numeric columns; round-trips through parsePlotWhitespace()
+ */
+QString writePlotDat(const PlotData &data, const QString &source = QString());
+
+/**
+ * @brief Format a PlotData as a LAMMPS-style thermo YAML document
+ * @param data Table to format
+ * @return YAML text with a quoted `keywords:` list and a `data:` list of rows;
+ *         round-trips through parsePlotYaml()
+ */
+QString writePlotYaml(const PlotData &data);
+
 #endif
 
 // Local Variables:

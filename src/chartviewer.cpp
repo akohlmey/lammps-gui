@@ -687,103 +687,63 @@ void ChartWindow::saveAs()
     }
 }
 
+PlotData ChartWindow::chartsToPlotData() const
+{
+    PlotData data;
+    QStringList names;
+    names << "Step";
+    for (auto *c : charts)
+        names << c->getName();
+    data.setColumnNames(names);
+
+    const int lines = charts.isEmpty() ? 0 : charts[0]->getCount();
+    for (int i = 0; i < lines; ++i) {
+        std::vector<double> row;
+        row.reserve(names.size());
+        row.push_back(charts[0]->getStep(i));
+        for (auto *c : charts)
+            row.push_back(c->getData(i));
+        data.appendRow(row);
+    }
+    return data;
+}
+
+// write the assembled chart data to a file using the given formatter
+static void writeExport(QWidget *parent, const QString &caption, const QString &defaultname,
+                        const QString &filter, const QString &text)
+{
+    const QString fileName = QFileDialog::getSaveFileName(parent, caption, defaultname, filter);
+    if (fileName.isEmpty()) return;
+    QFile file(fileName);
+    if (file.open(QIODevice::WriteOnly | QIODevice::Text)) {
+        QTextStream out(&file);
+        out << text;
+        file.close();
+    }
+}
+
 void ChartWindow::exportDat()
 {
     if (charts.empty()) return;
-    QString defaultname = filename + ".dat";
-    if (filename.isEmpty()) defaultname = "lammpsdata.dat";
-    QString fileName = QFileDialog::getSaveFileName(this, "Save Chart as Gnuplot data", defaultname,
-                                                    "Image Files (*.dat)");
-    if (!fileName.isEmpty()) {
-        QFile file(fileName);
-        if (file.open(QIODevice::WriteOnly | QIODevice::Text)) {
-            QTextStream out(&file);
-            constexpr int fw = 16;
-            out.setFieldAlignment(QTextStream::AlignRight);
-            out.setRealNumberPrecision(8);
-
-            out << "# Thermodynamic data from " << filename << "\n";
-            out << "#          Step";
-            for (auto &c : charts)
-                out << qSetFieldWidth(0) << ' ' << qSetFieldWidth(fw) << c->getName();
-            out << qSetFieldWidth(0) << '\n';
-
-            int lines = charts[0]->getCount();
-            for (int i = 0; i < lines; ++i) {
-                // timestep
-                out << qSetFieldWidth(0) << ' ' << qSetFieldWidth(fw) << charts[0]->getStep(i);
-                for (auto &c : charts)
-                    out << qSetFieldWidth(0) << ' ' << qSetFieldWidth(fw) << c->getData(i);
-                out << qSetFieldWidth(0) << '\n';
-            }
-            file.close();
-        }
-    }
+    const QString defaultname = filename.isEmpty() ? "lammpsdata.dat" : filename + ".dat";
+    writeExport(this, "Save Chart as Gnuplot data", defaultname, "Gnuplot data (*.dat)",
+                writePlotDat(chartsToPlotData(), filename));
 }
 
 void ChartWindow::exportCsv()
 {
     if (charts.empty()) return;
-    QString defaultname = filename + ".csv";
-    if (filename.isEmpty()) defaultname = "lammpsdata.csv";
-    QString fileName = QFileDialog::getSaveFileName(this, "Save Chart as CSV data", defaultname,
-                                                    "Image Files (*.csv)");
-    if (!fileName.isEmpty()) {
-        QFile file(fileName);
-        if (file.open(QIODevice::WriteOnly | QIODevice::Text)) {
-            QTextStream out(&file);
-            out.setRealNumberPrecision(8);
-
-            out << "Step";
-            for (auto &c : charts)
-                out << ',' << c->getName();
-            out << '\n';
-
-            int lines = charts[0]->getCount();
-            for (int i = 0; i < lines; ++i) {
-                // timestep
-                out << charts[0]->getStep(i);
-                for (auto &c : charts)
-                    out << ',' << c->getData(i);
-                out << '\n';
-            }
-            file.close();
-        }
-    }
+    const QString defaultname = filename.isEmpty() ? "lammpsdata.csv" : filename + ".csv";
+    writeExport(this, "Save Chart as CSV data", defaultname, "CSV data (*.csv)",
+                writePlotCsv(chartsToPlotData()));
 }
+
 void ChartWindow::exportYaml()
 {
     if (charts.empty()) return;
-    QString defaultname = filename + ".yaml";
-    if (filename.isEmpty()) defaultname = "lammpsdata.yaml";
-    QString fileName = QFileDialog::getSaveFileName(this, "Save Chart as YAML data", defaultname,
-                                                    "Image Files (*.yaml, *.yml)");
-    if (!fileName.isEmpty()) {
-        QFile file(fileName);
-        if (file.open(QIODevice::WriteOnly | QIODevice::Text)) {
-            QTextStream out(&file);
-            out.setRealNumberPrecision(8);
-            out << "---\n";
-
-            out << "keywords: ['Step'";
-            for (auto &c : charts)
-                out << ", '" << c->getName() << "'";
-            out << "]\n";
-
-            out << "data: \n";
-            int lines = charts[0]->getCount();
-            for (int i = 0; i < lines; ++i) {
-                // timestep
-                out << "  - [" << charts[0]->getStep(i);
-                // data
-                for (auto &c : charts)
-                    out << ", " << c->getData(i);
-                out << "]\n";
-            }
-            out << "...\n";
-            file.close();
-        }
-    }
+    const QString defaultname = filename.isEmpty() ? "lammpsdata.yaml" : filename + ".yaml";
+    writeExport(this, "Save Chart as YAML data", defaultname, "YAML data (*.yaml *.yml)",
+                writePlotYaml(chartsToPlotData()));
 }
 
 void ChartWindow::changeChart(int)

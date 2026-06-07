@@ -173,6 +173,10 @@ protected:
     bool eventFilter(QObject *watched, QEvent *event) override;
 
 private:
+    /// Collect the displayed charts into a PlotData (column 0 "Step", then one
+    /// column per chart) for the data exporters.
+    PlotData chartsToPlotData() const;
+
     LammpsGui *lammpsgui; ///< Main widget pointer for receiving signals
     bool doRaw, doSmooth; ///< Flags for displaying raw/smoothed data
     QMenuBar *menu;       ///< Menu bar

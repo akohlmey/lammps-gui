@@ -386,6 +386,74 @@ PlotData loadPlotData(const QString &filename, QString *error)
     return parsePlotWhitespace(text, error);
 }
 
+/* -------------------------------------------------------------------- */
+
+namespace {
+// 8 significant digits, matching the historical export precision
+QString fmt(double v)
+{
+    return QString::number(v, 'g', 8);
+}
+} // namespace
+
+QString writePlotCsv(const PlotData &data)
+{
+    QString out;
+    for (int c = 0; c < data.columnCount(); ++c) {
+        if (c) out += ',';
+        out += data.columnName(c);
+    }
+    out += '\n';
+    for (int r = 0; r < data.rowCount(); ++r) {
+        for (int c = 0; c < data.columnCount(); ++c) {
+            if (c) out += ',';
+            out += fmt(data.column(c)[r]);
+        }
+        out += '\n';
+    }
+    return out;
+}
+
+QString writePlotDat(const PlotData &data, const QString &source)
+{
+    QString out;
+    if (!source.isEmpty()) out += "# data from " + source + '\n';
+    out += '#';
+    for (int c = 0; c < data.columnCount(); ++c)
+        out += ' ' + data.columnName(c);
+    out += '\n';
+    for (int r = 0; r < data.rowCount(); ++r) {
+        for (int c = 0; c < data.columnCount(); ++c) {
+            if (c) out += ' ';
+            out += fmt(data.column(c)[r]);
+        }
+        out += '\n';
+    }
+    return out;
+}
+
+QString writePlotYaml(const PlotData &data)
+{
+    QString out = "---\n";
+    out += "keywords: [";
+    for (int c = 0; c < data.columnCount(); ++c) {
+        if (c) out += ", ";
+        out += '\'' + data.columnName(c) + '\'';
+    }
+    out += "]\n";
+    out += "data:\n";
+    for (int r = 0; r < data.rowCount(); ++r) {
+        out += "  - [";
+        for (int c = 0; c < data.columnCount(); ++c) {
+            if (c) out += ", ";
+            out += fmt(data.column(c)[r]);
+        }
+        out += "]\n";
+    }
+    out += "...\n";
+    return out;
+}
+
 // Local Variables:
 // c-basic-offset: 4
 // End:

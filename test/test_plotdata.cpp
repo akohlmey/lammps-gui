@@ -239,4 +239,61 @@ TEST(LoadPlotData, DispatchesByExtension)
     EXPECT_DOUBLE_EQ(d.column(1)[1], 2.5);
 }
 
+// ---- export writers (round-trip through the matching parser) -------------
+
+PlotData sampleTable()
+{
+    PlotData d;
+    d.setColumnNames({"Step", "Temp", "Press"});
+    d.appendRow({0.0, 300.0, 1.5});
+    d.appendRow({50.0, 310.0, 1.1});
+    return d;
+}
+
+TEST(PlotDataExport, CsvRoundTrip)
+{
+    const PlotData back = parsePlotCsv(writePlotCsv(sampleTable()));
+    ASSERT_EQ(back.columnCount(), 3);
+    ASSERT_EQ(back.rowCount(), 2);
+    EXPECT_EQ(back.columnName(0), "Step");
+    EXPECT_EQ(back.columnName(2), "Press");
+    EXPECT_NEAR(back.column(1)[0], 300.0, 1.0e-9);
+    EXPECT_NEAR(back.column(2)[1], 1.1, 1.0e-9);
+}
+
+TEST(PlotDataExport, DatRoundTrip)
+{
+    const PlotData back = parsePlotWhitespace(writePlotDat(sampleTable(), "unit-test"));
+    ASSERT_EQ(back.columnCount(), 3);
+    ASSERT_EQ(back.rowCount(), 2);
+    EXPECT_EQ(back.columnName(0), "Step");
+    EXPECT_EQ(back.columnName(2), "Press");
+    EXPECT_NEAR(back.column(0)[1], 50.0, 1.0e-9);
+    EXPECT_NEAR(back.column(1)[1], 310.0, 1.0e-9);
+}
+
+TEST(PlotDataExport, YamlRoundTripAndQuoting)
+{
+    const QString yaml = writePlotYaml(sampleTable());
+    // headers must be quoted strings
+    EXPECT_TRUE(yaml.contains("keywords: ['Step', 'Temp', 'Press']")) << yaml.toStdString();
+
+    const PlotData back = parsePlotYaml(yaml);
+    ASSERT_EQ(back.columnCount(), 3);
+    ASSERT_EQ(back.rowCount(), 2);
+    EXPECT_EQ(back.columnName(1), "Temp");
+    EXPECT_NEAR(back.column(2)[0], 1.5, 1.0e-9);
+    EXPECT_NEAR(back.column(0)[1], 50.0, 1.0e-9);
+}
+
+TEST(PlotDataExport, YamlQuotesNamesWithFlowChars)
+{
+    PlotData d;
+    d.setColumnNames({"Step", "c_rdf[1]"});
+    d.appendRow({0.0, 2.5});
+    const PlotData back = parsePlotYaml(writePlotYaml(d));
+    ASSERT_EQ(back.columnCount(), 2);
+    EXPECT_EQ(back.columnName(1), "c_rdf[1]");
+}
+
 } // namespace
