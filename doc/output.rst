@@ -130,6 +130,73 @@ last change of output fields or timestep setting, while the export from
 the log will contain *all* YAML output but *segmented* into individual
 runs.
 
+**Adjusting the chart style.** The *Chart Style...* entry in the chart
+window's *File* menu opens a dialog to change how the data is drawn.  The
+*Raw data* and *Smoothed data* series each have independent settings for
+the display style (*Lines*, *Points*, or *Lines and Points*), the color,
+and the line width.  This makes it possible, for example, to show the raw
+data as faint points and the smoothed curve as a bold line.
+
+.. versionadded:: 2.1
+
+   The *Chart Style* dialog and the independent styling of the raw and
+   smoothed series were added.
+
+**Post-processing the data.** The *Postprocess...* entry in the chart
+window's *File* menu runs an analysis on the data of the currently
+selected property.  The following analyses are available:
+
+- *Autocorrelation* computes the normalized autocorrelation function of
+  the selected data up to a chosen maximum lag and shows it in a new
+  chart window (the abscissa becomes the lag).  This is useful, for
+  example, for estimating correlation times of fluctuating quantities.
+- *Polynomial fit* performs a least-squares fit of a polynomial of a
+  chosen degree, overlays the fitted curve on the chart, and reports the
+  coefficients and the root-mean-square residual.
+- *Birch-Murnaghan EOS fit* fits a 4-parameter `Birch-Murnaghan equation
+  of state
+  <https://en.wikipedia.org/wiki/Birch%E2%80%93Murnaghan_equation_of_state>`_
+  to energy-versus-volume data (x = volume, y = energy) and reports the
+  equilibrium volume and energy, the bulk modulus, and its pressure
+  derivative.
+- *Custom function* evaluates a user-supplied mathematical expression
+  ``f(x)`` over the x range of the data and overlays it as a curve.  The
+  expression uses the variable ``x`` for the abscissa and supports the
+  usual arithmetic operators and functions (for example
+  ``2*x^2 + 3*sin(x)``).
+- *Custom fit* performs a nonlinear least-squares fit of a user-supplied
+  expression to the data.  In addition to the expression, you provide the
+  fit parameters and their initial guesses as ``name=value`` pairs (for
+  example ``a=1, b=0.5``) and, optionally, a label for the fitted curve.
+  The fit uses a Levenberg-Marquardt algorithm with analytic derivatives
+  of the expression; on success the fitted curve is overlaid and the
+  fitted parameters, the root-mean-square residual, and the number of
+  iterations are reported.
+
+The expressions for *Custom function* and *Custom fit* are parsed and
+evaluated with a bundled subset of the Lepton expression parser, the same
+library used by the LAMMPS `Lepton-based styles
+<https://docs.lammps.org/pair_lepton.html>`_, so the supported syntax
+matches.
+
+.. versionadded:: 2.1
+
+   The *Postprocess* dialog with the autocorrelation, polynomial,
+   Birch-Murnaghan EOS, custom-function, and custom-fit analyses was
+   added.
+
+The same *Charts* window is also used to plot data from an external file
+opened with *Run* -> *Plot Data File* (see :ref:`the Run menu
+<run_menu>`); in that standalone mode there is no associated simulation,
+so the *Units* and *Norm* controls are hidden, but the styling, export,
+and post-processing features described above work the same way.
+
+..
+   Maintainer note (screenshots): add screenshots of the *Chart Style*
+   dialog, the *Postprocess* dialog, and an example chart with a fitted
+   overlay curve.  Deferred until the pending dialog/layout redesign,
+   which is expected to change these dialogs.
+
 The *Preferences* dialog has a *Charts* tab, where you can configure
 multiple chart-related settings, like the default title, colors for the
 graphs, default choice of the raw / smooth graph selection, whether the

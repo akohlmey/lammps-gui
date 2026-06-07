@@ -1,6 +1,7 @@
 AboutDialog
 accessors
 Alvares
+autocorrelation
 backend
 backends
 camelCase
@@ -49,14 +50,17 @@ isLightTheme
 kspace
 lammps
 Lennard
+Levenberg
 licensors
 lj
 macOS
 makefile
+Marquardt
 matplotlib
 MBytes
 monofamily
 monosize
+Murnaghan
 Mutex
 mystrdup
 namespace

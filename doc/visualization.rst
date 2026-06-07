@@ -800,6 +800,22 @@ monitor the progress of the simulation.  It also can be used as an
 effective way to refine visualizations created with the :ref:`Snapshot
 Image Viewer <snapshot_viewer>`.
 
+The same window can also display existing image files that were not
+created by the current session: select one or more files with *File* ->
+*Open Image File(s)* (see :ref:`the File menu <files>`) to review images
+produced by an external (for example large parallel) simulation, or to
+revisit images from an earlier run without rerunning it.  Image formats
+that Qt cannot read natively are converted on demand with `ImageMagick
+<https://imagemagick.org/>`_ if it is available.  When the slide show is
+opened this way, the controls that act on a running simulation (such as
+stopping the run or sending images to the trash) are hidden.
+
+.. versionadded:: 2.1
+
+   Existing image files can be loaded into the slide show with *Open
+   Image File(s)*, and image files opened with *File* -> *View* are shown
+   here instead of as text.
+
 From the slide show window the following global keyboard shortcuts are
 supported: `Ctrl-W`: close window, `Ctrl-Q`: quit application, `Ctrl-/`:
 stop running simulation.  Other keyboard shortcuts are connected to some

@@ -14,6 +14,8 @@ corresponding underlined letter, that is `Alt-F` activates the
 corresponding to the underlined letters can be used to select entries
 instead of using the mouse.
 
+.. _files:
+
 File
 ^^^^
 
@@ -24,7 +26,8 @@ File
 
    - *New* clears the current buffer and resets the file name to ``*unknown*``
    - *Open* opens a dialog to select a new file for editing in the *Editor*
-   - *View* opens a dialog to select a file for viewing in a *separate* window (read-only) with support for on-the-fly decompression as explained above.
+   - *View* opens a dialog to select a file for viewing in a *separate* window (read-only) with support for on-the-fly decompression as explained above.  If the selected file is a supported image format, it is shown in the :ref:`snapshot viewer <slideshow>` instead of as text.
+   - *Open Image File(s)* opens a dialog to select one or more image files and shows them together in a standalone :ref:`snapshot viewer <slideshow>` window.  This is useful for reviewing images created by an external (e.g. large parallel) simulation, or for revisiting images from an earlier run without rerunning it.  Image formats that Qt cannot read natively are converted on demand with `ImageMagick <https://imagemagick.org/>`_ if it is available.
    - *Inspect restart* opens a dialog to select a file.  If that file is a
      `LAMMPS restart <https://docs.lammps.org/write_restart.html>`_ three
      windows with :ref:`information about the file are opened
@@ -43,6 +46,18 @@ In addition, up to 5 recent file names will be listed after the *Open*
 entry that allows re-opening recently opened files.  This list is stored
 when quitting and recovered when starting again.
 
+.. versionadded:: 2.1
+
+   The *Open Image File(s)* entry was added, and the *View* entry now
+   shows image files in the snapshot viewer instead of as (unreadable)
+   text.
+
+..
+   Maintainer note (screenshots): consider adding a screenshot of the
+   snapshot viewer with several externally produced images loaded through
+   *Open Image File(s)*.  Holding off until the pending dialog/layout
+   redesign lands, since the snapshot viewer layout may change.
+
 Edit
 ^^^^
 
@@ -55,6 +70,8 @@ The *Edit* menu offers the usual editor functions like *Undo*, *Redo*,
 shortcut `Ctrl-F`).  It can also open a *Preferences* dialog (keyboard
 shortcut `Ctrl-P`) and allows deleting all stored preferences and
 settings, so they are reset to their default values.
+
+.. _run_menu:
 
 Run
 ^^^
@@ -120,6 +137,29 @@ The *Create Image* entry will send a `dump image
 <https://docs.lammps.org/dump_image.html>`_ command to the LAMMPS
 instance, read the resulting file, and show it in an *Image Viewer*
 window.
+
+The *Plot Data File* entry opens a dialog to select a file with
+column-oriented numeric data and plots it in a standalone
+:ref:`Charts window <charts>` without running a simulation.  Supported
+formats are whitespace-separated columns (``.dat``), comma-separated
+values (``.csv``), `YAML <https://yaml.org/>`_ (including the segmented
+thermo output that LAMMPS itself writes), and `JSON
+<https://www.json.org/>`_; the format is recognized from the file name
+extension or, failing that, from the content.  After the file is read, a
+dialog lets you pick which column provides the x axis and which columns
+to plot.  Because there is no associated simulation, the *Units* and
+*Norm* controls are hidden in such a standalone chart window.  All the
+post-processing and export features described for the
+:ref:`Charts window <charts>` are available here as well.
+
+.. versionadded:: 2.1
+
+   The *Plot Data File* entry was added.
+
+..
+   Maintainer note (screenshots): add a screenshot of the column-picker
+   dialog (PlotDataDialog) and of a standalone chart window plotting an
+   external data file.  Deferred until the pending dialog/layout redesign.
 
 The *View in OVITO* entry will launch `OVITO <https://ovito.org>`_ with
 a `data file <https://docs.lammps.org/write_data.html>`_ containing the
