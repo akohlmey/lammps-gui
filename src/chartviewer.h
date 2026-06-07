@@ -375,6 +375,21 @@ public:
     qreal displayWidth() const { return rawWidth; }
 
     /**
+     * @brief Set how the processed (smoothed) data series is displayed
+     * @param mode  Lines, points, or both
+     * @param color Series color (invalid color falls back to the theme default)
+     * @param width Line width (used for the line and lines+points modes)
+     */
+    void setSmoothStyle(ChartDisplayMode mode, const QColor &color, qreal width);
+
+    /** @brief Current processed-series display mode */
+    ChartDisplayMode smoothMode() const { return smoothmode; }
+    /** @brief Current processed-series color (may be invalid, meaning the theme default) */
+    QColor smoothColor() const { return smoothcolor; }
+    /** @brief Current processed-series line width */
+    qreal smoothWidth() const { return smoothwidth; }
+
+    /**
      * @brief Overlay a fit curve on the chart
      * @param points Curve points (x, y) drawn as an overlay line; created on
      *               the first call and replaced on subsequent calls
@@ -400,18 +415,27 @@ public:
     QString getYLabel() const;
 
 private:
+    /// Add (or restyle) a line series and its on-demand scatter twin to show
+    /// the data as lines, points, or both, in the given color and width.
+    void renderSeries(QLineSeries *line, QScatterSeries *&points, ChartDisplayMode mode,
+                      const QColor &color, qreal width);
+
     std::unique_ptr<ChartBackend> backend; ///< Rendering backend (QtGraphs or QtCharts)
     double lastX;                          ///< Last (largest) x value appended
     int index;                             ///< Chart index
     int window, order;                     ///< Smoothing window and polynomial order
     QLineSeries *series, *smooth;          ///< Raw and smoothed data series
     QScatterSeries *scatter;               ///< Raw data drawn as points (created on demand)
+    QScatterSeries *smoothScatter;         ///< Processed data drawn as points (created on demand)
     QLineSeries *fit;                      ///< Optional fit-curve overlay (created on demand)
     QTime lastUpdate;                      ///< Time of last chart update
     bool doRaw, doSmooth;                  ///< Flags for showing raw/smoothed data
     ChartDisplayMode dispmode;             ///< How the raw series is drawn
     QColor rawColor;                       ///< Raw series color override (invalid = theme default)
     qreal rawWidth;                        ///< Raw series line width
+    ChartDisplayMode smoothmode;           ///< How the processed series is drawn
+    QColor smoothcolor;                    ///< Processed series color (invalid = theme default)
+    qreal smoothwidth;                     ///< Processed series line width
 };
 #endif
 

@@ -34,6 +34,7 @@
 #include <QEvent>
 #include <QFileDialog>
 #include <QFormLayout>
+#include <QGroupBox>
 #include <QHBoxLayout>
 #include <QIcon>
 #include <QKeySequence>
@@ -133,7 +134,7 @@ ChartWindow::ChartWindow(const QString &_filename, LammpsGui *_lammpsgui, QWidge
     // list of choices must be kepy in sync with list in preferences
     smooth = new QComboBox;
     smooth->addItem("Raw");
-    smooth->addItem("Smooth");
+    smooth->addItem("Smoothed");
     smooth->addItem("Both");
     smooth->setCurrentIndex(smoothchoice);
     window = new QSpinBox;
@@ -408,47 +409,82 @@ void ChartWindow::changeStyle()
 
     QDialog dialog(this);
     dialog.setWindowTitle("Chart Style");
-    auto *form = new QFormLayout(&dialog);
+    auto *layout = new QVBoxLayout(&dialog);
 
-    auto *modebox = new QComboBox;
-    modebox->addItem("Lines", static_cast<int>(ChartDisplayMode::Lines));
-    modebox->addItem("Points", static_cast<int>(ChartDisplayMode::Points));
-    modebox->addItem("Lines + Points", static_cast<int>(ChartDisplayMode::LinesAndPoints));
-    modebox->setCurrentIndex(static_cast<int>(chart->displayMode()));
-    form->addRow("Display:", modebox);
-
-    QColor chosen = chart->displayColor();
-    if (!chosen.isValid()) chosen = QColor(100, 150, 255); // default raw brush color
-    auto *colorbtn   = new QPushButton;
-    auto setBtnColor = [colorbtn](const QColor &c) {
-        colorbtn->setText(c.name());
-        colorbtn->setStyleSheet(QString("background-color: %1; color: %2;")
-                                    .arg(c.name(), (c.lightness() < 128) ? "white" : "black"));
+    // build a colored push button that edits the referenced color in place
+    auto colorButton = [&dialog](QColor &chosen) {
+        auto *btn        = new QPushButton;
+        auto setBtnColor = [btn](const QColor &c) {
+            btn->setText(c.name());
+            btn->setStyleSheet(QString("background-color: %1; color: %2;")
+                                   .arg(c.name(), (c.lightness() < 128) ? "white" : "black"));
+        };
+        setBtnColor(chosen);
+        QObject::connect(btn, &QPushButton::clicked, &dialog, [&chosen, btn, setBtnColor]() {
+            const QColor c = QColorDialog::getColor(chosen, btn, "Series Color");
+            if (c.isValid()) {
+                chosen = c;
+                setBtnColor(c);
+            }
+        });
+        return btn;
     };
-    setBtnColor(chosen);
-    connect(colorbtn, &QPushButton::clicked, &dialog, [&]() {
-        const QColor c = QColorDialog::getColor(chosen, &dialog, "Series Color");
-        if (c.isValid()) {
-            chosen = c;
-            setBtnColor(c);
-        }
-    });
-    form->addRow("Color:", colorbtn);
 
-    auto *widthspin = new QDoubleSpinBox;
-    widthspin->setRange(0.5, 20.0);
-    widthspin->setSingleStep(0.5);
-    widthspin->setValue(chart->displayWidth());
-    form->addRow("Line width:", widthspin);
+    // build a display-mode selector preset to the given mode
+    auto modeBox = [](ChartDisplayMode mode) {
+        auto *mb = new QComboBox;
+        mb->addItem("Lines", static_cast<int>(ChartDisplayMode::Lines));
+        mb->addItem("Points", static_cast<int>(ChartDisplayMode::Points));
+        mb->addItem("Lines + Points", static_cast<int>(ChartDisplayMode::LinesAndPoints));
+        mb->setCurrentIndex(static_cast<int>(mode));
+        return mb;
+    };
+
+    // build a line-width spin box preset to the given width
+    auto widthBox = [](qreal width) {
+        auto *w = new QDoubleSpinBox;
+        w->setRange(0.5, 20.0);
+        w->setSingleStep(0.5);
+        w->setValue(width);
+        return w;
+    };
+
+    // raw data section
+    QColor rawChosen = chart->displayColor();
+    if (!rawChosen.isValid()) rawChosen = QColor(100, 150, 255);
+    auto *rawMode      = modeBox(chart->displayMode());
+    auto *rawColorBtn  = colorButton(rawChosen);
+    auto *rawWidthSpin = widthBox(chart->displayWidth());
+    auto *rawBox       = new QGroupBox("Raw data");
+    auto *rawForm      = new QFormLayout(rawBox);
+    rawForm->addRow("Display:", rawMode);
+    rawForm->addRow("Color:", rawColorBtn);
+    rawForm->addRow("Line width:", rawWidthSpin);
+    layout->addWidget(rawBox);
+
+    // processed data section
+    QColor procChosen = chart->smoothColor();
+    if (!procChosen.isValid()) procChosen = QColor(255, 125, 125);
+    auto *procMode      = modeBox(chart->smoothMode());
+    auto *procColorBtn  = colorButton(procChosen);
+    auto *procWidthSpin = widthBox(chart->smoothWidth());
+    auto *procBox       = new QGroupBox("Smoothed data");
+    auto *procForm      = new QFormLayout(procBox);
+    procForm->addRow("Display:", procMode);
+    procForm->addRow("Color:", procColorBtn);
+    procForm->addRow("Line width:", procWidthSpin);
+    layout->addWidget(procBox);
 
     auto *buttons = new QDialogButtonBox(QDialogButtonBox::Ok | QDialogButtonBox::Cancel);
     connect(buttons, &QDialogButtonBox::accepted, &dialog, &QDialog::accept);
     connect(buttons, &QDialogButtonBox::rejected, &dialog, &QDialog::reject);
-    form->addRow(buttons);
+    layout->addWidget(buttons);
 
     if (dialog.exec() == QDialog::Accepted) {
-        const auto mode = static_cast<ChartDisplayMode>(modebox->currentData().toInt());
-        chart->setDisplayStyle(mode, chosen, widthspin->value());
+        chart->setDisplayStyle(static_cast<ChartDisplayMode>(rawMode->currentData().toInt()),
+                               rawChosen, rawWidthSpin->value());
+        chart->setSmoothStyle(static_cast<ChartDisplayMode>(procMode->currentData().toInt()),
+                              procChosen, procWidthSpin->value());
     }
 }
 
@@ -800,8 +836,9 @@ bool ChartWindow::eventFilter(QObject *watched, QEvent *event)
 
 ChartViewer::ChartViewer(const QString &title, int _index, QWidget *parent) :
     QWidget(parent), lastX(-1.0), index(_index), window(10), order(4), series(new QLineSeries),
-    smooth(nullptr), scatter(nullptr), fit(nullptr), doRaw(true), doSmooth(false),
-    dispmode(ChartDisplayMode::Lines), rawColor(), rawWidth(3.0)
+    smooth(nullptr), scatter(nullptr), smoothScatter(nullptr), fit(nullptr), doRaw(true),
+    doSmooth(false), dispmode(ChartDisplayMode::Lines), rawColor(), rawWidth(3.0),
+    smoothmode(ChartDisplayMode::Lines), smoothcolor(), smoothwidth(3.0)
 {
 #ifdef LAMMPS_GUI_USE_QTGRAPHS
     backend = std::make_unique<QtGraphsBackend>();
@@ -959,12 +996,14 @@ void ChartViewer::resetZoom()
 void ChartViewer::smoothParam(bool _doRaw, bool _doSmooth, int _window, int _order)
 {
     // hide raw plot (keep the series alive; data is still needed for smoothing)
-    if (!_doRaw && series) {
-        series->setVisible(false);
+    if (!_doRaw) {
+        if (series) series->setVisible(false);
+        if (scatter) scatter->setVisible(false);
     }
-    // hide smooth plot (keep the series alive for quick re-enable)
-    if (!_doSmooth && smooth) {
-        smooth->setVisible(false);
+    // hide processed plot (keep the series alive for quick re-enable)
+    if (!_doSmooth) {
+        if (smooth) smooth->setVisible(false);
+        if (smoothScatter) smoothScatter->setVisible(false);
     }
     doRaw    = _doRaw;
     doSmooth = _doSmooth;
@@ -1017,6 +1056,17 @@ void ChartViewer::setDisplayStyle(ChartDisplayMode mode, const QColor &color, qr
 
 /* -------------------------------------------------------------------- */
 
+void ChartViewer::setSmoothStyle(ChartDisplayMode mode, const QColor &color, qreal width)
+{
+    smoothmode  = mode;
+    smoothcolor = color;
+    smoothwidth = width;
+    updateSmooth();
+    resetZoom();
+}
+
+/* -------------------------------------------------------------------- */
+
 void ChartViewer::setFitCurve(const QList<QPointF> &points)
 {
     if (!fit) {
@@ -1062,6 +1112,33 @@ QList<QPointF> calc_sgsmooth(const QList<QPointF> &input, std::size_t window, in
 
 // update smooth plot data
 
+void ChartViewer::renderSeries(QLineSeries *line, QScatterSeries *&points, ChartDisplayMode mode,
+                               const QColor &color, qreal width)
+{
+    const bool wantLines  = (mode != ChartDisplayMode::Points);
+    const bool wantPoints = (mode != ChartDisplayMode::Lines);
+
+    // line series
+    if (!backend->hasSeries(line))
+        backend->addSeries(line, color, width);
+    else
+        backend->styleSeries(line, color, width);
+    line->setVisible(wantLines);
+
+    // matching points, created on demand and kept in sync with the line
+    if (wantPoints) {
+        if (!points) points = new QScatterSeries;
+        points->replace(line->points());
+        if (!backend->hasSeries(points))
+            backend->addSeries(points, color, width);
+        else
+            backend->styleSeries(points, color, width);
+        points->setVisible(true);
+    } else if (points) {
+        points->setVisible(false);
+    }
+}
+
 void ChartViewer::updateSmooth()
 {
     QSettings settings;
@@ -1072,40 +1149,16 @@ void ChartViewer::updateSmooth()
     if ((smoothidx < 0) || (smoothidx >= mybrushes.size())) smoothidx = 0;
     settings.endGroup();
 
-    const QColor rawcolor = rawColor.isValid() ? rawColor : mybrushes[rawidx].color();
-    const bool wantLines  = (dispmode != ChartDisplayMode::Points);
-    const bool wantPoints = (dispmode != ChartDisplayMode::Lines);
+    const QColor rawcol = rawColor.isValid() ? rawColor : mybrushes[rawidx].color();
+    const QColor smcol  = smoothcolor.isValid() ? smoothcolor : mybrushes[smoothidx].color();
 
-    if (doRaw) {
-        // raw data as a line series
-        if (!backend->hasSeries(series))
-            backend->addSeries(series, rawcolor, rawWidth);
-        else
-            backend->styleSeries(series, rawcolor, rawWidth);
-        series->setVisible(wantLines);
-
-        // raw data as points, created on demand and kept in sync with the line
-        if (wantPoints) {
-            if (!scatter) scatter = new QScatterSeries;
-            scatter->replace(series->points());
-            if (!backend->hasSeries(scatter))
-                backend->addSeries(scatter, rawcolor, rawWidth);
-            else
-                backend->styleSeries(scatter, rawcolor, rawWidth);
-            scatter->setVisible(true);
-        } else if (scatter) {
-            scatter->setVisible(false);
-        }
-    }
+    if (doRaw) renderSeries(series, scatter, dispmode, rawcol, rawWidth);
 
     if (doSmooth) {
         if (series->count() > (2 * window)) {
-            if (!smooth) {
-                smooth = new QLineSeries;
-                backend->addSeries(smooth, mybrushes[smoothidx].color(), 3.0);
-            }
-            smooth->setVisible(true);
+            if (!smooth) smooth = new QLineSeries;
             smooth->replace(calc_sgsmooth(series->points(), window, order));
+            renderSeries(smooth, smoothScatter, smoothmode, smcol, smoothwidth);
         }
     }
 }
