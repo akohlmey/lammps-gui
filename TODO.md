@@ -33,6 +33,26 @@ LAMMPS-GUI TODO list:
   These could make a different category of tutorials
   relative to the existing: atomic / molecular simulations versus materials science
 
+## Snapshot viewer (SlideShow) enhancements
+  Follow-ups to the "view arbitrary image files in the snapshot viewer"
+  feature (helpers `isImageFile()`, `SlideShow` ImageMagick conversion +
+  standalone mode, `viewFile()` routing, and "Open Image File(s)...").
+  - Cache converted images. For formats Qt cannot decode, `SlideShow` shells
+    out to ImageMagick (`magick`/`convert`) in `readImageFile()` and currently
+    re-converts the file every time it is displayed (e.g. on each navigation
+    back to it). Cache the temporary PNGs -- keyed by source path + mtime so
+    stale conversions are refreshed -- so each exotic-format file is converted
+    at most once per session; clean up the temp files on close.
+  - Extract movie frames with FFmpeg. Treat movie files (mp4/avi/mkv/webm/
+    animated gif/...) as image sources: if `ffmpeg` is available, extract the
+    frames to temporary PNGs (e.g. `ffmpeg -i movie.mp4 frame_%05d.png`) and
+    load them into the `SlideShow` so animations can be reviewed frame by
+    frame with the existing navigation/zoom/playback controls. This is the
+    inverse of the existing FFmpeg movie *export*. Detect movie files by
+    extension (extend an `isMovieFile()` helper alongside `isImageFile()`),
+    route them in `viewFile()` / "Open Image File(s)..." (or a sibling "Open
+    Movie..."), and reuse the conversion-cache cleanup from the item above.
+
 # Refactoring status and recommendations
 
 This is a staged plan for code cleanups and C++17 modernization. The
