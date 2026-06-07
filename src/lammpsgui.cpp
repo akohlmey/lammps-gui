@@ -170,6 +170,8 @@ void LammpsGui::createFileMenu()
 
     addMenuAction(menu, ":/icons/document-open.png", "&Open", "Ctrl+O", &LammpsGui::open);
     addMenuAction(menu, ":/icons/document-open.png", "&View", "Ctrl+Shift+F", &LammpsGui::view);
+    addMenuAction(menu, ":/icons/image-x-generic.png", "Open &Image File(s)...", "",
+                  &LammpsGui::openImages);
     addMenuAction(menu, ":/icons/document-open.png", "Inspect &Restart", "Ctrl+Shift+R",
                   &LammpsGui::inspect);
     menu->addSeparator();
@@ -1102,6 +1104,18 @@ void LammpsGui::openFile(const QString &fileName)
 // open file in read-only mode for viewing in separate window
 void LammpsGui::viewFile(const QString &fileName)
 {
+    // image files would be garbage in the text viewer; show them in the
+    // standalone snapshot viewer instead (which converts via ImageMagick if
+    // needed)
+    if (isImageFile(fileName)) {
+        auto *viewer = new SlideShow(fileName);
+        viewer->setAttribute(Qt::WA_DeleteOnClose);
+        viewer->setWindowIcon(QIcon(Cfg::MAIN_ICON));
+        viewer->addImage(fileName);
+        viewer->show();
+        return;
+    }
+
     QFile file(fileName);
     if (!file.open(QIODevice::ReadOnly | QFile::Text)) {
         warning(this, "LAMMPS-GUI Warning", "Cannot open file " + fileName + ":",
@@ -1111,6 +1125,23 @@ void LammpsGui::viewFile(const QString &fileName)
         auto *viewer = new FileViewer(fileName, this);
         viewer->show();
     }
+}
+
+// open one or more image files in a standalone snapshot viewer
+void LammpsGui::openImages()
+{
+    const QStringList files = QFileDialog::getOpenFileNames(
+        this, "Open Image File(s)", currentDir,
+        "Image files (*.png *.jpg *.jpeg *.bmp *.ppm *.pgm *.gif *.tif *.tiff *.tga *.eps *.sgi "
+        "*.webp);;All files (*)");
+    if (files.isEmpty()) return;
+
+    auto *viewer = new SlideShow(files.first());
+    viewer->setAttribute(Qt::WA_DeleteOnClose);
+    viewer->setWindowIcon(QIcon(Cfg::MAIN_ICON));
+    for (const QString &f : files)
+        viewer->addImage(f);
+    viewer->show();
 }
 
 void LammpsGui::purgeInspectList()

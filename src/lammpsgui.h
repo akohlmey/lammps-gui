@@ -220,6 +220,9 @@ private slots:
     /** @brief View a file in read-only mode */
     void view();
 
+    /** @brief Open one or more image files in a standalone snapshot viewer */
+    void openImages();
+
     /** @brief Inspect a data file */
     void inspect();
 
