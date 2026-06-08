@@ -9,15 +9,20 @@
 // This software is distributed under the GNU General Public License version 2 or later.
 ////////////////////////////////////////////////////////////////////////////////////////
 
+#include "chartviewer.h"
 #include "constants.h"
+#include "fileviewer.h"
 #include "helpers.h"
 #include "lammpsgui.h"
+#include "plotdata.h"
+#include "slideshow.h"
 
 #include <QApplication>
 #include <QCommandLineOption>
 #include <QCommandLineParser>
 #include <QFileInfo>
 #include <QFont>
+#include <QIcon>
 #include <QLocale>
 #include <QSettings>
 #include <QString>
@@ -75,7 +80,10 @@ int main(int argc, char *argv[])
     parser.addOptions(
         {{{"x", "width"}, "Override LAMMPS-GUI editor window width", "width"},
          {{"y", "height"}, "Override LAMMPS-GUI editor window height", "height"},
-         {{"s", "style"}, "Set LAMMPS-GUI's visual style (default: Fusion)", "style", "Fusion"}});
+         {{"s", "style"}, "Set LAMMPS-GUI's visual style (default: Fusion)", "style", "Fusion"},
+         {{"c", "chart"}, "Open FILE directly in the chart/plot viewer", "file"},
+         {{"i", "image"}, "Open FILE in the snapshot viewer (may be given multiple times)", "file"},
+         {{"t", "text"}, "Open FILE in the text file viewer", "file"}});
     parser.addPositionalArgument("file", "The LAMMPS input file to open (optional).");
     parser.process(app);
 
@@ -93,7 +101,6 @@ int main(int argc, char *argv[])
     }
 #endif
 
-    QString infile;
     int width  = parser.value("width").toInt();
     int height = parser.value("height").toInt();
 
@@ -114,10 +121,73 @@ int main(int argc, char *argv[])
     GUI_MONOFONT->setFixedPitch(true);
     GUI_ALLFONT->setStyleHint(QFont::SansSerif, QFont::PreferQuality);
 
-    QStringList args = parser.positionalArguments();
+    Q_INIT_RESOURCE(lammpsgui);
+
+    // -c/--chart: open a data file directly in a standalone chart window
+    if (parser.isSet("chart")) {
+        const QString fileName = parser.value("chart");
+        QString error;
+        PlotData data = loadPlotData(fileName, &error);
+        if (data.isEmpty()) {
+            critical(nullptr, "Plot Data File",
+                     "Could not read data from file:",
+                     error.isEmpty() ? fileName : error);
+            return 1;
+        }
+        auto *win = new ChartWindow(fileName, nullptr);
+        win->setAttribute(Qt::WA_DeleteOnClose);
+        win->setWindowTitle(QString("Plot: %1 - LAMMPS-GUI").arg(QFileInfo(fileName).fileName()));
+        win->setWindowIcon(QIcon(Cfg::MAIN_ICON));
+        win->setMinimumSize(Cfg::MINIMUM_WIDTH, Cfg::MINIMUM_HEIGHT);
+        // plot all columns with column 0 as x-axis
+        QList<int> ycols;
+        for (int i = 1; i < data.columnCount(); ++i)
+            ycols.append(i);
+        if (ycols.isEmpty() && data.columnCount() > 0) ycols.append(0);
+        win->loadData(data, 0, ycols);
+        win->show();
+        return app.exec();
+    }
+
+    // -i/--image: open one or more files in a standalone snapshot viewer
+    if (parser.isSet("image")) {
+        const QStringList imageFiles = parser.values("image");
+        if (imageFiles.isEmpty()) return 1;
+        auto *viewer = new SlideShow(imageFiles.first());
+        viewer->setAttribute(Qt::WA_DeleteOnClose);
+        viewer->setWindowIcon(QIcon(Cfg::MAIN_ICON));
+        for (const QString &f : imageFiles)
+            viewer->addImage(f);
+        viewer->show();
+        return app.exec();
+    }
+
+    // -t/--text: open a file in a standalone text viewer
+    if (parser.isSet("text")) {
+        const QString fileName = parser.value("text");
+        if (isImageFile(fileName)) {
+            critical(nullptr, "Cannot View Image as Text",
+                     "\"" + QFileInfo(fileName).fileName()
+                         + "\" is an image file. Use -i/--image to open it.");
+            return 1;
+        }
+        if (looksLikeBinaryFile(fileName)) {
+            critical(nullptr, "Cannot View Binary File as Text",
+                     "\"" + QFileInfo(fileName).fileName()
+                         + "\" appears to be a binary file.");
+            return 1;
+        }
+        auto *viewer = new FileViewer(fileName, nullptr);
+        viewer->setAttribute(Qt::WA_DeleteOnClose);
+        viewer->show();
+        return app.exec();
+    }
+
+    // default: open the full LAMMPS-GUI main window
+    QString infile;
+    const QStringList args = parser.positionalArguments();
     if (!args.empty()) infile = args[0];
 
-    Q_INIT_RESOURCE(lammpsgui);
     LammpsGui w(nullptr, infile, width, height);
     w.show();
 
