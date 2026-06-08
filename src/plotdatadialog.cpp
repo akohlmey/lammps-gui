@@ -20,6 +20,7 @@
 #include <QHBoxLayout>
 #include <QHeaderView>
 #include <QLabel>
+#include <QLineEdit>
 #include <QScrollArea>
 #include <QStringList>
 #include <QTableWidget>
@@ -37,14 +38,21 @@ PlotDataDialog::PlotDataDialog(const PlotData &data, QWidget *parent) : QDialog(
     layout->addWidget(
         new QLabel("The first unselected column will be used as the x-axis."));
 
-    // y-column selection checkboxes (default: every column but the first)
+    // y-column selection checkboxes + name editors (default: every column but the first)
     auto *ybox = new QGroupBox("Columns to plot (uncheck the x-axis column)");
     auto *yl   = new QVBoxLayout(ybox);
     for (int c = 0; c < ncol; ++c) {
-        auto *cb = new QCheckBox(data.columnName(c));
+        auto *cb = new QCheckBox;
         cb->setChecked(c != 0);
         ychecks.append(cb);
-        yl->addWidget(cb);
+        auto *nameEdit = new QLineEdit(data.columnName(c));
+        nameEdit->setPlaceholderText("column name");
+        nameEdit->setMinimumWidth(120);
+        ynames.append(nameEdit);
+        auto *row = new QHBoxLayout;
+        row->addWidget(cb);
+        row->addWidget(nameEdit, 1);
+        yl->addLayout(row);
     }
     auto *scroll = new QScrollArea;
     scroll->setWidgetResizable(true);
@@ -91,6 +99,14 @@ QList<int> PlotDataDialog::yColumns() const
     for (int i = 0; i < ychecks.size(); ++i)
         if (ychecks[i]->isChecked()) result.append(i);
     return result;
+}
+
+QStringList PlotDataDialog::columnNames() const
+{
+    QStringList names;
+    for (auto *e : ynames)
+        names << (e->text().trimmed().isEmpty() ? e->placeholderText() : e->text().trimmed());
+    return names;
 }
 
 // Local Variables:

@@ -77,6 +77,12 @@ public:
     void setColumnNames(const QStringList &columnNames);
 
     /**
+     * @brief Rename columns in place without clearing data
+     * @param newNames New names; length must match columnCount() (extra entries are ignored)
+     */
+    void renameColumns(const QStringList &newNames);
+
+    /**
      * @brief Append one row of values, one per column
      * @param row Values to append (size must equal columnCount())
      * @return true on success, false if the size does not match

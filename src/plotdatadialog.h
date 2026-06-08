@@ -14,8 +14,10 @@
 
 #include <QDialog>
 #include <QList>
+#include <QStringList>
 
 class QCheckBox;
+class QLineEdit;
 class PlotData;
 
 /**
@@ -59,8 +61,18 @@ public:
      */
     QList<int> yColumns() const;
 
+    /**
+     * @brief User-edited column names (may differ from the original parsed names)
+     *
+     * Each entry corresponds to a column by index.  Names are pre-filled from
+     * the parsed data and can be changed in the dialog before accepting.
+     * @return List of column name strings, one per column
+     */
+    QStringList columnNames() const;
+
 private:
     QList<QCheckBox *> ychecks; ///< per-column y selection checkboxes
+    QList<QLineEdit *> ynames;  ///< per-column name editors
 };
 
 #endif

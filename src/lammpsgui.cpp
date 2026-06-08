@@ -1843,6 +1843,9 @@ void LammpsGui::plotDataFile()
         return;
     }
 
+    // apply any user-edited column names before plotting
+    data.renameColumns(dialog.columnNames());
+
     // standalone chart window (no live simulation); cleans itself up on close
     auto *win = new ChartWindow(fileName, nullptr);
     win->setAttribute(Qt::WA_DeleteOnClose);

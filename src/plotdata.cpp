@@ -27,6 +27,12 @@ void PlotData::setColumnNames(const QStringList &columnNames)
     cols.assign(columnNames.size(), {});
 }
 
+void PlotData::renameColumns(const QStringList &newNames)
+{
+    for (int i = 0; i < newNames.size() && i < static_cast<int>(names.size()); ++i)
+        names[i] = newNames[i];
+}
+
 bool PlotData::appendRow(const std::vector<double> &row)
 {
     if (static_cast<int>(row.size()) != columnCount()) return false;
