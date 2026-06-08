@@ -705,7 +705,9 @@ void ChartWindow::postProcess()
                     "The expression did not produce a usable curve over the data range.");
             return;
         }
-        chart->setFitCurve(result.points, expr);
+        chart->setFitCurve(result.points, expr, /* eosMode= */ true);
+        smooth->setItemText(1, "Custom f(x)");
+        smooth->setCurrentIndex(2); // "Both" = raw data + function overlay
         information(this, "Custom Function",
                     QString("Plotted f(x) = %1\nover x in [%2, %3].")
                         .arg(expr)
@@ -730,7 +732,10 @@ void ChartWindow::postProcess()
             return;
         }
         const QString label = fitLabelEdit->text().trimmed();
-        chart->setFitCurve(fit.curve, label.isEmpty() ? expr : label);
+        const QString fitName = label.isEmpty() ? expr : label;
+        chart->setFitCurve(fit.curve, fitName, /* eosMode= */ true);
+        smooth->setItemText(1, fitName.length() > 12 ? "Custom fit" : fitName);
+        smooth->setCurrentIndex(2); // "Both" = raw data + fit overlay
 
         QString report = QString("Custom fit of  f(x) = %1\n").arg(expr);
         if (!label.isEmpty()) report += QString("(%1)\n").arg(label);
@@ -755,7 +760,11 @@ void ChartWindow::postProcess()
             const double x = xmin + (xmax - xmin) * k / Ncurve;
             curve.append(QPointF(x, evalPolynomial(f.coeffs, x)));
         }
-        chart->setFitCurve(curve);
+        const QString polyName =
+            QString("Poly deg %1").arg(static_cast<int>(f.coeffs.size()) - 1);
+        chart->setFitCurve(curve, polyName, /* eosMode= */ true);
+        smooth->setItemText(1, polyName);
+        smooth->setCurrentIndex(2); // "Both" = raw data + fit overlay
 
         QString report =
             QString("Polynomial fit of degree %1\n\n").arg(static_cast<int>(f.coeffs.size()) - 1);
@@ -886,7 +895,9 @@ void ChartWindow::selectSmooth(int)
             break;
     }
     const bool isEos = currentChart() && currentChart()->isEosFit();
-    smooth->setItemText(1, isEos ? "EOS fit" : "Smoothed");
+    // only reset label to "Smoothed" when no fit overlay is active; otherwise
+    // preserve whatever name was set when the fit was applied (EOS fit, Poly deg N, etc.)
+    if (!isEos) smooth->setItemText(1, "Smoothed");
     // SG smooth parameters are only relevant when smoothing without a fit overlay
     const bool sgEnabled = doSmooth && !isEos;
     window->setEnabled(sgEnabled);
