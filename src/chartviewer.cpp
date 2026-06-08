@@ -828,8 +828,8 @@ void ChartWindow::postProcess()
         smooth->setItemText(1, "EOS fit");
         smooth->setCurrentIndex(2); // "Both" = raw points + EOS fit line
 
-        // derive lattice constant: a0 = cbrt(V0 / N)
-        const double a0 = std::cbrt(f.v0 / static_cast<double>(natoms));
+        // derive lattice constant: a0 = cbrt(N * V0)
+        const double a0 = std::cbrt(static_cast<double>(natoms) * f.v0);
 
         // Show the result in a dialog with the rendered formula
         auto *resultDlg = new QDialog(this);

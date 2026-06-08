@@ -165,9 +165,9 @@ currently selected property.  The following analyses are available:
   to energy-versus-volume data (x = volume per unit cell, y = energy).  A
   confirmation dialog lets you verify the x and y column assignments and
   enter the number of atoms per unit cell N (default 1; set to 1 when the
-  x data already gives volume per atom).  The fit reports the equilibrium
+  x data is already the unit cell volume).  The fit reports the equilibrium
   volume V\ :sub:`0`, the derived lattice constant
-  a\ :sub:`0` = (V\ :sub:`0` / N)\ :sup:`1/3`, the equilibrium energy
+  a\ :sub:`0` = (N V\ :sub:`0`)\ :sup:`1/3`, the equilibrium energy
   E\ :sub:`0`, the bulk modulus B\ :sub:`0`, and its pressure
   derivative B\ :sub:`0`'.
 - *Custom function* evaluates a user-supplied mathematical expression
