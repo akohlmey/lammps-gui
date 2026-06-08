@@ -164,8 +164,9 @@ currently selected property.  The following analyses are available:
   <https://en.wikipedia.org/wiki/Birch%E2%80%93Murnaghan_equation_of_state>`_
   to energy-versus-volume data (x = volume per unit cell, y = energy).  A
   confirmation dialog lets you verify the x and y column assignments and
-  enter the number of atoms per unit cell N (default 1; set to 1 when the
-  x data is already the unit cell volume).  The fit reports the equilibrium
+  enter the number of atoms in the conventional unit cell N (default 1;
+  e.g. 4 for FCC, 2 for BCC or HCP; use N = 1 when the x data is already
+  the conventional cell volume rather than volume per atom).  The fit reports the equilibrium
   volume V\ :sub:`0`, the derived lattice constant
   a\ :sub:`0` = (N V\ :sub:`0`)\ :sup:`1/3`, the equilibrium energy
   E\ :sub:`0`, the bulk modulus B\ :sub:`0`, and its pressure

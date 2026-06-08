@@ -792,12 +792,16 @@ void ChartWindow::postProcess()
         eosLayout->addLayout(eosInfo);
         eosLayout->addWidget(new QLabel(
             "\nAtoms per unit cell N: the lattice constant is derived as\n"
-            "  a₀ = ∛(V₀ / N)\n"
-            "Set N=1 if the x-axis is already volume per atom."));
+            "  a₀ = ∛(N × V₀)\n"
+            "Use the conventional unit cell (e.g. N=4 for FCC, N=2 for BCC/HCP).\n"
+            "Set N=1 only when the x-axis is already the conventional cell volume."));
         auto *natSpin = new QSpinBox;
         natSpin->setRange(1, 1000);
         natSpin->setValue(1);
-        natSpin->setToolTip("Number of atoms per unit cell");
+        natSpin->setToolTip(
+            "Number of atoms in the conventional unit cell\n"
+            "(e.g. 4 for FCC, 2 for BCC/HCP).\n"
+            "Use N=1 when x is already the conventional cell volume.");
         auto *natForm = new QFormLayout;
         natForm->addRow("Atoms per unit cell N:", natSpin);
         eosLayout->addLayout(natForm);
