@@ -766,82 +766,106 @@ void ChartWindow::postProcess()
         return;
     }
 
-    // Birch-Murnaghan EOS fit (x = lattice constant, y = cohesive energy)
+    // Birch-Murnaghan EOS fit: second dialog — confirm columns + atoms per unit cell
     {
         const QString xLabel = chart->getXLabel();
         const QString yLabel = chart->getYLabel().isEmpty() ? chart->getName() : chart->getYLabel();
-        const QString msg =
-            QString("The Birch-Murnaghan EOS fit requires:\n"
-                    "  x-axis: lattice constant\n"
-                    "  y-axis: cohesive energy\n\n"
-                    "This chart has:\n"
-                    "  x: %1\n"
-                    "  y: %2\n\n"
-                    "Click OK to proceed, or Cancel to select a different property.")
-                .arg(xLabel)
-                .arg(yLabel);
-        if (QMessageBox::question(this, "Birch-Murnaghan EOS Fit", msg,
-                                  QMessageBox::Ok | QMessageBox::Cancel)
-            != QMessageBox::Ok)
+
+        QDialog eosConfirm(this);
+        eosConfirm.setWindowTitle("Birch-Murnaghan EOS Fit — Column Setup");
+        auto *eosLayout = new QVBoxLayout(&eosConfirm);
+        eosLayout->addWidget(new QLabel(
+            "The Birch-Murnaghan EOS fit expects volume on the x-axis and cohesive energy "
+            "on the y-axis.\n\nThis chart has:"));
+        auto *eosInfo = new QFormLayout;
+        eosInfo->addRow("x-axis:", new QLabel("<b>" + xLabel + "</b>"));
+        eosInfo->addRow("y-axis:", new QLabel("<b>" + yLabel + "</b>"));
+        eosLayout->addLayout(eosInfo);
+        eosLayout->addWidget(new QLabel(
+            "\nAtoms per unit cell N: the lattice constant is derived as\n"
+            "  a₀ = ∛(V₀ / N)\n"
+            "Set N=1 if the x-axis is already volume per atom."));
+        auto *natSpin = new QSpinBox;
+        natSpin->setRange(1, 1000);
+        natSpin->setValue(1);
+        natSpin->setToolTip("Number of atoms per unit cell");
+        auto *natForm = new QFormLayout;
+        natForm->addRow("Atoms per unit cell N:", natSpin);
+        eosLayout->addLayout(natForm);
+        auto *eosBtns = new QDialogButtonBox(QDialogButtonBox::Ok | QDialogButtonBox::Cancel);
+        connect(eosBtns, &QDialogButtonBox::accepted, &eosConfirm, &QDialog::accept);
+        connect(eosBtns, &QDialogButtonBox::rejected, &eosConfirm, &QDialog::reject);
+        eosLayout->addWidget(eosBtns);
+        if (eosConfirm.exec() != QDialog::Accepted) return;
+
+        const int natoms = natSpin->value();
+        const EosFit f   = birchMurnaghanFit(xs, ys);
+        if (!f.ok) {
+            warning(this, "Postprocess",
+                    "Birch-Murnaghan fit failed (needs >= 4 points, positive volumes, "
+                    "and a minimum within the data).");
             return;
+        }
+
+        QList<QPointF> curve;
+        for (int k = 0; k <= Ncurve; ++k) {
+            const double x = xmin + (xmax - xmin) * k / Ncurve;
+            if (x > 0.0) curve.append(QPointF(x, evalBirchMurnaghan(f, x)));
+        }
+        // EOS fit: hide in Raw mode, visible in EOS-fit/Both modes; raw data as points
+        chart->setFitCurve(curve, "EOS fit", /* eosMode= */ true);
+        chart->setDisplayStyle(ChartDisplayMode::Points, chart->displayColor(),
+                               chart->displayWidth());
+        smooth->setItemText(1, "EOS fit");
+        smooth->setCurrentIndex(2); // "Both" = raw points + EOS fit line
+
+        // derive lattice constant: a0 = cbrt(V0 / N)
+        const double a0 = std::cbrt(f.v0 / static_cast<double>(natoms));
+
+        // Show the result in a dialog with the rendered formula
+        auto *resultDlg = new QDialog(this);
+        resultDlg->setWindowTitle("Birch-Murnaghan EOS Fit");
+        resultDlg->setAttribute(Qt::WA_DeleteOnClose);
+        auto *dlgLayout = new QVBoxLayout(resultDlg);
+
+        auto *fmtLabel = new QLabel;
+        fmtLabel->setPixmap(QPixmap(":/icons/birch-murnaghan-eos.png"));
+        fmtLabel->setAlignment(Qt::AlignCenter);
+        dlgLayout->addWidget(fmtLabel);
+
+        auto *legend = new QLabel("where <i>V</i> is the unit cell volume "
+                                  "and <i>V</i><sub>0</sub> the equilibrium volume.");
+        legend->setAlignment(Qt::AlignCenter);
+        dlgLayout->addWidget(legend);
+
+        auto *resultForm = new QFormLayout;
+        auto makeVal     = [](double v, int prec) {
+            auto *l = new QLabel(QString::number(v, 'g', prec));
+            l->setTextInteractionFlags(Qt::TextSelectableByMouse);
+            return l;
+        };
+        resultForm->addRow(
+            "<b>V<sub>0</sub></b> &mdash; Equilibrium volume (from fit):", makeVal(f.v0, 8));
+        resultForm->addRow(
+            QString("<b>a<sub>0</sub></b> &mdash; Lattice constant ∛(V<sub>0</sub>/%1):")
+                .arg(natoms),
+            makeVal(a0, 8));
+        resultForm->addRow(
+            "<b>E<sub>0</sub></b> &mdash; Cohesive energy at V<sub>0</sub>:", makeVal(f.e0, 8));
+        resultForm->addRow(
+            "<b>B<sub>0</sub></b> &mdash; Bulk modulus (&minus;V<sub>0</sub> dP/dV at V<sub>0</sub>):",
+            makeVal(f.b0, 8));
+        resultForm->addRow(
+            "<b>B<sub>0</sub>'</b> &mdash; Pressure derivative dB/dP at P=0:",
+            makeVal(f.b0prime, 6));
+        resultForm->addRow("RMS residual:", makeVal(f.rms, 6));
+        dlgLayout->addLayout(resultForm);
+
+        auto *closeBtn = new QDialogButtonBox(QDialogButtonBox::Close);
+        connect(closeBtn, &QDialogButtonBox::rejected, resultDlg, &QDialog::accept);
+        dlgLayout->addWidget(closeBtn);
+        resultDlg->exec();
     }
-    const EosFit f = birchMurnaghanFit(xs, ys);
-    if (!f.ok) {
-        warning(this, "Postprocess",
-                "Birch-Murnaghan fit failed (needs >= 4 points, positive lattice constants, "
-                "and a minimum within the data).");
-        return;
-    }
-    QList<QPointF> curve;
-    for (int k = 0; k <= Ncurve; ++k) {
-        const double x = xmin + (xmax - xmin) * k / Ncurve;
-        if (x > 0.0) curve.append(QPointF(x, evalBirchMurnaghan(f, x)));
-    }
-    // EOS fit: hide in Raw mode, visible in EOS-fit/Both modes; raw data as points
-    chart->setFitCurve(curve, "EOS fit", /* eosMode= */ true);
-    chart->setDisplayStyle(ChartDisplayMode::Points, chart->displayColor(), chart->displayWidth());
-    smooth->setItemText(1, "EOS fit");
-    smooth->setCurrentIndex(2); // "Both" = raw points + EOS fit line
-
-    // Show the result in a dialog with the rendered formula (falling back to text)
-    auto *resultDlg = new QDialog(this);
-    resultDlg->setWindowTitle("Birch-Murnaghan EOS Fit");
-    resultDlg->setAttribute(Qt::WA_DeleteOnClose);
-    auto *dlgLayout = new QVBoxLayout(resultDlg);
-
-    auto *fmtLabel = new QLabel;
-    fmtLabel->setPixmap(QPixmap(":/icons/birch-murnaghan-eos.png"));
-    fmtLabel->setAlignment(Qt::AlignCenter);
-    dlgLayout->addWidget(fmtLabel);
-
-    auto *legend = new QLabel("where <i>V</i> is the unit cell volume "
-                              "and <i>V</i><sub>0</sub> the equilibrium volume.");
-    legend->setAlignment(Qt::AlignCenter);
-    dlgLayout->addWidget(legend);
-
-    auto *resultForm = new QFormLayout;
-    auto makeVal     = [](double v, int prec) {
-        auto *l = new QLabel(QString::number(v, 'g', prec));
-        l->setTextInteractionFlags(Qt::TextSelectableByMouse);
-        return l;
-    };
-    resultForm->addRow(
-        "<b>a<sub>0</sub></b> &mdash; Equilibrium lattice constant:", makeVal(f.v0, 8));
-    resultForm->addRow(
-        "<b>E<sub>0</sub></b> &mdash; Cohesive energy at a<sub>0</sub>:", makeVal(f.e0, 8));
-    resultForm->addRow(
-        "<b>B<sub>0</sub></b> &mdash; Bulk modulus (&minus;V<sub>0</sub> dP/dV at a<sub>0</sub>):",
-        makeVal(f.b0, 8));
-    resultForm->addRow(
-        "<b>B<sub>0</sub>'</b> &mdash; Pressure derivative dB/dP at P=0:", makeVal(f.b0prime, 6));
-    resultForm->addRow("RMS residual:", makeVal(f.rms, 6));
-    dlgLayout->addLayout(resultForm);
-
-    auto *closeBtn = new QDialogButtonBox(QDialogButtonBox::Close);
-    connect(closeBtn, &QDialogButtonBox::rejected, resultDlg, &QDialog::accept);
-    dlgLayout->addWidget(closeBtn);
-
-    resultDlg->exec();
 }
 
 void ChartWindow::selectSmooth(int)
