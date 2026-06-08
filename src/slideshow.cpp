@@ -373,7 +373,9 @@ void SlideShow::addImage(const QString &filename)
         scrollBar->setValue(lastidx);
     } else {
         // viewer mode, non-first image: dimensions already captured above;
-        // resize the window to the running maximum without reloading the display
+        // update the counter total and resize without reloading the display
+        imageCounter->setText(
+            QString("Image %1 / %2 :").arg(current + 1, 3).arg(imagefiles.size(), 3));
         adjustWindowSize();
     }
 }
