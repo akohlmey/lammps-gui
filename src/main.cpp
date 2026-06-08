@@ -15,6 +15,7 @@
 #include "helpers.h"
 #include "lammpsgui.h"
 #include "plotdata.h"
+#include "plotdatadialog.h"
 #include "slideshow.h"
 
 #include <QApplication>
@@ -134,17 +135,18 @@ int main(int argc, char *argv[])
                      error.isEmpty() ? fileName : error);
             return 1;
         }
+        PlotDataDialog dialog(data, nullptr);
+        if (dialog.exec() != QDialog::Accepted) return 0;
+        data.renameColumns(dialog.columnNames());
+        const int xcol      = dialog.xColumn();
+        QList<int> ycols    = dialog.yColumns();
+        if (ycols.isEmpty()) ycols.append(xcol);
         auto *win = new ChartWindow(fileName, nullptr);
         win->setAttribute(Qt::WA_DeleteOnClose);
         win->setWindowTitle(QString("Plot: %1 - LAMMPS-GUI").arg(QFileInfo(fileName).fileName()));
         win->setWindowIcon(QIcon(Cfg::MAIN_ICON));
         win->setMinimumSize(Cfg::MINIMUM_WIDTH, Cfg::MINIMUM_HEIGHT);
-        // plot all columns with column 0 as x-axis
-        QList<int> ycols;
-        for (int i = 1; i < data.columnCount(); ++i)
-            ycols.append(i);
-        if (ycols.isEmpty() && data.columnCount() > 0) ycols.append(0);
-        win->loadData(data, 0, ycols);
+        win->loadData(data, xcol, ycols);
         win->show();
         return app.exec();
     }

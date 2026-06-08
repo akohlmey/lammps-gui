@@ -33,7 +33,7 @@ available (On macOS use the Command key instead of Ctrl/Control).
      - Ctrl+/
      - Stop Active Run
    * - Ctrl+Shift+F
-     - View File
+     - View Text File
      - Ctrl+C
      - Copy text
      - Ctrl+Shift+V
@@ -75,7 +75,7 @@ available (On macOS use the Command key instead of Ctrl/Control).
      - Ctrl+Shift+G
      - LAMMPS-GUI Docs
    * - Ctrl+Shift+R
-     - Inspect Restart
+     - Inspect Restart File
      - Ctrl+Shift+O
      - View in OVITO
      - Ctrl+Shift+D
@@ -92,6 +92,12 @@ available (On macOS use the Command key instead of Ctrl/Control).
      - Context Help
      - Ctrl+Shift+T
      - LAMMPS Tutorial
+   * - Ctrl+Shift+J
+     - View Image File(s)
+     - Ctrl+Shift+P
+     - Plot Data File
+     -
+     -
    * - Ctrl+Shift+U
      - LAMMPS Update
      - Ctrl+Home

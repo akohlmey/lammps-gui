@@ -85,7 +85,8 @@ The plots are updated regularly with new data as the run progresses, so
 they can be used to visually monitor the evolution of available
 properties.  The update interval can be set in the *Preferences* dialog.
 By default, the raw data for the selected property is plotted as a blue
-graph.  From the "Plot:" drop menu on the second row and on the left,
+graph.  From the "Plot:" drop menu on the second row (immediately to the right of
+the *Chart Style...* and *Postprocess...* quick-access buttons),
 you can select whether to plot only raw data graph, only a smoothed data
 graph, or both graphs on top of each other.  The smoothing process uses
 a `Savitzky-Golay convolution filter
@@ -99,7 +100,10 @@ and a fourth order polynomial is fitted to the data in the window.
 The "Title:" and "Y:" input boxes allow to edit the text shown as the
 plot title and the y-axis label, respectively.  The text entered in the
 "Title:" box is applied to *all* charts, while the "Y:" text changes
-only the y-axis label of the currently *selected* plot.
+only the y-axis label of the currently *selected* plot.  In standalone
+plot mode (when plotting an external data file), an additional "X-Axis:"
+input box is shown to the right of "Y:" and sets the x-axis label for all
+charts.
 
 The window title shows the current run number that this chart window
 corresponds to.  Same as for the *Output* window, the chart window is
@@ -131,11 +135,12 @@ the log will contain *all* YAML output but *segmented* into individual
 runs.
 
 **Adjusting the chart style.** The *Chart Style...* entry in the chart
-window's *File* menu opens a dialog to change how the data is drawn.  The
-*Raw data* and *Smoothed data* series each have independent settings for
-the display style (*Lines*, *Points*, or *Lines and Points*), the color,
-and the line width.  This makes it possible, for example, to show the raw
-data as faint points and the smoothed curve as a bold line.
+window's *File* menu, or the chart-style quick-access button at the far
+left of the second toolbar row, opens a dialog to change how the data is
+drawn.  The *Raw data* and *Smoothed data* series each have independent
+settings for the display style (*Lines*, *Points*, or *Lines and Points*),
+the color, and the line width.  This makes it possible, for example, to
+show the raw data as faint points and the smoothed curve as a bold line.
 
 .. versionadded:: 2.1
 
@@ -143,8 +148,9 @@ data as faint points and the smoothed curve as a bold line.
    smoothed series were added.
 
 **Post-processing the data.** The *Postprocess...* entry in the chart
-window's *File* menu runs an analysis on the data of the currently
-selected property.  The following analyses are available:
+window's *File* menu, or the quick-access button immediately to the right
+of the *Chart Style...* button, runs an analysis on the data of the
+currently selected property.  The following analyses are available:
 
 - *Autocorrelation* computes the normalized autocorrelation function of
   the selected data up to a chosen maximum lag and shows it in a new
@@ -156,9 +162,14 @@ selected property.  The following analyses are available:
 - *Birch-Murnaghan EOS fit* fits a 4-parameter `Birch-Murnaghan equation
   of state
   <https://en.wikipedia.org/wiki/Birch%E2%80%93Murnaghan_equation_of_state>`_
-  to energy-versus-volume data (x = volume, y = energy) and reports the
-  equilibrium volume and energy, the bulk modulus, and its pressure
-  derivative.
+  to energy-versus-volume data (x = volume per unit cell, y = energy).  A
+  confirmation dialog lets you verify the x and y column assignments and
+  enter the number of atoms per unit cell N (default 1; set to 1 when the
+  x data already gives volume per atom).  The fit reports the equilibrium
+  volume V\ :sub:`0`, the derived lattice constant
+  a\ :sub:`0` = (V\ :sub:`0` / N)\ :sup:`1/3`, the equilibrium energy
+  E\ :sub:`0`, the bulk modulus B\ :sub:`0`, and its pressure
+  derivative B\ :sub:`0`'.
 - *Custom function* evaluates a user-supplied mathematical expression
   ``f(x)`` over the x range of the data and overlays it as a curve.  The
   expression uses the variable ``x`` for the abscissa and supports the
@@ -179,6 +190,12 @@ library used by the LAMMPS `Lepton-based styles
 <https://docs.lammps.org/pair_lepton.html>`_, so the supported syntax
 matches.
 
+When any fit or custom-function overlay is active, the "Plot:" drop-down
+treats the overlay as the "smoothed" series: selecting "Smoothed" or
+"Both" shows the overlay curve, while selecting "Raw" hides it.  This
+applies uniformly to all analysis types (polynomial, EOS, custom function,
+and custom fit).
+
 .. versionadded:: 2.1
 
    The *Postprocess* dialog with the autocorrelation, polynomial,
@@ -186,10 +203,18 @@ matches.
    added.
 
 The same *Charts* window is also used to plot data from an external file
-opened with *Run* -> *Plot Data File* (see :ref:`the Run menu
-<run_menu>`); in that standalone mode there is no associated simulation,
-so the *Units* and *Norm* controls are hidden, but the styling, export,
-and post-processing features described above work the same way.
+opened with *File* -> *Plot Data File...* (`Ctrl-Shift-P`, see
+:ref:`the File menu <files>`); in that standalone mode there is no
+associated simulation, so the *Units* and *Norm* controls are hidden.
+The column-picker dialog shown before the chart opens lets you select
+which column provides the x axis and which columns to plot, and also
+allows renaming columns.  An "X-Axis:" label field in the first toolbar
+row (to the right of "Title:" and "Y:") lets you edit the x-axis label
+after the chart opens.  All the styling, export, and post-processing
+features described above work the same way.  The same column-picker and
+standalone chart window are also launched when LAMMPS-GUI is invoked from
+the command line with the ``-c``/``--chart`` flag (see
+:ref:`command-line options <command-line-options>`).
 
 ..
    Maintainer note (screenshots): add screenshots of the *Chart Style*

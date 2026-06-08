@@ -6,6 +6,8 @@ Basic usage of LAMMPS-GUI
 .. index:: getting started
 .. index:: main window
 
+.. _command-line-options:
+
 Command-line options
 ^^^^^^^^^^^^^^^^^^^^
 
@@ -34,6 +36,14 @@ LAMMPS-GUI supports the following command-line options:
      - Set the visual style of the application (default: ``Fusion``)
    * - ``-p <path>``, ``--pluginpath <path>``
      - Set the path to the LAMMPS shared library (plugin mode only)
+   * - ``-c <file>``, ``--chart <file>``
+     - Open ``file`` directly in a standalone :ref:`Charts window <charts>`;
+       a column-picker dialog is shown first
+   * - ``-i <file>``, ``--image <file>``
+     - Open ``file`` in the :ref:`snapshot viewer <slideshow>`; may be given
+       multiple times to load several images at once
+   * - ``-t <file>``, ``--text <file>``
+     - Open ``file`` in a standalone text viewer
    * - ``-v``, ``--version``
      - Print version information and exit
    * - ``-h``, ``--help``
@@ -45,6 +55,15 @@ editor buffer.  Available choices for the visual style depend on the
 platform and Qt configuration.  On most platforms, there is also the
 option ``Windows`` which is a visual style somewhat resembling
 `Windows 95 <https://en.wikipedia.org/wiki/Windows_95>`_.
+
+The ``-c``, ``-i``, and ``-t`` flags open a standalone viewer without
+the main editor window; they are mutually exclusive with each other and
+with the ``file`` positional argument.
+
+.. versionadded:: 2.1
+
+   The ``-c``/``--chart``, ``-i``/``--image``, and ``-t``/``--text``
+   options were added.
 
 Launching LAMMPS-GUI
 ^^^^^^^^^^^^^^^^^^^^
