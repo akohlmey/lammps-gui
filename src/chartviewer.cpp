@@ -34,6 +34,7 @@
 #include <QDoubleSpinBox>
 #include <QEvent>
 #include <QFileDialog>
+#include <QFileInfo>
 #include <QFormLayout>
 #include <QGroupBox>
 #include <QHBoxLayout>
@@ -150,9 +151,16 @@ ChartWindow::ChartWindow(const QString &_filename, LammpsGui *_lammpsgui, QWidge
 
     // plot title and axis labels
     settings.beginGroup(Keys::GROUP_CHARTS);
-    auto mytitle = settings.value(Keys::TITLE, "Thermo: %f").toString().replace("%f", filename);
-    chartTitle   = new QLineEdit(mytitle);
-    chartYlabel  = new QLineEdit("");
+    QString mytitle;
+    if (lammpsgui) {
+        // live simulation: use the configured title template
+        mytitle = settings.value(Keys::TITLE, "Thermo: %f").toString().replace("%f", filename);
+    } else {
+        // standalone/plot mode: just the base filename, no "Thermo:" prefix
+        mytitle = QFileInfo(filename).fileName();
+    }
+    chartTitle  = new QLineEdit(mytitle);
+    chartYlabel = new QLineEdit("");
 
     // plot smoothing
     int smoothchoice = settings.value(Keys::SMOOTHCHOICE, 0).toInt();
