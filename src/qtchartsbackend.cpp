@@ -119,6 +119,16 @@ QString QtChartsBackend::getTLabel() const
     return chart ? chart->title() : QString();
 }
 
+void QtChartsBackend::setXLabel(const QString &xlabel)
+{
+    xaxis->setTitleText(xlabel);
+}
+
+void QtChartsBackend::setXLabelFormat(const QString &fmt)
+{
+    xaxis->setLabelFormat(fmt);
+}
+
 void QtChartsBackend::setYLabel(const QString &ylabel)
 {
     yaxis->setTitleText(ylabel);

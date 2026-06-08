@@ -118,6 +118,21 @@ public:
     virtual QString getTLabel() const = 0;
 
     /**
+     * @brief Set the X-axis label
+     * @param xlabel New X-axis label text
+     */
+    virtual void setXLabel(const QString &xlabel) = 0;
+
+    /**
+     * @brief Set the X-axis tick label format string
+     * @param fmt printf-style format string (e.g. "%d" or "%.6g")
+     *
+     * For the QtGraphs backend the format is stored and re-applied after
+     * every resetZoom() call so that QML tick regeneration does not revert it.
+     */
+    virtual void setXLabelFormat(const QString &fmt) = 0;
+
+    /**
      * @brief Set the Y-axis label
      * @param ylabel New Y-axis label text
      */

@@ -31,7 +31,8 @@
 
 QtGraphsBackend::QtGraphsBackend() :
     container(nullptr), quickWidget(nullptr), graphsView(nullptr), ylabelWidget(nullptr),
-    xlabelWidget(nullptr), titleWidget(nullptr), xaxis(nullptr), yaxis(nullptr)
+    xlabelWidget(nullptr), titleWidget(nullptr), xaxis(nullptr), yaxis(nullptr),
+    xformat("%.0f")
 {
 }
 
@@ -186,6 +187,8 @@ void QtGraphsBackend::resetZoom(double xmin, double xmax, double ymin, double ym
     yaxis->setTickAnchor(0.0);
     xaxis->setTickInterval(niceInterval(xspan));
     yaxis->setTickInterval(niceInterval(yspan));
+    // re-apply stored format because QML tick regeneration can revert it
+    if (!xformat.isEmpty()) xaxis->setLabelFormat(xformat);
 }
 
 void QtGraphsBackend::addSeries(QXYSeries *s, const QColor &color, qreal width)
@@ -225,6 +228,18 @@ void QtGraphsBackend::setTLabel(const QString &tlabel)
 QString QtGraphsBackend::getTLabel() const
 {
     return titleWidget ? titleWidget->text() : QString();
+}
+
+void QtGraphsBackend::setXLabel(const QString &xlabel)
+{
+    xaxis->setTitleText(xlabel);
+    if (xlabelWidget) xlabelWidget->setText(xlabel);
+}
+
+void QtGraphsBackend::setXLabelFormat(const QString &fmt)
+{
+    xformat = fmt;
+    xaxis->setLabelFormat(fmt);
 }
 
 void QtGraphsBackend::setYLabel(const QString &ylabel)

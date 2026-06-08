@@ -43,6 +43,8 @@ public:
     bool hasSeries(QXYSeries *s) const override;
     void setTLabel(const QString &tlabel) override;
     QString getTLabel() const override;
+    void setXLabel(const QString &xlabel) override;
+    void setXLabelFormat(const QString &fmt) override;
     void setYLabel(const QString &ylabel) override;
 
 private:

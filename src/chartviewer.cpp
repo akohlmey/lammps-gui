@@ -1233,14 +1233,14 @@ void ChartViewer::setYLabel(const QString &ylabel)
 
 void ChartViewer::setXLabel(const QString &xlabel)
 {
-    if (backend->xAxis()) backend->xAxis()->setTitleText(xlabel);
+    backend->setXLabel(xlabel);
 }
 
 /* -------------------------------------------------------------------- */
 
 void ChartViewer::setXLabelFormat(const QString &fmt)
 {
-    if (backend->xAxis()) backend->xAxis()->setLabelFormat(fmt);
+    backend->setXLabelFormat(fmt);
 }
 
 /* -------------------------------------------------------------------- */

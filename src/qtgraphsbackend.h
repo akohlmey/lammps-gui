@@ -47,6 +47,8 @@ public:
     bool hasSeries(QXYSeries *s) const override;
     void setTLabel(const QString &tlabel) override;
     QString getTLabel() const override;
+    void setXLabel(const QString &xlabel) override;
+    void setXLabelFormat(const QString &fmt) override;
     void setYLabel(const QString &ylabel) override;
 
 private:
@@ -58,6 +60,7 @@ private:
     QLabel *titleWidget;         ///< Chart title label (with spacing)
     QValueAxis *xaxis;           ///< X-axis (time/step)
     QValueAxis *yaxis;           ///< Y-axis (property value)
+    QString xformat;             ///< Stored x-axis label format; re-applied after resetZoom()
 };
 
 #endif
