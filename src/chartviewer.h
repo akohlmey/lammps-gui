@@ -146,6 +146,7 @@ private slots:
     void updateSmooth();                  ///< Update smoothing parameters
     void updateTLabel();                  ///< Update chart title
     void updateYLabel();                  ///< Update Y-axis label
+    void updateXLabel();                  ///< Update X-axis label (standalone plot mode)
     void updateXRange(int low, int high); ///< Update X-axis range
     void updateYRange(int low, int high); ///< Update Y-axis range
 
@@ -189,7 +190,7 @@ private:
     QAction *closeAct, *stopAct, *quitAct; ///< Window control actions
     QComboBox *smooth;                     ///< Smoothing algorithm selector
     QSpinBox *window, *order;              ///< Smoothing parameters
-    QLineEdit *chartTitle, *chartYlabel;   ///< Chart labels
+    QLineEdit *chartTitle, *chartYlabel, *chartXlabel; ///< Chart labels (chartXlabel standalone only)
     QLabel *units;                         ///< Units display
     QCheckBox *norm;                       ///< Normalization checkbox
     RangeSlider *xrange, *yrange;          ///< Range sliders for axes

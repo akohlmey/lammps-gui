@@ -127,8 +127,8 @@ ChartWindow::ChartWindow(const QString &_filename, LammpsGui *_lammpsgui, QWidge
     QWidget(parent), lammpsgui(_lammpsgui), menu(new QMenuBar), file(new QMenu("&File")),
     saveAsAct(nullptr), copyAct(nullptr), exportCsvAct(nullptr), exportDatAct(nullptr),
     exportYamlAct(nullptr), closeAct(nullptr), stopAct(nullptr), quitAct(nullptr), smooth(nullptr),
-    window(nullptr), order(nullptr), chartTitle(nullptr), chartYlabel(nullptr), units(nullptr),
-    norm(nullptr), filename(_filename)
+    window(nullptr), order(nullptr), chartTitle(nullptr), chartYlabel(nullptr),
+    chartXlabel(nullptr), units(nullptr), norm(nullptr), filename(_filename)
 {
     QSettings settings;
     auto *top  = new QVBoxLayout;
@@ -161,6 +161,7 @@ ChartWindow::ChartWindow(const QString &_filename, LammpsGui *_lammpsgui, QWidge
     }
     chartTitle  = new QLineEdit(mytitle);
     chartYlabel = new QLineEdit("");
+    if (!lammpsgui) chartXlabel = new QLineEdit("");
 
     // plot smoothing
     int smoothchoice = settings.value(Keys::SMOOTHCHOICE, 0).toInt();
@@ -202,7 +203,12 @@ ChartWindow::ChartWindow(const QString &_filename, LammpsGui *_lammpsgui, QWidge
     row1->addWidget(dummy);
     row2->addWidget(dummy);
     row1->addWidget(new QLabel("Title:"));
-    row1->addWidget(chartTitle, 2);
+    // in standalone plot mode give the title half the stretch to make room for X-Axis label
+    row1->addWidget(chartTitle, lammpsgui ? 2 : 1);
+    if (!lammpsgui) {
+        row1->addWidget(new QLabel("X-Axis:"));
+        row1->addWidget(chartXlabel, 1);
+    }
     row1->addWidget(new QLabel("Y-Axis:"));
     row1->addWidget(chartYlabel, 1);
     auto *unitsLabel = new QLabel("Units:");
@@ -243,6 +249,18 @@ ChartWindow::ChartWindow(const QString &_filename, LammpsGui *_lammpsgui, QWidge
     yrange->setToolTip("Adjust y-axis data range");
     yrange->setTickPosition(QSlider::TicksBothSides);
     yrange->setTickInterval(100);
+    auto makeToolBtn = [](const QString &icon, const QString &tip) {
+        auto *btn = new QPushButton(QIcon(icon), "");
+        btn->setToolTip(tip);
+        btn->setFixedWidth(32);
+        return btn;
+    };
+    auto *styleBtn = makeToolBtn(":/icons/preferences-desktop-personal.png", "Chart Style...");
+    auto *ppBtn    = makeToolBtn(":/icons/application-plot.png", "Postprocess...");
+    connect(styleBtn, &QPushButton::clicked, this, &ChartWindow::changeStyle);
+    connect(ppBtn, &QPushButton::clicked, this, &ChartWindow::postProcess);
+    row2->addWidget(styleBtn);
+    row2->addWidget(ppBtn);
     row2->addWidget(new QLabel("X:"));
     row2->addWidget(xrange);
     row2->addWidget(new QLabel("Y:"));
@@ -287,6 +305,8 @@ ChartWindow::ChartWindow(const QString &_filename, LammpsGui *_lammpsgui, QWidge
 
     connect(chartTitle, &QLineEdit::editingFinished, this, &ChartWindow::updateTLabel);
     connect(chartYlabel, &QLineEdit::editingFinished, this, &ChartWindow::updateYLabel);
+    if (chartXlabel)
+        connect(chartXlabel, &QLineEdit::editingFinished, this, &ChartWindow::updateXLabel);
     connect(smooth, &QComboBox::currentIndexChanged, this, &ChartWindow::selectSmooth);
     connect(window, &QAbstractSpinBox::editingFinished, this, &ChartWindow::updateSmooth);
     connect(order, &QAbstractSpinBox::editingFinished, this, &ChartWindow::updateSmooth);
@@ -402,6 +422,8 @@ void ChartWindow::loadData(const PlotData &data, int xcol, const QList<int> &yco
         ++idx;
     }
     if (!data.units().isEmpty()) setUnits(data.units());
+    // pre-fill the X-axis label field in standalone plot mode
+    if (chartXlabel) chartXlabel->setText(xlabel);
     setRangeEnabled(true);
     resetZoom();
 }
@@ -870,6 +892,13 @@ void ChartWindow::updateYLabel()
     for (auto &c : charts) {
         if (c->isVisible()) c->setYLabel(chartYlabel->text());
     }
+}
+
+void ChartWindow::updateXLabel()
+{
+    if (!chartXlabel) return;
+    for (auto &c : charts)
+        c->setXLabel(chartXlabel->text());
 }
 
 void ChartWindow::updateXRange(int low, int high)
