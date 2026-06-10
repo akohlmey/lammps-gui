@@ -131,22 +131,21 @@ int main(int argc, char *argv[])
         PlotData data = loadPlotData(fileName, &error);
         if (data.isEmpty()) {
             critical(nullptr, "Plot Data File",
-                     "Could not read data from file:",
-                     error.isEmpty() ? fileName : error);
+                     "Could not read data from file:", error.isEmpty() ? fileName : error);
             return 1;
         }
         PlotDataDialog dialog(data, nullptr);
         if (dialog.exec() != QDialog::Accepted) return 0;
-        data.renameColumns(dialog.columnNames());
-        const int xcol      = dialog.xColumn();
-        QList<int> ycols    = dialog.yColumns();
+        const PlotData plotData = dialog.buildData();
+        const int xcol          = dialog.xColumn();
+        QList<int> ycols        = dialog.yColumns();
         if (ycols.isEmpty()) ycols.append(xcol);
         auto *win = new ChartWindow(fileName, nullptr);
         win->setAttribute(Qt::WA_DeleteOnClose);
         win->setWindowTitle(QString("Plot: %1 - LAMMPS-GUI").arg(QFileInfo(fileName).fileName()));
         win->setWindowIcon(QIcon(Cfg::MAIN_ICON));
         win->setMinimumSize(Cfg::MINIMUM_WIDTH, Cfg::MINIMUM_HEIGHT);
-        win->loadData(data, xcol, ycols);
+        win->loadData(plotData, xcol, ycols);
         win->show();
         return app.exec();
     }
@@ -169,14 +168,13 @@ int main(int argc, char *argv[])
         const QString fileName = parser.value("text");
         if (isImageFile(fileName)) {
             critical(nullptr, "Cannot View Image as Text",
-                     "\"" + QFileInfo(fileName).fileName()
-                         + "\" is an image file. Use -i/--image to open it.");
+                     "\"" + QFileInfo(fileName).fileName() +
+                         "\" is an image file. Use -i/--image to open it.");
             return 1;
         }
         if (looksLikeBinaryFile(fileName)) {
             critical(nullptr, "Cannot View Binary File as Text",
-                     "\"" + QFileInfo(fileName).fileName()
-                         + "\" appears to be a binary file.");
+                     "\"" + QFileInfo(fileName).fileName() + "\" appears to be a binary file.");
             return 1;
         }
         auto *viewer = new FileViewer(fileName, nullptr);

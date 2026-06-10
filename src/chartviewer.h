@@ -35,6 +35,19 @@ class LammpsGui;
 class PlotData;
 
 /**
+ * @brief A labeled vertical reference line for chart overlays
+ *
+ * Used by the "Reference Lines..." dialog to annotate charts with
+ * vertical markers at specific x positions (e.g. high-symmetry k-points
+ * in phonon-dispersion plots).
+ */
+struct RefLine {
+    double x;      ///< X position of the line
+    QString label; ///< Text label (shown as the series name / tooltip)
+    QColor color;  ///< Line color (default: dark gray)
+};
+
+/**
  * @brief Window for displaying and managing multiple time-series charts
  *
  * ChartWindow provides a GUI for displaying and manipulating multiple
@@ -142,6 +155,8 @@ private slots:
     void stopRun();                       ///< Stop running simulation
     void changeStyle();                   ///< Edit the current chart's display style
     void postProcess();                   ///< Run an analysis on the current chart's data
+    void addDataFile();                   ///< Add data from another file as overlay series
+    void referenceLines();                ///< Edit vertical reference lines for all charts
     void selectSmooth(int selection);     ///< Select smoothing algorithm
     void updateSmooth();                  ///< Update smoothing parameters
     void updateTLabel();                  ///< Update chart title
@@ -188,15 +203,19 @@ private:
     QComboBox *columns;   ///< Dropdown for selecting chart
     QAction *saveAsAct, *copyAct, *exportCsvAct, *exportDatAct, *exportYamlAct; ///< Export actions
     QAction *closeAct, *stopAct, *quitAct; ///< Window control actions
+    QAction *addDataAct;                   ///< "Add Data from File..." (standalone only)
+    QAction *refLinesAct;                  ///< "Reference Lines..."
     QComboBox *smooth;                     ///< Smoothing algorithm selector
     QSpinBox *window, *order;              ///< Smoothing parameters
-    QLineEdit *chartTitle, *chartYlabel, *chartXlabel; ///< Chart labels (chartXlabel standalone only)
-    QLabel *units;                         ///< Units display
-    QCheckBox *norm;                       ///< Normalization checkbox
-    RangeSlider *xrange, *yrange;          ///< Range sliders for axes
+    QLineEdit *chartTitle, *chartYlabel,
+        *chartXlabel;             ///< Chart labels (chartXlabel standalone only)
+    QLabel *units;                ///< Units display
+    QCheckBox *norm;              ///< Normalization checkbox
+    RangeSlider *xrange, *yrange; ///< Range sliders for axes
 
     QString filename;            ///< Log file path
     QList<ChartViewer *> charts; ///< List of chart viewers
+    QList<RefLine> refLines;     ///< Current set of reference lines (applied to all charts)
 };
 
 /* -------------------------------------------------------------------- */
@@ -375,6 +394,35 @@ public:
     void setPoints(const QList<QPointF> &points);
 
     /**
+     * @brief Add an overlay data series from a second file
+     * @param pts   (x, y) data points
+     * @param name  Series name (shown as a tooltip / legend entry)
+     * @param color Line color
+     *
+     * Overlay series are always shown in full (no smoothing); they are
+     * included in the axis range calculation.
+     */
+    void addOverlaySeries(const QList<QPointF> &pts, const QString &name, const QColor &color);
+
+    /** @brief Remove all overlay series added via addOverlaySeries() */
+    void clearOverlaySeries();
+
+    /** @brief Number of overlay series currently displayed */
+    int overlaySeriesCount() const { return overlaySeries.size(); }
+
+    /**
+     * @brief Set vertical reference lines (replaces any existing set)
+     * @param lines List of reference line descriptors
+     *
+     * Each line spans the full data y-range and is updated on every zoom reset.
+     * Lines are identified by their position (x), label (series name), and color.
+     */
+    void setVerticalLines(const QList<RefLine> &lines);
+
+    /** @brief Remove all vertical reference lines */
+    void clearVerticalLines();
+
+    /**
      * @brief Set how the raw data series is displayed
      * @param mode  Lines, points, or both
      * @param color Series color (invalid color falls back to the theme default)
@@ -456,13 +504,16 @@ private:
     QLineSeries *fit;                      ///< Optional fit-curve overlay (created on demand)
     QTime lastUpdate;                      ///< Time of last chart update
     bool doRaw, doSmooth;                  ///< Flags for showing raw/smoothed data
-    bool eosMode;                          ///< True when fit is a BM EOS overlay (visibility follows doSmooth)
-    ChartDisplayMode dispmode;             ///< How the raw series is drawn
-    QColor rawColor;                       ///< Raw series color override (invalid = theme default)
-    qreal rawWidth;                        ///< Raw series line width
-    ChartDisplayMode smoothmode;           ///< How the processed series is drawn
-    QColor smoothcolor;                    ///< Processed series color (invalid = theme default)
-    qreal smoothwidth;                     ///< Processed series line width
+    bool eosMode;              ///< True when fit is a BM EOS overlay (visibility follows doSmooth)
+    ChartDisplayMode dispmode; ///< How the raw series is drawn
+    QColor rawColor;           ///< Raw series color override (invalid = theme default)
+    qreal rawWidth;            ///< Raw series line width
+    ChartDisplayMode smoothmode;        ///< How the processed series is drawn
+    QColor smoothcolor;                 ///< Processed series color (invalid = theme default)
+    qreal smoothwidth;                  ///< Processed series line width
+    QList<QLineSeries *> overlaySeries; ///< Extra data series added from secondary files
+    QList<QLineSeries *> vlines;        ///< Vertical reference line series (decorative)
+    QList<double> vlinePositions;       ///< X position of each vline (parallel to vlines)
 };
 #endif
 

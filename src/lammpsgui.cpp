@@ -1108,16 +1108,16 @@ void LammpsGui::viewFile(const QString &fileName)
 {
     if (isImageFile(fileName)) {
         warning(this, "Cannot View Image as Text",
-                "\"" + QFileInfo(fileName).fileName()
-                    + "\" is an image file and cannot be displayed in the text viewer.\n"
-                      "Use \"View Image File(s)...\" (Ctrl+Shift+J) to open it.");
+                "\"" + QFileInfo(fileName).fileName() +
+                    "\" is an image file and cannot be displayed in the text viewer.\n"
+                    "Use \"View Image File(s)...\" (Ctrl+Shift+J) to open it.");
         return;
     }
 
     if (looksLikeBinaryFile(fileName)) {
         warning(this, "Cannot View Binary File as Text",
-                "\"" + QFileInfo(fileName).fileName()
-                    + "\" appears to be a binary file and cannot be displayed in the text viewer.");
+                "\"" + QFileInfo(fileName).fileName() +
+                    "\" appears to be a binary file and cannot be displayed in the text viewer.");
         return;
     }
 
@@ -1843,8 +1843,7 @@ void LammpsGui::plotDataFile()
         return;
     }
 
-    // apply any user-edited column names before plotting
-    data.renameColumns(dialog.columnNames());
+    const PlotData plotData = dialog.buildData();
 
     // standalone chart window (no live simulation); cleans itself up on close
     auto *win = new ChartWindow(fileName, nullptr);
@@ -1852,7 +1851,7 @@ void LammpsGui::plotDataFile()
     win->setWindowTitle(QString("Plot: %1 - LAMMPS-GUI").arg(QFileInfo(fileName).fileName()));
     win->setWindowIcon(QIcon(Cfg::MAIN_ICON));
     win->setMinimumSize(Cfg::MINIMUM_WIDTH, Cfg::MINIMUM_HEIGHT);
-    win->loadData(data, dialog.xColumn(), ycols);
+    win->loadData(plotData, dialog.xColumn(), ycols);
     win->show();
 }
 

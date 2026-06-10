@@ -12,13 +12,15 @@
 #ifndef PLOTDATADIALOG_H
 #define PLOTDATADIALOG_H
 
+#include "plotdata.h"
+
 #include <QDialog>
 #include <QList>
 #include <QStringList>
 
 class QCheckBox;
 class QLineEdit;
-class PlotData;
+class QVBoxLayout;
 
 /**
  * @brief Dialog to choose which columns of a PlotData to plot
@@ -27,6 +29,11 @@ class PlotData;
  * select which columns to plot on the y-axis via checkboxes.  The first
  * unselected (unchecked) column is automatically used as the shared x-axis.
  * A small preview of the first rows is shown to help identify column content.
+ *
+ * A "Compute column" section at the bottom lets the user add derived columns
+ * from expressions that reference the existing column names as variables
+ * (e.g. @c nfcc/ntot or @c load_eV_per_Ang*1.602176634).  The column's
+ * first-row value is also available under @c colname_first.
  */
 class PlotDataDialog : public QDialog {
     Q_OBJECT
@@ -34,7 +41,7 @@ class PlotDataDialog : public QDialog {
 public:
     /**
      * @brief Constructor
-     * @param data   Parsed column data to choose from
+     * @param data   Parsed column data to choose from (stored as a working copy)
      * @param parent Parent widget
      */
     explicit PlotDataDialog(const PlotData &data, QWidget *parent = nullptr);
@@ -51,12 +58,15 @@ public:
      *
      * Returns the index of the first unchecked (unselected) column.
      * Falls back to 0 if all columns are checked.
+     * Indices refer to @ref buildData() columns.
      * @return Column index
      */
     int xColumn() const;
 
     /**
      * @brief Indices of the columns selected to plot on the y-axis
+     *
+     * Indices refer to @ref buildData() columns.
      * @return List of column indices (all checked columns)
      */
     QList<int> yColumns() const;
@@ -64,15 +74,35 @@ public:
     /**
      * @brief User-edited column names (may differ from the original parsed names)
      *
-     * Each entry corresponds to a column by index.  Names are pre-filled from
-     * the parsed data and can be changed in the dialog before accepting.
+     * Each entry corresponds to a column by index in @ref buildData().
      * @return List of column name strings, one per column
      */
     QStringList columnNames() const;
 
+    /**
+     * @brief Return the working data with renames and derived columns applied
+     *
+     * Includes any columns added via the "Compute column" section and
+     * applies the user's name edits.  Use this in place of calling
+     * renameColumns() on the original data.
+     * @return Updated PlotData ready for plotting
+     */
+    PlotData buildData() const;
+
+private slots:
+    /** @brief Evaluate the derived-column expression and append the new column */
+    void computeColumn();
+
 private:
+    /** @brief Append one row (checkbox + name editor) for column @p colIndex */
+    void appendColumnRow(const QString &name, bool checked);
+
+    PlotData workingData;       ///< Working copy of the data; derived cols appended here
+    QVBoxLayout *colsLayout;    ///< Layout of the per-column rows (for dynamic addition)
     QList<QCheckBox *> ychecks; ///< per-column y selection checkboxes
     QList<QLineEdit *> ynames;  ///< per-column name editors
+    QLineEdit *deriveNameEdit;  ///< Name field for the new derived column
+    QLineEdit *deriveExprEdit;  ///< Expression field for the new derived column
 };
 
 #endif

@@ -19,6 +19,7 @@
 #include "lammpsgui.h"
 #include "leastsquares.h"
 #include "plotdata.h"
+#include "plotdatadialog.h"
 #include "qaddon.h"
 #include "rangeslider.h"
 
@@ -40,13 +41,15 @@
 #include <QHBoxLayout>
 #include <QIcon>
 #include <QKeySequence>
+#include <QPen>
+#include <QScrollArea>
 
 #include <QLabel>
 #include <QLayout>
-#include <QMessageBox>
 #include <QList>
 #include <QMenu>
 #include <QMenuBar>
+#include <QMessageBox>
 #include <QPushButton>
 #include <QSettings>
 #include <QSpacerItem>
@@ -126,9 +129,10 @@ ChartViewer *ChartWindow::currentChart()
 ChartWindow::ChartWindow(const QString &_filename, LammpsGui *_lammpsgui, QWidget *parent) :
     QWidget(parent), lammpsgui(_lammpsgui), menu(new QMenuBar), file(new QMenu("&File")),
     saveAsAct(nullptr), copyAct(nullptr), exportCsvAct(nullptr), exportDatAct(nullptr),
-    exportYamlAct(nullptr), closeAct(nullptr), stopAct(nullptr), quitAct(nullptr), smooth(nullptr),
-    window(nullptr), order(nullptr), chartTitle(nullptr), chartYlabel(nullptr),
-    chartXlabel(nullptr), units(nullptr), norm(nullptr), filename(_filename)
+    exportYamlAct(nullptr), closeAct(nullptr), stopAct(nullptr), quitAct(nullptr),
+    addDataAct(nullptr), refLinesAct(nullptr), smooth(nullptr), window(nullptr), order(nullptr),
+    chartTitle(nullptr), chartYlabel(nullptr), chartXlabel(nullptr), units(nullptr), norm(nullptr),
+    filename(_filename)
 {
     QSettings settings;
     auto *top  = new QVBoxLayout;
@@ -286,6 +290,13 @@ ChartWindow::ChartWindow(const QString &_filename, LammpsGui *_lammpsgui, QWidge
                   &ChartWindow::changeStyle);
     addMenuAction(file, "&Postprocess...", ":/icons/application-plot.png", this,
                   &ChartWindow::postProcess);
+    // "Add Data from File..." is only relevant in standalone file-plot mode
+    if (!lammpsgui) {
+        addDataAct = addMenuAction(file, "&Add Data from File...", ":/icons/application-plot.png",
+                                   this, &ChartWindow::addDataFile);
+    }
+    refLinesAct = addMenuAction(file, "&Reference Lines...", ":/icons/preferences-desktop.png",
+                                this, &ChartWindow::referenceLines);
     file->addSeparator();
     stopAct =
         addMenuAction(file, "Stop &Run", ":/icons/process-stop.png", this, &ChartWindow::stopRun);
@@ -577,6 +588,14 @@ void ChartWindow::postProcess()
         return;
     }
 
+    // pre-compute x range for fit-range spinbox initialization
+    double dataXmin = chart->getStep(0), dataXmax = chart->getStep(0);
+    for (int i = 1; i < npoints; ++i) {
+        const double x = chart->getStep(i);
+        if (x < dataXmin) dataXmin = x;
+        if (x > dataXmax) dataXmax = x;
+    }
+
     QDialog dialog(this);
     dialog.setWindowTitle("Postprocess Chart Data");
     auto *form = new QFormLayout(&dialog);
@@ -613,18 +632,40 @@ void ChartWindow::postProcess()
     fitLabelEdit->setMinimumWidth(Cfg::POSTPROCESS_EXPR_WIDTH);
     form->addRow(fitLabelLabel, fitLabelEdit);
 
+    // fit x-range (hidden for autocorrelation, shown for all fitting analyses)
+    auto *fitRangeLabel  = new QLabel("Fit x-range:");
+    auto *fitRangeWidget = new QWidget;
+    auto *fitRangeRow    = new QHBoxLayout(fitRangeWidget);
+    fitRangeRow->setContentsMargins(0, 0, 0, 0);
+    auto *fitFromSpin = new QDoubleSpinBox;
+    fitFromSpin->setDecimals(6);
+    fitFromSpin->setRange(-1e15, 1e15);
+    fitFromSpin->setValue(dataXmin);
+    auto *fitToSpin = new QDoubleSpinBox;
+    fitToSpin->setDecimals(6);
+    fitToSpin->setRange(-1e15, 1e15);
+    fitToSpin->setValue(dataXmax);
+    fitRangeRow->addWidget(new QLabel("from"));
+    fitRangeRow->addWidget(fitFromSpin, 1);
+    fitRangeRow->addWidget(new QLabel("to"));
+    fitRangeRow->addWidget(fitToSpin, 1);
+    form->addRow(fitRangeLabel, fitRangeWidget);
+
     // swap the parameter widgets to match the selected analysis
     auto configure = [=, &dialog](int idx) {
-        const bool plot = (idx == 3); // custom-function plotting
-        const bool fit  = (idx == 4); // custom-function nonlinear fit
-        const bool expr = plot || fit;
-        const bool eos  = (idx == 2);
+        const bool plot      = (idx == 3); // custom-function plotting
+        const bool fit       = (idx == 4); // custom-function nonlinear fit
+        const bool expr      = plot || fit;
+        const bool eos       = (idx == 2);
+        const bool showRange = (idx != 0); // show for all except autocorrelation
         exprLabel->setVisible(expr);
         exprEdit->setVisible(expr);
         paramsLabel->setVisible(fit);
         paramsEdit->setVisible(fit);
         fitLabelLabel->setVisible(fit);
         fitLabelEdit->setVisible(fit);
+        fitRangeLabel->setVisible(showRange);
+        fitRangeWidget->setVisible(showRange);
         paramLabel->setVisible(!expr && !eos);
         if (idx == 1) { // polynomial degree
             paramLabel->setText("Degree:");
@@ -663,6 +704,28 @@ void ChartWindow::postProcess()
     }
 
     const int which = analysisbox->currentIndex();
+
+    // filter to the user-specified x-range for fitting analyses (not autocorrelation)
+    if (which != 0) {
+        const double fitXmin = fitFromSpin->value();
+        const double fitXmax = fitToSpin->value();
+        if (fitXmin < fitXmax) {
+            std::vector<double> fxs, fys;
+            for (std::size_t i = 0; i < xs.size(); ++i) {
+                if (xs[i] >= fitXmin && xs[i] <= fitXmax) {
+                    fxs.push_back(xs[i]);
+                    fys.push_back(ys[i]);
+                }
+            }
+            if (fxs.size() >= 2) {
+                xs = std::move(fxs);
+                ys = std::move(fys);
+            } else {
+                warning(this, "Postprocess",
+                        "Fewer than 2 data points in the selected x-range; using full data.");
+            }
+        }
+    }
 
     if (which == 0) { // autocorrelation -> new window (the abscissa becomes lag)
         const std::vector<double> acf = autocorrelation(ys, paramSpin->value());
@@ -731,7 +794,7 @@ void ChartWindow::postProcess()
                     QString("The fit could not be completed:\n%1").arg(fit.error));
             return;
         }
-        const QString label = fitLabelEdit->text().trimmed();
+        const QString label   = fitLabelEdit->text().trimmed();
         const QString fitName = label.isEmpty() ? expr : label;
         chart->setFitCurve(fit.curve, fitName, /* eosMode= */ true);
         smooth->setItemText(1, fitName.length() > 12 ? "Custom fit" : fitName);
@@ -760,8 +823,7 @@ void ChartWindow::postProcess()
             const double x = xmin + (xmax - xmin) * k / Ncurve;
             curve.append(QPointF(x, evalPolynomial(f.coeffs, x)));
         }
-        const QString polyName =
-            QString("Poly deg %1").arg(static_cast<int>(f.coeffs.size()) - 1);
+        const QString polyName = QString("Poly deg %1").arg(static_cast<int>(f.coeffs.size()) - 1);
         chart->setFitCurve(curve, polyName, /* eosMode= */ true);
         smooth->setItemText(1, polyName);
         smooth->setCurrentIndex(2); // "Both" = raw data + fit overlay
@@ -790,18 +852,17 @@ void ChartWindow::postProcess()
         eosInfo->addRow("x-axis:", new QLabel("<b>" + xLabel + "</b>"));
         eosInfo->addRow("y-axis:", new QLabel("<b>" + yLabel + "</b>"));
         eosLayout->addLayout(eosInfo);
-        eosLayout->addWidget(new QLabel(
-            "\nAtoms per unit cell N: the lattice constant is derived as\n"
-            "  a₀ = ∛(N × V₀)\n"
-            "Use the conventional unit cell (e.g. N=4 for FCC, N=2 for BCC/HCP).\n"
-            "Set N=1 only when the x-axis is already the conventional cell volume."));
+        eosLayout->addWidget(
+            new QLabel("\nAtoms per unit cell N: the lattice constant is derived as\n"
+                       "  a₀ = ∛(N × V₀)\n"
+                       "Use the conventional unit cell (e.g. N=4 for FCC, N=2 for BCC/HCP).\n"
+                       "Set N=1 only when the x-axis is already the conventional cell volume."));
         auto *natSpin = new QSpinBox;
         natSpin->setRange(1, 1000);
         natSpin->setValue(1);
-        natSpin->setToolTip(
-            "Number of atoms in the conventional unit cell\n"
-            "(e.g. 4 for FCC, 2 for BCC/HCP).\n"
-            "Use N=1 when x is already the conventional cell volume.");
+        natSpin->setToolTip("Number of atoms in the conventional unit cell\n"
+                            "(e.g. 4 for FCC, 2 for BCC/HCP).\n"
+                            "Use N=1 when x is already the conventional cell volume.");
         auto *natForm = new QFormLayout;
         natForm->addRow("Atoms per unit cell N:", natSpin);
         eosLayout->addLayout(natForm);
@@ -857,20 +918,19 @@ void ChartWindow::postProcess()
             l->setTextInteractionFlags(Qt::TextSelectableByMouse);
             return l;
         };
+        resultForm->addRow("<b>V<sub>0</sub></b> &mdash; Equilibrium volume (from fit):",
+                           makeVal(f.v0, 8));
         resultForm->addRow(
-            "<b>V<sub>0</sub></b> &mdash; Equilibrium volume (from fit):", makeVal(f.v0, 8));
-        resultForm->addRow(
-            QString("<b>a<sub>0</sub></b> &mdash; Lattice constant ∛(V<sub>0</sub>/%1):")
+            QString("<b>a<sub>0</sub></b> &mdash; Lattice constant ∛(%1 &times; V<sub>0</sub>):")
                 .arg(natoms),
             makeVal(a0, 8));
-        resultForm->addRow(
-            "<b>E<sub>0</sub></b> &mdash; Cohesive energy at V<sub>0</sub>:", makeVal(f.e0, 8));
-        resultForm->addRow(
-            "<b>B<sub>0</sub></b> &mdash; Bulk modulus (&minus;V<sub>0</sub> dP/dV at V<sub>0</sub>):",
-            makeVal(f.b0, 8));
-        resultForm->addRow(
-            "<b>B<sub>0</sub>'</b> &mdash; Pressure derivative dB/dP at P=0:",
-            makeVal(f.b0prime, 6));
+        resultForm->addRow("<b>E<sub>0</sub></b> &mdash; Cohesive energy at V<sub>0</sub>:",
+                           makeVal(f.e0, 8));
+        resultForm->addRow("<b>B<sub>0</sub></b> &mdash; Bulk modulus (&minus;V<sub>0</sub> dP/dV "
+                           "at V<sub>0</sub>):",
+                           makeVal(f.b0, 8));
+        resultForm->addRow("<b>B<sub>0</sub>'</b> &mdash; Pressure derivative dB/dP at P=0:",
+                           makeVal(f.b0prime, 6));
         resultForm->addRow("RMS residual:", makeVal(f.rms, 6));
         dlgLayout->addLayout(resultForm);
 
@@ -879,6 +939,171 @@ void ChartWindow::postProcess()
         dlgLayout->addWidget(closeBtn);
         resultDlg->exec();
     }
+}
+
+void ChartWindow::addDataFile()
+{
+    if (charts.empty()) return;
+
+    const QString fileName = QFileDialog::getOpenFileName(
+        this, "Add Data from File", QString(),
+        "Data files (*.dat *.csv *.yaml *.yml *.json *.txt);;All files (*)");
+    if (fileName.isEmpty()) return;
+
+    QString error;
+    PlotData data = loadPlotData(fileName, &error);
+    if (data.isEmpty()) {
+        critical(this, "Add Data from File",
+                 "Could not read data from file:", error.isEmpty() ? fileName : error);
+        return;
+    }
+
+    PlotDataDialog dialog(data, this);
+    if (dialog.exec() != QDialog::Accepted) return;
+    const PlotData plotData = dialog.buildData();
+    const QList<int> ycols  = dialog.yColumns();
+    const int xcol          = dialog.xColumn();
+    if (ycols.isEmpty() || xcol < 0 || xcol >= plotData.columnCount()) return;
+
+    ChartViewer *chart = currentChart();
+    if (!chart) return;
+
+    const std::vector<double> &xvals = plotData.column(xcol);
+    const int nrow                   = plotData.rowCount();
+
+    // auto-color palette for overlay series (avoids primary raw/smooth colors)
+    static const QList<QColor> palette = {
+        QColor(220, 80, 40),  // red-orange
+        QColor(40, 160, 40),  // green
+        QColor(160, 40, 220), // purple
+        QColor(180, 140, 0),  // amber
+        QColor(0, 160, 180),  // teal
+    };
+    int colorIdx = chart->overlaySeriesCount();
+
+    for (int ycol : ycols) {
+        if (ycol < 0 || ycol >= plotData.columnCount()) continue;
+        QList<QPointF> pts;
+        pts.reserve(nrow);
+        const std::vector<double> &yvals = plotData.column(ycol);
+        for (int r = 0; r < nrow; ++r)
+            pts.append(QPointF(xvals[r], yvals[r]));
+        chart->addOverlaySeries(pts, plotData.columnName(ycol), palette[colorIdx % palette.size()]);
+        ++colorIdx;
+    }
+}
+
+void ChartWindow::referenceLines()
+{
+    if (charts.empty()) return;
+
+    QDialog dialog(this);
+    dialog.setWindowTitle("Reference Lines");
+    auto *layout = new QVBoxLayout(&dialog);
+    layout->addWidget(
+        new QLabel("Vertical reference lines are applied to all charts.\n"
+                   "Example: annotate high-symmetry k-points in phonon-dispersion plots."));
+
+    // scrollable list of (x, label, color) rows
+    auto *listWidget = new QWidget;
+    auto *listLayout = new QVBoxLayout(listWidget);
+    listLayout->setContentsMargins(4, 4, 4, 4);
+
+    auto *scroll = new QScrollArea;
+    scroll->setWidgetResizable(true);
+    scroll->setWidget(listWidget);
+    scroll->setMinimumHeight(100);
+    layout->addWidget(scroll, 1);
+
+    // helper to build one color-button (same pattern as changeStyle)
+    struct RowData {
+        QDoubleSpinBox *xSpin;
+        QLineEdit *labelEdit;
+        QColor color;
+    };
+    QList<RowData *> rows;
+    QList<QPushButton *> colorBtns;
+
+    auto addRow = [&](double xval, const QString &lbl, const QColor &col) {
+        auto *rd  = new RowData;
+        rd->xSpin = new QDoubleSpinBox;
+        rd->xSpin->setDecimals(6);
+        rd->xSpin->setRange(-1e15, 1e15);
+        rd->xSpin->setValue(xval);
+        rd->labelEdit = new QLineEdit(lbl);
+        rd->labelEdit->setPlaceholderText("label");
+        rd->color = col.isValid() ? col : QColor(80, 80, 80);
+
+        auto *colorBtn = new QPushButton;
+        auto updateBtn = [colorBtn](const QColor &c) {
+            colorBtn->setText(c.name());
+            colorBtn->setStyleSheet(QString("background-color: %1; color: %2;")
+                                        .arg(c.name(), c.lightness() < 128 ? "white" : "black"));
+        };
+        updateBtn(rd->color);
+        QObject::connect(colorBtn, &QPushButton::clicked, &dialog, [rd, colorBtn, updateBtn]() {
+            const QColor c = QColorDialog::getColor(rd->color, colorBtn, "Line Color");
+            if (c.isValid()) {
+                rd->color = c;
+                updateBtn(c);
+            }
+        });
+
+        auto *delBtn = new QPushButton("×");
+        delBtn->setFixedWidth(24);
+
+        auto *row = new QHBoxLayout;
+        row->addWidget(new QLabel("x ="));
+        row->addWidget(rd->xSpin, 1);
+        row->addWidget(new QLabel(" Label:"));
+        row->addWidget(rd->labelEdit, 2);
+        row->addWidget(new QLabel(" Color:"));
+        row->addWidget(colorBtn);
+        row->addWidget(delBtn);
+        listLayout->addLayout(row);
+
+        rows.append(rd);
+        colorBtns.append(colorBtn);
+
+        // remove this row when "×" is clicked
+        QObject::connect(delBtn, &QPushButton::clicked, &dialog,
+                         [rd, &rows, &colorBtns, colorBtn, row, listLayout]() {
+                             rows.removeOne(rd);
+                             colorBtns.removeOne(colorBtn);
+                             // hide all widgets in the row
+                             QLayoutItem *item;
+                             while ((item = row->takeAt(0)) != nullptr) {
+                                 if (item->widget()) item->widget()->hide();
+                                 delete item;
+                             }
+                             delete row;
+                         });
+    };
+
+    // populate with existing lines
+    for (const auto &rl : refLines)
+        addRow(rl.x, rl.label, rl.color);
+
+    auto *addBtn = new QPushButton("Add line");
+    QObject::connect(addBtn, &QPushButton::clicked, &dialog, [&]() {
+        addRow(0.0, QString(), QColor(80, 80, 80));
+    });
+    layout->addWidget(addBtn);
+
+    auto *buttons = new QDialogButtonBox(QDialogButtonBox::Ok | QDialogButtonBox::Cancel);
+    QObject::connect(buttons, &QDialogButtonBox::accepted, &dialog, &QDialog::accept);
+    QObject::connect(buttons, &QDialogButtonBox::rejected, &dialog, &QDialog::reject);
+    layout->addWidget(buttons);
+
+    if (dialog.exec() != QDialog::Accepted) return;
+
+    // rebuild the refLines list and apply to all charts
+    refLines.clear();
+    for (const auto *rd : rows)
+        refLines.append({rd->xSpin->value(), rd->labelEdit->text().trimmed(), rd->color});
+
+    for (auto *c : charts)
+        c->setVerticalLines(refLines);
 }
 
 void ChartWindow::selectSmooth(int)
@@ -1235,6 +1460,19 @@ QRectF ChartViewer::getMinMax() const
         }
     }
 
+    // include extra overlay data series added from secondary files
+    for (auto *s : overlaySeries) {
+        if (s && s->isVisible()) {
+            for (auto &p : s->points()) {
+                xmin = qMin(xmin, p.x());
+                xmax = qMax(xmax, p.x());
+                ymin = qMin(ymin, p.y());
+                ymax = qMax(ymax, p.y());
+            }
+        }
+    }
+    // note: vlines (vertical reference lines) are decorative and excluded from range
+
     // avoid (nearly) empty ranges
     double deltax = xmax - xmin;
     if ((deltax / ((xmax == 0.0) ? 1.0 : xmax)) < 1.0e-10) {
@@ -1266,7 +1504,14 @@ QRectF ChartViewer::getMinMax() const
 void ChartViewer::resetZoom()
 {
     auto ranges = getMinMax();
-    backend->resetZoom(ranges.left(), ranges.right(), ranges.bottom(), ranges.top());
+    // update vertical reference lines to span the current data y range
+    const double ybot = ranges.bottom();
+    const double ytop = ranges.top();
+    for (int i = 0; i < vlines.size(); ++i) {
+        const double x = vlinePositions[i];
+        vlines[i]->replace(QList<QPointF>{{x, ybot}, {x, ytop}});
+    }
+    backend->resetZoom(ranges.left(), ranges.right(), ybot, ytop);
 }
 
 /* -------------------------------------------------------------------- */
@@ -1370,6 +1615,68 @@ void ChartViewer::setFitCurve(const QList<QPointF> &points, const QString &name,
     }
     resetZoom();
 }
+
+/* -------------------------------------------------------------------- */
+
+void ChartViewer::addOverlaySeries(const QList<QPointF> &pts, const QString &name,
+                                   const QColor &color)
+{
+    auto *s = new QLineSeries;
+    s->setName(name);
+    s->replace(pts);
+    backend->addSeries(s, color, rawWidth);
+    overlaySeries.append(s);
+    resetZoom();
+}
+
+/* -------------------------------------------------------------------- */
+
+void ChartViewer::clearOverlaySeries()
+{
+    for (auto *s : overlaySeries)
+        backend->removeSeries(s);
+    overlaySeries.clear();
+    resetZoom();
+}
+
+/* -------------------------------------------------------------------- */
+
+void ChartViewer::setVerticalLines(const QList<RefLine> &lines)
+{
+    clearVerticalLines();
+    if (lines.isEmpty()) return;
+    auto ranges       = getMinMax();
+    const double ybot = ranges.bottom();
+    const double ytop = ranges.top();
+    for (const auto &rl : lines) {
+        auto *s = new QLineSeries;
+        s->setName(rl.label);
+        s->replace(QList<QPointF>{{rl.x, ybot}, {rl.x, ytop}});
+        const QColor col = rl.color.isValid() ? rl.color : QColor(80, 80, 80);
+        backend->addSeries(s, col, 1.5);
+#ifndef LAMMPS_GUI_USE_QTGRAPHS
+        // dashed style is only supported by the QtCharts backend
+        QPen pen = s->pen();
+        pen.setStyle(Qt::DashLine);
+        s->setPen(pen);
+#endif
+        vlines.append(s);
+        vlinePositions.append(rl.x);
+    }
+    resetZoom();
+}
+
+/* -------------------------------------------------------------------- */
+
+void ChartViewer::clearVerticalLines()
+{
+    for (auto *s : vlines)
+        backend->removeSeries(s);
+    vlines.clear();
+    vlinePositions.clear();
+}
+
+/* -------------------------------------------------------------------- */
 
 // local Savitzky-Golay smoothing wrapper around the least-squares core
 
