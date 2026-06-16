@@ -1,0 +1,31 @@
+cff-version: 1.2.0
+message: "If you use this software, please cite it using these metadata."
+title: "LAMMPS-GUI"
+abstract: >-
+  LAMMPS-GUI is a cross-platform Qt-based graphical application for the
+  LAMMPS molecular dynamics simulation software. It integrates an
+  input-script editor, live simulation execution via the LAMMPS C-library
+  interface, log and thermodynamic-data viewing, interactive plotting, and
+  snapshot/slide-show visualization into a single tool aimed at learning and
+  exploring molecular dynamics with LAMMPS.
+type: software
+authors:
+  - family-names: Kohlmeyer
+    given-names: Axel
+    orcid: "https://orcid.org/0000-0001-6204-6475"
+    affiliation: "Institute for Computational Molecular Science, Temple University, Philadelphia, PA, USA"
+version: "2.0.90"
+date-released: "2026-06-16"
+license: GPL-2.0-or-later
+repository-code: "https://github.com/akohlmey/lammps-gui"
+url: "https://lammps-gui.lammps.org/"
+keywords:
+  - molecular dynamics
+  - LAMMPS
+  - Qt
+  - scientific visualization
+  - simulation
+  - research software
+# After the JOSS paper is accepted, add a `preferred-citation:` block of
+# type `article` here with the published JOSS DOI so that citing tools
+# prefer the paper over this software record.
