@@ -45,8 +45,8 @@ the LAMMPS shared library and calling it through the LAMMPS C-language
 library interface [@frantzdale2010library]. The simulation runs in a
 concurrent worker thread, so that the interface stays responsive and the
 running simulation can be monitored, plotted, visualized, and cleanly
-stopped while it executes. By preserving the traditional ``edit input, run
-LAMMPS, observe, and analyze'' workflow, LAMMPS-GUI lets users move freely
+stopped while it executes. By preserving the traditional "edit input, run
+LAMMPS, observe, and analyze" workflow, LAMMPS-GUI lets users move freely
 between the graphical tool and the command-line LAMMPS executable, which is
 essential once a workflow grows beyond what a laptop can run. Pre-compiled
 packages are provided for Windows, macOS, and Linux, so that users obtain
@@ -86,7 +86,7 @@ LAMMPS tutorials for beginning and intermediate users [@gravelle2025lammps]
 and has been used in that role at LAMMPS workshops. While its primary
 audience is beginners, several features -- rapid prototyping of input
 decks, debugging of failing inputs, and the interactive construction of
-reproducible ``dump image'' visualization commands -- also make it useful
+reproducible `dump image` visualization commands -- also make it useful
 to experienced researchers.
 
 # Functionality
@@ -111,7 +111,7 @@ funneled through a single adapter class. Key capabilities include:
   [@savitzkygolay1964] and post-processing such as autocorrelation,
   polynomial, Birch-Murnaghan equation-of-state, and nonlinear curve fits.
 - **Visualization.** A snapshot image viewer that builds high-quality
-  renderings using the LAMMPS ``dump image`` command, with interactive
+  renderings using the LAMMPS `dump image` command, with interactive
   controls and the ability to copy the exact generated command back into
   the input script for reproducible figures, plus a slide-show viewer for
   sequences of images that can be exported as movies.
