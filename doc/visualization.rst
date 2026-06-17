@@ -836,9 +836,9 @@ cursor on top of it and a descriptive tooltip will appear.
 The **toolbar** at the top of the Slide Show window provides the
 following controls, organized from left to right:
 
-- **Export to movie** (`Ctrl-E`): Export the entire image sequence to a
-  movie file or `animated GIF file
-  <https://en.wikipedia.org/wiki/GIF#Animated_GIF>`_.  This requires
+- **Export to movie** (`Ctrl-E`): Export the active range of images (see
+  the **Start** and **Stop** controls below) to a movie file or `animated
+  GIF file <https://en.wikipedia.org/wiki/GIF#Animated_GIF>`_.  This requires
   that either the `FFmpeg program <https://ffmpeg.org/>`_ or the
   `ImageMagick software <https://imagemagick.org/>`_ are installed.
   Supported output formats include MP4, MKV, AVI, MPG, MPEG, WEBM, and
@@ -856,11 +856,14 @@ following controls, organized from left to right:
   clipboard for pasting it into another application.  This requires
   support from the receiving application, which is the case for many
   common applications like document editors and web browsers.
-- **Delete all images**: Remove all image files associated with the
-  slide show.  Since the number of image files can be large for long
-  simulations, this provides a safe way to clean up the working
-  directory without risk of accidentally deleting other files.  This
-  will, however, only delete the images of the last run.  If that was
+- **Delete selected images**: Remove the image files in the currently
+  selected range (see the **Start** and **Stop** controls below) from
+  disk.  A confirmation dialog reports how many files will be removed
+  before they are deleted.  With the default range (first to last image)
+  this removes the entire sequence.  Since the number of image files can
+  be large for long simulations, this provides a safe way to clean up the
+  working directory without risk of accidentally deleting other files.
+  This will, however, only delete images of the last run.  If that was
   stopped before completion or the output filename has changed, older
   images created by previous runs will not be deleted.
 
@@ -886,18 +889,33 @@ to be adjusted for presentation purposes.  The same transformations are
 also applied when exporting images or movies.
 
 The **playback controls** below the image allow to select the displayed
-image and control the slideshow settings:
+image, restrict the active range, and control the slideshow settings:
 
-- **Play**: Start playing the animation from the current frame to the
-  last frame.
+- **Play**: Start playing the animation, advancing through the active
+  range defined by the **Start** and **Stop** controls.
 - **Loop**: Toggle continuous looping of the animation.  When enabled,
-  playback wraps around from the last image back to the first.
+  playback wraps around from the last image of the active range back to
+  the first.
 - **Delay**: Set the delay in milliseconds between frames
   during animation playback.
+- **Start**: First image of the active range.  Animation, single
+  stepping, movie export, and image deletion are all restricted to
+  images at or after this position.  Defaults to the first image.
+- **Stop**: Last image of the active range.  Defaults to the last image
+  and keeps following the growing sequence while a simulation produces
+  new images, unless it has been set to a specific value.
 
-- **First**: Jump to the first image in the sequence.
+- **First**: Jump to the first image of the active range.
 - **Previous**: Step back to the previous image.
-- The **slider control** allows selecting a frame in the image sequence
-  by by moving the slider position.
+- The **slider control** selects a frame in the image sequence by moving
+  the slider position.  Its track is colored to indicate the active
+  range: positions inside the **Start** to **Stop** range are drawn in
+  blue, while the skipped images outside it are drawn in red.
 - **Next**: Step forward to the next image.
-- **Last**: Jump to the last image in the sequence.
+- **Last**: Jump to the last image of the active range.
+
+.. versionadded:: 2.1
+
+   The **Start** and **Stop** controls restrict animation, single
+   stepping, movie export, and deletion to a selected range of images,
+   and the navigation slider highlights that range in color.

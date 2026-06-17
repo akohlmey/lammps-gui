@@ -139,6 +139,8 @@ if (NOT BUILD_DOC_ONLY)
     ${CMAKE_SOURCE_DIR}/src/preferences.h
     ${CMAKE_SOURCE_DIR}/src/qaddon.cpp
     ${CMAKE_SOURCE_DIR}/src/qaddon.h
+    ${CMAKE_SOURCE_DIR}/src/rangebandslider.cpp
+    ${CMAKE_SOURCE_DIR}/src/rangebandslider.h
     ${CMAKE_SOURCE_DIR}/thirdparty/rangeslider/rangeslider.cpp
     ${CMAKE_SOURCE_DIR}/thirdparty/rangeslider/rangeslider.h
     ${CMAKE_SOURCE_DIR}/src/setvariables.cpp
