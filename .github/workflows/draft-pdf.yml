@@ -5,7 +5,7 @@ on:
       - joss-paper
     paths:
       - paper/**
-      - .github/workflows/draft-pdf.ytml
+      - .github/workflows/draft-pdf.yml
 
 jobs:
   paper:
