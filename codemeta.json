@@ -1,0 +1,15 @@
+{
+  "@context": "https://raw.githubusercontent.com/codemeta/codemeta/master/codemeta.jsonld",
+  "@type": "Code",
+  "author": [ "Axel Kohlmeyer" ],
+  "identifier": "",
+  "codeRepository": "https://github.com/akohlmey/lammps-gui",
+  "datePublished": "2026-06-16",
+  "dateModified": "2026-06-16",
+  "dateCreated": "2026-06-16",
+  "description": "LAMMPS-GUI - The graphical interface for learning and running LAMMPS",
+  "keywords": "LAMMPS, molecular dynamics, simulation, scientific visualization, education, C++, Qt, research software",
+  "license": "GPL v2.0+",
+  "title": "LAMMPS-GUI",
+  "version": "v2.1.0"
+}
