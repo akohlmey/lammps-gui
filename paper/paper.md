@@ -52,10 +52,14 @@ essential once a workflow grows beyond what a laptop can run. Pre-compiled
 packages are provided for Windows, macOS, and Linux, so that users obtain
 an identical experience on every major platform without compiling anything.
 
-![The LAMMPS-GUI editor window after loading a benchmark input script. The
-status bar shows the current working directory; line numbers, syntax
-highlighting, and a run-control toolbar support the central edit-run-observe
-workflow.\label{fig:editor}](images/lammps-gui-rhodo.png){ width=70% }
+![A LAMMPS-GUI session with a simulation in flight showing the editor
+window with syntax highlighting, line numbers and the marker of the
+currently processed input line. The status bar shows the CPU utilization
+and the simulation progress of the current run command. The Image Viewer
+shows a snapshot of the starting geometry, the Output window the screen
+output of the simulation, and the Charts window the automatically
+updated plot of one of the thermodynamic data columns from the
+output.\label{fig:editor}](images/lammps-gui-deform.png){ width=74% }
 
 # Statement of need
 
