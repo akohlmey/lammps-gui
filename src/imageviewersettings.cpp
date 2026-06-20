@@ -17,6 +17,7 @@
 
 #include "imageviewer_internal.h"
 
+#include "colormaps.h"
 #include "constants.h"
 #include "helpers.h"
 #include "lammpsgui.h"
@@ -395,37 +396,32 @@ QRadioButton *ImageViewer::addShapeButton(QButtonGroup *group, const QString &la
     return button;
 }
 
-// Populate a color-map combo box with the shared gradient and sequence palettes.
-// Atoms and bonds offer the identical set of maps (the atom "amap" and bond
-// "bmap" selectors), so the item list lives in one place.
+// resolve a color-map stop to a QColor (named color or explicit RGB)
+static QColor stopColor(const ColorMapStop &s)
+{
+    return s.name.isEmpty() ? QColor::fromRgbF(s.r, s.g, s.b) : QColor(s.name);
+}
+
+// Populate a color-map combo box from the shared colormaps.cpp table, so the
+// preview swatches match exactly what the dump-image command renders.  Atoms and
+// bonds offer the identical set of maps (the atom "amap" and bond "bmap"
+// selectors), so the item list lives in one place.
 static void addColorMapItems(QComboBox *box)
 {
-    box->addItem(gradient_icon({QColor(0, 57, 109), "white", QColor(117, 14, 19)}), "BWR");
-    box->addItem(gradient_icon({QColor(117, 14, 19), "white", QColor(0, 57, 109)}), "RWB");
-    box->addItem(gradient_icon({QColor(73, 29, 141), "white", QColor(0, 65, 68)}), "PWT");
-    box->addItem(gradient_icon({"blue", "white", "green"}), "BWG");
-    box->addItem(gradient_icon({"blue", "green", "red"}), "BGR");
-    box->addItem(gradient_icon({"black", "white"}), "Grayscale");
-    // clang-format off
-    box->addItem(gradient_icon({QColor(72, 33, 115), QColor(111, 111, 142), QColor(41, 175, 127),
-                                QColor(189, 223, 174)}), "Viridis");
-    box->addItem(gradient_icon({QColor(13, 8, 135), QColor(156, 23, 150), QColor(237, 121, 83),
-                                QColor(240, 249, 33)}), "Plasma");
-    box->addItem(gradient_icon({QColor(8, 8, 12), QColor(81, 18, 124), QColor(183, 55, 121),
-                                QColor(252, 137, 97), QColor(252, 253, 191)}), "Inferno");
-    box->addItem(gradient_icon({QColor(18, 39, 64), QColor(27, 72, 94), QColor(86, 139, 135),
-                                QColor(181, 209, 174)}), "Teal");
-    box->addItem(gradient_icon({"red", "yellow", "green", "cyan", "blue", "purple"}), "Rainbow");
-    box->addItem(sequence_icon({QColor(206, 206, 206), QColor(165, 89, 170), QColor(81, 168, 156),
-                                QColor(240, 197, 113), QColor(224, 43, 53), QColor(8, 42, 84)}),
-                 "Sequential");
-    box->addItem(sequence_icon({QColor(37, 102, 118), QColor(100, 221, 150), QColor(146, 49, 36),
-                                QColor(100, 212, 253), QColor(5, 110, 18), QColor(253, 89, 37),
-                                QColor(70, 243, 62), QColor(186, 134, 92), QColor(201, 221, 135),
-                                QColor(62, 76, 20)}), "Landscape");
-    box->addItem(sequence_icon({"red", "cyan", "green", "black", "magenta", "blue", "yellow",
-                                "purple", "white", "orange"}), "Basic");
-    // clang-format on
+    for (const QString &name : colorMapNames()) {
+        const ColorMapDef &def = colorMapDef(name);
+        if (def.continuous) {
+            QList<QPair<double, QColor>> stops;
+            for (const auto &s : def.stops)
+                stops.append({s.pos, stopColor(s)});
+            box->addItem(gradient_icon(stops), name);
+        } else {
+            QList<QColor> colors;
+            for (const auto &s : def.stops)
+                colors.append(stopColor(s));
+            box->addItem(sequence_icon(colors), name);
+        }
+    }
 }
 
 void ImageViewer::atomSettings()

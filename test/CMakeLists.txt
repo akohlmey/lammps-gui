@@ -115,6 +115,7 @@ gtest_discover_tests(test_flagwarnings)
 add_executable(test_dumpimage
   test_dumpimage.cpp
   ${CMAKE_SOURCE_DIR}/src/dumpimage.cpp
+  ${CMAKE_SOURCE_DIR}/src/colormaps.cpp
 )
 
 target_include_directories(test_dumpimage PRIVATE ${CMAKE_SOURCE_DIR}/src)

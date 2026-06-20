@@ -172,9 +172,9 @@ QStringList defaultcolors = {"red",       "green",    "blue",       "yellow",   
 } // namespace
 
 // 2) create a color gradient icon
-QIcon gradient_icon(const QList<QColor> &colors)
+QIcon gradient_icon(const QList<QPair<double, QColor>> &stops)
 {
-    if (colors.isEmpty()) return QIcon();
+    if (stops.isEmpty()) return QIcon();
 
     // define pixmap and horizontal gradient
     QPixmap pixmap(ICON_SIZE, ICON_SIZE);
@@ -182,11 +182,9 @@ QIcon gradient_icon(const QList<QColor> &colors)
     QPainter painter(&pixmap);
     QLinearGradient gradient(0, 0, ICON_SIZE, 0);
 
-    // distribute colors across gradient
-    for (int i = 0; i < colors.size(); ++i) {
-        qreal pos = static_cast<qreal>(i) / qMax(1, colors.size() - 1);
-        gradient.setColorAt(pos, colors[i]);
-    }
+    // place each color at its stop position
+    for (const auto &s : stops)
+        gradient.setColorAt(std::clamp(s.first, 0.0, 1.0), s.second);
 
     painter.fillRect(pixmap.rect(), gradient);
     painter.end();

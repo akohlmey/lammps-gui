@@ -124,7 +124,7 @@ public:
 
 // ---- shared free helpers (defined in imageviewer.cpp) --------------------
 QPixmap color_icon(const QColor &color);
-QIcon gradient_icon(const QList<QColor> &colors);
+QIcon gradient_icon(const QList<QPair<double, QColor>> &stops);
 QIcon sequence_icon(const QList<QColor> &colors);
 QJsonObject loadJsonColors(QWidget *parent);
 void saveJsonColors(QWidget *parent, const QJsonArray &colors, const QJsonObject &lights);

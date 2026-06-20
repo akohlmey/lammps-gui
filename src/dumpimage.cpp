@@ -11,6 +11,8 @@
 
 #include "dumpimage.h"
 
+#include "colormaps.h"
+
 #include <QRegularExpression>
 
 // LAMMPS dump_image built-in defaults. The builder emits a color, color map,
@@ -119,94 +121,44 @@ static bool appendFixComputeStyles(QString &cmd, const DumpImageParams &p)
 static void appendColorMapArgs(QString &cmd, const QString &kw, const QString &colormap,
                                const QString &mapmin, const QString &mapmax, const QString &pfx)
 {
-    const QString mmin = (mapmin == "auto") ? QStringLiteral("min") : mapmin;
-    const QString mmax = (mapmax == "auto") ? QStringLiteral("max") : mapmax;
-    auto M             = [&](int n) {
-        return pfx + QString::number(n);
-    };
-    if (colormap == "RWB") {
-        cmd += " color " + M(1) + " 0.459 0.055 0.075";
-        cmd += " color " + M(2) + " 0.000 0.227 0.427";
-        cmd += QString(" %1 %2 %3 cf 0.0 ").arg(kw, mmin, mmax);
-        cmd += "5 min " + M(1) + " 0.1 " + M(1) + " 0.5 white 0.9 " + M(2) + " max " + M(2);
-    } else if (colormap == "PWT") {
-        cmd += " color " + M(1) + " 0.286 0.114 0.553";
-        cmd += " color " + M(2) + " 0.000 0.255 0.267";
-        cmd += QString(" %1 %2 %3 cf 0.0 ").arg(kw, mmin, mmax);
-        cmd += "5 min " + M(1) + " 0.1 " + M(1) + " 0.5 white 0.9 " + M(2) + " max " + M(2);
-    } else if (colormap == "BGR") {
-        cmd += QString(" %1 %2 %3 cf 0.0 ").arg(kw, mmin, mmax);
-        cmd += "5 min blue 0.05 blue 0.5 green 0.95 red max red";
-    } else if (colormap == "BWG") {
-        cmd += QString(" %1 %2 %3 cf 0.0 ").arg(kw, mmin, mmax);
-        cmd += "5 min blue 0.1 blue 0.5 white 0.9 green max green";
-    } else if (colormap == "Grayscale") {
-        cmd += QString(" %1 %2 %3 cf 0.0 ").arg(kw, mmin, mmax);
-        cmd += "2 min black max white";
-    } else if (colormap == "Rainbow") {
-        cmd += QString(" %1 %2 %3 cf 0.0 ").arg(kw, mmin, mmax);
-        cmd += "6 min red 0.25 yellow 0.45 green 0.65 cyan 0.85 blue max purple";
-    } else if (colormap == "Sequential") {
-        cmd += " color " + M(1) + " 0.808 0.808 0.808";
-        cmd += " color " + M(2) + " 0.647 0.349 0.667";
-        cmd += " color " + M(3) + " 0.349 0.659 0.612";
-        cmd += " color " + M(4) + " 0.941 0.772 0.443";
-        cmd += " color " + M(5) + " 0.878 0.169 0.208";
-        cmd += " color " + M(6) + " 0.031 0.165 0.329";
-        cmd += QString(" %1 %2 %3 sa 1.0 ").arg(kw, mmin, mmax);
-        cmd += "6 " + M(1) + " " + M(2) + " " + M(3) + " " + M(4) + " " + M(5) + " " + M(6);
-    } else if (colormap == "Landscape") {
-        cmd += " color " + M(0) + " 0.145 0.400 0.463";
-        cmd += " color " + M(1) + " 0.392 0.867 0.588";
-        cmd += " color " + M(2) + " 0.572 0.192 0.141";
-        cmd += " color " + M(3) + " 0.392 0.831 0.992";
-        cmd += " color " + M(4) + " 0.020 0.431 0.071";
-        cmd += " color " + M(5) + " 0.992 0.349 0.145";
-        cmd += " color " + M(6) + " 0.275 0.953 0.243";
-        cmd += " color " + M(7) + " 0.729 0.525 0.361";
-        cmd += " color " + M(8) + " 0.780 0.867 0.529";
-        cmd += " color " + M(9) + " 0.243 0.298 0.078";
-        cmd += QString(" %1 %2 %3 sa 1.0 ").arg(kw, mmin, mmax);
-        cmd += "10 " + M(0) + " " + M(1) + " " + M(2) + " " + M(3) + " " + M(4) + " " + M(5) + " " +
-               M(6) + " " + M(7) + " " + M(8) + " " + M(9);
-    } else if (colormap == "Basic") {
-        cmd += QString(" %1 %2 %3 sa 1.0 ").arg(kw, mmin, mmax);
-        cmd += "10 red cyan green black magenta blue yellow purple white orange";
-    } else if (colormap == "Teal") {
-        cmd += " color " + M(1) + " 0.071 0.153 0.251";
-        cmd += " color " + M(2) + " 0.106 0.282 0.369";
-        cmd += " color " + M(3) + " 0.337 0.545 0.529";
-        cmd += " color " + M(4) + " 0.710 0.820 0.682";
-        cmd += QString(" %1 %2 %3 cf 0.0 ").arg(kw, mmin, mmax);
-        cmd += "4 min " + M(1) + " 0.25 " + M(2) + " 0.5 " + M(3) + " max " + M(4);
-    } else if (colormap == "Viridis") {
-        cmd += " color " + M(1) + " 0.282 0.129 0.451";
-        cmd += " color " + M(2) + " 0.435 0.435 0.556";
-        cmd += " color " + M(3) + " 0.161 0.686 0.498";
-        cmd += " color " + M(4) + " 0.741 0.875 0.149";
-        cmd += QString(" %1 %2 %3 cf 0.0 ").arg(kw, mmin, mmax);
-        cmd += "4 min " + M(1) + " 0.333 " + M(2) + " 0.667 " + M(3) + " max " + M(4);
-    } else if (colormap == "Inferno") {
-        cmd += " color " + M(1) + " 0.032 0.032 0.048";
-        cmd += " color " + M(2) + " 0.318 0.071 0.486";
-        cmd += " color " + M(3) + " 0.718 0.216 0.475";
-        cmd += " color " + M(4) + " 0.988 0.537 0.380";
-        cmd += " color " + M(5) + " 0.988 0.992 0.749";
-        cmd += QString(" %1 %2 %3 cf 0.0 ").arg(kw, mmin, mmax);
-        cmd +=
-            "5 min " + M(1) + " 0.25 " + M(2) + " 0.5 " + M(3) + " 0.75 " + M(4) + " max " + M(5);
-    } else if (colormap == "Plasma") {
-        cmd += " color " + M(1) + " 0.051 0.031 0.529";
-        cmd += " color " + M(2) + " 0.612 0.090 0.620";
-        cmd += " color " + M(3) + " 0.929 0.475 0.325";
-        cmd += " color " + M(4) + " 0.941 0.976 0.129";
-        cmd += QString(" %1 %2 %3 cf 0.0 ").arg(kw, mmin, mmax);
-        cmd += "4 min " + M(1) + " 0.333 " + M(2) + " 0.667 " + M(3) + " max " + M(4);
-    } else { // default is "BWR"
-        cmd += " color " + M(1) + " 0.000 0.227 0.427";
-        cmd += " color " + M(2) + " 0.459 0.055 0.075";
-        cmd += QString(" %1 %2 %3 cf 0.0 ").arg(kw, mmin, mmax);
-        cmd += "3 min " + M(1) + " 0.5 white max " + M(2);
+    const ColorMapDef &def = colorMapDef(colormap);
+    const QString mmin     = (mapmin == "auto") ? QStringLiteral("min") : mapmin;
+    const QString mmax     = (mapmax == "auto") ? QStringLiteral("max") : mapmax;
+
+    // Resolve each stop to a color token: a LAMMPS named color used verbatim, or
+    // a custom color "<pfx><n>" defined once via "color <pfx><n> R G B".  Distinct
+    // RGB values share a single custom color, numbered in order of first use.
+    QStringList colorref; // per-stop color token, parallel to def.stops
+    QStringList rgbseen;  // distinct "R G B" strings; index + 1 -> custom number
+    for (const auto &s : def.stops) {
+        if (!s.name.isEmpty()) {
+            colorref.append(s.name);
+            continue;
+        }
+        const QString rgb =
+            QStringLiteral("%1 %2 %3").arg(s.r, 0, 'f', 3).arg(s.g, 0, 'f', 3).arg(s.b, 0, 'f', 3);
+        int idx = rgbseen.indexOf(rgb);
+        if (idx < 0) {
+            rgbseen.append(rgb);
+            idx = rgbseen.size() - 1;
+            cmd += " color " + pfx + QString::number(idx + 1) + " " + rgb;
+        }
+        colorref.append(pfx + QString::number(idx + 1));
+    }
+
+    const int n = def.stops.size();
+    if (def.continuous) {
+        cmd += QString(" %1 %2 %3 cf 0.0 %4").arg(kw, mmin, mmax).arg(n);
+        for (int i = 0; i < n; ++i) {
+            const QString pos = (i == 0)       ? QStringLiteral("min")
+                                : (i == n - 1) ? QStringLiteral("max")
+                                               : QString::number(def.stops[i].pos);
+            cmd += " " + pos + " " + colorref[i];
+        }
+    } else {
+        cmd += QString(" %1 %2 %3 sa 1.0 %4").arg(kw, mmin, mmax).arg(n);
+        for (const auto &c : colorref)
+            cmd += " " + c;
     }
 }
 

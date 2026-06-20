@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.20)
 
 project(lammps-gui
-  VERSION 2.0.90
+  VERSION 2.0.95
   LANGUAGES CXX
   DESCRIPTION "The LAMMPS GUI"
   HOMEPAGE_URL "https://lammps-gui.lammps.org/")
@@ -100,6 +100,8 @@ if (NOT BUILD_DOC_ONLY)
     ${CMAKE_SOURCE_DIR}/src/chartbackend.h
     ${CMAKE_SOURCE_DIR}/src/codeeditor.cpp
     ${CMAKE_SOURCE_DIR}/src/codeeditor.h
+    ${CMAKE_SOURCE_DIR}/src/colormaps.cpp
+    ${CMAKE_SOURCE_DIR}/src/colormaps.h
     ${CMAKE_SOURCE_DIR}/src/constants.h
     ${CMAKE_SOURCE_DIR}/src/customfunc.cpp
     ${CMAKE_SOURCE_DIR}/src/customfunc.h
