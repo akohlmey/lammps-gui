@@ -60,6 +60,12 @@ const std::map<QString, ColorMapDef> &table()
         {"Magma", {true, {rc(0.0,  0.001, 0.000, 0.014), rc(0.25, 0.317, 0.072, 0.485),
                           rc(0.5,  0.716, 0.215, 0.475), rc(0.75, 0.987, 0.536, 0.382),
                           rc(1.0,  0.987, 0.991, 0.750)}}},
+        {"Cividis", {true, {rc(0.0,  0.000, 0.135, 0.305), rc(0.25, 0.264, 0.308, 0.423),
+                            rc(0.5,  0.489, 0.485, 0.471), rc(0.75, 0.736, 0.681, 0.424),
+                            rc(1.0,  0.996, 0.909, 0.218)}}},
+        {"Turbo", {true, {rc(0.0, 0.190, 0.072, 0.232), rc(0.2, 0.244, 0.609, 0.997),
+                          rc(0.4, 0.276, 0.971, 0.517), rc(0.6, 0.883, 0.866, 0.217),
+                          rc(0.8, 0.941, 0.356, 0.070), rc(1.0, 0.480, 0.016, 0.011)}}},
         {"Teal", {true, {rc(0.0, 0.071, 0.153, 0.251), rc(0.25, 0.106, 0.282, 0.369),
                          rc(0.5, 0.337, 0.545, 0.529), rc(1.0,  0.710, 0.820, 0.682)}}},
         {"Rainbow", {true, {nm(0.0, "red"), nm(0.25, "yellow"), nm(0.45, "green"),
@@ -92,9 +98,10 @@ const ColorMapDef &colorMapDef(const QString &name)
 
 const QStringList &colorMapNames()
 {
-    static const QStringList names = {"BWR",       "RWB",     "PWT",        "BWG",       "BGR",
-                                      "Grayscale", "Viridis", "Plasma",     "Inferno",   "Magma",
-                                      "Teal",      "Rainbow", "Sequential", "Landscape", "Basic"};
+    static const QStringList names = {"BWR",       "RWB",     "PWT",    "BWG",     "BGR",
+                                      "Grayscale", "Viridis", "Plasma", "Inferno", "Magma",
+                                      "Cividis",   "Turbo",   "Teal",   "Rainbow", "Sequential",
+                                      "Landscape", "Basic"};
     return names;
 }
 

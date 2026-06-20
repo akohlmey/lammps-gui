@@ -459,6 +459,16 @@ TEST(DumpImageCommand, PerceptualColorMapsUseCanonicalStops)
     cmd        = buildCmd(p);
     EXPECT_TRUE(cmd.contains(" color map3 0.716 0.215 0.475")) << cmd.toStdString();
     EXPECT_TRUE(cmd.contains(" color map5 0.987 0.991 0.750"));
+
+    p.colormap = "Cividis";
+    cmd        = buildCmd(p);
+    EXPECT_TRUE(cmd.contains(" color map1 0.000 0.135 0.305")) << cmd.toStdString();
+    EXPECT_TRUE(cmd.contains(" color map5 0.996 0.909 0.218"));
+
+    p.colormap = "Turbo";
+    cmd        = buildCmd(p);
+    EXPECT_TRUE(cmd.contains(" color map1 0.190 0.072 0.232")) << cmd.toStdString();
+    EXPECT_TRUE(cmd.contains(" color map6 0.480 0.016 0.011"));
 }
 
 } // namespace
