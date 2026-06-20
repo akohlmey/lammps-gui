@@ -1,5 +1,9 @@
 LAMMPS-GUI TODO list:
 
+**Current priorities (chosen 2026-06-20):** the Stage 8 plotting follow-ups and
+the SlideShow enhancements, both marked "(priority)" below.  Everything else is
+a longer-term idea or deliberately out of scope.
+
 # New feature ideas
 
 ## Implement data file manager GUI with the following features:
@@ -33,7 +37,7 @@ LAMMPS-GUI TODO list:
   These could make a different category of tutorials
   relative to the existing: atomic / molecular simulations versus materials science
 
-## Snapshot viewer (SlideShow) enhancements
+## Snapshot viewer (SlideShow) enhancements (priority)
   Follow-ups to the "view arbitrary image files in the snapshot viewer"
   feature (helpers `isImageFile()`, `SlideShow` ImageMagick conversion +
   standalone mode, `viewFile()` routing, and "Open Image File(s)...").
@@ -55,15 +59,12 @@ LAMMPS-GUI TODO list:
 
 # Refactoring status and recommendations
 
-This is a staged plan for code cleanups and C++17 modernization. The
-codebase is already disciplined and modern (nullptr, auto, range-for,
-override, constexpr, Rule-of-5 on every class, make_unique, no malloc /
-sprintf / strcpy / typedef), so the work is targeted consolidation, not a
-legacy rewrite. The biggest opportunities are: (a) string-handling churn
-at the char* / std::string / QString boundary, (b) the LammpsWrapper
-plugin-vs-linked dispatch duplication, and (c) a handful of oversized
-methods. See CLAUDE.md ("String handling & modern C++ conventions") for
-the settled design choices that govern this work.
+The staged code-cleanup and C++17-modernization effort (stages 1-8 below) is
+complete; the original "biggest opportunities" -- string-handling churn at the
+char* / std::string / QString boundary, the LammpsWrapper plugin-vs-linked
+dispatch duplication, and a handful of oversized methods -- have all been
+addressed. The conventions that effort settled remain the standard for new and
+refactored code. See CLAUDE.md ("String handling & modern C++ conventions").
 
 **Settled north star:** QString is the canonical internal string type;
 ALL conversions to/from char* and std::string are confined to
@@ -78,35 +79,9 @@ overloads and `lastErrorMessage()` are the templates to follow.
 - Cleanup commits must not change behavior; build with
   `-DENABLE_TESTING=ON` and keep `ctest` green after each stage.
 
-## Completed stages 1-8 (done; see git history for details)
+## Completed stages 1-8 (done; see git history on the `refactor/cleanup` branch)
 
-All eight stages are complete and committed on the `refactor/cleanup`
-branch: constants/keys centralization (1), wrapper string consolidation
-(2), `LammpsWrapper` plugin/linked dispatch de-duplication (3), typed
-data-extraction helpers (4), oversized-method/file decomposition (5), the
-modern-C++ breadth pass (6), the `createImage` struct-driven renderer
-extraction (7), and the reusable-ChartViewer external-data plotting +
-post-processing feature -- including the vendored `LeptonMini` expression
-parser and the Levenberg-Marquardt custom fit (8).
-
-## Remaining refactor items (deferred from Stage 6; low priority)
-
-Both were assessed and intentionally left as-is -- high churn for low
-value. Revisit only when already editing the surrounding code:
-
-- **`enum class` for internal enumerations.** `AccelType`/`AccelPrec` are
-  persisted in QSettings (read via `.toInt()`, compared against `int`,
-  passed as `QVariant` defaults) and `PIPES` is used as array indices, so
-  they genuinely need int interop; the `LammpsWrapper`
-  `StyleConst`/`ScopeConst`/`TypeConst` likewise map to LAMMPS ints.
-  `enum class` would only add `static_cast` noise. No suitable candidate.
-- **Audit dialog `findChild`/`setObjectName` wiring** (137 / 113 uses).
-  Replacing the `findChild`-based readback with typed member pointers is
-  the silent-failure-on-rename operation that is unsafe to do without a
-  real GUI run to catch mistakes (build/tests would not). Object names
-  were kept exact.
-
-## Stage 8 plotting -- optional follow-ups
+## Stage 8 plotting follow-ups (priority)
 
 - *Custom-fit parameter bounds.* `levmar` is currently unconstrained; the
   Grace template offers per-parameter bounds. Add box constraints
