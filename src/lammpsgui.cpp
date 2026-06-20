@@ -274,9 +274,15 @@ void LammpsGui::createTutorialMenu()
     auto *menu              = menubar->addMenu("&Tutorials");
     const auto &collections = tutorialCollections();
     for (int c = 0; c < collections.size(); ++c) {
-        const auto &coll    = collections[c];
-        const QString title = coll.published ? coll.name : (coll.name + " (coming soon)");
-        auto *sub           = menu->addMenu(title);
+        const auto &coll = collections[c];
+        QString title    = QString("&%1: %2").arg(c + 1).arg(coll.name);
+        if (!coll.published) title += " (" + coll.status + ")";
+        auto *sub = menu->addMenu(title);
+        // a planned collection has no tutorials yet: show it as a disabled entry
+        if (coll.count() == 0) {
+            sub->menuAction()->setEnabled(false);
+            continue;
+        }
         for (int i = 0; i < coll.count(); ++i) {
             auto *action =
                 addMenuAction(sub, coll.logoFor(i + 1),

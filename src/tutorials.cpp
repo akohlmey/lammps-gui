@@ -22,8 +22,8 @@ namespace {
 TutorialCollection molecular()
 {
     TutorialCollection c;
-    c.key          = QStringLiteral("molecular");
-    c.name         = QStringLiteral("Molecular");
+    c.key          = QStringLiteral("softmatter");
+    c.name         = QStringLiteral("Soft Matter");
     c.dirPrefix    = QStringLiteral("tutorial");
     c.author       = QStringLiteral("Simon Gravelle, Cecilia Alvares, Jake Gissinger, "
                                           "and Axel Kohlmeyer");
@@ -105,6 +105,7 @@ TutorialCollection matsci()
     c.siteUrl      = QStringLiteral("https://lammpstutorials.github.io/");
     c.logo         = QStringLiteral(":/icons/tutorial-logo.png");
     c.published    = false;
+    c.status       = QStringLiteral("coming soon");
 
     c.titles = {"Crystalline metals and the EAM potential",
                 "Variables, automation, and the energy-volume curve",
@@ -131,9 +132,29 @@ TutorialCollection matsci()
     return c;
 }
 
+// --- Collection 3: granular / discrete-element-method tutorials (PLANNED) -----
+//
+// A placeholder for a future tutorial collection.  No tutorials are defined yet,
+// so it shows in the menu as a disabled "Granular / DEM (planned)" entry.  Add
+// titles/blurbs (and eventually hosting + published = true) as it is developed.
+TutorialCollection granular()
+{
+    TutorialCollection c;
+    c.key       = QStringLiteral("granular");
+    c.name      = QStringLiteral("Granular / DEM");
+    c.dirPrefix = QStringLiteral("granular-tutorial");
+    c.author    = QStringLiteral("the LAMMPS Granular / DEM tutorials authors");
+    c.siteUrl   = QStringLiteral("https://lammpstutorials.github.io/");
+    c.logo      = QStringLiteral(":/icons/tutorial-logo.png");
+    c.published = false;
+    c.status    = QStringLiteral("planned");
+    // no tutorials defined yet
+    return c;
+}
+
 const QList<TutorialCollection> &collections()
 {
-    static const QList<TutorialCollection> all = {molecular(), matsci()};
+    static const QList<TutorialCollection> all = {molecular(), matsci(), granular()};
     return all;
 }
 

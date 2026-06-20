@@ -41,6 +41,7 @@ struct TutorialCollection {
     QStringList slugs;    ///< per-tutorial web-page slugs (count() entries, or empty)
     QStringList blurbs;   ///< per-tutorial HTML descriptions (count() entries)
     bool published;       ///< true once the files are hosted publicly and downloadable
+    QString status;       ///< menu label for an unpublished collection ("coming soon", "planned")
 
     /** @brief Number of tutorials in this collection */
     int count() const { return blurbs.size(); }
