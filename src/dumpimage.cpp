@@ -112,94 +112,101 @@ static bool appendFixComputeStyles(QString &cmd, const DumpImageParams &p)
     return dofixes;
 }
 
-// Append the definition of the selected color map (color/amap arguments).
-static void appendColorMapArgs(QString &cmd, const DumpImageParams &p)
+// Append the definition of a color map. @p kw is the dump_modify keyword
+// ("amap" for atoms, "bmap" for bonds); @p pfx prefixes the custom color-stop
+// names so an atom map and a bond map with different gradients do not collide in
+// the global color namespace (atoms use "map", bonds use "bm").
+static void appendColorMapArgs(QString &cmd, const QString &kw, const QString &colormap,
+                               const QString &mapmin, const QString &mapmax, const QString &pfx)
 {
-    QString mmin = p.mapmin;
-    if (mmin == "auto") mmin = "min";
-    QString mmax = p.mapmax;
-    if (mmax == "auto") mmax = "max";
-    if (p.colormap == "RWB") {
-        cmd += " color map1 0.459 0.055 0.075";
-        cmd += " color map2 0.000 0.227 0.427";
-        cmd += QString(" amap %1 %2 cf 0.0 ").arg(mmin).arg(mmax);
-        cmd += "5 min map1 0.1 map1 0.5 white 0.9 map2 max map2";
-    } else if (p.colormap == "PWT") {
-        cmd += " color map1 0.286 0.114 0.553";
-        cmd += " color map2 0.000 0.255 0.267";
-        cmd += QString(" amap %1 %2 cf 0.0 ").arg(mmin).arg(mmax);
-        cmd += "5 min map1 0.1 map1 0.5 white 0.9 map2 max map2";
-    } else if (p.colormap == "BGR") {
-        cmd += QString(" amap %1 %2 cf 0.0 ").arg(mmin).arg(mmax);
+    const QString mmin = (mapmin == "auto") ? QStringLiteral("min") : mapmin;
+    const QString mmax = (mapmax == "auto") ? QStringLiteral("max") : mapmax;
+    auto M             = [&](int n) {
+        return pfx + QString::number(n);
+    };
+    if (colormap == "RWB") {
+        cmd += " color " + M(1) + " 0.459 0.055 0.075";
+        cmd += " color " + M(2) + " 0.000 0.227 0.427";
+        cmd += QString(" %1 %2 %3 cf 0.0 ").arg(kw, mmin, mmax);
+        cmd += "5 min " + M(1) + " 0.1 " + M(1) + " 0.5 white 0.9 " + M(2) + " max " + M(2);
+    } else if (colormap == "PWT") {
+        cmd += " color " + M(1) + " 0.286 0.114 0.553";
+        cmd += " color " + M(2) + " 0.000 0.255 0.267";
+        cmd += QString(" %1 %2 %3 cf 0.0 ").arg(kw, mmin, mmax);
+        cmd += "5 min " + M(1) + " 0.1 " + M(1) + " 0.5 white 0.9 " + M(2) + " max " + M(2);
+    } else if (colormap == "BGR") {
+        cmd += QString(" %1 %2 %3 cf 0.0 ").arg(kw, mmin, mmax);
         cmd += "5 min blue 0.05 blue 0.5 green 0.95 red max red";
-    } else if (p.colormap == "BWG") {
-        cmd += QString(" amap %1 %2 cf 0.0 ").arg(mmin).arg(mmax);
+    } else if (colormap == "BWG") {
+        cmd += QString(" %1 %2 %3 cf 0.0 ").arg(kw, mmin, mmax);
         cmd += "5 min blue 0.1 blue 0.5 white 0.9 green max green";
-    } else if (p.colormap == "Grayscale") {
-        cmd += QString(" amap %1 %2 cf 0.0 ").arg(mmin).arg(mmax);
+    } else if (colormap == "Grayscale") {
+        cmd += QString(" %1 %2 %3 cf 0.0 ").arg(kw, mmin, mmax);
         cmd += "2 min black max white";
-    } else if (p.colormap == "Rainbow") {
-        cmd += QString(" amap %1 %2 cf 0.0 ").arg(mmin).arg(mmax);
+    } else if (colormap == "Rainbow") {
+        cmd += QString(" %1 %2 %3 cf 0.0 ").arg(kw, mmin, mmax);
         cmd += "6 min red 0.25 yellow 0.45 green 0.65 cyan 0.85 blue max purple";
-    } else if (p.colormap == "Sequential") {
-        cmd += " color map1 0.808 0.808 0.808";
-        cmd += " color map2 0.647 0.349 0.667";
-        cmd += " color map3 0.349 0.659 0.612";
-        cmd += " color map4 0.941 0.772 0.443";
-        cmd += " color map5 0.878 0.169 0.208";
-        cmd += " color map6 0.031 0.165 0.329";
-        cmd += QString(" amap %1 %2 sa 1.0 ").arg(mmin).arg(mmax);
-        cmd += "6 map1 map2 map3 map4 map5 map6";
-    } else if (p.colormap == "Landscape") {
-        cmd += " color map0 0.145 0.400 0.463";
-        cmd += " color map1 0.392 0.867 0.588";
-        cmd += " color map2 0.572 0.192 0.141";
-        cmd += " color map3 0.392 0.831 0.992";
-        cmd += " color map4 0.020 0.431 0.071";
-        cmd += " color map5 0.992 0.349 0.145";
-        cmd += " color map6 0.275 0.953 0.243";
-        cmd += " color map7 0.729 0.525 0.361";
-        cmd += " color map8 0.780 0.867 0.529";
-        cmd += " color map9 0.243 0.298 0.078";
-        cmd += QString(" amap %1 %2 sa 1.0 ").arg(mmin).arg(mmax);
-        cmd += "10 map0 map1 map2 map3 map4 map5 map6 map7 map8 map9";
-    } else if (p.colormap == "Basic") {
-        cmd += QString(" amap %1 %2 sa 1.0 ").arg(mmin).arg(mmax);
+    } else if (colormap == "Sequential") {
+        cmd += " color " + M(1) + " 0.808 0.808 0.808";
+        cmd += " color " + M(2) + " 0.647 0.349 0.667";
+        cmd += " color " + M(3) + " 0.349 0.659 0.612";
+        cmd += " color " + M(4) + " 0.941 0.772 0.443";
+        cmd += " color " + M(5) + " 0.878 0.169 0.208";
+        cmd += " color " + M(6) + " 0.031 0.165 0.329";
+        cmd += QString(" %1 %2 %3 sa 1.0 ").arg(kw, mmin, mmax);
+        cmd += "6 " + M(1) + " " + M(2) + " " + M(3) + " " + M(4) + " " + M(5) + " " + M(6);
+    } else if (colormap == "Landscape") {
+        cmd += " color " + M(0) + " 0.145 0.400 0.463";
+        cmd += " color " + M(1) + " 0.392 0.867 0.588";
+        cmd += " color " + M(2) + " 0.572 0.192 0.141";
+        cmd += " color " + M(3) + " 0.392 0.831 0.992";
+        cmd += " color " + M(4) + " 0.020 0.431 0.071";
+        cmd += " color " + M(5) + " 0.992 0.349 0.145";
+        cmd += " color " + M(6) + " 0.275 0.953 0.243";
+        cmd += " color " + M(7) + " 0.729 0.525 0.361";
+        cmd += " color " + M(8) + " 0.780 0.867 0.529";
+        cmd += " color " + M(9) + " 0.243 0.298 0.078";
+        cmd += QString(" %1 %2 %3 sa 1.0 ").arg(kw, mmin, mmax);
+        cmd += "10 " + M(0) + " " + M(1) + " " + M(2) + " " + M(3) + " " + M(4) + " " + M(5) + " " +
+               M(6) + " " + M(7) + " " + M(8) + " " + M(9);
+    } else if (colormap == "Basic") {
+        cmd += QString(" %1 %2 %3 sa 1.0 ").arg(kw, mmin, mmax);
         cmd += "10 red cyan green black magenta blue yellow purple white orange";
-    } else if (p.colormap == "Teal") {
-        cmd += " color map1 0.071 0.153 0.251";
-        cmd += " color map2 0.106 0.282 0.369";
-        cmd += " color map3 0.337 0.545 0.529";
-        cmd += " color map4 0.710 0.820 0.682";
-        cmd += QString(" amap %1 %2 cf 0.0 ").arg(mmin).arg(mmax);
-        cmd += "4 min map1 0.25 map2 0.5 map3 max map4";
-    } else if (p.colormap == "Viridis") {
-        cmd += " color map1 0.282 0.129 0.451";
-        cmd += " color map2 0.435 0.435 0.556";
-        cmd += " color map3 0.161 0.686 0.498";
-        cmd += " color map4 0.741 0.875 0.149";
-        cmd += QString(" amap %1 %2 cf 0.0 ").arg(mmin).arg(mmax);
-        cmd += "4 min map1 0.333 map2 0.667 map3 max map4";
-    } else if (p.colormap == "Inferno") {
-        cmd += " color map1 0.032 0.032 0.048";
-        cmd += " color map2 0.318 0.071 0.486";
-        cmd += " color map3 0.718 0.216 0.475";
-        cmd += " color map4 0.988 0.537 0.380";
-        cmd += " color map5 0.988 0.992 0.749";
-        cmd += QString(" amap %1 %2 cf 0.0 ").arg(mmin).arg(mmax);
-        cmd += "5 min map1 0.25 map2 0.5 map3 0.75 map4 max map5";
-    } else if (p.colormap == "Plasma") {
-        cmd += " color map1 0.051 0.031 0.529";
-        cmd += " color map2 0.612 0.090 0.620";
-        cmd += " color map3 0.929 0.475 0.325";
-        cmd += " color map4 0.941 0.976 0.129";
-        cmd += QString(" amap %1 %2 cf 0.0 ").arg(mmin).arg(mmax);
-        cmd += "4 min map1 0.333 map2 0.667 map3 max map4";
+    } else if (colormap == "Teal") {
+        cmd += " color " + M(1) + " 0.071 0.153 0.251";
+        cmd += " color " + M(2) + " 0.106 0.282 0.369";
+        cmd += " color " + M(3) + " 0.337 0.545 0.529";
+        cmd += " color " + M(4) + " 0.710 0.820 0.682";
+        cmd += QString(" %1 %2 %3 cf 0.0 ").arg(kw, mmin, mmax);
+        cmd += "4 min " + M(1) + " 0.25 " + M(2) + " 0.5 " + M(3) + " max " + M(4);
+    } else if (colormap == "Viridis") {
+        cmd += " color " + M(1) + " 0.282 0.129 0.451";
+        cmd += " color " + M(2) + " 0.435 0.435 0.556";
+        cmd += " color " + M(3) + " 0.161 0.686 0.498";
+        cmd += " color " + M(4) + " 0.741 0.875 0.149";
+        cmd += QString(" %1 %2 %3 cf 0.0 ").arg(kw, mmin, mmax);
+        cmd += "4 min " + M(1) + " 0.333 " + M(2) + " 0.667 " + M(3) + " max " + M(4);
+    } else if (colormap == "Inferno") {
+        cmd += " color " + M(1) + " 0.032 0.032 0.048";
+        cmd += " color " + M(2) + " 0.318 0.071 0.486";
+        cmd += " color " + M(3) + " 0.718 0.216 0.475";
+        cmd += " color " + M(4) + " 0.988 0.537 0.380";
+        cmd += " color " + M(5) + " 0.988 0.992 0.749";
+        cmd += QString(" %1 %2 %3 cf 0.0 ").arg(kw, mmin, mmax);
+        cmd +=
+            "5 min " + M(1) + " 0.25 " + M(2) + " 0.5 " + M(3) + " 0.75 " + M(4) + " max " + M(5);
+    } else if (colormap == "Plasma") {
+        cmd += " color " + M(1) + " 0.051 0.031 0.529";
+        cmd += " color " + M(2) + " 0.612 0.090 0.620";
+        cmd += " color " + M(3) + " 0.929 0.475 0.325";
+        cmd += " color " + M(4) + " 0.941 0.976 0.129";
+        cmd += QString(" %1 %2 %3 cf 0.0 ").arg(kw, mmin, mmax);
+        cmd += "4 min " + M(1) + " 0.333 " + M(2) + " 0.667 " + M(3) + " max " + M(4);
     } else { // default is "BWR"
-        cmd += " color map1 0.000 0.227 0.427";
-        cmd += " color map2 0.459 0.055 0.075";
-        cmd += QString(" amap %1 %2 cf 0.0 ").arg(mmin).arg(mmax);
-        cmd += "3 min map1 0.5 white max map2";
+        cmd += " color " + M(1) + " 0.000 0.227 0.427";
+        cmd += " color " + M(2) + " 0.459 0.055 0.075";
+        cmd += QString(" %1 %2 %3 cf 0.0 ").arg(kw, mmin, mmax);
+        cmd += "3 min " + M(1) + " 0.5 white max " + M(2);
     }
 }
 
@@ -374,7 +381,9 @@ QString buildDumpImageCommand(const DumpImageParams &p)
     // apply the selected color map only when atoms are colored by a per-atom
     // value; for type/element coloring the map is unused, so omit it
     const bool atomByValue = (atomColorTok != "type") && (atomColorTok != "element");
-    if (atomByValue) appendColorMapArgs(dumpcmd, p);
+    if (atomByValue) appendColorMapArgs(dumpcmd, "amap", p.colormap, p.mapmin, p.mapmax, "map");
+    if (p.bondbyvalue)
+        appendColorMapArgs(dumpcmd, "bmap", p.bondcolormap, p.bondmapmin, p.bondmapmax, "bm");
 
     appendFixComputeColors(dumpcmd, p);
 

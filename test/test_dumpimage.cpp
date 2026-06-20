@@ -62,6 +62,7 @@ DumpImageParams makeParams()
     p.bond_flag    = 0;
     p.showbonds    = true;
     p.bondcolor    = "gray";
+    p.bondbyvalue  = false;
     p.bonddiam     = "0.2";
     p.autobond     = false;
     p.haspairstyle = true;
@@ -106,9 +107,12 @@ DumpImageParams makeParams()
     p.backlight    = 0.2;
     p.version      = 20260330; // not greater than threshold -> no lights/hull
 
-    p.colormap = "BWR";
-    p.mapmin   = "auto";
-    p.mapmax   = "auto";
+    p.colormap     = "BWR";
+    p.mapmin       = "auto";
+    p.mapmax       = "auto";
+    p.bondcolormap = "BWR";
+    p.bondmapmin   = "auto";
+    p.bondmapmax   = "auto";
 
     return p;
 }
@@ -381,6 +385,38 @@ TEST(DumpImageCommand, SubboxAxesCenterEmittedWhenSet)
     EXPECT_TRUE(cmd.contains(" subbox yes 0.01")) << cmd.toStdString();
     EXPECT_TRUE(cmd.contains(" axes "));
     EXPECT_TRUE(cmd.contains(" center s 0.3 0.5 0.5"));
+}
+
+TEST(DumpImageCommand, BondColorByValueEmitsComputeAndBmap)
+{
+    auto p            = makeParams();
+    p.nbondtypes      = 1;
+    p.showbonds       = true;
+    p.bondbyvalue     = true;
+    p.bondcolor       = "c_imgviewer_bondval";
+    p.bonddiam        = "0.3";
+    p.bondcolormap    = "Plasma";
+    const QString cmd = buildDumpImageCommand(p);
+    EXPECT_TRUE(cmd.contains(" bond c_imgviewer_bondval 0.3 ")) << cmd.toStdString();
+    EXPECT_TRUE(cmd.contains(" bmap min max cf 0.0 "));
+    EXPECT_TRUE(cmd.contains(" color bm1 ")); // bond map stops use the "bm" prefix
+    EXPECT_FALSE(cmd.contains(" amap "));     // atoms colored by type -> no atom map
+}
+
+TEST(DumpImageCommand, AtomAndBondMapsUseDistinctColorNames)
+{
+    auto p            = makeParams();
+    p.atomcolor       = "vx"; // atoms colored by value -> amap
+    p.colormap        = "Viridis";
+    p.nbondtypes      = 1;
+    p.bondbyvalue     = true;
+    p.bondcolor       = "c_b";
+    p.bondcolormap    = "Plasma";
+    const QString cmd = buildDumpImageCommand(p);
+    EXPECT_TRUE(cmd.contains(" amap ")) << cmd.toStdString();
+    EXPECT_TRUE(cmd.contains(" bmap "));
+    EXPECT_TRUE(cmd.contains(" color map1 ")); // atom (Viridis) custom stops
+    EXPECT_TRUE(cmd.contains(" color bm1 "));  // bond (Plasma) custom stops, distinct names
 }
 
 } // namespace

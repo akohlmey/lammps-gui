@@ -79,7 +79,8 @@ struct DumpImageParams {
     int nbondtypes;    ///< number of bond types
     int bond_flag;     ///< LAMMPS bond_flag setting
     bool showbonds;    ///< draw bonds
-    QString bondcolor; ///< bond color property
+    QString bondcolor; ///< bond color property (or "c_<id>" when bondbyvalue)
+    bool bondbyvalue;  ///< color bonds by a per-bond compute value (emit bmap)
     QString bonddiam;  ///< bond diameter property
     bool autobond;     ///< derive bonds from a distance cutoff
     bool haspairstyle; ///< a pair style other than "none" is defined
@@ -128,10 +129,13 @@ struct DumpImageParams {
     double backlight;                         ///< back light setting
     int version;                              ///< LAMMPS version (date) id
 
-    // ---- colormap ----
-    QString colormap; ///< name of the selected color map
-    QString mapmin;   ///< minimum-value choice for the color map
-    QString mapmax;   ///< maximum-value choice for the color map
+    // ---- color maps (atoms / bonds) ----
+    QString colormap;     ///< name of the selected atom color map
+    QString mapmin;       ///< minimum-value choice for the atom color map
+    QString mapmax;       ///< maximum-value choice for the atom color map
+    QString bondcolormap; ///< name of the selected bond color map
+    QString bondmapmin;   ///< minimum-value choice for the bond color map
+    QString bondmapmax;   ///< maximum-value choice for the bond color map
 
     // ---- regions / fixes / computes ----
     std::map<std::string, ImageInfo *> computes; ///< per-compute graphics settings

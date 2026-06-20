@@ -1403,11 +1403,12 @@ DumpImageParams ImageViewer::gatherDumpImageParams(const QString &dumpfilename)
     p.ellipsoiddiam  = ellipsoiddiam;
 
     // bonds
-    p.showbonds  = showbonds;
-    p.bondcolor  = bondcolor;
-    p.bonddiam   = bonddiam;
-    p.autobond   = autobond;
-    p.bondcutoff = bondcutoff;
+    p.showbonds   = showbonds;
+    p.bondcolor   = bondcolor;
+    p.bondbyvalue = false; // no bond-by-value UI yet; keep bonds colored normally
+    p.bonddiam    = bonddiam;
+    p.autobond    = autobond;
+    p.bondcutoff  = bondcutoff;
 
     // view / image
     p.xsize       = xsize;
@@ -1450,9 +1451,12 @@ DumpImageParams ImageViewer::gatherDumpImageParams(const QString &dumpfilename)
     p.backlight    = backlight;
 
     // colormap
-    p.colormap = colormap;
-    p.mapmin   = mapmin;
-    p.mapmax   = mapmax;
+    p.colormap     = colormap;
+    p.mapmin       = mapmin;
+    p.mapmax       = mapmax;
+    p.bondcolormap = colormap;
+    p.bondmapmin   = mapmin;
+    p.bondmapmax   = mapmax;
 
     // regions / fixes / computes (non-owning pointer copies)
     p.computes = computes;
