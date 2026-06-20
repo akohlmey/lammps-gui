@@ -454,10 +454,10 @@ void ImageViewer::atomSettings()
 
     layout->setColumnStretch(0, 7);
     layout->setColumnStretch(1, 4);
-    layout->setColumnStretch(2, 7);
+    layout->setColumnStretch(2, 6);
     layout->setColumnStretch(3, 3);
-    layout->setColumnStretch(4, 7);
-    layout->setColumnStretch(5, 7);
+    layout->setColumnStretch(4, 6);
+    layout->setColumnStretch(5, 3);
     layout->setColumnStretch(6, 4);
 
     n = 0;
