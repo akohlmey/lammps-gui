@@ -53,17 +53,15 @@ LAMMPS-GUI TODO list:
     route them in `viewFile()` / "Open Image File(s)..." (or a sibling "Open
     Movie..."), and reuse the conversion-cache cleanup from the item above.
 
-## Verify and expand the dump-image color maps
-  The perceptually-uniform color maps (Viridis, Plasma, Inferno, Teal, ...)
-  were approximated from matplotlib and may contain errors; verify the RGB
-  stops against the canonical matplotlib data and correct as needed. Note the
-  preview gradient swatches in the settings dialog (`gradient_icon(...)` in
-  `imageviewersettings.cpp`) and the actual `amap`/`bmap` stops emitted by the
-  builder (`appendColorMapArgs()` in `dumpimage.cpp`) are defined separately
-  and do not fully agree -- e.g. Plasma's 2nd stop is (156,23,150) in the
-  preview vs (156,23,158) in the command -- so give the two a single source of
-  truth while fixing the values. Also consider offering a few more diverse,
-  perceptually-uniform maps (e.g. Cividis, Magma, Turbo).
+## Offer a few more perceptually-uniform color maps (optional)
+  Done: the preview swatches and the emitted `amap`/`bmap` stops now share a
+  single source of truth (`colormaps.{h,cpp}`, consumed by both
+  `appendColorMapArgs()` in `dumpimage.cpp` and `addColorMapItems()` in
+  `imageviewersettings.cpp`), the perceptually-uniform maps were corrected
+  against canonical matplotlib data (Viridis/Plasma/Inferno; the old "Inferno"
+  was really magma), and Magma was added. Optionally add Cividis and Turbo
+  (canonical stops are easy to resample from matplotlib) to the table and the
+  `colorMapNames()` list.
 
 # Refactoring status and recommendations
 
