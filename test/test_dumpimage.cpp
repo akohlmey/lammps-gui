@@ -96,6 +96,7 @@ DumpImageParams makeParams()
     p.boxcolor     = "white";
     p.backcolor    = "black";
     p.backcolor2   = "gray";
+    p.usegradient  = true;
     p.axestrans    = 0.0;
     p.boxtrans     = 0.0;
     p.atomtrans    = 1.0;
@@ -322,7 +323,8 @@ TEST(DumpImageCommand, AllDefaultsPruned)
     p.atomcolor    = "type";
     p.boxcolor     = "gold";
     p.backcolor    = "black";
-    p.backcolor2   = "black"; // solid background == LAMMPS default -> pruned
+    p.backcolor2   = "white";
+    p.usegradient  = false; // solid background; backcolor == LAMMPS default -> pruned
     p.axestrans    = 1.0;
     p.boxtrans     = 1.0;
     p.atomtrans    = 1.0;
@@ -353,6 +355,16 @@ TEST(DumpImageCommand, TransparencyEmittedWhenNotOpaque)
     EXPECT_TRUE(cmd.contains(" axestrans 0"));
     EXPECT_TRUE(cmd.contains(" boxtrans 0"));
     EXPECT_FALSE(cmd.contains(" atrans ")); // opaque -> pruned
+}
+
+TEST(DumpImageCommand, SolidBackgroundOmitsBackcolor2)
+{
+    auto p            = makeParams();
+    p.usegradient     = false;
+    p.backcolor       = "navy"; // a delta from the LAMMPS default
+    const QString cmd = buildDumpImageCommand(p);
+    EXPECT_TRUE(cmd.contains(" backcolor navy"));
+    EXPECT_FALSE(cmd.contains(" backcolor2")); // never backcolor2 without the gradient
 }
 
 } // namespace

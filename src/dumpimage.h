@@ -118,6 +118,7 @@ struct DumpImageParams {
     QString boxcolor;                         ///< box / subbox color
     QString backcolor;                        ///< lower background color
     QString backcolor2;                       ///< upper background color
+    bool usegradient;                         ///< draw a vertical gradient
     double axestrans;                         ///< axes transparency
     double boxtrans;                          ///< box / subbox transparency
     double atomtrans;                         ///< atom / bond transparency

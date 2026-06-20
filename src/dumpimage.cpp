@@ -235,8 +235,8 @@ QString buildDumpImageCommand(const DumpImageParams &p)
     const bool do_vdw = p.vdwfactor > VDW_CUT;
 
     // atom color for dump
-    const QString atomColorTok =
-        (!p.atomcustom && p.useelements) ? QStringLiteral("element") : p.atomcolor;
+    const QString atomColorTok = (!p.atomcustom && p.useelements) ? QStringLiteral("element")
+                                                                  : p.atomcolor;
     dumpcmd += blank + atomColorTok;
 
     // atom diameter for dump
@@ -342,14 +342,17 @@ QString buildDumpImageCommand(const DumpImageParams &p)
 
     if (p.boxcolor != DEF_BOXCOLOR) dumpcmd += " boxcolor " + p.boxcolor;
 
-    // the background is one logical unit: LAMMPS defaults to a solid black
-    // background, the GUI to a vertical gradient (a deliberate divergence, with
-    // a darkgray default lower color so backcolor is itself a delta). Emit the
-    // backcolor/backcolor2 pair together -- never backcolor2 alone -- whenever
-    // the pair differs from the solid LAMMPS default
-    if (!((p.backcolor == DEF_BACKCOLOR) && (p.backcolor2 == DEF_BACKCOLOR))) {
+    // background: with the gradient enabled (the GUI default, a deliberate
+    // divergence from the solid LAMMPS default) the backcolor/backcolor2 pair is
+    // emitted together -- the darkgray default lower color keeps backcolor itself
+    // a delta. With the gradient off the background is solid and only backcolor is
+    // emitted, and only when it differs from the LAMMPS default. So backcolor2 is
+    // never emitted without backcolor.
+    if (p.usegradient) {
         dumpcmd += " backcolor " + p.backcolor;
         dumpcmd += " backcolor2 " + p.backcolor2;
+    } else if (p.backcolor != DEF_BACKCOLOR) {
+        dumpcmd += " backcolor " + p.backcolor;
     }
 
     if (p.axestrans != DEF_TRANS) dumpcmd += QString(" axestrans %1").arg(p.axestrans);

@@ -742,6 +742,7 @@ void ImageViewer::readImageSettings()
     boxtrans       = 1.0;
     backcolor      = settings.value(Keys::BACKCOLOR, "darkgray").toString();
     backcolor2     = settings.value(Keys::BACKCOLOR2, "white").toString();
+    usegradient    = settings.value(Keys::USEGRADIENT, true).toBool();
     ssaoval        = 0.6;
     atomcustom     = false;
     atomtrans      = 1.0;
@@ -1439,6 +1440,7 @@ DumpImageParams ImageViewer::gatherDumpImageParams(const QString &dumpfilename)
     p.boxcolor     = boxcolor;
     p.backcolor    = backcolor;
     p.backcolor2   = backcolor2;
+    p.usegradient  = usegradient;
     p.axestrans    = axestrans;
     p.boxtrans     = boxtrans;
     p.atomtrans    = atomtrans;

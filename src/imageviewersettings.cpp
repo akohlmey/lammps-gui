@@ -195,11 +195,16 @@ void ImageViewer::globalSettings()
     bgcolor->setValidator(colorvalidator);
     bgcolor->setMaximumWidth(fwidth);
     layout->addWidget(bgcolor, idx, n++, 1, 1);
-    layout->addWidget(new QLabel("Topcolor: "), idx, n++, 1, 1, Qt::AlignVCenter | Qt::AlignRight);
+    auto *gradient = new QCheckBox("Gradient: ", this);
+    gradient->setChecked(usegradient);
+    gradient->setToolTip("Blend the background from the bottom to the top color");
+    layout->addWidget(gradient, idx, n++, 1, 1, Qt::AlignVCenter | Qt::AlignRight);
     auto *b2color = new QLineEdit(backcolor2);
     b2color->setCompleter(colorcompleter);
     b2color->setValidator(colorvalidator);
     b2color->setMaximumWidth(fwidth);
+    b2color->setEnabled(usegradient);
+    connect(gradient, &QCheckBox::toggled, b2color, &QLineEdit::setEnabled);
     layout->addWidget(b2color, idx++, n++, 1, 1);
 
     n = 0;
@@ -343,6 +348,7 @@ void ImageViewer::globalSettings()
     if (subdiam->hasAcceptableInput()) subboxdiam = subdiam->text().toDouble();
     if (bgcolor->hasAcceptableInput()) backcolor = bgcolor->text();
     if (b2color->hasAcceptableInput()) backcolor2 = b2color->text();
+    usegradient = gradient->isChecked();
 
     antialias = fsaa->isChecked();
     button    = findChild<QPushButton *>("antialias");

@@ -135,6 +135,7 @@ inline const QString AXESDIAM     = QStringLiteral("axesdiam");
 inline const QString AXESLEN      = QStringLiteral("axeslen");
 inline const QString BACKCOLOR    = QStringLiteral("backcolor");
 inline const QString BACKCOLOR2   = QStringLiteral("backcolor2");
+inline const QString USEGRADIENT  = QStringLiteral("usegradient");
 inline const QString BACKGROUND   = QStringLiteral("background");
 inline const QString BACKGROUND2  = QStringLiteral("background2");
 inline const QString BONDCOLOR    = QStringLiteral("bondcolor");
