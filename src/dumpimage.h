@@ -144,14 +144,38 @@ struct DumpImageParams {
 };
 
 /**
- * @brief Assemble a complete LAMMPS `write_dump ... image ...` command
+ * @brief The two argument strings of an assembled `dump image` command
+ *
+ * The render options (everything that follows `... image <N> <file>`) and the
+ * `dump_modify` options (colors, color maps, lighting, ...) are kept separate so
+ * the caller can compose either an explicit `dump`/`dump_modify` pair or a
+ * one-shot `write_dump` (via toWriteDumpCommand()), and so each builder step can
+ * append to whichever string is logical. Both strings begin with a leading space.
+ */
+struct DumpImageCommand {
+    QString dumpargs;   ///< render options after `image <N> <file>`
+    QString modifyargs; ///< options for `dump_modify <id>` / after `modify`
+    bool dofixes;       ///< a fix/compute graphic is active (write_dump omits `noinit`)
+};
+
+/**
+ * @brief Assemble the render and dump_modify argument strings for a dump image
  * @param p Fully populated parameter struct (no GUI or LAMMPS access required)
- * @return The dump-image command string ready to hand to LammpsWrapper::command()
+ * @return The two argument strings (see DumpImageCommand)
  *
  * Pure function: depends only on @p p, performs no I/O and no LAMMPS calls, and
  * is therefore exercised directly by the unit tests.
  */
-QString buildDumpImageCommand(const DumpImageParams &p);
+DumpImageCommand buildDumpImageCommand(const DumpImageParams &p);
+
+/**
+ * @brief Compose a one-shot `write_dump ... image ...` command from the pieces
+ * @param c     the two argument strings from buildDumpImageCommand()
+ * @param group atom group to render
+ * @param file  output image file name
+ * @return A complete `write_dump` command string
+ */
+QString toWriteDumpCommand(const DumpImageCommand &c, const QString &group, const QString &file);
 
 #endif
 

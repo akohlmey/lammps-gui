@@ -1539,32 +1539,39 @@ void ImageViewer::createImage()
     lammps->command("if $(is_defined(dump,WRITE_DUMP)) then 'undump WRITE_DUMP'");
 
     // (re)create the per-bond coloring compute when a bond/local attribute is
-    // selected; it must exist and be initialized (via run 0) before the
-    // write_dump can reference it. clear any leftover from a prior failed render.
+    // selected; the explicit dump + run 0 below initializes it (write_dump's
+    // dump->init()+write() never runs modify->init()). clear any leftover first.
     const bool bondvalue = bondLocalAttrs.contains(bondcolor);
     lammps->command(QString("if $(is_defined(compute,%1)) then 'uncompute %1'").arg(bondComputeId));
-    if (bondvalue) {
-        StdoutSilencer guard;
+    if (bondvalue)
         lammps->command(
             QString("compute %1 %2 bond/local %3").arg(bondComputeId, group, bondcolor));
-        lammps->command("run 0 post no");
-        if (lammps->hasError()) lammps->getLastErrorMessage(nullptr, 0);
-    }
 
     QDir dumpdir(QDir::tempPath());
     QFile dumpfile(dumpdir.absoluteFilePath(filename + ".ppm"));
 
-    // gather parameters (also refreshes use* members), then sync the atom-size
-    // widgets and assemble the dump-image command from the gathered snapshot
+    // gather parameters (also refreshes use* members), sync the atom-size widgets,
+    // and assemble the dump and dump_modify argument strings
     const DumpImageParams params = gatherDumpImageParams(dumpfile.fileName());
     syncAtomSizeWidgets();
-    const QString dumpcmd = buildDumpImageCommand(params);
+    const DumpImageCommand cmds = buildDumpImageCommand(params);
+    last_dump_cmd               = toWriteDumpCommand(cmds, group, dumpfile.fileName());
 
+    // Render with an explicit dump + run 0 rather than write_dump: the run does a
+    // real modify->init(), which initializes any compute the image references
+    // (e.g. the per-bond compute). dump image needs a '*' in the file name (it is
+    // replaced by the timestep) and "first yes" forces the single frame.
+    const QString starfile = dumpdir.absoluteFilePath(filename + ".*.ppm");
     {
         StdoutSilencer guard;
-        last_dump_cmd = dumpcmd;
-        lammps->command(dumpcmd);
+        lammps->command("dump WRITE_DUMP " + group + " image 1 '" + starfile + "'" + cmds.dumpargs);
+        lammps->command("dump_modify WRITE_DUMP first yes pad 0" + cmds.modifyargs);
+        lammps->command("run 0 post no");
+        lammps->command("undump WRITE_DUMP");
     }
+    const auto step = static_cast<long long>(lammps->getThermo("step"));
+    const QString imagepath =
+        dumpdir.absoluteFilePath(QString("%1.%2.ppm").arg(filename).arg(step));
 
     // the per-bond compute has done its job for this frame; remove it again
     if (bondvalue) {
@@ -1582,10 +1589,12 @@ void ImageViewer::createImage()
         return;
     }
 
-    QImageReader reader(dumpfile.fileName());
+    QImageReader reader(imagepath);
     reader.setAutoTransform(true);
     const QImage newImage = reader.read();
-    dumpfile.remove();
+    // remove the per-step frame file(s) this render produced
+    for (const auto &f : dumpdir.entryList({filename + ".*.ppm"}, QDir::Files))
+        QFile::remove(dumpdir.absoluteFilePath(f));
 
     // read of new image failed. nothing left to do.
     if (newImage.isNull()) return;

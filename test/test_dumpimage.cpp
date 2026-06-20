@@ -1,6 +1,6 @@
 // Unit tests for the pure dump-image command builder (src/dumpimage.cpp).
 //
-// These tests exercise buildDumpImageCommand() without a GUI or a live LAMMPS
+// These tests exercise buildCmd() without a GUI or a live LAMMPS
 // instance: a DumpImageParams struct is populated with representative values
 // and the resulting "write_dump ... image ..." command string is checked for
 // the expected fragments.
@@ -117,9 +117,17 @@ DumpImageParams makeParams()
     return p;
 }
 
+// reconstruct the one-shot write_dump command so the assertions below (which look
+// for "write_dump ... image ... modify ..." fragments) keep working against the
+// two-string builder
+QString buildCmd(const DumpImageParams &p)
+{
+    return toWriteDumpCommand(buildDumpImageCommand(p), p.group, p.dumpfile);
+}
+
 TEST(DumpImageCommand, BasicStructure)
 {
-    const QString cmd = buildDumpImageCommand(makeParams());
+    const QString cmd = buildCmd(makeParams());
 
     EXPECT_TRUE(cmd.startsWith("write_dump all image '/tmp/foo.ppm'")) << cmd.toStdString();
     EXPECT_TRUE(cmd.contains(" size 800 600"));
@@ -146,14 +154,14 @@ TEST(DumpImageCommand, ColorTablePrunedToDeltas)
     p.ntypes     = 4;
 
     // an unmodified default table emits no color or acolor lines
-    QString cmd = buildDumpImageCommand(p);
+    QString cmd = buildCmd(p);
     EXPECT_FALSE(cmd.contains(" color ")) << cmd.toStdString();
     EXPECT_FALSE(cmd.contains(" acolor "));
 
     // changing one slot's RGB emits only that color line; the name is unchanged,
     // so the default type assignment still applies and no acolor is needed
     p.color_list[2].second = QColor(10, 20, 30); // the "blue" slot
-    cmd                    = buildDumpImageCommand(p);
+    cmd                    = buildCmd(p);
     EXPECT_TRUE(cmd.contains(" color blue ")) << cmd.toStdString();
     EXPECT_FALSE(cmd.contains(" color red")); // unchanged default -> pruned
     EXPECT_FALSE(cmd.contains(" acolor "));
@@ -163,7 +171,7 @@ TEST(DumpImageCommand, DefaultColormapIsBWR)
 {
     auto p            = makeParams();
     p.atomcolor       = "vx"; // color atoms by a per-atom value so the map is emitted
-    const QString cmd = buildDumpImageCommand(p);
+    const QString cmd = buildCmd(p);
 
     // "auto" min/max are translated to "min"/"max"
     EXPECT_TRUE(cmd.contains(" color map1 0.000 0.227 0.427"));
@@ -178,7 +186,7 @@ TEST(DumpImageCommand, ExplicitColormapRange)
     p.atomcolor       = "vx";
     p.mapmin          = "0.0";
     p.mapmax          = "1.0";
-    const QString cmd = buildDumpImageCommand(p);
+    const QString cmd = buildCmd(p);
     EXPECT_TRUE(cmd.contains(" amap 0.0 1.0 cf 0.0 ")) << cmd.toStdString();
 }
 
@@ -187,7 +195,7 @@ TEST(DumpImageCommand, NamedColormap)
     auto p            = makeParams();
     p.atomcolor       = "vx";
     p.colormap        = "Grayscale";
-    const QString cmd = buildDumpImageCommand(p);
+    const QString cmd = buildCmd(p);
     EXPECT_TRUE(cmd.contains(" amap min max cf 0.0 2 min black max white")) << cmd.toStdString();
 }
 
@@ -199,7 +207,7 @@ TEST(DumpImageCommand, ElementColoring)
     p.elements    = "element C H ";
     p.adiams      = "adiam 1 1.7 adiam 2 1.2 ";
 
-    const QString cmd = buildDumpImageCommand(p);
+    const QString cmd = buildCmd(p);
     EXPECT_TRUE(cmd.contains(" element")); // atom-color token
     EXPECT_TRUE(cmd.contains("element C H"));
     EXPECT_TRUE(cmd.contains("adiam 1 1.7"));
@@ -209,7 +217,7 @@ TEST(DumpImageCommand, NoAtoms)
 {
     auto p            = makeParams();
     p.showatoms       = false;
-    const QString cmd = buildDumpImageCommand(p);
+    const QString cmd = buildCmd(p);
     EXPECT_TRUE(cmd.contains(" atom no"));
 }
 
@@ -218,7 +226,7 @@ TEST(DumpImageCommand, BondNoneWhenVdwActive)
     auto p            = makeParams();
     p.nbondtypes      = 1;
     p.vdwfactor       = 2.0; // do_vdw true -> bonds suppressed
-    const QString cmd = buildDumpImageCommand(p);
+    const QString cmd = buildCmd(p);
     EXPECT_TRUE(cmd.contains(" bond none none "));
 }
 
@@ -230,7 +238,7 @@ TEST(DumpImageCommand, BondDrawnWhenRequested)
     p.showbonds       = true;
     p.bondcolor       = "gray";
     p.bonddiam        = "0.2";
-    const QString cmd = buildDumpImageCommand(p);
+    const QString cmd = buildCmd(p);
     EXPECT_TRUE(cmd.contains(" bond gray 0.2 ")) << cmd.toStdString();
 }
 
@@ -241,7 +249,7 @@ TEST(DumpImageCommand, AutobondAppended)
     p.haspairstyle    = true;
     p.bondcutoff      = 2.0;
     p.bonddiam        = "0.3";
-    const QString cmd = buildDumpImageCommand(p);
+    const QString cmd = buildCmd(p);
     EXPECT_TRUE(cmd.contains(" autobond 2 0.3")) << cmd.toStdString();
 }
 
@@ -250,7 +258,7 @@ TEST(DumpImageCommand, AutobondSkippedWithoutPairStyle)
     auto p            = makeParams();
     p.autobond        = true;
     p.haspairstyle    = false;
-    const QString cmd = buildDumpImageCommand(p);
+    const QString cmd = buildCmd(p);
     EXPECT_FALSE(cmd.contains(" autobond "));
 }
 
@@ -260,7 +268,7 @@ TEST(DumpImageCommand, ActiveFixSuppressesNoinit)
     ImageInfo fix(true, "ave/time", CONSTANT, "blue", 0.5, 1.0, 2.0);
     p.fixes["myfix"] = &fix;
 
-    const QString cmd = buildDumpImageCommand(p);
+    const QString cmd = buildCmd(p);
     EXPECT_TRUE(cmd.contains(" fix myfix const 1 2")) << cmd.toStdString();
     EXPECT_TRUE(cmd.contains(" fcolor myfix blue"));
     EXPECT_TRUE(cmd.contains(" ftrans myfix 0.5"));
@@ -273,7 +281,7 @@ TEST(DumpImageCommand, DisabledFixIgnored)
     ImageInfo fix(false, "ave/time", CONSTANT, "blue", 0.5, 1.0, 2.0);
     p.fixes["myfix"] = &fix;
 
-    const QString cmd = buildDumpImageCommand(p);
+    const QString cmd = buildCmd(p);
     EXPECT_FALSE(cmd.contains("myfix"));
     EXPECT_TRUE(cmd.contains(" noinit")); // no active fix/compute
 }
@@ -284,7 +292,7 @@ TEST(DumpImageCommand, RegionPoints)
     RegionInfo reg(true, POINTS, "red", 0.2, 0.5, 100);
     p.regions["myreg"] = &reg;
 
-    const QString cmd = buildDumpImageCommand(p);
+    const QString cmd = buildCmd(p);
     EXPECT_TRUE(cmd.contains(" region myreg red points 100 0.2")) << cmd.toStdString();
 }
 
@@ -295,13 +303,13 @@ TEST(DumpImageCommand, RegionFrameHullPointsGatedByVersion)
     p.regions["box"] = &reg;
 
     // at the threshold: no hull_points keyword
-    QString cmd = buildDumpImageCommand(p);
+    QString cmd = buildCmd(p);
     EXPECT_TRUE(cmd.contains(" region box blue frame 0.3")) << cmd.toStdString();
     EXPECT_FALSE(cmd.contains("hull_points"));
 
     // newer version: hull_points appended
     p.version = 20260331;
-    cmd       = buildDumpImageCommand(p);
+    cmd       = buildCmd(p);
     EXPECT_TRUE(cmd.contains("hull_points 250")) << cmd.toStdString();
 }
 
@@ -309,14 +317,14 @@ TEST(DumpImageCommand, LightsGatedByVersion)
 {
     auto p            = makeParams();
     p.version         = 20260331;
-    const QString cmd = buildDumpImageCommand(p);
+    const QString cmd = buildCmd(p);
     EXPECT_TRUE(cmd.contains(" lights 0.2 0.7 0.3 0.2")) << cmd.toStdString();
 }
 
 TEST(DumpImageCommand, ColorMapOmittedForTypeColoring)
 {
     auto p = makeParams(); // atomcolor == "type"
-    EXPECT_FALSE(buildDumpImageCommand(p).contains(" amap ")) << "type coloring needs no map";
+    EXPECT_FALSE(buildCmd(p).contains(" amap ")) << "type coloring needs no map";
 }
 
 TEST(DumpImageCommand, AllDefaultsPruned)
@@ -338,7 +346,7 @@ TEST(DumpImageCommand, AllDefaultsPruned)
     p.backlight    = 0.9;
     p.version      = 20260331; // lights gate open, but the values are default
 
-    const QString cmd = buildDumpImageCommand(p);
+    const QString cmd = buildCmd(p);
     EXPECT_FALSE(cmd.contains(" amap ")) << cmd.toStdString();
     EXPECT_FALSE(cmd.contains(" color "));
     EXPECT_FALSE(cmd.contains(" acolor "));
@@ -358,7 +366,7 @@ TEST(DumpImageCommand, AllDefaultsPruned)
 TEST(DumpImageCommand, TransparencyEmittedWhenNotOpaque)
 {
     auto p            = makeParams(); // axestrans = boxtrans = 0.0, atomtrans = 1.0
-    const QString cmd = buildDumpImageCommand(p);
+    const QString cmd = buildCmd(p);
     EXPECT_TRUE(cmd.contains(" axestrans 0"));
     EXPECT_TRUE(cmd.contains(" boxtrans 0"));
     EXPECT_FALSE(cmd.contains(" atrans ")); // opaque -> pruned
@@ -369,7 +377,7 @@ TEST(DumpImageCommand, SolidBackgroundOmitsBackcolor2)
     auto p            = makeParams();
     p.usegradient     = false;
     p.backcolor       = "navy"; // a delta from the LAMMPS default
-    const QString cmd = buildDumpImageCommand(p);
+    const QString cmd = buildCmd(p);
     EXPECT_TRUE(cmd.contains(" backcolor navy"));
     EXPECT_FALSE(cmd.contains(" backcolor2")); // never backcolor2 without the gradient
 }
@@ -381,7 +389,7 @@ TEST(DumpImageCommand, SubboxAxesCenterEmittedWhenSet)
     p.subboxdiam      = 0.01;
     p.showaxes        = true;
     p.xcenter         = 0.3; // moved off the default box center
-    const QString cmd = buildDumpImageCommand(p);
+    const QString cmd = buildCmd(p);
     EXPECT_TRUE(cmd.contains(" subbox yes 0.01")) << cmd.toStdString();
     EXPECT_TRUE(cmd.contains(" axes "));
     EXPECT_TRUE(cmd.contains(" center s 0.3 0.5 0.5"));
@@ -396,7 +404,7 @@ TEST(DumpImageCommand, BondColorByValueEmitsComputeAndBmap)
     p.bondcolor       = "c_imgviewer_bondval";
     p.bonddiam        = "0.3";
     p.bondcolormap    = "Plasma";
-    const QString cmd = buildDumpImageCommand(p);
+    const QString cmd = buildCmd(p);
     EXPECT_TRUE(cmd.contains(" bond c_imgviewer_bondval 0.3 ")) << cmd.toStdString();
     EXPECT_TRUE(cmd.contains(" bmap min max cf 0.0 "));
     EXPECT_TRUE(cmd.contains(" color bm1 ")); // bond map stops use the "bm" prefix
@@ -412,7 +420,7 @@ TEST(DumpImageCommand, AtomAndBondMapsUseDistinctColorNames)
     p.bondbyvalue     = true;
     p.bondcolor       = "c_b";
     p.bondcolormap    = "Plasma";
-    const QString cmd = buildDumpImageCommand(p);
+    const QString cmd = buildCmd(p);
     EXPECT_TRUE(cmd.contains(" amap ")) << cmd.toStdString();
     EXPECT_TRUE(cmd.contains(" bmap "));
     EXPECT_TRUE(cmd.contains(" color map1 ")); // atom (Viridis) custom stops
