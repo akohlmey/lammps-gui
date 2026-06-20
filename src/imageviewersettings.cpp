@@ -531,12 +531,13 @@ void ImageViewer::atomSettings()
     bondbutton->setChecked(showbonds);
     layout->addWidget(bondbutton, idx, n++, 1, 1);
     layout->addWidget(new QLabel("Color: "), idx, n++, 1, 1, Qt::AlignVCenter | Qt::AlignRight);
-    auto *bncolor = new QComboBox;
+    const bool hasRealBonds = (lammps->extractSetting("molecule_flag") == 1);
+    auto *bncolor           = new QComboBox;
     bncolor->setObjectName("bncolor");
-    bncolor->addItems({"atom", "type"});
-    bncolor->insertSeparator(bncolor->count());
-    bncolor->addItems(bondLocalAttrs); // per-bond compute attributes -> color by value
-    if (atomcustom) {                  // select item that was selected the last time
+    // compute bond/local "color by value" choices need real bonds and are not
+    // compatible with distance-derived AutoBonds
+    rebuildBondColorChoices(bncolor, hasRealBonds && !autobond);
+    if (atomcustom) { // select item that was selected the last time
         if (bondcolor == "none") {
             bondbutton->setChecked(false);
         } else {
@@ -574,7 +575,7 @@ void ImageViewer::atomSettings()
     auto *bntrans = new QLineEdit(QString::number(bondtrans));
     bntrans->setValidator(transvalidator);
     layout->addWidget(bntrans, idx++, n++, 1, 1);
-    if (lammps->extractSetting("molecule_flag") != 1) {
+    if (!hasRealBonds) {
         bondbutton->setEnabled(false);
         bondbutton->setChecked(false);
         showbonds = false;
