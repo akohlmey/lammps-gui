@@ -395,6 +395,39 @@ QRadioButton *ImageViewer::addShapeButton(QButtonGroup *group, const QString &la
     return button;
 }
 
+// Populate a color-map combo box with the shared gradient and sequence palettes.
+// Atoms and bonds offer the identical set of maps (the atom "amap" and bond
+// "bmap" selectors), so the item list lives in one place.
+static void addColorMapItems(QComboBox *box)
+{
+    box->addItem(gradient_icon({QColor(0, 57, 109), "white", QColor(117, 14, 19)}), "BWR");
+    box->addItem(gradient_icon({QColor(117, 14, 19), "white", QColor(0, 57, 109)}), "RWB");
+    box->addItem(gradient_icon({QColor(73, 29, 141), "white", QColor(0, 65, 68)}), "PWT");
+    box->addItem(gradient_icon({"blue", "white", "green"}), "BWG");
+    box->addItem(gradient_icon({"blue", "green", "red"}), "BGR");
+    box->addItem(gradient_icon({"black", "white"}), "Grayscale");
+    // clang-format off
+    box->addItem(gradient_icon({QColor(72, 33, 115), QColor(111, 111, 142), QColor(41, 175, 127),
+                                QColor(189, 223, 174)}), "Viridis");
+    box->addItem(gradient_icon({QColor(13, 8, 135), QColor(156, 23, 150), QColor(237, 121, 83),
+                                QColor(240, 249, 33)}), "Plasma");
+    box->addItem(gradient_icon({QColor(8, 8, 12), QColor(81, 18, 124), QColor(183, 55, 121),
+                                QColor(252, 137, 97), QColor(252, 253, 191)}), "Inferno");
+    box->addItem(gradient_icon({QColor(18, 39, 64), QColor(27, 72, 94), QColor(86, 139, 135),
+                                QColor(181, 209, 174)}), "Teal");
+    box->addItem(gradient_icon({"red", "yellow", "green", "cyan", "blue", "purple"}), "Rainbow");
+    box->addItem(sequence_icon({QColor(206, 206, 206), QColor(165, 89, 170), QColor(81, 168, 156),
+                                QColor(240, 197, 113), QColor(224, 43, 53), QColor(8, 42, 84)}),
+                 "Sequential");
+    box->addItem(sequence_icon({QColor(37, 102, 118), QColor(100, 221, 150), QColor(146, 49, 36),
+                                QColor(100, 212, 253), QColor(5, 110, 18), QColor(253, 89, 37),
+                                QColor(70, 243, 62), QColor(186, 134, 92), QColor(201, 221, 135),
+                                QColor(62, 76, 20)}), "Landscape");
+    box->addItem(sequence_icon({"red", "cyan", "green", "black", "magenta", "blue", "yellow",
+                                "purple", "white", "orange"}), "Basic");
+    // clang-format on
+}
+
 void ImageViewer::atomSettings()
 {
     updatePeratom();
@@ -479,32 +512,7 @@ void ImageViewer::atomSettings()
     layout->addWidget(new QLabel("Map: "), idx, n++, 1, 1, Qt::AlignVCenter | Qt::AlignRight);
     auto *amap = new QComboBox;
     amap->setObjectName("amap");
-    amap->addItem(gradient_icon({QColor(0, 57, 109), "white", QColor(117, 14, 19)}), "BWR");
-    amap->addItem(gradient_icon({QColor(117, 14, 19), "white", QColor(0, 57, 109)}), "RWB");
-    amap->addItem(gradient_icon({QColor(73, 29, 141), "white", QColor(0, 65, 68)}), "PWT");
-    amap->addItem(gradient_icon({"blue", "white", "green"}), "BWG");
-    amap->addItem(gradient_icon({"blue", "green", "red"}), "BGR");
-    amap->addItem(gradient_icon({"black", "white"}), "Grayscale");
-    // clang-format off
-    amap->addItem(gradient_icon({QColor(72, 33, 115), QColor(111, 111, 142), QColor(41, 175, 127),
-                                 QColor(189, 223, 174)}), "Viridis");
-    amap->addItem(gradient_icon({QColor(13, 8, 135), QColor(156, 23, 150), QColor(237, 121, 83),
-                                 QColor(240, 249, 33)}), "Plasma");
-    amap->addItem(gradient_icon({QColor(8, 8, 12), QColor(81, 18, 124), QColor(183, 55, 121),
-                                 QColor(252, 137, 97), QColor(252, 253, 191)}), "Inferno");
-    amap->addItem(gradient_icon({QColor(18, 39, 64), QColor(27, 72, 94), QColor(86, 139, 135),
-                                 QColor(181, 209, 174)}), "Teal");
-    amap->addItem(gradient_icon({"red", "yellow", "green", "cyan", "blue", "purple"}), "Rainbow");
-    amap->addItem(sequence_icon({QColor(206, 206, 206), QColor(165, 89, 170), QColor(81, 168, 156),
-                                 QColor(240, 197, 113), QColor(224, 43, 53), QColor(8, 42, 84)}),
-                  "Sequential");
-    amap->addItem(sequence_icon({QColor(37, 102, 118), QColor(100, 221, 150), QColor(146, 49, 36),
-                                 QColor(100, 212, 253), QColor(5, 110, 18), QColor(253, 89, 37),
-                                 QColor(70, 243, 62), QColor(186, 134, 92), QColor(201, 221, 135),
-                                 QColor(62, 76, 20)}), "Landscape");
-    amap->addItem(sequence_icon({"red", "cyan", "green", "black", "magenta", "blue", "yellow",
-                                 "purple", "white", "orange"}), "Basic");
-    // clang-format on
+    addColorMapItems(amap);
     selectComboItem(amap, colormap);
     if ((atomcolor == "type") || (atomcolor == "element")) amap->setEnabled(false);
     QRegularExpression validminmax(
@@ -588,6 +596,37 @@ void ImageViewer::atomSettings()
     connect(vdwbutton, &QCheckBox::checkStateChanged, this, &ImageViewer::vdwbondSync);
     connect(autobutton, &QCheckBox::checkStateChanged, this, &ImageViewer::vdwbondSync);
 #endif
+
+    // bond color-map row, mirroring the atom Map/Min/Max row; only used when
+    // bonds are colored by a per-bond compute value (a bond/local attribute)
+    n = 0;
+    ++n; // no control in the first column
+    layout->addWidget(new QLabel("Map: "), idx, n++, 1, 1, Qt::AlignVCenter | Qt::AlignRight);
+    auto *bmap = new QComboBox;
+    bmap->setObjectName("bmap");
+    addColorMapItems(bmap);
+    selectComboItem(bmap, bondcolormap);
+    layout->addWidget(bmap, idx, n++, 1, 1);
+    layout->addWidget(new QLabel("Min: "), idx, n++, 1, 1, Qt::AlignVCenter | Qt::AlignRight);
+    auto *bmapmin = new QLineEdit(bondmapmin);
+    bmapmin->setValidator(minmaxvalidator);
+    layout->addWidget(bmapmin, idx, n++, 1, 1);
+    layout->addWidget(new QLabel("Max: "), idx, n++, 1, 1, Qt::AlignVCenter | Qt::AlignRight);
+    auto *bmapmax = new QLineEdit(bondmapmax);
+    bmapmax->setValidator(minmaxvalidator);
+    layout->addWidget(bmapmax, idx++, n++, 1, 1);
+
+    // enable the bond map/min/max fields only when the bond Color is a per-bond
+    // value (a bond/local attribute), tracking changes to the bond Color combo
+    auto syncBondMap = [bmap, bmapmin, bmapmax, this](const QString &text) {
+        const bool byvalue = bondLocalAttrs.contains(text);
+        bmap->setEnabled(byvalue);
+        bmapmin->setEnabled(byvalue);
+        bmapmax->setEnabled(byvalue);
+    };
+    syncBondMap(bncolor->currentText());
+    connect(bncolor, &QComboBox::currentTextChanged, this, syncBondMap);
+
     layout->addWidget(new QHline, idx++, 0, 1, MAXCOLS);
 
     n = 0;
@@ -781,6 +820,10 @@ void ImageViewer::atomSettings()
     } else {
         bonddiam = value;
     }
+
+    bondcolormap = bmap->currentText();
+    if (bmapmin->hasAcceptableInput()) bondmapmin = bmapmin->text();
+    if (bmapmax->hasAcceptableInput()) bondmapmax = bmapmax->text();
 
     // enable atom size input field in main window, if not set to symbolic value
     if (atomcustom) {

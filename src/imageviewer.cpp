@@ -757,6 +757,9 @@ void ImageViewer::readImageSettings()
     colormap       = settings.value(Keys::COLORMAP, "BWR").toString();
     mapmin         = "auto";
     mapmax         = "auto";
+    bondcolormap   = settings.value(Keys::BONDCOLORMAP, "BWR").toString();
+    bondmapmin     = "auto";
+    bondmapmax     = "auto";
 
     showatoms      = true;
     showbonds      = lammps->extractSetting("molecule_flag") == 1;
@@ -1453,9 +1456,9 @@ DumpImageParams ImageViewer::gatherDumpImageParams(const QString &dumpfilename)
     p.colormap     = colormap;
     p.mapmin       = mapmin;
     p.mapmax       = mapmax;
-    p.bondcolormap = colormap;
-    p.bondmapmin   = mapmin;
-    p.bondmapmax   = mapmax;
+    p.bondcolormap = bondcolormap;
+    p.bondmapmin   = bondmapmin;
+    p.bondmapmax   = bondmapmax;
 
     // regions / fixes / computes (non-owning pointer copies)
     p.computes = computes;

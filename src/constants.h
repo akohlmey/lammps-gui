@@ -149,6 +149,7 @@ inline const QString CHARTY       = QStringLiteral("charty");
 inline const QString CITE         = QStringLiteral("cite");
 inline const QString COLOR        = QStringLiteral("color");
 inline const QString COLORMAP     = QStringLiteral("colormap");
+inline const QString BONDCOLORMAP = QStringLiteral("bondcolormap");
 inline const QString COMMAND      = QStringLiteral("command");
 inline const QString DIAMETER     = QStringLiteral("diameter");
 inline const QString ECHO         = QStringLiteral("echo");
