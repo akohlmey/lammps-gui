@@ -133,6 +133,15 @@ private:
     void updatePeratom();     ///< Update per-atom information
     bool hasAutobonds();      ///< Check if autobonds are enabled
 
+    /** @brief True when bond color-by-value applies: a bond/local attribute is
+     *  selected, the atom style has real bonds, and AutoBonds is off (compute
+     *  bond/local only works for real bonds) */
+    bool bondByValueActive();
+
+    /** @brief (Re)populate the bond Color selector; the compute bond/local
+     *  "color by value" choices are added only when @p allowByValue */
+    void rebuildBondColorChoices(QComboBox *bncolor, bool allowByValue);
+
     /// @name dump-image command preparation used by createImage()
     /// @{
     /// Gather widget state and LAMMPS-derived data into a DumpImageParams snapshot

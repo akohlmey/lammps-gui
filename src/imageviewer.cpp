@@ -960,6 +960,14 @@ void ImageViewer::vdwbondSync()
     } else {
         if (vdw->isChecked() && ab->isChecked()) vdw->setChecked(false);
     }
+
+    // compute bond/local coloring needs real bonds, so it is unavailable while
+    // AutoBonds is on; refresh the bond Color choices to match the live state
+    auto *bncolor = dialog->findChild<QComboBox *>("bncolor");
+    if (bncolor) {
+        const bool hasRealBonds = (lammps->extractSetting("molecule_flag") == 1);
+        rebuildBondColorChoices(bncolor, hasRealBonds && !ab->isChecked());
+    }
 }
 
 void ImageViewer::acolorSync()
@@ -1107,7 +1115,7 @@ void ImageViewer::cmdToClipboard()
     // The id is lowercase (we don't want to model uppercase ids for users) and
     // long and tied to the dump id ("viz") to make a clash with an existing
     // compute unlikely.
-    if (bondLocalAttrs.contains(bondcolor)) {
+    if (bondByValueActive()) {
         out += "compute bond_dump_viz " + group + " bond/local " + bondcolor + '\n';
         dumpargs.replace("c_" + bondComputeId, "c_bond_dump_viz");
     }
@@ -1402,11 +1410,15 @@ DumpImageParams ImageViewer::gatherDumpImageParams(const QString &dumpfilename)
     p.ellipsoiddiam  = ellipsoiddiam;
 
     // bonds: a "compute bond/local" attribute name selects bond color-by-value,
-    // in which case the emitted bond color is a reference to the managed compute
-    const bool bondvalue = bondLocalAttrs.contains(bondcolor);
+    // in which case the emitted bond color is a reference to the managed compute.
+    // A stale or saved bond/local selection that no longer applies (no real bonds
+    // or AutoBonds active) falls back to coloring bonds by atom.
+    const bool bondvalue = bondByValueActive();
     p.showbonds          = showbonds;
     p.bondbyvalue        = bondvalue;
-    p.bondcolor          = bondvalue ? ("c_" + bondComputeId) : bondcolor;
+    p.bondcolor          = bondvalue                            ? ("c_" + bondComputeId)
+                           : bondLocalAttrs.contains(bondcolor) ? QStringLiteral("atom")
+                                                                : bondcolor;
     p.bonddiam           = bonddiam;
     p.autobond           = autobond;
     p.bondcutoff         = bondcutoff;
@@ -1548,10 +1560,11 @@ void ImageViewer::createImage()
     // attempt to clean up if a previous write_dump command failed
     lammps->command("if $(is_defined(dump,WRITE_DUMP)) then 'undump WRITE_DUMP'");
 
-    // (re)create the per-bond coloring compute when a bond/local attribute is
-    // selected; the explicit dump + run 0 below initializes it (write_dump's
-    // dump->init()+write() never runs modify->init()). clear any leftover first.
-    const bool bondvalue = bondLocalAttrs.contains(bondcolor);
+    // (re)create the per-bond coloring compute when bond color-by-value applies
+    // (a bond/local attribute, real bonds, AutoBonds off); the explicit dump +
+    // run 0 below initializes it (write_dump's dump->init()+write() never runs
+    // modify->init()). clear any leftover first.
+    const bool bondvalue = bondByValueActive();
     lammps->command(QString("if $(is_defined(compute,%1)) then 'uncompute %1'").arg(bondComputeId));
     if (bondvalue)
         lammps->command(
@@ -1930,6 +1943,31 @@ bool ImageViewer::hasAutobonds()
     const auto *pair_style = static_cast<const char *>(lammps->extractGlobal("pair_style"));
     if (!pair_style) return false;
     return strcmp(pair_style, "none") != 0;
+}
+
+bool ImageViewer::bondByValueActive()
+{
+    // compute bond/local only works for real bonds: the atom style must support
+    // bonds and AutoBonds (a distance search with no bond identities) must be off
+    return bondLocalAttrs.contains(bondcolor) && !autobond &&
+           (lammps->extractSetting("molecule_flag") == 1);
+}
+
+void ImageViewer::rebuildBondColorChoices(QComboBox *bncolor, bool allowByValue)
+{
+    if (!bncolor) return;
+    const QString current = bncolor->currentText();
+    bncolor->clear();
+    bncolor->addItems({"atom", "type"});
+    if (allowByValue) {
+        bncolor->insertSeparator(bncolor->count());
+        bncolor->addItems(bondLocalAttrs); // per-bond compute attributes -> color by value
+    }
+    // restore the previous selection, or fall back to "atom" if it is no longer offered
+    if (bncolor->findText(current) >= 0)
+        selectComboItem(bncolor, current);
+    else
+        selectComboItem(bncolor, "atom");
 }
 
 // Local Variables:
