@@ -1093,44 +1093,41 @@ void ImageViewer::doRecenter()
 
 void ImageViewer::cmdToClipboard()
 {
-    auto words = splitLine(last_dump_cmd);
-    int modidx = 0;
-    int maxidx = words.size();
-    for (int i = 0; i < maxidx; ++i) {
-        if (words[i] == "modify") {
-            modidx = i;
-            break;
-        }
+    // Compose a reusable `dump`/`dump_modify` pair from the two argument strings
+    // assembled for the last render, so no re-parsing of a joined command string
+    // is needed. The render uses a one-shot WRITE_DUMP; here we emit a persistent
+    // "viz" dump every 100 steps with zero-padded frame numbers instead.
+    QString dumpargs = last_dumpargs;
+
+    QString out;
+    // When coloring bonds by a per-bond value, the render args reference a
+    // `compute bond/local`; emit it first so the copied snippet is self-contained.
+    // The id is lowercase (we don't want to model uppercase ids for users) and
+    // long and tied to the dump id ("viz") to make a clash with an existing
+    // compute unlikely.
+    if (bondLocalAttrs.contains(bondcolor)) {
+        out += "compute bond_dump_viz " + group + " bond/local " + bondcolor + '\n';
+        dumpargs.replace("c_" + bondComputeId, "c_bond_dump_viz");
     }
 
-    QString dumpcmd = "dump viz ";
-    dumpcmd += words[1];
+    QString imagefile = "myimage-*.ppm";
+    if (lammps->configHasPngSupport())
+        imagefile = "myimage-*.png";
+    else if (lammps->configHasJpegSupport())
+        imagefile = "myimage-*.jpg";
 
-    if (lammps->configHasPngSupport()) {
-        dumpcmd += " image 100 myimage-*.png";
-    } else if (lammps->configHasJpegSupport()) {
-        dumpcmd += " image 100 myimage-*.jpg";
-    } else {
-        dumpcmd += " image 100 myimage-*.ppm";
-    }
+    out += "dump viz " + group + " image 100 " + imagefile + dumpargs + '\n';
+    out += "dump_modify viz pad 9" + last_modifyargs + '\n';
 
-    for (int i = 4; i < modidx; ++i)
-        if (words[i] != "noinit") dumpcmd += " " + words[i];
-    dumpcmd += '\n';
-
-    dumpcmd += "dump_modify viz pad 9";
-    for (int i = modidx + 1; i < maxidx; ++i)
-        dumpcmd += " " + words[i];
-    dumpcmd += '\n';
 #if QT_CONFIG(clipboard)
     auto *clip = QGuiApplication::clipboard();
     if (clip) {
-        clip->setText(dumpcmd, QClipboard::Clipboard);
-        if (clip->supportsSelection()) clip->setText(dumpcmd, QClipboard::Selection);
+        clip->setText(out, QClipboard::Clipboard);
+        if (clip->supportsSelection()) clip->setText(out, QClipboard::Selection);
     } else
-        fprintf(stderr, "# customized dump image command:\n%s", qPrintable(dumpcmd));
+        fprintf(stderr, "# customized dump image command:\n%s", qPrintable(out));
 #else
-    fprintf(stderr, "# customized dump image command:\n%s", dumpcmd.c_str());
+    fprintf(stderr, "# customized dump image command:\n%s", qPrintable(out));
 #endif
 }
 
@@ -1565,7 +1562,8 @@ void ImageViewer::createImage()
     const DumpImageParams params = gatherDumpImageParams(dumpfile.fileName());
     syncAtomSizeWidgets();
     const DumpImageCommand cmds = buildDumpImageCommand(params);
-    last_dump_cmd               = toWriteDumpCommand(cmds, group, dumpfile.fileName());
+    last_dumpargs               = cmds.dumpargs;
+    last_modifyargs             = cmds.modifyargs;
 
     // Render with an explicit dump + run 0 rather than write_dump: the run does a
     // real modify->init(), which initializes any compute the image references

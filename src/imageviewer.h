@@ -199,7 +199,8 @@ private:
     QString group;                               ///< Current atom group
     QString molecule;                            ///< Current molecule selection
     QString filename;                            ///< Image filename
-    QString last_dump_cmd;                       ///< Last executed dump command
+    QString last_dumpargs;                       ///< Render args of the last image command
+    QString last_modifyargs;                     ///< dump_modify args of the last image command
     int xsize, ysize;                            ///< Image dimensions in pixels
     int hrot, vrot;                              ///< Horizontal and vertical rotation angles
     int bodyflag;                                ///< bflag1 setting (triangle, cylinder or both)
