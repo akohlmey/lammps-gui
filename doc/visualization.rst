@@ -461,8 +461,9 @@ The dialog contains the following sections:
      available), *type*, *element*, and a few pre-defined choices for
      custom atom diameters.  The text field can be edited and a
      different custom diameter entered.
-   - **Opacity**: The transparency of atoms *and* bonds (range: 0.0 --
-     1.0, where 1.0 is fully opaque and 0.0 is fully transparent).
+   - **Opacity**: The transparency of atoms (range: 0.0 -- 1.0, where 1.0
+     is fully opaque and 0.0 is fully transparent).  Bonds have their own
+     Opacity setting in the **Bonds** section below.
    - **VDW style** (checkbox): Enable or disable space-filling sphere
      rendering.  When unchecked, the ball-and-stick style is used.
    - **Colormap**: Select the colormap used for coloring by a per-atom
@@ -491,12 +492,21 @@ The dialog contains the following sections:
    - **Bonds** (checkbox): Enable or disable bond rendering.  This
      option is only available when the atom style supports explicit
      bonds.
-   - **Color**: Select bond coloring mode -- *atom* (colored by the
-     atom type at each end) or *type* (uniform color per bond type).
+   - **Color**: Select the bond coloring mode.  The basic choices are
+     *atom* (each bond half is colored by the atom type at its end) and
+     *type* (a uniform color per bond type).  The list also offers a set
+     of per-bond properties computed by ``compute bond/local`` -- *dist*,
+     *dx*, *dy*, *dz*, *engpot*, *force*, *fx*, *fy*, *fz*, *engvib*,
+     *engrot*, *engtrans*, *omega*, and *velvib*.  Selecting one of these
+     colors the bonds by that per-bond value using the bond colormap (see
+     **Map** below); LAMMPS-GUI creates the required ``compute
+     bond/local`` automatically.
    - **Size**: Select bond diameter mode.  Options include *atom*,
      *type*, and a few pre-defined choices for custom bond diameters.
      The text field can be edited and a different custom diameter
      entered.
+   - **Opacity**: The transparency of bonds (range: 0.0 -- 1.0), set
+     independently from the atom opacity.
    - **AutoBonds** (checkbox): Automatically determine bonds from atom
      distances, useful for many-body force fields with implicit bonds
      like `AIREBO <https://docs.lammps.org/pair_airebo.html>`_ or
@@ -507,8 +517,14 @@ The dialog contains the following sections:
      the `special_bonds settings
      <https://docs.lammps.org/special_bonds.html>`_
    - **Cutoff**: The distance cutoff used for automatic bond detection
-     (range: 0.001 -- 10.0 in distance units).  Only available when
-     auto-bonds are enabled.
+     (range: 0.001 -- 10.0 in distance units), in the text field next to
+     the AutoBonds checkbox.  Only available when auto-bonds are enabled.
+   - **Map** / **Min** / **Max**: Select the colormap and value range
+     used when coloring bonds by a per-bond value (see **Color** above).
+     The same colormaps as the atom **Colormap** are offered, and these
+     fields are only enabled when a per-bond property is selected as the
+     bond color.  Use *auto* for **Min** / **Max** to let LAMMPS
+     determine the range automatically.
 
 **Bodies**
    Controls visualization of `body particles
