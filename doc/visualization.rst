@@ -473,8 +473,9 @@ The dialog contains the following sections:
      (purple-white-teal), *BWG* (blue-white-green), *BGR*
      (blue-green-red), *Grayscale* (black-white), *Viridis* (from
      matplotlib), *Plasma* (from matplotlib), *Inferno* (from
-     matplotlib), *Teal*, and *Rainbow*.  *Sequential*, *Landscape*, and
-     *Basic* are maps with discrete colors.  These are pre-defined
+     matplotlib), *Magma* (from matplotlib), *Teal*, and *Rainbow*.
+     *Sequential*, *Landscape*, and *Basic* are maps with discrete
+     colors.  These are pre-defined
      colormap settings and currently cannot be adjusted from LAMMPS-GUI
      directly.  As for *all* image settings, further customizations can
      be realized by copying the dump image command line as customized by

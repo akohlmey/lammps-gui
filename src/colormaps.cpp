@@ -50,13 +50,16 @@ const std::map<QString, ColorMapDef> &table()
         {"BGR", {true, {nm(0.0, "blue"), nm(0.05, "blue"), nm(0.5, "green"),
                         nm(0.95, "red"), nm(1.0, "red")}}},
         {"Grayscale", {true, {nm(0.0, "black"), nm(1.0, "white")}}},
-        {"Viridis", {true, {rc(0.0,   0.282, 0.129, 0.451), rc(0.333, 0.435, 0.435, 0.556),
-                            rc(0.667, 0.161, 0.686, 0.498), rc(1.0,   0.741, 0.875, 0.149)}}},
-        {"Plasma", {true, {rc(0.0,   0.051, 0.031, 0.529), rc(0.333, 0.612, 0.090, 0.620),
-                           rc(0.667, 0.929, 0.475, 0.325), rc(1.0,   0.941, 0.976, 0.129)}}},
-        {"Inferno", {true, {rc(0.0,  0.032, 0.032, 0.048), rc(0.25, 0.318, 0.071, 0.486),
-                            rc(0.5,  0.718, 0.216, 0.475), rc(0.75, 0.988, 0.537, 0.380),
-                            rc(1.0,  0.988, 0.992, 0.749)}}},
+        {"Viridis", {true, {rc(0.0,   0.267, 0.005, 0.329), rc(0.333, 0.191, 0.407, 0.556),
+                            rc(0.667, 0.208, 0.719, 0.473), rc(1.0,   0.993, 0.906, 0.144)}}},
+        {"Plasma", {true, {rc(0.0,   0.050, 0.030, 0.528), rc(0.333, 0.611, 0.090, 0.620),
+                           rc(0.667, 0.928, 0.473, 0.326), rc(1.0,   0.940, 0.975, 0.131)}}},
+        {"Inferno", {true, {rc(0.0,  0.001, 0.000, 0.014), rc(0.25, 0.342, 0.062, 0.429),
+                            rc(0.5,  0.736, 0.216, 0.330), rc(0.75, 0.978, 0.558, 0.035),
+                            rc(1.0,  0.988, 0.998, 0.645)}}},
+        {"Magma", {true, {rc(0.0,  0.001, 0.000, 0.014), rc(0.25, 0.317, 0.072, 0.485),
+                          rc(0.5,  0.716, 0.215, 0.475), rc(0.75, 0.987, 0.536, 0.382),
+                          rc(1.0,  0.987, 0.991, 0.750)}}},
         {"Teal", {true, {rc(0.0, 0.071, 0.153, 0.251), rc(0.25, 0.106, 0.282, 0.369),
                          rc(0.5, 0.337, 0.545, 0.529), rc(1.0,  0.710, 0.820, 0.682)}}},
         {"Rainbow", {true, {nm(0.0, "red"), nm(0.25, "yellow"), nm(0.45, "green"),
@@ -89,9 +92,9 @@ const ColorMapDef &colorMapDef(const QString &name)
 
 const QStringList &colorMapNames()
 {
-    static const QStringList names = {"BWR",       "RWB",        "PWT",       "BWG",     "BGR",
-                                      "Grayscale", "Viridis",    "Plasma",    "Inferno", "Teal",
-                                      "Rainbow",   "Sequential", "Landscape", "Basic"};
+    static const QStringList names = {"BWR",       "RWB",     "PWT",        "BWG",       "BGR",
+                                      "Grayscale", "Viridis", "Plasma",     "Inferno",   "Magma",
+                                      "Teal",      "Rainbow", "Sequential", "Landscape", "Basic"};
     return names;
 }
 

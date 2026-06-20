@@ -440,4 +440,25 @@ TEST(DumpImageCommand, AtomAndBondMapsUseDistinctColorNames)
     EXPECT_TRUE(cmd.contains(" color bm1 "));  // bond (Plasma) custom stops, distinct names
 }
 
+TEST(DumpImageCommand, PerceptualColorMapsUseCanonicalStops)
+{
+    auto p      = makeParams();
+    p.atomcolor = "vx"; // color atoms by value so the map is emitted
+
+    p.colormap  = "Viridis";
+    QString cmd = buildCmd(p);
+    EXPECT_TRUE(cmd.contains(" color map1 0.267 0.005 0.329")) << cmd.toStdString();
+    EXPECT_TRUE(cmd.contains(" color map4 0.993 0.906 0.144"));
+
+    p.colormap = "Inferno";
+    cmd        = buildCmd(p);
+    EXPECT_TRUE(cmd.contains(" color map1 0.001 0.000 0.014")) << cmd.toStdString();
+    EXPECT_TRUE(cmd.contains(" color map5 0.988 0.998 0.645"));
+
+    p.colormap = "Magma";
+    cmd        = buildCmd(p);
+    EXPECT_TRUE(cmd.contains(" color map3 0.716 0.215 0.475")) << cmd.toStdString();
+    EXPECT_TRUE(cmd.contains(" color map5 0.987 0.991 0.750"));
+}
+
 } // namespace
