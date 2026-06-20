@@ -284,15 +284,11 @@ QString buildDumpImageCommand(const DumpImageParams &p)
         dumpcmd += QString(" box yes %1").arg(p.boxdiam);
     else
         dumpcmd += " box no 0.0";
-    if (p.showsubbox)
-        dumpcmd += QString(" subbox yes %1").arg(p.subboxdiam);
-    else
-        dumpcmd += " subbox no 0.0";
+    // subbox and axes default to "no" in LAMMPS, so emit them only when shown
+    if (p.showsubbox) dumpcmd += QString(" subbox yes %1").arg(p.subboxdiam);
 
     if (p.showaxes)
         dumpcmd += QString(" axes %1 %2 %3").arg(p.axesloc).arg(p.axeslen).arg(p.axesdiam);
-    else
-        dumpcmd += " axes no 0.0 0.0";
 
     if (p.autobond && p.haspairstyle) {
         // use custom bond diameter value, if present
@@ -310,7 +306,9 @@ QString buildDumpImageCommand(const DumpImageParams &p)
 
     const bool dofixes = appendFixComputeStyles(dumpcmd, p);
 
-    dumpcmd += QString(" center s %1 %2 %3").arg(p.xcenter).arg(p.ycenter).arg(p.zcenter);
+    // center defaults to the box center "s 0.5 0.5 0.5"; emit only when moved
+    if ((p.xcenter != 0.5) || (p.ycenter != 0.5) || (p.zcenter != 0.5))
+        dumpcmd += QString(" center s %1 %2 %3").arg(p.xcenter).arg(p.ycenter).arg(p.zcenter);
     if (!dofixes) dumpcmd += " noinit";
     dumpcmd += " modify";
 
@@ -344,10 +342,9 @@ QString buildDumpImageCommand(const DumpImageParams &p)
 
     // background: with the gradient enabled (the GUI default, a deliberate
     // divergence from the solid LAMMPS default) the backcolor/backcolor2 pair is
-    // emitted together -- the darkgray default lower color keeps backcolor itself
-    // a delta. With the gradient off the background is solid and only backcolor is
-    // emitted, and only when it differs from the LAMMPS default. So backcolor2 is
-    // never emitted without backcolor.
+    // emitted together. With the gradient off the background is solid and only
+    // backcolor is emitted, and only when it differs from the LAMMPS default, so
+    // backcolor2 is never emitted without backcolor.
     if (p.usegradient) {
         dumpcmd += " backcolor " + p.backcolor;
         dumpcmd += " backcolor2 " + p.backcolor2;

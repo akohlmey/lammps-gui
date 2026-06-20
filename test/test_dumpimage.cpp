@@ -124,9 +124,9 @@ TEST(DumpImageCommand, BasicStructure)
     EXPECT_TRUE(cmd.contains(" fsaa yes"));
     EXPECT_TRUE(cmd.contains(" view 30 20"));
     EXPECT_TRUE(cmd.contains(" box yes 0.05"));
-    EXPECT_TRUE(cmd.contains(" subbox no 0.0"));
-    EXPECT_TRUE(cmd.contains(" axes no 0.0 0.0"));
-    EXPECT_TRUE(cmd.contains(" center s 0.5 0.5 0.5"));
+    EXPECT_FALSE(cmd.contains(" subbox ")); // not shown -> pruned
+    EXPECT_FALSE(cmd.contains(" axes "));   // not shown -> pruned
+    EXPECT_FALSE(cmd.contains(" center ")); // default box center -> pruned
     EXPECT_TRUE(cmd.contains(" modify"));
     EXPECT_TRUE(cmd.contains(" noinit")); // no active fix/compute
     EXPECT_TRUE(cmd.contains(" boxcolor white"));
@@ -345,6 +345,9 @@ TEST(DumpImageCommand, AllDefaultsPruned)
     EXPECT_FALSE(cmd.contains(" atrans"));
     EXPECT_FALSE(cmd.contains(" btrans"));
     EXPECT_FALSE(cmd.contains(" lights"));
+    EXPECT_FALSE(cmd.contains(" subbox "));
+    EXPECT_FALSE(cmd.contains(" axes "));
+    EXPECT_FALSE(cmd.contains(" center "));
     EXPECT_TRUE(cmd.contains(" modify"));
 }
 
@@ -365,6 +368,19 @@ TEST(DumpImageCommand, SolidBackgroundOmitsBackcolor2)
     const QString cmd = buildDumpImageCommand(p);
     EXPECT_TRUE(cmd.contains(" backcolor navy"));
     EXPECT_FALSE(cmd.contains(" backcolor2")); // never backcolor2 without the gradient
+}
+
+TEST(DumpImageCommand, SubboxAxesCenterEmittedWhenSet)
+{
+    auto p            = makeParams();
+    p.showsubbox      = true;
+    p.subboxdiam      = 0.01;
+    p.showaxes        = true;
+    p.xcenter         = 0.3; // moved off the default box center
+    const QString cmd = buildDumpImageCommand(p);
+    EXPECT_TRUE(cmd.contains(" subbox yes 0.01")) << cmd.toStdString();
+    EXPECT_TRUE(cmd.contains(" axes "));
+    EXPECT_TRUE(cmd.contains(" center s 0.3 0.5 0.5"));
 }
 
 } // namespace
