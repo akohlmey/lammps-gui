@@ -154,6 +154,20 @@ queries up front) and then calls the pure builder.
 
 -----
 
+Color Maps
+----------
+
+The dump-image color maps are defined once, as a table of ``ColorMapDef``
+entries in ``src/colormaps.cpp``.  Both the command builder
+(``appendColorMapArgs()`` in ``src/dumpimage.cpp``) and the settings-dialog
+preview swatches (``addColorMapItems()`` in ``src/imageviewersettings.cpp``)
+consume this single source of truth, so they cannot drift apart.  See
+:ref:`add_colormap` for how to add or modify a map.
+
+.. doxygenfile:: colormaps.h
+
+-----
+
 SlideShow Class
 ---------------
 

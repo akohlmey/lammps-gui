@@ -487,6 +487,22 @@ The dialog contains the following sections:
      have LAMMPS determine the range automatically or specify an
      explicit numeric value.
 
+The color maps available for coloring atoms and bonds by value are shown
+below; the continuous maps are interpolated between color stops, while
+*Sequential*, *Landscape*, and *Basic* use discrete colors.
+
+.. _colormap_preview:
+
+.. figure:: JPG/lammps-gui-colormaps.png
+   :align: center
+   :width: 60%
+
+   The dump-image color maps offered for coloring atoms and bonds by value.
+
+These color maps are defined in a single table in the C++ source, which makes
+them simple to add or modify; see :ref:`add_colormap` in the Programmer's
+Guide for step-by-step instructions.
+
 **Bonds**
    Controls bond visualization.
 

@@ -79,6 +79,48 @@ All documentation should be written in American English using plain
 ASCII characters (no typographic quotes, em-dashes written as ``--``,
 etc.).
 
+.. _add_colormap:
+
+Adding or modifying a color map
+===============================
+
+.. index:: color map
+
+The dump-image color maps shown in the :ref:`Atoms/bonds settings dialog
+<atom_settings>` are defined once, as a table in ``src/colormaps.cpp``.  A
+single ``ColorMapDef`` -- a ``continuous`` flag plus a list of ``ColorMapStop``
+entries (each a position in ``[0,1]`` and either a LAMMPS named color or an
+explicit RGB triple in ``[0,1]``) -- drives both the ``dump_modify`` command
+emitted by ``appendColorMapArgs()`` (in ``src/dumpimage.cpp``) and the preview
+swatch built by ``addColorMapItems()`` (in ``src/imageviewersettings.cpp``), so
+the two cannot disagree.
+
+To add a color map:
+
+#. Add an entry to the ``maps`` table in ``src/colormaps.cpp``.  Use ``rc(pos,
+   r, g, b)`` for an explicit RGB stop (components in ``[0,1]``) or ``nm(pos,
+   "name")`` for a LAMMPS named color.  Set the ``ColorMapDef`` flag to ``true``
+   for an interpolated (continuous) map or ``false`` for a discrete sequence.
+   Use the same 0..1 floating-point values that LAMMPS renders so the preview
+   matches exactly.
+#. Add the map's name to ``colorMapNames()`` in the same file, at the position
+   where it should appear in the selection menu.
+#. Regenerate the documentation preview image and add the new map to the
+   color-map list in ``doc/visualization.rst``::
+
+       python3 doc/colormaps_preview.py
+
+#. Optionally extend ``test/test_dumpimage.cpp`` to pin the new map's stops.
+
+Modifying an existing map is just editing its stops in the table; nothing else
+needs to change.  Canonical stops for a matplotlib color map can be resampled
+with a few lines of Python::
+
+    import matplotlib.cm as cm
+    m = cm.get_cmap("cividis")
+    n = 5  # number of stops
+    print([tuple(round(c, 3) for c in m(i / (n - 1))[:3]) for i in range(n)])
+
 Contributing
 ============
 
