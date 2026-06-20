@@ -83,15 +83,19 @@ TutorialCollection molecular()
         "employ far more computationally demanding models like ReaxFF.  Also, the "
         "formation of water molecules is tracked over time.</p>",
     };
+    c.available = c.blurbs.size(); // fully published: all tutorials are launchable
     return c;
 }
 
-// --- Collection 2: the materials-science tutorials (SKELETON, unpublished) ----
+// --- Collection 2: the materials-science tutorials (rolling out) --------------
 //
-// Content-complete in the (currently private) matsci-tutorials-article repo as
-// T1-T14.  TODO: once the files are hosted in a public repository, set filesUrl
-// and webUrl, add per-tutorial slugs, replace the placeholder blurbs with proper
-// descriptions, and set published = true.
+// Input/solution files for all 14 tutorials are hosted publicly in the
+// matsci-tutorials-inputs repository, so the collection downloads like any
+// other.  It is being released incrementally as each tutorial's text is
+// finalized: `available` is the number of leading tutorials enabled in the menu
+// (the rest stay disabled teasers).  TODO: bump `available` as tutorials are
+// finalized, add per-tutorial webUrl/slugs, replace the placeholder blurbs with
+// proper descriptions, and set published = true once all 14 are released.
 TutorialCollection matsci()
 {
     TutorialCollection c;
@@ -99,13 +103,15 @@ TutorialCollection matsci()
     c.name         = QStringLiteral("Materials Science");
     c.dirPrefix    = QStringLiteral("matsci-tutorial");
     c.author       = QStringLiteral("the LAMMPS Materials Science tutorials authors");
-    c.filesUrl     = QString(); // TODO: public files base URL once hosted
-    c.filesRepoUrl = QStringLiteral("https://github.com/lammpstutorials/matsci-tutorials-article");
+    c.filesUrl     = QStringLiteral("https://raw.githubusercontent.com/lammpstutorials/"
+                                        "matsci-tutorials-inputs/refs/heads/main/tutorial%1/%2");
+    c.filesRepoUrl = QStringLiteral("https://github.com/lammpstutorials/matsci-tutorials-inputs");
     c.webUrl       = QString(); // TODO: per-tutorial web pages once published
     c.siteUrl      = QStringLiteral("https://lammpstutorials.github.io/");
     c.logo         = QStringLiteral(":/icons/tutorial-logo.png");
     c.published    = false;
     c.status       = QStringLiteral("coming soon");
+    c.available    = 1; // only Tutorial 1 is launchable so far
 
     c.titles = {"Crystalline metals and the EAM potential",
                 "Variables, automation, and the energy-volume curve",

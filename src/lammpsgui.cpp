@@ -290,9 +290,9 @@ void LammpsGui::createTutorialMenu()
                               [this, c, i]() {
                                   startTutorial(c, i + 1);
                               });
-            // Unpublished collections appear as a "coming attractions" teaser: the
-            // titles are visible but the entries cannot be launched yet.
-            if (action && !coll.published) action->setEnabled(false);
+            // Tutorials beyond the available count appear as a "coming attractions"
+            // teaser: their titles are visible but the entries cannot be launched yet.
+            if (action && i >= coll.available) action->setEnabled(false);
         }
     }
 }
@@ -2384,8 +2384,8 @@ void LammpsGui::startTutorial(int collection, int tutno)
 {
     const auto &coll = tutorialCollection(collection);
     if (tutno < 1 || tutno > coll.count()) return;
-    // unpublished collections are shown in the menu but cannot be launched yet
-    if (!coll.published) return;
+    // tutorials beyond the available count are shown in the menu but not launchable yet
+    if (tutno > coll.available) return;
 
     delete wizard;
     wizard = new TutorialWizard(collection, tutno, this);
