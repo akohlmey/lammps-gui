@@ -72,6 +72,7 @@
 #include <string>
 
 #include "constants.h"
+#include "tutorials.h"
 
 namespace {
 const QString citeme("# When using LAMMPS-GUI in your project, please cite: "
@@ -270,12 +271,23 @@ void LammpsGui::createViewMenu()
 
 void LammpsGui::createTutorialMenu()
 {
-    auto *menu = menubar->addMenu("&Tutorials");
-    for (int i = 0; i < Cfg::NUM_TUTORIALS; ++i) {
-        addMenuAction(menu, ":/icons/tutorial-logo.png",
-                      QString("Start LAMMPS Tutorial &%1").arg(i + 1), "", [this, i]() {
-                          startTutorial(i + 1);
-                      });
+    auto *menu              = menubar->addMenu("&Tutorials");
+    const auto &collections = tutorialCollections();
+    for (int c = 0; c < collections.size(); ++c) {
+        const auto &coll    = collections[c];
+        const QString title = coll.published ? coll.name : (coll.name + " (coming soon)");
+        auto *sub           = menu->addMenu(title);
+        for (int i = 0; i < coll.count(); ++i) {
+            auto *action =
+                addMenuAction(sub, coll.logoFor(i + 1),
+                              QString("Tutorial &%1: %2").arg(i + 1).arg(coll.titles.value(i)), "",
+                              [this, c, i]() {
+                                  startTutorial(c, i + 1);
+                              });
+            // Unpublished collections appear as a "coming attractions" teaser: the
+            // titles are visible but the entries cannot be launched yet.
+            if (action && !coll.published) action->setEnabled(false);
+        }
     }
 }
 
@@ -2253,24 +2265,23 @@ void LammpsGui::tutorialWeb()
     QDesktopServices::openUrl(QUrl("https://lammpstutorials.github.io/"));
 }
 
-QWizardPage *LammpsGui::tutorialIntro(const int ntutorial, const QString &infotext)
+QWizardPage *LammpsGui::tutorialIntro(int collection, int ntutorial, const QString &infotext)
 {
-    auto *page = new QWizardPage;
-    page->setTitle(QString("Getting Started With Tutorial %1").arg(ntutorial));
-    page->setPixmap(QWizard::WatermarkPixmap,
-                    QPixmap(QString(":/icons/tutorial%1-logo.png").arg(ntutorial)));
+    const auto &coll = tutorialCollection(collection);
+    auto *page       = new QWizardPage;
+    page->setTitle(QString("Getting Started With %1 Tutorial %2").arg(coll.name).arg(ntutorial));
+    page->setPixmap(QWizard::WatermarkPixmap, QPixmap(coll.logoFor(ntutorial)));
 
-    // TBD: TODO: update URL to published tutorial DOI
-    auto *label = new QLabel(
-        QString("<p>This dialog will help you to select and populate a folder with materials "
-                "required to work through tutorial ") +
-        QString::number(ntutorial) +
-        QString(" from the LAMMPS tutorials article by Simon Gravelle, Cecilia Alvares, "
-                "Jake Gissinger, and Axel Kohlmeyer.</p>"
-                "<p>The materials for this tutorial are downloaded from:<br><b><a "
-                "href=\"https://github.com/lammpstutorials/lammpstutorials-article\">https://"
-                "github.com/lammpstutorials/lammpstutorials-article</a></b></p>") +
-        infotext);
+    QString text = QString("<p>This dialog will help you to select and populate a folder with "
+                           "materials required to work through tutorial %1 from the LAMMPS %2 "
+                           "tutorials by %3.</p>")
+                       .arg(ntutorial)
+                       .arg(coll.name, coll.author);
+    if (!coll.filesRepoUrl.isEmpty())
+        text += QString("<p>The materials for this tutorial are downloaded from:<br>"
+                        "<b><a href=\"%1\">%1</a></b></p>")
+                    .arg(coll.filesRepoUrl);
+    auto *label = new QLabel(text + infotext);
     label->setWordWrap(true);
 
     auto *layout = new QVBoxLayout;
@@ -2279,14 +2290,14 @@ QWizardPage *LammpsGui::tutorialIntro(const int ntutorial, const QString &infote
     return page;
 }
 
-QWizardPage *LammpsGui::tutorialDirectory(const int ntutorial)
+QWizardPage *LammpsGui::tutorialDirectory(int collection, int ntutorial)
 {
+    const auto &coll = tutorialCollection(collection);
     QSettings settings;
     settings.beginGroup(Keys::GROUP_TUTORIAL);
     auto *page = new QWizardPage;
-    page->setTitle(QString("Select Directory for Tutorial %1").arg(ntutorial));
-    page->setPixmap(QWizard::WatermarkPixmap,
-                    QPixmap(QString(":/icons/tutorial%1-logo.png").arg(ntutorial)));
+    page->setTitle(QString("Select Directory for %1 Tutorial %2").arg(coll.name).arg(ntutorial));
+    page->setPixmap(QWizard::WatermarkPixmap, QPixmap(coll.logoFor(ntutorial)));
 
     auto *label = new QLabel(
         QString("<p>Select a directory to store the files for tutorial %1.  The directory will be "
@@ -2303,26 +2314,25 @@ QWizardPage *LammpsGui::tutorialDirectory(const int ntutorial)
     auto *dirlayout = new QHBoxLayout;
     auto *directory = new QLineEdit;
 
-    // if we are already in a tutorial folder, stay there or pick folder in same parent dir
-    bool haveDir = false;
-    for (int i = 1; i < 99; ++i) {
-        if (currentDir.endsWith(QString("tutorial%1").arg(i))) {
-            if (i > 9) { // We assume there are no more than 99 tutorials
-                currentDir.chop(2);
-            } else {
-                currentDir.chop(1);
-            }
-            currentDir.append(QString::number(ntutorial));
-            haveDir = true;
-        }
+    // if we are already inside this collection's "<prefix><N>" folder, switch the
+    // tutorial number in place; otherwise append a fresh folder (after redirecting
+    // away from home/system locations that should not be written to directly)
+    const QString folder = coll.dirPrefix + QString::number(ntutorial);
+    const int idx        = currentDir.lastIndexOf("/" + coll.dirPrefix);
+    bool inCollFolder    = false;
+    if (idx >= 0) {
+        bool ok        = false;
+        QString digits = currentDir.mid(idx + 1 + coll.dirPrefix.size());
+        digits.toInt(&ok);
+        inCollFolder = ok && !digits.isEmpty();
     }
-
-    // if current dir is home, or application folder, switch to desktop path
-    if ((currentDir == QDir::homePath()) || currentDir.contains("AppData") ||
-        currentDir.contains("system32") || currentDir.contains("Program Files")) {
+    if (inCollFolder) {
+        currentDir.truncate(idx);
+    } else if ((currentDir == QDir::homePath()) || currentDir.contains("AppData") ||
+               currentDir.contains("system32") || currentDir.contains("Program Files")) {
         currentDir = QStandardPaths::writableLocation(QStandardPaths::DesktopLocation);
     }
-    if (!haveDir) currentDir.append(QString("/tutorial%1").arg(ntutorial));
+    currentDir.append("/" + folder);
     directory->setText(currentDir);
 
     auto *dirbutton = new QPushButton("&Choose");
@@ -2343,10 +2353,9 @@ QWizardPage *LammpsGui::tutorialDirectory(const int ntutorial)
     solval->setObjectName("t_getsolution");
     layout->addWidget(solval, Qt::AlignVCenter | Qt::AlignLeft);
 
-    // we have tutorials 1 to 8 currently available online
-
+    // only offer the webpage checkbox for collections that have online pages
     QCheckBox *webval = nullptr;
-    if ((ntutorial > 0) && (ntutorial < 9)) {
+    if (!coll.webUrl.isEmpty()) {
         webval = new QCheckBox("&Open tutorial webpage in web browser");
         webval->setChecked(settings.value(Keys::WEBPAGE, true).toBool());
         webval->setObjectName("t_webopen");
@@ -2365,58 +2374,23 @@ QWizardPage *LammpsGui::tutorialDirectory(const int ntutorial)
     return page;
 }
 
-void LammpsGui::startTutorial(int tutno)
+void LammpsGui::startTutorial(int collection, int tutno)
 {
-    static const char *descriptions[] = {
-        "<p>In tutorial 1 you will learn about LAMMPS input files, their syntax and "
-        "structure, how to create and set up models and their interactions, how to run a "
-        "minimization and a molecular dynamics trajectory, how to plot thermodynamic data "
-        "and how to create visualizations of your system</p>",
-        "<p>In tutorial 2 you will learn about setting up a simulation for a molecular "
-        "system with bonds.  The target is to simulate a carbon nanotube with a "
-        "conventional molecular force field under growing strain and observe the response "
-        "to it.  Since bonds are represented by a harmonic potential, they cannot break.  "
-        "This is then compared to simulating the same system with a reactive force field "
-        "(AIREBO) where bonds may be broken and formed.</p>",
-        "<p>In tutorial 3 you will learn setting up a multi-component, a polymer molecule embedded "
-        "in liquid water.  The model employs a long-range Coulomb solver and a stretching force is "
-        "applied to the polymer. This is used to demonstrate how to use the type label facility in "
-        "LAMMPS to make components more generic.</p>",
-        "<p>In tutorial 4 an electrolyte is simulated while confined between two walls and "
-        "thus illustrating the specifics of simulating systems with fluid-solid "
-        "interfaces.  The water model is more complex than in tutorial 3 and also a "
-        "non-equilibrium MD simulation is performed by imposing shearing forces on the "
-        "electrolyte through moving the walls.</p>",
-        "<p>Tutorial 5 demonstrates the use of the ReaxFF reactive force field which "
-        "includes a dynamic bond topology based on determining the bond order.  ReaxFF "
-        "includes charge equilibration (QEq) and thus the atoms can change their partial "
-        "charges according to the local environment.</p>",
-        "<p>In tutorial 6 an MD simulation is combined with Monte Carlo (MC) steps to implement "
-        "a Grand Canonical ensemble.  This represents an open system where atoms or "
-        "molecules may be exchanged with a reservoir.</p>",
-        "<p>In tutorial 7 you will determine the height of a free energy barrier through "
-        "using umbrella sampling.  This is one of many advanced methods using specific "
-        "reaction coordinates or so-called collective variables to map out relevant parts "
-        "of free energy landscapes, where unbiased MD or MC simulation may take too "
-        "long.</p>",
-        "<p>In tutorial 8 a CNT embedded in a Nylon-6,6 polymer melt is simulated.  The "
-        "REACTER protocol is used to model the polymerization of Nylon without having to "
-        "employ far more computationally demanding models like ReaxFF.  Also, the "
-        "formation of water molecules is tracked over time.</p>",
-    };
-
-    if (tutno < 1 || tutno > 8) return;
+    const auto &coll = tutorialCollection(collection);
+    if (tutno < 1 || tutno > coll.count()) return;
+    // unpublished collections are shown in the menu but cannot be launched yet
+    if (!coll.published) return;
 
     delete wizard;
-    wizard = new TutorialWizard(tutno, this);
+    wizard = new TutorialWizard(collection, tutno, this);
     const auto infotext =
-        QString(descriptions[tutno - 1]) +
+        coll.blurbs.value(tutno - 1) +
         QString("<hr width=\"33%\"\\>\n<p align=\"center\">Click on the \"Next\" button "
                 "to select a folder.</p>");
     wizard->setFont(font());
-    wizard->addPage(tutorialIntro(tutno, infotext));
-    wizard->addPage(tutorialDirectory(tutno));
-    wizard->setWindowTitle(QString("Tutorial %1 Setup Wizard").arg(tutno));
+    wizard->addPage(tutorialIntro(collection, tutno, infotext));
+    wizard->addPage(tutorialDirectory(collection, tutno));
+    wizard->setWindowTitle(QString("%1 Tutorial %2 Setup Wizard").arg(coll.name).arg(tutno));
     wizard->setWizardStyle(QWizard::ModernStyle);
     wizard->show();
 }
@@ -2663,47 +2637,17 @@ bool LammpsGui::eventFilter(QObject *watched, QEvent *event)
     return QWidget::eventFilter(watched, event);
 }
 
-// Base URL for tutorial input and solution files on the web
-static const QString tutorialBaseUrl =
-    "https://raw.githubusercontent.com/lammpstutorials/"
-    "lammpstutorials-article/refs/heads/main/files/tutorial%1/%2";
-
-void LammpsGui::openTutorialWebpage(int tutno)
+void LammpsGui::openTutorialWebpage(int collection, int tutno)
 {
-    QString weburl = "https://lammpstutorials.github.io/sphinx/build/html/tutorial%1/%2.html";
-    switch (tutno) {
-        case 1:
-            weburl = weburl.arg(tutno).arg("lennard-jones-fluid");
-            break;
-        case 2:
-            weburl = weburl.arg(tutno).arg("breaking-a-carbon-nanotube");
-            break;
-        case 3:
-            weburl = weburl.arg(tutno).arg("polymer-in-water");
-            break;
-        case 4:
-            weburl = weburl.arg(tutno).arg("nanosheared-electrolyte");
-            break;
-        case 5:
-            weburl = weburl.arg(tutno).arg("reactive-silicon-dioxide");
-            break;
-        case 6:
-            weburl = weburl.arg(tutno).arg("water-adsorption-in-silica");
-            break;
-        case 7:
-            weburl = weburl.arg(tutno).arg("free-energy-calculation");
-            break;
-        case 8:
-            weburl = weburl.arg(tutno).arg("reactive-molecular-dynamics");
-            break;
-        default:
-            weburl = "https://lammpstutorials.github.io/";
-    }
-    QDesktopServices::openUrl(QUrl(weburl));
+    const auto &coll = tutorialCollection(collection);
+    QString weburl   = coll.siteUrl;
+    if (!coll.webUrl.isEmpty() && (tutno >= 1) && (tutno <= coll.slugs.size()))
+        weburl = coll.webUrl.arg(tutno).arg(coll.slugs.value(tutno - 1));
+    if (!weburl.isEmpty()) QDesktopServices::openUrl(QUrl(weburl));
 }
 
 bool LammpsGui::downloadTutorialFiles(const QString &dir, const QList<DownloadItem> &downloads,
-                                      URLDownloader &downloader)
+                                      URLDownloader &downloader, const QString &baseUrl)
 {
     int i   = 0;
     int num = downloads.size();
@@ -2721,7 +2665,7 @@ bool LammpsGui::downloadTutorialFiles(const QString &dir, const QList<DownloadIt
         status->repaint();
 
         QString localPath = dir + QDir::separator() + item.fname;
-        if (!downloader.download(tutorialBaseUrl.arg(item.ntutorial).arg(item.fname), localPath)) {
+        if (!downloader.download(baseUrl.arg(item.ntutorial).arg(item.fname), localPath)) {
             // download failed. abort, restore status line, and launch error dialog
             status->setText("Error.");
             progress->hide();
@@ -2756,14 +2700,23 @@ bool LammpsGui::downloadTutorialFiles(const QString &dir, const QList<DownloadIt
     return true;
 }
 
-void LammpsGui::setupTutorial(int tutno, const QString &dir, bool purgedir, bool getsolution,
-                              bool openwebpage)
+void LammpsGui::setupTutorial(int collection, int tutno, const QString &dir, bool purgedir,
+                              bool getsolution, bool openwebpage)
 {
+    const auto &coll = tutorialCollection(collection);
+    if (coll.filesUrl.isEmpty()) {
+        critical(this, "LAMMPS-GUI Error", "Tutorial files are not available:",
+                 QString("The \"%1\" tutorial collection is not yet published for download.")
+                     .arg(coll.name));
+        return;
+    }
+    const QString baseUrl = coll.filesUrl;
+
     QDir directory(dir);
     directory.cd(dir);
 
     // open web page of the corresponding online tutorial
-    if (openwebpage) openTutorialWebpage(tutno);
+    if (openwebpage) openTutorialWebpage(collection, tutno);
 
     if (purgedir) purgeDirectory(dir);
     if (getsolution) directory.mkpath("solution");
@@ -2773,7 +2726,7 @@ void LammpsGui::setupTutorial(int tutno, const QString &dir, bool purgedir, bool
     // download and process manifest for selected tutorial
     // must check for error after download, e.g. when there is no network.
     QString manifestPath = dir + QDir::separator() + ".manifest";
-    if (!downloader.download(tutorialBaseUrl.arg(tutno).arg(".manifest"), manifestPath)) {
+    if (!downloader.download(baseUrl.arg(tutno).arg(".manifest"), manifestPath)) {
         critical(this, "LAMMPS-GUI Error",
                  "Tutorial files download error:", downloader.errorString());
         return;
@@ -2806,7 +2759,7 @@ void LammpsGui::setupTutorial(int tutno, const QString &dir, bool purgedir, bool
         manifest.remove();
     }
 
-    if (!downloadTutorialFiles(dir, downloads, downloader)) return;
+    if (!downloadTutorialFiles(dir, downloads, downloader, baseUrl)) return;
 
     if (!first.isEmpty()) openFile(dir + QDir::separator() + first);
 }

@@ -103,6 +103,8 @@ if (NOT BUILD_DOC_ONLY)
     ${CMAKE_SOURCE_DIR}/src/colormaps.cpp
     ${CMAKE_SOURCE_DIR}/src/colormaps.h
     ${CMAKE_SOURCE_DIR}/src/constants.h
+    ${CMAKE_SOURCE_DIR}/src/tutorials.cpp
+    ${CMAKE_SOURCE_DIR}/src/tutorials.h
     ${CMAKE_SOURCE_DIR}/src/customfunc.cpp
     ${CMAKE_SOURCE_DIR}/src/customfunc.h
     ${CMAKE_SOURCE_DIR}/src/dumpimage.cpp

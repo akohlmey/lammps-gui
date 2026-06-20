@@ -37,7 +37,6 @@ constexpr int PROGRESS_MAXIMUM    = 1000; ///< Maximum value for QProgressBar
 
 // ---- File limits ---------------------------------------------------------
 constexpr int NUM_RECENT_FILES = 5; ///< Number of entries in the recent files list
-constexpr int NUM_TUTORIALS    = 8; ///< Number of tutorials available
 
 // ---- LAMMPS version requirement ------------------------------------------
 constexpr int MIN_LAMMPS_VERSION =
