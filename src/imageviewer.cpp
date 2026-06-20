@@ -740,7 +740,7 @@ void ImageViewer::readImageSettings()
     axestrans      = 1.0;
     axesloc        = "yes"; // = "lowerleft"
     boxtrans       = 1.0;
-    backcolor      = settings.value(Keys::BACKCOLOR, "black").toString();
+    backcolor      = settings.value(Keys::BACKCOLOR, "darkgray").toString();
     backcolor2     = settings.value(Keys::BACKCOLOR2, "white").toString();
     ssaoval        = 0.6;
     atomcustom     = false;

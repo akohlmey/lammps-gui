@@ -13,6 +13,20 @@
 
 #include <QRegularExpression>
 
+// LAMMPS dump_image built-in defaults. The builder emits a color, color map,
+// light, or transparency setting only when it differs from these, so the
+// generated command stays compact without changing the rendered image: the
+// GUI's own defaults were reconciled to match LAMMPS (the per-type color table
+// in deftypecolors mirrors the LAMMPS color database). Deliberate GUI
+// divergences (the backcolor2 gradient and shiny) are emitted unconditionally.
+constexpr double DEF_TRANS     = 1.0; // fully opaque
+constexpr double DEF_AMBIENT   = 0.0;
+constexpr double DEF_KEYLIGHT  = 0.9;
+constexpr double DEF_FILLLIGHT = 0.45;
+constexpr double DEF_BACKLIGHT = 0.9;
+const QString DEF_BOXCOLOR     = QStringLiteral("gold");
+const QString DEF_BACKCOLOR    = QStringLiteral("black");
+
 // Append region visualization arguments to the dump-image command.
 static void appendRegionArgs(QString &cmd, const DumpImageParams &p)
 {
@@ -221,10 +235,9 @@ QString buildDumpImageCommand(const DumpImageParams &p)
     const bool do_vdw = p.vdwfactor > VDW_CUT;
 
     // atom color for dump
-    if (!p.atomcustom && p.useelements)
-        dumpcmd += blank + "element";
-    else
-        dumpcmd += blank + p.atomcolor;
+    const QString atomColorTok =
+        (!p.atomcustom && p.useelements) ? QStringLiteral("element") : p.atomcolor;
+    dumpcmd += blank + atomColorTok;
 
     // atom diameter for dump
     if (!p.atomcustom) {
@@ -301,28 +314,53 @@ QString buildDumpImageCommand(const DumpImageParams &p)
     if (!dofixes) dumpcmd += " noinit";
     dumpcmd += " modify";
 
-    // must change global colors first so they apply everywhere
-    const int numcolors = p.color_list.size();
+    // change global color definitions first so they apply everywhere, but emit
+    // only those that differ from the LAMMPS built-in defaults: deftypecolors
+    // mirrors the LAMMPS color database, so an unmodified table emits nothing
+    const int numcolors    = p.color_list.size();
+    const int ndefcolors   = deftypecolors.size();
+    const bool prunecolors = (numcolors == ndefcolors);
 
     for (int i = 0; i < numcolors; ++i) {
+        if (prunecolors && (p.color_list[i].first == deftypecolors[i].first) &&
+            (p.color_list[i].second == deftypecolors[i].second))
+            continue;
         dumpcmd += QString(" color %1 %2 %3 %4")
                        .arg(p.color_list[i].first)
                        .arg(p.color_list[i].second.redF())
                        .arg(p.color_list[i].second.greenF())
                        .arg(p.color_list[i].second.blueF());
     }
+    // assign type colors only where the name differs from the default LAMMPS
+    // assignment for that type (type i -> deftypecolors[(i - 1) % ndefcolors])
     for (int i = 1; i <= p.ntypes; ++i) {
-        dumpcmd += QString(" acolor %1 %2").arg(i).arg(p.color_list[(i - 1) % numcolors].first);
+        const QString curname = p.color_list[(i - 1) % numcolors].first;
+        const QString defname = deftypecolors[(i - 1) % ndefcolors].first;
+        if (curname == defname) continue;
+        dumpcmd += QString(" acolor %1 %2").arg(i).arg(curname);
     }
 
-    dumpcmd += " boxcolor " + p.boxcolor;
-    dumpcmd += " backcolor " + p.backcolor;
-    dumpcmd += " backcolor2 " + p.backcolor2;
-    dumpcmd += QString(" axestrans %1").arg(p.axestrans);
-    dumpcmd += QString(" boxtrans %1").arg(p.boxtrans);
-    dumpcmd += QString(" atrans * %1").arg(p.atomtrans);
-    if (p.bond_flag == 1) dumpcmd += QString(" btrans * %1").arg(p.atomtrans);
-    if (p.version > 20260330)
+    if (p.boxcolor != DEF_BOXCOLOR) dumpcmd += " boxcolor " + p.boxcolor;
+
+    // the background is one logical unit: LAMMPS defaults to a solid black
+    // background, the GUI to a vertical gradient (a deliberate divergence, with
+    // a darkgray default lower color so backcolor is itself a delta). Emit the
+    // backcolor/backcolor2 pair together -- never backcolor2 alone -- whenever
+    // the pair differs from the solid LAMMPS default
+    if (!((p.backcolor == DEF_BACKCOLOR) && (p.backcolor2 == DEF_BACKCOLOR))) {
+        dumpcmd += " backcolor " + p.backcolor;
+        dumpcmd += " backcolor2 " + p.backcolor2;
+    }
+
+    if (p.axestrans != DEF_TRANS) dumpcmd += QString(" axestrans %1").arg(p.axestrans);
+    if (p.boxtrans != DEF_TRANS) dumpcmd += QString(" boxtrans %1").arg(p.boxtrans);
+    if (p.atomtrans != DEF_TRANS) dumpcmd += QString(" atrans * %1").arg(p.atomtrans);
+    if ((p.bond_flag == 1) && (p.atomtrans != DEF_TRANS))
+        dumpcmd += QString(" btrans * %1").arg(p.atomtrans);
+
+    const bool lightsdefault = (p.ambientlight == DEF_AMBIENT) && (p.keylight == DEF_KEYLIGHT) &&
+                               (p.filllight == DEF_FILLLIGHT) && (p.backlight == DEF_BACKLIGHT);
+    if ((p.version > 20260330) && !lightsdefault)
         dumpcmd += QString(" lights %1 %2 %3 %4")
                        .arg(p.ambientlight)
                        .arg(p.keylight)
@@ -332,8 +370,11 @@ QString buildDumpImageCommand(const DumpImageParams &p)
     if (p.useelements) dumpcmd += blank + p.elements + blank + p.adiams + blank;
     if (p.usesigma) dumpcmd += blank + p.adiams + blank;
     if (!p.useelements && !p.usesigma && (p.atomSize != 1.0)) dumpcmd += blank + p.adiams + blank;
-    // apply selected colormap
-    appendColorMapArgs(dumpcmd, p);
+
+    // apply the selected color map only when atoms are colored by a per-atom
+    // value; for type/element coloring the map is unused, so omit it
+    const bool atomByValue = (atomColorTok != "type") && (atomColorTok != "element");
+    if (atomByValue) appendColorMapArgs(dumpcmd, p);
 
     appendFixComputeColors(dumpcmd, p);
 

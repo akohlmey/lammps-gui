@@ -134,19 +134,31 @@ TEST(DumpImageCommand, BasicStructure)
     EXPECT_FALSE(cmd.contains(" lights ")); // version not greater than threshold
 }
 
-TEST(DumpImageCommand, ColorTable)
+TEST(DumpImageCommand, ColorTablePrunedToDeltas)
 {
-    const QString cmd = buildDumpImageCommand(makeParams());
+    auto p       = makeParams();
+    p.color_list = deftypecolors; // identical to the LAMMPS built-in defaults
+    p.ntypes     = 4;
 
-    EXPECT_TRUE(cmd.contains(" color red 1 0 0")) << cmd.toStdString();
-    EXPECT_TRUE(cmd.contains(" color blue 0 0 1"));
-    EXPECT_TRUE(cmd.contains(" acolor 1 red"));
-    EXPECT_TRUE(cmd.contains(" acolor 2 blue"));
+    // an unmodified default table emits no color or acolor lines
+    QString cmd = buildDumpImageCommand(p);
+    EXPECT_FALSE(cmd.contains(" color ")) << cmd.toStdString();
+    EXPECT_FALSE(cmd.contains(" acolor "));
+
+    // changing one slot's RGB emits only that color line; the name is unchanged,
+    // so the default type assignment still applies and no acolor is needed
+    p.color_list[2].second = QColor(10, 20, 30); // the "blue" slot
+    cmd                    = buildDumpImageCommand(p);
+    EXPECT_TRUE(cmd.contains(" color blue ")) << cmd.toStdString();
+    EXPECT_FALSE(cmd.contains(" color red")); // unchanged default -> pruned
+    EXPECT_FALSE(cmd.contains(" acolor "));
 }
 
 TEST(DumpImageCommand, DefaultColormapIsBWR)
 {
-    const QString cmd = buildDumpImageCommand(makeParams());
+    auto p            = makeParams();
+    p.atomcolor       = "vx"; // color atoms by a per-atom value so the map is emitted
+    const QString cmd = buildDumpImageCommand(p);
 
     // "auto" min/max are translated to "min"/"max"
     EXPECT_TRUE(cmd.contains(" color map1 0.000 0.227 0.427"));
@@ -158,6 +170,7 @@ TEST(DumpImageCommand, DefaultColormapIsBWR)
 TEST(DumpImageCommand, ExplicitColormapRange)
 {
     auto p            = makeParams();
+    p.atomcolor       = "vx";
     p.mapmin          = "0.0";
     p.mapmax          = "1.0";
     const QString cmd = buildDumpImageCommand(p);
@@ -167,6 +180,7 @@ TEST(DumpImageCommand, ExplicitColormapRange)
 TEST(DumpImageCommand, NamedColormap)
 {
     auto p            = makeParams();
+    p.atomcolor       = "vx";
     p.colormap        = "Grayscale";
     const QString cmd = buildDumpImageCommand(p);
     EXPECT_TRUE(cmd.contains(" amap min max cf 0.0 2 min black max white")) << cmd.toStdString();
@@ -292,6 +306,53 @@ TEST(DumpImageCommand, LightsGatedByVersion)
     p.version         = 20260331;
     const QString cmd = buildDumpImageCommand(p);
     EXPECT_TRUE(cmd.contains(" lights 0.2 0.7 0.3 0.2")) << cmd.toStdString();
+}
+
+TEST(DumpImageCommand, ColorMapOmittedForTypeColoring)
+{
+    auto p = makeParams(); // atomcolor == "type"
+    EXPECT_FALSE(buildDumpImageCommand(p).contains(" amap ")) << "type coloring needs no map";
+}
+
+TEST(DumpImageCommand, AllDefaultsPruned)
+{
+    auto p         = makeParams();
+    p.color_list   = deftypecolors; // == LAMMPS built-in defaults
+    p.ntypes       = 4;
+    p.atomcolor    = "type";
+    p.boxcolor     = "gold";
+    p.backcolor    = "black";
+    p.backcolor2   = "black"; // solid background == LAMMPS default -> pruned
+    p.axestrans    = 1.0;
+    p.boxtrans     = 1.0;
+    p.atomtrans    = 1.0;
+    p.ambientlight = 0.0;
+    p.keylight     = 0.9;
+    p.filllight    = 0.45;
+    p.backlight    = 0.9;
+    p.version      = 20260331; // lights gate open, but the values are default
+
+    const QString cmd = buildDumpImageCommand(p);
+    EXPECT_FALSE(cmd.contains(" amap ")) << cmd.toStdString();
+    EXPECT_FALSE(cmd.contains(" color "));
+    EXPECT_FALSE(cmd.contains(" acolor "));
+    EXPECT_FALSE(cmd.contains(" boxcolor"));
+    EXPECT_FALSE(cmd.contains(" backcolor"));
+    EXPECT_FALSE(cmd.contains(" axestrans"));
+    EXPECT_FALSE(cmd.contains(" boxtrans"));
+    EXPECT_FALSE(cmd.contains(" atrans"));
+    EXPECT_FALSE(cmd.contains(" btrans"));
+    EXPECT_FALSE(cmd.contains(" lights"));
+    EXPECT_TRUE(cmd.contains(" modify"));
+}
+
+TEST(DumpImageCommand, TransparencyEmittedWhenNotOpaque)
+{
+    auto p            = makeParams(); // axestrans = boxtrans = 0.0, atomtrans = 1.0
+    const QString cmd = buildDumpImageCommand(p);
+    EXPECT_TRUE(cmd.contains(" axestrans 0"));
+    EXPECT_TRUE(cmd.contains(" boxtrans 0"));
+    EXPECT_FALSE(cmd.contains(" atrans ")); // opaque -> pruned
 }
 
 } // namespace
