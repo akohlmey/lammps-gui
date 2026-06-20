@@ -53,16 +53,6 @@ LAMMPS-GUI TODO list:
     route them in `viewFile()` / "Open Image File(s)..." (or a sibling "Open
     Movie..."), and reuse the conversion-cache cleanup from the item above.
 
-## Offer a few more perceptually-uniform color maps (optional)
-  Done: the preview swatches and the emitted `amap`/`bmap` stops now share a
-  single source of truth (`colormaps.{h,cpp}`, consumed by both
-  `appendColorMapArgs()` in `dumpimage.cpp` and `addColorMapItems()` in
-  `imageviewersettings.cpp`), the perceptually-uniform maps were corrected
-  against canonical matplotlib data (Viridis/Plasma/Inferno; the old "Inferno"
-  was really magma), and Magma was added. Optionally add Cividis and Turbo
-  (canonical stops are easy to resample from matplotlib) to the table and the
-  `colorMapNames()` list.
-
 # Refactoring status and recommendations
 
 This is a staged plan for code cleanups and C++17 modernization. The
