@@ -1510,6 +1510,16 @@ void ImageViewer::createImage()
     if (renderstatus) renderstatus->setEnabled(true);
     repaint();
 
+    // The stop button halts a run via a walltime timeout whose state persists and
+    // makes any later "run" exit immediately (run.cpp: if (timer->is_timeout())
+    // return), so our render "run 0" would silently produce nothing. Reset it on
+    // every render (cheap); this also covers a run started and stopped while the
+    // viewer stays open.
+    {
+        StdoutSilencer guard;
+        lammps->command("timer timeout off");
+    }
+
     QString oldgroup = group;
     if (molecule != "none") {
         // get center of box

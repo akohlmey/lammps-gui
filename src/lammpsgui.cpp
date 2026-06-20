@@ -1900,15 +1900,13 @@ void LammpsGui::renderImage()
             }
         }
 
-        // Sanitize the LAMMPS state once before opening the viewer, which renders
-        // by creating its own dump and issuing "run 0": (1) the GUI stop button
-        // halts a run via a walltime timeout whose state persists and makes any
-        // later "run" exit immediately (run.cpp: if (timer->is_timeout()) return),
-        // so clear it; (2) leaving the input deck's dumps active would make our
-        // run re-trigger them and overwrite their output files, so undump them all.
+        // Purge the input deck's dump instances before opening the viewer: it
+        // renders by creating its own dump and issuing "run 0", and leaving the
+        // deck's dumps active would make that run re-trigger them and overwrite
+        // their output files. (The walltime timeout the stop button leaves behind
+        // is cleared per render in ImageViewer::createImage.)
         {
             StdoutSilencer guard;
-            lammps.command("timer timeout off");
             const int ndumps = lammps.idCount("dump");
             QStringList dumpids;
             for (int i = 0; i < ndumps; ++i)
