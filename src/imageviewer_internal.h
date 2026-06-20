@@ -61,7 +61,7 @@ inline const QList<QPair<QString, QColor>> deftypecolors = {
     {{"red"}, {255, 0, 0}},           {{"forestgreen"}, {34, 139, 34}},
     {{"blue"}, {0, 0, 255}},          {{"gold"}, {255, 215, 0}},
     {{"cyan"}, {0, 255, 255}},        {{"magenta"}, {255, 0, 255}},
-    {{"silver"}, {110, 110, 110}},    {{"orange"}, {255, 128, 0}},
+    {{"silver"}, {192, 192, 192}},    {{"orange"}, {255, 128, 0}},
     {{"lime"}, {0, 255, 0}},          {{"gray"}, {128, 128, 128}},
     {{"darkred"}, {139, 0, 0}},       {{"darkgreen"}, {0, 100, 0}},
     {{"darkblue"}, {0, 0, 139}},      {{"darkcyan"}, {0, 139, 139}},

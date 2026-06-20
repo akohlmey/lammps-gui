@@ -731,7 +731,7 @@ void ImageViewer::readImageSettings()
     showsubbox     = false;
     boxdiam        = settings.value(Keys::BOXDIAM, 0.025).toDouble();
     subboxdiam     = boxdiam;
-    boxcolor       = settings.value(Keys::BOXCOLOR, "yellow").toString();
+    boxcolor       = settings.value(Keys::BOXCOLOR, "gold").toString();
     showaxes       = settings.value(Keys::AXES, false).toBool();
     usessao        = settings.value(Keys::SSAO, false).toBool();
     antialias      = settings.value(Keys::ANTIALIAS, false).toBool();
