@@ -746,6 +746,7 @@ void ImageViewer::readImageSettings()
     ssaoval        = 0.6;
     atomcustom     = false;
     atomtrans      = 1.0;
+    bondtrans      = 1.0;
     atomcolor      = settings.value(Keys::COLOR, "type").toString();
     atomdiam       = settings.value(Keys::DIAMETER, "type").toString();
     bondcolor      = settings.value(Keys::BONDCOLOR, "atom").toString();
@@ -1447,6 +1448,7 @@ DumpImageParams ImageViewer::gatherDumpImageParams(const QString &dumpfilename)
     p.axestrans    = axestrans;
     p.boxtrans     = boxtrans;
     p.atomtrans    = atomtrans;
+    p.bondtrans    = bondtrans;
     p.ambientlight = ambientlight;
     p.keylight     = keylight;
     p.filllight    = filllight;

@@ -360,8 +360,8 @@ DumpImageCommand buildDumpImageCommand(const DumpImageParams &p)
     if (p.axestrans != DEF_TRANS) m += QString(" axestrans %1").arg(p.axestrans);
     if (p.boxtrans != DEF_TRANS) m += QString(" boxtrans %1").arg(p.boxtrans);
     if (p.atomtrans != DEF_TRANS) m += QString(" atrans * %1").arg(p.atomtrans);
-    if ((p.bond_flag == 1) && (p.atomtrans != DEF_TRANS))
-        m += QString(" btrans * %1").arg(p.atomtrans);
+    if ((p.bond_flag == 1) && (p.bondtrans != DEF_TRANS))
+        m += QString(" btrans * %1").arg(p.bondtrans);
 
     const bool lightsdefault = (p.ambientlight == DEF_AMBIENT) && (p.keylight == DEF_KEYLIGHT) &&
                                (p.filllight == DEF_FILLLIGHT) && (p.backlight == DEF_BACKLIGHT);

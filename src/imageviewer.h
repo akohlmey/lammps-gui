@@ -222,7 +222,8 @@ private:
     double axesdiam;                             ///< Axes diameter
     double axestrans;                            ///< Axes transparency
     double ssaoval;                              ///< SSAO strength
-    double atomtrans;                            ///< Atom / Bond transparency
+    double atomtrans;                            ///< Atom transparency
+    double bondtrans;                            ///< Bond transparency
     double ambientlight;                         ///< ambient light setting
     double keylight;                             ///< key light setting
     double filllight;                            ///< fill light setting

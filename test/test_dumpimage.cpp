@@ -101,6 +101,7 @@ DumpImageParams makeParams()
     p.axestrans    = 0.0;
     p.boxtrans     = 0.0;
     p.atomtrans    = 1.0;
+    p.bondtrans    = 1.0;
     p.ambientlight = 0.2;
     p.keylight     = 0.7;
     p.filllight    = 0.3;
@@ -340,6 +341,7 @@ TEST(DumpImageCommand, AllDefaultsPruned)
     p.axestrans    = 1.0;
     p.boxtrans     = 1.0;
     p.atomtrans    = 1.0;
+    p.bondtrans    = 1.0;
     p.ambientlight = 0.0;
     p.keylight     = 0.9;
     p.filllight    = 0.45;
@@ -370,6 +372,17 @@ TEST(DumpImageCommand, TransparencyEmittedWhenNotOpaque)
     EXPECT_TRUE(cmd.contains(" axestrans 0"));
     EXPECT_TRUE(cmd.contains(" boxtrans 0"));
     EXPECT_FALSE(cmd.contains(" atrans ")); // opaque -> pruned
+}
+
+TEST(DumpImageCommand, BondTransparencyIndependentOfAtoms)
+{
+    auto p            = makeParams();
+    p.bond_flag       = 1;
+    p.atomtrans       = 1.0; // atoms opaque -> atrans pruned
+    p.bondtrans       = 0.5; // bonds translucent -> btrans emitted independently
+    const QString cmd = buildCmd(p);
+    EXPECT_FALSE(cmd.contains(" atrans "));
+    EXPECT_TRUE(cmd.contains(" btrans * 0.5")) << cmd.toStdString();
 }
 
 TEST(DumpImageCommand, SolidBackgroundOmitsBackcolor2)

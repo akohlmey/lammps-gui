@@ -574,33 +574,33 @@ void ImageViewer::atomSettings()
         }
     }
     layout->addWidget(bndiam, idx, n++, 1, 1);
-    auto *autobutton = new QCheckBox("AutoBonds:", this);
-    autobutton->setChecked(autobond);
-    autobutton->setEnabled(hasAutobonds());
-    autobutton->setObjectName("autobutton");
-    layout->addWidget(autobutton, idx, n++, 1, 1, Qt::AlignVCenter | Qt::AlignRight);
-    auto *bcutoff = new QLineEdit(QString::number(bondcutoff));
-    bcutoff->setValidator(new QDoubleValidator(0.001, 10.0, 100, this));
-    bcutoff->setEnabled(hasAutobonds());
-    layout->addWidget(bcutoff, idx++, n++, 1, 1);
+    layout->addWidget(new QLabel("Opacity: "), idx, n++, 1, 1, Qt::AlignVCenter | Qt::AlignRight);
+    auto *bntrans = new QLineEdit(QString::number(bondtrans));
+    bntrans->setValidator(transvalidator);
+    layout->addWidget(bntrans, idx++, n++, 1, 1);
     if (lammps->extractSetting("molecule_flag") != 1) {
         bondbutton->setEnabled(false);
         bondbutton->setChecked(false);
         showbonds = false;
     }
 
-#if QT_VERSION < QT_VERSION_CHECK(6, 7, 0)
-    connect(vdwbutton, &QCheckBox::stateChanged, this, &ImageViewer::vdwbondSync);
-    connect(autobutton, &QCheckBox::stateChanged, this, &ImageViewer::vdwbondSync);
-#else
-    connect(vdwbutton, &QCheckBox::checkStateChanged, this, &ImageViewer::vdwbondSync);
-    connect(autobutton, &QCheckBox::checkStateChanged, this, &ImageViewer::vdwbondSync);
-#endif
-
-    // bond color-map row, mirroring the atom Map/Min/Max row; only used when
-    // bonds are colored by a per-bond compute value (a bond/local attribute)
-    n = 0;
-    ++n; // no control in the first column
+    // bond color-map row, mirroring the atom Map/Min/Max row. The AutoBonds
+    // toggle and its cutoff field sit in the first column (mirroring the atoms'
+    // VDW toggle), which frees the bond row above for the Opacity field. The map
+    // fields are only used when bonds are colored by a per-bond compute value.
+    n                = 0;
+    auto *autobutton = new QCheckBox("AutoBonds:", this);
+    autobutton->setChecked(autobond);
+    autobutton->setEnabled(hasAutobonds());
+    autobutton->setObjectName("autobutton");
+    auto *bcutoff = new QLineEdit(QString::number(bondcutoff));
+    bcutoff->setValidator(new QDoubleValidator(0.001, 10.0, 100, this));
+    bcutoff->setEnabled(hasAutobonds());
+    auto *autolayout = new QHBoxLayout;
+    autolayout->setContentsMargins(0, 0, 0, 0);
+    autolayout->addWidget(autobutton);
+    autolayout->addWidget(bcutoff);
+    layout->addLayout(autolayout, idx, n++, 1, 1);
     layout->addWidget(new QLabel("Map: "), idx, n++, 1, 1, Qt::AlignVCenter | Qt::AlignRight);
     auto *bmap = new QComboBox;
     bmap->setObjectName("bmap");
@@ -615,6 +615,14 @@ void ImageViewer::atomSettings()
     auto *bmapmax = new QLineEdit(bondmapmax);
     bmapmax->setValidator(minmaxvalidator);
     layout->addWidget(bmapmax, idx++, n++, 1, 1);
+
+#if QT_VERSION < QT_VERSION_CHECK(6, 7, 0)
+    connect(vdwbutton, &QCheckBox::stateChanged, this, &ImageViewer::vdwbondSync);
+    connect(autobutton, &QCheckBox::stateChanged, this, &ImageViewer::vdwbondSync);
+#else
+    connect(vdwbutton, &QCheckBox::checkStateChanged, this, &ImageViewer::vdwbondSync);
+    connect(autobutton, &QCheckBox::checkStateChanged, this, &ImageViewer::vdwbondSync);
+#endif
 
     // enable the bond map/min/max fields only when the bond Color is a per-bond
     // value (a bond/local attribute), tracking changes to the bond Color combo
@@ -821,6 +829,7 @@ void ImageViewer::atomSettings()
         bonddiam = value;
     }
 
+    if (bntrans->hasAcceptableInput()) bondtrans = bntrans->text().toDouble();
     bondcolormap = bmap->currentText();
     if (bmapmin->hasAcceptableInput()) bondmapmin = bmapmin->text();
     if (bmapmax->hasAcceptableInput()) bondmapmax = bmapmax->text();

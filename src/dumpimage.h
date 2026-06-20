@@ -122,7 +122,8 @@ struct DumpImageParams {
     bool usegradient;                         ///< draw a vertical gradient
     double axestrans;                         ///< axes transparency
     double boxtrans;                          ///< box / subbox transparency
-    double atomtrans;                         ///< atom / bond transparency
+    double atomtrans;                         ///< atom transparency
+    double bondtrans;                         ///< bond transparency
     double ambientlight;                      ///< ambient light setting
     double keylight;                          ///< key light setting
     double filllight;                         ///< fill light setting
