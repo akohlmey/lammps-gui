@@ -1402,13 +1402,15 @@ DumpImageParams ImageViewer::gatherDumpImageParams(const QString &dumpfilename)
     p.ellipsoidlevel = ellipsoidlevel;
     p.ellipsoiddiam  = ellipsoiddiam;
 
-    // bonds
-    p.showbonds   = showbonds;
-    p.bondcolor   = bondcolor;
-    p.bondbyvalue = false; // no bond-by-value UI yet; keep bonds colored normally
-    p.bonddiam    = bonddiam;
-    p.autobond    = autobond;
-    p.bondcutoff  = bondcutoff;
+    // bonds: a "compute bond/local" attribute name selects bond color-by-value,
+    // in which case the emitted bond color is a reference to the managed compute
+    const bool bondvalue = bondLocalAttrs.contains(bondcolor);
+    p.showbonds          = showbonds;
+    p.bondbyvalue        = bondvalue;
+    p.bondcolor          = bondvalue ? ("c_" + bondComputeId) : bondcolor;
+    p.bonddiam           = bonddiam;
+    p.autobond           = autobond;
+    p.bondcutoff         = bondcutoff;
 
     // view / image
     p.xsize       = xsize;
@@ -1536,6 +1538,19 @@ void ImageViewer::createImage()
     // attempt to clean up if a previous write_dump command failed
     lammps->command("if $(is_defined(dump,WRITE_DUMP)) then 'undump WRITE_DUMP'");
 
+    // (re)create the per-bond coloring compute when a bond/local attribute is
+    // selected; it must exist and be initialized (via run 0) before the
+    // write_dump can reference it. clear any leftover from a prior failed render.
+    const bool bondvalue = bondLocalAttrs.contains(bondcolor);
+    lammps->command(QString("if $(is_defined(compute,%1)) then 'uncompute %1'").arg(bondComputeId));
+    if (bondvalue) {
+        StdoutSilencer guard;
+        lammps->command(
+            QString("compute %1 %2 bond/local %3").arg(bondComputeId, group, bondcolor));
+        lammps->command("run 0 post no");
+        if (lammps->hasError()) lammps->getLastErrorMessage(nullptr, 0);
+    }
+
     QDir dumpdir(QDir::tempPath());
     QFile dumpfile(dumpdir.absoluteFilePath(filename + ".ppm"));
 
@@ -1549,6 +1564,12 @@ void ImageViewer::createImage()
         StdoutSilencer guard;
         last_dump_cmd = dumpcmd;
         lammps->command(dumpcmd);
+    }
+
+    // the per-bond compute has done its job for this frame; remove it again
+    if (bondvalue) {
+        StdoutSilencer guard;
+        lammps->command("uncompute " + bondComputeId);
     }
 
     // display error message

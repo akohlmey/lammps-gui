@@ -23,6 +23,7 @@
 #include <QPair>
 #include <QPixmap>
 #include <QString>
+#include <QStringList>
 #include <string>
 
 class QComboBox;
@@ -66,6 +67,15 @@ inline const QList<QPair<QString, QColor>> deftypecolors = {
     {{"darkred"}, {139, 0, 0}},       {{"darkgreen"}, {0, 100, 0}},
     {{"darkblue"}, {0, 0, 139}},      {{"darkcyan"}, {0, 139, 139}},
     {{"darkmagenta"}, {139, 0, 139}}, {{"darkgray"}, {69, 69, 69}}};
+
+// per-bond "compute bond/local" attributes offered for the bond color-by-value
+// feature; a single attribute yields a per-bond vector referenced as c_<id>
+inline const QStringList bondLocalAttrs = {"dist",   "dx",       "dy",    "dz",    "engpot",
+                                           "force",  "fx",       "fy",    "fz",    "engvib",
+                                           "engrot", "engtrans", "omega", "velvib"};
+
+// reserved compute ID the GUI creates/destroys to color bonds by a per-bond value
+inline const QString bondComputeId = QStringLiteral("imgviewer_bondcolor");
 
 /**
  * @brief Store settings for displaying graphics from a fix or compute in a LAMMPS snapshot image

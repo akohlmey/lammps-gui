@@ -530,7 +530,9 @@ void ImageViewer::atomSettings()
     auto *bncolor = new QComboBox;
     bncolor->setObjectName("bncolor");
     bncolor->addItems({"atom", "type"});
-    if (atomcustom) { // select item that was selected the last time
+    bncolor->insertSeparator(bncolor->count());
+    bncolor->addItems(bondLocalAttrs); // per-bond compute attributes -> color by value
+    if (atomcustom) {                  // select item that was selected the last time
         if (bondcolor == "none") {
             bondbutton->setChecked(false);
         } else {
