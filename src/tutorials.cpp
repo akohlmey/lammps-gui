@@ -28,7 +28,7 @@ TutorialCollection molecular()
     c.author       = QStringLiteral("Simon Gravelle, Cecilia Alvares, Jake Gissinger, "
                                           "and Axel Kohlmeyer");
     c.filesUrl     = QStringLiteral("https://raw.githubusercontent.com/lammpstutorials/"
-                                        "lammpstutorials-article/refs/heads/main/files/tutorial%1/%2");
+                                        "lammpstutorials-article/main/files/tutorial%1/%2");
     c.filesRepoUrl = QStringLiteral("https://github.com/lammpstutorials/lammpstutorials-article");
     c.webUrl       = QStringLiteral("https://lammpstutorials.github.io/sphinx/build/html/"
                                           "tutorial%1/%2.html");
@@ -104,14 +104,14 @@ TutorialCollection matsci()
     c.dirPrefix    = QStringLiteral("matsci-tutorial");
     c.author       = QStringLiteral("the LAMMPS Materials Science tutorials authors");
     c.filesUrl     = QStringLiteral("https://raw.githubusercontent.com/lammpstutorials/"
-                                        "matsci-tutorials-inputs/refs/heads/main/tutorial%1/%2");
+                                        "matsci-tutorials-inputs/main/tutorial%1/%2");
     c.filesRepoUrl = QStringLiteral("https://github.com/lammpstutorials/matsci-tutorials-inputs");
     c.webUrl       = QString(); // TODO: per-tutorial web pages once published
     c.siteUrl      = QStringLiteral("https://lammpstutorials.github.io/");
     c.logo         = QStringLiteral(":/icons/tutorial-logo.png");
     c.published    = false;
     c.status       = QStringLiteral("coming soon");
-    c.available    = 1; // only Tutorial 1 is launchable so far
+    c.available    = 2; // only Tutorials 1 and 2 are launchable so far
 
     c.titles = {"Crystalline metals and the EAM potential",
                 "Variables, automation, and the energy-volume curve",

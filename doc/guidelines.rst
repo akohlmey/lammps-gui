@@ -143,7 +143,7 @@ Each collection's input and solution files live in their own public (e.g.
 GitHub) repository, laid out as one ``tutorial<N>/`` folder per tutorial.  The
 ``filesUrl`` field is a two-argument download pattern where ``%1`` is the
 tutorial number and ``%2`` is the file name, for example
-``.../matsci-tutorials-inputs/refs/heads/main/tutorial%1/%2``.
+``.../matsci-tutorials-inputs/main/tutorial%1/%2``.
 
 Every ``tutorial<N>/`` folder contains a ``.manifest`` text file that lists the
 files to download, one per line (``#`` comments and blank lines are ignored):
