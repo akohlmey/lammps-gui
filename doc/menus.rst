@@ -185,6 +185,8 @@ output, charts, slide show, variables, or snapshot images.  The
 default settings for their visibility can be changed in the
 *Preferences* dialog.
 
+.. _tutorials:
+
 Tutorials
 ^^^^^^^^^
 
@@ -192,19 +194,28 @@ Tutorials
 .. index:: menus; Tutorials
 .. index:: LAMMPS tutorials
 
-The *Tutorials* menu is to support the set of LAMMPS tutorials for
-beginners and intermediate LAMMPS users documented in
-:ref:`Gravelle1 <Gravelle1>`.  From the drop down menu you can select
-which of the eight currently available tutorial sessions you want to
-begin.  This
-opens a 'wizard' dialog where you can choose in which folder you want to
-work, whether you want that folder to be wiped from *any* files, whether
-you want to download the solution files (which can be large) to a
-``solution`` sub-folder, and whether you want the corresponding
-tutorial's online version opened in your web browser.  The dialog will
-then start downloading the files requested (download progress is
-reported in the status line) and load the first input file for the
-selected session into LAMMPS-GUI.
+The *Tutorials* menu supports several collections of LAMMPS tutorials for
+beginners and intermediate LAMMPS users.  The menu has one submenu per
+collection, for example *Soft Matter* (the molecular tutorials documented
+in :ref:`Gravelle1 <Gravelle1>`), *Materials Science*, and *Granular /
+DEM*.  Each submenu lists its individual tutorial sessions; selecting one
+begins that session.
+
+Collections are released incrementally.  A collection that is not yet
+fully published is labeled in the menu with its status, e.g. *(coming
+soon)* or *(planned)*.  Within such a collection only the tutorials that
+are already available can be launched; the remaining entries are shown
+(so you can preview what is coming) but are disabled.  A collection with
+no tutorials available yet appears as a single disabled submenu.
+
+Selecting an available tutorial opens a 'wizard' dialog where you can
+choose in which folder you want to work, whether you want that folder to
+be wiped from *any* files, whether you want to download the solution
+files (which can be large) to a ``solution`` sub-folder, and whether you
+want the corresponding tutorial's online version opened in your web
+browser.  The dialog will then start downloading the files requested
+(download progress is reported in the status line) and load the first
+input file for the selected session into LAMMPS-GUI.
 
 .. image:: JPG/lammps-gui-tutorials.png
    :align: center
