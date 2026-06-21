@@ -81,8 +81,8 @@ TutorialCollection molecular()
         "<p>In tutorial 8 a CNT embedded in a Nylon-6,6 polymer melt is simulated.  The "
         "REACTER protocol is used to model the polymerization of Nylon without having to "
         "employ far more computationally demanding models like ReaxFF.  Also, the "
-        "formation of water molecules is tracked over time.</p>",
-    };
+        "formation of water molecules is tracked over time.</p>"};
+
     c.available = c.blurbs.size(); // fully published: all tutorials are launchable
     return c;
 }
@@ -90,12 +90,9 @@ TutorialCollection molecular()
 // --- Collection 2: the materials-science tutorials (rolling out) --------------
 //
 // Input/solution files for all 14 tutorials are hosted publicly in the
-// matsci-tutorials-inputs repository, so the collection downloads like any
-// other.  It is being released incrementally as each tutorial's text is
-// finalized: `available` is the number of leading tutorials enabled in the menu
-// (the rest stay disabled teasers).  TODO: bump `available` as tutorials are
-// finalized, add per-tutorial webUrl/slugs, replace the placeholder blurbs with
-// proper descriptions, and set published = true once all 14 are released.
+// matsci-tutorials-inputs repository, so the collection downloads like any other.
+// TODO: add per-tutorial logos, webUrl/slugs and set published = true once all 14 are released.
+
 TutorialCollection matsci()
 {
     TutorialCollection c;
@@ -110,8 +107,7 @@ TutorialCollection matsci()
     c.siteUrl      = QStringLiteral("https://lammpstutorials.github.io/");
     c.logo         = QStringLiteral(":/icons/tutorial-logo.png");
     c.published    = false;
-    c.status       = QStringLiteral("coming soon");
-    c.available    = 2; // only Tutorials 1 and 2 are launchable so far
+    c.status       = QStringLiteral("in development");
 
     c.titles = {"Crystalline metals and the EAM potential",
                 "Variables, automation, and the energy-volume curve",
@@ -128,13 +124,49 @@ TutorialCollection matsci()
                 "Diffusion in a liquid metal",
                 "Chemical short-range order in a high-entropy alloy"};
 
-    // placeholder descriptions seeded from the article titles; replace with real
-    // blurbs as the collection is published
-    for (const auto &t : c.titles)
-        c.blurbs.append(QString("<p>Materials Science tutorial: <b>%1</b>.  (A detailed "
-                                "description will be added as this tutorial collection is "
-                                "published.)</p>")
-                            .arg(t));
+    c.blurbs = {
+        "<p>In tutorial 1 a face-centered cubic metal is constructed, an EAM potential is applied, "
+        "and the equilibrium lattice constant and cohesive energy of the crystal are obtained by "
+        "energy minimization.</p>",
+        "<p>In tutorial 2 the use of variables, loops, and command-line arguments in LAMMPS is "
+        "demonstrated to scan the lattice parameter of a metal crystal, plot its energy-volume "
+        "curve, and fit it to an equation of state to determine the equilibrium lattice constant "
+        "and bulk modulus.</p>",
+        "In tutorial 3 a single crystal is equilibrated and then subjected to tensile and "
+        "compressive strain, the stress-strain response is extracted, and dislocation nucleation "
+        "is visualized.</p>",
+        "Tutorial 4 introduces grain boundaries: first a &Sigma;5(310) symmetric tilt boundary in "
+        "fcc aluminum is constructed and its energy computed, then a &Sigma;3(111) boundary in bcc "
+        "iron is strained to fracture and the per-atom stress is analyzed.</p>",
+        "In tutorial 5 an aluminum surface is indented with rigid objects and a shaped tool is "
+        "stamped into the surface using a hybrid potential.</p>",
+        "In tutorial 6 the full elastic stiffness tensor of crystalline silicon is computed from "
+        "small-strain deformations using the Stillinger-Weber potential.</p>",
+        "In tutorial 7 the generalized stacking fault energy (&gamma;-surface) of fcc aluminum is "
+        "traced along the &lt;112&gt; direction in the (111) plane, "
+        "explaining dislocation glide and partial splitting.</p>",
+        "In tutorial 8 the thermal conductivity of silicon is computed using reverse "
+        "non-equilibrium molecular dynamics (NEMD), and its finite-size dependence is "
+        "examined.</p>",
+        "In tutorial 9 the full phonon dispersion of fcc copper is obtained by accumulating "
+        "displacement correlations during a finite-temperature MD run using <b><code>fix "
+        "phonon</code></b>.</p>",
+        "In tutorial 10 the zone-center phonon frequencies of silicon are computed at zero "
+        "temperature from the dynamical matrix, and their connection to elastic constants is "
+        "discussed.</p>",
+        "In tutorial 11 a primary knock-on atom (PKA) displacement cascade is simulated in "
+        "bcc iron, and the resulting Frenkel-pair defects are counted on the fly with the "
+        "<b><code>compute frenkel</code></b> command.</p>",
+        "In tutorial 12 the melting temperature of fcc aluminum is determined; first by "
+        "direct NPT heating and then by the more rigorous two-phase coexistence method.</p>",
+        "In tutorial 13 the self-diffusion coefficient of liquid aluminum is measured from the "
+        "mean-squared displacement, and its temperature dependence is fitted to an Arrhenius law "
+        "to obtain an activation energy.</p>",
+        "In tutorial 14 the chemical short-range order of the high-entropy alloy CoCrFeNi is "
+        "equilibrated with a hybrid molecular dynamics / Monte Carlo simulation and quantified "
+        "with the Warren-Cowley parameters for three different published potentials.</p>"};
+
+    c.available = c.blurbs.size(); // fully published: all tutorials are launchable
     return c;
 }
 
