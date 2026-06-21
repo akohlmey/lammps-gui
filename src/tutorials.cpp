@@ -105,9 +105,9 @@ TutorialCollection matsci()
     c.filesRepoUrl = QStringLiteral("https://github.com/lammpstutorials/matsci-tutorials-inputs");
     c.webUrl       = QString(); // TODO: per-tutorial web pages once published
     c.siteUrl      = QStringLiteral("https://lammpstutorials.github.io/");
-    c.logo         = QStringLiteral(":/icons/tutorial-logo.png");
+    c.logo         = QStringLiteral(":/icons/matsci%1-logo.png");
     c.published    = false;
-    c.status       = QStringLiteral("in development");
+    c.status       = QStringLiteral("beta");
 
     c.titles = {"Crystalline metals and the EAM potential",
                 "Variables, automation, and the energy-volume curve",
