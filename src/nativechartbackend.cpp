@@ -53,6 +53,13 @@ void NativeChartBackend::init(QWidget *parent, const QString &title, QLineSeries
 
     if (series) series->setName(title);
 
+    // Refresh every series mirror from its Qt source right before each paint, so
+    // visibility/data changes that bypass this backend (e.g. ChartViewer calling
+    // setVisible() directly when toggling raw/smoothed) are never drawn stale.
+    m_plot->setPrePaintHook([this]() {
+        syncSeries();
+    });
+
     // The range sliders (ChartWindow::updateXRange/updateYRange) call setRange()
     // directly on these axes; forward that to the renderer. Using m_plot as the
     // connection context drops the connection automatically if it is destroyed.
@@ -76,7 +83,7 @@ QList<QAbstractAxis *> NativeChartBackend::getAxes() const
 
 void NativeChartBackend::resetZoom(double xmin, double xmax, double ymin, double ymax)
 {
-    syncSeries();
+    // series data is refreshed by the pre-paint hook; here just set the ranges
     // keep the QValueAxis state consistent (read by getAxes() and the sliders)
     xaxis->setRange(xmin, xmax);
     yaxis->setRange(ymin, ymax);
@@ -121,8 +128,7 @@ void NativeChartBackend::addSeries(QXYSeries *s, const QColor &color, qreal widt
     PlotSeries *ptr = e.plot.get();
     m_entries.push_back(std::move(e));
     m_plot->addSeries(ptr);
-    syncSeries();
-    m_plot->update();
+    m_plot->update(); // data is filled by the pre-paint hook
 }
 
 void NativeChartBackend::styleSeries(QXYSeries *s, const QColor &color, qreal width)

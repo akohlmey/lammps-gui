@@ -28,6 +28,8 @@
 #include <QString>
 #include <QWidget>
 
+#include <functional>
+
 class QImage;
 class QPainter;
 class QPaintEvent;
@@ -82,6 +84,16 @@ public:
     bool hasSeries(const PlotSeries *series) const;
 
     /**
+     * @brief Install a callback invoked at the start of every paint
+     * @param hook Called just before the chart is drawn
+     *
+     * Lets the owner refresh series data/visibility from an external source
+     * right before rendering, so the drawn state is never stale regardless of
+     * when that source changed.
+     */
+    void setPrePaintHook(std::function<void()> hook);
+
+    /**
      * @brief Render the chart into a freshly allocated image
      * @param size Pixel size of the returned image
      * @return The rendered image (white background)
@@ -102,6 +114,7 @@ private:
     PlotAxis m_yaxis;                   ///< Y-axis configuration
     QString m_title;                    ///< chart title
     QList<const PlotSeries *> m_series; ///< registered series (not owned)
+    std::function<void()> m_prePaint;   ///< optional callback run before each paint
 };
 
 #endif
