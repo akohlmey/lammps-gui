@@ -51,8 +51,8 @@ LAMMPS-GUI lets users move freely between the graphical tool and the
 command-line LAMMPS executable, which is essential once a workflow grows
 beyond what a laptop or desktop computer can run.  In addition to the
 source code, pre-compiled packages are provided for Windows, macOS, and
-Linux (x86_64), so that most users obtain an identical experience on
-every major platform without compiling anything.
+Linux (x86_64), so that most users can run LAMMPS-GUI and obtain an
+identical experience instantly, without having to compile anything.
 
 ![A LAMMPS-GUI session with a simulation in flight. The editor shows
 syntax highlighting, line numbers, and a marker on the currently
@@ -65,35 +65,35 @@ data column.\label{fig:editor}](images/lammps-gui-deform.png){ width=74% }
 
 The development of LAMMPS-GUI was driven by the experience of teaching
 LAMMPS at tutorials and workshops, where a large fraction of the
-available time was spent not on molecular dynamics but on installing and
-operating the surrounding tool chain -- a text editor, a plotting
-program, and a molecular visualization package -- most of which differ
-between Windows, macOS, and Linux.  A workaround, distributing a
-pre-configured Linux (x86_64) virtual-machine image, broke down when
-Apple moved to the ARM architecture, which re-introduced the need for
-platform-specific instructions.  A single, self-contained, cross-platform
-tool that mirrors the console workflow removes this barrier and lets
-instructors teach one interface on every platform.
+available time was spent not on teaching molecular dynamics but on
+installing and operating the surrounding tool chain -- a text editor, a
+plotting program, and a molecular visualization package -- most of which
+differ between Windows, macOS, and Linux.  Several attempted workarounds
+either were too complex and unsustainable or broke down when Apple moved
+to the ARM CPU architecture.  As a single, self-contained,
+cross-platform tool that mirrors the console workflow, LAMMPS-GUI
+removes this barrier and lets instructors teach one interface on all
+platforms and focus on teaching LAMMPS and molecular dynamics.
 
 Several other approaches to make running LAMMPS simulations more
-accessible exist, but they target different needs. Commercial
-molecular-modeling packages provide structure editors that can export
-LAMMPS inputs and re-import results; Atomify compiles a modified version
-of LAMMPS to WebAssembly and runs simulations and visualization inside a
-web browser [@atomify_home]; and dedicated visualization programs such
-as OVITO [@ovito_home] and VMD [@vmd_home] render trajectories with a
-breadth and quality that LAMMPS-GUI does not attempt to match. None of
-these, however, integrates input editing, live simulation, output
-monitoring, plotting, and visualization into one application that
-follows the same edit-run-observe loop as the standalone
-executable. LAMMPS-GUI fills exactly this gap. It was developed to
-support the official set of LAMMPS tutorials for beginning and
-intermediate users [@gravelle2025lammps] and has been used in that role
-at LAMMPS workshops. While its primary audience is beginners, several
-features -- rapid prototyping of input decks, debugging of failing
-inputs by visualizing selected components, and the interactive
-construction of reproducible `dump image` visualization commands -- also
-make it useful to experienced researchers.
+accessible exist, but they target different needs.  Commercial
+molecular-modeling packages typically provide structure editors that can
+export LAMMPS inputs and re-import results; Atomify compiles a modified
+version of LAMMPS to WebAssembly and runs simulations and visualization
+inside a web browser [@atomify_home]; and dedicated visualization
+programs such as OVITO [@ovito_home] and VMD [@vmd_home] render
+trajectories with a breadth and quality that LAMMPS-GUI does not attempt
+to match.  None of these, however, integrates input editing, live
+simulation, output monitoring, plotting, and visualization into one
+application that follows the same edit-run-observe loop as the
+standalone executable. LAMMPS-GUI fills exactly this gap. It was
+developed to support importing tutorial materials, for example from the
+official set of LAMMPS tutorials [@gravelle2025lammps], and has been
+used in that role at LAMMPS workshops.  While its primary audience is
+beginners, several features -- rapid prototyping of input decks,
+debugging of failing inputs by visualizing selected components, and the
+interactive construction of reproducible `dump image` visualization
+commands -- also make it useful to experienced researchers.
 
 # Functionality
 
