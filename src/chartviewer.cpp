@@ -62,11 +62,6 @@
 #include <algorithm>
 
 #include "chartbackend.h"
-#ifdef LAMMPS_GUI_USE_QTGRAPHS
-#include "qtgraphsbackend.h"
-#else
-#include "qtchartsbackend.h"
-#endif
 
 #include <cmath>
 
@@ -1333,11 +1328,7 @@ ChartViewer::ChartViewer(const QString &title, int _index, QWidget *parent) :
     doSmooth(false), eosMode(false), dispmode(ChartDisplayMode::Lines), rawColor(), rawWidth(3.0),
     smoothmode(ChartDisplayMode::Lines), smoothcolor(), smoothwidth(3.0)
 {
-#ifdef LAMMPS_GUI_USE_QTGRAPHS
-    backend = std::make_unique<QtGraphsBackend>();
-#else
-    backend = std::make_unique<QtChartsBackend>();
-#endif
+    backend = ChartBackend::create();
     backend->init(this, title, series);
 
     // embed the backend widget into our layout
@@ -1654,12 +1645,9 @@ void ChartViewer::setVerticalLines(const QList<RefLine> &lines)
         s->replace(QList<QPointF>{{rl.x, ybot}, {rl.x, ytop}});
         const QColor col = rl.color.isValid() ? rl.color : QColor(80, 80, 80);
         backend->addSeries(s, col, 1.5);
-#ifndef LAMMPS_GUI_USE_QTGRAPHS
-        // dashed style is only supported by the QtCharts backend
-        QPen pen = s->pen();
-        pen.setStyle(Qt::DashLine);
-        s->setPen(pen);
-#endif
+        // request a dashed style; backends that cannot render it (QtGraphs)
+        // ignore this and draw a solid line
+        backend->setSeriesLineStyle(s, Qt::DashLine);
         vlines.append(s);
         vlinePositions.append(rl.x);
     }

@@ -17,6 +17,8 @@
 #include <QString>
 #include <QtGlobal>
 
+#include <memory>
+
 class QAbstractAxis;
 class QLineSeries;
 class QXYSeries;
@@ -34,6 +36,16 @@ class QWidget;
 class ChartBackend {
 public:
     virtual ~ChartBackend() = default;
+
+    /**
+     * @brief Create the chart backend selected at build time
+     * @return A new backend instance (native QPainter, QtGraphs, or QtCharts)
+     *
+     * The concrete type is chosen by the build via the LAMMPS_GUI_USE_NATIVE_CHARTS
+     * and LAMMPS_GUI_USE_QTGRAPHS preprocessor defines, keeping that choice in a
+     * single translation unit instead of scattered #ifdefs at the call sites.
+     */
+    static std::unique_ptr<ChartBackend> create();
 
     /**
      * @brief Initialize the backend chart widget and axes
@@ -91,6 +103,15 @@ public:
      * @param width New line width (applied only to line series)
      */
     virtual void styleSeries(QXYSeries *s, const QColor &color, qreal width) = 0;
+
+    /**
+     * @brief Set the line style of a series (e.g. dashed reference lines)
+     * @param s     Series to restyle (only line series are affected)
+     * @param style Qt pen style to apply
+     *
+     * Backends that cannot render dashed lines (QtGraphs) treat this as a no-op.
+     */
+    virtual void setSeriesLineStyle(QXYSeries *s, Qt::PenStyle style) = 0;
 
     /**
      * @brief Remove a series from the chart display

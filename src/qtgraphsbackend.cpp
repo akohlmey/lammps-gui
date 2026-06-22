@@ -31,8 +31,7 @@
 
 QtGraphsBackend::QtGraphsBackend() :
     container(nullptr), quickWidget(nullptr), graphsView(nullptr), ylabelWidget(nullptr),
-    xlabelWidget(nullptr), titleWidget(nullptr), xaxis(nullptr), yaxis(nullptr),
-    xformat("%.0f")
+    xlabelWidget(nullptr), titleWidget(nullptr), xaxis(nullptr), yaxis(nullptr), xformat("%.0f")
 {
 }
 
@@ -204,6 +203,14 @@ void QtGraphsBackend::styleSeries(QXYSeries *s, const QColor &color, qreal width
         line->setWidth(width);
         line->setCapStyle(Qt::RoundCap);
     }
+}
+
+void QtGraphsBackend::setSeriesLineStyle(QXYSeries *s, Qt::PenStyle style)
+{
+    // QtGraphs line series do not support dashed/dotted styles; intentionally a
+    // no-op so callers can request dashes uniformly across backends.
+    Q_UNUSED(s);
+    Q_UNUSED(style);
 }
 
 void QtGraphsBackend::removeSeries(QXYSeries *s)

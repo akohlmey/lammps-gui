@@ -98,6 +98,7 @@ if (NOT BUILD_DOC_ONLY)
     ${CMAKE_SOURCE_DIR}/src/chartviewer.cpp
     ${CMAKE_SOURCE_DIR}/src/chartviewer.h
     ${CMAKE_SOURCE_DIR}/src/chartbackend.h
+    ${CMAKE_SOURCE_DIR}/src/chartbackend.cpp
     ${CMAKE_SOURCE_DIR}/src/codeeditor.cpp
     ${CMAKE_SOURCE_DIR}/src/codeeditor.h
     ${CMAKE_SOURCE_DIR}/src/colormaps.cpp

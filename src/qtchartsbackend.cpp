@@ -99,6 +99,15 @@ void QtChartsBackend::styleSeries(QXYSeries *s, const QColor &color, qreal width
         s->setColor(color);
 }
 
+void QtChartsBackend::setSeriesLineStyle(QXYSeries *s, Qt::PenStyle style)
+{
+    if (auto *line = qobject_cast<QLineSeries *>(s)) {
+        QPen pen = line->pen();
+        pen.setStyle(style);
+        line->setPen(pen);
+    }
+}
+
 void QtChartsBackend::removeSeries(QXYSeries *s)
 {
     chart->removeSeries(s);
