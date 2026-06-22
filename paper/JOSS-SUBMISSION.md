@@ -34,8 +34,10 @@ Author-side gates JOSS expects to be satisfied before review:
       `.github/CODE_OF_CONDUCT.md`, issue/PR templates.
 - [ ] **Tagged release** matching the submitted state (e.g. the current
       v2.1.x). Create the tag before/at submission.
-- [ ] **Archive DOI** (Zenodo or similar) for the tagged release. JOSS asks
-      for this during review; minting it early does no harm.
+- [ ] **Archive DOI** (Zenodo or similar) for the tagged release. JOSS
+      requires this after the review is accepted (not at submission); it is a
+      permanent archival snapshot of the reviewed version, separate from the
+      GitHub repository, and minting it early does no harm.
 - [x] `CITATION.cff` at the repo root (GitHub shows a "Cite this
       repository" button). Update its `version`/`date-released` to match the
       release tag, and add a `preferred-citation` JOSS DOI once accepted.
