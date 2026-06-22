@@ -172,9 +172,9 @@ QStringList defaultcolors = {"red",       "green",    "blue",       "yellow",   
 } // namespace
 
 // 2) create a color gradient icon
-QIcon gradient_icon(const QList<QColor> &colors)
+QIcon gradient_icon(const QList<QPair<double, QColor>> &stops)
 {
-    if (colors.isEmpty()) return QIcon();
+    if (stops.isEmpty()) return QIcon();
 
     // define pixmap and horizontal gradient
     QPixmap pixmap(ICON_SIZE, ICON_SIZE);
@@ -182,11 +182,9 @@ QIcon gradient_icon(const QList<QColor> &colors)
     QPainter painter(&pixmap);
     QLinearGradient gradient(0, 0, ICON_SIZE, 0);
 
-    // distribute colors across gradient
-    for (int i = 0; i < colors.size(); ++i) {
-        qreal pos = static_cast<qreal>(i) / qMax(1, colors.size() - 1);
-        gradient.setColorAt(pos, colors[i]);
-    }
+    // place each color at its stop position
+    for (const auto &s : stops)
+        gradient.setColorAt(std::clamp(s.first, 0.0, 1.0), s.second);
 
     painter.fillRect(pixmap.rect(), gradient);
     painter.end();
@@ -731,7 +729,7 @@ void ImageViewer::readImageSettings()
     showsubbox     = false;
     boxdiam        = settings.value(Keys::BOXDIAM, 0.025).toDouble();
     subboxdiam     = boxdiam;
-    boxcolor       = settings.value(Keys::BOXCOLOR, "yellow").toString();
+    boxcolor       = settings.value(Keys::BOXCOLOR, "gold").toString();
     showaxes       = settings.value(Keys::AXES, false).toBool();
     usessao        = settings.value(Keys::SSAO, false).toBool();
     antialias      = settings.value(Keys::ANTIALIAS, false).toBool();
@@ -742,9 +740,11 @@ void ImageViewer::readImageSettings()
     boxtrans       = 1.0;
     backcolor      = settings.value(Keys::BACKCOLOR, "black").toString();
     backcolor2     = settings.value(Keys::BACKCOLOR2, "white").toString();
+    usegradient    = settings.value(Keys::USEGRADIENT, true).toBool();
     ssaoval        = 0.6;
     atomcustom     = false;
     atomtrans      = 1.0;
+    bondtrans      = 1.0;
     atomcolor      = settings.value(Keys::COLOR, "type").toString();
     atomdiam       = settings.value(Keys::DIAMETER, "type").toString();
     bondcolor      = settings.value(Keys::BONDCOLOR, "atom").toString();
@@ -756,6 +756,9 @@ void ImageViewer::readImageSettings()
     colormap       = settings.value(Keys::COLORMAP, "BWR").toString();
     mapmin         = "auto";
     mapmax         = "auto";
+    bondcolormap   = settings.value(Keys::BONDCOLORMAP, "BWR").toString();
+    bondmapmin     = "auto";
+    bondmapmax     = "auto";
 
     showatoms      = true;
     showbonds      = lammps->extractSetting("molecule_flag") == 1;
@@ -957,6 +960,14 @@ void ImageViewer::vdwbondSync()
     } else {
         if (vdw->isChecked() && ab->isChecked()) vdw->setChecked(false);
     }
+
+    // compute bond/local coloring needs real bonds, so it is unavailable while
+    // AutoBonds is on; refresh the bond Color choices to match the live state
+    auto *bncolor = dialog->findChild<QComboBox *>("bncolor");
+    if (bncolor) {
+        const bool hasRealBonds = (lammps->extractSetting("molecule_flag") == 1);
+        rebuildBondColorChoices(bncolor, hasRealBonds && !ab->isChecked());
+    }
 }
 
 void ImageViewer::acolorSync()
@@ -1092,44 +1103,41 @@ void ImageViewer::doRecenter()
 
 void ImageViewer::cmdToClipboard()
 {
-    auto words = splitLine(last_dump_cmd);
-    int modidx = 0;
-    int maxidx = words.size();
-    for (int i = 0; i < maxidx; ++i) {
-        if (words[i] == "modify") {
-            modidx = i;
-            break;
-        }
+    // Compose a reusable `dump`/`dump_modify` pair from the two argument strings
+    // assembled for the last render, so no re-parsing of a joined command string
+    // is needed. The render uses a one-shot WRITE_DUMP; here we emit a persistent
+    // "viz" dump every 100 steps with zero-padded frame numbers instead.
+    QString dumpargs = last_dumpargs;
+
+    QString out;
+    // When coloring bonds by a per-bond value, the render args reference a
+    // `compute bond/local`; emit it first so the copied snippet is self-contained.
+    // The id is lowercase (we don't want to model uppercase ids for users) and
+    // long and tied to the dump id ("viz") to make a clash with an existing
+    // compute unlikely.
+    if (bondByValueActive()) {
+        out += "compute bond_dump_viz " + group + " bond/local " + bondcolor + '\n';
+        dumpargs.replace("c_" + bondComputeId, "c_bond_dump_viz");
     }
 
-    QString dumpcmd = "dump viz ";
-    dumpcmd += words[1];
+    QString imagefile = "myimage-*.ppm";
+    if (lammps->configHasPngSupport())
+        imagefile = "myimage-*.png";
+    else if (lammps->configHasJpegSupport())
+        imagefile = "myimage-*.jpg";
 
-    if (lammps->configHasPngSupport()) {
-        dumpcmd += " image 100 myimage-*.png";
-    } else if (lammps->configHasJpegSupport()) {
-        dumpcmd += " image 100 myimage-*.jpg";
-    } else {
-        dumpcmd += " image 100 myimage-*.ppm";
-    }
+    out += "dump viz " + group + " image 100 " + imagefile + dumpargs + '\n';
+    out += "dump_modify viz pad 9" + last_modifyargs + '\n';
 
-    for (int i = 4; i < modidx; ++i)
-        if (words[i] != "noinit") dumpcmd += " " + words[i];
-    dumpcmd += '\n';
-
-    dumpcmd += "dump_modify viz pad 9";
-    for (int i = modidx + 1; i < maxidx; ++i)
-        dumpcmd += " " + words[i];
-    dumpcmd += '\n';
 #if QT_CONFIG(clipboard)
     auto *clip = QGuiApplication::clipboard();
     if (clip) {
-        clip->setText(dumpcmd, QClipboard::Clipboard);
-        if (clip->supportsSelection()) clip->setText(dumpcmd, QClipboard::Selection);
+        clip->setText(out, QClipboard::Clipboard);
+        if (clip->supportsSelection()) clip->setText(out, QClipboard::Selection);
     } else
-        fprintf(stderr, "# customized dump image command:\n%s", qPrintable(dumpcmd));
+        fprintf(stderr, "# customized dump image command:\n%s", qPrintable(out));
 #else
-    fprintf(stderr, "# customized dump image command:\n%s", dumpcmd.c_str());
+    fprintf(stderr, "# customized dump image command:\n%s", qPrintable(out));
 #endif
 }
 
@@ -1401,12 +1409,19 @@ DumpImageParams ImageViewer::gatherDumpImageParams(const QString &dumpfilename)
     p.ellipsoidlevel = ellipsoidlevel;
     p.ellipsoiddiam  = ellipsoiddiam;
 
-    // bonds
-    p.showbonds  = showbonds;
-    p.bondcolor  = bondcolor;
-    p.bonddiam   = bonddiam;
-    p.autobond   = autobond;
-    p.bondcutoff = bondcutoff;
+    // bonds: a "compute bond/local" attribute name selects bond color-by-value,
+    // in which case the emitted bond color is a reference to the managed compute.
+    // A stale or saved bond/local selection that no longer applies (no real bonds
+    // or AutoBonds active) falls back to coloring bonds by atom.
+    const bool bondvalue = bondByValueActive();
+    p.showbonds          = showbonds;
+    p.bondbyvalue        = bondvalue;
+    p.bondcolor          = bondvalue                            ? ("c_" + bondComputeId)
+                           : bondLocalAttrs.contains(bondcolor) ? QStringLiteral("atom")
+                                                                : bondcolor;
+    p.bonddiam           = bonddiam;
+    p.autobond           = autobond;
+    p.bondcutoff         = bondcutoff;
 
     // view / image
     p.xsize       = xsize;
@@ -1439,18 +1454,23 @@ DumpImageParams ImageViewer::gatherDumpImageParams(const QString &dumpfilename)
     p.boxcolor     = boxcolor;
     p.backcolor    = backcolor;
     p.backcolor2   = backcolor2;
+    p.usegradient  = usegradient;
     p.axestrans    = axestrans;
     p.boxtrans     = boxtrans;
     p.atomtrans    = atomtrans;
+    p.bondtrans    = bondtrans;
     p.ambientlight = ambientlight;
     p.keylight     = keylight;
     p.filllight    = filllight;
     p.backlight    = backlight;
 
     // colormap
-    p.colormap = colormap;
-    p.mapmin   = mapmin;
-    p.mapmax   = mapmax;
+    p.colormap     = colormap;
+    p.mapmin       = mapmin;
+    p.mapmax       = mapmax;
+    p.bondcolormap = bondcolormap;
+    p.bondmapmin   = bondmapmin;
+    p.bondmapmax   = bondmapmax;
 
     // regions / fixes / computes (non-owning pointer copies)
     p.computes = computes;
@@ -1502,6 +1522,16 @@ void ImageViewer::createImage()
     if (renderstatus) renderstatus->setEnabled(true);
     repaint();
 
+    // The stop button halts a run via a walltime timeout whose state persists and
+    // makes any later "run" exit immediately (run.cpp: if (timer->is_timeout())
+    // return), so our render "run 0" would silently produce nothing. Reset it on
+    // every render (cheap); this also covers a run started and stopped while the
+    // viewer stays open.
+    {
+        StdoutSilencer guard;
+        lammps->command("timer timeout off");
+    }
+
     QString oldgroup = group;
     if (molecule != "none") {
         // get center of box
@@ -1530,19 +1560,47 @@ void ImageViewer::createImage()
     // attempt to clean up if a previous write_dump command failed
     lammps->command("if $(is_defined(dump,WRITE_DUMP)) then 'undump WRITE_DUMP'");
 
+    // (re)create the per-bond coloring compute when bond color-by-value applies
+    // (a bond/local attribute, real bonds, AutoBonds off); the explicit dump +
+    // run 0 below initializes it (write_dump's dump->init()+write() never runs
+    // modify->init()). clear any leftover first.
+    const bool bondvalue = bondByValueActive();
+    lammps->command(QString("if $(is_defined(compute,%1)) then 'uncompute %1'").arg(bondComputeId));
+    if (bondvalue)
+        lammps->command(
+            QString("compute %1 %2 bond/local %3").arg(bondComputeId, group, bondcolor));
+
     QDir dumpdir(QDir::tempPath());
     QFile dumpfile(dumpdir.absoluteFilePath(filename + ".ppm"));
 
-    // gather parameters (also refreshes use* members), then sync the atom-size
-    // widgets and assemble the dump-image command from the gathered snapshot
+    // gather parameters (also refreshes use* members), sync the atom-size widgets,
+    // and assemble the dump and dump_modify argument strings
     const DumpImageParams params = gatherDumpImageParams(dumpfile.fileName());
     syncAtomSizeWidgets();
-    const QString dumpcmd = buildDumpImageCommand(params);
+    const DumpImageCommand cmds = buildDumpImageCommand(params);
+    last_dumpargs               = cmds.dumpargs;
+    last_modifyargs             = cmds.modifyargs;
 
+    // Render with an explicit dump + run 0 rather than write_dump: the run does a
+    // real modify->init(), which initializes any compute the image references
+    // (e.g. the per-bond compute). dump image needs a '*' in the file name (it is
+    // replaced by the timestep) and "first yes" forces the single frame.
+    const QString starfile = dumpdir.absoluteFilePath(filename + ".*.ppm");
     {
         StdoutSilencer guard;
-        last_dump_cmd = dumpcmd;
-        lammps->command(dumpcmd);
+        lammps->command("dump WRITE_DUMP " + group + " image 1 '" + starfile + "'" + cmds.dumpargs);
+        lammps->command("dump_modify WRITE_DUMP first yes pad 0" + cmds.modifyargs);
+        lammps->command("run 0 post no");
+        lammps->command("undump WRITE_DUMP");
+    }
+    const auto step = static_cast<long long>(lammps->getThermo("step"));
+    const QString imagepath =
+        dumpdir.absoluteFilePath(QString("%1.%2.ppm").arg(filename).arg(step));
+
+    // the per-bond compute has done its job for this frame; remove it again
+    if (bondvalue) {
+        StdoutSilencer guard;
+        lammps->command("uncompute " + bondComputeId);
     }
 
     // display error message
@@ -1555,10 +1613,12 @@ void ImageViewer::createImage()
         return;
     }
 
-    QImageReader reader(dumpfile.fileName());
+    QImageReader reader(imagepath);
     reader.setAutoTransform(true);
     const QImage newImage = reader.read();
-    dumpfile.remove();
+    // remove the per-step frame file(s) this render produced
+    for (const auto &f : dumpdir.entryList({filename + ".*.ppm"}, QDir::Files))
+        QFile::remove(dumpdir.absoluteFilePath(f));
 
     // read of new image failed. nothing left to do.
     if (newImage.isNull()) return;
@@ -1883,6 +1943,31 @@ bool ImageViewer::hasAutobonds()
     const auto *pair_style = static_cast<const char *>(lammps->extractGlobal("pair_style"));
     if (!pair_style) return false;
     return strcmp(pair_style, "none") != 0;
+}
+
+bool ImageViewer::bondByValueActive()
+{
+    // compute bond/local only works for real bonds: the atom style must support
+    // bonds and AutoBonds (a distance search with no bond identities) must be off
+    return bondLocalAttrs.contains(bondcolor) && !autobond &&
+           (lammps->extractSetting("molecule_flag") == 1);
+}
+
+void ImageViewer::rebuildBondColorChoices(QComboBox *bncolor, bool allowByValue)
+{
+    if (!bncolor) return;
+    const QString current = bncolor->currentText();
+    bncolor->clear();
+    bncolor->addItems({"atom", "type"});
+    if (allowByValue) {
+        bncolor->insertSeparator(bncolor->count());
+        bncolor->addItems(bondLocalAttrs); // per-bond compute attributes -> color by value
+    }
+    // restore the previous selection, or fall back to "atom" if it is no longer offered
+    if (bncolor->findText(current) >= 0)
+        selectComboItem(bncolor, current);
+    else
+        selectComboItem(bncolor, "atom");
 }
 
 // Local Variables:

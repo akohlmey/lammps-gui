@@ -49,6 +49,7 @@ https
 isLightTheme
 kspace
 lammps
+launchable
 Lennard
 Levenberg
 licensors
@@ -87,6 +88,7 @@ QThread
 rangeslider
 rasterizer
 README
+rollout
 Savitzky
 screenshooter
 scrollable
@@ -100,6 +102,8 @@ stdcapture
 stderr
 stdout
 Subclassed
+subfolder
+submenu
 supercomputing
 Sur
 Thermo

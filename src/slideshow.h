@@ -19,9 +19,10 @@
 
 class QLabel;
 class QScrollArea;
-class QSlider;
+class QSpinBox;
 class QTimer;
 class LammpsGui;
+class RangeBandSlider;
 
 /**
  * @brief Slideshow viewer for displaying sequences of images
@@ -71,7 +72,7 @@ public:
 private slots:
     void quit();             ///< Close slideshow window
     void copy();             ///< Copy image to clipboard
-    void deleteImages();     ///< Delete all image files in sequence
+    void deleteImages();     ///< Delete image files in the selected range
     void stopRun();          ///< Stop running simulation
     void movie();            ///< Export images as movie file
     void saveCurrentImage(); ///< Save current image with zoom/flip/rotate applied
@@ -113,17 +114,35 @@ private:
      */
     void adjustWindowSize();
 
+    /**
+     * @brief First image of the active range, as a 0-based index
+     */
+    int startIdx() const;
+
+    /**
+     * @brief Last image of the active range, as a 0-based index
+     */
+    int stopIdx() const;
+
+    /**
+     * @brief Push the current [Start, Stop] range to the navigation slider so
+     *        it can highlight the active vs. skipped images
+     */
+    void updateSliderRange();
+
 private:
-    LammpsGui *lammpsgui;     ///< Main widget pointer for receiving signals
-    QImage image;             ///< Currently displayed image
-    QImage rawImage;          ///< Raw image before transformations
-    QTimer *playtimer;        ///< Timer for automatic playback
-    QLabel *imageLabel;       ///< Label displaying the image
-    QScrollArea *scrollArea;  ///< Scrollable area for image display
-    QSlider *scrollBar;       ///< Scroll bar for selecting images
-    QLabel *imageCounter;     ///< Label showing image count
-    QLabel *imageName;        ///< Label showing image filename
-    double scaleFactor = 1.0; ///< Current zoom scale factor
+    LammpsGui *lammpsgui;       ///< Main widget pointer for receiving signals
+    QImage image;               ///< Currently displayed image
+    QImage rawImage;            ///< Raw image before transformations
+    QTimer *playtimer;          ///< Timer for automatic playback
+    QLabel *imageLabel;         ///< Label displaying the image
+    QScrollArea *scrollArea;    ///< Scrollable area for image display
+    RangeBandSlider *scrollBar; ///< Scroll bar for selecting images (highlights active range)
+    QLabel *imageCounter;       ///< Label showing image count
+    QLabel *imageName;          ///< Label showing image filename
+    QSpinBox *startBox;         ///< First image of the active range (1-based UI value)
+    QSpinBox *stopBox;          ///< Last image of the active range (1-based UI value)
+    double scaleFactor = 1.0;   ///< Current zoom scale factor
 
     int current;             ///< Index of current image
     int maxwidth, maxheight; ///< Maximum image dimensions

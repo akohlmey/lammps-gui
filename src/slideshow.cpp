@@ -14,6 +14,7 @@
 #include "helpers.h"
 #include "lammpsgui.h"
 #include "qaddon.h"
+#include "rangebandslider.h"
 
 #include <QApplication>
 #include <QClipboard>
@@ -27,6 +28,7 @@
 #include <QImageReader>
 #include <QKeySequence>
 #include <QLabel>
+#include <QMessageBox>
 #include <QPalette>
 #include <QProcess>
 #include <QPushButton>
@@ -80,10 +82,10 @@ QImage readImageFile(const QString &filename)
 
 SlideShow::SlideShow(const QString &fileName, LammpsGui *_lammpsgui, QWidget *parent) :
     QDialog(parent), lammpsgui(_lammpsgui), playtimer(nullptr), imageLabel(new QLabel),
-    scrollArea(new QScrollArea), scrollBar(new QSlider),
+    scrollArea(new QScrollArea), scrollBar(new RangeBandSlider),
     imageCounter(new QLabel("Image   0 /   0 :")), imageName(new QLabel("(none)")),
-    current(0), maxwidth(0), maxheight(0), timerDelay(100), doLoop(true), imageRotation(0),
-    imageFlipH(false), imageFlipV(false)
+    startBox(new QSpinBox), stopBox(new QSpinBox), current(0), maxwidth(0), maxheight(0),
+    timerDelay(100), doLoop(true), imageRotation(0), imageFlipH(false), imageFlipV(false)
 {
     imageLabel->setBackgroundRole(QPalette::Base);
     imageLabel->setSizePolicy(QSizePolicy::Minimum, QSizePolicy::Minimum);
@@ -167,7 +169,7 @@ SlideShow::SlideShow(const QString &fileName, LammpsGui *_lammpsgui, QWidget *pa
     toclip->setMaximumSize(buttonhint);
 
     auto *totrash = new QPushButton(QIcon(":/icons/trash.png"), "");
-    totrash->setToolTip("Delete all image files");
+    totrash->setToolTip("Delete image files in the selected range");
     totrash->setMinimumSize(buttonhint);
     totrash->setMaximumSize(buttonhint);
 
@@ -197,6 +199,39 @@ SlideShow::SlideShow(const QString &fileName, LammpsGui *_lammpsgui, QWidget *pa
     delay->setMaximumWidth(dsize.width());
     delay->setMinimumHeight(buttonhint.height());
     delay->setMaximumHeight(buttonhint.height());
+
+    // Start/Stop spinboxes bound the active image range for play, single
+    // stepping, movie export, and deletion. Both are 1-based to match the
+    // "Image N / M" counter. Stop defaults to the last image and follows the
+    // growing maximum (see addImage()) until the user sets it explicitly.
+    startBox->setRange(1, 1);
+    startBox->setValue(1);
+    startBox->setObjectName("startframe");
+    startBox->setToolTip("First image of the active range for play, step, movie, and delete");
+    startBox->setMinimumWidth(dsize.width());
+    startBox->setMaximumWidth(dsize.width());
+    startBox->setMinimumHeight(buttonhint.height());
+    startBox->setMaximumHeight(buttonhint.height());
+
+    stopBox->setRange(1, 1);
+    stopBox->setValue(1);
+    stopBox->setObjectName("stopframe");
+    stopBox->setToolTip("Last image of the active range for play, step, movie, and delete");
+    stopBox->setMinimumWidth(dsize.width());
+    stopBox->setMaximumWidth(dsize.width());
+    stopBox->setMinimumHeight(buttonhint.height());
+    stopBox->setMaximumHeight(buttonhint.height());
+
+    // keep the range ordered (Start must never exceed Stop) and mirror the
+    // active range onto the navigation slider's colored band
+    connect(startBox, QOverload<int>::of(&QSpinBox::valueChanged), this, [this](int v) {
+        if (v > stopBox->value()) stopBox->setValue(v);
+        updateSliderRange();
+    });
+    connect(stopBox, QOverload<int>::of(&QSpinBox::valueChanged), this, [this](int v) {
+        if (v < startBox->value()) startBox->setValue(v);
+        updateSliderRange();
+    });
 
     auto *gofirst = new QPushButton(QIcon(":/icons/go-first.png"), "");
     gofirst->setToolTip("Go to first Image");
@@ -306,10 +341,14 @@ SlideShow::SlideShow(const QString &fileName, LammpsGui *_lammpsgui, QWidget *pa
     botLayout->addWidget(goloop, 1);
     botLayout->addWidget(new QLabel("Delay:"));
     botLayout->addWidget(delay, 5);
+    botLayout->addWidget(new QLabel("Start:"));
+    botLayout->addWidget(startBox, 5);
+    botLayout->addWidget(new QLabel("Stop:"));
+    botLayout->addWidget(stopBox, 5);
     botLayout->addSpacerItem(new QSpacerItem(10, 10, QSizePolicy::Expanding, QSizePolicy::Minimum));
     botLayout->addWidget(imageCounter);
     botLayout->addWidget(imageName);
-    botLayout->setStretch(4, 3);
+    botLayout->setStretch(8, 3);
     botLayout->setSizeConstraint(QLayout::SetMinimumSize);
     botLayout->setSpacing(LAYOUT_SPACING);
 
@@ -367,6 +406,16 @@ void SlideShow::addImage(const QString &filename)
     imagefiles.append(filename);
     scrollBar->setMaximum(lastidx);
 
+    // Grow the active-range bounds with the sequence. If Stop was pinned to the
+    // previous maximum, keep it tracking the last image; otherwise leave the
+    // user's explicit choice untouched.
+    const int total       = imagefiles.size();
+    const bool followStop = (stopBox->value() >= stopBox->maximum());
+    startBox->setMaximum(total);
+    stopBox->setMaximum(total);
+    if (followStop) stopBox->setValue(total);
+    updateSliderRange();
+
     if (lammpsgui || lastidx == 0) {
         // live mode: display every incoming image; or first image in any mode
         loadImage(lastidx);
@@ -382,10 +431,45 @@ void SlideShow::addImage(const QString &filename)
 
 void SlideShow::deleteImages()
 {
-    for (const auto &file : imagefiles) {
-        QFile::remove(file);
+    const int lo = startIdx();
+    const int hi = stopIdx();
+    if ((lo < 0) || (hi < lo) || (hi >= imagefiles.size())) return;
+
+    const int count = hi - lo + 1;
+    const auto reply =
+        QMessageBox::question(this, "Delete Images",
+                              QString("Delete %1 image file%2 (image %3 to %4) from disk?\n"
+                                      "This operation cannot be undone.")
+                                  .arg(count)
+                                  .arg(count == 1 ? "" : "s")
+                                  .arg(lo + 1)
+                                  .arg(hi + 1),
+                              QMessageBox::Yes | QMessageBox::No, QMessageBox::No);
+    if (reply != QMessageBox::Yes) return;
+
+    // remove back-to-front so the lower indices stay valid while deleting
+    for (int i = hi; i >= lo; --i) {
+        QFile::remove(imagefiles[i]);
+        imagefiles.removeAt(i);
     }
-    clear();
+
+    // nothing left: reset to the empty state
+    if (imagefiles.isEmpty()) {
+        clear();
+        return;
+    }
+
+    // resync navigation and reset the active range to the full remaining set
+    const int total = imagefiles.size();
+    scrollBar->setMaximum(total - 1);
+    startBox->setMaximum(total);
+    stopBox->setMaximum(total);
+    startBox->setValue(1);
+    stopBox->setValue(total);
+    updateSliderRange();
+
+    current = std::clamp(current, 0, total - 1);
+    loadImage(current);
 }
 
 void SlideShow::clear()
@@ -398,6 +482,11 @@ void SlideShow::clear()
     imageCounter->setText("Image   0 /   0 :");
     imageName->setText("(none)");
     scrollBar->setMaximum(1);
+    startBox->setRange(1, 1);
+    startBox->setValue(1);
+    stopBox->setRange(1, 1);
+    stopBox->setValue(1);
+    updateSliderRange();
     adjustWindowSize();
     repaint();
 }
@@ -408,6 +497,21 @@ void SlideShow::setDelay()
     if (field && (field->objectName() == "delay")) {
         timerDelay = field->value();
     }
+}
+
+int SlideShow::startIdx() const
+{
+    return startBox->value() - 1;
+}
+
+int SlideShow::stopIdx() const
+{
+    return stopBox->value() - 1;
+}
+
+void SlideShow::updateSliderRange()
+{
+    scrollBar->setActiveRange(startIdx(), stopIdx());
 }
 
 void SlideShow::loadImage(int idx)
@@ -421,7 +525,7 @@ void SlideShow::loadImage(int idx)
         if (newImage.isNull()) {
             --idx;
         } else {
-            rawImage = newImage;
+            rawImage  = newImage;
             maxwidth  = qMax(maxwidth, newImage.width());
             maxheight = qMax(maxheight, newImage.height());
             applyImageTransform();
@@ -472,11 +576,17 @@ void SlideShow::movie()
                                      "Movie Files (*.mp4 *.mkv *.avi *.mpg *.mpeg *.gif *.webm)");
     if (fileName.isEmpty()) return;
 
+    // restrict the exported frames to the active [Start, Stop] range
+    const int lo = startIdx();
+    const int hi = stopIdx();
+    if ((lo < 0) || (hi < lo) || (hi >= imagefiles.size())) return;
+    const QStringList frames = imagefiles.mid(lo, hi - lo + 1);
+
     if (hasExe("ffmpeg")) {
         QDir curdir(".");
         QTemporaryFile concatfile;
         if (concatfile.open()) {
-            for (const auto &img : imagefiles) {
+            for (const auto &img : frames) {
                 concatfile.write("file '");
                 concatfile.write(curdir.absoluteFilePath(img).toLocal8Bit());
                 concatfile.write("'\n");
@@ -527,7 +637,7 @@ void SlideShow::movie()
         QStringList args;
         args << "-delay" << QString::number(timerDelay / 10);
         QDir curdir(".");
-        for (const auto &img : imagefiles)
+        for (const auto &img : frames)
             args << curdir.absoluteFilePath(img);
         if (scaleFactor != 1.0) args << "-resize" << QString("%1%%").arg(100.0 * scaleFactor);
         if (imageRotation != 0.0) args << "-rotate" << QString("%1").arg(imageRotation);
@@ -545,20 +655,20 @@ void SlideShow::movie()
 
 void SlideShow::first()
 {
-    current = 0;
+    current = startIdx();
     loadImage(current);
 }
 
 void SlideShow::last()
 {
-    current = imagefiles.size() - 1;
+    current = stopIdx();
     loadImage(current);
 }
 
 void SlideShow::play()
 {
-    // if we do not loop, start animation from beginning
-    if (!doLoop) current = 0;
+    // if we do not loop, start animation from beginning of the active range
+    if (!doLoop) current = startIdx();
     auto *delay = findChild<QSpinBox *>("delay");
 
     if (playtimer) {
@@ -581,14 +691,16 @@ void SlideShow::play()
 
 void SlideShow::next()
 {
+    const int lo = startIdx();
+    const int hi = stopIdx();
     ++current;
-    if (current >= imagefiles.size()) {
+    if (current > hi) {
         if (doLoop) {
-            current = 0;
+            current = lo;
         } else {
-            // stop animation
+            // stop animation at the end of the active range
             if (playtimer) play();
-            --current;
+            current = hi;
         }
     }
     loadImage(current);
@@ -596,12 +708,14 @@ void SlideShow::next()
 
 void SlideShow::prev()
 {
+    const int lo = startIdx();
+    const int hi = stopIdx();
     --current;
-    if (current < 0) {
+    if (current < lo) {
         if (doLoop)
-            current = imagefiles.size() - 1;
+            current = hi;
         else
-            current = 0;
+            current = lo;
     }
     loadImage(current);
 }

@@ -133,6 +133,15 @@ private:
     void updatePeratom();     ///< Update per-atom information
     bool hasAutobonds();      ///< Check if autobonds are enabled
 
+    /** @brief True when bond color-by-value applies: a bond/local attribute is
+     *  selected, the atom style has real bonds, and AutoBonds is off (compute
+     *  bond/local only works for real bonds) */
+    bool bondByValueActive();
+
+    /** @brief (Re)populate the bond Color selector; the compute bond/local
+     *  "color by value" choices are added only when @p allowByValue */
+    void rebuildBondColorChoices(QComboBox *bncolor, bool allowByValue);
+
     /// @name dump-image command preparation used by createImage()
     /// @{
     /// Gather widget state and LAMMPS-derived data into a DumpImageParams snapshot
@@ -199,7 +208,8 @@ private:
     QString group;                               ///< Current atom group
     QString molecule;                            ///< Current molecule selection
     QString filename;                            ///< Image filename
-    QString last_dump_cmd;                       ///< Last executed dump command
+    QString last_dumpargs;                       ///< Render args of the last image command
+    QString last_modifyargs;                     ///< dump_modify args of the last image command
     int xsize, ysize;                            ///< Image dimensions in pixels
     int hrot, vrot;                              ///< Horizontal and vertical rotation angles
     int bodyflag;                                ///< bflag1 setting (triangle, cylinder or both)
@@ -221,7 +231,8 @@ private:
     double axesdiam;                             ///< Axes diameter
     double axestrans;                            ///< Axes transparency
     double ssaoval;                              ///< SSAO strength
-    double atomtrans;                            ///< Atom / Bond transparency
+    double atomtrans;                            ///< Atom transparency
+    double bondtrans;                            ///< Bond transparency
     double ambientlight;                         ///< ambient light setting
     double keylight;                             ///< key light setting
     double filllight;                            ///< fill light setting
@@ -235,6 +246,9 @@ private:
     QString colormap;                            ///< Name of selected color map
     QString mapmin;                              ///< Choice of minimum value for colormap
     QString mapmax;                              ///< Choice of maximum value for colormap
+    QString bondcolormap;                        ///< Name of selected bond color map
+    QString bondmapmin;                          ///< Choice of minimum value for bond colormap
+    QString bondmapmax;                          ///< Choice of maximum value for bond colormap
     QString bondcolor;                           ///< Custom bond color property
     QString bonddiam;                            ///< Custom bond diameter property
     QString bodycolor;                           ///< Custom body color property
@@ -243,6 +257,7 @@ private:
     QString tricolor;                            ///< Custom triangle color property
     double xcenter, ycenter, zcenter;            ///< View center coordinates
     bool atomcustom;                             ///< Use custom atom color settings
+    bool usegradient;                            ///< Vertical background gradient
     bool showbox;                                ///< Show simulation box flag
     bool showsubbox;                             ///< Show subdomain boxes flag
     bool showaxes;                               ///< Show coordinate axes flag

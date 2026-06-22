@@ -11,7 +11,23 @@
 
 #include "dumpimage.h"
 
+#include "colormaps.h"
+
 #include <QRegularExpression>
+
+// LAMMPS dump_image built-in defaults. The builder emits a color, color map,
+// light, or transparency setting only when it differs from these, so the
+// generated command stays compact without changing the rendered image: the
+// GUI's own defaults were reconciled to match LAMMPS (the per-type color table
+// in deftypecolors mirrors the LAMMPS color database). Deliberate GUI
+// divergences (the backcolor2 gradient and shiny) are emitted unconditionally.
+constexpr double DEF_TRANS     = 1.0; // fully opaque
+constexpr double DEF_AMBIENT   = 0.0;
+constexpr double DEF_KEYLIGHT  = 0.9;
+constexpr double DEF_FILLLIGHT = 0.45;
+constexpr double DEF_BACKLIGHT = 0.9;
+const QString DEF_BOXCOLOR     = QStringLiteral("gold");
+const QString DEF_BACKCOLOR    = QStringLiteral("black");
 
 // Append region visualization arguments to the dump-image command.
 static void appendRegionArgs(QString &cmd, const DumpImageParams &p)
@@ -98,94 +114,51 @@ static bool appendFixComputeStyles(QString &cmd, const DumpImageParams &p)
     return dofixes;
 }
 
-// Append the definition of the selected color map (color/amap arguments).
-static void appendColorMapArgs(QString &cmd, const DumpImageParams &p)
+// Append the definition of a color map. @p kw is the dump_modify keyword
+// ("amap" for atoms, "bmap" for bonds); @p pfx prefixes the custom color-stop
+// names so an atom map and a bond map with different gradients do not collide in
+// the global color namespace (atoms use "map", bonds use "bm").
+static void appendColorMapArgs(QString &cmd, const QString &kw, const QString &colormap,
+                               const QString &mapmin, const QString &mapmax, const QString &pfx)
 {
-    QString mmin = p.mapmin;
-    if (mmin == "auto") mmin = "min";
-    QString mmax = p.mapmax;
-    if (mmax == "auto") mmax = "max";
-    if (p.colormap == "RWB") {
-        cmd += " color map1 0.459 0.055 0.075";
-        cmd += " color map2 0.000 0.227 0.427";
-        cmd += QString(" amap %1 %2 cf 0.0 ").arg(mmin).arg(mmax);
-        cmd += "5 min map1 0.1 map1 0.5 white 0.9 map2 max map2";
-    } else if (p.colormap == "PWT") {
-        cmd += " color map1 0.286 0.114 0.553";
-        cmd += " color map2 0.000 0.255 0.267";
-        cmd += QString(" amap %1 %2 cf 0.0 ").arg(mmin).arg(mmax);
-        cmd += "5 min map1 0.1 map1 0.5 white 0.9 map2 max map2";
-    } else if (p.colormap == "BGR") {
-        cmd += QString(" amap %1 %2 cf 0.0 ").arg(mmin).arg(mmax);
-        cmd += "5 min blue 0.05 blue 0.5 green 0.95 red max red";
-    } else if (p.colormap == "BWG") {
-        cmd += QString(" amap %1 %2 cf 0.0 ").arg(mmin).arg(mmax);
-        cmd += "5 min blue 0.1 blue 0.5 white 0.9 green max green";
-    } else if (p.colormap == "Grayscale") {
-        cmd += QString(" amap %1 %2 cf 0.0 ").arg(mmin).arg(mmax);
-        cmd += "2 min black max white";
-    } else if (p.colormap == "Rainbow") {
-        cmd += QString(" amap %1 %2 cf 0.0 ").arg(mmin).arg(mmax);
-        cmd += "6 min red 0.25 yellow 0.45 green 0.65 cyan 0.85 blue max purple";
-    } else if (p.colormap == "Sequential") {
-        cmd += " color map1 0.808 0.808 0.808";
-        cmd += " color map2 0.647 0.349 0.667";
-        cmd += " color map3 0.349 0.659 0.612";
-        cmd += " color map4 0.941 0.772 0.443";
-        cmd += " color map5 0.878 0.169 0.208";
-        cmd += " color map6 0.031 0.165 0.329";
-        cmd += QString(" amap %1 %2 sa 1.0 ").arg(mmin).arg(mmax);
-        cmd += "6 map1 map2 map3 map4 map5 map6";
-    } else if (p.colormap == "Landscape") {
-        cmd += " color map0 0.145 0.400 0.463";
-        cmd += " color map1 0.392 0.867 0.588";
-        cmd += " color map2 0.572 0.192 0.141";
-        cmd += " color map3 0.392 0.831 0.992";
-        cmd += " color map4 0.020 0.431 0.071";
-        cmd += " color map5 0.992 0.349 0.145";
-        cmd += " color map6 0.275 0.953 0.243";
-        cmd += " color map7 0.729 0.525 0.361";
-        cmd += " color map8 0.780 0.867 0.529";
-        cmd += " color map9 0.243 0.298 0.078";
-        cmd += QString(" amap %1 %2 sa 1.0 ").arg(mmin).arg(mmax);
-        cmd += "10 map0 map1 map2 map3 map4 map5 map6 map7 map8 map9";
-    } else if (p.colormap == "Basic") {
-        cmd += QString(" amap %1 %2 sa 1.0 ").arg(mmin).arg(mmax);
-        cmd += "10 red cyan green black magenta blue yellow purple white orange";
-    } else if (p.colormap == "Teal") {
-        cmd += " color map1 0.071 0.153 0.251";
-        cmd += " color map2 0.106 0.282 0.369";
-        cmd += " color map3 0.337 0.545 0.529";
-        cmd += " color map4 0.710 0.820 0.682";
-        cmd += QString(" amap %1 %2 cf 0.0 ").arg(mmin).arg(mmax);
-        cmd += "4 min map1 0.25 map2 0.5 map3 max map4";
-    } else if (p.colormap == "Viridis") {
-        cmd += " color map1 0.282 0.129 0.451";
-        cmd += " color map2 0.435 0.435 0.556";
-        cmd += " color map3 0.161 0.686 0.498";
-        cmd += " color map4 0.741 0.875 0.149";
-        cmd += QString(" amap %1 %2 cf 0.0 ").arg(mmin).arg(mmax);
-        cmd += "4 min map1 0.333 map2 0.667 map3 max map4";
-    } else if (p.colormap == "Inferno") {
-        cmd += " color map1 0.032 0.032 0.048";
-        cmd += " color map2 0.318 0.071 0.486";
-        cmd += " color map3 0.718 0.216 0.475";
-        cmd += " color map4 0.988 0.537 0.380";
-        cmd += " color map5 0.988 0.992 0.749";
-        cmd += QString(" amap %1 %2 cf 0.0 ").arg(mmin).arg(mmax);
-        cmd += "5 min map1 0.25 map2 0.5 map3 0.75 map4 max map5";
-    } else if (p.colormap == "Plasma") {
-        cmd += " color map1 0.051 0.031 0.529";
-        cmd += " color map2 0.612 0.090 0.620";
-        cmd += " color map3 0.929 0.475 0.325";
-        cmd += " color map4 0.941 0.976 0.129";
-        cmd += QString(" amap %1 %2 cf 0.0 ").arg(mmin).arg(mmax);
-        cmd += "4 min map1 0.333 map2 0.667 map3 max map4";
-    } else { // default is "BWR"
-        cmd += " color map1 0.000 0.227 0.427";
-        cmd += " color map2 0.459 0.055 0.075";
-        cmd += QString(" amap %1 %2 cf 0.0 ").arg(mmin).arg(mmax);
-        cmd += "3 min map1 0.5 white max map2";
+    const ColorMapDef &def = colorMapDef(colormap);
+    const QString mmin     = (mapmin == "auto") ? QStringLiteral("min") : mapmin;
+    const QString mmax     = (mapmax == "auto") ? QStringLiteral("max") : mapmax;
+
+    // Resolve each stop to a color token: a LAMMPS named color used verbatim, or
+    // a custom color "<pfx><n>" defined once via "color <pfx><n> R G B".  Distinct
+    // RGB values share a single custom color, numbered in order of first use.
+    QStringList colorref; // per-stop color token, parallel to def.stops
+    QStringList rgbseen;  // distinct "R G B" strings; index + 1 -> custom number
+    for (const auto &s : def.stops) {
+        if (!s.name.isEmpty()) {
+            colorref.append(s.name);
+            continue;
+        }
+        const QString rgb =
+            QStringLiteral("%1 %2 %3").arg(s.r, 0, 'f', 3).arg(s.g, 0, 'f', 3).arg(s.b, 0, 'f', 3);
+        int idx = rgbseen.indexOf(rgb);
+        if (idx < 0) {
+            rgbseen.append(rgb);
+            idx = rgbseen.size() - 1;
+            cmd += " color " + pfx + QString::number(idx + 1) + " " + rgb;
+        }
+        colorref.append(pfx + QString::number(idx + 1));
+    }
+
+    const int n = def.stops.size();
+    if (def.continuous) {
+        cmd += QString(" %1 %2 %3 cf 0.0 %4").arg(kw, mmin, mmax).arg(n);
+        for (int i = 0; i < n; ++i) {
+            const QString pos = (i == 0)       ? QStringLiteral("min")
+                                : (i == n - 1) ? QStringLiteral("max")
+                                               : QString::number(def.stops[i].pos);
+            cmd += " " + pos + " " + colorref[i];
+        }
+    } else {
+        cmd += QString(" %1 %2 %3 sa 1.0 %4").arg(kw, mmin, mmax).arg(n);
+        for (const auto &c : colorref)
+            cmd += " " + c;
     }
 }
 
@@ -212,132 +185,167 @@ static void appendFixComputeColors(QString &cmd, const DumpImageParams &p)
     }
 }
 
-QString buildDumpImageCommand(const DumpImageParams &p)
+DumpImageCommand buildDumpImageCommand(const DumpImageParams &p)
 {
-    QString dumpcmd = QString("write_dump ") + p.group + " image ";
-    dumpcmd += "'" + p.dumpfile + "'";
+    QString d; // render options (after "image <N> <file>")
+    QString m; // dump_modify options
 
     const int hhrot   = (p.hrot > 180) ? 360 - p.hrot : p.hrot;
     const bool do_vdw = p.vdwfactor > VDW_CUT;
 
-    // atom color for dump
-    if (!p.atomcustom && p.useelements)
-        dumpcmd += blank + "element";
-    else
-        dumpcmd += blank + p.atomcolor;
+    // atom color
+    const QString atomColorTok = (!p.atomcustom && p.useelements) ? QStringLiteral("element")
+                                                                  : p.atomcolor;
+    d += blank + atomColorTok;
 
-    // atom diameter for dump
+    // atom diameter
     if (!p.atomcustom) {
         if (p.usediameter && do_vdw)
-            dumpcmd += blank + "diameter";
+            d += blank + "diameter";
         else
-            dumpcmd += " type";
+            d += " type";
     } else {
         if ((p.atomdiam == "diameter") && p.usediameter && do_vdw)
-            dumpcmd += blank + "diameter";
+            d += blank + "diameter";
         else
-            dumpcmd += " type";
+            d += " type";
     }
 
-    if (!p.showatoms) dumpcmd += " atom no";
+    if (!p.showatoms) d += " atom no";
     if (p.showbodies && (p.body_flag == 1)) {
-        dumpcmd += QString(" body %1 %2 %3").arg(p.bodycolor).arg(p.bodydiam).arg(p.bodyflag);
+        d += QString(" body %1 %2 %3").arg(p.bodycolor).arg(p.bodydiam).arg(p.bodyflag);
     } else if (p.showlines && (p.line_flag == 1))
-        dumpcmd += QString(" line %1 %2").arg(p.linecolor).arg(p.linediam);
+        d += QString(" line %1 %2").arg(p.linecolor).arg(p.linediam);
     else if (p.showtris && (p.tri_flag == 1))
-        dumpcmd += QString(" tri %1 %2 %3").arg(p.tricolor).arg(p.triflag).arg(p.tridiam);
+        d += QString(" tri %1 %2 %3").arg(p.tricolor).arg(p.triflag).arg(p.tridiam);
     else if (p.showellipsoids && (p.ellipsoid_flag == 1)) {
-        dumpcmd += QString(" ellipsoid %1 %2 %3 %4")
-                       .arg(p.ellipsoidcolor)
-                       .arg(p.ellipsoidflag)
-                       .arg(p.ellipsoidlevel)
-                       .arg(p.ellipsoiddiam);
+        d += QString(" ellipsoid %1 %2 %3 %4")
+                 .arg(p.ellipsoidcolor)
+                 .arg(p.ellipsoidflag)
+                 .arg(p.ellipsoidlevel)
+                 .arg(p.ellipsoiddiam);
     }
-    dumpcmd += QString(" size %1 %2").arg(p.xsize).arg(p.ysize);
-    dumpcmd += QString(" zoom %1").arg(p.zoom);
-    dumpcmd += QString(" shiny %1 ").arg(p.shinyfactor);
-    dumpcmd += QString(" fsaa %1").arg(p.antialias ? "yes" : "no");
+    d += QString(" size %1 %2").arg(p.xsize).arg(p.ysize);
+    d += QString(" zoom %1").arg(p.zoom);
+    d += QString(" shiny %1 ").arg(p.shinyfactor);
+    d += QString(" fsaa %1").arg(p.antialias ? "yes" : "no");
     if (p.nbondtypes > 0) {
         if (do_vdw || !p.showbonds)
-            dumpcmd += " bond none none ";
+            d += " bond none none ";
         else
-            dumpcmd += QString(" bond %1 %2 ").arg(p.bondcolor).arg(p.bonddiam);
+            d += QString(" bond %1 %2 ").arg(p.bondcolor).arg(p.bonddiam);
     }
     if (p.dimension == 3) {
-        dumpcmd += QString(" view %1 %2").arg(hhrot).arg(p.vrot);
+        d += QString(" view %1 %2").arg(hhrot).arg(p.vrot);
     }
-    if (p.usessao) dumpcmd += QString(" ssao yes 453983 %1").arg(p.ssaoval);
+    if (p.usessao) d += QString(" ssao yes 453983 %1").arg(p.ssaoval);
     if (p.showbox)
-        dumpcmd += QString(" box yes %1").arg(p.boxdiam);
+        d += QString(" box yes %1").arg(p.boxdiam);
     else
-        dumpcmd += " box no 0.0";
-    if (p.showsubbox)
-        dumpcmd += QString(" subbox yes %1").arg(p.subboxdiam);
-    else
-        dumpcmd += " subbox no 0.0";
+        d += " box no 0.0";
+    // subbox and axes default to "no" in LAMMPS, so emit them only when shown
+    if (p.showsubbox) d += QString(" subbox yes %1").arg(p.subboxdiam);
 
-    if (p.showaxes)
-        dumpcmd += QString(" axes %1 %2 %3").arg(p.axesloc).arg(p.axeslen).arg(p.axesdiam);
-    else
-        dumpcmd += " axes no 0.0 0.0";
+    if (p.showaxes) d += QString(" axes %1 %2 %3").arg(p.axesloc).arg(p.axeslen).arg(p.axesdiam);
 
     if (p.autobond && p.haspairstyle) {
         // use custom bond diameter value, if present
         QRegularExpression validnum(R"((^\d+\.?\d*|^\d*\.?\d+))");
         auto match = validnum.match(p.bonddiam);
         if (match.hasMatch()) {
-            dumpcmd +=
-                blank + "autobond" + blank + QString::number(p.bondcutoff) + blank + p.bonddiam;
+            d += blank + "autobond" + blank + QString::number(p.bondcutoff) + blank + p.bonddiam;
         } else {
-            dumpcmd += blank + "autobond" + blank + QString::number(p.bondcutoff) + " 0.5";
+            d += blank + "autobond" + blank + QString::number(p.bondcutoff) + " 0.5";
         }
     }
 
-    appendRegionArgs(dumpcmd, p);
+    appendRegionArgs(d, p);
 
-    const bool dofixes = appendFixComputeStyles(dumpcmd, p);
+    const bool dofixes = appendFixComputeStyles(d, p);
 
-    dumpcmd += QString(" center s %1 %2 %3").arg(p.xcenter).arg(p.ycenter).arg(p.zcenter);
-    if (!dofixes) dumpcmd += " noinit";
-    dumpcmd += " modify";
+    // center defaults to the box center "s 0.5 0.5 0.5"; emit only when moved
+    if ((p.xcenter != 0.5) || (p.ycenter != 0.5) || (p.zcenter != 0.5))
+        d += QString(" center s %1 %2 %3").arg(p.xcenter).arg(p.ycenter).arg(p.zcenter);
 
-    // must change global colors first so they apply everywhere
-    const int numcolors = p.color_list.size();
+    // ---- dump_modify options ----
+
+    // change global color definitions first so they apply everywhere, but emit
+    // only those that differ from the LAMMPS built-in defaults: deftypecolors
+    // mirrors the LAMMPS color database, so an unmodified table emits nothing
+    const int numcolors    = p.color_list.size();
+    const int ndefcolors   = deftypecolors.size();
+    const bool prunecolors = (numcolors == ndefcolors);
 
     for (int i = 0; i < numcolors; ++i) {
-        dumpcmd += QString(" color %1 %2 %3 %4")
-                       .arg(p.color_list[i].first)
-                       .arg(p.color_list[i].second.redF())
-                       .arg(p.color_list[i].second.greenF())
-                       .arg(p.color_list[i].second.blueF());
+        if (prunecolors && (p.color_list[i].first == deftypecolors[i].first) &&
+            (p.color_list[i].second == deftypecolors[i].second))
+            continue;
+        m += QString(" color %1 %2 %3 %4")
+                 .arg(p.color_list[i].first)
+                 .arg(p.color_list[i].second.redF())
+                 .arg(p.color_list[i].second.greenF())
+                 .arg(p.color_list[i].second.blueF());
     }
+    // assign type colors only where the name differs from the default LAMMPS
+    // assignment for that type (type i -> deftypecolors[(i - 1) % ndefcolors])
     for (int i = 1; i <= p.ntypes; ++i) {
-        dumpcmd += QString(" acolor %1 %2").arg(i).arg(p.color_list[(i - 1) % numcolors].first);
+        const QString curname = p.color_list[(i - 1) % numcolors].first;
+        const QString defname = deftypecolors[(i - 1) % ndefcolors].first;
+        if (curname == defname) continue;
+        m += QString(" acolor %1 %2").arg(i).arg(curname);
     }
 
-    dumpcmd += " boxcolor " + p.boxcolor;
-    dumpcmd += " backcolor " + p.backcolor;
-    dumpcmd += " backcolor2 " + p.backcolor2;
-    dumpcmd += QString(" axestrans %1").arg(p.axestrans);
-    dumpcmd += QString(" boxtrans %1").arg(p.boxtrans);
-    dumpcmd += QString(" atrans * %1").arg(p.atomtrans);
-    if (p.bond_flag == 1) dumpcmd += QString(" btrans * %1").arg(p.atomtrans);
-    if (p.version > 20260330)
-        dumpcmd += QString(" lights %1 %2 %3 %4")
-                       .arg(p.ambientlight)
-                       .arg(p.keylight)
-                       .arg(p.filllight)
-                       .arg(p.backlight);
+    if (p.boxcolor != DEF_BOXCOLOR) m += " boxcolor " + p.boxcolor;
 
-    if (p.useelements) dumpcmd += blank + p.elements + blank + p.adiams + blank;
-    if (p.usesigma) dumpcmd += blank + p.adiams + blank;
-    if (!p.useelements && !p.usesigma && (p.atomSize != 1.0)) dumpcmd += blank + p.adiams + blank;
-    // apply selected colormap
-    appendColorMapArgs(dumpcmd, p);
+    // background: with the gradient enabled (the GUI default, a deliberate
+    // divergence from the solid LAMMPS default) the backcolor/backcolor2 pair is
+    // emitted together. With the gradient off the background is solid and only
+    // backcolor is emitted, and only when it differs from the LAMMPS default, so
+    // backcolor2 is never emitted without backcolor.
+    if (p.usegradient) {
+        m += " backcolor " + p.backcolor;
+        m += " backcolor2 " + p.backcolor2;
+    } else if (p.backcolor != DEF_BACKCOLOR) {
+        m += " backcolor " + p.backcolor;
+    }
 
-    appendFixComputeColors(dumpcmd, p);
+    if (p.axestrans != DEF_TRANS) m += QString(" axestrans %1").arg(p.axestrans);
+    if (p.boxtrans != DEF_TRANS) m += QString(" boxtrans %1").arg(p.boxtrans);
+    if (p.atomtrans != DEF_TRANS) m += QString(" atrans * %1").arg(p.atomtrans);
+    if ((p.bond_flag == 1) && (p.bondtrans != DEF_TRANS))
+        m += QString(" btrans * %1").arg(p.bondtrans);
 
-    return dumpcmd;
+    const bool lightsdefault = (p.ambientlight == DEF_AMBIENT) && (p.keylight == DEF_KEYLIGHT) &&
+                               (p.filllight == DEF_FILLLIGHT) && (p.backlight == DEF_BACKLIGHT);
+    if ((p.version > 20260330) && !lightsdefault)
+        m += QString(" lights %1 %2 %3 %4")
+                 .arg(p.ambientlight)
+                 .arg(p.keylight)
+                 .arg(p.filllight)
+                 .arg(p.backlight);
+
+    if (p.useelements) m += blank + p.elements + blank + p.adiams + blank;
+    if (p.usesigma) m += blank + p.adiams + blank;
+    if (!p.useelements && !p.usesigma && (p.atomSize != 1.0)) m += blank + p.adiams + blank;
+
+    // apply the selected color map only when atoms are colored by a per-atom
+    // value; for type/element coloring the map is unused, so omit it
+    const bool atomByValue = (atomColorTok != "type") && (atomColorTok != "element");
+    if (atomByValue) appendColorMapArgs(m, "amap", p.colormap, p.mapmin, p.mapmax, "map");
+    if (p.bondbyvalue)
+        appendColorMapArgs(m, "bmap", p.bondcolormap, p.bondmapmin, p.bondmapmax, "bm");
+
+    appendFixComputeColors(m, p);
+
+    return {d, m, dofixes};
+}
+
+QString toWriteDumpCommand(const DumpImageCommand &c, const QString &group, const QString &file)
+{
+    QString cmd = "write_dump " + group + " image '" + file + "'" + c.dumpargs;
+    if (!c.dofixes) cmd += " noinit";
+    cmd += " modify" + c.modifyargs;
+    return cmd;
 }
 
 // Local Variables:

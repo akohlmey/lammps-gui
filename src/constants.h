@@ -37,7 +37,6 @@ constexpr int PROGRESS_MAXIMUM    = 1000; ///< Maximum value for QProgressBar
 
 // ---- File limits ---------------------------------------------------------
 constexpr int NUM_RECENT_FILES = 5; ///< Number of entries in the recent files list
-constexpr int NUM_TUTORIALS    = 8; ///< Number of tutorials available
 
 // ---- LAMMPS version requirement ------------------------------------------
 constexpr int MIN_LAMMPS_VERSION =
@@ -135,8 +134,7 @@ inline const QString AXESDIAM     = QStringLiteral("axesdiam");
 inline const QString AXESLEN      = QStringLiteral("axeslen");
 inline const QString BACKCOLOR    = QStringLiteral("backcolor");
 inline const QString BACKCOLOR2   = QStringLiteral("backcolor2");
-inline const QString BACKGROUND   = QStringLiteral("background");
-inline const QString BACKGROUND2  = QStringLiteral("background2");
+inline const QString USEGRADIENT  = QStringLiteral("usegradient");
 inline const QString BONDCOLOR    = QStringLiteral("bondcolor");
 inline const QString BONDCUT      = QStringLiteral("bondcut");
 inline const QString BONDCUTOFF   = QStringLiteral("bondcutoff");
@@ -150,6 +148,7 @@ inline const QString CHARTY       = QStringLiteral("charty");
 inline const QString CITE         = QStringLiteral("cite");
 inline const QString COLOR        = QStringLiteral("color");
 inline const QString COLORMAP     = QStringLiteral("colormap");
+inline const QString BONDCOLORMAP = QStringLiteral("bondcolormap");
 inline const QString COMMAND      = QStringLiteral("command");
 inline const QString DIAMETER     = QStringLiteral("diameter");
 inline const QString ECHO         = QStringLiteral("echo");

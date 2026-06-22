@@ -175,10 +175,12 @@ void Preferences::accept()
     if (box) settings->setValue(Keys::VDWSTYLE, box->isChecked());
     box = tabWidget->findChild<QCheckBox *>("autobond");
     if (box) settings->setValue(Keys::AUTOBOND, box->isChecked());
-    field = tabWidget->findChild<QLineEdit *>("background");
-    if (field && field->hasAcceptableInput()) settings->setValue(Keys::BACKGROUND, field->text());
-    field = tabWidget->findChild<QLineEdit *>("background2");
-    if (field && field->hasAcceptableInput()) settings->setValue(Keys::BACKGROUND2, field->text());
+    field = tabWidget->findChild<QLineEdit *>("backcolor");
+    if (field && field->hasAcceptableInput()) settings->setValue(Keys::BACKCOLOR, field->text());
+    field = tabWidget->findChild<QLineEdit *>("backcolor2");
+    if (field && field->hasAcceptableInput()) settings->setValue(Keys::BACKCOLOR2, field->text());
+    box = tabWidget->findChild<QCheckBox *>("usegradient");
+    if (box) settings->setValue(Keys::USEGRADIENT, box->isChecked());
     field = tabWidget->findChild<QLineEdit *>("boxcolor");
     if (field && field->hasAcceptableInput()) settings->setValue(Keys::BOXCOLOR, field->text());
     settings->endGroup();
@@ -745,6 +747,7 @@ SnapshotTab::SnapshotTab(QSettings *_settings, QWidget *parent) :
     auto *ssao  = new QLabel("HQ Image mode:");
     auto *shiny = new QLabel("Shiny Image mode:");
     auto *cback = new QLabel("Background Color:");
+    auto *cgrad = new QLabel("Background Gradient:");
     auto *cbac2 = new QLabel("Background2 Color:");
 
     // right column labels
@@ -796,13 +799,14 @@ SnapshotTab::SnapshotTab(QSettings *_settings, QWidget *parent) :
     auto *aval       = makeCheckBox(Keys::ANTIALIAS, "anti", false);
     auto *sval       = makeCheckBox(Keys::SSAO, "ssao", false);
     auto *hval       = makeCheckBox(Keys::SHINYSTYLE, "shiny", true);
-    auto *background = makeColorEdit(Keys::BACKGROUND, "black");
-    auto *background2 = makeColorEdit(Keys::BACKGROUND2, "white");
+    auto *background = makeColorEdit(Keys::BACKCOLOR, "black");
+    auto *background2 = makeColorEdit(Keys::BACKCOLOR2, "white");
+    auto *gradient    = makeCheckBox(Keys::USEGRADIENT, "usegradient", true);
 
     // right column values
     auto *bval  = makeCheckBox(Keys::BOX, "box", true);
     auto *bdval = makeNumEdit(Keys::BOXDIAM, "0.025", new QDoubleValidator(0.001, 1.0, 100, this));
-    auto *boxcolor = makeColorEdit(Keys::BOXCOLOR, "yellow");
+    auto *boxcolor = makeColorEdit(Keys::BOXCOLOR, "gold");
     auto *eval     = makeCheckBox(Keys::AXES, "axes", false);
     auto *alval    = makeNumEdit(Keys::AXESLEN, "0.5", new QDoubleValidator(0.01, 10.0, 100, this));
     auto *adval = makeNumEdit(Keys::AXESDIAM, "0.05", new QDoubleValidator(0.001, 1.0, 100, this));
@@ -840,6 +844,8 @@ SnapshotTab::SnapshotTab(QSettings *_settings, QWidget *parent) :
     grid->addWidget(hval, i++, 1, Qt::AlignVCenter);
     grid->addWidget(cback, i, 0, Qt::AlignTop);
     grid->addWidget(background, i++, 1, Qt::AlignVCenter);
+    grid->addWidget(cgrad, i, 0, Qt::AlignTop);
+    grid->addWidget(gradient, i++, 1, Qt::AlignVCenter);
     grid->addWidget(cbac2, i, 0, Qt::AlignTop);
     grid->addWidget(background2, i++, 1, Qt::AlignVCenter);
     int nrows = i;
@@ -881,6 +887,10 @@ SnapshotTab::SnapshotTab(QSettings *_settings, QWidget *parent) :
 
     connect(vval, &QCheckBox::toggled, this, &SnapshotTab::chooseVdw);
     connect(uval, &QCheckBox::toggled, this, &SnapshotTab::chooseBond);
+
+    // the second background color only applies when the gradient is enabled
+    background2->setEnabled(gradient->isChecked());
+    connect(gradient, &QCheckBox::toggled, background2, &QLineEdit::setEnabled);
 }
 
 void SnapshotTab::chooseVdw()

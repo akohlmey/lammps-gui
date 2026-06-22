@@ -79,7 +79,8 @@ struct DumpImageParams {
     int nbondtypes;    ///< number of bond types
     int bond_flag;     ///< LAMMPS bond_flag setting
     bool showbonds;    ///< draw bonds
-    QString bondcolor; ///< bond color property
+    QString bondcolor; ///< bond color property (or "c_<id>" when bondbyvalue)
+    bool bondbyvalue;  ///< color bonds by a per-bond compute value (emit bmap)
     QString bonddiam;  ///< bond diameter property
     bool autobond;     ///< derive bonds from a distance cutoff
     bool haspairstyle; ///< a pair style other than "none" is defined
@@ -118,19 +119,24 @@ struct DumpImageParams {
     QString boxcolor;                         ///< box / subbox color
     QString backcolor;                        ///< lower background color
     QString backcolor2;                       ///< upper background color
+    bool usegradient;                         ///< draw a vertical gradient
     double axestrans;                         ///< axes transparency
     double boxtrans;                          ///< box / subbox transparency
-    double atomtrans;                         ///< atom / bond transparency
+    double atomtrans;                         ///< atom transparency
+    double bondtrans;                         ///< bond transparency
     double ambientlight;                      ///< ambient light setting
     double keylight;                          ///< key light setting
     double filllight;                         ///< fill light setting
     double backlight;                         ///< back light setting
     int version;                              ///< LAMMPS version (date) id
 
-    // ---- colormap ----
-    QString colormap; ///< name of the selected color map
-    QString mapmin;   ///< minimum-value choice for the color map
-    QString mapmax;   ///< maximum-value choice for the color map
+    // ---- color maps (atoms / bonds) ----
+    QString colormap;     ///< name of the selected atom color map
+    QString mapmin;       ///< minimum-value choice for the atom color map
+    QString mapmax;       ///< maximum-value choice for the atom color map
+    QString bondcolormap; ///< name of the selected bond color map
+    QString bondmapmin;   ///< minimum-value choice for the bond color map
+    QString bondmapmax;   ///< maximum-value choice for the bond color map
 
     // ---- regions / fixes / computes ----
     std::map<std::string, ImageInfo *> computes; ///< per-compute graphics settings
@@ -139,14 +145,38 @@ struct DumpImageParams {
 };
 
 /**
- * @brief Assemble a complete LAMMPS `write_dump ... image ...` command
+ * @brief The two argument strings of an assembled `dump image` command
+ *
+ * The render options (everything that follows `... image <N> <file>`) and the
+ * `dump_modify` options (colors, color maps, lighting, ...) are kept separate so
+ * the caller can compose either an explicit `dump`/`dump_modify` pair or a
+ * one-shot `write_dump` (via toWriteDumpCommand()), and so each builder step can
+ * append to whichever string is logical. Both strings begin with a leading space.
+ */
+struct DumpImageCommand {
+    QString dumpargs;   ///< render options after `image <N> <file>`
+    QString modifyargs; ///< options for `dump_modify <id>` / after `modify`
+    bool dofixes;       ///< a fix/compute graphic is active (write_dump omits `noinit`)
+};
+
+/**
+ * @brief Assemble the render and dump_modify argument strings for a dump image
  * @param p Fully populated parameter struct (no GUI or LAMMPS access required)
- * @return The dump-image command string ready to hand to LammpsWrapper::command()
+ * @return The two argument strings (see DumpImageCommand)
  *
  * Pure function: depends only on @p p, performs no I/O and no LAMMPS calls, and
  * is therefore exercised directly by the unit tests.
  */
-QString buildDumpImageCommand(const DumpImageParams &p);
+DumpImageCommand buildDumpImageCommand(const DumpImageParams &p);
+
+/**
+ * @brief Compose a one-shot `write_dump ... image ...` command from the pieces
+ * @param c     the two argument strings from buildDumpImageCommand()
+ * @param group atom group to render
+ * @param file  output image file name
+ * @return A complete `write_dump` command string
+ */
+QString toWriteDumpCommand(const DumpImageCommand &c, const QString &group, const QString &file);
 
 #endif
 

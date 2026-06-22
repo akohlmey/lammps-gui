@@ -28,6 +28,28 @@ TutorialWizard Class
 
 -----
 
+Tutorial Collections
+--------------------
+
+The ``TutorialCollection`` struct (``src/tutorials.h``) is the single source of
+truth for the tutorial collections offered in the *Tutorials* menu.  Each entry
+describes one independently hosted collection (its files repository, web pages,
+per-tutorial titles and blurbs, and how much of it is released).  The menu and
+the ``TutorialWizard`` consume the table through the
+``tutorialCollections()`` and ``tutorialCollection()`` accessors.  See
+:ref:`add_tutorial` for how to add or update a tutorial or a whole collection.
+
+.. doxygenstruct:: TutorialCollection
+   :members:
+
+-----
+
+.. doxygenfunction:: tutorialCollections
+
+.. doxygenfunction:: tutorialCollection
+
+-----
+
 Editor Components
 =================
 
@@ -151,6 +173,20 @@ queries up front) and then calls the pure builder.
 -----
 
 .. doxygenfunction:: buildDumpImageCommand
+
+-----
+
+Color Maps
+----------
+
+The dump-image color maps are defined once, as a table of ``ColorMapDef``
+entries in ``src/colormaps.cpp``.  Both the command builder
+(``appendColorMapArgs()`` in ``src/dumpimage.cpp``) and the settings-dialog
+preview swatches (``addColorMapItems()`` in ``src/imageviewersettings.cpp``)
+consume this single source of truth, so they cannot drift apart.  See
+:ref:`add_colormap` for how to add or modify a map.
+
+.. doxygenfile:: colormaps.h
 
 -----
 

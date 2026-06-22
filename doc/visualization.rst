@@ -461,8 +461,9 @@ The dialog contains the following sections:
      available), *type*, *element*, and a few pre-defined choices for
      custom atom diameters.  The text field can be edited and a
      different custom diameter entered.
-   - **Opacity**: The transparency of atoms *and* bonds (range: 0.0 --
-     1.0, where 1.0 is fully opaque and 0.0 is fully transparent).
+   - **Opacity**: The transparency of atoms (range: 0.0 -- 1.0, where 1.0
+     is fully opaque and 0.0 is fully transparent).  Bonds have their own
+     Opacity setting in the **Bonds** section below.
    - **VDW style** (checkbox): Enable or disable space-filling sphere
      rendering.  When unchecked, the ball-and-stick style is used.
    - **Colormap**: Select the colormap used for coloring by a per-atom
@@ -472,8 +473,9 @@ The dialog contains the following sections:
      (purple-white-teal), *BWG* (blue-white-green), *BGR*
      (blue-green-red), *Grayscale* (black-white), *Viridis* (from
      matplotlib), *Plasma* (from matplotlib), *Inferno* (from
-     matplotlib), *Teal*, and *Rainbow*.  *Sequential*, *Landscape*, and
-     *Basic* are maps with discrete colors.  These are pre-defined
+     matplotlib), *Magma* (from matplotlib), *Cividis* (from matplotlib),
+     *Turbo* (from matplotlib), *Teal*, and *Rainbow*.  *Sequential*,
+     *Landscape*, and *Basic* are maps with discrete colors.  These are pre-defined
      colormap settings and currently cannot be adjusted from LAMMPS-GUI
      directly.  As for *all* image settings, further customizations can
      be realized by copying the dump image command line as customized by
@@ -485,18 +487,43 @@ The dialog contains the following sections:
      have LAMMPS determine the range automatically or specify an
      explicit numeric value.
 
+The color maps available for coloring atoms and bonds by value are shown
+below; the continuous maps are interpolated between color stops, while
+*Sequential*, *Landscape*, and *Basic* use discrete colors.
+
+.. _colormap_preview:
+
+.. figure:: JPG/lammps-gui-colormaps.png
+   :align: center
+   :width: 60%
+
+   The dump-image color maps offered for coloring atoms and bonds by value.
+
+These color maps are defined in a single table in the C++ source, which makes
+them simple to add or modify; see :ref:`add_colormap` in the Programmer's
+Guide for step-by-step instructions.
+
 **Bonds**
    Controls bond visualization.
 
    - **Bonds** (checkbox): Enable or disable bond rendering.  This
      option is only available when the atom style supports explicit
      bonds.
-   - **Color**: Select bond coloring mode -- *atom* (colored by the
-     atom type at each end) or *type* (uniform color per bond type).
+   - **Color**: Select the bond coloring mode.  The basic choices are
+     *atom* (each bond half is colored by the atom type at its end) and
+     *type* (a uniform color per bond type).  The list also offers a set
+     of per-bond properties computed by ``compute bond/local`` -- *dist*,
+     *dx*, *dy*, *dz*, *engpot*, *force*, *fx*, *fy*, *fz*, *engvib*,
+     *engrot*, *engtrans*, *omega*, and *velvib*.  Selecting one of these
+     colors the bonds by that per-bond value using the bond colormap (see
+     **Map** below); LAMMPS-GUI creates the required ``compute
+     bond/local`` automatically.
    - **Size**: Select bond diameter mode.  Options include *atom*,
      *type*, and a few pre-defined choices for custom bond diameters.
      The text field can be edited and a different custom diameter
      entered.
+   - **Opacity**: The transparency of bonds (range: 0.0 -- 1.0), set
+     independently from the atom opacity.
    - **AutoBonds** (checkbox): Automatically determine bonds from atom
      distances, useful for many-body force fields with implicit bonds
      like `AIREBO <https://docs.lammps.org/pair_airebo.html>`_ or
@@ -507,8 +534,14 @@ The dialog contains the following sections:
      the `special_bonds settings
      <https://docs.lammps.org/special_bonds.html>`_
    - **Cutoff**: The distance cutoff used for automatic bond detection
-     (range: 0.001 -- 10.0 in distance units).  Only available when
-     auto-bonds are enabled.
+     (range: 0.001 -- 10.0 in distance units), in the text field next to
+     the AutoBonds checkbox.  Only available when auto-bonds are enabled.
+   - **Map** / **Min** / **Max**: Select the colormap and value range
+     used when coloring bonds by a per-bond value (see **Color** above).
+     The same colormaps as the atom **Colormap** are offered, and these
+     fields are only enabled when a per-bond property is selected as the
+     bond color.  Use *auto* for **Min** / **Max** to let LAMMPS
+     determine the range automatically.
 
 **Bodies**
    Controls visualization of `body particles
@@ -836,9 +869,9 @@ cursor on top of it and a descriptive tooltip will appear.
 The **toolbar** at the top of the Slide Show window provides the
 following controls, organized from left to right:
 
-- **Export to movie** (`Ctrl-E`): Export the entire image sequence to a
-  movie file or `animated GIF file
-  <https://en.wikipedia.org/wiki/GIF#Animated_GIF>`_.  This requires
+- **Export to movie** (`Ctrl-E`): Export the active range of images (see
+  the **Start** and **Stop** controls below) to a movie file or `animated
+  GIF file <https://en.wikipedia.org/wiki/GIF#Animated_GIF>`_.  This requires
   that either the `FFmpeg program <https://ffmpeg.org/>`_ or the
   `ImageMagick software <https://imagemagick.org/>`_ are installed.
   Supported output formats include MP4, MKV, AVI, MPG, MPEG, WEBM, and
@@ -856,11 +889,14 @@ following controls, organized from left to right:
   clipboard for pasting it into another application.  This requires
   support from the receiving application, which is the case for many
   common applications like document editors and web browsers.
-- **Delete all images**: Remove all image files associated with the
-  slide show.  Since the number of image files can be large for long
-  simulations, this provides a safe way to clean up the working
-  directory without risk of accidentally deleting other files.  This
-  will, however, only delete the images of the last run.  If that was
+- **Delete selected images**: Remove the image files in the currently
+  selected range (see the **Start** and **Stop** controls below) from
+  disk.  A confirmation dialog reports how many files will be removed
+  before they are deleted.  With the default range (first to last image)
+  this removes the entire sequence.  Since the number of image files can
+  be large for long simulations, this provides a safe way to clean up the
+  working directory without risk of accidentally deleting other files.
+  This will, however, only delete images of the last run.  If that was
   stopped before completion or the output filename has changed, older
   images created by previous runs will not be deleted.
 
@@ -886,18 +922,33 @@ to be adjusted for presentation purposes.  The same transformations are
 also applied when exporting images or movies.
 
 The **playback controls** below the image allow to select the displayed
-image and control the slideshow settings:
+image, restrict the active range, and control the slideshow settings:
 
-- **Play**: Start playing the animation from the current frame to the
-  last frame.
+- **Play**: Start playing the animation, advancing through the active
+  range defined by the **Start** and **Stop** controls.
 - **Loop**: Toggle continuous looping of the animation.  When enabled,
-  playback wraps around from the last image back to the first.
+  playback wraps around from the last image of the active range back to
+  the first.
 - **Delay**: Set the delay in milliseconds between frames
   during animation playback.
+- **Start**: First image of the active range.  Animation, single
+  stepping, movie export, and image deletion are all restricted to
+  images at or after this position.  Defaults to the first image.
+- **Stop**: Last image of the active range.  Defaults to the last image
+  and keeps following the growing sequence while a simulation produces
+  new images, unless it has been set to a specific value.
 
-- **First**: Jump to the first image in the sequence.
+- **First**: Jump to the first image of the active range.
 - **Previous**: Step back to the previous image.
-- The **slider control** allows selecting a frame in the image sequence
-  by by moving the slider position.
+- The **slider control** selects a frame in the image sequence by moving
+  the slider position.  Its track is colored to indicate the active
+  range: positions inside the **Start** to **Stop** range are drawn in
+  blue, while the skipped images outside it are drawn in red.
 - **Next**: Step forward to the next image.
-- **Last**: Jump to the last image in the sequence.
+- **Last**: Jump to the last image of the active range.
+
+.. versionadded:: 2.1
+
+   The **Start** and **Stop** controls restrict animation, single
+   stepping, movie export, and deletion to a selected range of images,
+   and the navigation slider highlights that range in color.

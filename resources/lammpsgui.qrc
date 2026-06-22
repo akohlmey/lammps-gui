@@ -13,6 +13,20 @@
     <file>icons/tutorial6-logo.png</file>
     <file>icons/tutorial7-logo.png</file>
     <file>icons/tutorial8-logo.png</file>
+    <file>icons/matsci1-logo.png</file>
+    <file>icons/matsci2-logo.png</file>
+    <file>icons/matsci3-logo.png</file>
+    <file>icons/matsci4-logo.png</file>
+    <file>icons/matsci5-logo.png</file>
+    <file>icons/matsci6-logo.png</file>
+    <file>icons/matsci7-logo.png</file>
+    <file>icons/matsci8-logo.png</file>
+    <file>icons/matsci9-logo.png</file>
+    <file>icons/matsci10-logo.png</file>
+    <file>icons/matsci11-logo.png</file>
+    <file>icons/matsci12-logo.png</file>
+    <file>icons/matsci13-logo.png</file>
+    <file>icons/matsci14-logo.png</file>
     <file>help_index.table</file>
     <file>image_style.table</file>
     <!-- This file is updated with: grep 'mycmd ==' ../../src/input.cpp | sed -e 's/^.*mycmd == "\(.*\)".*$/\1/' > lammps_internal_commands.txt -->

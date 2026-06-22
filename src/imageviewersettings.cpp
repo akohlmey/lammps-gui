@@ -17,6 +17,7 @@
 
 #include "imageviewer_internal.h"
 
+#include "colormaps.h"
 #include "constants.h"
 #include "helpers.h"
 #include "lammpsgui.h"
@@ -195,11 +196,16 @@ void ImageViewer::globalSettings()
     bgcolor->setValidator(colorvalidator);
     bgcolor->setMaximumWidth(fwidth);
     layout->addWidget(bgcolor, idx, n++, 1, 1);
-    layout->addWidget(new QLabel("Topcolor: "), idx, n++, 1, 1, Qt::AlignVCenter | Qt::AlignRight);
+    auto *gradient = new QCheckBox("Gradient: ", this);
+    gradient->setChecked(usegradient);
+    gradient->setToolTip("Blend the background from the bottom to the top color");
+    layout->addWidget(gradient, idx, n++, 1, 1, Qt::AlignVCenter | Qt::AlignRight);
     auto *b2color = new QLineEdit(backcolor2);
     b2color->setCompleter(colorcompleter);
     b2color->setValidator(colorvalidator);
     b2color->setMaximumWidth(fwidth);
+    b2color->setEnabled(usegradient);
+    connect(gradient, &QCheckBox::toggled, b2color, &QLineEdit::setEnabled);
     layout->addWidget(b2color, idx++, n++, 1, 1);
 
     n = 0;
@@ -343,6 +349,7 @@ void ImageViewer::globalSettings()
     if (subdiam->hasAcceptableInput()) subboxdiam = subdiam->text().toDouble();
     if (bgcolor->hasAcceptableInput()) backcolor = bgcolor->text();
     if (b2color->hasAcceptableInput()) backcolor2 = b2color->text();
+    usegradient = gradient->isChecked();
 
     antialias = fsaa->isChecked();
     button    = findChild<QPushButton *>("antialias");
@@ -389,6 +396,34 @@ QRadioButton *ImageViewer::addShapeButton(QButtonGroup *group, const QString &la
     return button;
 }
 
+// resolve a color-map stop to a QColor (named color or explicit RGB)
+static QColor stopColor(const ColorMapStop &s)
+{
+    return s.name.isEmpty() ? QColor::fromRgbF(s.r, s.g, s.b) : QColor(s.name);
+}
+
+// Populate a color-map combo box from the shared colormaps.cpp table, so the
+// preview swatches match exactly what the dump-image command renders.  Atoms and
+// bonds offer the identical set of maps (the atom "amap" and bond "bmap"
+// selectors), so the item list lives in one place.
+static void addColorMapItems(QComboBox *box)
+{
+    for (const QString &name : colorMapNames()) {
+        const ColorMapDef &def = colorMapDef(name);
+        if (def.continuous) {
+            QList<QPair<double, QColor>> stops;
+            for (const auto &s : def.stops)
+                stops.append({s.pos, stopColor(s)});
+            box->addItem(gradient_icon(stops), name);
+        } else {
+            QList<QColor> colors;
+            for (const auto &s : def.stops)
+                colors.append(stopColor(s));
+            box->addItem(sequence_icon(colors), name);
+        }
+    }
+}
+
 void ImageViewer::atomSettings()
 {
     updatePeratom();
@@ -415,10 +450,10 @@ void ImageViewer::atomSettings()
 
     layout->setColumnStretch(0, 7);
     layout->setColumnStretch(1, 4);
-    layout->setColumnStretch(2, 7);
+    layout->setColumnStretch(2, 6);
     layout->setColumnStretch(3, 3);
-    layout->setColumnStretch(4, 7);
-    layout->setColumnStretch(5, 7);
+    layout->setColumnStretch(4, 6);
+    layout->setColumnStretch(5, 3);
     layout->setColumnStretch(6, 4);
 
     n = 0;
@@ -473,32 +508,7 @@ void ImageViewer::atomSettings()
     layout->addWidget(new QLabel("Map: "), idx, n++, 1, 1, Qt::AlignVCenter | Qt::AlignRight);
     auto *amap = new QComboBox;
     amap->setObjectName("amap");
-    amap->addItem(gradient_icon({QColor(0, 57, 109), "white", QColor(117, 14, 19)}), "BWR");
-    amap->addItem(gradient_icon({QColor(117, 14, 19), "white", QColor(0, 57, 109)}), "RWB");
-    amap->addItem(gradient_icon({QColor(73, 29, 141), "white", QColor(0, 65, 68)}), "PWT");
-    amap->addItem(gradient_icon({"blue", "white", "green"}), "BWG");
-    amap->addItem(gradient_icon({"blue", "green", "red"}), "BGR");
-    amap->addItem(gradient_icon({"black", "white"}), "Grayscale");
-    // clang-format off
-    amap->addItem(gradient_icon({QColor(72, 33, 115), QColor(111, 111, 142), QColor(41, 175, 127),
-                                 QColor(189, 223, 174)}), "Viridis");
-    amap->addItem(gradient_icon({QColor(13, 8, 135), QColor(156, 23, 150), QColor(237, 121, 83),
-                                 QColor(240, 249, 33)}), "Plasma");
-    amap->addItem(gradient_icon({QColor(8, 8, 12), QColor(81, 18, 124), QColor(183, 55, 121),
-                                 QColor(252, 137, 97), QColor(252, 253, 191)}), "Inferno");
-    amap->addItem(gradient_icon({QColor(18, 39, 64), QColor(27, 72, 94), QColor(86, 139, 135),
-                                 QColor(181, 209, 174)}), "Teal");
-    amap->addItem(gradient_icon({"red", "yellow", "green", "cyan", "blue", "purple"}), "Rainbow");
-    amap->addItem(sequence_icon({QColor(206, 206, 206), QColor(165, 89, 170), QColor(81, 168, 156),
-                                 QColor(240, 197, 113), QColor(224, 43, 53), QColor(8, 42, 84)}),
-                  "Sequential");
-    amap->addItem(sequence_icon({QColor(37, 102, 118), QColor(100, 221, 150), QColor(146, 49, 36),
-                                 QColor(100, 212, 253), QColor(5, 110, 18), QColor(253, 89, 37),
-                                 QColor(70, 243, 62), QColor(186, 134, 92), QColor(201, 221, 135),
-                                 QColor(62, 76, 20)}), "Landscape");
-    amap->addItem(sequence_icon({"red", "cyan", "green", "black", "magenta", "blue", "yellow",
-                                 "purple", "white", "orange"}), "Basic");
-    // clang-format on
+    addColorMapItems(amap);
     selectComboItem(amap, colormap);
     if ((atomcolor == "type") || (atomcolor == "element")) amap->setEnabled(false);
     QRegularExpression validminmax(
@@ -521,9 +531,12 @@ void ImageViewer::atomSettings()
     bondbutton->setChecked(showbonds);
     layout->addWidget(bondbutton, idx, n++, 1, 1);
     layout->addWidget(new QLabel("Color: "), idx, n++, 1, 1, Qt::AlignVCenter | Qt::AlignRight);
-    auto *bncolor = new QComboBox;
+    const bool hasRealBonds = (lammps->extractSetting("molecule_flag") == 1);
+    auto *bncolor           = new QComboBox;
     bncolor->setObjectName("bncolor");
-    bncolor->addItems({"atom", "type"});
+    // compute bond/local "color by value" choices need real bonds and are not
+    // compatible with distance-derived AutoBonds
+    rebuildBondColorChoices(bncolor, hasRealBonds && !autobond);
     if (atomcustom) { // select item that was selected the last time
         if (bondcolor == "none") {
             bondbutton->setChecked(false);
@@ -558,20 +571,47 @@ void ImageViewer::atomSettings()
         }
     }
     layout->addWidget(bndiam, idx, n++, 1, 1);
-    auto *autobutton = new QCheckBox("AutoBonds:", this);
-    autobutton->setChecked(autobond);
-    autobutton->setEnabled(hasAutobonds());
-    autobutton->setObjectName("autobutton");
-    layout->addWidget(autobutton, idx, n++, 1, 1, Qt::AlignVCenter | Qt::AlignRight);
-    auto *bcutoff = new QLineEdit(QString::number(bondcutoff));
-    bcutoff->setValidator(new QDoubleValidator(0.001, 10.0, 100, this));
-    bcutoff->setEnabled(hasAutobonds());
-    layout->addWidget(bcutoff, idx++, n++, 1, 1);
-    if (lammps->extractSetting("molecule_flag") != 1) {
+    layout->addWidget(new QLabel("Opacity: "), idx, n++, 1, 1, Qt::AlignVCenter | Qt::AlignRight);
+    auto *bntrans = new QLineEdit(QString::number(bondtrans));
+    bntrans->setValidator(transvalidator);
+    layout->addWidget(bntrans, idx++, n++, 1, 1);
+    if (!hasRealBonds) {
         bondbutton->setEnabled(false);
         bondbutton->setChecked(false);
         showbonds = false;
     }
+
+    // bond color-map row, mirroring the atom Map/Min/Max row. The AutoBonds
+    // toggle and its cutoff field sit in the first column (mirroring the atoms'
+    // VDW toggle), which frees the bond row above for the Opacity field. The map
+    // fields are only used when bonds are colored by a per-bond compute value.
+    n                = 0;
+    auto *autobutton = new QCheckBox("AutoBonds:", this);
+    autobutton->setChecked(autobond);
+    autobutton->setEnabled(hasAutobonds());
+    autobutton->setObjectName("autobutton");
+    auto *bcutoff = new QLineEdit(QString::number(bondcutoff));
+    bcutoff->setValidator(new QDoubleValidator(0.001, 10.0, 100, this));
+    bcutoff->setEnabled(hasAutobonds());
+    auto *autolayout = new QHBoxLayout;
+    autolayout->setContentsMargins(0, 0, 0, 0);
+    autolayout->addWidget(autobutton);
+    autolayout->addWidget(bcutoff);
+    layout->addLayout(autolayout, idx, n++, 1, 1);
+    layout->addWidget(new QLabel("Map: "), idx, n++, 1, 1, Qt::AlignVCenter | Qt::AlignRight);
+    auto *bmap = new QComboBox;
+    bmap->setObjectName("bmap");
+    addColorMapItems(bmap);
+    selectComboItem(bmap, bondcolormap);
+    layout->addWidget(bmap, idx, n++, 1, 1);
+    layout->addWidget(new QLabel("Min: "), idx, n++, 1, 1, Qt::AlignVCenter | Qt::AlignRight);
+    auto *bmapmin = new QLineEdit(bondmapmin);
+    bmapmin->setValidator(minmaxvalidator);
+    layout->addWidget(bmapmin, idx, n++, 1, 1);
+    layout->addWidget(new QLabel("Max: "), idx, n++, 1, 1, Qt::AlignVCenter | Qt::AlignRight);
+    auto *bmapmax = new QLineEdit(bondmapmax);
+    bmapmax->setValidator(minmaxvalidator);
+    layout->addWidget(bmapmax, idx++, n++, 1, 1);
 
 #if QT_VERSION < QT_VERSION_CHECK(6, 7, 0)
     connect(vdwbutton, &QCheckBox::stateChanged, this, &ImageViewer::vdwbondSync);
@@ -580,6 +620,18 @@ void ImageViewer::atomSettings()
     connect(vdwbutton, &QCheckBox::checkStateChanged, this, &ImageViewer::vdwbondSync);
     connect(autobutton, &QCheckBox::checkStateChanged, this, &ImageViewer::vdwbondSync);
 #endif
+
+    // enable the bond map/min/max fields only when the bond Color is a per-bond
+    // value (a bond/local attribute), tracking changes to the bond Color combo
+    auto syncBondMap = [bmap, bmapmin, bmapmax, this](const QString &text) {
+        const bool byvalue = bondLocalAttrs.contains(text);
+        bmap->setEnabled(byvalue);
+        bmapmin->setEnabled(byvalue);
+        bmapmax->setEnabled(byvalue);
+    };
+    syncBondMap(bncolor->currentText());
+    connect(bncolor, &QComboBox::currentTextChanged, this, syncBondMap);
+
     layout->addWidget(new QHline, idx++, 0, 1, MAXCOLS);
 
     n = 0;
@@ -773,6 +825,11 @@ void ImageViewer::atomSettings()
     } else {
         bonddiam = value;
     }
+
+    if (bntrans->hasAcceptableInput()) bondtrans = bntrans->text().toDouble();
+    bondcolormap = bmap->currentText();
+    if (bmapmin->hasAcceptableInput()) bondmapmin = bmapmin->text();
+    if (bmapmax->hasAcceptableInput()) bondmapmax = bmapmax->text();
 
     // enable atom size input field in main window, if not set to symbolic value
     if (atomcustom) {

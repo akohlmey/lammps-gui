@@ -165,29 +165,32 @@ protected:
 
     /**
      * @brief Create an introduction page for a tutorial
-     * @param ntutorial Tutorial number
+     * @param collection Tutorial collection index
+     * @param ntutorial Tutorial number within the collection
      * @param infotext Information text to display
      * @return Wizard page with tutorial introduction
      */
-    QWizardPage *tutorialIntro(const int ntutorial, const QString &infotext);
+    QWizardPage *tutorialIntro(int collection, int ntutorial, const QString &infotext);
 
     /**
      * @brief Create a directory selection page for a tutorial
-     * @param ntutorial Tutorial number
+     * @param collection Tutorial collection index
+     * @param ntutorial Tutorial number within the collection
      * @return Wizard page for tutorial directory selection
      */
-    QWizardPage *tutorialDirectory(const int ntutorial);
+    QWizardPage *tutorialDirectory(int collection, int ntutorial);
 
     /**
      * @brief Set up files and resources for a tutorial
-     * @param tutno Tutorial number
+     * @param collection Tutorial collection index
+     * @param tutno Tutorial number within the collection
      * @param dir Directory to create files in
      * @param purgedir Whether to clean the directory first
      * @param getsolution Whether to include solution files
      * @param openwebpage Whether to open the tutorial web page
      */
-    void setupTutorial(int tutno, const QString &dir, bool purgedir, bool getsolution,
-                       bool openwebpage);
+    void setupTutorial(int collection, int tutno, const QString &dir, bool purgedir,
+                       bool getsolution, bool openwebpage);
 
     /** @brief Clean up the inspect file dialog list */
     void purgeInspectList();
@@ -308,9 +311,10 @@ private slots:
 
     /**
      * @brief Start a tutorial wizard
-     * @param tutno Tutorial number (1-8)
+     * @param collection Tutorial collection index
+     * @param tutno Tutorial number within the collection
      */
-    void startTutorial(int tutno);
+    void startTutorial(int collection, int tutno);
 
     /** @brief Open HOWTO documentation */
     void howto();
@@ -341,8 +345,8 @@ private:
     /** @brief Append accelerator-package command-line arguments to lammpsArgs */
     void appendAcceleratorArgs(int accel, QSettings &settings);
 
-    /** @brief Open the online web page for the given tutorial number */
-    void openTutorialWebpage(int tutno);
+    /** @brief Open the online web page for the given collection and tutorial number */
+    void openTutorialWebpage(int collection, int tutno);
 
     /** @brief One file to fetch for a tutorial: tutorial number and relative filename */
     struct DownloadItem {
@@ -351,9 +355,9 @@ private:
         QString fname;
     };
 
-    /** @brief Download the listed tutorial files with progress; false on error (dialog shown) */
+    /** @brief Download the listed tutorial files from @p baseUrl with progress; false on error */
     bool downloadTutorialFiles(const QString &dir, const QList<DownloadItem> &downloads,
-                               URLDownloader &downloader);
+                               URLDownloader &downloader, const QString &baseUrl);
 
     /** @brief Create and show/hide the output log window for a run */
     void createLogWindow(QSettings &settings);
