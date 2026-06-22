@@ -1,6 +1,9 @@
 # Native chart backend -- design and staged plan
 
-Status: planning / in development (started 2026-06-22).
+Status: Phase 1 complete (2026-06-22) -- the native backend is available as an
+opt-in build (`-DLAMMPS_GUI_USE_NATIVE_CHARTS=ON`), default off, verified end to
+end via the `-c` chart CLI. Phases 2-4 (make it the default, delete QtGraphs,
+then go native-only) are deferred to the next development cycle, after v2.1.0.
 Branch: `native-chart-backend` (off `develop`).
 
 This is the durable design memory for replacing the two Qt-module chart
@@ -135,22 +138,30 @@ The trajectory: land native optional and default-off this cycle (so the pending
 v2.1.0 release ships with unchanged behavior), make it the default next cycle,
 delete the QML / QtGraphs backend, then delete QtCharts and go native-only.
 
-### Phase 1 -- optional native backend (this cycle, before v2.1.0)
+### Phase 1 -- optional native backend (this cycle, before v2.1.0) -- DONE
 
-Minimal blast radius. Default behavior unchanged.
+Minimal blast radius. Default behavior unchanged. Landed as four signed commits:
 
-1. Commit: `plotaxismath.{cpp,h}` (Qt-free) + GoogleTest unit tests for tick
-   intervals and label formatting.
-2. Commit: `plotseries.{cpp,h}` neutral model + `plotwidget.{cpp,h}` renderer,
-   exercised by a standalone path so it can be screenshot-tested before wiring.
-3. Commit: `nativechartbackend.{cpp,h}` adapter + `ChartBackend::create()`
-   factory collapsing the `#ifdef`s; native restores dashed reference lines.
-4. Commit: CMake `LAMMPS_GUI_USE_NATIVE_CHARTS` option (default OFF) + wiring;
-   docs (CLAUDE.md "Chart backend abstraction" + CMake options table).
+1. `plotaxismath.{cpp,h}` (Qt-free) + GoogleTest unit tests for tick intervals
+   and label formatting (19 cases).
+2. `plotseries.h` neutral model + `plotwidget.{cpp,h}` renderer, screenshot-
+   tested standalone before wiring.
+3. `ChartBackend::create()` factory (`chartbackend.cpp`) + a new
+   `setSeriesLineStyle()` interface method, removing the backend instantiation
+   and the dashed-reference-line `#ifdef`s from `ChartViewer`. Behavior-
+   preserving for QtCharts/QtGraphs; native restores dashed reference lines.
+4. `nativechartbackend.{cpp,h}` adapter + the `LAMMPS_GUI_USE_NATIVE_CHARTS`
+   CMake option (default OFF) + docs.
 
-One signed commit per concern; each builds both plugin and linked configs.
-Gate: native output is visually on par with QtCharts via the `-c` CLI
-screenshot harness under `xvfb-run`.
+Verified: native output renders correctly through the `-c` chart CLI under
+`xvfb-run`; the QtGraphs (plugin) and QtCharts (linked) builds still compile and
+all non-GUI unit tests stay green.
+
+Outstanding for Phase 2 hardening (noted here so they are not forgotten):
+interactive testing of the scatter/points mode, the smoothing visibility
+toggles, and the range sliders in the native build; a committed render smoke
+test for `PlotWidget`; dark-mode and high-DPI parity; save-as-image at export
+resolution.
 
 ### Phase 2 -- native becomes default (next cycle)
 
