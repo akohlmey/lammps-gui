@@ -54,13 +54,6 @@ source code, pre-compiled packages are provided for Windows, macOS, and
 Linux (x86_64), so that most users can run LAMMPS-GUI and obtain an
 identical experience instantly, without having to compile anything.
 
-![A LAMMPS-GUI session with a simulation in flight. The editor shows
-syntax highlighting, line numbers, and a marker on the currently
-processed input line; the status bar shows CPU utilization and run
-progress; the Image Viewer shows the starting geometry; the Output window
-the screen output; and the Charts window a live plot of a thermodynamic
-data column.\label{fig:editor}](images/lammps-gui-deform.png){ width=74% }
-
 # Statement of need
 
 The development of LAMMPS-GUI was driven by the experience of teaching
@@ -74,6 +67,13 @@ to the ARM CPU architecture.  As a single, self-contained,
 cross-platform tool that mirrors the console workflow, LAMMPS-GUI
 removes this barrier and lets instructors teach one interface on all
 platforms and focus on teaching LAMMPS and molecular dynamics.
+
+![A LAMMPS-GUI session with a simulation in flight. The editor shows
+syntax highlighting, line numbers, and a marker on the currently
+processed input line; the status bar shows CPU utilization and run
+progress; the Image Viewer shows the starting geometry; the Output window
+the screen output; and the Charts window a live plot of a thermodynamic
+data column.\label{fig:editor}](images/lammps-gui-deform.png){ width=74% }
 
 Several other approaches to make running LAMMPS simulations more
 accessible exist, but they target different needs.  Commercial
