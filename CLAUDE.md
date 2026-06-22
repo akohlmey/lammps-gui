@@ -178,7 +178,7 @@ We are adding an AI assistant to the GUI frontend of this physics-simulation
 software. Work is exploratory: build a **minimal** implementation first to probe
 workflow options, then decide a fuller architecture and implement interactively.
 
-**Before working on this feature, read `docs/ai-assistant-design.md`** — it is
+**Before working on this feature, read `doc/ai-assistant-design.md`** — it is
 the durable design memory (provider abstraction, RAG, reliability via
 verification, tool-calling file generation, the wizard/expert-system model, the
 probe verify-repair loop, and the case-based learning approach). Treat its
