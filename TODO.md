@@ -57,6 +57,29 @@ a longer-term idea or deliberately out of scope.
     route them in `viewFile()` / "Open Image File(s)..." (or a sibling "Open
     Movie..."), and reuse the conversion-cache cleanup from the item above.
 
+## Native chart backend -- replace QtCharts and QtGraphs (planned 2026-06-22)
+
+Replace both Qt-module chart backends with a single self-contained `QPainter`
+renderer built only on Qt Widgets, ending the QtGraphs / QML technical debt
+(faked axis titles, stringly-typed QML reflection, tick-format reset hack, no
+dashed reference lines) and the dependency on the GPLv3 QtCharts add-on. The
+end goal is native-only. Full design and staged plan in
+`doc/native-chart-backend.md`; work happens on the `native-chart-backend`
+branch (off `develop`). Summary of phases:
+
+  - Phase 1 (this cycle, before v2.1.0): add an optional native backend behind
+    a new `LAMMPS_GUI_USE_NATIVE_CHARTS` CMake option, default OFF, so released
+    behavior is unchanged. New files: `plotaxismath` (Qt-free, unit-tested),
+    `plotseries` (neutral model), `plotwidget` (renderer), `nativechartbackend`
+    (adapter); plus a `ChartBackend::create()` factory collapsing the `#ifdef`s.
+  - Phase 2 (next cycle): make native the default; harden dark mode, high-DPI,
+    save-as-image, live-update repaint.
+  - Phase 3 (next cycle): delete the QtGraphs backend; drop Graphs / Quick /
+    QuickWidgets from the build.
+  - Phase 4 (after a release of real-world use): retype the `ChartBackend`
+    interface and `chartviewer` onto the neutral model, delete the QtCharts
+    backend, drop the Qt Charts module -- native-only, LGPLv3 Widgets only.
+
 # Refactoring status and recommendations
 
 The staged code-cleanup and C++17-modernization effort (stages 1-8 below) is
