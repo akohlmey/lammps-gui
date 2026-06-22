@@ -13,6 +13,7 @@
 
 #include "plotaxismath.h"
 
+#include <QFont>
 #include <QFontMetricsF>
 #include <QImage>
 #include <QPaintEvent>
@@ -26,9 +27,10 @@
 namespace {
 
 // layout constants (logical pixels)
-constexpr double PAD      = 6.0; ///< outer padding around the whole chart
-constexpr double GAP      = 4.0; ///< spacing between adjacent text/lines
-constexpr double TICK_LEN = 5.0; ///< length of axis tick marks
+constexpr double OUTER     = 10.0; ///< outer padding around the whole chart
+constexpr double TITLE_GAP = 8.0;  ///< gap between a title and the adjacent labels/plot
+constexpr double LABEL_GAP = 5.0;  ///< gap between tick labels and the axis
+constexpr double TICK_LEN  = 5.0;  ///< length of axis tick marks
 
 // gridline / frame colors, matched to the previous QtGraphs/QtCharts appearance
 const QColor MAJOR_GRID(160, 160, 160);
@@ -159,7 +161,13 @@ void PlotWidget::doRender(QPainter &p, const QRectF &target) const
     p.fillRect(target, Qt::white);
 
     const QFontMetricsF fm(p.font());
-    const double textH = fm.height();
+    const double labelH = fm.height();
+
+    // bold font for the chart and axis titles
+    QFont titleFont = p.font();
+    titleFont.setBold(true);
+    const QFontMetricsF fmT(titleFont);
+    const double titleH = fmT.height();
 
     // axis ranges (guarded against a zero span)
     double xmin = m_xaxis.min, xmax = m_xaxis.max;
@@ -183,14 +191,16 @@ void PlotWidget::doRender(QPainter &p, const QRectF &target) const
     const bool hasXTitle = !m_xaxis.title.isEmpty();
     const bool hasYTitle = !m_yaxis.title.isEmpty();
 
-    const double leftMargin   = PAD + (hasYTitle ? textH + GAP : 0.0) + maxYLabelW + GAP + TICK_LEN;
-    const double bottomMargin = PAD + (hasXTitle ? textH + GAP : 0.0) + textH + GAP + TICK_LEN;
-    const double topMargin    = PAD + (hasTitle ? textH + GAP : 0.0);
+    const double leftMargin =
+        OUTER + (hasYTitle ? titleH + TITLE_GAP : 0.0) + maxYLabelW + LABEL_GAP + TICK_LEN;
+    const double bottomMargin =
+        OUTER + (hasXTitle ? titleH + TITLE_GAP : 0.0) + labelH + LABEL_GAP + TICK_LEN;
+    const double topMargin = OUTER + (hasTitle ? titleH + TITLE_GAP : 0.5 * labelH);
     // leave room so the last X tick label is not clipped at the right edge
     double lastXLabelW = 0.0;
     if (!xticks.empty())
         lastXLabelW = fm.horizontalAdvance(labelText(xticks.back(), m_xaxis.labelFormat));
-    const double rightMargin = PAD + 0.5 * lastXLabelW;
+    const double rightMargin = OUTER + 0.5 * lastXLabelW;
 
     QRectF plot(target.left() + leftMargin, target.top() + topMargin,
                 target.width() - leftMargin - rightMargin,
@@ -205,10 +215,8 @@ void PlotWidget::doRender(QPainter &p, const QRectF &target) const
         return plot.bottom() - (vy - ymin) / (ymax - ymin) * plot.height();
     };
 
-    // minor gridlines first (lighter), then major (darker)
-    auto drawVLines = [&](const std::vector<double> &vals, const QColor &col) {
-        QPen pen(col);
-        pen.setWidth(0); // cosmetic 1px
+    // gridlines: dashed minor (lighter) first, then solid major (darker)
+    auto drawVLines = [&](const std::vector<double> &vals, const QPen &pen) {
         p.setPen(pen);
         for (double v : vals) {
             const double x = mapX(v);
@@ -216,9 +224,7 @@ void PlotWidget::doRender(QPainter &p, const QRectF &target) const
             p.drawLine(QPointF(x, plot.top()), QPointF(x, plot.bottom()));
         }
     };
-    auto drawHLines = [&](const std::vector<double> &vals, const QColor &col) {
-        QPen pen(col);
-        pen.setWidth(0);
+    auto drawHLines = [&](const std::vector<double> &vals, const QPen &pen) {
         p.setPen(pen);
         for (double v : vals) {
             const double y = mapY(v);
@@ -227,14 +233,20 @@ void PlotWidget::doRender(QPainter &p, const QRectF &target) const
         }
     };
 
+    QPen majorPen(MAJOR_GRID);
+    majorPen.setWidth(0); // cosmetic 1px, solid
+    QPen minorPen(MINOR_GRID);
+    minorPen.setWidth(0);
+    minorPen.setStyle(Qt::DashLine); // dashed, matching the QtCharts look
+
     const int xsub = std::max(0, m_xaxis.subTicks);
     const int ysub = std::max(0, m_yaxis.subTicks);
     if (m_xaxis.minorGridVisible && xsub > 0)
-        drawVLines(PlotAxisMath::tickValues(xmin, xmax, xMajor / (xsub + 1)), MINOR_GRID);
+        drawVLines(PlotAxisMath::tickValues(xmin, xmax, xMajor / (xsub + 1)), minorPen);
     if (m_yaxis.minorGridVisible && ysub > 0)
-        drawHLines(PlotAxisMath::tickValues(ymin, ymax, yMajor / (ysub + 1)), MINOR_GRID);
-    if (m_xaxis.gridVisible) drawVLines(xticks, MAJOR_GRID);
-    if (m_yaxis.gridVisible) drawHLines(yticks, MAJOR_GRID);
+        drawHLines(PlotAxisMath::tickValues(ymin, ymax, yMajor / (ysub + 1)), minorPen);
+    if (m_xaxis.gridVisible) drawVLines(xticks, majorPen);
+    if (m_yaxis.gridVisible) drawHLines(yticks, majorPen);
 
     // plot frame
     {
@@ -253,7 +265,7 @@ void PlotWidget::doRender(QPainter &p, const QRectF &target) const
         p.drawLine(QPointF(x, plot.bottom()), QPointF(x, plot.bottom() + TICK_LEN));
         const QString lbl = labelText(v, m_xaxis.labelFormat);
         const double w    = fm.horizontalAdvance(lbl);
-        p.drawText(QPointF(x - 0.5 * w, plot.bottom() + TICK_LEN + GAP + fm.ascent()), lbl);
+        p.drawText(QPointF(x - 0.5 * w, plot.bottom() + TICK_LEN + LABEL_GAP + fm.ascent()), lbl);
     }
     for (double v : yticks) {
         const double y = mapY(v);
@@ -261,30 +273,31 @@ void PlotWidget::doRender(QPainter &p, const QRectF &target) const
         p.drawLine(QPointF(plot.left() - TICK_LEN, y), QPointF(plot.left(), y));
         const QString lbl = labelText(v, m_yaxis.labelFormat);
         const double w    = fm.horizontalAdvance(lbl);
-        p.drawText(
-            QPointF(plot.left() - TICK_LEN - GAP - w, y + 0.5 * fm.ascent() - 0.5 * fm.descent()),
-            lbl);
+        p.drawText(QPointF(plot.left() - TICK_LEN - LABEL_GAP - w,
+                           y + 0.5 * fm.ascent() - 0.5 * fm.descent()),
+                   lbl);
     }
 
-    // axis titles
+    // titles are drawn bold
+    p.setFont(titleFont);
+    p.setPen(Qt::black);
     if (hasXTitle) {
-        const double w = fm.horizontalAdvance(m_xaxis.title);
-        p.drawText(QPointF(plot.center().x() - 0.5 * w, target.bottom() - PAD - fm.descent()),
+        const double w = fmT.horizontalAdvance(m_xaxis.title);
+        p.drawText(QPointF(plot.center().x() - 0.5 * w, target.bottom() - OUTER - fmT.descent()),
                    m_xaxis.title);
     }
     if (hasYTitle) {
         p.save();
-        const double w = fm.horizontalAdvance(m_yaxis.title);
-        p.translate(target.left() + PAD + fm.ascent(), plot.center().y() + 0.5 * w);
+        const double w = fmT.horizontalAdvance(m_yaxis.title);
+        p.translate(target.left() + OUTER + fmT.ascent(), plot.center().y() + 0.5 * w);
         p.rotate(-90.0);
         p.drawText(QPointF(0.0, 0.0), m_yaxis.title);
         p.restore();
     }
-
-    // chart title
     if (hasTitle) {
-        const double w = fm.horizontalAdvance(m_title);
-        p.drawText(QPointF(plot.center().x() - 0.5 * w, target.top() + PAD + fm.ascent()), m_title);
+        const double w = fmT.horizontalAdvance(m_title);
+        p.drawText(QPointF(plot.center().x() - 0.5 * w, target.top() + OUTER + fmT.ascent()),
+                   m_title);
     }
 
     // series (clipped to the plot area)
