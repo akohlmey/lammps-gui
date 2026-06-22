@@ -1127,6 +1127,9 @@ void ChartWindow::selectSmooth(int)
     window->setEnabled(sgEnabled);
     order->setEnabled(sgEnabled);
     updateSmooth();
+    // re-fit the axes to the now-displayed series so the range covers the whole
+    // data (e.g. a smoothed curve that overshoots the raw range is not clipped)
+    resetZoom();
 }
 
 void ChartWindow::updateSmooth()
