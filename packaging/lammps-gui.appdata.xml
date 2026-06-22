@@ -54,6 +54,30 @@
   </provides>
 
   <releases>
+    <release version="2.0.99" timestamp="1782069988">
+      <description>
+        Reorganize the tutorials into multiple collections: rename the existing set to "Soft Matter", number the collections in the menu, add a new "Materials Science" collection (14 tutorials with per-tutorial logos and descriptions, released incrementally as their text is finalized), and add a placeholder for a planned "Granular / DEM" collection
+        Make the snapshot-image color maps a single source of truth shared by the dump command builder and the preview swatches; correct Viridis, Plasma, and Inferno to canonical matplotlib values and add Magma, Cividis, and Turbo
+        Color bonds by a per-bond compute value with an independent bond color map and range, give bonds an independent opacity, and add a background gradient toggle to the snapshot viewer
+        Emit only the dump-image settings that differ from the LAMMPS defaults, producing cleaner and more portable image commands
+        Document the multi-collection tutorials and how to add or update a tutorial collection, the bond color/opacity options, and the color maps
+        Update internal data tables (help and image-style index) and packaging scripts
+      </description>
+    </release>
+    <release version="2.0.90" timestamp="1781728854">
+      <description>
+        Add a "Plot Data File..." import dialog and menu entry to plot external data files (whitespace/.dat, CSV, LAMMPS YAML, and JSON) in the chart window, with column selection and renaming at import time
+        Add chart display modes (lines, points, lines+points) and a per-chart style dialog, with independent styles for raw and processed series
+        Add a Postprocess dialog with autocorrelation, polynomial and Birch-Murnaghan equation-of-state curve fits with overlays, and custom-function plotting and nonlinear curve fitting via a vendored JIT-less subset of the Lepton expression parser
+        Extend the standalone plot mode with derived columns, multi-file overlay, fit x-range, reference lines, editable title and axis labels, and the base filename as the default title
+        Improve the Birch-Murnaghan EOS post-processing: number-of-atoms input, corrected lattice-constant formula, and clearer V/V0/a0 result labels
+        Add -c/--chart, -i/--image, and -t/--text command line flags to open files directly
+        View and convert image files in the snapshot viewer and via ImageMagick in the slideshow viewer, add a standalone slideshow mode, add Start/Stop range controls and a color-coded slider to the slideshow, and keep a stable window size when images have different dimensions
+        Reorganize and rename File menu entries, add keyboard shortcuts for View Image and Plot Data File, and warn when View Text File is given a binary or image file
+        Improve the YAML thermo parser to handle the sequence-of-maps format and tolerate trailing commas
+        Extensive internal refactoring for consistency and testability: short Cfg and Keys constant namespaces, QString-based interfaces, a pure dump-image command builder, and Qt-free least-squares, analysis, and fitting cores
+      </description>
+    </release>
     <release version="2.0.6" timestamp="1777151498">
       <description>
         more refactoring for more efficiency and consistency
