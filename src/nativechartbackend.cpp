@@ -148,6 +148,15 @@ void NativeChartBackend::setSeriesLineStyle(QXYSeries *s, Qt::PenStyle style)
     }
 }
 
+void NativeChartBackend::setReferenceLabel(QXYSeries *s, const QString &label)
+{
+    if (Entry *e = findEntry(s)) {
+        e->plot->isReference = true;
+        e->plot->refLabel    = label;
+        m_plot->update();
+    }
+}
+
 void NativeChartBackend::removeSeries(QXYSeries *s)
 {
     for (auto it = m_entries.begin(); it != m_entries.end(); ++it) {

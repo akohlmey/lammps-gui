@@ -40,7 +40,9 @@ struct PlotSeries {
     Qt::PenStyle style = Qt::SolidLine;         ///< line style, e.g. dashed reference lines
     qreal markerSize   = 6.0;                   ///< marker diameter (Scatter series)
     QString name;                               ///< series label (for a future legend)
-    bool visible = true;                        ///< whether the series is drawn
+    bool visible     = true;                    ///< whether the series is drawn
+    bool isReference = false;                   ///< draw as a labeled reference line
+    QString refLabel;                           ///< text drawn next to a reference line
 };
 
 /**

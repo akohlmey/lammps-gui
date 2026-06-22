@@ -114,6 +114,21 @@ public:
     virtual void setSeriesLineStyle(QXYSeries *s, Qt::PenStyle style) = 0;
 
     /**
+     * @brief Mark a series as a labeled reference line
+     * @param s     The reference-line series
+     * @param label Text to draw next to the line
+     *
+     * Optional capability: the native backend draws the label next to the line
+     * (inferring horizontal/vertical from the series geometry). Backends that do
+     * not render annotations leave this as a no-op and only draw the line.
+     */
+    virtual void setReferenceLabel(QXYSeries *s, const QString &label)
+    {
+        Q_UNUSED(s);
+        Q_UNUSED(label);
+    }
+
+    /**
      * @brief Remove a series from the chart display
      * @param s Series to remove
      */

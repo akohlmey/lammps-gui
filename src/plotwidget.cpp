@@ -356,6 +356,34 @@ void PlotWidget::doRender(QPainter &p, const QRectF &target) const
                 p.drawEllipse(QPointF(mapX(pt.x()), mapY(pt.y())), r, r);
         }
     }
+
+    // reference-line labels, drawn in the line's color near the line; the
+    // orientation is inferred from the two-point geometry
+    QFont refFont = axisTitleFont;
+    refFont.setBold(false);
+    p.setFont(refFont);
+    for (const PlotSeries *s : m_series) {
+        if (!s || !s->visible || !s->isReference || s->refLabel.isEmpty()) continue;
+        if (s->points.size() < 2) continue;
+        p.setPen(s->color);
+        const QString lbl   = s->refLabel;
+        const double tw     = fm.horizontalAdvance(lbl);
+        const bool vertical = s->points.first().x() == s->points.last().x();
+        if (vertical) {
+            const double px = mapX(s->points.first().x());
+            if (px < plot.left() - 0.5 || px > plot.right() + 0.5) continue;
+            double tx = px + 4.0;
+            if (tx + tw > plot.right()) tx = px - 4.0 - tw; // flip to the left near the edge
+            p.drawText(QPointF(tx, plot.top() + fm.ascent() + 3.0), lbl);
+        } else {
+            const double py = mapY(s->points.first().y());
+            if (py < plot.top() - 0.5 || py > plot.bottom() + 0.5) continue;
+            const double tx = plot.right() - tw - 4.0;
+            double ty       = py - 4.0;
+            if (ty - fm.ascent() < plot.top()) ty = py + fm.ascent() + 3.0; // flip below near top
+            p.drawText(QPointF(tx, ty), lbl);
+        }
+    }
     p.restore();
 }
 

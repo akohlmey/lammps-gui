@@ -47,6 +47,7 @@ public:
     void addSeries(QXYSeries *s, const QColor &color, qreal width) override;
     void styleSeries(QXYSeries *s, const QColor &color, qreal width) override;
     void setSeriesLineStyle(QXYSeries *s, Qt::PenStyle style) override;
+    void setReferenceLabel(QXYSeries *s, const QString &label) override;
     void removeSeries(QXYSeries *s) override;
     bool hasSeries(QXYSeries *s) const override;
     void setTLabel(const QString &tlabel) override;

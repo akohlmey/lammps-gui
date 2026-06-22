@@ -41,10 +41,14 @@ class PlotData;
  * vertical markers at specific x positions (e.g. high-symmetry k-points
  * in phonon-dispersion plots).
  */
+/** @brief Orientation of a reference line: a vertical line at x, or a horizontal line at y */
+enum class RefOrient { Vertical, Horizontal };
+
 struct RefLine {
-    double x;      ///< X position of the line
-    QString label; ///< Text label (shown as the series name / tooltip)
-    QColor color;  ///< Line color (default: dark gray)
+    RefOrient orient = RefOrient::Vertical; ///< vertical (fixed x) or horizontal (fixed y)
+    double value;                           ///< x position (vertical) or y position (horizontal)
+    QString label;                          ///< text label (drawn by the native backend)
+    QColor color;                           ///< line color (default: dark gray)
 };
 
 /**
@@ -417,7 +421,7 @@ public:
      * Each line spans the full data y-range and is updated on every zoom reset.
      * Lines are identified by their position (x), label (series name), and color.
      */
-    void setVerticalLines(const QList<RefLine> &lines);
+    void setReferenceLines(const QList<RefLine> &lines);
 
     /** @brief Remove all vertical reference lines */
     void clearVerticalLines();
@@ -512,8 +516,8 @@ private:
     QColor smoothcolor;                 ///< Processed series color (invalid = theme default)
     qreal smoothwidth;                  ///< Processed series line width
     QList<QLineSeries *> overlaySeries; ///< Extra data series added from secondary files
-    QList<QLineSeries *> vlines;        ///< Vertical reference line series (decorative)
-    QList<double> vlinePositions;       ///< X position of each vline (parallel to vlines)
+    QList<QLineSeries *> vlines;        ///< Reference line series (decorative)
+    QList<RefLine> reflineDefs;         ///< Reference line definitions (parallel to vlines)
 };
 #endif
 

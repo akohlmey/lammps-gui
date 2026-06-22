@@ -996,8 +996,8 @@ void ChartWindow::referenceLines()
     dialog.setWindowTitle("Reference Lines");
     auto *layout = new QVBoxLayout(&dialog);
     layout->addWidget(
-        new QLabel("Vertical reference lines are applied to all charts.\n"
-                   "Example: annotate high-symmetry k-points in phonon-dispersion plots."));
+        new QLabel("Reference lines (vertical at an x value or horizontal at a y value) are\n"
+                   "applied to all charts. Labels are drawn next to the line."));
 
     // scrollable list of (x, label, color) rows
     auto *listWidget = new QWidget;
@@ -1012,6 +1012,7 @@ void ChartWindow::referenceLines()
 
     // helper to build one color-button (same pattern as changeStyle)
     struct RowData {
+        QComboBox *orientCombo;
         QDoubleSpinBox *xSpin;
         QLineEdit *labelEdit;
         QColor color;
@@ -1019,15 +1020,26 @@ void ChartWindow::referenceLines()
     QList<RowData *> rows;
     QList<QPushButton *> colorBtns;
 
-    auto addRow = [&](double xval, const QString &lbl, const QColor &col) {
-        auto *rd  = new RowData;
+    auto addRow = [&](RefOrient orient, double val, const QString &lbl, const QColor &col) {
+        auto *rd        = new RowData;
+        rd->orientCombo = new QComboBox;
+        rd->orientCombo->addItems({"Vertical", "Horizontal"});
+        rd->orientCombo->setCurrentIndex(orient == RefOrient::Horizontal ? 1 : 0);
         rd->xSpin = new QDoubleSpinBox;
         rd->xSpin->setDecimals(6);
         rd->xSpin->setRange(-1e15, 1e15);
-        rd->xSpin->setValue(xval);
+        rd->xSpin->setValue(val);
         rd->labelEdit = new QLineEdit(lbl);
         rd->labelEdit->setPlaceholderText("label");
         rd->color = col.isValid() ? col : QColor(80, 80, 80);
+
+        // position label tracks the orientation: "x =" for vertical, "y =" for horizontal
+        auto *posLabel = new QLabel;
+        auto updatePos = [posLabel](int idx) {
+            posLabel->setText(idx == 1 ? "y =" : "x =");
+        };
+        updatePos(rd->orientCombo->currentIndex());
+        QObject::connect(rd->orientCombo, &QComboBox::currentIndexChanged, &dialog, updatePos);
 
         auto *colorBtn = new QPushButton;
         auto updateBtn = [colorBtn](const QColor &c) {
@@ -1048,7 +1060,8 @@ void ChartWindow::referenceLines()
         delBtn->setFixedWidth(24);
 
         auto *row = new QHBoxLayout;
-        row->addWidget(new QLabel("x ="));
+        row->addWidget(rd->orientCombo);
+        row->addWidget(posLabel);
         row->addWidget(rd->xSpin, 1);
         row->addWidget(new QLabel(" Label:"));
         row->addWidget(rd->labelEdit, 2);
@@ -1077,11 +1090,11 @@ void ChartWindow::referenceLines()
 
     // populate with existing lines
     for (const auto &rl : refLines)
-        addRow(rl.x, rl.label, rl.color);
+        addRow(rl.orient, rl.value, rl.label, rl.color);
 
     auto *addBtn = new QPushButton("Add line");
     QObject::connect(addBtn, &QPushButton::clicked, &dialog, [&]() {
-        addRow(0.0, QString(), QColor(80, 80, 80));
+        addRow(RefOrient::Vertical, 0.0, QString(), QColor(80, 80, 80));
     });
     layout->addWidget(addBtn);
 
@@ -1094,11 +1107,14 @@ void ChartWindow::referenceLines()
 
     // rebuild the refLines list and apply to all charts
     refLines.clear();
-    for (const auto *rd : rows)
-        refLines.append({rd->xSpin->value(), rd->labelEdit->text().trimmed(), rd->color});
+    for (const auto *rd : rows) {
+        const RefOrient o = rd->orientCombo->currentIndex() == 1 ? RefOrient::Horizontal
+                                                                 : RefOrient::Vertical;
+        refLines.append({o, rd->xSpin->value(), rd->labelEdit->text().trimmed(), rd->color});
+    }
 
     for (auto *c : charts)
-        c->setVerticalLines(refLines);
+        c->setReferenceLines(refLines);
 }
 
 void ChartWindow::selectSmooth(int)
@@ -1498,12 +1514,16 @@ QRectF ChartViewer::getMinMax() const
 void ChartViewer::resetZoom()
 {
     auto ranges = getMinMax();
-    // update vertical reference lines to span the current data y range
+    // update reference lines to span the current data range along their axis
     const double ybot = ranges.bottom();
     const double ytop = ranges.top();
     for (int i = 0; i < vlines.size(); ++i) {
-        const double x = vlinePositions[i];
-        vlines[i]->replace(QList<QPointF>{{x, ybot}, {x, ytop}});
+        const RefLine &rl = reflineDefs[i];
+        if (rl.orient == RefOrient::Vertical)
+            vlines[i]->replace(QList<QPointF>{{rl.value, ybot}, {rl.value, ytop}});
+        else
+            vlines[i]->replace(
+                QList<QPointF>{{ranges.left(), rl.value}, {ranges.right(), rl.value}});
     }
     backend->resetZoom(ranges.left(), ranges.right(), ybot, ytop);
 }
@@ -1635,24 +1655,27 @@ void ChartViewer::clearOverlaySeries()
 
 /* -------------------------------------------------------------------- */
 
-void ChartViewer::setVerticalLines(const QList<RefLine> &lines)
+void ChartViewer::setReferenceLines(const QList<RefLine> &lines)
 {
     clearVerticalLines();
     if (lines.isEmpty()) return;
-    auto ranges       = getMinMax();
-    const double ybot = ranges.bottom();
-    const double ytop = ranges.top();
+    auto ranges = getMinMax();
     for (const auto &rl : lines) {
         auto *s = new QLineSeries;
         s->setName(rl.label);
-        s->replace(QList<QPointF>{{rl.x, ybot}, {rl.x, ytop}});
+        if (rl.orient == RefOrient::Vertical)
+            s->replace(QList<QPointF>{{rl.value, ranges.bottom()}, {rl.value, ranges.top()}});
+        else
+            s->replace(QList<QPointF>{{ranges.left(), rl.value}, {ranges.right(), rl.value}});
         const QColor col = rl.color.isValid() ? rl.color : QColor(80, 80, 80);
         backend->addSeries(s, col, 1.5);
         // request a dashed style; backends that cannot render it (QtGraphs)
         // ignore this and draw a solid line
         backend->setSeriesLineStyle(s, Qt::DashLine);
+        // attach the text label (drawn by the native backend; no-op elsewhere)
+        if (!rl.label.isEmpty()) backend->setReferenceLabel(s, rl.label);
         vlines.append(s);
-        vlinePositions.append(rl.x);
+        reflineDefs.append(rl);
     }
     resetZoom();
 }
@@ -1664,7 +1687,7 @@ void ChartViewer::clearVerticalLines()
     for (auto *s : vlines)
         backend->removeSeries(s);
     vlines.clear();
-    vlinePositions.clear();
+    reflineDefs.clear();
 }
 
 /* -------------------------------------------------------------------- */
