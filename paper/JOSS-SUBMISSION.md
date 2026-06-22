@@ -9,7 +9,7 @@ This file is a developer note and is not part of the published paper.
 
 - `paper.md` -- JOSS paper (Pandoc Markdown + YAML header). Single author.
 - `paper.bib` -- references for `paper.md` (BibTeX, DOIs where available).
-- `images/lammps-gui-rhodo.png` -- Figure 1, referenced from `paper.md`.
+- `images/lammps-gui-deform.png` -- Figure 1, referenced from `paper.md`.
 - The abandoned long-form CPC draft (`lammps-gui-library.tex` / `.bib`) is
   **not** on this branch; it is archived on the `paper` branch as source
   material in case it is ever needed again.

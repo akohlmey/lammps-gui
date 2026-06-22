@@ -17,7 +17,7 @@ authors:
 affiliations:
   - name: Institute for Computational Molecular Science, Temple University, Philadelphia, PA, USA
     index: 1
-date: 16 June 2026
+date: 22 June 2026
 bibliography: paper.bib
 ---
 
@@ -54,14 +54,12 @@ source code, pre-compiled packages are provided for Windows, macOS, and
 Linux (x86_64), so that most users obtain an identical experience on
 every major platform without compiling anything.
 
-![A LAMMPS-GUI session with a simulation in flight showing the editor
-window with syntax highlighting, line numbers and the marker of the
-currently processed input line. The status bar shows the CPU utilization
-and the simulation progress of the current run command. The Image Viewer
-shows a snapshot of the starting geometry, the Output window the screen
-output of the simulation, and the Charts window the automatically
-updated plot of one of the thermodynamic data columns from the
-output.\label{fig:editor}](images/lammps-gui-deform.png){ width=74% }
+![A LAMMPS-GUI session with a simulation in flight. The editor shows
+syntax highlighting, line numbers, and a marker on the currently
+processed input line; the status bar shows CPU utilization and run
+progress; the Image Viewer shows the starting geometry; the Output window
+the screen output; and the Charts window a live plot of a thermodynamic
+data column.\label{fig:editor}](images/lammps-gui-deform.png){ width=74% }
 
 # Statement of need
 
@@ -115,7 +113,8 @@ funneled through a single adapter class. Key capabilities include:
 - **Output and charts.** An output window that highlights warnings and
   errors and makes embedded documentation URLs clickable, and a charts
   window that plots thermodynamic data read directly from the running
-  simulation (rather than scraped from text), with Savitzky-Golay smoothing
+  simulation (rather than scraped from text) or imported from external data
+  files, with Savitzky-Golay smoothing
   [@savitzkygolay1964] and post-processing such as autocorrelation,
   polynomial, Birch-Murnaghan equation-of-state, and nonlinear curve fits.
 - **Visualization.** A snapshot image viewer that builds high-quality
@@ -124,7 +123,8 @@ funneled through a single adapter class. Key capabilities include:
   the input script for reproducible figures, plus a slide-show viewer for
   sequences of images that can be exported as movies.
 - **Tutorials and convenience.** A guided tutorial wizard that downloads
-  and opens lesson inputs, a tabbed preferences dialog, hand-off to OVITO
+  and opens lesson inputs from several tutorial collections, a tabbed
+  preferences dialog, hand-off to OVITO
   and VMD, and command-line flags that expose the charting and image
   viewers as standalone utilities.
 
