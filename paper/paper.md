@@ -27,15 +27,15 @@ LAMMPS is a widely used, massively parallel classical molecular dynamics
 (MD) engine for particle-based simulations at the atomic, mesoscopic,
 and continuum scales [@thompson2022lammps]. It is implemented in C++ as
 a no-frills, console-mode application, which makes it highly portable
-and efficient across a broad range of hardware, but also means that
-learning to use it requires mastering a collection of separate -- and
+and efficient, but also means that
+learning to use it requires mastering separate -- and
 often platform-specific -- tools for editing inputs, extracting and
 plotting thermodynamic data, and visualizing atomic configurations
 *before* one can begin to learn MD itself.
 
 LAMMPS-GUI is a cross-platform graphical application, written in C++17
-using version 6 of the Qt framework [@qt_home], that combines all of
-these tasks into a single program: an input-script editor with syntax
+using version 6 of the Qt framework [@qt_home], that combines these
+tasks into a single program: an input-script editor with syntax
 highlighting, auto-completion, and context-sensitive documentation
 lookup; live execution of LAMMPS with real-time monitoring of its screen
 output; interactive line charts of thermodynamic data; an interactive
@@ -45,14 +45,14 @@ it by loading a LAMMPS shared library and calling it through the LAMMPS
 C-language library interface [@frantzdale2010library].  The simulation
 runs in a concurrent worker thread, so that the interface stays
 responsive and the running simulation can be monitored, plotted,
-visualized, and cleanly stopped while it executes.  By preserving the
+visualized, and cleanly stopped.  By preserving the
 traditional "edit input, run LAMMPS, observe, and analyze" workflow,
 LAMMPS-GUI lets users move freely between the graphical tool and the
 command-line LAMMPS executable, which is essential once a workflow grows
-beyond what a laptop or desktop computer can run.  In addition to the
+beyond what a personal computer can run.  In addition to the
 source code, pre-compiled packages are provided for Windows, macOS, and
-Linux (x86_64), so that most users can run LAMMPS-GUI and obtain an
-identical experience instantly, without having to compile anything.
+Linux, so that most users can run LAMMPS-GUI and obtain an identical
+experience instantly, without having to compile anything.
 
 # Statement of need
 
@@ -73,7 +73,7 @@ syntax highlighting, line numbers, and a marker on the currently
 processed input line; the status bar shows CPU utilization and run
 progress; the Image Viewer shows the starting geometry; the Output window
 the screen output; and the Charts window a live plot of a thermodynamic
-data column.\label{fig:editor}](images/lammps-gui-deform.png){ width=74% }
+data column.\label{fig:editor}](images/lammps-gui-deform.png){ width=70% }
 
 Several other approaches to make running LAMMPS simulations more
 accessible exist, but they target different needs.  Commercial
@@ -129,10 +129,10 @@ funneled through a single adapter class. Key capabilities include:
   viewers as standalone utilities.
 
 A recurring theme is the co-evolution of LAMMPS-GUI and LAMMPS: needs
-arising in the graphical front end motivated concrete improvements to
+in the graphical front end motivated improvements to
 the simulation engine and its library interface -- catchable exceptions,
 a locked cache of live thermodynamic data, and greatly expanded snapshot
-rendering that was eventually collected into a dedicated GRAPHICS
+rendering that was collected into a dedicated GRAPHICS
 package [@kohlmeyer2025lammps]. In its default *plugin mode*, LAMMPS-GUI
 has no link-time dependency on LAMMPS and loads the shared library at
 run time, so a single pre-compiled binary can be paired with -- or
