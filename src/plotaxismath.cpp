@@ -144,6 +144,17 @@ std::string formatAxisLabel(double value, const std::string &format)
     }
 }
 
+int tickDecimals(double interval)
+{
+    if (!(interval > 0.0) || !std::isfinite(interval)) return 0;
+    // number of decimals so a step of `interval` changes the last shown digit;
+    // the small epsilon keeps exact powers of ten (e.g. 0.1 -> 1) from rounding up
+    int d = static_cast<int>(std::ceil(-std::log10(interval) - 1.0e-9));
+    if (d < 0) d = 0;
+    if (d > 12) d = 12;
+    return d;
+}
+
 } // namespace PlotAxisMath
 
 // Local Variables:

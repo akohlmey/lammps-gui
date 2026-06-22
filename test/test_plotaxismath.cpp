@@ -110,6 +110,35 @@ TEST(TickValues, CustomAnchor)
     EXPECT_DOUBLE_EQ(t[1], 1.5);
 }
 
+// ---- tickDecimals --------------------------------------------------------
+
+TEST(TickDecimals, IntegerOrLargerSpacingsAreZero)
+{
+    EXPECT_EQ(tickDecimals(1.0), 0);
+    EXPECT_EQ(tickDecimals(2.0), 0);
+    EXPECT_EQ(tickDecimals(5.0), 0);
+    EXPECT_EQ(tickDecimals(10.0), 0);
+    EXPECT_EQ(tickDecimals(2000.0), 0);
+}
+
+TEST(TickDecimals, FractionalSpacings)
+{
+    EXPECT_EQ(tickDecimals(0.5), 1);
+    EXPECT_EQ(tickDecimals(0.2), 1);
+    EXPECT_EQ(tickDecimals(0.1), 1);
+    EXPECT_EQ(tickDecimals(0.05), 2);
+    EXPECT_EQ(tickDecimals(0.02), 2);
+    EXPECT_EQ(tickDecimals(0.01), 2);
+    EXPECT_EQ(tickDecimals(0.001), 3);
+}
+
+TEST(TickDecimals, NonPositiveIsZero)
+{
+    EXPECT_EQ(tickDecimals(0.0), 0);
+    EXPECT_EQ(tickDecimals(-1.0), 0);
+    EXPECT_EQ(tickDecimals(std::nan("")), 0);
+}
+
 // ---- formatAxisLabel -----------------------------------------------------
 
 TEST(FormatAxisLabel, IntegerSpecifier)

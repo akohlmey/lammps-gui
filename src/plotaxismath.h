@@ -65,6 +65,18 @@ std::vector<double> tickValues(double min, double max, double interval, double a
  */
 std::string formatAxisLabel(double value, const std::string &format);
 
+/**
+ * @brief Decimal places needed to distinguish ticks at a given spacing
+ * @param interval Tick spacing (e.g. from niceTickInterval)
+ * @return Number of decimals so that adjacent ticks differ in their last shown
+ *         digit: 0 for integer-or-larger spacings, more as the spacing shrinks
+ *         (e.g. 0.5 -> 1, 0.05 -> 2). Capped at 12; 0 for non-positive input.
+ *
+ * Lets a renderer pick a `"%.Nf"` format from the tick spacing so that, e.g.,
+ * closely spaced values do not collapse to identical labels.
+ */
+int tickDecimals(double interval);
+
 } // namespace PlotAxisMath
 
 #endif
