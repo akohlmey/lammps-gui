@@ -139,8 +139,9 @@ window's *File* menu, or the chart-style quick-access button at the far
 left of the second toolbar row, opens a dialog to change how the data is
 drawn.  The *Raw data* and *Processed data* series each have independent
 settings for the display style (*Lines*, *Points*, or *Lines and Points*),
-the color, and the line width.  This makes it possible, for example, to
-show the raw data as faint points and the smoothed curve as a bold line.
+the color, the line width, and the point size.  This makes it possible, for
+example, to show the raw data as faint points and the smoothed curve as a
+bold line.
 The *Legend* placement selector in the same dialog adds an in-plot legend
 that lists the visible named series; it can be turned *Off* or anchored to
 any of the four plot corners (*Top left*, *Top right*, *Bottom right*, or
@@ -149,7 +150,24 @@ any of the four plot corners (*Top left*, *Top right*, *Bottom right*, or
 .. versionadded:: 2.1
 
    The *Chart Style* dialog and the independent styling of the raw and
-   processed series were added, including the optional in-plot legend.
+   processed series were added, including the per-series point size and the
+   optional in-plot legend.
+
+**Reference lines.** The *Reference Lines...* entry in the chart window's
+*File* menu opens a dialog for adding straight annotation lines that are
+drawn on *every* chart in the window.  Each line is either *Vertical* (at a
+chosen x value) or *Horizontal* (at a chosen y value) and can carry a text
+label and an individually chosen color.  The label position along the line
+(*Top*, *Center*, or *Bottom* for vertical lines; *Left*, *Center*, or
+*Right* for horizontal lines) is selected per line, while the label font
+size, the gap between the label and the line, and whether the labels are
+drawn in an opaque box apply to the whole window.  Reference lines are
+useful, for example, to mark a target temperature, a transition point, or a
+fitted value.
+
+.. versionadded:: 2.1
+
+   The *Reference Lines* dialog was added.
 
 **Post-processing the data.** The *Postprocess...* entry in the chart
 window's *File* menu, or the quick-access button immediately to the right
