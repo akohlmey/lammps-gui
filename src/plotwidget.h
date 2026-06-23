@@ -74,6 +74,16 @@ public:
     void setGrid(bool major, bool minor);
 
     /**
+     * @brief Toggle a legend drawn in the top-left corner of the plot
+     *
+     * The legend lists each visible, named data series (raw / processed / fit /
+     * overlays); reference lines and unnamed marker-only mirrors are excluded.
+     */
+    void setLegendVisible(bool on);
+    /** @brief Whether the legend is currently drawn */
+    bool legendVisible() const { return m_legend; }
+
+    /**
      * @brief Register a series for drawing (non-owning; ignored if already present)
      * @param series Series owned by the caller
      */
@@ -106,6 +116,7 @@ private:
     PlotAxis m_yaxis;                   ///< Y-axis configuration
     QString m_title;                    ///< chart title
     QList<const PlotSeries *> m_series; ///< registered series (not owned)
+    bool m_legend = false;              ///< draw a top-left legend of named series
 };
 
 #endif

@@ -165,6 +165,7 @@ inline const QString LOGX         = QStringLiteral("logx");
 inline const QString LOGY         = QStringLiteral("logy");
 inline const QString MAINX        = QStringLiteral("mainx");
 inline const QString MAINY        = QStringLiteral("mainy");
+inline const QString LEGEND       = QStringLiteral("legend");
 inline const QString MINORGRID    = QStringLiteral("minorgrid");
 inline const QString MONOFAMILY   = QStringLiteral("monofamily");
 inline const QString MONOSIZE     = QStringLiteral("monosize");

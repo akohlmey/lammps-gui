@@ -27,6 +27,7 @@ class QCloseEvent;
 class QEvent;
 class QMenuBar;
 class QMenu;
+class QPushButton;
 class QSpinBox;
 class RangeSlider;
 
@@ -209,6 +210,10 @@ private:
     /// active column (so it is restored when switching columns).
     void setProcessedLabel(const QString &label);
 
+    /// Enable/disable the in-plot legend, keeping the toolbar button, the Chart
+    /// Style checkbox, and the persisted setting in sync.
+    void setLegendEnabled(bool on);
+
     LammpsGui *lammpsgui; ///< Main widget pointer for receiving signals
     bool doRaw, doSmooth; ///< Flags for displaying raw/smoothed data
     QMenuBar *menu;       ///< Menu bar
@@ -225,6 +230,7 @@ private:
     QLabel *units;                ///< Units display
     QCheckBox *norm;              ///< Normalization checkbox
     RangeSlider *xrange, *yrange; ///< Range sliders for axes
+    QPushButton *legendBtn;       ///< Checkable toolbar button toggling the in-plot legend
 
     QString filename;    ///< Log file path
     ChartViewer *viewer; ///< The single chart view (renders the active column)
@@ -480,6 +486,9 @@ public:
 
     /** @brief Remove all vertical reference lines */
     void clearVerticalLines();
+
+    /** @brief Toggle the in-plot legend (drawn top-left) */
+    void setLegend(bool on);
 
     /**
      * @brief Set how the raw data series is displayed

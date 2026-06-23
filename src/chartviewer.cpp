@@ -52,6 +52,7 @@
 #include <QMessageBox>
 #include <QPushButton>
 #include <QSettings>
+#include <QSignalBlocker>
 #include <QSpacerItem>
 #include <QSpinBox>
 #include <QStringList>
@@ -157,6 +158,19 @@ void ChartWindow::setProcessedLabel(const QString &label)
 {
     if (active >= 0) cols[active]->procLabel = label;
     smooth->setItemText(1, label);
+}
+
+void ChartWindow::setLegendEnabled(bool on)
+{
+    if (legendBtn) {
+        const QSignalBlocker block(legendBtn); // avoid re-entering via toggled()
+        legendBtn->setChecked(on);
+    }
+    if (viewer) viewer->setLegend(on);
+    QSettings settings;
+    settings.beginGroup(Keys::GROUP_CHARTS);
+    settings.setValue(Keys::LEGEND, on);
+    settings.endGroup();
 }
 
 ChartWindow::ChartWindow(const QString &_filename, LammpsGui *_lammpsgui, QWidget *parent) :
@@ -296,10 +310,17 @@ ChartWindow::ChartWindow(const QString &_filename, LammpsGui *_lammpsgui, QWidge
     };
     auto *styleBtn = makeToolBtn(":/icons/preferences-desktop-personal.png", "Chart Style...");
     auto *ppBtn    = makeToolBtn(":/icons/application-plot.png", "Postprocess...");
+    legendBtn      = makeToolBtn(":/icons/expand-text.png", "Draw Legend");
+    legendBtn->setCheckable(true);
+    settings.beginGroup(Keys::GROUP_CHARTS);
+    legendBtn->setChecked(settings.value(Keys::LEGEND, false).toBool());
+    settings.endGroup();
     connect(styleBtn, &QPushButton::clicked, this, &ChartWindow::changeStyle);
     connect(ppBtn, &QPushButton::clicked, this, &ChartWindow::postProcess);
+    connect(legendBtn, &QPushButton::toggled, this, &ChartWindow::setLegendEnabled);
     row2->addWidget(styleBtn);
     row2->addWidget(ppBtn);
+    row2->addWidget(legendBtn);
     row2->addWidget(new QLabel("X:"));
     row2->addWidget(xrange);
     row2->addWidget(new QLabel("Y:"));
@@ -349,6 +370,7 @@ ChartWindow::ChartWindow(const QString &_filename, LammpsGui *_lammpsgui, QWidge
     layout->setSpacing(LAYOUT_SPACING);
     // the single shared chart view; it renders whichever column is active
     viewer = new ChartViewer;
+    viewer->setLegend(legendBtn->isChecked());
     layout->addWidget(viewer);
     setLayout(layout);
 
@@ -595,13 +617,25 @@ void ChartWindow::changeStyle()
     auto *procColorBtn  = colorButton(procChosen);
     auto *procWidthSpin = widthBox(chart->smoothWidth());
     auto *procPointSpin = pointBox(chart->smoothPointSize());
-    auto *procBox       = new QGroupBox("Smoothed data");
+    auto *procBox       = new QGroupBox("Processed data");
     auto *procForm      = new QFormLayout(procBox);
     procForm->addRow("Display:", procMode);
     procForm->addRow("Color:", procColorBtn);
     procForm->addRow("Line width:", procWidthSpin);
     procForm->addRow("Point size:", procPointSpin);
     layout->addWidget(procBox);
+
+    // legend toggle: a checkable button on the left, "Draw Legend" label to its right
+    auto *legendRow    = new QHBoxLayout;
+    auto *legendToggle = new QPushButton;
+    legendToggle->setCheckable(true);
+    legendToggle->setChecked(legendBtn->isChecked());
+    legendToggle->setFixedWidth(32);
+    legendToggle->setIcon(QIcon(":/icons/expand-text.png"));
+    legendRow->addWidget(legendToggle);
+    legendRow->addWidget(new QLabel("Draw Legend"));
+    legendRow->addStretch(1);
+    layout->addLayout(legendRow);
 
     auto *buttons = new QDialogButtonBox(QDialogButtonBox::Ok | QDialogButtonBox::Cancel);
     connect(buttons, &QDialogButtonBox::accepted, &dialog, &QDialog::accept);
@@ -613,6 +647,7 @@ void ChartWindow::changeStyle()
                                rawChosen, rawWidthSpin->value(), rawPointSpin->value());
         chart->setSmoothStyle(static_cast<ChartDisplayMode>(procMode->currentData().toInt()),
                               procChosen, procWidthSpin->value(), procPointSpin->value());
+        setLegendEnabled(legendToggle->isChecked());
     }
 }
 
@@ -1496,6 +1531,7 @@ void renderColumnSeries(PlotWidget *plot, PlotSeries *line, std::unique_ptr<Plot
             points       = std::make_unique<PlotSeries>();
             points->type = PlotSeriesType::Scatter;
         }
+        points->name = line->name; // share the line's name so the legend dedups them
         points->replace(line->points);
         if (!plot->hasSeries(points.get()))
             addColumnSeries(plot, points.get(), color, width);
@@ -1534,7 +1570,10 @@ void refreshColumn(PlotWidget *plot, ChartColumn &col)
             if (col.smoothScatter) col.smoothScatter->setVisible(false);
         } else if (!col.eosMode && col.series->count() > (2 * col.window)) {
             if (col.fit) col.fit->setVisible(false);
-            if (!col.smooth) col.smooth = std::make_unique<PlotSeries>();
+            if (!col.smooth) {
+                col.smooth       = std::make_unique<PlotSeries>();
+                col.smooth->name = QStringLiteral("Smooth"); // legend label for the SG series
+            }
             col.smooth->replace(calc_sgsmooth(col.series->points, col.window, col.order));
             renderColumnSeries(plot, col.smooth.get(), col.smoothScatter, col.smoothmode, smcol,
                                col.smoothwidth, col.smoothpointsize);
@@ -1969,6 +2008,13 @@ void ChartViewer::setReferenceLines(const QList<RefLine> &lines)
 void ChartViewer::clearVerticalLines()
 {
     clearColumnVerticalLines(plot, *col);
+}
+
+/* -------------------------------------------------------------------- */
+
+void ChartViewer::setLegend(bool on)
+{
+    plot->setLegendVisible(on);
 }
 
 /* -------------------------------------------------------------------- */

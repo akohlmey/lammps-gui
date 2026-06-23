@@ -33,6 +33,12 @@ constexpr double TITLE_VPAD = 12.0; ///< padding above and below the chart title
 constexpr double LABEL_GAP  = 5.0;  ///< gap between tick labels and the axis
 constexpr double TICK_LEN   = 5.0;  ///< length of axis tick marks
 
+// legend box layout (logical pixels)
+constexpr double LEGEND_INSET  = 8.0;  ///< inset from the top-left plot corner
+constexpr double LEGEND_PAD    = 5.0;  ///< padding inside the legend box
+constexpr double LEGEND_SWATCH = 20.0; ///< width of a legend color swatch
+constexpr double LEGEND_GAP    = 6.0;  ///< gap between swatch and label text
+
 // gridline / frame colors
 const QColor MAJOR_GRID(160, 160, 160);
 const QColor MINOR_GRID(208, 208, 208);
@@ -138,6 +144,14 @@ void PlotWidget::setGrid(bool major, bool minor)
     update();
 }
 
+void PlotWidget::setLegendVisible(bool on)
+{
+    if (m_legend != on) {
+        m_legend = on;
+        update();
+    }
+}
+
 void PlotWidget::addSeries(const PlotSeries *series)
 {
     if (series && !m_series.contains(series)) {
@@ -190,6 +204,7 @@ void PlotWidget::doRender(QPainter &p, const QRectF &target) const
     p.setRenderHint(QPainter::TextAntialiasing, true);
     p.fillRect(target, Qt::white);
 
+    const QFont baseFont = p.font();
     const QFontMetricsF fm(p.font());
     const double labelH = fm.height();
 
@@ -393,6 +408,58 @@ void PlotWidget::doRender(QPainter &p, const QRectF &target) const
             double ty       = py - 4.0;
             if (ty - fm.ascent() < plot.top()) ty = py + fm.ascent() + 3.0; // flip below near top
             p.drawText(QPointF(tx, ty), lbl);
+        }
+    }
+
+    // optional legend in the top-left of the plot area: one row per visible,
+    // named data series (raw / processed / fit / overlays). Reference lines and
+    // the unnamed marker-only mirror series are excluded; duplicate names (e.g. a
+    // line and its scatter twin in "Both" mode) collapse to a single row.
+    if (m_legend) {
+        struct LegendEntry {
+            QString name;
+            QColor color;
+            bool line;
+        };
+        QList<LegendEntry> entries;
+        QList<QString> seen;
+        for (const PlotSeries *s : m_series) {
+            if (!s || !s->visible || s->isReference || s->name.isEmpty()) continue;
+            if (seen.contains(s->name)) continue;
+            seen.append(s->name);
+            entries.append({s->name, s->color, s->type == PlotSeriesType::Line});
+        }
+        if (!entries.isEmpty()) {
+            p.setFont(baseFont);
+            double maxTextW = 0.0;
+            for (const auto &e : entries)
+                maxTextW = std::max(maxTextW, fm.horizontalAdvance(e.name));
+            const double boxW = LEGEND_PAD + LEGEND_SWATCH + LEGEND_GAP + maxTextW + LEGEND_PAD;
+            const double boxH = LEGEND_PAD + entries.size() * labelH + LEGEND_PAD;
+            const double bx   = plot.left() + LEGEND_INSET;
+            const double by   = plot.top() + LEGEND_INSET;
+            QPen border(FRAME_COLOR);
+            border.setWidth(0);
+            p.setPen(border);
+            p.setBrush(QColor(255, 255, 255, 230)); // slightly translucent over the grid
+            p.drawRect(QRectF(bx, by, boxW, boxH));
+            double y = by + LEGEND_PAD;
+            for (const auto &e : entries) {
+                const double cy = y + 0.5 * labelH;
+                if (e.line) {
+                    p.setPen(QPen(e.color, 2.0));
+                    p.drawLine(QPointF(bx + LEGEND_PAD, cy),
+                               QPointF(bx + LEGEND_PAD + LEGEND_SWATCH, cy));
+                } else {
+                    p.setPen(Qt::NoPen);
+                    p.setBrush(e.color);
+                    p.drawEllipse(QPointF(bx + LEGEND_PAD + 0.5 * LEGEND_SWATCH, cy), 3.5, 3.5);
+                }
+                p.setPen(Qt::black);
+                p.drawText(QPointF(bx + LEGEND_PAD + LEGEND_SWATCH + LEGEND_GAP, y + fm.ascent()),
+                           e.name);
+                y += labelH;
+            }
         }
     }
     p.restore();
