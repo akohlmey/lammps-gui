@@ -153,6 +153,12 @@ int ChartWindow::activeIndex() const
     return cols.empty() ? -1 : 0;
 }
 
+void ChartWindow::setProcessedLabel(const QString &label)
+{
+    if (active >= 0) cols[active]->procLabel = label;
+    smooth->setItemText(1, label);
+}
+
 ChartWindow::ChartWindow(const QString &_filename, LammpsGui *_lammpsgui, QWidget *parent) :
     QWidget(parent), lammpsgui(_lammpsgui), menu(new QMenuBar), file(new QMenu("&File")),
     saveAsAct(nullptr), copyAct(nullptr), exportCsvAct(nullptr), exportDatAct(nullptr),
@@ -214,9 +220,9 @@ ChartWindow::ChartWindow(const QString &_filename, LammpsGui *_lammpsgui, QWidge
     // list of choices must be kepy in sync with list in preferences
     smooth = new QComboBox;
     smooth->addItem("Raw");
-    // the processed-series slot is empty until smoothing or a post-process fit
-    // fills it; the label updates to "Smoothed" or the fit name accordingly
-    smooth->addItem("(empty)");
+    // the processed-series slot always holds the smoothed data ("Smooth"); a
+    // post-process fit/function replaces it and overrides the label with its name
+    smooth->addItem("Smooth");
     smooth->addItem("Both");
     smooth->setCurrentIndex(smoothchoice);
     window = new QSpinBox;
@@ -803,7 +809,7 @@ void ChartWindow::postProcess()
             return;
         }
         chart->setFitCurve(result.points, expr, /* eosMode= */ true);
-        smooth->setItemText(1, "Custom f(x)");
+        setProcessedLabel("Custom f(x)");
         smooth->setCurrentIndex(2); // "Both" = raw data + function overlay
         information(this, "Custom Function",
                     QString("Plotted f(x) = %1\nover x in [%2, %3].")
@@ -831,7 +837,7 @@ void ChartWindow::postProcess()
         const QString label   = fitLabelEdit->text().trimmed();
         const QString fitName = label.isEmpty() ? expr : label;
         chart->setFitCurve(fit.curve, fitName, /* eosMode= */ true);
-        smooth->setItemText(1, fitName.length() > 12 ? "Custom fit" : fitName);
+        setProcessedLabel(fitName.length() > 12 ? "Custom fit" : fitName);
         smooth->setCurrentIndex(2); // "Both" = raw data + fit overlay
 
         QString report = QString("Custom fit of  f(x) = %1\n").arg(expr);
@@ -859,7 +865,7 @@ void ChartWindow::postProcess()
         }
         const QString polyName = QString("Poly deg %1").arg(static_cast<int>(f.coeffs.size()) - 1);
         chart->setFitCurve(curve, polyName, /* eosMode= */ true);
-        smooth->setItemText(1, polyName);
+        setProcessedLabel(polyName);
         smooth->setCurrentIndex(2); // "Both" = raw data + fit overlay
 
         QString report =
@@ -924,7 +930,7 @@ void ChartWindow::postProcess()
         chart->setFitCurve(curve, "EOS fit", /* eosMode= */ true);
         chart->setDisplayStyle(ChartDisplayMode::Points, chart->displayColor(),
                                chart->displayWidth(), chart->displayPointSize());
-        smooth->setItemText(1, "EOS fit");
+        setProcessedLabel("EOS fit");
         smooth->setCurrentIndex(2); // "Both" = raw points + EOS fit line
 
         // derive lattice constant: a0 = cbrt(N * V0)
@@ -1178,10 +1184,10 @@ void ChartWindow::selectSmooth(int)
             doSmooth = true;
             break;
     }
+    // the processed-slot label does not depend on the Raw/Smooth/Both choice; it
+    // is "Smooth" unless a post-process fit overrode it (set in postProcess and
+    // restored on column switch in changeChart)
     const bool isEos = currentChart() && currentChart()->isEosFit();
-    // label the processed-series slot: keep a fit name while a fit is active,
-    // otherwise "Smoothed" when smoothing is shown and "(empty)" when it is not
-    if (!isEos) smooth->setItemText(1, doSmooth ? "Smoothed" : "(empty)");
     // SG smooth parameters are only relevant when smoothing without a fit overlay
     const bool sgEnabled = doSmooth && !isEos;
     window->setEnabled(sgEnabled);
@@ -1323,11 +1329,12 @@ void ChartWindow::changeChart(int)
         viewer->setColumn(cols[active].get());
         viewer->setReferenceLines(refLines); // re-apply window reference lines to this column
         chartYlabel->setText(cols[active]->yTitle);
+        // restore this column's processed-slot label ("Smooth" or its fit name)
+        smooth->setItemText(1, cols[active]->procLabel);
     }
 
-    // sync the processed-series label and SG parameter spinbox state
-    const bool isEos = currentChart() && currentChart()->isEosFit();
-    smooth->setItemText(1, isEos ? "EOS fit" : (doSmooth ? "Smoothed" : "(empty)"));
+    // sync the SG parameter spinbox state (irrelevant while a fit overrides the slot)
+    const bool isEos     = currentChart() && currentChart()->isEosFit();
     const bool sgEnabled = doSmooth && !isEos;
     window->setEnabled(sgEnabled);
     order->setEnabled(sgEnabled);

@@ -205,6 +205,10 @@ private:
     /// Position in `cols` of the column matching the combo selection (-1 if none).
     int activeIndex() const;
 
+    /// Set the processed-series Plot-combo slot label and remember it on the
+    /// active column (so it is restored when switching columns).
+    void setProcessedLabel(const QString &label);
+
     LammpsGui *lammpsgui; ///< Main widget pointer for receiving signals
     bool doRaw, doSmooth; ///< Flags for displaying raw/smoothed data
     QMenuBar *menu;       ///< Menu bar
@@ -288,6 +292,8 @@ struct ChartColumn {
     std::vector<std::unique_ptr<PlotSeries>> vlines;        ///< Reference line series (decorative)
     QList<RefLine> reflineDefs; ///< Reference line definitions (parallel to vlines)
     QString yTitle;             ///< This column's Y-axis label (restored on the shared plot)
+    QString procLabel = QStringLiteral("Smooth"); ///< Label of the processed-series slot in the
+                                                  ///< Plot combo ("Smooth", or a fit/function name)
 };
 
 /**
