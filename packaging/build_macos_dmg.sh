@@ -14,8 +14,28 @@ if $(./${APP_NAME}.app/Contents/MacOS/lammps-gui -h | grep -q pluginpath); then
     chmod 0755 ${APP_NAME}.app/Contents/Frameworks/liblammps.0.dylib
 fi
 
+# The pre-compiled LAMMPS library is built with OpenMP and records a dependency
+# on /usr/local/lib/libomp.dylib.  Apple ships no libomp, so on hosts that were
+# set up without an OpenMP runtime (e.g. CI runners) macdeployqt cannot resolve
+# or bundle it and prints a cryptic otool "can't open file" error.  Detect that
+# case so the bundle is built cleanly without OpenMP support instead.
+SKIP_LIBOMP=no
+LAMMPS_LIB=${APP_NAME}.app/Contents/Frameworks/liblammps.0.dylib
+if [ -f "${LAMMPS_LIB}" ] \
+   && otool -L "${LAMMPS_LIB}" 2>/dev/null | grep -q '/usr/local/lib/libomp.dylib' \
+   && [ ! -e /usr/local/lib/libomp.dylib ]; then
+    echo "NOTE: liblammps references libomp.dylib but no OpenMP runtime is installed;"
+    echo "      building the bundle without OpenMP support and skipping libomp deployment."
+    SKIP_LIBOMP=yes
+fi
+
 echo "Create initial dmg file with macdeployqt"
-macdeployqt ${APP_NAME}.app -dmg
+if [ "${SKIP_LIBOMP}" = "yes" ]; then
+    # drop the expected, harmless errors about the unresolved libomp dependency
+    macdeployqt ${APP_NAME}.app -dmg 2>&1 | grep -v 'libomp\.dylib'
+else
+    macdeployqt ${APP_NAME}.app -dmg
+fi
 echo "Create writable dmg file"
 hdiutil convert ${APP_NAME}.dmg -format UDRW -o ${APP_NAME}-rw.dmg
 
