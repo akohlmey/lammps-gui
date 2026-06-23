@@ -2049,11 +2049,6 @@ void LammpsGui::about()
 {
     std::string version = "<b>This is LAMMPS-GUI version " LAMMPS_GUI_VERSION;
     version += " using Qt version " QT_VERSION_STR;
-#ifdef LAMMPS_GUI_USE_QTGRAPHS
-    version += " with QtGraphs";
-#else
-    version += " with QtCharts";
-#endif
     if (isLightTheme())
         version += " using light theme";
     else

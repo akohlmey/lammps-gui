@@ -319,12 +319,10 @@ by setting ``-D Qt6_DIR=/path/to/qt6/lib/cmake/Qt6``, which is a path to
 a folder inside the Qt installation that contains the file
 ``Qt6Config.cmake``.
 
-Since the QtCharts module of the Qt library has been deprecated with Qt
-version 6.10, LAMMPS-GUI includes an alternate implementation of the
-charts display based on the QtGraphs module.  This alternate version is
-enabled by default when compiling LAMMPS-GUI for Qt 6.10 and later.
-Setting ``-D LAMMPS_GUI_USE_QTCHARTS=yes`` will enforce using the
-QtCharts-based chart display.
+The charts display is drawn by a self-contained native renderer
+(:cpp:class:`PlotWidget`) built only on Qt Widgets and ``QPainter``, so the
+build no longer depends on the Qt Charts or Qt Graphs modules.  No extra
+CMake settings are required to select a chart backend.
 
 .. versionchanged:: 2.0.0
 

@@ -122,30 +122,30 @@ ChartViewer Class
 
 -----
 
-ChartBackend Class
-------------------
+PlotWidget Class
+----------------
 
-.. doxygenclass:: ChartBackend
+Native ``QWidget`` + ``QPainter`` 2D line/scatter chart renderer
+(``src/plotwidget.h``).  It is the sole chart backend; ``ChartViewer`` feeds it
+neutral ``PlotSeries`` / ``PlotAxis`` model objects plus the Qt-free
+axis-layout helpers from ``plotaxismath`` -- no Qt Charts, Graphs, or QML.
+
+.. doxygenclass:: PlotWidget
    :members:
    :protected-members:
 
 -----
 
-QtGraphsBackend Class
----------------------
+Chart Model and Axis Math
+-------------------------
 
-.. doxygenclass:: QtGraphsBackend
-   :members:
-   :protected-members:
+Neutral chart model value types (``src/plotseries.h``) consumed by
+``PlotWidget``, and the Qt-free axis-layout helpers (``src/plotaxismath.h``:
+nice-number ticks, tick values, and printf-style label formatting).
 
------
+.. doxygenfile:: plotseries.h
 
-QtChartsBackend Class
----------------------
-
-.. doxygenclass:: QtChartsBackend
-   :members:
-   :protected-members:
+.. doxygenfile:: plotaxismath.h
 
 -----
 
@@ -380,6 +380,12 @@ Qt Helper Widgets
 -----
 
 .. doxygenclass:: RangeSlider
+   :members:
+   :protected-members:
+
+-----
+
+.. doxygenclass:: RangeBandSlider
    :members:
    :protected-members:
 
