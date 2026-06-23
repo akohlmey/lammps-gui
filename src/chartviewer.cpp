@@ -332,6 +332,11 @@ ChartWindow::ChartWindow(const QString &_filename, LammpsGui *_lammpsgui, QWidge
     legendCombo->addItem("Legend bottom left", static_cast<int>(LegendPos::BottomLeft));
     settings.beginGroup(Keys::GROUP_CHARTS);
     const int legendIdx = legendCombo->findData(settings.value(Keys::LEGEND, 0).toInt());
+    double defRefPt     = font().pointSizeF();
+    if (defRefPt <= 0.0) defRefPt = 9.0; // pixel-size app fonts report <= 0 pt
+    refLabelSize  = settings.value(Keys::REFLABELSIZE, defRefPt).toDouble();
+    refLabelDist  = settings.value(Keys::REFLABELDIST, 4.0).toDouble();
+    refLabelBoxed = settings.value(Keys::REFLABELBOX, false).toBool();
     settings.endGroup();
     legendCombo->setCurrentIndex(legendIdx < 0 ? 0 : legendIdx);
     connect(styleBtn, &QPushButton::clicked, this, &ChartWindow::changeStyle);
@@ -390,6 +395,7 @@ ChartWindow::ChartWindow(const QString &_filename, LammpsGui *_lammpsgui, QWidge
     // the single shared chart view; it renders whichever column is active
     viewer = new ChartViewer;
     viewer->setLegendPos(static_cast<LegendPos>(legendCombo->currentData().toInt()));
+    viewer->setRefLabelStyle(refLabelSize, refLabelDist, refLabelBoxed);
     layout->addWidget(viewer);
     setLayout(layout);
 
@@ -1088,7 +1094,7 @@ void ChartWindow::referenceLines()
 
     QDialog dialog(this);
     dialog.setWindowTitle("Reference Lines");
-    dialog.setMinimumWidth(560); // room for a usable label field next to the value
+    dialog.setMinimumWidth(680); // room for the label field plus the anchor selector
     auto *layout = new QVBoxLayout(&dialog);
     layout->addWidget(
         new QLabel("Reference lines (vertical at an x value or horizontal at a y value) are\n"
@@ -1112,12 +1118,14 @@ void ChartWindow::referenceLines()
         QComboBox *orientCombo;
         QDoubleSpinBox *xSpin;
         QLineEdit *labelEdit;
+        QComboBox *anchorCombo;
         QColor color;
     };
     QList<RowData *> rows;
     QList<QPushButton *> colorBtns;
 
-    auto addRow = [&](RefOrient orient, double val, const QString &lbl, const QColor &col) {
+    auto addRow = [&](RefOrient orient, double val, const QString &lbl, const QColor &col,
+                      RefAnchor anchor) {
         auto *rd        = new RowData;
         rd->orientCombo = new QComboBox;
         rd->orientCombo->addItems({"Vertical", "Horizontal"});
@@ -1139,6 +1147,21 @@ void ChartWindow::referenceLines()
         };
         updatePos(rd->orientCombo->currentIndex());
         QObject::connect(rd->orientCombo, &QComboBox::currentIndexChanged, &dialog, updatePos);
+
+        // label anchor along the line; the item texts track the orientation
+        rd->anchorCombo = new QComboBox;
+        rd->anchorCombo->addItem("Top", static_cast<int>(RefAnchor::Start));
+        rd->anchorCombo->addItem("Center", static_cast<int>(RefAnchor::Center));
+        rd->anchorCombo->addItem("Bottom", static_cast<int>(RefAnchor::End));
+        rd->anchorCombo->setCurrentIndex(static_cast<int>(anchor));
+        auto *anchorCombo = rd->anchorCombo;
+        auto updateAnchor = [anchorCombo](int idx) {
+            const bool horiz = (idx == 1);
+            anchorCombo->setItemText(0, horiz ? "Left" : "Top");
+            anchorCombo->setItemText(2, horiz ? "Right" : "Bottom");
+        };
+        updateAnchor(rd->orientCombo->currentIndex());
+        QObject::connect(rd->orientCombo, &QComboBox::currentIndexChanged, &dialog, updateAnchor);
 
         auto *colorBtn = new QPushButton;
         auto updateBtn = [colorBtn](const QColor &c) {
@@ -1164,6 +1187,8 @@ void ChartWindow::referenceLines()
         row->addWidget(rd->xSpin, 0);
         row->addWidget(new QLabel("Label:"));
         row->addWidget(rd->labelEdit, 1);
+        row->addWidget(new QLabel("Pos:"));
+        row->addWidget(rd->anchorCombo);
         row->addWidget(new QLabel("Color:"));
         row->addWidget(colorBtn);
         row->addWidget(delBtn);
@@ -1189,13 +1214,32 @@ void ChartWindow::referenceLines()
 
     // populate with existing lines
     for (const auto &rl : refLines)
-        addRow(rl.orient, rl.value, rl.label, rl.color);
+        addRow(rl.orient, rl.value, rl.label, rl.color, rl.anchor);
 
     auto *addBtn = new QPushButton("Add line");
     QObject::connect(addBtn, &QPushButton::clicked, &dialog, [&]() {
-        addRow(RefOrient::Vertical, 0.0, QString(), QColor(80, 80, 80));
+        addRow(RefOrient::Vertical, 0.0, QString(), QColor(80, 80, 80), RefAnchor::Start);
     });
     layout->addWidget(addBtn);
+
+    // window-wide label style: font size, gap from the line, and a framed/opaque background
+    auto *styleRow = new QHBoxLayout;
+    auto *fontSpin = new QDoubleSpinBox;
+    fontSpin->setRange(5.0, 30.0);
+    fontSpin->setSingleStep(0.5);
+    fontSpin->setValue(refLabelSize);
+    auto *distSpin = new QSpinBox;
+    distSpin->setRange(0, 50);
+    distSpin->setValue(static_cast<int>(refLabelDist));
+    auto *boxedCheck = new QCheckBox("Boxed labels");
+    boxedCheck->setChecked(refLabelBoxed);
+    styleRow->addWidget(new QLabel("Label font:"));
+    styleRow->addWidget(fontSpin);
+    styleRow->addWidget(new QLabel("Gap:"));
+    styleRow->addWidget(distSpin);
+    styleRow->addWidget(boxedCheck);
+    styleRow->addStretch(1);
+    layout->addLayout(styleRow);
 
     auto *buttons = new QDialogButtonBox(QDialogButtonBox::Ok | QDialogButtonBox::Cancel);
     QObject::connect(buttons, &QDialogButtonBox::accepted, &dialog, &QDialog::accept);
@@ -1210,8 +1254,21 @@ void ChartWindow::referenceLines()
     for (const auto *rd : rows) {
         const RefOrient o = rd->orientCombo->currentIndex() == 1 ? RefOrient::Horizontal
                                                                  : RefOrient::Vertical;
-        refLines.append({o, rd->xSpin->value(), rd->labelEdit->text().trimmed(), rd->color});
+        const auto a      = static_cast<RefAnchor>(rd->anchorCombo->currentData().toInt());
+        refLines.append({o, rd->xSpin->value(), rd->labelEdit->text().trimmed(), rd->color, a});
     }
+
+    // store and apply the window-wide label style
+    refLabelSize  = fontSpin->value();
+    refLabelDist  = distSpin->value();
+    refLabelBoxed = boxedCheck->isChecked();
+    if (viewer) viewer->setRefLabelStyle(refLabelSize, refLabelDist, refLabelBoxed);
+    QSettings rls;
+    rls.beginGroup(Keys::GROUP_CHARTS);
+    rls.setValue(Keys::REFLABELSIZE, refLabelSize);
+    rls.setValue(Keys::REFLABELDIST, refLabelDist);
+    rls.setValue(Keys::REFLABELBOX, refLabelBoxed);
+    rls.endGroup();
 
     if (!cols.empty()) viewer->setReferenceLines(refLines);
 }
@@ -1741,6 +1798,7 @@ void setColumnReferenceLines(PlotWidget *plot, ChartColumn &col, const QList<Ref
         if (!rl.label.isEmpty()) {
             s->isReference = true;
             s->refLabel    = rl.label;
+            s->refAnchor   = rl.anchor;
         }
         addColumnSeries(plot, s.get(), c, 1.5);
         col.vlines.push_back(std::move(s));
@@ -2030,6 +2088,13 @@ void ChartViewer::clearVerticalLines()
 void ChartViewer::setLegendPos(LegendPos pos)
 {
     plot->setLegendPos(pos);
+}
+
+/* -------------------------------------------------------------------- */
+
+void ChartViewer::setRefLabelStyle(double pointSize, double distance, bool boxed)
+{
+    plot->setRefLabelStyle(pointSize, distance, boxed);
 }
 
 /* -------------------------------------------------------------------- */

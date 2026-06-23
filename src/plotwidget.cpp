@@ -152,6 +152,14 @@ void PlotWidget::setLegendPos(LegendPos pos)
     }
 }
 
+void PlotWidget::setRefLabelStyle(double pointSize, double distance, bool boxed)
+{
+    m_refLabelSize  = pointSize;
+    m_refLabelDist  = distance;
+    m_refLabelBoxed = boxed;
+    update();
+}
+
 void PlotWidget::addSeries(const PlotSeries *series)
 {
     if (series && !m_series.contains(series)) {
@@ -383,32 +391,52 @@ void PlotWidget::doRender(QPainter &p, const QRectF &target) const
         }
     }
 
-    // reference-line labels, drawn in the line's color near the line; the
-    // orientation is inferred from the two-point geometry
-    QFont refFont = axisTitleFont;
-    refFont.setBold(false);
+    // reference-line labels: each line's RefAnchor positions the label along the
+    // line (top/center/bottom for vertical, left/center/right for horizontal); the
+    // window-wide style sets the font size, the perpendicular gap from the line,
+    // and an optional framed opaque background for readability over plot lines.
+    QFont refFont = baseFont;
+    if (m_refLabelSize > 0.0) refFont.setPointSizeF(m_refLabelSize);
+    const QFontMetricsF fmRef(refFont);
     p.setFont(refFont);
     for (const PlotSeries *s : m_series) {
         if (!s || !s->visible || !s->isReference || s->refLabel.isEmpty()) continue;
         if (s->points.size() < 2) continue;
-        p.setPen(s->color);
         const QString lbl   = s->refLabel;
-        const double tw     = fm.horizontalAdvance(lbl);
+        const double tw     = fmRef.horizontalAdvance(lbl);
         const bool vertical = s->points.first().x() == s->points.last().x();
+        double tx = 0.0, ty = 0.0; // text baseline origin
         if (vertical) {
             const double px = mapX(s->points.first().x());
             if (px < plot.left() - 0.5 || px > plot.right() + 0.5) continue;
-            double tx = px + 4.0;
-            if (tx + tw > plot.right()) tx = px - 4.0 - tw; // flip to the left near the edge
-            p.drawText(QPointF(tx, plot.top() + fm.ascent() + 3.0), lbl);
+            tx = px + m_refLabelDist;
+            if (tx + tw > plot.right()) tx = px - m_refLabelDist - tw; // flip near right edge
+            if (s->refAnchor == RefAnchor::Start)
+                ty = plot.top() + fmRef.ascent() + 2.0;
+            else if (s->refAnchor == RefAnchor::End)
+                ty = plot.bottom() - fmRef.descent() - 2.0;
+            else
+                ty = plot.center().y() + 0.5 * (fmRef.ascent() - fmRef.descent());
         } else {
             const double py = mapY(s->points.first().y());
             if (py < plot.top() - 0.5 || py > plot.bottom() + 0.5) continue;
-            const double tx = plot.right() - tw - 4.0;
-            double ty       = py - 4.0;
-            if (ty - fm.ascent() < plot.top()) ty = py + fm.ascent() + 3.0; // flip below near top
-            p.drawText(QPointF(tx, ty), lbl);
+            if (s->refAnchor == RefAnchor::Start)
+                tx = plot.left() + 2.0;
+            else if (s->refAnchor == RefAnchor::End)
+                tx = plot.right() - tw - 2.0;
+            else
+                tx = plot.center().x() - 0.5 * tw;
+            ty = py - m_refLabelDist;
+            if (ty - fmRef.ascent() < plot.top()) ty = py + fmRef.ascent() + m_refLabelDist; // flip
         }
+        if (m_refLabelBoxed) {
+            const QRectF box(tx - 2.0, ty - fmRef.ascent() - 1.0, tw + 4.0, fmRef.height() + 2.0);
+            p.setPen(QPen(s->color, 0));
+            p.setBrush(QColor(255, 255, 255)); // opaque white for readability
+            p.drawRect(box);
+        }
+        p.setPen(s->color);
+        p.drawText(QPointF(tx, ty), lbl);
     }
 
     // optional legend in a chosen plot corner: one row per visible, named data

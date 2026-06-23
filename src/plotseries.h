@@ -25,6 +25,14 @@
 enum class PlotSeriesType { Line, Scatter };
 
 /**
+ * @brief Where a reference-line label sits along its line
+ *
+ * For a vertical line: Start = top, Center = middle, End = bottom.
+ * For a horizontal line: Start = left, Center = center, End = right.
+ */
+enum class RefAnchor { Start, Center, End };
+
+/**
  * @brief One data series in the neutral chart model
  *
  * Carries the points plus the minimal styling the native renderer needs.
@@ -40,6 +48,7 @@ struct PlotSeries {
     bool visible     = true;                    ///< whether the series is drawn
     bool isReference = false;                   ///< draw as a labeled reference line
     QString refLabel;                           ///< text drawn next to a reference line
+    RefAnchor refAnchor = RefAnchor::Start;     ///< where the label sits along the line
 
     // convenience accessors mirroring the subset of the Qt series API used by
     // ChartViewer, so callers need not poke the points list directly

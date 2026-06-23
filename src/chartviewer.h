@@ -12,6 +12,8 @@
 #ifndef CHARTVIEWER_H
 #define CHARTVIEWER_H
 
+#include "plotseries.h" // PlotSeries model + RefAnchor used by RefLine below
+
 #include <QComboBox>
 #include <QLabel>
 #include <QLineEdit>
@@ -52,6 +54,7 @@ struct RefLine {
     double value;                           ///< x position (vertical) or y position (horizontal)
     QString label;                          ///< text label (in line color)
     QColor color;                           ///< line color (default: dark gray)
+    RefAnchor anchor = RefAnchor::Start;    ///< where the label sits along the line
 };
 
 /**
@@ -244,6 +247,9 @@ private:
     std::vector<std::unique_ptr<ChartColumn>> cols; ///< Per-column data/display state
     int active;              ///< Index into cols of the rendered column (-1 = none)
     QList<RefLine> refLines; ///< Current set of reference lines (applied to the active column)
+    double refLabelSize;     ///< Reference-label font point size (window-wide)
+    double refLabelDist;     ///< Reference-label gap from its line, in px (window-wide)
+    bool refLabelBoxed;      ///< Whether reference labels get a framed opaque background
 };
 
 /* -------------------------------------------------------------------- */
@@ -496,6 +502,9 @@ public:
 
     /** @brief Set the in-plot legend placement (corner, or off) */
     void setLegendPos(LegendPos pos);
+
+    /** @brief Set the window-wide reference-label style (font size, gap, boxed) */
+    void setRefLabelStyle(double pointSize, double distance, bool boxed);
 
     /**
      * @brief Set how the raw data series is displayed

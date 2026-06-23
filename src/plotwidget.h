@@ -87,6 +87,17 @@ public:
     LegendPos legendPos() const { return m_legendPos; }
 
     /**
+     * @brief Style applied to all reference-line labels
+     * @param pointSize Label font point size (<= 0 keeps the default size)
+     * @param distance  Perpendicular gap between the label and its line, in px
+     * @param boxed     Draw a frame + opaque background behind each label
+     *
+     * The per-line label position along the line comes from each reference
+     * series' RefAnchor; this sets the window-wide font/offset/box appearance.
+     */
+    void setRefLabelStyle(double pointSize, double distance, bool boxed);
+
+    /**
      * @brief Register a series for drawing (non-owning; ignored if already present)
      * @param series Series owned by the caller
      */
@@ -120,6 +131,9 @@ private:
     QString m_title;                        ///< chart title
     QList<const PlotSeries *> m_series;     ///< registered series (not owned)
     LegendPos m_legendPos = LegendPos::Off; ///< legend placement (corner, or off)
+    double m_refLabelSize = 0.0;            ///< reference-label font point size (0 = default)
+    double m_refLabelDist = 4.0;            ///< reference-label gap from its line (px)
+    bool m_refLabelBoxed  = false;          ///< frame + opaque background behind ref labels
 };
 
 #endif
