@@ -2075,9 +2075,9 @@ void LammpsGui::about()
     std::string version = "<b>This is LAMMPS-GUI version " LAMMPS_GUI_VERSION;
     version += " using Qt version " QT_VERSION_STR;
     if (isLightTheme())
-        version += " using light theme";
+        version += " with light theme";
     else
-        version += " using dark theme";
+        version += " with dark theme";
     version += "</b><br><br>\n";
     if (lammps.hasPlugin()) {
         version += "LAMMPS library loaded as plugin";
