@@ -144,10 +144,10 @@ void PlotWidget::setGrid(bool major, bool minor)
     update();
 }
 
-void PlotWidget::setLegendVisible(bool on)
+void PlotWidget::setLegendPos(LegendPos pos)
 {
-    if (m_legend != on) {
-        m_legend = on;
+    if (m_legendPos != pos) {
+        m_legendPos = pos;
         update();
     }
 }
@@ -411,11 +411,11 @@ void PlotWidget::doRender(QPainter &p, const QRectF &target) const
         }
     }
 
-    // optional legend in the top-left of the plot area: one row per visible,
-    // named data series (raw / processed / fit / overlays). Reference lines and
-    // the unnamed marker-only mirror series are excluded; duplicate names (e.g. a
-    // line and its scatter twin in "Both" mode) collapse to a single row.
-    if (m_legend) {
+    // optional legend in a chosen plot corner: one row per visible, named data
+    // series (raw / processed / fit / overlays). Reference lines and the unnamed
+    // marker-only mirror series are excluded; duplicate names (e.g. a line and its
+    // scatter twin in "Both" mode) collapse to a single row.
+    if (m_legendPos != LegendPos::Off) {
         struct LegendEntry {
             QString name;
             QColor color;
@@ -436,8 +436,14 @@ void PlotWidget::doRender(QPainter &p, const QRectF &target) const
                 maxTextW = std::max(maxTextW, fm.horizontalAdvance(e.name));
             const double boxW = LEGEND_PAD + LEGEND_SWATCH + LEGEND_GAP + maxTextW + LEGEND_PAD;
             const double boxH = LEGEND_PAD + entries.size() * labelH + LEGEND_PAD;
-            const double bx   = plot.left() + LEGEND_INSET;
-            const double by   = plot.top() + LEGEND_INSET;
+            const bool right =
+                (m_legendPos == LegendPos::TopRight || m_legendPos == LegendPos::BottomRight);
+            const bool bottom =
+                (m_legendPos == LegendPos::BottomLeft || m_legendPos == LegendPos::BottomRight);
+            const double bx = right ? (plot.right() - LEGEND_INSET - boxW)
+                                    : (plot.left() + LEGEND_INSET);
+            const double by = bottom ? (plot.bottom() - LEGEND_INSET - boxH)
+                                     : (plot.top() + LEGEND_INSET);
             QPen border(FRAME_COLOR);
             border.setWidth(0);
             p.setPen(border);

@@ -160,16 +160,13 @@ void ChartWindow::setProcessedLabel(const QString &label)
     smooth->setItemText(1, label);
 }
 
-void ChartWindow::setLegendEnabled(bool on)
+void ChartWindow::applyLegendPos()
 {
-    if (legendBtn) {
-        const QSignalBlocker block(legendBtn); // avoid re-entering via toggled()
-        legendBtn->setChecked(on);
-    }
-    if (viewer) viewer->setLegend(on);
+    const int pos = legendCombo->currentData().toInt();
+    if (viewer) viewer->setLegendPos(static_cast<LegendPos>(pos));
     QSettings settings;
     settings.beginGroup(Keys::GROUP_CHARTS);
-    settings.setValue(Keys::LEGEND, on);
+    settings.setValue(Keys::LEGEND, pos);
     settings.endGroup();
 }
 
@@ -326,17 +323,23 @@ ChartWindow::ChartWindow(const QString &_filename, LammpsGui *_lammpsgui, QWidge
     };
     auto *styleBtn = makeToolBtn(":/icons/preferences-desktop-personal.png", "Chart Style...");
     auto *ppBtn    = makeToolBtn(":/icons/application-plot.png", "Postprocess...");
-    legendBtn      = makeToolBtn(":/icons/expand-text.png", "Draw Legend");
-    legendBtn->setCheckable(true);
+    legendCombo    = new QComboBox;
+    legendCombo->setToolTip("In-plot legend placement");
+    legendCombo->addItem("No Legend", static_cast<int>(LegendPos::Off));
+    legendCombo->addItem("Legend top left", static_cast<int>(LegendPos::TopLeft));
+    legendCombo->addItem("Legend top right", static_cast<int>(LegendPos::TopRight));
+    legendCombo->addItem("Legend bottom right", static_cast<int>(LegendPos::BottomRight));
+    legendCombo->addItem("Legend bottom left", static_cast<int>(LegendPos::BottomLeft));
     settings.beginGroup(Keys::GROUP_CHARTS);
-    legendBtn->setChecked(settings.value(Keys::LEGEND, false).toBool());
+    const int legendIdx = legendCombo->findData(settings.value(Keys::LEGEND, 0).toInt());
     settings.endGroup();
+    legendCombo->setCurrentIndex(legendIdx < 0 ? 0 : legendIdx);
     connect(styleBtn, &QPushButton::clicked, this, &ChartWindow::changeStyle);
     connect(ppBtn, &QPushButton::clicked, this, &ChartWindow::postProcess);
-    connect(legendBtn, &QPushButton::toggled, this, &ChartWindow::setLegendEnabled);
+    connect(legendCombo, &QComboBox::currentIndexChanged, this, &ChartWindow::applyLegendPos);
     row2->addWidget(styleBtn);
     row2->addWidget(ppBtn);
-    row2->addWidget(legendBtn);
+    row2->addWidget(legendCombo);
     row2->addWidget(new QLabel("X:"));
     row2->addWidget(xrange);
     row2->addWidget(new QLabel("Y:"));
@@ -386,7 +389,7 @@ ChartWindow::ChartWindow(const QString &_filename, LammpsGui *_lammpsgui, QWidge
     layout->setSpacing(LAYOUT_SPACING);
     // the single shared chart view; it renders whichever column is active
     viewer = new ChartViewer;
-    viewer->setLegend(legendBtn->isChecked());
+    viewer->setLegendPos(static_cast<LegendPos>(legendCombo->currentData().toInt()));
     layout->addWidget(viewer);
     setLayout(layout);
 
@@ -641,18 +644,6 @@ void ChartWindow::changeStyle()
     procForm->addRow("Point size:", procPointSpin);
     layout->addWidget(procBox);
 
-    // legend toggle: a checkable button on the left, "Draw Legend" label to its right
-    auto *legendRow    = new QHBoxLayout;
-    auto *legendToggle = new QPushButton;
-    legendToggle->setCheckable(true);
-    legendToggle->setChecked(legendBtn->isChecked());
-    legendToggle->setFixedWidth(32);
-    legendToggle->setIcon(QIcon(":/icons/expand-text.png"));
-    legendRow->addWidget(legendToggle);
-    legendRow->addWidget(new QLabel("Draw Legend"));
-    legendRow->addStretch(1);
-    layout->addLayout(legendRow);
-
     auto *buttons = new QDialogButtonBox(QDialogButtonBox::Ok | QDialogButtonBox::Cancel);
     connect(buttons, &QDialogButtonBox::accepted, &dialog, &QDialog::accept);
     connect(buttons, &QDialogButtonBox::rejected, &dialog, &QDialog::reject);
@@ -663,7 +654,6 @@ void ChartWindow::changeStyle()
                                rawChosen, rawWidthSpin->value(), rawPointSpin->value());
         chart->setSmoothStyle(static_cast<ChartDisplayMode>(procMode->currentData().toInt()),
                               procChosen, procWidthSpin->value(), procPointSpin->value());
-        setLegendEnabled(legendToggle->isChecked());
         // a style change is view-only: restore the slider window the setters reset
         applySliderWindow();
     }
@@ -2037,9 +2027,9 @@ void ChartViewer::clearVerticalLines()
 
 /* -------------------------------------------------------------------- */
 
-void ChartViewer::setLegend(bool on)
+void ChartViewer::setLegendPos(LegendPos pos)
 {
-    plot->setLegendVisible(on);
+    plot->setLegendPos(pos);
 }
 
 /* -------------------------------------------------------------------- */

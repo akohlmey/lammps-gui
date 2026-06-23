@@ -32,6 +32,9 @@ class QPainter;
 class QPaintEvent;
 class QRectF;
 
+/** @brief Legend placement: off, or one of the four plot corners */
+enum class LegendPos { Off, TopLeft, TopRight, BottomLeft, BottomRight };
+
 /**
  * @brief QPainter-based renderer for the neutral chart model
  *
@@ -74,14 +77,14 @@ public:
     void setGrid(bool major, bool minor);
 
     /**
-     * @brief Toggle a legend drawn in the top-left corner of the plot
+     * @brief Place a legend in one of the plot corners (or turn it off)
      *
      * The legend lists each visible, named data series (raw / processed / fit /
      * overlays); reference lines and unnamed marker-only mirrors are excluded.
      */
-    void setLegendVisible(bool on);
-    /** @brief Whether the legend is currently drawn */
-    bool legendVisible() const { return m_legend; }
+    void setLegendPos(LegendPos pos);
+    /** @brief Current legend placement */
+    LegendPos legendPos() const { return m_legendPos; }
 
     /**
      * @brief Register a series for drawing (non-owning; ignored if already present)
@@ -112,11 +115,11 @@ private:
     /** @brief Shared painting routine used by paintEvent() and renderToImage() */
     void doRender(QPainter &p, const QRectF &target) const;
 
-    PlotAxis m_xaxis;                   ///< X-axis configuration
-    PlotAxis m_yaxis;                   ///< Y-axis configuration
-    QString m_title;                    ///< chart title
-    QList<const PlotSeries *> m_series; ///< registered series (not owned)
-    bool m_legend = false;              ///< draw a top-left legend of named series
+    PlotAxis m_xaxis;                       ///< X-axis configuration
+    PlotAxis m_yaxis;                       ///< Y-axis configuration
+    QString m_title;                        ///< chart title
+    QList<const PlotSeries *> m_series;     ///< registered series (not owned)
+    LegendPos m_legendPos = LegendPos::Off; ///< legend placement (corner, or off)
 };
 
 #endif

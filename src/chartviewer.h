@@ -35,6 +35,7 @@ class ChartViewer;
 struct ChartColumn;
 class LammpsGui;
 class PlotData;
+enum class LegendPos; // defined in plotwidget.h
 
 /**
  * @brief A labeled vertical reference line for chart overlays
@@ -210,9 +211,8 @@ private:
     /// active column (so it is restored when switching columns).
     void setProcessedLabel(const QString &label);
 
-    /// Enable/disable the in-plot legend, keeping the toolbar button, the Chart
-    /// Style checkbox, and the persisted setting in sync.
-    void setLegendEnabled(bool on);
+    /// Apply the legend placement chosen in the toolbar dropdown and persist it.
+    void applyLegendPos();
 
     /// Move both range-slider handles back to the full extent (no plot update).
     void resetRangeSliders();
@@ -237,7 +237,7 @@ private:
     QLabel *units;                ///< Units display
     QCheckBox *norm;              ///< Normalization checkbox
     RangeSlider *xrange, *yrange; ///< Range sliders for axes
-    QPushButton *legendBtn;       ///< Checkable toolbar button toggling the in-plot legend
+    QComboBox *legendCombo;       ///< Toolbar dropdown choosing the in-plot legend placement
 
     QString filename;    ///< Log file path
     ChartViewer *viewer; ///< The single chart view (renders the active column)
@@ -494,8 +494,8 @@ public:
     /** @brief Remove all vertical reference lines */
     void clearVerticalLines();
 
-    /** @brief Toggle the in-plot legend (drawn top-left) */
-    void setLegend(bool on);
+    /** @brief Set the in-plot legend placement (corner, or off) */
+    void setLegendPos(LegendPos pos);
 
     /**
      * @brief Set how the raw data series is displayed
