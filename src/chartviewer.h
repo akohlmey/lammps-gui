@@ -214,6 +214,13 @@ private:
     /// Style checkbox, and the persisted setting in sync.
     void setLegendEnabled(bool on);
 
+    /// Move both range-slider handles back to the full extent (no plot update).
+    void resetRangeSliders();
+
+    /// Re-derive the displayed plot range from the current slider-handle window
+    /// and the active column's data range (so a view-only change preserves zoom).
+    void applySliderWindow();
+
     LammpsGui *lammpsgui; ///< Main widget pointer for receiving signals
     bool doRaw, doSmooth; ///< Flags for displaying raw/smoothed data
     QMenuBar *menu;       ///< Menu bar

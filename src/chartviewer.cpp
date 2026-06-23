@@ -173,6 +173,22 @@ void ChartWindow::setLegendEnabled(bool on)
     settings.endGroup();
 }
 
+void ChartWindow::resetRangeSliders()
+{
+    // setLow/setHigh only repaint the handles; callers update the plot separately
+    xrange->setLow(0);
+    xrange->setHigh(SLIDER_RANGE);
+    yrange->setLow(0);
+    yrange->setHigh(SLIDER_RANGE);
+}
+
+void ChartWindow::applySliderWindow()
+{
+    if (cols.empty()) return;
+    updateXRange(xrange->low(), xrange->high());
+    updateYRange(yrange->low(), yrange->high());
+}
+
 ChartWindow::ChartWindow(const QString &_filename, LammpsGui *_lammpsgui, QWidget *parent) :
     QWidget(parent), lammpsgui(_lammpsgui), menu(new QMenuBar), file(new QMenu("&File")),
     saveAsAct(nullptr), copyAct(nullptr), exportCsvAct(nullptr), exportDatAct(nullptr),
@@ -648,6 +664,8 @@ void ChartWindow::changeStyle()
         chart->setSmoothStyle(static_cast<ChartDisplayMode>(procMode->currentData().toInt()),
                               procChosen, procWidthSpin->value(), procPointSpin->value());
         setLegendEnabled(legendToggle->isChecked());
+        // a style change is view-only: restore the slider window the setters reset
+        applySliderWindow();
     }
 }
 
@@ -845,6 +863,7 @@ void ChartWindow::postProcess()
         }
         chart->setFitCurve(result.points, expr, /* eosMode= */ true);
         setProcessedLabel("Custom f(x)");
+        resetRangeSliders();        // a fit re-fits to the whole data set; match the sliders
         smooth->setCurrentIndex(2); // "Both" = raw data + function overlay
         information(this, "Custom Function",
                     QString("Plotted f(x) = %1\nover x in [%2, %3].")
@@ -873,6 +892,7 @@ void ChartWindow::postProcess()
         const QString fitName = label.isEmpty() ? expr : label;
         chart->setFitCurve(fit.curve, fitName, /* eosMode= */ true);
         setProcessedLabel(fitName.length() > 12 ? "Custom fit" : fitName);
+        resetRangeSliders();        // a fit re-fits to the whole data set; match the sliders
         smooth->setCurrentIndex(2); // "Both" = raw data + fit overlay
 
         QString report = QString("Custom fit of  f(x) = %1\n").arg(expr);
@@ -901,6 +921,7 @@ void ChartWindow::postProcess()
         const QString polyName = QString("Poly deg %1").arg(static_cast<int>(f.coeffs.size()) - 1);
         chart->setFitCurve(curve, polyName, /* eosMode= */ true);
         setProcessedLabel(polyName);
+        resetRangeSliders();        // a fit re-fits to the whole data set; match the sliders
         smooth->setCurrentIndex(2); // "Both" = raw data + fit overlay
 
         QString report =
@@ -966,6 +987,7 @@ void ChartWindow::postProcess()
         chart->setDisplayStyle(ChartDisplayMode::Points, chart->displayColor(),
                                chart->displayWidth(), chart->displayPointSize());
         setProcessedLabel("EOS fit");
+        resetRangeSliders();        // a fit re-fits to the whole data set; match the sliders
         smooth->setCurrentIndex(2); // "Both" = raw points + EOS fit line
 
         // derive lattice constant: a0 = cbrt(N * V0)
@@ -1066,6 +1088,8 @@ void ChartWindow::addDataFile()
         chart->addOverlaySeries(pts, plotData.columnName(ycol), palette[colorIdx % palette.size()]);
         ++colorIdx;
     }
+    // new data was added (and re-fit to the full range): match the sliders to it
+    resetRangeSliders();
 }
 
 void ChartWindow::referenceLines()
@@ -1228,9 +1252,10 @@ void ChartWindow::selectSmooth(int)
     window->setEnabled(sgEnabled);
     order->setEnabled(sgEnabled);
     updateSmooth();
-    // re-fit the axes to the now-displayed series so the range covers the whole
-    // data (e.g. a smoothed curve that overshoots the raw range is not clipped)
-    resetZoom();
+    // toggling Raw/Smooth/Both is a view-only change: keep the current slider
+    // window, just re-derive the displayed range from it (the data range may have
+    // grown/shrunk as the smoothed series was shown/hidden)
+    applySliderWindow();
 }
 
 void ChartWindow::updateSmooth()
@@ -1374,11 +1399,8 @@ void ChartWindow::changeChart(int)
     window->setEnabled(sgEnabled);
     order->setEnabled(sgEnabled);
 
-    // reset plot range selection
-    xrange->setLow(0);
-    xrange->setHigh(SLIDER_RANGE);
-    yrange->setLow(0);
-    yrange->setHigh(SLIDER_RANGE);
+    // a chart switch shows the new column at full range (setColumn re-fit it)
+    resetRangeSliders();
 }
 
 void ChartWindow::closeEvent(QCloseEvent *event)
