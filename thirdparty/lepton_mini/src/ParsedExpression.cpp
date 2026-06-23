@@ -45,7 +45,11 @@ ParsedExpression::ParsedExpression(const ExpressionTreeNode& rootNode) : rootNod
 }
 
 const ExpressionTreeNode& ParsedExpression::getRootNode() const {
-    if (&rootNode.getOperation() == NULL)
+    // ParsedExpression is a friend of ExpressionTreeNode, so test the operation
+    // pointer directly.  The upstream form '&rootNode.getOperation() == NULL'
+    // takes the address of a dereferenced (possibly null) reference, which is
+    // undefined behavior and triggers -Wtautological-undefined-compare on Clang.
+    if (rootNode.operation == NULL)
         throw Exception("Illegal call to an initialized ParsedExpression");
     return rootNode;
 }
