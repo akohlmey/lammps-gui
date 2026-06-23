@@ -267,8 +267,22 @@ short live run; keep `ctest` green)
    `PlotSeries` set, cached bounds, smoothing params, display style, EOS/fit
    flags, and per-column title/ylabel out of the `ChartViewer` QWidget into a
    plain `ChartColumn` data+logic struct. `ChartViewer` keeps only the QWidget
-   shell + its `PlotWidget` for now (no behavior change yet). Mechanical move,
-   build-verifiable.
+   shell + its `PlotWidget` for now (no behavior change yet).
+
+   Blast-radius note (measured 2026-06-23): this is *not* a trivial mechanical
+   move. There are ~150 bare member references across the `ChartViewer` method
+   region, and -- critically -- five member names collide with `ChartWindow`'s
+   own members: `smooth`/`window`/`order`/`doRaw`/`doSmooth` exist in **both**
+   classes (a `PlotSeries`/`int`/`bool` in `ChartViewer`, a `QComboBox`/
+   `QSpinBox`/`bool` in `ChartWindow`). The safe way to do the rename is to scope
+   edits strictly to the `ChartViewer` method bodies, which start at the first
+   `ChartViewer::` definition in `chartviewer.cpp` (no bare `ChartViewer` member
+   is touched before then; `ChartWindow` only reaches a viewer through its public
+   `c->method()` API). The `PlotSeries` members are `unique_ptr` (move-only), so
+   `ChartColumn` is a move-only type -- fine for the eventual `vector<ChartColumn>`
+   as long as it is never copied. Do this as one focused, screenshot-verified
+   commit, not a global find/replace (a blind replace would corrupt the
+   identically-named `ChartWindow` members).
 2. **Make `PlotWidget` render a `ChartColumn` on demand.** Add a
    `ChartWindow`-owned single `PlotWidget` and a `renderColumn(const
    ChartColumn&)` path that feeds it the column's series + labels + zoom. Still
