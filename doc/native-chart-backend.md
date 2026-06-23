@@ -283,26 +283,62 @@ short live run; keep `ctest` green)
    as long as it is never copied. Do this as one focused, screenshot-verified
    commit, not a global find/replace (a blind replace would corrupt the
    identically-named `ChartWindow` members).
-2. **Make `PlotWidget` render a `ChartColumn` on demand.** Add a
-   `ChartWindow`-owned single `PlotWidget` and a `renderColumn(const
-   ChartColumn&)` path that feeds it the column's series + labels + zoom. Still
-   parallel to the existing per-column viewers (dormant), so it can be
-   screenshot-diffed against the live ones.
-3. **Switch `ChartWindow` to own `vector<ChartColumn>` + one `PlotWidget`.**
-   `addChart` appends a `ChartColumn`; `changeChart` sets an active index and
-   calls `renderColumn`; `addData` appends to the target column and repaints
-   only when it is active. Delete the per-column `ChartViewer` widgets and the
-   show/hide scheme. Rewire the control slots (`updateSmooth`, `updateTLabel`,
-   `updateXRange/Y`, `selectSmooth`) to act on the active column (smoothing
-   params still applied to all columns' data).
-4. **Move the per-column-attached features onto `ChartColumn`.** Postprocess
-   fits (autocorrelation new-chart, polynomial/EOS/custom), "Add Data from File"
-   overlays, and reference lines currently attach to a specific `ChartViewer`;
-   re-point them at the active `ChartColumn`. Repoint the export paths
-   (`saveAs`/`copy`/`exportCsv`/`exportDat`/`exportYaml`) and `getStep` to read
-   from the column structs.
-5. **Remove the now-empty `ChartViewer` widget type** (or rename `ChartColumn`
-   to it), update `doc/api_reference.rst`, and refresh this file's status.
+   DONE (commit "extract per-column ChartViewer state into a ChartColumn struct").
+
+2. **Extract the column rendering pipeline into free functions.** Move the
+   per-column render logic out of `ChartViewer`'s instance methods into
+   file-local free functions taking an explicit `(PlotWidget *, ChartColumn &)`:
+   `columnMinMax`, `addColumnSeries`, `styleColumnSeries`, `renderColumnSeries`,
+   `refreshColumn` (= `updateSmooth` body), `resetColumnZoom` (= `resetZoom`
+   body). `ChartViewer`'s methods become thin forwarders.
+   DONE (commit "extract the column rendering pipeline into free functions").
+
+3a. **Extract the remaining per-column operations into free functions.**
+   `appendColumnPoint` (pure data append + bounds), `setColumnPoints`,
+   `setColumnDisplayStyle`, `setColumnSmoothStyle`, `setColumnFitCurve`,
+   `addColumnOverlay`, `clearColumnOverlay`, `setColumnReferenceLines`,
+   `clearColumnVerticalLines`, `setColumnSmoothParam`. After this, **all**
+   per-column logic is in `(PlotWidget *, ChartColumn &)` free functions and
+   every `ChartViewer` method is a one-line forwarder.
+   DONE (commit "extract remaining per-column operations into free functions").
+
+3b. **Switch `ChartWindow` to a single `PlotWidget` + `vector<ChartColumn>`;
+   delete `ChartViewer`.** The behavior-changing finale. Worked-out design:
+
+   - `ChartWindow` members: drop `QList<ChartViewer *> charts`; add
+     `PlotWidget *plot` (one renderer, placed in the layout),
+     `std::vector<std::unique_ptr<ChartColumn>> cols` (unique_ptr so column
+     addresses stay stable -- though the registered `PlotSeries*` are heap-stable
+     regardless), `int active` (index of the shown column, -1 = none), and
+     `int updChart` (the cached throttle interval, formerly a `ChartViewer`
+     member). Replace `currentChart()` with `ChartColumn *activeColumn()`.
+   - Only the **active** column's series are registered on the shared plot. Add
+     `PlotWidget::clearSeries()` and a `selectColumn(plot, col)` that:
+     `clearSeries()`; re-`addSeries()` the column's persistent extras (`fit`,
+     `overlaySeries`, `vlines`) which retain their own styling; `refreshColumn()`
+     to (re)create+style+register the raw/smoothed series; apply the window's
+     `refLines`; `resetColumnZoom()`; and restore the column's y-label.
+   - **Only the y-axis label varies per column** (it is the column keyword); the
+     chart title, x-title, and x-format are window-wide and stay on the shared
+     plot. So `ChartColumn` needs just one new field, `QString yTitle`.
+   - "Apply to all columns but render only the active": `updateSmooth` and
+     `referenceLines` set flags/defs on every column (data-only -- add
+     `setColumnData` and `setColumnSmoothFlags` variants that do **not** touch the
+     plot) and then `refreshColumn`/`selectColumn` only the active one. `loadData`
+     likewise sets data on all columns and `selectColumn`s the first.
+   - `addData(step, data, index)`: `appendColumnPoint` on the matching column;
+     if it is the active column and its per-column throttle (`lastUpdate` +
+     `updChart`) has elapsed, `refreshColumn` + `resetColumnZoom`.
+   - `changeChart`: set `active` to the selected column, `selectColumn` it,
+     restore the y-label field, sync the smooth-label/spinbox state, reset the
+     range sliders (unchanged). `resetCharts`: `clearSeries` + `cols.clear()` +
+     `columns->clear()`. `copy`/`saveAs`: grab the one `plot`.
+   - Delete the `ChartViewer` class; remove its `doc/api_reference.rst` entry if
+     present and refresh this file's status.
+
+   This is the stage that changes live-run/multi-column behavior, so it needs the
+   full verification matrix below, including a real live thermo run and
+   Data-dropdown switching -- the manual testing a beta cycle is for.
 
 ### Verification matrix (the established GUI-visual-verification workflow)
 
