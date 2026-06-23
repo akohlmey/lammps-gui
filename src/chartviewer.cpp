@@ -72,6 +72,22 @@ constexpr int SLIDER_RANGE       = 1000;
 constexpr double SLIDER_FRACTION = 1.0 / static_cast<double>(SLIDER_RANGE);
 constexpr int LAYOUT_SPACING     = 6;
 
+// Widen a (near) empty [lo, hi] range to a small symmetric/relative band so the
+// axis is never degenerate. Shared by the X and Y branches of getMinMax().
+void padEmptyRange(double &lo, double &hi)
+{
+    const double delta = hi - lo;
+    if ((delta / ((hi == 0.0) ? 1.0 : hi)) < 1.0e-10) {
+        if ((lo == 0.0) || (hi == 0.0)) {
+            lo = -0.025;
+            hi = 0.025;
+        } else {
+            lo -= 0.025 * fabs(lo);
+            hi += 0.025 * fabs(hi);
+        }
+    }
+}
+
 // brush color index must be kept in sync with preferences
 
 const QList<QBrush> mybrushes = {
@@ -1520,28 +1536,9 @@ QRectF ChartViewer::getMinMax() const
     }
     // note: vlines (vertical reference lines) are decorative and excluded from range
 
-    // avoid (nearly) empty ranges
-    double deltax = xmax - xmin;
-    if ((deltax / ((xmax == 0.0) ? 1.0 : xmax)) < 1.0e-10) {
-        if ((xmin == 0.0) || (xmax == 0.0)) {
-            xmin = -0.025;
-            xmax = 0.025;
-        } else {
-            xmin -= 0.025 * fabs(xmin);
-            xmax += 0.025 * fabs(xmax);
-        }
-    }
-
-    double deltay = ymax - ymin;
-    if ((deltay / ((ymax == 0.0) ? 1.0 : ymax)) < 1.0e-10) {
-        if ((ymin == 0.0) || (ymax == 0.0)) {
-            ymin = -0.025;
-            ymax = 0.025;
-        } else {
-            ymin -= 0.025 * fabs(ymin);
-            ymax += 0.025 * fabs(ymax);
-        }
-    }
+    // avoid (nearly) empty ranges on either axis
+    padEmptyRange(xmin, xmax);
+    padEmptyRange(ymin, ymax);
 
     return {xmin, ymax, xmax - xmin, ymin - ymax};
 }
