@@ -31,7 +31,6 @@ jobs:
       uses: jurplel/install-qt-action@v4
       with:
         version: '6.8.*'
-        modules: 'qtcharts'
 
     - name: Building LAMMPS-GUI via CMake
       shell: bash

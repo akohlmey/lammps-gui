@@ -32,7 +32,6 @@ jobs:
       with:
         version: '6.8.*'
         arch: 'win64_msvc2022_64'
-        modules: 'qtcharts'
 
     - name: Building LAMMPS-GUI via CMake
       shell: cmd

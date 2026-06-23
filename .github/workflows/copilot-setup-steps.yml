@@ -35,7 +35,6 @@ jobs:
                       libomp-dev \
                       mesa-common-dev \
                       qt6-base-dev \
-                      qt6-charts-dev \
                       python3 \
                       python3-venv \
                       python3-dev \
