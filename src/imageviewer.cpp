@@ -1878,8 +1878,8 @@ void ImageViewer::updateFixes()
             if (match.captured(1) == "Compute") {
                 if (image_computes.contains(style)) {
                     if (computes.count(id) == 0) {
-                        const auto &color = defaultcolors[i % defaultcolors.size()].toStdString();
-                        computes[id]      = new ImageInfo(false, style, TYPE, color, 1.0, 0.0, 0.0);
+                        const QString &color = defaultcolors[i % defaultcolors.size()];
+                        computes[id] = new ImageInfo(false, style, TYPE, color, 1.0, 0.0, 0.0);
                         ++i;
                     } else {
                         computes[id]->style = style;
@@ -1888,8 +1888,8 @@ void ImageViewer::updateFixes()
             } else if (match.captured(1) == "Fix") {
                 if (image_fixes.contains(style)) {
                     if (fixes.count(id) == 0) {
-                        const auto &color = defaultcolors[i % defaultcolors.size()].toStdString();
-                        fixes[id]         = new ImageInfo(false, style, TYPE, color, 1.0, 0.0, 0.0);
+                        const QString &color = defaultcolors[i % defaultcolors.size()];
+                        fixes[id] = new ImageInfo(false, style, TYPE, color, 1.0, 0.0, 0.0);
                         ++i;
                     } else {
                         fixes[id]->style = style;
@@ -1925,10 +1925,10 @@ void ImageViewer::updateRegions()
         if (!name.isEmpty()) {
             std::string id = name.toStdString();
             if (regions.count(id) == 0) {
-                const auto &color = defaultcolors[i % defaultcolors.size()].toStdString();
-                auto *reginfo     = new RegionInfo(false, FRAME, color, DEFAULT_DIAMETER,
-                                                   DEFAULT_OPACITY, DEFAULT_NPOINTS);
-                regions[id]       = reginfo;
+                const QString &color = defaultcolors[i % defaultcolors.size()];
+                auto *reginfo        = new RegionInfo(false, FRAME, color, DEFAULT_DIAMETER,
+                                                      DEFAULT_OPACITY, DEFAULT_NPOINTS);
+                regions[id]          = reginfo;
             }
         }
     }

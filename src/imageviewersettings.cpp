@@ -968,11 +968,11 @@ void ImageViewer::buildFixComputeRows(QGridLayout *layout, int &idx,
         cstyle->addItem("const");
         cstyle->setCurrentIndex(item.second->colorstyle);
         layout->addWidget(cstyle, idx, n++);
-        auto *color = new QLineEdit(item.second->color.c_str());
+        auto *color = new QLineEdit(item.second->color);
         color->setCompleter(colorcompleter);
         color->setValidator(colorvalidator);
         color->setFixedSize(metrics.averageCharWidth() * 12, metrics.height() + 4);
-        color->setText(item.second->color.c_str());
+        color->setText(item.second->color);
         layout->addWidget(color, idx, n++);
         auto *trans = new QLineEdit(QString::number(item.second->opacity));
         trans->setValidator(transvalidator);
@@ -1018,7 +1018,7 @@ void ImageViewer::readFixComputeRows(QGridLayout *layout, int offset,
         items[id]->colorstyle = combo->currentIndex();
         item                  = layout->itemAtPosition(idx, n++);
         auto *line            = qobject_cast<QLineEdit *>(item->widget());
-        if (line && line->hasAcceptableInput()) items[id]->color = line->text().toStdString();
+        if (line && line->hasAcceptableInput()) items[id]->color = line->text();
         item = layout->itemAtPosition(idx, n++);
         line = qobject_cast<QLineEdit *>(item->widget());
         if (line && line->hasAcceptableInput()) items[id]->opacity = line->text().toDouble();
@@ -1136,7 +1136,7 @@ void ImageViewer::readRegionRows(QGridLayout *layout)
         regions[id]->style   = combo->currentIndex();
         item                 = layout->itemAtPosition(idx, n++);
         auto *line           = qobject_cast<QLineEdit *>(item->widget());
-        if (line && line->hasAcceptableInput()) regions[id]->color = line->text().toStdString();
+        if (line && line->hasAcceptableInput()) regions[id]->color = line->text();
         item = layout->itemAtPosition(idx, n++);
         line = qobject_cast<QLineEdit *>(item->widget());
         if (line && line->hasAcceptableInput()) regions[id]->diameter = line->text().toDouble();
@@ -1205,11 +1205,11 @@ void ImageViewer::regionSettings()
         style->addItem("points");
         style->setCurrentIndex(reg.second->style);
         layout->addWidget(style, idx, n++);
-        auto *color = new QLineEdit(reg.second->color.c_str());
+        auto *color = new QLineEdit(reg.second->color);
         color->setCompleter(colorcompleter);
         color->setValidator(colorvalidator);
         color->setFixedSize(metrics.averageCharWidth() * 12, metrics.height() + 4);
-        color->setText(reg.second->color.c_str());
+        color->setText(reg.second->color);
         layout->addWidget(color, idx, n++);
         auto *frame = new QLineEdit(QString::number(reg.second->diameter));
         frame->setValidator(framevalidator);

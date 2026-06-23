@@ -35,7 +35,7 @@ static void appendRegionArgs(QString &cmd, const DumpImageParams &p)
     for (const auto &reg : p.regions) {
         if (reg.second->enabled) {
             QString id(reg.first.c_str());
-            QString color(reg.second->color.c_str());
+            const QString &color = reg.second->color;
             switch (reg.second->style) {
                 case FRAME:
                     cmd += " region " + id + blank + color;
@@ -168,7 +168,7 @@ static void appendFixComputeColors(QString &cmd, const DumpImageParams &p)
     for (const auto &comp : p.computes) {
         if (comp.second->enabled) {
             QString id(comp.first.c_str());
-            QString color(comp.second->color.c_str());
+            const QString &color = comp.second->color;
             cmd += " ccolor " + id + blank + color;
             cmd += " ctrans " + id + blank + QString::number(comp.second->opacity);
             cmd += blank;
@@ -177,7 +177,7 @@ static void appendFixComputeColors(QString &cmd, const DumpImageParams &p)
     for (const auto &fix : p.fixes) {
         if (fix.second->enabled) {
             QString id(fix.first.c_str());
-            QString color(fix.second->color.c_str());
+            const QString &color = fix.second->color;
             cmd += " fcolor " + id + blank + color;
             cmd += " ftrans " + id + blank + QString::number(fix.second->opacity);
             cmd += blank;

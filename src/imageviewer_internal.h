@@ -84,20 +84,20 @@ class ImageInfo {
 public:
     ImageInfo() = delete;
     /** Custom constructor */
-    ImageInfo(bool _enabled, const QString &_style, int _colorstyle, const std::string &_color,
+    ImageInfo(bool _enabled, const QString &_style, int _colorstyle, const QString &_color,
               double _opacity, double _flag1, double _flag2) :
         enabled(_enabled), style(_style), colorstyle(_colorstyle), color(_color), opacity(_opacity),
         flag1(_flag1), flag2(_flag2)
     {
     }
 
-    bool enabled;      ///< display graphics if true
-    QString style;     ///< name of style
-    int colorstyle;    ///< color style for graphics: TYPE, ELEMENT, CONSTANT
-    std::string color; ///< custom color of graphics objects for style == CONSTANT
-    double opacity;    ///< opacity of graphics objects for style == CONSTANT
-    double flag1;      ///< Flag #1 for graphics
-    double flag2;      ///< Flag #2 for graphics
+    bool enabled;   ///< display graphics if true
+    QString style;  ///< name of style
+    int colorstyle; ///< color style for graphics: TYPE, ELEMENT, CONSTANT
+    QString color;  ///< custom color of graphics objects for style == CONSTANT
+    double opacity; ///< opacity of graphics objects for style == CONSTANT
+    double flag1;   ///< Flag #1 for graphics
+    double flag2;   ///< Flag #2 for graphics
 };
 
 /**
@@ -107,19 +107,19 @@ class RegionInfo {
 public:
     RegionInfo() = delete;
     /** Custom constructor */
-    RegionInfo(bool _enabled, int _style, const std::string &_color, double _diameter,
-               double _opacity, int _npoints) :
+    RegionInfo(bool _enabled, int _style, const QString &_color, double _diameter, double _opacity,
+               int _npoints) :
         enabled(_enabled), style(_style), color(_color), diameter(_diameter), opacity(_opacity),
         npoints(_npoints)
     {
     }
 
-    bool enabled;      ///< display region if true
-    int style;         ///< style of region object: FRAME, FILLED, TRANSPARENT, or POINTS
-    std::string color; ///< color of region display
-    double diameter;   ///< diameter value for POINTS and FRAME
-    double opacity;    ///< opacity for TRANSPARENT
-    int npoints;       ///< number of points to be used for POINTS style region display
+    bool enabled;    ///< display region if true
+    int style;       ///< style of region object: FRAME, FILLED, TRANSPARENT, or POINTS
+    QString color;   ///< color of region display
+    double diameter; ///< diameter value for POINTS and FRAME
+    double opacity;  ///< opacity for TRANSPARENT
+    int npoints;     ///< number of points to be used for POINTS style region display
 };
 
 // ---- shared free helpers (defined in imageviewer.cpp) --------------------
