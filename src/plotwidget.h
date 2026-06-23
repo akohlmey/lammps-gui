@@ -82,6 +82,8 @@ public:
     void removeSeries(const PlotSeries *series);
     /** @brief Whether a series is currently registered */
     bool hasSeries(const PlotSeries *series) const;
+    /** @brief Unregister all series (does not delete them) */
+    void clearSeries();
 
     /**
      * @brief Render the chart into a freshly allocated image

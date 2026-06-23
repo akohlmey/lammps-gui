@@ -31,6 +31,7 @@ class QSpinBox;
 class RangeSlider;
 
 class ChartViewer;
+struct ChartColumn;
 class LammpsGui;
 class PlotData;
 
@@ -77,7 +78,7 @@ public:
      * @brief Get the number of charts currently displayed
      * @return Number of charts
      */
-    int numCharts() const { return charts.size(); }
+    int numCharts() const { return static_cast<int>(cols.size()); }
 
     /**
      * @brief Check if a chart at given index has the specified title
@@ -197,8 +198,12 @@ private:
     /// column per chart) for the data exporters.
     PlotData chartsToPlotData() const;
 
-    /// Return the chart currently selected in the columns combo box.
+    /// Return the single chart view (bound to the currently selected column),
+    /// or nullptr if no column exists yet.
     ChartViewer *currentChart();
+
+    /// Position in `cols` of the column matching the combo selection (-1 if none).
+    int activeIndex() const;
 
     LammpsGui *lammpsgui; ///< Main widget pointer for receiving signals
     bool doRaw, doSmooth; ///< Flags for displaying raw/smoothed data
@@ -217,9 +222,11 @@ private:
     QCheckBox *norm;              ///< Normalization checkbox
     RangeSlider *xrange, *yrange; ///< Range sliders for axes
 
-    QString filename;            ///< Log file path
-    QList<ChartViewer *> charts; ///< List of chart viewers
-    QList<RefLine> refLines;     ///< Current set of reference lines (applied to all charts)
+    QString filename;    ///< Log file path
+    ChartViewer *viewer; ///< The single chart view (renders the active column)
+    std::vector<std::unique_ptr<ChartColumn>> cols; ///< Per-column data/display state
+    int active;              ///< Index into cols of the rendered column (-1 = none)
+    QList<RefLine> refLines; ///< Current set of reference lines (applied to the active column)
 };
 
 /* -------------------------------------------------------------------- */
@@ -280,6 +287,7 @@ struct ChartColumn {
     std::vector<std::unique_ptr<PlotSeries>> overlaySeries; ///< Extra series from secondary files
     std::vector<std::unique_ptr<PlotSeries>> vlines;        ///< Reference line series (decorative)
     QList<RefLine> reflineDefs; ///< Reference line definitions (parallel to vlines)
+    QString yTitle;             ///< This column's Y-axis label (restored on the shared plot)
 };
 
 /**
@@ -297,23 +305,32 @@ class ChartViewer : public QWidget {
 
 public:
     /**
-     * @brief Constructor
-     * @param title Chart title (property name)
-     * @param index Chart index
+     * @brief Constructor -- creates the renderer; no column is bound yet
      * @param parent Parent widget
      */
-    explicit ChartViewer(const QString &title, int index, QWidget *parent = nullptr);
+    explicit ChartViewer(QWidget *parent = nullptr);
 
     /**
      * @brief Destructor
      */
     ~ChartViewer() override;
 
-    ChartViewer()                               = delete;
     ChartViewer(const ChartViewer &)            = delete;
     ChartViewer(ChartViewer &&)                 = delete;
     ChartViewer &operator=(const ChartViewer &) = delete;
     ChartViewer &operator=(ChartViewer &&)      = delete;
+
+    /**
+     * @brief Bind this view to a column (or nullptr) and render it
+     *
+     * Unregisters the previous column's series from the shared plot and
+     * (re)attaches and draws @p c, restoring its Y-axis label. The column is
+     * owned by ChartWindow, not by the viewer.
+     */
+    void setColumn(ChartColumn *c);
+
+    /** @brief The column currently bound to this view (may be nullptr) */
+    ChartColumn *boundColumn() const { return col; }
 
     /**
      * @brief Append an (x, y) data point to the chart
@@ -359,13 +376,13 @@ public:
      * @brief Get chart index
      * @return Index of this chart
      */
-    int getIndex() const { return column.index; };
+    int getIndex() const { return col->index; };
 
     /**
      * @brief Get number of data points
      * @return Number of points in series
      */
-    int getCount() const { return column.series->count(); }
+    int getCount() const { return col->series->count(); }
 
     /**
      * @brief Get the series (data column) name
@@ -382,14 +399,14 @@ public:
      * @param index Data point index
      * @return Step number (X value)
      */
-    double getStep(int index) const { return (index < 0) ? 0.0 : column.series->at(index).x(); }
+    double getStep(int index) const { return (index < 0) ? 0.0 : col->series->at(index).x(); }
 
     /**
      * @brief Get data value at given index
      * @param index Data point index
      * @return Data value (Y value)
      */
-    double getData(int index) const { return (index < 0) ? 0.0 : column.series->at(index).y(); }
+    double getData(int index) const { return (index < 0) ? 0.0 : col->series->at(index).y(); }
 
     /**
      * @brief Set chart title
@@ -444,7 +461,7 @@ public:
     void clearOverlaySeries();
 
     /** @brief Number of overlay series currently displayed */
-    int overlaySeriesCount() const { return static_cast<int>(column.overlaySeries.size()); }
+    int overlaySeriesCount() const { return static_cast<int>(col->overlaySeries.size()); }
 
     /**
      * @brief Set vertical reference lines (replaces any existing set)
@@ -468,13 +485,13 @@ public:
     void setDisplayStyle(ChartDisplayMode mode, const QColor &color, qreal width, qreal pointSize);
 
     /** @brief Current display mode */
-    ChartDisplayMode displayMode() const { return column.dispmode; }
+    ChartDisplayMode displayMode() const { return col->dispmode; }
     /** @brief Current series color (may be invalid, meaning the theme default) */
-    QColor displayColor() const { return column.rawColor; }
+    QColor displayColor() const { return col->rawColor; }
     /** @brief Current line width */
-    qreal displayWidth() const { return column.rawWidth; }
+    qreal displayWidth() const { return col->rawWidth; }
     /** @brief Current marker diameter */
-    qreal displayPointSize() const { return column.rawPointSize; }
+    qreal displayPointSize() const { return col->rawPointSize; }
 
     /**
      * @brief Set how the processed (smoothed) data series is displayed
@@ -486,13 +503,13 @@ public:
     void setSmoothStyle(ChartDisplayMode mode, const QColor &color, qreal width, qreal pointSize);
 
     /** @brief Current processed-series display mode */
-    ChartDisplayMode smoothMode() const { return column.smoothmode; }
+    ChartDisplayMode smoothMode() const { return col->smoothmode; }
     /** @brief Current processed-series color (may be invalid, meaning the theme default) */
-    QColor smoothColor() const { return column.smoothcolor; }
+    QColor smoothColor() const { return col->smoothcolor; }
     /** @brief Current processed-series line width */
-    qreal smoothWidth() const { return column.smoothwidth; }
+    qreal smoothWidth() const { return col->smoothwidth; }
     /** @brief Current processed-series marker diameter */
-    qreal smoothPointSize() const { return column.smoothpointsize; }
+    qreal smoothPointSize() const { return col->smoothpointsize; }
 
     /**
      * @brief Overlay a fit curve on the chart
@@ -510,7 +527,7 @@ public:
                      bool eosFit = false);
 
     /** @brief True when the current fit overlay is a Birch-Murnaghan EOS fit */
-    bool isEosFit() const { return column.eosMode && column.fit && !column.fit->points.isEmpty(); }
+    bool isEosFit() const { return col->eosMode && col->fit && !col->fit->points.isEmpty(); }
 
     /**
      * @brief Get current chart title
@@ -541,9 +558,9 @@ private:
     /// Restyle an already-registered series and request a repaint.
     void stylePlotSeries(PlotSeries *s, const QColor &color, qreal width);
 
-    PlotWidget *plot;   ///< Renderer (Qt child of this widget)
-    int updChart;       ///< Cached live-update throttle interval (ms)
-    ChartColumn column; ///< This viewer's per-column data and display state
+    PlotWidget *plot; ///< Renderer (Qt child of this widget)
+    int updChart;     ///< Cached live-update throttle interval (ms)
+    ChartColumn *col; ///< Column currently rendered (owned by ChartWindow, not here)
 };
 #endif
 

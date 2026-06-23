@@ -156,6 +156,14 @@ bool PlotWidget::hasSeries(const PlotSeries *series) const
     return m_series.contains(series);
 }
 
+void PlotWidget::clearSeries()
+{
+    if (!m_series.isEmpty()) {
+        m_series.clear();
+        update();
+    }
+}
+
 QImage PlotWidget::renderToImage(const QSize &size) const
 {
     QImage image(size, QImage::Format_RGB32);
