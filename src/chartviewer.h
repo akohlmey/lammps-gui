@@ -431,8 +431,9 @@ public:
      * @param mode  Lines, points, or both
      * @param color Series color (invalid color falls back to the theme default)
      * @param width Line width (used for the line and lines+points modes)
+     * @param pointSize Marker diameter (used for the points and lines+points modes)
      */
-    void setDisplayStyle(ChartDisplayMode mode, const QColor &color, qreal width);
+    void setDisplayStyle(ChartDisplayMode mode, const QColor &color, qreal width, qreal pointSize);
 
     /** @brief Current display mode */
     ChartDisplayMode displayMode() const { return dispmode; }
@@ -440,14 +441,17 @@ public:
     QColor displayColor() const { return rawColor; }
     /** @brief Current line width */
     qreal displayWidth() const { return rawWidth; }
+    /** @brief Current marker diameter */
+    qreal displayPointSize() const { return rawPointSize; }
 
     /**
      * @brief Set how the processed (smoothed) data series is displayed
      * @param mode  Lines, points, or both
      * @param color Series color (invalid color falls back to the theme default)
      * @param width Line width (used for the line and lines+points modes)
+     * @param pointSize Marker diameter (used for the points and lines+points modes)
      */
-    void setSmoothStyle(ChartDisplayMode mode, const QColor &color, qreal width);
+    void setSmoothStyle(ChartDisplayMode mode, const QColor &color, qreal width, qreal pointSize);
 
     /** @brief Current processed-series display mode */
     ChartDisplayMode smoothMode() const { return smoothmode; }
@@ -455,6 +459,8 @@ public:
     QColor smoothColor() const { return smoothcolor; }
     /** @brief Current processed-series line width */
     qreal smoothWidth() const { return smoothwidth; }
+    /** @brief Current processed-series marker diameter */
+    qreal smoothPointSize() const { return smoothpointsize; }
 
     /**
      * @brief Overlay a fit curve on the chart
@@ -496,7 +502,7 @@ private:
     /// Add (or restyle) a line series and its on-demand scatter twin to show
     /// the data as lines, points, or both, in the given color and width.
     void renderSeries(QLineSeries *line, QScatterSeries *&points, ChartDisplayMode mode,
-                      const QColor &color, qreal width);
+                      const QColor &color, qreal width, qreal pointSize);
 
     std::unique_ptr<ChartBackend> backend; ///< Rendering backend (QtGraphs or QtCharts)
     double lastX;                          ///< Last (largest) x value appended
@@ -512,9 +518,11 @@ private:
     ChartDisplayMode dispmode; ///< How the raw series is drawn
     QColor rawColor;           ///< Raw series color override (invalid = theme default)
     qreal rawWidth;            ///< Raw series line width
+    qreal rawPointSize;        ///< Raw series marker diameter
     ChartDisplayMode smoothmode;        ///< How the processed series is drawn
     QColor smoothcolor;                 ///< Processed series color (invalid = theme default)
     qreal smoothwidth;                  ///< Processed series line width
+    qreal smoothpointsize;              ///< Processed series marker diameter
     QList<QLineSeries *> overlaySeries; ///< Extra data series added from secondary files
     QList<QLineSeries *> vlines;        ///< Reference line series (decorative)
     QList<RefLine> reflineDefs;         ///< Reference line definitions (parallel to vlines)

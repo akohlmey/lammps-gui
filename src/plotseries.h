@@ -38,7 +38,7 @@ struct PlotSeries {
     QColor color       = Qt::black;             ///< line / marker color
     qreal width        = 1.0;                   ///< line width (Line series)
     Qt::PenStyle style = Qt::SolidLine;         ///< line style, e.g. dashed reference lines
-    qreal markerSize   = 6.0;                   ///< marker diameter (Scatter series)
+    qreal markerSize   = 8.0;                   ///< marker diameter (Scatter series)
     QString name;                               ///< series label (for a future legend)
     bool visible     = true;                    ///< whether the series is drawn
     bool isReference = false;                   ///< draw as a labeled reference line

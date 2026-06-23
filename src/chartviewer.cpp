@@ -527,17 +527,28 @@ void ChartWindow::changeStyle()
         return w;
     };
 
+    // build a point-diameter spin box preset to the given size
+    auto pointBox = [](qreal size) {
+        auto *w = new QDoubleSpinBox;
+        w->setRange(1.0, 40.0);
+        w->setSingleStep(1.0);
+        w->setValue(size);
+        return w;
+    };
+
     // raw data section
     QColor rawChosen = chart->displayColor();
     if (!rawChosen.isValid()) rawChosen = QColor(100, 150, 255);
     auto *rawMode      = modeBox(chart->displayMode());
     auto *rawColorBtn  = colorButton(rawChosen);
     auto *rawWidthSpin = widthBox(chart->displayWidth());
+    auto *rawPointSpin = pointBox(chart->displayPointSize());
     auto *rawBox       = new QGroupBox("Raw data");
     auto *rawForm      = new QFormLayout(rawBox);
     rawForm->addRow("Display:", rawMode);
     rawForm->addRow("Color:", rawColorBtn);
     rawForm->addRow("Line width:", rawWidthSpin);
+    rawForm->addRow("Point size:", rawPointSpin);
     layout->addWidget(rawBox);
 
     // processed data section
@@ -546,11 +557,13 @@ void ChartWindow::changeStyle()
     auto *procMode      = modeBox(chart->smoothMode());
     auto *procColorBtn  = colorButton(procChosen);
     auto *procWidthSpin = widthBox(chart->smoothWidth());
+    auto *procPointSpin = pointBox(chart->smoothPointSize());
     auto *procBox       = new QGroupBox("Smoothed data");
     auto *procForm      = new QFormLayout(procBox);
     procForm->addRow("Display:", procMode);
     procForm->addRow("Color:", procColorBtn);
     procForm->addRow("Line width:", procWidthSpin);
+    procForm->addRow("Point size:", procPointSpin);
     layout->addWidget(procBox);
 
     auto *buttons = new QDialogButtonBox(QDialogButtonBox::Ok | QDialogButtonBox::Cancel);
@@ -560,9 +573,9 @@ void ChartWindow::changeStyle()
 
     if (dialog.exec() == QDialog::Accepted) {
         chart->setDisplayStyle(static_cast<ChartDisplayMode>(rawMode->currentData().toInt()),
-                               rawChosen, rawWidthSpin->value());
+                               rawChosen, rawWidthSpin->value(), rawPointSpin->value());
         chart->setSmoothStyle(static_cast<ChartDisplayMode>(procMode->currentData().toInt()),
-                              procChosen, procWidthSpin->value());
+                              procChosen, procWidthSpin->value(), procPointSpin->value());
     }
 }
 
@@ -884,7 +897,7 @@ void ChartWindow::postProcess()
         // EOS fit: hide in Raw mode, visible in EOS-fit/Both modes; raw data as points
         chart->setFitCurve(curve, "EOS fit", /* eosMode= */ true);
         chart->setDisplayStyle(ChartDisplayMode::Points, chart->displayColor(),
-                               chart->displayWidth());
+                               chart->displayWidth(), chart->displayPointSize());
         smooth->setItemText(1, "EOS fit");
         smooth->setCurrentIndex(2); // "Both" = raw points + EOS fit line
 
@@ -1350,7 +1363,8 @@ ChartViewer::ChartViewer(const QString &title, int _index, QWidget *parent) :
     QWidget(parent), lastX(-1.0), index(_index), window(10), order(4), series(new QLineSeries),
     smooth(nullptr), scatter(nullptr), smoothScatter(nullptr), fit(nullptr), doRaw(true),
     doSmooth(false), eosMode(false), dispmode(ChartDisplayMode::Lines), rawColor(), rawWidth(3.0),
-    smoothmode(ChartDisplayMode::Lines), smoothcolor(), smoothwidth(3.0)
+    rawPointSize(8.0), smoothmode(ChartDisplayMode::Lines), smoothcolor(), smoothwidth(3.0),
+    smoothpointsize(8.0)
 {
     backend = ChartBackend::create();
     backend->init(this, title, series);
@@ -1595,22 +1609,26 @@ void ChartViewer::setPoints(const QList<QPointF> &points)
 
 /* -------------------------------------------------------------------- */
 
-void ChartViewer::setDisplayStyle(ChartDisplayMode mode, const QColor &color, qreal width)
+void ChartViewer::setDisplayStyle(ChartDisplayMode mode, const QColor &color, qreal width,
+                                  qreal pointSize)
 {
-    dispmode = mode;
-    rawColor = color;
-    rawWidth = width;
+    dispmode     = mode;
+    rawColor     = color;
+    rawWidth     = width;
+    rawPointSize = pointSize;
     updateSmooth();
     resetZoom();
 }
 
 /* -------------------------------------------------------------------- */
 
-void ChartViewer::setSmoothStyle(ChartDisplayMode mode, const QColor &color, qreal width)
+void ChartViewer::setSmoothStyle(ChartDisplayMode mode, const QColor &color, qreal width,
+                                 qreal pointSize)
 {
-    smoothmode  = mode;
-    smoothcolor = color;
-    smoothwidth = width;
+    smoothmode      = mode;
+    smoothcolor     = color;
+    smoothwidth     = width;
+    smoothpointsize = pointSize;
     updateSmooth();
     resetZoom();
 }
@@ -1732,7 +1750,7 @@ QList<QPointF> calc_sgsmooth(const QList<QPointF> &input, std::size_t window, in
 // update smooth plot data
 
 void ChartViewer::renderSeries(QLineSeries *line, QScatterSeries *&points, ChartDisplayMode mode,
-                               const QColor &color, qreal width)
+                               const QColor &color, qreal width, qreal pointSize)
 {
     const bool wantLines  = (mode != ChartDisplayMode::Points);
     const bool wantPoints = (mode != ChartDisplayMode::Lines);
@@ -1752,6 +1770,7 @@ void ChartViewer::renderSeries(QLineSeries *line, QScatterSeries *&points, Chart
             backend->addSeries(points, color, width);
         else
             backend->styleSeries(points, color, width);
+        backend->setMarkerSize(points, pointSize);
         points->setVisible(true);
     } else if (points) {
         points->setVisible(false);
@@ -1771,7 +1790,7 @@ void ChartViewer::updateSmooth()
     const QColor rawcol = rawColor.isValid() ? rawColor : mybrushes[rawidx].color();
     const QColor smcol  = smoothcolor.isValid() ? smoothcolor : mybrushes[smoothidx].color();
 
-    if (doRaw) renderSeries(series, scatter, dispmode, rawcol, rawWidth);
+    if (doRaw) renderSeries(series, scatter, dispmode, rawcol, rawWidth, rawPointSize);
 
     if (doSmooth) {
         if (eosMode && fit && !fit->points().isEmpty()) {
@@ -1783,7 +1802,7 @@ void ChartViewer::updateSmooth()
             if (fit) fit->setVisible(false);
             if (!smooth) smooth = new QLineSeries;
             smooth->replace(calc_sgsmooth(series->points(), window, order));
-            renderSeries(smooth, smoothScatter, smoothmode, smcol, smoothwidth);
+            renderSeries(smooth, smoothScatter, smoothmode, smcol, smoothwidth, smoothpointsize);
         }
     } else {
         if (eosMode && fit) fit->setVisible(false);

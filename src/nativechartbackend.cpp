@@ -148,6 +148,14 @@ void NativeChartBackend::setSeriesLineStyle(QXYSeries *s, Qt::PenStyle style)
     }
 }
 
+void NativeChartBackend::setMarkerSize(QXYSeries *s, qreal size)
+{
+    if (Entry *e = findEntry(s)) {
+        e->plot->markerSize = size;
+        m_plot->update();
+    }
+}
+
 void NativeChartBackend::setReferenceLabel(QXYSeries *s, const QString &label)
 {
     if (Entry *e = findEntry(s)) {

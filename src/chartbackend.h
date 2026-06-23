@@ -114,6 +114,19 @@ public:
     virtual void setSeriesLineStyle(QXYSeries *s, Qt::PenStyle style) = 0;
 
     /**
+     * @brief Set the marker diameter of a scatter series
+     * @param s    The series (only scatter series are affected)
+     * @param size Marker diameter in pixels
+     *
+     * Optional: backends that do not size markers leave this as a no-op.
+     */
+    virtual void setMarkerSize(QXYSeries *s, qreal size)
+    {
+        Q_UNUSED(s);
+        Q_UNUSED(size);
+    }
+
+    /**
      * @brief Mark a series as a labeled reference line
      * @param s     The reference-line series
      * @param label Text to draw next to the line

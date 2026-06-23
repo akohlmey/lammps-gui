@@ -15,6 +15,7 @@
 
 #include <QChart>
 #include <QPen>
+#include <QScatterSeries>
 #include <QSettings>
 #include <QXYSeries>
 
@@ -106,6 +107,11 @@ void QtChartsBackend::setSeriesLineStyle(QXYSeries *s, Qt::PenStyle style)
         pen.setStyle(style);
         line->setPen(pen);
     }
+}
+
+void QtChartsBackend::setMarkerSize(QXYSeries *s, qreal size)
+{
+    if (auto *sc = qobject_cast<QScatterSeries *>(s)) sc->setMarkerSize(size);
 }
 
 void QtChartsBackend::removeSeries(QXYSeries *s)
