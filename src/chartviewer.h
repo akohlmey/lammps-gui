@@ -243,6 +243,46 @@ enum class ChartDisplayMode {
 };
 
 /**
+ * @brief The per-column data and display state of one chart
+ *
+ * Holds everything specific to a single plotted column: its neutral PlotSeries
+ * objects, cached data bounds, smoothing parameters, display style, and the
+ * overlay/reference-line state. It is a plain (non-QWidget) value type,
+ * move-only because of its unique_ptr<PlotSeries> members, so that a single
+ * renderer can eventually be pointed at any column on demand.
+ */
+struct ChartColumn {
+    int index      = -1;                       ///< Chart index (thermo column id)
+    double lastX   = -1.0;                     ///< Last (largest) x value appended
+    double rawXmin = 1.0e100;                  ///< Running min x of the raw series (live path)
+    double rawXmax = -1.0e100;                 ///< Running max x of the raw series
+    double rawYmin = 1.0e100;                  ///< Running min y of the raw series
+    double rawYmax = -1.0e100;                 ///< Running max y of the raw series
+    int window     = 10;                       ///< Smoothing window
+    int order      = 4;                        ///< Smoothing polynomial order
+    std::unique_ptr<PlotSeries> series;        ///< Raw data series (always present)
+    std::unique_ptr<PlotSeries> smooth;        ///< Smoothed data series (created on demand)
+    std::unique_ptr<PlotSeries> scatter;       ///< Raw data as points (created on demand)
+    std::unique_ptr<PlotSeries> smoothScatter; ///< Processed data as points (created on demand)
+    std::unique_ptr<PlotSeries> fit;           ///< Optional fit-curve overlay (created on demand)
+    QTime lastUpdate;                          ///< Time of last chart update
+    bool doRaw    = true;                      ///< Show raw data series
+    bool doSmooth = false;                     ///< Show smoothed data series
+    bool eosMode  = false; ///< True when fit is a BM EOS overlay (visibility follows doSmooth)
+    ChartDisplayMode dispmode = ChartDisplayMode::Lines; ///< How the raw series is drawn
+    QColor rawColor;                   ///< Raw series color override (invalid = theme default)
+    qreal rawWidth              = 3.0; ///< Raw series line width
+    qreal rawPointSize          = 8.0; ///< Raw series marker diameter
+    ChartDisplayMode smoothmode = ChartDisplayMode::Lines; ///< How the processed series is drawn
+    QColor smoothcolor;          ///< Processed series color (invalid = theme default)
+    qreal smoothwidth     = 3.0; ///< Processed series line width
+    qreal smoothpointsize = 8.0; ///< Processed series marker diameter
+    std::vector<std::unique_ptr<PlotSeries>> overlaySeries; ///< Extra series from secondary files
+    std::vector<std::unique_ptr<PlotSeries>> vlines;        ///< Reference line series (decorative)
+    QList<RefLine> reflineDefs; ///< Reference line definitions (parallel to vlines)
+};
+
+/**
  * @brief Individual chart viewer for displaying a single time-series
  *
  * ChartViewer displays a single thermodynamic property as a function
@@ -319,13 +359,13 @@ public:
      * @brief Get chart index
      * @return Index of this chart
      */
-    int getIndex() const { return index; };
+    int getIndex() const { return column.index; };
 
     /**
      * @brief Get number of data points
      * @return Number of points in series
      */
-    int getCount() const { return series->count(); }
+    int getCount() const { return column.series->count(); }
 
     /**
      * @brief Get the series (data column) name
@@ -342,14 +382,14 @@ public:
      * @param index Data point index
      * @return Step number (X value)
      */
-    double getStep(int index) const { return (index < 0) ? 0.0 : series->at(index).x(); }
+    double getStep(int index) const { return (index < 0) ? 0.0 : column.series->at(index).x(); }
 
     /**
      * @brief Get data value at given index
      * @param index Data point index
      * @return Data value (Y value)
      */
-    double getData(int index) const { return (index < 0) ? 0.0 : series->at(index).y(); }
+    double getData(int index) const { return (index < 0) ? 0.0 : column.series->at(index).y(); }
 
     /**
      * @brief Set chart title
@@ -404,7 +444,7 @@ public:
     void clearOverlaySeries();
 
     /** @brief Number of overlay series currently displayed */
-    int overlaySeriesCount() const { return static_cast<int>(overlaySeries.size()); }
+    int overlaySeriesCount() const { return static_cast<int>(column.overlaySeries.size()); }
 
     /**
      * @brief Set vertical reference lines (replaces any existing set)
@@ -428,13 +468,13 @@ public:
     void setDisplayStyle(ChartDisplayMode mode, const QColor &color, qreal width, qreal pointSize);
 
     /** @brief Current display mode */
-    ChartDisplayMode displayMode() const { return dispmode; }
+    ChartDisplayMode displayMode() const { return column.dispmode; }
     /** @brief Current series color (may be invalid, meaning the theme default) */
-    QColor displayColor() const { return rawColor; }
+    QColor displayColor() const { return column.rawColor; }
     /** @brief Current line width */
-    qreal displayWidth() const { return rawWidth; }
+    qreal displayWidth() const { return column.rawWidth; }
     /** @brief Current marker diameter */
-    qreal displayPointSize() const { return rawPointSize; }
+    qreal displayPointSize() const { return column.rawPointSize; }
 
     /**
      * @brief Set how the processed (smoothed) data series is displayed
@@ -446,13 +486,13 @@ public:
     void setSmoothStyle(ChartDisplayMode mode, const QColor &color, qreal width, qreal pointSize);
 
     /** @brief Current processed-series display mode */
-    ChartDisplayMode smoothMode() const { return smoothmode; }
+    ChartDisplayMode smoothMode() const { return column.smoothmode; }
     /** @brief Current processed-series color (may be invalid, meaning the theme default) */
-    QColor smoothColor() const { return smoothcolor; }
+    QColor smoothColor() const { return column.smoothcolor; }
     /** @brief Current processed-series line width */
-    qreal smoothWidth() const { return smoothwidth; }
+    qreal smoothWidth() const { return column.smoothwidth; }
     /** @brief Current processed-series marker diameter */
-    qreal smoothPointSize() const { return smoothpointsize; }
+    qreal smoothPointSize() const { return column.smoothpointsize; }
 
     /**
      * @brief Overlay a fit curve on the chart
@@ -470,7 +510,7 @@ public:
                      bool eosFit = false);
 
     /** @brief True when the current fit overlay is a Birch-Murnaghan EOS fit */
-    bool isEosFit() const { return eosMode && fit && !fit->points.isEmpty(); }
+    bool isEosFit() const { return column.eosMode && column.fit && !column.fit->points.isEmpty(); }
 
     /**
      * @brief Get current chart title
@@ -501,34 +541,9 @@ private:
     /// Restyle an already-registered series and request a repaint.
     void stylePlotSeries(PlotSeries *s, const QColor &color, qreal width);
 
-    PlotWidget *plot;                          ///< Renderer (Qt child of this widget)
-    double lastX;                              ///< Last (largest) x value appended
-    int updChart;                              ///< Cached live-update throttle interval (ms)
-    double rawXmin;                            ///< Running min x of the raw series (live path)
-    double rawXmax;                            ///< Running max x of the raw series
-    double rawYmin;                            ///< Running min y of the raw series
-    double rawYmax;                            ///< Running max y of the raw series
-    int index;                                 ///< Chart index
-    int window, order;                         ///< Smoothing window and polynomial order
-    std::unique_ptr<PlotSeries> series;        ///< Raw data series (always present)
-    std::unique_ptr<PlotSeries> smooth;        ///< Smoothed data series (created on demand)
-    std::unique_ptr<PlotSeries> scatter;       ///< Raw data as points (created on demand)
-    std::unique_ptr<PlotSeries> smoothScatter; ///< Processed data as points (created on demand)
-    std::unique_ptr<PlotSeries> fit;           ///< Optional fit-curve overlay (created on demand)
-    QTime lastUpdate;                          ///< Time of last chart update
-    bool doRaw, doSmooth;                      ///< Flags for showing raw/smoothed data
-    bool eosMode;              ///< True when fit is a BM EOS overlay (visibility follows doSmooth)
-    ChartDisplayMode dispmode; ///< How the raw series is drawn
-    QColor rawColor;           ///< Raw series color override (invalid = theme default)
-    qreal rawWidth;            ///< Raw series line width
-    qreal rawPointSize;        ///< Raw series marker diameter
-    ChartDisplayMode smoothmode; ///< How the processed series is drawn
-    QColor smoothcolor;          ///< Processed series color (invalid = theme default)
-    qreal smoothwidth;           ///< Processed series line width
-    qreal smoothpointsize;       ///< Processed series marker diameter
-    std::vector<std::unique_ptr<PlotSeries>> overlaySeries; ///< Extra series from secondary files
-    std::vector<std::unique_ptr<PlotSeries>> vlines;        ///< Reference line series (decorative)
-    QList<RefLine> reflineDefs; ///< Reference line definitions (parallel to vlines)
+    PlotWidget *plot;   ///< Renderer (Qt child of this widget)
+    int updChart;       ///< Cached live-update throttle interval (ms)
+    ChartColumn column; ///< This viewer's per-column data and display state
 };
 #endif
 
