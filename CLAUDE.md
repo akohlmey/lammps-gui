@@ -33,7 +33,6 @@ Default install prefix is `$HOME/.local` (no root required).
 | Option | Default | Description |
 |---|---|---|
 | `LAMMPS_GUI_USE_PLUGIN` | `ON` | Load LAMMPS `.so` at runtime via dlopen |
-| `LAMMPS_GUI_USE_QTCHARTS` | `OFF` | Force QtCharts even when Qt 6.10+ is available |
 | `BUILD_DOC` | `ON` | Build Sphinx HTML docs along with the app (slow; disable for code-only work) |
 | `BUILD_DOC_ONLY` | `OFF` | Build only Sphinx/Doxygen docs, skip the C++ binary entirely |
 | `ENABLE_TESTING` | `OFF` | Enable unit + GUI tests (Linux only) |
@@ -120,7 +119,7 @@ main.cpp
 
 **Plugin vs. linked mode.** When built with `LAMMPS_GUI_USE_PLUGIN=ON` (default), the executable has no link-time dependency on LAMMPS. `plugin/liblammpsplugin.c` provides `dlopen`-based dispatch; `LammpsWrapper` calls through function pointers loaded at startup. This lets the GUI ship as a standalone binary that can download or swap LAMMPS shared libraries.
 
-**Chart backend abstraction.** `ChartBackend` (`src/chartbackend.h`) is a pure virtual interface hiding the differences between QtGraphs (QML/Qt Quick, Qt ≥ 6.10) and QtCharts (widget-based, Qt ≥ 6.2). The concrete implementations are `QtGraphsBackend` and `QtChartsBackend`. The build system selects the right one at compile time via the `LAMMPS_GUI_USE_QTGRAPHS` preprocessor define.
+**Native chart rendering.** Charts are drawn by a single self-contained renderer, `PlotWidget` (`src/plotwidget.{cpp,h}`), a `QWidget`+`QPainter` 2D line/scatter plotter that depends only on Qt Widgets — no Qt Charts, Qt Graphs, or QML. `ChartViewer` owns neutral `PlotSeries` data objects (`src/plotseries.h`) and feeds them to `PlotWidget` directly; axis-layout math (nice ticks, label formatting) lives in the Qt-free `plotaxismath` (`src/plotaxismath.{cpp,h}`). The old `ChartBackend`/QtCharts/QtGraphs abstraction was removed once the native renderer reached parity; history and rationale are in `doc/native-chart-backend.md`.
 
 **Threading model.** LAMMPS simulations run on a `LammpsRunner` (QThread). `StdCapture` intercepts the LAMMPS library's stdout by replacing the file descriptor before `LammpsRunner::run()` starts. A `QTimer` in `LammpsGui` polls `StdCapture::getChunk()` to feed `LogWindow` without blocking the UI thread.
 
@@ -210,10 +209,10 @@ decisions and caveats as binding unless we explicitly revise them here.
 | `src/findandreplace.{cpp,h}` | Non-modal find/replace dialog for the editor |
 | `src/logwindow.{cpp,h}` | Log viewer; delegates warning highlighting to `FlagWarnings` |
 | `src/flagwarnings.{cpp,h}` | QSyntaxHighlighter for warnings/errors/URLs in log text |
-| `src/chartviewer.{cpp,h}` | `ChartWindow` (container) + `ChartViewer` (one chart per column) |
-| `src/chartbackend.h` | Abstract chart backend interface |
-| `src/qtchartsbackend.{cpp,h}` | QtCharts concrete backend |
-| `src/qtgraphsbackend.{cpp,h}` | QtGraphs concrete backend |
+| `src/chartviewer.{cpp,h}` | `ChartWindow` (container) + `ChartViewer` (one chart per column); owns `PlotSeries`, renders via `PlotWidget` |
+| `src/plotwidget.{cpp,h}` | `QWidget`+`QPainter` 2D line/scatter chart renderer — the only chart backend (no chart module/QML) |
+| `src/plotseries.h` | Neutral chart model value types (`PlotSeries`, `PlotAxis`) consumed by `PlotWidget` |
+| `src/plotaxismath.{cpp,h}` | Qt-free axis-layout helpers (nice ticks, tick values, printf label formatting) |
 | `src/plotdata.{cpp,h}` | Column-oriented numeric data model + CSV/`.dat`/YAML/JSON parsers and writers |
 | `src/plotdatadialog.{cpp,h}` | Column-picker dialog for plotting an external data file |
 | `src/analysis.{cpp,h}` | Qt-free post-processing analyses (autocorrelation) |

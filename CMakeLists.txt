@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.20)
 
 project(lammps-gui
-  VERSION 2.1.0
+  VERSION 2.0.999
   LANGUAGES CXX
   DESCRIPTION "The LAMMPS GUI"
   HOMEPAGE_URL "https://lammps-gui.lammps.org/")
@@ -11,8 +11,6 @@ include(GNUInstallDirs)
 # configuration settings:
 # prefer compiling plugin version only if standalone compile
 option(LAMMPS_GUI_USE_PLUGIN "Load LAMMPS library dynamically at runtime" ON)
-# prefer QtCharts even if deprecated
-option(LAMMPS_GUI_USE_QTCHARTS "Prefer using QtCharts over QtGraphs" OFF)
 # build html documentation by default
 option(BUILD_DOC "Build LAMMPS-GUI HTML documentation" ON)
 ##################################################################################
@@ -71,21 +69,10 @@ if (NOT BUILD_DOC_ONLY)
     set(ICON_RC_FILE ${CMAKE_SOURCE_DIR}/resources/lmpicons.rc)
   endif()
 
-  # check if Qt6.10 and QtGraphs are available unless we force using QtCharts
-  if (NOT LAMMPS_GUI_USE_QTCHARTS)
-    find_package(Qt6 6.10 QUIET COMPONENTS Gui Widgets Network Graphs Quick QuickWidgets)
-    if(Qt6_FOUND)
-      set(LAMMPS_GUI_USE_QTGRAPHS ON)
-    endif()
-  endif()
-  if (NOT LAMMPS_GUI_USE_QTGRAPHS)
-    find_package(Qt6 6.2 REQUIRED COMPONENTS Gui Widgets Network Charts)
-  endif()
-  if(LAMMPS_GUI_USE_QTGRAPHS)
-    message(STATUS "Using Qt version ${Qt6_VERSION} with QtGraphs for LAMMPS-GUI")
-  else()
-    message(STATUS "Using Qt version ${Qt6_VERSION} with QtCharts for LAMMPS-GUI")
-  endif()
+  # charts are rendered by the self-contained native QPainter backend; only the
+  # LGPL Qt Widgets are needed (no Qt Charts / Graphs / Quick modules)
+  find_package(Qt6 6.2 REQUIRED COMPONENTS Gui Widgets Network)
+  message(STATUS "Using Qt version ${Qt6_VERSION} with the native chart backend for LAMMPS-GUI")
 
   set(PROJECT_SOURCES
     ${CMAKE_SOURCE_DIR}/src/main.cpp
@@ -97,7 +84,11 @@ if (NOT BUILD_DOC_ONLY)
     ${CMAKE_SOURCE_DIR}/src/analysis.h
     ${CMAKE_SOURCE_DIR}/src/chartviewer.cpp
     ${CMAKE_SOURCE_DIR}/src/chartviewer.h
-    ${CMAKE_SOURCE_DIR}/src/chartbackend.h
+    ${CMAKE_SOURCE_DIR}/src/plotwidget.cpp
+    ${CMAKE_SOURCE_DIR}/src/plotwidget.h
+    ${CMAKE_SOURCE_DIR}/src/plotseries.h
+    ${CMAKE_SOURCE_DIR}/src/plotaxismath.cpp
+    ${CMAKE_SOURCE_DIR}/src/plotaxismath.h
     ${CMAKE_SOURCE_DIR}/src/codeeditor.cpp
     ${CMAKE_SOURCE_DIR}/src/codeeditor.h
     ${CMAKE_SOURCE_DIR}/src/colormaps.cpp
@@ -160,17 +151,6 @@ if (NOT BUILD_DOC_ONLY)
     ${ICON_RC_FILE}
   )
   qt6_add_resources(PROJECT_SOURCES resources/lammpsgui.qrc)
-
-  # add the correct chart backend implementation
-  if(LAMMPS_GUI_USE_QTGRAPHS)
-    list(APPEND PROJECT_SOURCES
-      ${CMAKE_SOURCE_DIR}/src/qtgraphsbackend.cpp
-      ${CMAKE_SOURCE_DIR}/src/qtgraphsbackend.h)
-  else()
-    list(APPEND PROJECT_SOURCES
-      ${CMAKE_SOURCE_DIR}/src/qtchartsbackend.cpp
-      ${CMAKE_SOURCE_DIR}/src/qtchartsbackend.h)
-  endif()
 
   if(APPLE)
     if (LAMMPS_SOURCE_DIR)
@@ -239,12 +219,7 @@ if (NOT BUILD_DOC_ONLY)
   target_include_directories(lammps-gui PRIVATE ${CMAKE_SOURCE_DIR}/thirdparty/rangeslider)
   target_link_libraries(lammps-gui PRIVATE lepton_mini)
   target_compile_definitions(lammps-gui PRIVATE LAMMPS_GUI_VERSION="${PROJECT_VERSION}")
-  if(LAMMPS_GUI_USE_QTGRAPHS)
-    target_compile_definitions(lammps-gui PRIVATE LAMMPS_GUI_USE_QTGRAPHS)
-    target_link_libraries(lammps-gui PRIVATE Qt6::Gui Qt6::Widgets Qt6::Network Qt6::Graphs Qt6::Quick Qt6::QuickWidgets)
-  else()
-    target_link_libraries(lammps-gui PRIVATE Qt6::Gui Qt6::Widgets Qt6::Network Qt6::Charts)
-  endif()
+  target_link_libraries(lammps-gui PRIVATE Qt6::Gui Qt6::Widgets Qt6::Network)
 
   ###################
   # unit tests, only enabled on Linux

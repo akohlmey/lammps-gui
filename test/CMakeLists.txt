@@ -191,6 +191,17 @@ target_link_libraries(test_analysis PRIVATE GTest::gtest_main)
 
 gtest_discover_tests(test_analysis)
 
+# Test executable for the axis-layout helpers (Qt-free)
+add_executable(test_plotaxismath
+  test_plotaxismath.cpp
+  ${CMAKE_SOURCE_DIR}/src/plotaxismath.cpp
+)
+
+target_include_directories(test_plotaxismath PRIVATE ${CMAKE_SOURCE_DIR}/src)
+target_link_libraries(test_plotaxismath PRIVATE GTest::gtest_main)
+
+gtest_discover_tests(test_plotaxismath)
+
 # Test executable for the curve fits (Qt-free; depends on the leastsquares core)
 add_executable(test_fitting
   test_fitting.cpp
