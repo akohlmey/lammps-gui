@@ -46,7 +46,6 @@
 #include <QWidget>
 
 #include <cstdlib>
-#include <cstring>
 #include <string>
 #include <vector>
 
@@ -670,14 +669,7 @@ void CodeEditor::contextMenuEvent(QContextMenuEvent *event)
             QFileInfo fi(word);
             if (fi.exists() && fi.isFile()) {
                 // check if file is a LAMMPS restart
-                char magic[16] = "               ";
-                QFile file(word);
-                if (file.open(QIODevice::ReadOnly)) {
-                    QDataStream in(&file);
-                    in.readRawData(magic, 16);
-                    file.close();
-                }
-                if (strcmp(magic, LAMMPS_MAGIC) == 0) {
+                if (isRestartFile(word)) {
                     addMenuAction(menu, QString("Inspect restart file '%1'").arg(word),
                                   ":/icons/document-open.png", this, &CodeEditor::inspectFile)
                         ->setData(word);

@@ -121,6 +121,13 @@ extern void exportImage(QWidget *parent, QImage *image, const QString &title);
 [[nodiscard]] extern bool isImageFile(const QString &filename);
 
 /**
+ * @brief Check whether a file is a LAMMPS binary restart file
+ * @param filename Path to the file
+ * @return true if the file exists and begins with the LAMMPS restart magic string
+ */
+[[nodiscard]] extern bool isRestartFile(const QString &filename);
+
+/**
  * @brief Heuristic check whether a file is binary rather than text
  * @param filename Path to the file
  * @return true if the first 8 KB of the file contains a null byte

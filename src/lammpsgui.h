@@ -22,11 +22,6 @@
 
 #include "lammpswrapper.h"
 
-// define magic string for LAMMPS restart files, if not already defined
-#if !defined(LAMMPS_MAGIC)
-#define LAMMPS_MAGIC "LammpS RestartT"
-#endif
-
 // forward declarations
 
 class QAction;

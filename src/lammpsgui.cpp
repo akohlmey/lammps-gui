@@ -36,7 +36,6 @@
 #include <QCheckBox>
 #include <QClipboard>
 #include <QCoreApplication>
-#include <QDataStream>
 #include <QDesktopServices>
 #include <QEvent>
 #include <QFileDialog>
@@ -1242,12 +1241,9 @@ void LammpsGui::inspectFile(const QString &fileName)
                 file.errorString());
         return;
     }
-
-    char magic[16] = "               ";
-    QDataStream in(&file);
-    in.readRawData(magic, 16);
     file.close();
-    if (strcmp(magic, LAMMPS_MAGIC) != 0) {
+
+    if (!isRestartFile(fileName)) {
         warning(this, "LAMMPS-GUI Warning", "File " + fileName + " is not a LAMMPS restart file.");
         return;
     }
