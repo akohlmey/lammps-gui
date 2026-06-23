@@ -1734,7 +1734,10 @@ void setColumnReferenceLines(PlotWidget *plot, ChartColumn &col, const QList<Ref
         col.vlines.push_back(std::move(s));
         col.reflineDefs.append(rl);
     }
-    resetColumnZoom(plot, col);
+    // reference lines are annotations anchored to the full data extent (and
+    // clipped to the view); they do not change the data range, so leave the
+    // displayed range -- and the range sliders that drive it -- untouched
+    plot->update();
 }
 
 // Apply smoothing flags/parameters to the column and redraw.
