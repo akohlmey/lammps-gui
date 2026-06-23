@@ -214,9 +214,6 @@ private:
     /// active column (so it is restored when switching columns).
     void setProcessedLabel(const QString &label);
 
-    /// Apply the legend placement chosen in the toolbar dropdown and persist it.
-    void applyLegendPos();
-
     /// Move both range-slider handles back to the full extent (no plot update).
     void resetRangeSliders();
 
@@ -240,13 +237,13 @@ private:
     QLabel *units;                ///< Units display
     QCheckBox *norm;              ///< Normalization checkbox
     RangeSlider *xrange, *yrange; ///< Range sliders for axes
-    QComboBox *legendCombo;       ///< Toolbar dropdown choosing the in-plot legend placement
 
     QString filename;    ///< Log file path
     ChartViewer *viewer; ///< The single chart view (renders the active column)
     std::vector<std::unique_ptr<ChartColumn>> cols; ///< Per-column data/display state
     int active;              ///< Index into cols of the rendered column (-1 = none)
     QList<RefLine> refLines; ///< Current set of reference lines (applied to the active column)
+    LegendPos legendPos;     ///< In-plot legend placement (set in the Chart Style dialog)
     double refLabelSize;     ///< Reference-label font point size (window-wide)
     double refLabelDist;     ///< Reference-label gap from its line, in px (window-wide)
     bool refLabelBoxed;      ///< Whether reference labels get a framed opaque background

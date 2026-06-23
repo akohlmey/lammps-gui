@@ -137,15 +137,19 @@ runs.
 **Adjusting the chart style.** The *Chart Style...* entry in the chart
 window's *File* menu, or the chart-style quick-access button at the far
 left of the second toolbar row, opens a dialog to change how the data is
-drawn.  The *Raw data* and *Smoothed data* series each have independent
+drawn.  The *Raw data* and *Processed data* series each have independent
 settings for the display style (*Lines*, *Points*, or *Lines and Points*),
 the color, and the line width.  This makes it possible, for example, to
 show the raw data as faint points and the smoothed curve as a bold line.
+The *Legend* placement selector in the same dialog adds an in-plot legend
+that lists the visible named series; it can be turned *Off* or anchored to
+any of the four plot corners (*Top left*, *Top right*, *Bottom right*, or
+*Bottom left*).  The selected placement is remembered across sessions.
 
 .. versionadded:: 2.1
 
    The *Chart Style* dialog and the independent styling of the raw and
-   smoothed series were added.
+   processed series were added, including the optional in-plot legend.
 
 **Post-processing the data.** The *Postprocess...* entry in the chart
 window's *File* menu, or the quick-access button immediately to the right

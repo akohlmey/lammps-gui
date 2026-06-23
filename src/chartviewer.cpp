@@ -160,16 +160,6 @@ void ChartWindow::setProcessedLabel(const QString &label)
     smooth->setItemText(1, label);
 }
 
-void ChartWindow::applyLegendPos()
-{
-    const int pos = legendCombo->currentData().toInt();
-    if (viewer) viewer->setLegendPos(static_cast<LegendPos>(pos));
-    QSettings settings;
-    settings.beginGroup(Keys::GROUP_CHARTS);
-    settings.setValue(Keys::LEGEND, pos);
-    settings.endGroup();
-}
-
 void ChartWindow::resetRangeSliders()
 {
     // setLow/setHigh only repaint the handles; callers update the plot separately
@@ -323,28 +313,18 @@ ChartWindow::ChartWindow(const QString &_filename, LammpsGui *_lammpsgui, QWidge
     };
     auto *styleBtn = makeToolBtn(":/icons/preferences-desktop-personal.png", "Chart Style...");
     auto *ppBtn    = makeToolBtn(":/icons/application-plot.png", "Postprocess...");
-    legendCombo    = new QComboBox;
-    legendCombo->setToolTip("In-plot legend placement");
-    legendCombo->addItem("No Legend", static_cast<int>(LegendPos::Off));
-    legendCombo->addItem("Legend top left", static_cast<int>(LegendPos::TopLeft));
-    legendCombo->addItem("Legend top right", static_cast<int>(LegendPos::TopRight));
-    legendCombo->addItem("Legend bottom right", static_cast<int>(LegendPos::BottomRight));
-    legendCombo->addItem("Legend bottom left", static_cast<int>(LegendPos::BottomLeft));
     settings.beginGroup(Keys::GROUP_CHARTS);
-    const int legendIdx = legendCombo->findData(settings.value(Keys::LEGEND, 0).toInt());
-    double defRefPt     = font().pointSizeF();
+    legendPos       = static_cast<LegendPos>(settings.value(Keys::LEGEND, 0).toInt());
+    double defRefPt = font().pointSizeF();
     if (defRefPt <= 0.0) defRefPt = 9.0; // pixel-size app fonts report <= 0 pt
     refLabelSize  = settings.value(Keys::REFLABELSIZE, defRefPt).toDouble();
     refLabelDist  = settings.value(Keys::REFLABELDIST, 4.0).toDouble();
     refLabelBoxed = settings.value(Keys::REFLABELBOX, false).toBool();
     settings.endGroup();
-    legendCombo->setCurrentIndex(legendIdx < 0 ? 0 : legendIdx);
     connect(styleBtn, &QPushButton::clicked, this, &ChartWindow::changeStyle);
     connect(ppBtn, &QPushButton::clicked, this, &ChartWindow::postProcess);
-    connect(legendCombo, &QComboBox::currentIndexChanged, this, &ChartWindow::applyLegendPos);
     row2->addWidget(styleBtn);
     row2->addWidget(ppBtn);
-    row2->addWidget(legendCombo);
     row2->addWidget(new QLabel("X:"));
     row2->addWidget(xrange);
     row2->addWidget(new QLabel("Y:"));
@@ -394,7 +374,7 @@ ChartWindow::ChartWindow(const QString &_filename, LammpsGui *_lammpsgui, QWidge
     layout->setSpacing(LAYOUT_SPACING);
     // the single shared chart view; it renders whichever column is active
     viewer = new ChartViewer;
-    viewer->setLegendPos(static_cast<LegendPos>(legendCombo->currentData().toInt()));
+    viewer->setLegendPos(legendPos);
     viewer->setRefLabelStyle(refLabelSize, refLabelDist, refLabelBoxed);
     layout->addWidget(viewer);
     setLayout(layout);
@@ -650,6 +630,20 @@ void ChartWindow::changeStyle()
     procForm->addRow("Point size:", procPointSpin);
     layout->addWidget(procBox);
 
+    // in-plot legend section
+    auto *legendCombo = new QComboBox;
+    legendCombo->addItem("Off", static_cast<int>(LegendPos::Off));
+    legendCombo->addItem("Top left", static_cast<int>(LegendPos::TopLeft));
+    legendCombo->addItem("Top right", static_cast<int>(LegendPos::TopRight));
+    legendCombo->addItem("Bottom right", static_cast<int>(LegendPos::BottomRight));
+    legendCombo->addItem("Bottom left", static_cast<int>(LegendPos::BottomLeft));
+    const int legendIdx = legendCombo->findData(static_cast<int>(legendPos));
+    legendCombo->setCurrentIndex(legendIdx < 0 ? 0 : legendIdx);
+    auto *legendBox  = new QGroupBox("Legend");
+    auto *legendForm = new QFormLayout(legendBox);
+    legendForm->addRow("Placement:", legendCombo);
+    layout->addWidget(legendBox);
+
     auto *buttons = new QDialogButtonBox(QDialogButtonBox::Ok | QDialogButtonBox::Cancel);
     connect(buttons, &QDialogButtonBox::accepted, &dialog, &QDialog::accept);
     connect(buttons, &QDialogButtonBox::rejected, &dialog, &QDialog::reject);
@@ -660,6 +654,12 @@ void ChartWindow::changeStyle()
                                rawChosen, rawWidthSpin->value(), rawPointSpin->value());
         chart->setSmoothStyle(static_cast<ChartDisplayMode>(procMode->currentData().toInt()),
                               procChosen, procWidthSpin->value(), procPointSpin->value());
+        legendPos = static_cast<LegendPos>(legendCombo->currentData().toInt());
+        if (viewer) viewer->setLegendPos(legendPos);
+        QSettings settings;
+        settings.beginGroup(Keys::GROUP_CHARTS);
+        settings.setValue(Keys::LEGEND, static_cast<int>(legendPos));
+        settings.endGroup();
         // a style change is view-only: restore the slider window the setters reset
         applySliderWindow();
     }
