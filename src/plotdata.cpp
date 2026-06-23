@@ -100,6 +100,35 @@ bool looksLikeJson(const QString &text)
     return t.startsWith('[') || t.startsWith('{');
 }
 
+// Convert a list of string tokens to a numeric row. Returns false (and leaves
+// @p row in an unspecified state) on the first token that is not a number. When
+// @p skipEmpty is true, empty tokens are ignored rather than treated as errors
+// (tolerates the trailing comma LAMMPS writes in YAML rows).
+bool tokensToRow(const QStringList &toks, std::vector<double> &row, bool skipEmpty = false)
+{
+    row.clear();
+    row.reserve(toks.size());
+    for (const QString &t : toks) {
+        const QString tok = skipEmpty ? t.trimmed() : t;
+        if (skipEmpty && tok.isEmpty()) continue;
+        bool good      = false;
+        const double v = tok.toDouble(&good);
+        if (!good) return false;
+        row.push_back(v);
+    }
+    return true;
+}
+
+// Generate placeholder column names "column1", "column2", ... for ncol columns.
+QStringList genericColumnNames(int ncol)
+{
+    QStringList names;
+    names.reserve(ncol);
+    for (int i = 0; i < ncol; ++i)
+        names << QStringLiteral("column%1").arg(i + 1);
+    return names;
+}
+
 } // namespace
 
 /* -------------------------------------------------------------------- */
@@ -137,26 +166,14 @@ PlotData parsePlotCsv(const QString &text, QString *error)
                 continue; // header consumed
             }
             // a fully numeric first line means there is no header
-            ncol = toks.size();
-            for (int i = 0; i < ncol; ++i)
-                names << QStringLiteral("column%1").arg(i + 1);
+            ncol  = toks.size();
+            names = genericColumnNames(ncol);
             // fall through to parse this line as data
         }
 
         if (toks.size() != ncol) continue; // skip ragged lines
         std::vector<double> row;
-        row.reserve(ncol);
-        bool ok = true;
-        for (const QString &t : toks) {
-            bool good      = false;
-            const double v = t.toDouble(&good);
-            if (!good) {
-                ok = false;
-                break;
-            }
-            row.push_back(v);
-        }
-        if (ok) rows.push_back(std::move(row));
+        if (tokensToRow(toks, row)) rows.push_back(std::move(row));
     }
 
     if ((ncol <= 0) || rows.empty()) {
@@ -191,28 +208,15 @@ PlotData parsePlotWhitespace(const QString &text, QString *error)
 
         const QStringList toks = line.split(ws, Qt::SkipEmptyParts);
         std::vector<double> row;
-        row.reserve(toks.size());
-        bool ok = true;
-        for (const QString &t : toks) {
-            bool good      = false;
-            const double v = t.toDouble(&good);
-            if (!good) {
-                ok = false;
-                break;
-            }
-            row.push_back(v);
-        }
-        if (!ok) continue; // skip non-numeric lines (e.g. stray text headers)
+        if (!tokensToRow(toks, row)) continue; // skip non-numeric lines (e.g. text headers)
 
         if (ncol < 0) {
             ncol                    = static_cast<int>(row.size());
             const QStringList ctoks = lastComment.split(ws, Qt::SkipEmptyParts);
-            if (ctoks.size() == ncol) {
+            if (ctoks.size() == ncol)
                 names = ctoks;
-            } else {
-                for (int i = 0; i < ncol; ++i)
-                    names << QStringLiteral("column%1").arg(i + 1);
-            }
+            else
+                names = genericColumnNames(ncol);
         }
         if (static_cast<int>(row.size()) != ncol) continue; // skip ragged
         rows.push_back(std::move(row));
@@ -255,26 +259,15 @@ PlotData parsePlotYaml(const QString &text, QString *error)
             if (!inside.isEmpty()) {
                 const QStringList toks = inside.split(',');
                 std::vector<double> row;
-                bool ok = true;
-                for (const QString &t : toks) {
-                    const QString tok = t.trimmed();
-                    // tolerate the trailing comma LAMMPS writes (e.g. "..., -837.0, ]")
-                    if (tok.isEmpty()) continue;
-                    bool good      = false;
-                    const double v = tok.toDouble(&good);
-                    if (!good) {
-                        ok = false;
-                        break;
-                    }
-                    row.push_back(v);
-                }
-                if (ok && !row.empty()) rows.push_back(std::move(row));
+                // tolerate the trailing comma LAMMPS writes (e.g. "..., -837.0, ]")
+                if (tokensToRow(toks, row, /*skipEmpty=*/true) && !row.empty())
+                    rows.push_back(std::move(row));
                 continue;
             }
             // Format 2: - {key: val, key: val, ...}  (generic YAML sequence of maps)
             QString rest = line.mid(1).trimmed();
             if (rest.startsWith('{') && rest.endsWith('}')) {
-                rest                   = rest.mid(1, rest.size() - 2).trimmed();
+                rest                    = rest.mid(1, rest.size() - 2).trimmed();
                 const QStringList pairs = rest.split(',');
                 if (names.isEmpty()) {
                     // first entry: derive column names from the keys
@@ -318,10 +311,8 @@ PlotData parsePlotYaml(const QString &text, QString *error)
     }
     // fall back to generic names if keywords were missing or mismatched
     if (ncol != static_cast<int>(rows.front().size())) {
-        ncol = static_cast<int>(rows.front().size());
-        names.clear();
-        for (int i = 0; i < ncol; ++i)
-            names << QStringLiteral("column%1").arg(i + 1);
+        ncol  = static_cast<int>(rows.front().size());
+        names = genericColumnNames(ncol);
     }
     out.setColumnNames(names);
     for (auto &r : rows)
@@ -364,10 +355,7 @@ PlotData parsePlotJson(const QByteArray &bytes, QString *error)
             if (error) *error = QStringLiteral("no JSON rows found");
             return out;
         }
-        QStringList names;
-        for (int i = 0; i < ncol; ++i)
-            names << QStringLiteral("column%1").arg(i + 1);
-        out.setColumnNames(names);
+        out.setColumnNames(genericColumnNames(ncol));
         for (auto &r : rows)
             out.appendRow(r);
         return out;
