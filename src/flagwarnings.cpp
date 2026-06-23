@@ -57,7 +57,10 @@ void FlagWarnings::highlightBlock(const QString &text)
             oldwarnings = nwarnings;
             oldlines    = nlines;
             summary->setText(QString("%1 Warnings / Errors - %2 Lines").arg(nwarnings).arg(nlines));
-            summary->repaint();
+            // setText() already schedules a paint; let Qt coalesce it via update()
+            // rather than forcing a synchronous repaint() from inside highlighting,
+            // which fires on essentially every log line appended during a run
+            summary->update();
         }
     }
 }
