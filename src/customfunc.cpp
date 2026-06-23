@@ -20,6 +20,28 @@
 #include <string>
 #include <vector>
 
+CompiledExpression::CompiledExpression(const QString &expression)
+{
+    try {
+        // parse once, optimize, and compile to an interpreted program so the
+        // per-point evaluation in the caller's loop stays cheap
+        LeptonMini::ParsedExpression parsed =
+            LeptonMini::Parser::parse(expression.toStdString()).optimize();
+        program = std::make_unique<LeptonMini::ExpressionProgram>(parsed.createProgram());
+        valid   = true;
+    } catch (const std::exception &e) {
+        errorMsg = QString::fromStdString(e.what());
+        valid    = false;
+    }
+}
+
+CompiledExpression::~CompiledExpression() = default;
+
+double CompiledExpression::evaluate(const std::map<std::string, double> &variables) const
+{
+    return program->evaluate(variables);
+}
+
 CustomCurve evalCustomCurve(const QString &expression, double xmin, double xmax, int nsamples,
                             const QString &variable)
 {
@@ -34,13 +56,13 @@ CustomCurve evalCustomCurve(const QString &expression, double xmin, double xmax,
 
     const std::string var = variable.toStdString();
 
-    try {
-        // parse once, optimize, and compile to an interpreted program so the
-        // per-point evaluation in the loop stays cheap
-        LeptonMini::ParsedExpression parsed =
-            LeptonMini::Parser::parse(expr.toStdString()).optimize();
-        LeptonMini::ExpressionProgram program = parsed.createProgram();
+    CompiledExpression program(expr);
+    if (!program.isValid()) {
+        result.error = program.error();
+        return result;
+    }
 
+    try {
         std::map<std::string, double> vars;
         for (int k = 0; k <= nsamples; ++k) {
             const double x = xmin + (xmax - xmin) * static_cast<double>(k) / nsamples;
