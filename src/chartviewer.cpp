@@ -312,6 +312,7 @@ ChartWindow::ChartWindow(const QString &_filename, LammpsGui *_lammpsgui, QWidge
         return btn;
     };
     auto *styleBtn = makeToolBtn(":/icons/preferences-desktop-personal.png", "Chart Style...");
+    auto *refBtn   = makeToolBtn(":/icons/preferences-desktop.png", "Reference Lines...");
     auto *ppBtn    = makeToolBtn(":/icons/application-plot.png", "Postprocess...");
     settings.beginGroup(Keys::GROUP_CHARTS);
     legendPos       = static_cast<LegendPos>(settings.value(Keys::LEGEND, 0).toInt());
@@ -322,8 +323,10 @@ ChartWindow::ChartWindow(const QString &_filename, LammpsGui *_lammpsgui, QWidge
     refLabelBoxed = settings.value(Keys::REFLABELBOX, false).toBool();
     settings.endGroup();
     connect(styleBtn, &QPushButton::clicked, this, &ChartWindow::changeStyle);
+    connect(refBtn, &QPushButton::clicked, this, &ChartWindow::referenceLines);
     connect(ppBtn, &QPushButton::clicked, this, &ChartWindow::postProcess);
     row2->addWidget(styleBtn);
+    row2->addWidget(refBtn);
     row2->addWidget(ppBtn);
     row2->addWidget(new QLabel("X:"));
     row2->addWidget(xrange);
@@ -348,6 +351,8 @@ ChartWindow::ChartWindow(const QString &_filename, LammpsGui *_lammpsgui, QWidge
     file->addSeparator();
     addMenuAction(file, "Chart &Style...", ":/icons/preferences-desktop-personal.png", this,
                   &ChartWindow::changeStyle);
+    refLinesAct = addMenuAction(file, "&Reference Lines...", ":/icons/preferences-desktop.png",
+                                this, &ChartWindow::referenceLines);
     addMenuAction(file, "&Postprocess...", ":/icons/application-plot.png", this,
                   &ChartWindow::postProcess);
     // "Add Data from File..." is only relevant in standalone file-plot mode
@@ -355,8 +360,6 @@ ChartWindow::ChartWindow(const QString &_filename, LammpsGui *_lammpsgui, QWidge
         addDataAct = addMenuAction(file, "&Add Data from File...", ":/icons/application-plot.png",
                                    this, &ChartWindow::addDataFile);
     }
-    refLinesAct = addMenuAction(file, "&Reference Lines...", ":/icons/preferences-desktop.png",
-                                this, &ChartWindow::referenceLines);
     file->addSeparator();
     stopAct =
         addMenuAction(file, "Stop &Run", ":/icons/process-stop.png", this, &ChartWindow::stopRun);
