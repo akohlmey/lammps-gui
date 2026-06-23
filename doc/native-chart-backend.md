@@ -157,11 +157,21 @@ Verified: native output renders correctly through the `-c` chart CLI under
 `xvfb-run`; the QtGraphs (plugin) and QtCharts (linked) builds still compile and
 all non-GUI unit tests stay green.
 
+Feature-parity sweep on the native backend (2026-06-22): verified via the `-c`
+chart CLI under Xvfb -- Points / Lines+Points (scatter rendering), multiple Y
+columns + Data-dropdown switching, X/Y range sliders, Postprocess
+(Autocorrelation new-chart and Polynomial-fit overlay), overlay series from "Add
+Data from File", Save Graph As (widget grab), Chart Style point size, and
+title/axis-label editing. All rendered correctly. Two UX fixes came out of it:
+a point-diameter control in Chart Style (default raised 6 -> 8 px), and the
+processed-series plot choice now labels "(empty)" until it holds data.
+
 Outstanding for Phase 2 hardening (noted here so they are not forgotten):
-interactive testing of the scatter/points mode, the smoothing visibility
-toggles, and the range sliders in the native build; a committed render smoke
-test for `PlotWidget`; dark-mode and high-DPI parity; save-as-image at export
-resolution.
+a committed render smoke test for `PlotWidget`; dark-mode and high-DPI parity;
+save-as-image at an explicit export resolution (it currently grabs at widget
+size); the Custom function / Custom fit and EOS-fit postprocess paths (only
+Autocorrelation + Polynomial were exercised); and live-run (streaming thermo)
+rendering.
 
 ### Phase 2 -- native becomes default (next cycle)
 
