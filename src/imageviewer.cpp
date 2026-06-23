@@ -1963,8 +1963,11 @@ void ImageViewer::rebuildBondColorChoices(QComboBox *bncolor, bool allowByValue)
         bncolor->insertSeparator(bncolor->count());
         bncolor->addItems(bondLocalAttrs); // per-bond compute attributes -> color by value
     }
-    // restore the previous selection, or fall back to "atom" if it is no longer offered
-    if (bncolor->findText(current) >= 0)
+    // restore the previous selection, or fall back to "atom" if it is no longer
+    // offered. Guard against an empty "current" (a freshly created, still-empty
+    // combo): findText("") would match the inserted separator -- whose text is
+    // empty -- and leave the box showing a blank selection instead of "atom".
+    if (!current.isEmpty() && bncolor->findText(current) >= 0)
         selectComboItem(bncolor, current);
     else
         selectComboItem(bncolor, "atom");
