@@ -58,6 +58,23 @@
   <content_rating type="oars-1.1" />
 
   <releases>
+    <release version="2.0.999" timestamp="1782228677">
+      <description>
+        <p>Pre-release for the upcoming 2.1.0 version.</p>
+        <ul>
+          <li>Replace the QtCharts and QtGraphs chart backends with a single self-contained native renderer (a QWidget plus QPainter 2D line and scatter plotter) so charts look and behave identically on every platform and Qt version, the build no longer depends on the Qt Charts or Qt Graphs modules, and a Qt-free axis-layout core (nice ticks, label formatting) is shared by all plots</li>
+          <li>Collapse the multi-view chart layout into one shared plot widget that is rebound as you switch the displayed property, reducing memory use and redraw overhead</li>
+          <li>Add an optional in-plot legend with a placement selector in the Chart Style dialog (off or any of the four corners), remembered across sessions</li>
+          <li>Add reference lines to the chart window: vertical or horizontal annotation lines drawn on every chart with per-line label, color, and label anchor, plus window-wide label font size, gap, and optional boxed labels</li>
+          <li>Add an independent point-size control for the raw and processed series in the Chart Style dialog and enlarge the default point size</li>
+          <li>Render snapshot images for input decks that keep a "fix graphics/labels" color scale: the snapshot viewer now satisfies the fix's dump dependency instead of aborting the render</li>
+          <li>Several chart refinements and fixes: keep the zoom and range sliders consistent when adding reference lines or switching between raw and smoothed data, bold titles and dashed minor grid lines, adaptive tick precision, and corrected processed-series labeling</li>
+          <li>Performance: remove per-point QSettings reads and O(N) rescans from the live thermo update path, coalesce the log warnings-summary repaint, and restyle the CPU-usage label only when its color bucket changes</li>
+          <li>Convert the AppStream metadata to a valid format</li>
+          <li>Further internal refactoring for consistency and testability: store image colors as QString, factor shared dialog and parser helpers, confine the Lepton expression boundary behind a compiled-expression type, and update the source file map</li>
+        </ul>
+      </description>
+    </release>
     <release version="2.0.99" timestamp="1782069988">
       <description>
         <ul>
