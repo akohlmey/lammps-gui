@@ -994,6 +994,7 @@ void ChartWindow::referenceLines()
 
     QDialog dialog(this);
     dialog.setWindowTitle("Reference Lines");
+    dialog.setMinimumWidth(560); // room for a usable label field next to the value
     auto *layout = new QVBoxLayout(&dialog);
     layout->addWidget(
         new QLabel("Reference lines (vertical at an x value or horizontal at a y value) are\n"
@@ -1008,6 +1009,8 @@ void ChartWindow::referenceLines()
     scroll->setWidgetResizable(true);
     scroll->setWidget(listWidget);
     scroll->setMinimumHeight(100);
+    // keep rows within the viewport width; only scroll vertically as lines are added
+    scroll->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
     layout->addWidget(scroll, 1);
 
     // helper to build one color-button (same pattern as changeStyle)
@@ -1029,6 +1032,8 @@ void ChartWindow::referenceLines()
         rd->xSpin->setDecimals(6);
         rd->xSpin->setRange(-1e15, 1e15);
         rd->xSpin->setValue(val);
+        // keep the value field compact so the label field has room
+        rd->xSpin->setMaximumWidth(110);
         rd->labelEdit = new QLineEdit(lbl);
         rd->labelEdit->setPlaceholderText("label");
         rd->color = col.isValid() ? col : QColor(80, 80, 80);
@@ -1062,10 +1067,10 @@ void ChartWindow::referenceLines()
         auto *row = new QHBoxLayout;
         row->addWidget(rd->orientCombo);
         row->addWidget(posLabel);
-        row->addWidget(rd->xSpin, 1);
-        row->addWidget(new QLabel(" Label:"));
-        row->addWidget(rd->labelEdit, 2);
-        row->addWidget(new QLabel(" Color:"));
+        row->addWidget(rd->xSpin, 0);
+        row->addWidget(new QLabel("Label:"));
+        row->addWidget(rd->labelEdit, 1);
+        row->addWidget(new QLabel("Color:"));
         row->addWidget(colorBtn);
         row->addWidget(delBtn);
         listLayout->addLayout(row);
