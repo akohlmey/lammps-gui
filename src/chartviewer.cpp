@@ -1360,9 +1360,10 @@ bool ChartWindow::eventFilter(QObject *watched, QEvent *event)
 /* -------------------------------------------------------------------- */
 
 ChartViewer::ChartViewer(const QString &title, int _index, QWidget *parent) :
-    QWidget(parent), plot(nullptr), lastX(-1.0), index(_index), window(10), order(4),
-    series(std::make_unique<PlotSeries>()), doRaw(true), doSmooth(false), eosMode(false),
-    dispmode(ChartDisplayMode::Lines), rawColor(), rawWidth(3.0), rawPointSize(8.0),
+    QWidget(parent), plot(nullptr), lastX(-1.0), updChart(Cfg::CHART_UPDATE_INTERVAL_DEFAULT),
+    rawXmin(1.0e100), rawXmax(-1.0e100), rawYmin(1.0e100), rawYmax(-1.0e100), index(_index),
+    window(10), order(4), series(std::make_unique<PlotSeries>()), doRaw(true), doSmooth(false),
+    eosMode(false), dispmode(ChartDisplayMode::Lines), rawColor(), rawWidth(3.0), rawPointSize(8.0),
     smoothmode(ChartDisplayMode::Lines), smoothcolor(), smoothwidth(3.0), smoothpointsize(8.0)
 {
     plot = new PlotWidget(this);
@@ -1372,6 +1373,9 @@ ChartViewer::ChartViewer(const QString &title, int _index, QWidget *parent) :
     series->name = title;
 
     QSettings settings;
+    // cache the live-update throttle interval once; re-read it per appended
+    // point would construct a QSettings object on the hot thermo path
+    updChart = settings.value(Keys::UPDCHART, Cfg::CHART_UPDATE_INTERVAL_DEFAULT).toInt();
     settings.beginGroup(Keys::GROUP_CHARTS);
     plot->setGrid(settings.value(Keys::GRID, true).toBool(),
                   settings.value(Keys::MINORGRID, true).toBool());
@@ -1414,11 +1418,15 @@ void ChartViewer::addPoint(double x, double y)
     if (lastX < x) {
         lastX = x;
         series->append(x, y);
+        // track the raw-series bounds incrementally so getMinMax() does not have
+        // to rescan the whole (monotonically growing) series on every update
+        rawXmin = qMin(rawXmin, x);
+        rawXmax = qMax(rawXmax, x);
+        rawYmin = qMin(rawYmin, y);
+        rawYmax = qMax(rawYmax, y);
 
-        QSettings settings;
-        // update the chart display only after at least updchart milliseconds have passed
-        if (lastUpdate.msecsTo(QTime::currentTime()) >
-            settings.value(Keys::UPDCHART, Cfg::CHART_UPDATE_INTERVAL_DEFAULT).toInt()) {
+        // update the chart display only after at least updChart milliseconds have passed
+        if (lastUpdate.msecsTo(QTime::currentTime()) > updChart) {
             lastUpdate = QTime::currentTime();
             updateSmooth();
             resetZoom();
@@ -1472,17 +1480,12 @@ QString ChartViewer::getYLabel() const
 
 QRectF ChartViewer::getMinMax() const
 {
-    // get min/max for plot
-    qreal xmin = 1.0e100;
-    qreal xmax = -1.0e100;
-    qreal ymin = 1.0e100;
-    qreal ymax = -1.0e100;
-    for (auto &p : series->points) {
-        xmin = qMin(xmin, p.x());
-        xmax = qMax(xmax, p.x());
-        ymin = qMin(ymin, p.y());
-        ymax = qMax(ymax, p.y());
-    }
+    // raw-series bounds are tracked incrementally on the append/replace paths,
+    // so seed from the cached values instead of rescanning series->points here
+    qreal xmin = rawXmin;
+    qreal xmax = rawXmax;
+    qreal ymin = rawYmin;
+    qreal ymax = rawYmax;
 
     // if plotting the smoothed data, include its range too
     if (doSmooth && smooth) {
@@ -1620,6 +1623,15 @@ void ChartViewer::setPoints(const QList<QPointF> &points)
 {
     series->replace(points);
     lastX = points.isEmpty() ? -1.0 : points.last().x();
+    // recompute the cached raw-series bounds for the replaced data (one-shot)
+    rawXmin = rawYmin = 1.0e100;
+    rawXmax = rawYmax = -1.0e100;
+    for (const auto &p : points) {
+        rawXmin = qMin(rawXmin, p.x());
+        rawXmax = qMax(rawXmax, p.x());
+        rawYmin = qMin(rawYmin, p.y());
+        rawYmax = qMax(rawYmax, p.y());
+    }
     updateSmooth();
     resetZoom();
 }

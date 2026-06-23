@@ -503,6 +503,11 @@ private:
 
     PlotWidget *plot;                          ///< Renderer (Qt child of this widget)
     double lastX;                              ///< Last (largest) x value appended
+    int updChart;                              ///< Cached live-update throttle interval (ms)
+    double rawXmin;                            ///< Running min x of the raw series (live path)
+    double rawXmax;                            ///< Running max x of the raw series
+    double rawYmin;                            ///< Running min y of the raw series
+    double rawYmax;                            ///< Running max y of the raw series
     int index;                                 ///< Chart index
     int window, order;                         ///< Smoothing window and polynomial order
     std::unique_ptr<PlotSeries> series;        ///< Raw data series (always present)
