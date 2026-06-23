@@ -424,6 +424,15 @@ static void addColorMapItems(QComboBox *box)
     }
 }
 
+// Fetch and cast the widget at grid cell (row, col), advancing `col` past it.
+// Returns nullptr if the cell is empty or holds a different widget type. Used by
+// the dialog readers to walk a row of widgets by column position.
+template <typename T> static T *gridWidget(QGridLayout *layout, int row, int &col)
+{
+    auto *item = layout->itemAtPosition(row, col++);
+    return item ? qobject_cast<T *>(item->widget()) : nullptr;
+}
+
 // The three created widgets of a color-map selector row.
 struct ColorMapRow {
     QComboBox *map; ///< the map-name combo (carries the object name)
@@ -1016,36 +1025,28 @@ void ImageViewer::buildFixComputeRows(QGridLayout *layout, int &idx,
 void ImageViewer::readFixComputeRows(QGridLayout *layout, int offset,
                                      std::map<std::string, ImageInfo *> &items)
 {
-    int n = 0;
     for (int idx = offset; idx < offset + static_cast<int>(items.size()); ++idx) {
-        n          = 0;
-        auto *item = layout->itemAtPosition(idx, n++);
-        if (!item) continue;
-        auto *label = qobject_cast<QLabel *>(item->widget());
+        int n       = 0;
+        auto *label = gridWidget<QLabel>(layout, idx, n);
+        if (!label) continue;
 
         auto id = label->text().toStdString();
         // compute ID is not registered with a widget; skip rest to avoid segfault
         if (items.count(id) == 0) continue;
 
         ++n; // nothing to do with label for style name
-        item                  = layout->itemAtPosition(idx, n++);
-        auto *box             = qobject_cast<QCheckBox *>(item->widget());
-        items[id]->enabled    = (box->isChecked());
-        item                  = layout->itemAtPosition(idx, n++);
-        auto *combo           = qobject_cast<QComboBox *>(item->widget());
-        items[id]->colorstyle = combo->currentIndex();
-        item                  = layout->itemAtPosition(idx, n++);
-        auto *line            = qobject_cast<QLineEdit *>(item->widget());
-        if (line && line->hasAcceptableInput()) items[id]->color = line->text();
-        item = layout->itemAtPosition(idx, n++);
-        line = qobject_cast<QLineEdit *>(item->widget());
-        if (line && line->hasAcceptableInput()) items[id]->opacity = line->text().toDouble();
-        item = layout->itemAtPosition(idx, n++);
-        line = qobject_cast<QLineEdit *>(item->widget());
-        if (line && line->hasAcceptableInput()) items[id]->flag1 = line->text().toDouble();
-        item = layout->itemAtPosition(idx, n++);
-        line = qobject_cast<QLineEdit *>(item->widget());
-        if (line && line->hasAcceptableInput()) items[id]->flag2 = line->text().toDouble();
+        if (auto *box = gridWidget<QCheckBox>(layout, idx, n))
+            items[id]->enabled = box->isChecked();
+        if (auto *combo = gridWidget<QComboBox>(layout, idx, n))
+            items[id]->colorstyle = combo->currentIndex();
+        if (auto *line = gridWidget<QLineEdit>(layout, idx, n); line && line->hasAcceptableInput())
+            items[id]->color = line->text();
+        if (auto *line = gridWidget<QLineEdit>(layout, idx, n); line && line->hasAcceptableInput())
+            items[id]->opacity = line->text().toDouble();
+        if (auto *line = gridWidget<QLineEdit>(layout, idx, n); line && line->hasAcceptableInput())
+            items[id]->flag1 = line->text().toDouble();
+        if (auto *line = gridWidget<QLineEdit>(layout, idx, n); line && line->hasAcceptableInput())
+            items[id]->flag2 = line->text().toDouble();
     }
 }
 
@@ -1140,30 +1141,22 @@ void ImageViewer::fixSettings()
 
 void ImageViewer::readRegionRows(QGridLayout *layout)
 {
-    int n = 0;
     for (int idx = 4; idx < static_cast<int>(regions.size()) + 4; ++idx) {
-        n                    = 0;
-        auto *item           = layout->itemAtPosition(idx, n++);
-        auto *label          = qobject_cast<QLabel *>(item->widget());
-        auto id              = label->text().toStdString();
-        item                 = layout->itemAtPosition(idx, n++);
-        auto *box            = qobject_cast<QCheckBox *>(item->widget());
-        regions[id]->enabled = box->isChecked();
-        item                 = layout->itemAtPosition(idx, n++);
-        auto *combo          = qobject_cast<QComboBox *>(item->widget());
-        regions[id]->style   = combo->currentIndex();
-        item                 = layout->itemAtPosition(idx, n++);
-        auto *line           = qobject_cast<QLineEdit *>(item->widget());
-        if (line && line->hasAcceptableInput()) regions[id]->color = line->text();
-        item = layout->itemAtPosition(idx, n++);
-        line = qobject_cast<QLineEdit *>(item->widget());
-        if (line && line->hasAcceptableInput()) regions[id]->diameter = line->text().toDouble();
-        item = layout->itemAtPosition(idx, n++);
-        line = qobject_cast<QLineEdit *>(item->widget());
-        if (line && line->hasAcceptableInput()) regions[id]->npoints = line->text().toInt();
-        item = layout->itemAtPosition(idx, n++);
-        line = qobject_cast<QLineEdit *>(item->widget());
-        if (line && line->hasAcceptableInput()) regions[id]->opacity = line->text().toDouble();
+        int n       = 0;
+        auto *label = gridWidget<QLabel>(layout, idx, n);
+        auto id     = label->text().toStdString();
+        if (auto *box = gridWidget<QCheckBox>(layout, idx, n))
+            regions[id]->enabled = box->isChecked();
+        if (auto *combo = gridWidget<QComboBox>(layout, idx, n))
+            regions[id]->style = combo->currentIndex();
+        if (auto *line = gridWidget<QLineEdit>(layout, idx, n); line && line->hasAcceptableInput())
+            regions[id]->color = line->text();
+        if (auto *line = gridWidget<QLineEdit>(layout, idx, n); line && line->hasAcceptableInput())
+            regions[id]->diameter = line->text().toDouble();
+        if (auto *line = gridWidget<QLineEdit>(layout, idx, n); line && line->hasAcceptableInput())
+            regions[id]->npoints = line->text().toInt();
+        if (auto *line = gridWidget<QLineEdit>(layout, idx, n); line && line->hasAcceptableInput())
+            regions[id]->opacity = line->text().toDouble();
     }
 }
 
