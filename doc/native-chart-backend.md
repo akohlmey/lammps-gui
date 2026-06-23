@@ -227,7 +227,18 @@ only large refactor and is deliberately last, behind a proven renderer.
 
 ## Phase 5 -- collapse the multi-view layout to a single PlotWidget
 
-Status: PLANNED (2026-06-23). Branch: `chart-single-view` (off `develop`).
+Status: IMPLEMENTED (2026-06-23), pending manual beta testing. Branch:
+`chart-single-view` (off `develop`). All five staged commits landed (stage 1
+ChartColumn extraction, stage 2 rendering-pipeline free functions, stage 3a
+remaining per-column free functions, stage 3b the ChartWindow collapse). One
+deviation from the plan: `ChartViewer` was **not** deleted but retyped as a
+single, rebindable thin view over a non-owned `ChartColumn *` -- this reaches
+the same end state (one `PlotWidget` instead of N) with far less churn in the
+long dialog methods (`changeStyle`/`postProcess`/`addDataFile`), which keep
+operating on `currentChart()` (now the one view). Headless verification done
+(both build configs, 174 unit tests, single-column `-c` render parity, and live
+Data-dropdown column switching on a multi-column file); the live thermo stream
+and the postprocess/overlay/reference-line paths still want a manual pass.
 
 ### Why
 
