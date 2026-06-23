@@ -424,6 +424,40 @@ static void addColorMapItems(QComboBox *box)
     }
 }
 
+// The three created widgets of a color-map selector row.
+struct ColorMapRow {
+    QComboBox *map; ///< the map-name combo (carries the object name)
+    QLineEdit *min; ///< the minimum-value edit
+    QLineEdit *max; ///< the maximum-value edit
+};
+
+// Build the "Map: [combo]  Min: [edit]  Max: [edit]" color-map selector row
+// shared by the atom ("amap") and bond ("bmap") sections. Adds the six widgets
+// into `layout` at grid row `idx`, advancing the column counter `n`, and returns
+// the widgets so the caller can wire them up. Only the combo gets an object name
+// (looked up later via findChild); the min/max edits are used through the
+// returned pointers. The caller advances `idx` after the row.
+static ColorMapRow addColorMapRow(QGridLayout *layout, int idx, int &n, const QString &comboName,
+                                  const QString &curMap, const QString &curMin,
+                                  const QString &curMax, QValidator *minmaxValidator)
+{
+    layout->addWidget(new QLabel("Map: "), idx, n++, 1, 1, Qt::AlignVCenter | Qt::AlignRight);
+    auto *map = new QComboBox;
+    map->setObjectName(comboName);
+    addColorMapItems(map);
+    selectComboItem(map, curMap);
+    layout->addWidget(map, idx, n++, 1, 1);
+    layout->addWidget(new QLabel("Min: "), idx, n++, 1, 1, Qt::AlignVCenter | Qt::AlignRight);
+    auto *mapmin = new QLineEdit(curMin);
+    mapmin->setValidator(minmaxValidator);
+    layout->addWidget(mapmin, idx, n++, 1, 1);
+    layout->addWidget(new QLabel("Max: "), idx, n++, 1, 1, Qt::AlignVCenter | Qt::AlignRight);
+    auto *mapmax = new QLineEdit(curMax);
+    mapmax->setValidator(minmaxValidator);
+    layout->addWidget(mapmax, idx, n++, 1, 1);
+    return {map, mapmin, mapmax};
+}
+
 void ImageViewer::atomSettings()
 {
     updatePeratom();
@@ -505,25 +539,17 @@ void ImageViewer::atomSettings()
     vdwbutton->setChecked(vdwfactor > VDW_CUT);
     vdwbutton->setObjectName("vdwbutton");
     layout->addWidget(vdwbutton, idx, n++, 1, 1, Qt::AlignCenter);
-    layout->addWidget(new QLabel("Map: "), idx, n++, 1, 1, Qt::AlignVCenter | Qt::AlignRight);
-    auto *amap = new QComboBox;
-    amap->setObjectName("amap");
-    addColorMapItems(amap);
-    selectComboItem(amap, colormap);
-    if ((atomcolor == "type") || (atomcolor == "element")) amap->setEnabled(false);
     QRegularExpression validminmax(
         R"((auto|min|max|[+-]?\d+\.?\d*|[+-]?\d*\.?\d+)|[+-]?\d+\.?\d*[eE][+-]?\d+|[+-]?\d*\.?\d+[eE][+-]?\d+)");
     auto *minmaxvalidator = new QRegularExpressionValidator(validminmax, this);
 
-    layout->addWidget(amap, idx, n++, 1, 1);
-    layout->addWidget(new QLabel("Min: "), idx, n++, 1, 1, Qt::AlignVCenter | Qt::AlignRight);
-    auto *amapmin = new QLineEdit(mapmin);
-    amapmin->setValidator(minmaxvalidator);
-    layout->addWidget(amapmin, idx, n++, 1, 1);
-    layout->addWidget(new QLabel("Max: "), idx, n++, 1, 1, Qt::AlignVCenter | Qt::AlignRight);
-    auto *amapmax = new QLineEdit(mapmax);
-    amapmax->setValidator(minmaxvalidator);
-    layout->addWidget(amapmax, idx++, n++, 1, 1);
+    const ColorMapRow arow =
+        addColorMapRow(layout, idx, n, "amap", colormap, mapmin, mapmax, minmaxvalidator);
+    QComboBox *amap    = arow.map;
+    QLineEdit *amapmin = arow.min;
+    QLineEdit *amapmax = arow.max;
+    if ((atomcolor == "type") || (atomcolor == "element")) amap->setEnabled(false);
+    ++idx;
 
     n = 0;
 
@@ -598,20 +624,12 @@ void ImageViewer::atomSettings()
     autolayout->addWidget(autobutton);
     autolayout->addWidget(bcutoff);
     layout->addLayout(autolayout, idx, n++, 1, 1);
-    layout->addWidget(new QLabel("Map: "), idx, n++, 1, 1, Qt::AlignVCenter | Qt::AlignRight);
-    auto *bmap = new QComboBox;
-    bmap->setObjectName("bmap");
-    addColorMapItems(bmap);
-    selectComboItem(bmap, bondcolormap);
-    layout->addWidget(bmap, idx, n++, 1, 1);
-    layout->addWidget(new QLabel("Min: "), idx, n++, 1, 1, Qt::AlignVCenter | Qt::AlignRight);
-    auto *bmapmin = new QLineEdit(bondmapmin);
-    bmapmin->setValidator(minmaxvalidator);
-    layout->addWidget(bmapmin, idx, n++, 1, 1);
-    layout->addWidget(new QLabel("Max: "), idx, n++, 1, 1, Qt::AlignVCenter | Qt::AlignRight);
-    auto *bmapmax = new QLineEdit(bondmapmax);
-    bmapmax->setValidator(minmaxvalidator);
-    layout->addWidget(bmapmax, idx++, n++, 1, 1);
+    const ColorMapRow brow = addColorMapRow(layout, idx, n, "bmap", bondcolormap, bondmapmin,
+                                            bondmapmax, minmaxvalidator);
+    QComboBox *bmap        = brow.map;
+    QLineEdit *bmapmin     = brow.min;
+    QLineEdit *bmapmax     = brow.max;
+    ++idx;
 
 #if QT_VERSION < QT_VERSION_CHECK(6, 7, 0)
     connect(vdwbutton, &QCheckBox::stateChanged, this, &ImageViewer::vdwbondSync);
