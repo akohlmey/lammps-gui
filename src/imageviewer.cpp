@@ -1557,8 +1557,9 @@ void ImageViewer::createImage()
         if (lammps->hasError()) lammps->getLastErrorMessage(nullptr, 0);
     }
 
-    // attempt to clean up if a previous write_dump command failed
-    lammps->command("if $(is_defined(dump,WRITE_DUMP)) then 'undump WRITE_DUMP'");
+    // attempt to clean up if a previous render left our dump defined
+    lammps->command("if $(is_defined(dump," + renderdumpid + ")) then 'undump " + renderdumpid +
+                    "'");
 
     // (re)create the per-bond coloring compute when bond color-by-value applies
     // (a bond/local attribute, real bonds, AutoBonds off); the explicit dump +
@@ -1586,13 +1587,41 @@ void ImageViewer::createImage()
     // (e.g. the per-bond compute). dump image needs a '*' in the file name (it is
     // replaced by the timestep) and "first yes" forces the single frame.
     const QString starfile = dumpdir.absoluteFilePath(filename + ".*.ppm");
-    {
-        StdoutSilencer guard;
-        lammps->command("dump WRITE_DUMP " + group + " image 1 '" + starfile + "'" + cmds.dumpargs);
-        lammps->command("dump_modify WRITE_DUMP first yes pad 0" + cmds.modifyargs);
-        lammps->command("run 0 post no");
-        lammps->command("undump WRITE_DUMP");
+
+    // A surviving "fix graphics/labels ... colorscale <id>" requires a dump image
+    // named <id> to still exist, but LammpsGui::renderImage purges the deck's dumps
+    // before opening the viewer, so the run 0 below would abort in the fix's init().
+    // The fix only *displays* that dump's color map (it does not define one), so we
+    // satisfy the dependency by naming our own render dump after the missing id: the
+    // fix then finds a valid "dump image" and the render proceeds. The id is read
+    // from the specific error and cached in renderdumpid, so the one-shot retry only
+    // happens on the first affected render.
+    static const QRegularExpression colorscaleErr(
+        QStringLiteral(R"(Dump ID (\S+) for colorscale not found)"));
+    QString dumpid = renderdumpid;
+    QString errmsg;
+    for (int attempt = 0; attempt < 2; ++attempt) {
+        {
+            StdoutSilencer guard;
+            lammps->command("dump " + dumpid + " " + group + " image 1 '" + starfile + "'" +
+                            cmds.dumpargs);
+            lammps->command("dump_modify " + dumpid + " first yes pad 0" + cmds.modifyargs);
+            lammps->command("run 0 post no");
+            lammps->command("undump " + dumpid);
+        }
+        errmsg              = lammps->lastErrorMessage();
+        const auto colmatch = colorscaleErr.match(errmsg);
+        // retry once under the missing colorscale dump id (unless we already use it)
+        if (colmatch.hasMatch() && (colmatch.captured(1) != dumpid)) {
+            dumpid = colmatch.captured(1);
+            lammps->command("if $(is_defined(dump," + dumpid + ")) then 'undump " + dumpid + "'");
+            continue;
+        }
+        break;
     }
+    // cache the working dump id only on success, so a deck with several distinct
+    // colorscale dumps (which a single render dump cannot satisfy) does not oscillate
+    if (errmsg.isEmpty()) renderdumpid = dumpid;
     const auto step = static_cast<long long>(lammps->getThermo("step"));
     const QString imagepath =
         dumpdir.absoluteFilePath(QString("%1.%2.ppm").arg(filename).arg(step));
@@ -1604,7 +1633,6 @@ void ImageViewer::createImage()
     }
 
     // display error message
-    const QString errmsg = lammps->lastErrorMessage();
     if (!errmsg.isEmpty()) {
         // ignore "Invalid LAMMPS handle", but report other errors
         if (!errmsg.contains("Invalid LAMMPS handle"))

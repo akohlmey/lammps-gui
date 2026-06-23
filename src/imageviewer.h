@@ -210,6 +210,9 @@ private:
     QString filename;                            ///< Image filename
     QString last_dumpargs;                       ///< Render args of the last image command
     QString last_modifyargs;                     ///< dump_modify args of the last image command
+    QString renderdumpid = "WRITE_DUMP";         ///< Id of our render dump; renamed to a missing
+                                                 ///< "fix graphics/labels" colorscale dump and
+                                                 ///< cached so the detection runs only once
     int xsize, ysize;                            ///< Image dimensions in pixels
     int hrot, vrot;                              ///< Horizontal and vertical rotation angles
     int bodyflag;                                ///< bflag1 setting (triangle, cylinder or both)
