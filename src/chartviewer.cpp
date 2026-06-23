@@ -1562,6 +1562,161 @@ void resetColumnZoom(PlotWidget *plot, ChartColumn &col)
     plot->update();
 }
 
+// Append a point to a column's raw series (monotonic in x) and update its cached
+// bounds. Pure data: returns true if the point was appended (x advanced).
+bool appendColumnPoint(ChartColumn &col, double x, double y)
+{
+    if (col.lastX >= x) return false;
+    col.lastX = x;
+    col.series->append(x, y);
+    col.rawXmin = qMin(col.rawXmin, x);
+    col.rawXmax = qMax(col.rawXmax, x);
+    col.rawYmin = qMin(col.rawYmin, y);
+    col.rawYmax = qMax(col.rawYmax, y);
+    return true;
+}
+
+// Replace a column's raw series with a full point list (file/standalone load),
+// recompute its cached bounds, then redraw.
+void setColumnPoints(PlotWidget *plot, ChartColumn &col, const QList<QPointF> &points)
+{
+    col.series->replace(points);
+    col.lastX   = points.isEmpty() ? -1.0 : points.last().x();
+    col.rawXmin = col.rawYmin = 1.0e100;
+    col.rawXmax = col.rawYmax = -1.0e100;
+    for (const auto &p : points) {
+        col.rawXmin = qMin(col.rawXmin, p.x());
+        col.rawXmax = qMax(col.rawXmax, p.x());
+        col.rawYmin = qMin(col.rawYmin, p.y());
+        col.rawYmax = qMax(col.rawYmax, p.y());
+    }
+    refreshColumn(plot, col);
+    resetColumnZoom(plot, col);
+}
+
+// Set the raw-series display style and redraw.
+void setColumnDisplayStyle(PlotWidget *plot, ChartColumn &col, ChartDisplayMode mode,
+                           const QColor &color, qreal width, qreal pointSize)
+{
+    col.dispmode     = mode;
+    col.rawColor     = color;
+    col.rawWidth     = width;
+    col.rawPointSize = pointSize;
+    refreshColumn(plot, col);
+    resetColumnZoom(plot, col);
+}
+
+// Set the processed-series display style and redraw.
+void setColumnSmoothStyle(PlotWidget *plot, ChartColumn &col, ChartDisplayMode mode,
+                          const QColor &color, qreal width, qreal pointSize)
+{
+    col.smoothmode      = mode;
+    col.smoothcolor     = color;
+    col.smoothwidth     = width;
+    col.smoothpointsize = pointSize;
+    refreshColumn(plot, col);
+    resetColumnZoom(plot, col);
+}
+
+// Set or replace the column's fit-curve overlay (EOS, polynomial, custom).
+void setColumnFitCurve(PlotWidget *plot, ChartColumn &col, const QList<QPointF> &points,
+                       const QString &name, bool eos)
+{
+    col.eosMode = eos;
+    if (!col.fit) {
+        col.fit = std::make_unique<PlotSeries>();
+        addColumnSeries(plot, col.fit.get(), QColor(220, 30, 30), 2.0); // distinct fit-curve color
+    }
+    if (!name.isEmpty()) col.fit->name = name;
+    col.fit->replace(points);
+    if (col.eosMode) {
+        // visibility follows doSmooth: refreshColumn will show/hide it correctly
+        refreshColumn(plot, col);
+    } else {
+        col.fit->setVisible(true);
+    }
+    resetColumnZoom(plot, col);
+}
+
+// Add an extra overlay data series (from a secondary file) to the column.
+void addColumnOverlay(PlotWidget *plot, ChartColumn &col, const QList<QPointF> &pts,
+                      const QString &name, const QColor &color)
+{
+    auto s  = std::make_unique<PlotSeries>();
+    s->name = name;
+    s->replace(pts);
+    addColumnSeries(plot, s.get(), color, col.rawWidth);
+    col.overlaySeries.push_back(std::move(s));
+    resetColumnZoom(plot, col);
+}
+
+// Remove all overlay series from the column and the plot.
+void clearColumnOverlay(PlotWidget *plot, ChartColumn &col)
+{
+    for (auto &s : col.overlaySeries)
+        plot->removeSeries(s.get());
+    col.overlaySeries.clear();
+    resetColumnZoom(plot, col);
+}
+
+// Remove all reference lines from the column and the plot.
+void clearColumnVerticalLines(PlotWidget *plot, ChartColumn &col)
+{
+    for (auto &s : col.vlines)
+        plot->removeSeries(s.get());
+    col.vlines.clear();
+    col.reflineDefs.clear();
+}
+
+// Replace the column's reference lines with the given definitions.
+void setColumnReferenceLines(PlotWidget *plot, ChartColumn &col, const QList<RefLine> &lines)
+{
+    clearColumnVerticalLines(plot, col);
+    if (lines.isEmpty()) return;
+    auto ranges = columnMinMax(col);
+    for (const auto &rl : lines) {
+        auto s  = std::make_unique<PlotSeries>();
+        s->name = rl.label;
+        if (rl.orient == RefOrient::Vertical)
+            s->replace(QList<QPointF>{{rl.value, ranges.bottom()}, {rl.value, ranges.top()}});
+        else
+            s->replace(QList<QPointF>{{ranges.left(), rl.value}, {ranges.right(), rl.value}});
+        const QColor c = rl.color.isValid() ? rl.color : QColor(80, 80, 80);
+        // dashed reference line, with an optional label drawn next to it
+        s->style = Qt::DashLine;
+        if (!rl.label.isEmpty()) {
+            s->isReference = true;
+            s->refLabel    = rl.label;
+        }
+        addColumnSeries(plot, s.get(), c, 1.5);
+        col.vlines.push_back(std::move(s));
+        col.reflineDefs.append(rl);
+    }
+    resetColumnZoom(plot, col);
+}
+
+// Apply smoothing flags/parameters to the column and redraw.
+void setColumnSmoothParam(PlotWidget *plot, ChartColumn &col, bool doRaw, bool doSmooth, int window,
+                          int order)
+{
+    // hide raw plot (keep the series alive; data is still needed for smoothing)
+    if (!doRaw) {
+        if (col.series) col.series->setVisible(false);
+        if (col.scatter) col.scatter->setVisible(false);
+    }
+    // hide processed plot (keep the series alive for quick re-enable)
+    if (!doSmooth) {
+        if (col.smooth) col.smooth->setVisible(false);
+        if (col.smoothScatter) col.smoothScatter->setVisible(false);
+        if (col.eosMode && col.fit) col.fit->setVisible(false);
+    }
+    col.doRaw    = doRaw;
+    col.doSmooth = doSmooth;
+    col.window   = window;
+    col.order    = order;
+    refreshColumn(plot, col);
+}
+
 } // namespace
 
 /* -------------------------------------------------------------------- */
@@ -1618,21 +1773,12 @@ void ChartViewer::stylePlotSeries(PlotSeries *s, const QColor &color, qreal widt
 
 void ChartViewer::addPoint(double x, double y)
 {
-    if (column.lastX < x) {
-        column.lastX = x;
-        column.series->append(x, y);
-        // track the raw-series bounds incrementally so getMinMax() does not have
-        // to rescan the whole (monotonically growing) series on every update
-        column.rawXmin = qMin(column.rawXmin, x);
-        column.rawXmax = qMax(column.rawXmax, x);
-        column.rawYmin = qMin(column.rawYmin, y);
-        column.rawYmax = qMax(column.rawYmax, y);
-
+    if (appendColumnPoint(column, x, y)) {
         // update the chart display only after at least updChart milliseconds have passed
         if (column.lastUpdate.msecsTo(QTime::currentTime()) > updChart) {
             column.lastUpdate = QTime::currentTime();
-            updateSmooth();
-            resetZoom();
+            refreshColumn(plot, column);
+            resetColumnZoom(plot, column);
         }
     }
 }
@@ -1697,22 +1843,7 @@ void ChartViewer::resetZoom()
 
 void ChartViewer::smoothParam(bool _doRaw, bool _doSmooth, int _window, int _order)
 {
-    // hide raw plot (keep the series alive; data is still needed for smoothing)
-    if (!_doRaw) {
-        if (column.series) column.series->setVisible(false);
-        if (column.scatter) column.scatter->setVisible(false);
-    }
-    // hide processed plot (keep the series alive for quick re-enable)
-    if (!_doSmooth) {
-        if (column.smooth) column.smooth->setVisible(false);
-        if (column.smoothScatter) column.smoothScatter->setVisible(false);
-        if (column.eosMode && column.fit) column.fit->setVisible(false);
-    }
-    column.doRaw    = _doRaw;
-    column.doSmooth = _doSmooth;
-    column.window   = _window;
-    column.order    = _order;
-    updateSmooth();
+    setColumnSmoothParam(plot, column, _doRaw, _doSmooth, _window, _order);
 }
 
 /* -------------------------------------------------------------------- */
@@ -1747,19 +1878,7 @@ void ChartViewer::setXLabelFormat(const QString &fmt)
 
 void ChartViewer::setPoints(const QList<QPointF> &points)
 {
-    column.series->replace(points);
-    column.lastX = points.isEmpty() ? -1.0 : points.last().x();
-    // recompute the cached raw-series bounds for the replaced data (one-shot)
-    column.rawXmin = column.rawYmin = 1.0e100;
-    column.rawXmax = column.rawYmax = -1.0e100;
-    for (const auto &p : points) {
-        column.rawXmin = qMin(column.rawXmin, p.x());
-        column.rawXmax = qMax(column.rawXmax, p.x());
-        column.rawYmin = qMin(column.rawYmin, p.y());
-        column.rawYmax = qMax(column.rawYmax, p.y());
-    }
-    updateSmooth();
-    resetZoom();
+    setColumnPoints(plot, column, points);
 }
 
 /* -------------------------------------------------------------------- */
@@ -1767,12 +1886,7 @@ void ChartViewer::setPoints(const QList<QPointF> &points)
 void ChartViewer::setDisplayStyle(ChartDisplayMode mode, const QColor &color, qreal width,
                                   qreal pointSize)
 {
-    column.dispmode     = mode;
-    column.rawColor     = color;
-    column.rawWidth     = width;
-    column.rawPointSize = pointSize;
-    updateSmooth();
-    resetZoom();
+    setColumnDisplayStyle(plot, column, mode, color, width, pointSize);
 }
 
 /* -------------------------------------------------------------------- */
@@ -1780,32 +1894,14 @@ void ChartViewer::setDisplayStyle(ChartDisplayMode mode, const QColor &color, qr
 void ChartViewer::setSmoothStyle(ChartDisplayMode mode, const QColor &color, qreal width,
                                  qreal pointSize)
 {
-    column.smoothmode      = mode;
-    column.smoothcolor     = color;
-    column.smoothwidth     = width;
-    column.smoothpointsize = pointSize;
-    updateSmooth();
-    resetZoom();
+    setColumnSmoothStyle(plot, column, mode, color, width, pointSize);
 }
 
 /* -------------------------------------------------------------------- */
 
 void ChartViewer::setFitCurve(const QList<QPointF> &points, const QString &name, bool eos)
 {
-    column.eosMode = eos;
-    if (!column.fit) {
-        column.fit = std::make_unique<PlotSeries>();
-        addPlotSeries(column.fit.get(), QColor(220, 30, 30), 2.0); // distinct fit-curve color
-    }
-    if (!name.isEmpty()) column.fit->name = name;
-    column.fit->replace(points);
-    if (column.eosMode) {
-        // visibility follows doSmooth: updateSmooth will show/hide it correctly
-        updateSmooth();
-    } else {
-        column.fit->setVisible(true);
-    }
-    resetZoom();
+    setColumnFitCurve(plot, column, points, name, eos);
 }
 
 /* -------------------------------------------------------------------- */
@@ -1813,60 +1909,28 @@ void ChartViewer::setFitCurve(const QList<QPointF> &points, const QString &name,
 void ChartViewer::addOverlaySeries(const QList<QPointF> &pts, const QString &name,
                                    const QColor &color)
 {
-    auto s  = std::make_unique<PlotSeries>();
-    s->name = name;
-    s->replace(pts);
-    addPlotSeries(s.get(), color, column.rawWidth);
-    column.overlaySeries.push_back(std::move(s));
-    resetZoom();
+    addColumnOverlay(plot, column, pts, name, color);
 }
 
 /* -------------------------------------------------------------------- */
 
 void ChartViewer::clearOverlaySeries()
 {
-    for (auto &s : column.overlaySeries)
-        plot->removeSeries(s.get());
-    column.overlaySeries.clear();
-    resetZoom();
+    clearColumnOverlay(plot, column);
 }
 
 /* -------------------------------------------------------------------- */
 
 void ChartViewer::setReferenceLines(const QList<RefLine> &lines)
 {
-    clearVerticalLines();
-    if (lines.isEmpty()) return;
-    auto ranges = getMinMax();
-    for (const auto &rl : lines) {
-        auto s  = std::make_unique<PlotSeries>();
-        s->name = rl.label;
-        if (rl.orient == RefOrient::Vertical)
-            s->replace(QList<QPointF>{{rl.value, ranges.bottom()}, {rl.value, ranges.top()}});
-        else
-            s->replace(QList<QPointF>{{ranges.left(), rl.value}, {ranges.right(), rl.value}});
-        const QColor col = rl.color.isValid() ? rl.color : QColor(80, 80, 80);
-        // dashed reference line, with an optional label drawn next to it
-        s->style = Qt::DashLine;
-        if (!rl.label.isEmpty()) {
-            s->isReference = true;
-            s->refLabel    = rl.label;
-        }
-        addPlotSeries(s.get(), col, 1.5);
-        column.vlines.push_back(std::move(s));
-        column.reflineDefs.append(rl);
-    }
-    resetZoom();
+    setColumnReferenceLines(plot, column, lines);
 }
 
 /* -------------------------------------------------------------------- */
 
 void ChartViewer::clearVerticalLines()
 {
-    for (auto &s : column.vlines)
-        plot->removeSeries(s.get());
-    column.vlines.clear();
-    column.reflineDefs.clear();
+    clearColumnVerticalLines(plot, column);
 }
 
 /* -------------------------------------------------------------------- */
