@@ -182,7 +182,9 @@ ChartWindow::ChartWindow(const QString &_filename, LammpsGui *_lammpsgui, QWidge
     // list of choices must be kepy in sync with list in preferences
     smooth = new QComboBox;
     smooth->addItem("Raw");
-    smooth->addItem("Smoothed");
+    // the processed-series slot is empty until smoothing or a post-process fit
+    // fills it; the label updates to "Smoothed" or the fit name accordingly
+    smooth->addItem("(empty)");
     smooth->addItem("Both");
     smooth->setCurrentIndex(smoothchoice);
     window = new QSpinBox;
@@ -1153,9 +1155,9 @@ void ChartWindow::selectSmooth(int)
             break;
     }
     const bool isEos = currentChart() && currentChart()->isEosFit();
-    // only reset label to "Smoothed" when no fit overlay is active; otherwise
-    // preserve whatever name was set when the fit was applied (EOS fit, Poly deg N, etc.)
-    if (!isEos) smooth->setItemText(1, "Smoothed");
+    // label the processed-series slot: keep a fit name while a fit is active,
+    // otherwise "Smoothed" when smoothing is shown and "(empty)" when it is not
+    if (!isEos) smooth->setItemText(1, doSmooth ? "Smoothed" : "(empty)");
     // SG smooth parameters are only relevant when smoothing without a fit overlay
     const bool sgEnabled = doSmooth && !isEos;
     window->setEnabled(sgEnabled);
@@ -1313,9 +1315,9 @@ void ChartWindow::changeChart(int)
         }
     }
 
-    // sync "Smoothed"/"EOS fit" label and SG parameter spinbox state
+    // sync the processed-series label and SG parameter spinbox state
     const bool isEos = currentChart() && currentChart()->isEosFit();
-    smooth->setItemText(1, isEos ? "EOS fit" : "Smoothed");
+    smooth->setItemText(1, isEos ? "EOS fit" : (doSmooth ? "Smoothed" : "(empty)"));
     const bool sgEnabled = doSmooth && !isEos;
     window->setEnabled(sgEnabled);
     order->setEnabled(sgEnabled);
