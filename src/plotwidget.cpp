@@ -89,10 +89,20 @@ void PlotWidget::setXTitle(const QString &title)
     update();
 }
 
+QString PlotWidget::xTitle() const
+{
+    return m_xaxis.title;
+}
+
 void PlotWidget::setYTitle(const QString &title)
 {
     m_yaxis.title = title;
     update();
+}
+
+QString PlotWidget::yTitle() const
+{
+    return m_yaxis.title;
 }
 
 void PlotWidget::setXRange(double min, double max)
@@ -166,15 +176,8 @@ QSize PlotWidget::sizeHint() const
     return {400, 300};
 }
 
-void PlotWidget::setPrePaintHook(std::function<void()> hook)
-{
-    m_prePaint = std::move(hook);
-}
-
 void PlotWidget::doRender(QPainter &p, const QRectF &target) const
 {
-    if (m_prePaint) m_prePaint(); // refresh series state before drawing
-
     p.setRenderHint(QPainter::Antialiasing, true);
     p.setRenderHint(QPainter::TextAntialiasing, true);
     p.fillRect(target, Qt::white);

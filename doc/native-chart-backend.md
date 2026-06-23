@@ -1,10 +1,16 @@
 # Native chart backend -- design and staged plan
 
-Status: Phase 1 complete (2026-06-22) -- the native backend is available as an
-opt-in build (`-DLAMMPS_GUI_USE_NATIVE_CHARTS=ON`), default off, verified end to
-end via the `-c` chart CLI. Phases 2-4 (make it the default, delete QtGraphs,
-then go native-only) are deferred to the next development cycle, after v2.1.0.
-Branch: `native-chart-backend` (off `develop`).
+Status: NATIVE-ONLY (2026-06-22). The native `QPainter` renderer is now the sole
+chart backend. The `ChartBackend` abstraction and the QtCharts and QtGraphs
+backends have been deleted; `ChartViewer` owns `PlotSeries` objects and renders
+them with `PlotWidget` directly. The build links only Qt Gui/Widgets/Network --
+no Qt Charts, Graphs, or Quick/QML. On a feature branch we collapsed Phases 2-4
+into one jump (decision: native is clearly better; reset/redo is cheap while
+`develop` is not merged to `main`). All 174 non-GUI tests pass; charts verified
+via the `-c` CLI. Branch: `native-chart-backend` (off `develop`).
+
+Historical staged plan (Phases 1-4) is kept below for context; it was executed
+as Phase 1 (opt-in) then a direct collapse to native-only.
 
 This is the durable design memory for replacing the two Qt-module chart
 backends (QtCharts and QtGraphs) with a single, self-contained renderer built

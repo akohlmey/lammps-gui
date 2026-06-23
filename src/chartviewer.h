@@ -224,21 +224,14 @@ private:
 
 /* -------------------------------------------------------------------- */
 
-#ifdef LAMMPS_GUI_USE_QTGRAPHS
-#include <QtGraphs/QAbstractAxis>
-#include <QtGraphs/QLineSeries>
-#include <QtGraphs/QScatterSeries>
-#include <QtGraphs/QValueAxis>
-#else
-#include <QLineSeries>
-#include <QScatterSeries>
-#include <QValueAxis>
-#endif
+#include "plotseries.h"
 
 #include <QColor>
-#include <memory>
 
-class ChartBackend;
+#include <memory>
+#include <vector>
+
+class PlotWidget;
 
 /**
  * @brief How a chart's raw data series is drawn
@@ -253,11 +246,11 @@ enum class ChartDisplayMode {
  * @brief Individual chart viewer for displaying a single time-series
  *
  * ChartViewer displays a single thermodynamic property as a function
- * of simulation time. It delegates rendering to a ChartBackend
- * (QtGraphsBackend or QtChartsBackend), supporting both raw and
- * smoothed data display, interactive zoom/pan, and data export.
+ * of simulation time. It owns the neutral PlotSeries data objects and
+ * renders them with a PlotWidget, supporting both raw and smoothed data
+ * display, interactive zoom/pan, and data export.
  *
- * @see ChartBackend, QtGraphsBackend, QtChartsBackend
+ * @see PlotWidget, PlotSeries
  */
 class ChartViewer : public QWidget {
     Q_OBJECT
@@ -298,11 +291,10 @@ public:
      */
     QRectF getMinMax() const;
 
-    /**
-     * @brief Get list of chart axes
-     * @return List of axes (X and Y)
-     */
-    QList<QAbstractAxis *> getAxes() const;
+    /** @brief Set the displayed X-axis range (used by the range sliders) */
+    void setXAxisRange(double min, double max);
+    /** @brief Set the displayed Y-axis range (used by the range sliders) */
+    void setYAxisRange(double min, double max);
 
     /**
      * @brief Reset zoom to show all data
@@ -412,7 +404,7 @@ public:
     void clearOverlaySeries();
 
     /** @brief Number of overlay series currently displayed */
-    int overlaySeriesCount() const { return overlaySeries.size(); }
+    int overlaySeriesCount() const { return static_cast<int>(overlaySeries.size()); }
 
     /**
      * @brief Set vertical reference lines (replaces any existing set)
@@ -478,7 +470,7 @@ public:
                      bool eosFit = false);
 
     /** @brief True when the current fit overlay is a Birch-Murnaghan EOS fit */
-    bool isEosFit() const { return eosMode && fit && !fit->points().isEmpty(); }
+    bool isEosFit() const { return eosMode && fit && !fit->points.isEmpty(); }
 
     /**
      * @brief Get current chart title
@@ -501,31 +493,37 @@ public:
 private:
     /// Add (or restyle) a line series and its on-demand scatter twin to show
     /// the data as lines, points, or both, in the given color and width.
-    void renderSeries(QLineSeries *line, QScatterSeries *&points, ChartDisplayMode mode,
+    void renderSeries(PlotSeries *line, std::unique_ptr<PlotSeries> &points, ChartDisplayMode mode,
                       const QColor &color, qreal width, qreal pointSize);
 
-    std::unique_ptr<ChartBackend> backend; ///< Rendering backend (QtGraphs or QtCharts)
-    double lastX;                          ///< Last (largest) x value appended
-    int index;                             ///< Chart index
-    int window, order;                     ///< Smoothing window and polynomial order
-    QLineSeries *series, *smooth;          ///< Raw and smoothed data series
-    QScatterSeries *scatter;               ///< Raw data drawn as points (created on demand)
-    QScatterSeries *smoothScatter;         ///< Processed data drawn as points (created on demand)
-    QLineSeries *fit;                      ///< Optional fit-curve overlay (created on demand)
-    QTime lastUpdate;                      ///< Time of last chart update
-    bool doRaw, doSmooth;                  ///< Flags for showing raw/smoothed data
+    /// Register a series with the renderer in the given color and width.
+    void addPlotSeries(PlotSeries *s, const QColor &color, qreal width);
+    /// Restyle an already-registered series and request a repaint.
+    void stylePlotSeries(PlotSeries *s, const QColor &color, qreal width);
+
+    PlotWidget *plot;                          ///< Renderer (Qt child of this widget)
+    double lastX;                              ///< Last (largest) x value appended
+    int index;                                 ///< Chart index
+    int window, order;                         ///< Smoothing window and polynomial order
+    std::unique_ptr<PlotSeries> series;        ///< Raw data series (always present)
+    std::unique_ptr<PlotSeries> smooth;        ///< Smoothed data series (created on demand)
+    std::unique_ptr<PlotSeries> scatter;       ///< Raw data as points (created on demand)
+    std::unique_ptr<PlotSeries> smoothScatter; ///< Processed data as points (created on demand)
+    std::unique_ptr<PlotSeries> fit;           ///< Optional fit-curve overlay (created on demand)
+    QTime lastUpdate;                          ///< Time of last chart update
+    bool doRaw, doSmooth;                      ///< Flags for showing raw/smoothed data
     bool eosMode;              ///< True when fit is a BM EOS overlay (visibility follows doSmooth)
     ChartDisplayMode dispmode; ///< How the raw series is drawn
     QColor rawColor;           ///< Raw series color override (invalid = theme default)
     qreal rawWidth;            ///< Raw series line width
     qreal rawPointSize;        ///< Raw series marker diameter
-    ChartDisplayMode smoothmode;        ///< How the processed series is drawn
-    QColor smoothcolor;                 ///< Processed series color (invalid = theme default)
-    qreal smoothwidth;                  ///< Processed series line width
-    qreal smoothpointsize;              ///< Processed series marker diameter
-    QList<QLineSeries *> overlaySeries; ///< Extra data series added from secondary files
-    QList<QLineSeries *> vlines;        ///< Reference line series (decorative)
-    QList<RefLine> reflineDefs;         ///< Reference line definitions (parallel to vlines)
+    ChartDisplayMode smoothmode; ///< How the processed series is drawn
+    QColor smoothcolor;          ///< Processed series color (invalid = theme default)
+    qreal smoothwidth;           ///< Processed series line width
+    qreal smoothpointsize;       ///< Processed series marker diameter
+    std::vector<std::unique_ptr<PlotSeries>> overlaySeries; ///< Extra series from secondary files
+    std::vector<std::unique_ptr<PlotSeries>> vlines;        ///< Reference line series (decorative)
+    QList<RefLine> reflineDefs; ///< Reference line definitions (parallel to vlines)
 };
 #endif
 

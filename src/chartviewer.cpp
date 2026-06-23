@@ -61,7 +61,7 @@
 #include <QVariant>
 #include <algorithm>
 
-#include "chartbackend.h"
+#include "plotwidget.h"
 
 #include <cmath>
 
@@ -1203,13 +1203,12 @@ void ChartWindow::updateXRange(int low, int high)
 {
     for (auto &c : charts) {
         if (c->isVisible()) {
-            auto axes   = c->getAxes();
             auto ranges = c->getMinMax();
             double xmin =
                 ranges.left() + static_cast<double>(low) * SLIDER_FRACTION * ranges.width();
             double xmax =
                 ranges.left() + static_cast<double>(high) * SLIDER_FRACTION * ranges.width();
-            axes[0]->setRange(xmin, xmax);
+            c->setXAxisRange(xmin, xmax);
         }
     }
 }
@@ -1218,13 +1217,12 @@ void ChartWindow::updateYRange(int low, int high)
 {
     for (auto &c : charts) {
         if (c->isVisible()) {
-            auto axes   = c->getAxes();
             auto ranges = c->getMinMax();
             double ymin =
                 ranges.bottom() - static_cast<double>(low) * SLIDER_FRACTION * ranges.height();
             double ymax =
                 ranges.bottom() - static_cast<double>(high) * SLIDER_FRACTION * ranges.height();
-            axes[1]->setRange(ymin, ymax);
+            c->setYAxisRange(ymin, ymax);
         }
     }
 }
@@ -1362,26 +1360,26 @@ bool ChartWindow::eventFilter(QObject *watched, QEvent *event)
 /* -------------------------------------------------------------------- */
 
 ChartViewer::ChartViewer(const QString &title, int _index, QWidget *parent) :
-    QWidget(parent), lastX(-1.0), index(_index), window(10), order(4), series(new QLineSeries),
-    smooth(nullptr), scatter(nullptr), smoothScatter(nullptr), fit(nullptr), doRaw(true),
-    doSmooth(false), eosMode(false), dispmode(ChartDisplayMode::Lines), rawColor(), rawWidth(3.0),
-    rawPointSize(8.0), smoothmode(ChartDisplayMode::Lines), smoothcolor(), smoothwidth(3.0),
-    smoothpointsize(8.0)
+    QWidget(parent), plot(nullptr), lastX(-1.0), index(_index), window(10), order(4),
+    series(std::make_unique<PlotSeries>()), doRaw(true), doSmooth(false), eosMode(false),
+    dispmode(ChartDisplayMode::Lines), rawColor(), rawWidth(3.0), rawPointSize(8.0),
+    smoothmode(ChartDisplayMode::Lines), smoothcolor(), smoothwidth(3.0), smoothpointsize(8.0)
 {
-    backend = ChartBackend::create();
-    backend->init(this, title, series);
+    plot = new PlotWidget(this);
+    plot->setXTitle("Time step");
+    plot->setYTitle(title);
+    plot->setXLabelFormat("%d");
+    series->name = title;
 
-    // embed the backend widget into our layout
+    QSettings settings;
+    settings.beginGroup(Keys::GROUP_CHARTS);
+    plot->setGrid(settings.value(Keys::GRID, true).toBool(),
+                  settings.value(Keys::MINORGRID, true).toBool());
+    settings.endGroup();
+
     auto *layout = new QVBoxLayout(this);
     layout->setContentsMargins(0, 0, 0, 0);
-    if (auto *widget = backend->widget()) {
-        layout->addWidget(widget);
-    } else {
-        auto *error = new QLabel(tr("Unable to initialize chart display."), this);
-        error->setAlignment(Qt::AlignCenter);
-        error->setWordWrap(true);
-        layout->addWidget(error);
-    }
+    layout->addWidget(plot);
 
     lastUpdate = QTime::currentTime();
     updateSmooth();
@@ -1389,13 +1387,24 @@ ChartViewer::ChartViewer(const QString &title, int _index, QWidget *parent) :
 
 /* -------------------------------------------------------------------- */
 
-ChartViewer::~ChartViewer()
+ChartViewer::~ChartViewer() = default;
+
+/* -------------------------------------------------------------------- */
+
+void ChartViewer::addPlotSeries(PlotSeries *s, const QColor &color, qreal width)
 {
-    // series and smooth are owned by the chart backend (QChart or GraphsView)
-    // and will be cleaned up when the backend widget is destroyed as a child
-    // of this widget. Do not delete them manually to avoid double-free crashes,
-    // particularly with the QtGraphs backend where removeSeries() and widget
-    // destruction both delete attached series objects.
+    s->color = color;
+    if (s->type == PlotSeriesType::Line) s->width = width;
+    plot->addSeries(s);
+}
+
+/* -------------------------------------------------------------------- */
+
+void ChartViewer::stylePlotSeries(PlotSeries *s, const QColor &color, qreal width)
+{
+    s->color = color;
+    if (s->type == PlotSeriesType::Line) s->width = width;
+    plot->update();
 }
 
 /* -------------------------------------------------------------------- */
@@ -1419,51 +1428,56 @@ void ChartViewer::addPoint(double x, double y)
 
 /* -------------------------------------------------------------------- */
 
-QList<QAbstractAxis *> ChartViewer::getAxes() const
+void ChartViewer::setXAxisRange(double min, double max)
 {
-    return backend->getAxes();
+    plot->setXRange(min, max);
+}
+
+/* -------------------------------------------------------------------- */
+
+void ChartViewer::setYAxisRange(double min, double max)
+{
+    plot->setYRange(min, max);
 }
 
 /* -------------------------------------------------------------------- */
 
 QString ChartViewer::getName() const
 {
-    return series->name();
+    return series->name;
 }
 
 /* -------------------------------------------------------------------- */
 
 QString ChartViewer::getTLabel() const
 {
-    return backend->getTLabel();
+    return plot->title();
 }
 
 /* -------------------------------------------------------------------- */
 
 QString ChartViewer::getXLabel() const
 {
-    return backend->xAxis()->titleText();
+    return plot->xTitle();
 }
 
 /* -------------------------------------------------------------------- */
 
 QString ChartViewer::getYLabel() const
 {
-    return backend->yAxis()->titleText();
+    return plot->yTitle();
 }
 
 /* -------------------------------------------------------------------- */
 
 QRectF ChartViewer::getMinMax() const
 {
-    auto points = series->points();
-
     // get min/max for plot
     qreal xmin = 1.0e100;
     qreal xmax = -1.0e100;
     qreal ymin = 1.0e100;
     qreal ymax = -1.0e100;
-    for (auto &p : points) {
+    for (auto &p : series->points) {
         xmin = qMin(xmin, p.x());
         xmax = qMax(xmax, p.x());
         ymin = qMin(ymin, p.y());
@@ -1472,8 +1486,7 @@ QRectF ChartViewer::getMinMax() const
 
     // if plotting the smoothed data, include its range too
     if (doSmooth && smooth) {
-        auto spoints = smooth->points();
-        for (auto &p : spoints) {
+        for (auto &p : smooth->points) {
             xmin = qMin(xmin, p.x());
             xmax = qMax(xmax, p.x());
             ymin = qMin(ymin, p.y());
@@ -1482,8 +1495,8 @@ QRectF ChartViewer::getMinMax() const
     }
 
     // include any visible fit/overlay curve (EOS, polynomial, custom)
-    if (fit && fit->isVisible() && !fit->points().isEmpty()) {
-        for (auto &p : fit->points()) {
+    if (fit && fit->isVisible() && !fit->points.isEmpty()) {
+        for (auto &p : fit->points) {
             xmin = qMin(xmin, p.x());
             xmax = qMax(xmax, p.x());
             ymin = qMin(ymin, p.y());
@@ -1492,9 +1505,9 @@ QRectF ChartViewer::getMinMax() const
     }
 
     // include extra overlay data series added from secondary files
-    for (auto *s : overlaySeries) {
+    for (auto &s : overlaySeries) {
         if (s && s->isVisible()) {
-            for (auto &p : s->points()) {
+            for (auto &p : s->points) {
                 xmin = qMin(xmin, p.x());
                 xmax = qMax(xmax, p.x());
                 ymin = qMin(ymin, p.y());
@@ -1538,15 +1551,17 @@ void ChartViewer::resetZoom()
     // update reference lines to span the current data range along their axis
     const double ybot = ranges.bottom();
     const double ytop = ranges.top();
-    for (int i = 0; i < vlines.size(); ++i) {
-        const RefLine &rl = reflineDefs[i];
+    for (std::size_t i = 0; i < vlines.size(); ++i) {
+        const RefLine &rl = reflineDefs[static_cast<int>(i)];
         if (rl.orient == RefOrient::Vertical)
             vlines[i]->replace(QList<QPointF>{{rl.value, ybot}, {rl.value, ytop}});
         else
             vlines[i]->replace(
                 QList<QPointF>{{ranges.left(), rl.value}, {ranges.right(), rl.value}});
     }
-    backend->resetZoom(ranges.left(), ranges.right(), ybot, ytop);
+    plot->setXRange(ranges.left(), ranges.right());
+    plot->setYRange(ybot, ytop);
+    plot->update();
 }
 
 /* -------------------------------------------------------------------- */
@@ -1575,28 +1590,28 @@ void ChartViewer::smoothParam(bool _doRaw, bool _doSmooth, int _window, int _ord
 
 void ChartViewer::setTLabel(const QString &tlabel)
 {
-    backend->setTLabel(tlabel);
+    plot->setTitle(tlabel);
 }
 
 /* -------------------------------------------------------------------- */
 
 void ChartViewer::setYLabel(const QString &ylabel)
 {
-    backend->setYLabel(ylabel);
+    plot->setYTitle(ylabel);
 }
 
 /* -------------------------------------------------------------------- */
 
 void ChartViewer::setXLabel(const QString &xlabel)
 {
-    backend->setXLabel(xlabel);
+    plot->setXTitle(xlabel);
 }
 
 /* -------------------------------------------------------------------- */
 
 void ChartViewer::setXLabelFormat(const QString &fmt)
 {
-    backend->setXLabelFormat(fmt);
+    plot->setXLabelFormat(fmt);
 }
 
 /* -------------------------------------------------------------------- */
@@ -1641,10 +1656,10 @@ void ChartViewer::setFitCurve(const QList<QPointF> &points, const QString &name,
 {
     eosMode = eos;
     if (!fit) {
-        fit = new QLineSeries;
-        backend->addSeries(fit, QColor(220, 30, 30), 2.0); // distinct fit-curve color
+        fit = std::make_unique<PlotSeries>();
+        addPlotSeries(fit.get(), QColor(220, 30, 30), 2.0); // distinct fit-curve color
     }
-    if (!name.isEmpty()) fit->setName(name);
+    if (!name.isEmpty()) fit->name = name;
     fit->replace(points);
     if (eosMode) {
         // visibility follows doSmooth: updateSmooth will show/hide it correctly
@@ -1660,11 +1675,11 @@ void ChartViewer::setFitCurve(const QList<QPointF> &points, const QString &name,
 void ChartViewer::addOverlaySeries(const QList<QPointF> &pts, const QString &name,
                                    const QColor &color)
 {
-    auto *s = new QLineSeries;
-    s->setName(name);
+    auto s  = std::make_unique<PlotSeries>();
+    s->name = name;
     s->replace(pts);
-    backend->addSeries(s, color, rawWidth);
-    overlaySeries.append(s);
+    addPlotSeries(s.get(), color, rawWidth);
+    overlaySeries.push_back(std::move(s));
     resetZoom();
 }
 
@@ -1672,8 +1687,8 @@ void ChartViewer::addOverlaySeries(const QList<QPointF> &pts, const QString &nam
 
 void ChartViewer::clearOverlaySeries()
 {
-    for (auto *s : overlaySeries)
-        backend->removeSeries(s);
+    for (auto &s : overlaySeries)
+        plot->removeSeries(s.get());
     overlaySeries.clear();
     resetZoom();
 }
@@ -1686,20 +1701,21 @@ void ChartViewer::setReferenceLines(const QList<RefLine> &lines)
     if (lines.isEmpty()) return;
     auto ranges = getMinMax();
     for (const auto &rl : lines) {
-        auto *s = new QLineSeries;
-        s->setName(rl.label);
+        auto s  = std::make_unique<PlotSeries>();
+        s->name = rl.label;
         if (rl.orient == RefOrient::Vertical)
             s->replace(QList<QPointF>{{rl.value, ranges.bottom()}, {rl.value, ranges.top()}});
         else
             s->replace(QList<QPointF>{{ranges.left(), rl.value}, {ranges.right(), rl.value}});
         const QColor col = rl.color.isValid() ? rl.color : QColor(80, 80, 80);
-        backend->addSeries(s, col, 1.5);
-        // request a dashed style; backends that cannot render it (QtGraphs)
-        // ignore this and draw a solid line
-        backend->setSeriesLineStyle(s, Qt::DashLine);
-        // attach the text label (drawn by the native backend; no-op elsewhere)
-        if (!rl.label.isEmpty()) backend->setReferenceLabel(s, rl.label);
-        vlines.append(s);
+        // dashed reference line, with an optional label drawn next to it
+        s->style = Qt::DashLine;
+        if (!rl.label.isEmpty()) {
+            s->isReference = true;
+            s->refLabel    = rl.label;
+        }
+        addPlotSeries(s.get(), col, 1.5);
+        vlines.push_back(std::move(s));
         reflineDefs.append(rl);
     }
     resetZoom();
@@ -1709,8 +1725,8 @@ void ChartViewer::setReferenceLines(const QList<RefLine> &lines)
 
 void ChartViewer::clearVerticalLines()
 {
-    for (auto *s : vlines)
-        backend->removeSeries(s);
+    for (auto &s : vlines)
+        plot->removeSeries(s.get());
     vlines.clear();
     reflineDefs.clear();
 }
@@ -1751,28 +1767,32 @@ QList<QPointF> calc_sgsmooth(const QList<QPointF> &input, std::size_t window, in
 
 // update smooth plot data
 
-void ChartViewer::renderSeries(QLineSeries *line, QScatterSeries *&points, ChartDisplayMode mode,
-                               const QColor &color, qreal width, qreal pointSize)
+void ChartViewer::renderSeries(PlotSeries *line, std::unique_ptr<PlotSeries> &points,
+                               ChartDisplayMode mode, const QColor &color, qreal width,
+                               qreal pointSize)
 {
     const bool wantLines  = (mode != ChartDisplayMode::Points);
     const bool wantPoints = (mode != ChartDisplayMode::Lines);
 
     // line series
-    if (!backend->hasSeries(line))
-        backend->addSeries(line, color, width);
+    if (!plot->hasSeries(line))
+        addPlotSeries(line, color, width);
     else
-        backend->styleSeries(line, color, width);
+        stylePlotSeries(line, color, width);
     line->setVisible(wantLines);
 
     // matching points, created on demand and kept in sync with the line
     if (wantPoints) {
-        if (!points) points = new QScatterSeries;
-        points->replace(line->points());
-        if (!backend->hasSeries(points))
-            backend->addSeries(points, color, width);
+        if (!points) {
+            points       = std::make_unique<PlotSeries>();
+            points->type = PlotSeriesType::Scatter;
+        }
+        points->replace(line->points);
+        if (!plot->hasSeries(points.get()))
+            addPlotSeries(points.get(), color, width);
         else
-            backend->styleSeries(points, color, width);
-        backend->setMarkerSize(points, pointSize);
+            stylePlotSeries(points.get(), color, width);
+        points->markerSize = pointSize;
         points->setVisible(true);
     } else if (points) {
         points->setVisible(false);
@@ -1792,23 +1812,25 @@ void ChartViewer::updateSmooth()
     const QColor rawcol = rawColor.isValid() ? rawColor : mybrushes[rawidx].color();
     const QColor smcol  = smoothcolor.isValid() ? smoothcolor : mybrushes[smoothidx].color();
 
-    if (doRaw) renderSeries(series, scatter, dispmode, rawcol, rawWidth, rawPointSize);
+    if (doRaw) renderSeries(series.get(), scatter, dispmode, rawcol, rawWidth, rawPointSize);
 
     if (doSmooth) {
-        if (eosMode && fit && !fit->points().isEmpty()) {
+        if (eosMode && fit && !fit->points.isEmpty()) {
             // EOS fit acts as the "processed" series; suppress the SG smooth
             fit->setVisible(true);
             if (smooth) smooth->setVisible(false);
             if (smoothScatter) smoothScatter->setVisible(false);
         } else if (!eosMode && series->count() > (2 * window)) {
             if (fit) fit->setVisible(false);
-            if (!smooth) smooth = new QLineSeries;
-            smooth->replace(calc_sgsmooth(series->points(), window, order));
-            renderSeries(smooth, smoothScatter, smoothmode, smcol, smoothwidth, smoothpointsize);
+            if (!smooth) smooth = std::make_unique<PlotSeries>();
+            smooth->replace(calc_sgsmooth(series->points, window, order));
+            renderSeries(smooth.get(), smoothScatter, smoothmode, smcol, smoothwidth,
+                         smoothpointsize);
         }
     } else {
         if (eosMode && fit) fit->setVisible(false);
     }
+    plot->update();
 }
 
 // Local Variables:
