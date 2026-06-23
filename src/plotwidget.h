@@ -12,14 +12,13 @@
 #ifndef PLOTWIDGET_H
 #define PLOTWIDGET_H
 
-// Lightweight 2D line / scatter chart drawn directly with QPainter, with no
-// dependency on any Qt chart module (QtCharts / QtGraphs) or QML. It consumes
-// the neutral PlotSeries / PlotAxis model and reproduces the subset of chart
-// features that LAMMPS-GUI actually uses: linear axes with nice-number major
-// ticks, minor subticks, major / minor gridlines, printf-style tick labels,
-// axis and chart titles, and multiple line / scatter series including dashed
-// reference lines. Zoom is programmatic (setXRange / setYRange); there is no
-// in-widget mouse interaction (the chart window drives ranges externally).
+// Lightweight 2D line / scatter chart drawn directly with QPainter, with
+// no dependency on any Qt module.  It consumes the neutral PlotSeries / PlotAxis
+// model and reproduces the subset of chart features that LAMMPS-GUI actually uses:
+// linear axes with nice-number major ticks, minor subticks, major / minor gridlines,
+// printf-style tick labels, axis and chart titles, and multiple line / scatter
+// series including dashed reference lines. Zoom is programmatic (setXRange / setYRange);
+// there is no in-widget mouse interaction (the chart window drives ranges externally).
 
 #include "plotseries.h"
 
@@ -36,9 +35,8 @@ class QRectF;
 /**
  * @brief QPainter-based renderer for the neutral chart model
  *
- * Series objects are referenced, not owned: the caller (NativeChartBackend)
- * owns each PlotSeries and registers / unregisters it here, then calls update()
- * after changing its data or style.
+ * Series objects are referenced, not owned: the caller owns each PlotSeries and
+ * registers / unregisters it here, then calls update() after changing its data or style.
  */
 class PlotWidget : public QWidget {
 public:

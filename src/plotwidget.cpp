@@ -33,7 +33,7 @@ constexpr double TITLE_VPAD = 12.0; ///< padding above and below the chart title
 constexpr double LABEL_GAP  = 5.0;  ///< gap between tick labels and the axis
 constexpr double TICK_LEN   = 5.0;  ///< length of axis tick marks
 
-// gridline / frame colors, matched to the previous QtGraphs/QtCharts appearance
+// gridline / frame colors
 const QColor MAJOR_GRID(160, 160, 160);
 const QColor MINOR_GRID(208, 208, 208);
 const QColor FRAME_COLOR(80, 80, 80);
@@ -272,7 +272,7 @@ void PlotWidget::doRender(QPainter &p, const QRectF &target) const
     majorPen.setWidth(0); // cosmetic 1px, solid
     QPen minorPen(MINOR_GRID);
     minorPen.setWidth(0);
-    minorPen.setStyle(Qt::DashLine); // dashed, matching the QtCharts look
+    minorPen.setStyle(Qt::DashLine);
 
     const int xsub = std::max(0, m_xaxis.subTicks);
     const int ysub = std::max(0, m_yaxis.subTicks);

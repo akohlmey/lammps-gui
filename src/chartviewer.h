@@ -47,7 +47,7 @@ enum class RefOrient { Vertical, Horizontal };
 struct RefLine {
     RefOrient orient = RefOrient::Vertical; ///< vertical (fixed x) or horizontal (fixed y)
     double value;                           ///< x position (vertical) or y position (horizontal)
-    QString label;                          ///< text label (drawn by the native backend)
+    QString label;                          ///< text label (in line color)
     QColor color;                           ///< line color (default: dark gray)
 };
 

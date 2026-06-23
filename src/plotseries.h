@@ -12,12 +12,9 @@
 #ifndef PLOTSERIES_H
 #define PLOTSERIES_H
 
-// Neutral, backend-agnostic value types describing what to draw on a chart.
-// They depend only on Qt value types (QtCore / QtGui), NOT on any Qt chart
-// module (QtCharts / QtGraphs), so the renderer and -- eventually -- ChartViewer
-// can be decoupled from those modules. PlotWidget consumes these directly; the
-// NativeChartBackend adapter populates them from whatever the ChartBackend
-// interface hands it.
+// Neutral value types describing what to draw on a chart.
+// They depend only on Qt value types (QtCore / QtGui).
+// PlotWidget consumes these directly.
 
 #include <QColor>
 #include <QList>

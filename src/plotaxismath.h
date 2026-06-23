@@ -14,10 +14,8 @@
 
 // Small, self-contained (Qt-free) helpers for laying out a linear value axis:
 // "nice" tick spacing, the set of major tick values for a range, and printf-style
-// tick-label formatting. Pure functions so they can be unit-tested without a GUI
-// and reused by the native QPainter chart renderer. The tick-spacing rule matches
-// the logic previously inlined in the QtGraphs backend so that axis appearance is
-// preserved across backends.
+// tick-label formatting.  Pure functions so they can be unit-tested without a GUI
+// and reused by the native QPainter chart renderer.
 
 #include <string>
 #include <vector>
@@ -31,9 +29,6 @@ namespace PlotAxisMath {
  * @param targetIntervals Desired number of gaps between ticks (clamped to >= 1);
  *                       the result targets roughly this many intervals
  * @return A tick spacing of the form {1,2,5} * 10^n closest to range/targetIntervals
- *
- * Reproduces the rounding thresholds used by the QtGraphs backend so the chosen
- * interval matches across chart backends.
  */
 double niceTickInterval(double range, int targetIntervals = 4);
 
