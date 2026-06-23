@@ -224,3 +224,77 @@ only large refactor and is deliberately last, behind a proven renderer.
 - New `.cpp` / `.h` files go into `PROJECT_SOURCES` in `CMakeLists.txt`.
 - Documentation in American English, plain ASCII (`--` not em-dash).
 - Build with `-DENABLE_TESTING=ON` and keep `ctest` green after each stage.
+
+## Phase 5 -- collapse the multi-view layout to a single PlotWidget
+
+Status: PLANNED (2026-06-23). Branch: `chart-single-view` (off `develop`).
+
+### Why
+
+`ChartWindow` builds **one full `ChartViewer` widget per thermo column**
+(`addChart`), stacks them all in one `QVBoxLayout`, and `hide()`s every one but
+the column selected by the `columns` combo (`changeChart`). Each `ChartViewer`
+is a `QWidget` wrapping its own `PlotWidget`. That "N heavyweight views, N-1
+hidden" shape was dictated by the old Qt chart modules: a `QChartView` /
+`GraphsView` was bound to its own chart model and could not be cheaply
+repointed at another column's data, so the only way to switch columns was to
+build a separate view per column and toggle visibility.
+
+The native `PlotWidget` just paints whatever `PlotSeries` it is handed, so a
+single instance can render any column on demand. Collapsing to one renderer
+gives: one `PlotWidget` instead of N (less memory, fewer Qt child widgets); a
+live-run path that only ever repaints a single widget (compounds with the
+per-point/​per-tick perf work already on `develop`); and a clean
+data-model-vs-one-view split matching the renderer's design intent.
+
+This is the only remaining QtCharts-era structural artifact in the chart code;
+the axis-title overlay workaround (`VerticalLabel`/`QLabel`) was already removed
+during the native conversion.
+
+### What makes it tractable / safe
+
+- The data/view split already exists: a `ChartViewer` owns neutral `PlotSeries`
+  objects (`series`/`smooth`/`scatter`/`fit`/`overlaySeries`/`vlines`) and a
+  child `PlotWidget`; the renderer never holds Qt chart types.
+- `changeChart` already **resets the range sliders to full on every switch**, so
+  per-column zoom is not persisted today -- the collapse need not preserve it.
+- Per-column raw bounds are already tracked incrementally (`rawXmin..rawYmax`).
+
+### Staged commits (verify each with the `-c` CLI screenshot workflow and one
+short live run; keep `ctest` green)
+
+1. **Extract per-column state into a non-widget `ChartColumn`.** Move the
+   `PlotSeries` set, cached bounds, smoothing params, display style, EOS/fit
+   flags, and per-column title/ylabel out of the `ChartViewer` QWidget into a
+   plain `ChartColumn` data+logic struct. `ChartViewer` keeps only the QWidget
+   shell + its `PlotWidget` for now (no behavior change yet). Mechanical move,
+   build-verifiable.
+2. **Make `PlotWidget` render a `ChartColumn` on demand.** Add a
+   `ChartWindow`-owned single `PlotWidget` and a `renderColumn(const
+   ChartColumn&)` path that feeds it the column's series + labels + zoom. Still
+   parallel to the existing per-column viewers (dormant), so it can be
+   screenshot-diffed against the live ones.
+3. **Switch `ChartWindow` to own `vector<ChartColumn>` + one `PlotWidget`.**
+   `addChart` appends a `ChartColumn`; `changeChart` sets an active index and
+   calls `renderColumn`; `addData` appends to the target column and repaints
+   only when it is active. Delete the per-column `ChartViewer` widgets and the
+   show/hide scheme. Rewire the control slots (`updateSmooth`, `updateTLabel`,
+   `updateXRange/Y`, `selectSmooth`) to act on the active column (smoothing
+   params still applied to all columns' data).
+4. **Move the per-column-attached features onto `ChartColumn`.** Postprocess
+   fits (autocorrelation new-chart, polynomial/EOS/custom), "Add Data from File"
+   overlays, and reference lines currently attach to a specific `ChartViewer`;
+   re-point them at the active `ChartColumn`. Repoint the export paths
+   (`saveAs`/`copy`/`exportCsv`/`exportDat`/`exportYaml`) and `getStep` to read
+   from the column structs.
+5. **Remove the now-empty `ChartViewer` widget type** (or rename `ChartColumn`
+   to it), update `doc/api_reference.rst`, and refresh this file's status.
+
+### Verification matrix (the established GUI-visual-verification workflow)
+
+Live thermo run (streaming, multi-column switching) + `-c` standalone for:
+Points / Lines+Points; multiple Y columns + Data-dropdown switching; X/Y range
+sliders; Raw/Smoothed/Both; Postprocess (autocorrelation new-chart, polynomial
+overlay, EOS fit, custom function/fit); overlay from "Add Data from File";
+reference lines; Save Graph As / Copy; CSV/DAT/YAML export. Screenshot-diff each
+against `develop`.
