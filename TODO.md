@@ -1,9 +1,5 @@
 LAMMPS-GUI TODO list:
 
-**Current priorities (chosen 2026-06-20):** the Stage 8 plotting follow-ups and
-the SlideShow enhancements, both marked "(priority)" below.  Everything else is
-a longer-term idea or deliberately out of scope.
-
 # New feature ideas
 
 ## Implement data file manager GUI with the following features:
@@ -30,13 +26,6 @@ a longer-term idea or deliberately out of scope.
   a few typical use scenarios (could perhaps use some LLM based KI to
   look up suggestions for answers?).
 
-## Integrate / adapt Mark Tschopp's LAMMPS tutorials
-  Available as python jupyter notebooks here (unchanged for 6 years):
-  https://github.com/mrkllntschpp/lammps-tutorials
-  these have not been updated in a long time.
-  These could make a different category of tutorials
-  relative to the existing: atomic / molecular simulations versus materials science
-
 ## Snapshot viewer (SlideShow) enhancements (priority)
   Follow-ups to the "view arbitrary image files in the snapshot viewer"
   feature (helpers `isImageFile()`, `SlideShow` ImageMagick conversion +
@@ -57,76 +46,3 @@ a longer-term idea or deliberately out of scope.
     route them in `viewFile()` / "Open Image File(s)..." (or a sibling "Open
     Movie..."), and reuse the conversion-cache cleanup from the item above.
 
-## Native chart backend -- replace QtCharts and QtGraphs (planned 2026-06-22)
-
-Replace both Qt-module chart backends with a single self-contained `QPainter`
-renderer built only on Qt Widgets, ending the QtGraphs / QML technical debt
-(faked axis titles, stringly-typed QML reflection, tick-format reset hack, no
-dashed reference lines) and the dependency on the GPLv3 QtCharts add-on. The
-end goal is native-only. Full design and staged plan in
-`doc/native-chart-backend.md`; work happens on the `native-chart-backend`
-branch (off `develop`). Summary of phases:
-
-  - Phase 1 (this cycle, before v2.1.0): add an optional native backend behind
-    a new `LAMMPS_GUI_USE_NATIVE_CHARTS` CMake option, default OFF, so released
-    behavior is unchanged. New files: `plotaxismath` (Qt-free, unit-tested),
-    `plotseries` (neutral model), `plotwidget` (renderer), `nativechartbackend`
-    (adapter); plus a `ChartBackend::create()` factory collapsing the `#ifdef`s.
-  - Phase 2 (next cycle): make native the default; harden dark mode, high-DPI,
-    save-as-image, live-update repaint.
-  - Phase 3 (next cycle): delete the QtGraphs backend; drop Graphs / Quick /
-    QuickWidgets from the build.
-  - Phase 4 (after a release of real-world use): retype the `ChartBackend`
-    interface and `chartviewer` onto the neutral model, delete the QtCharts
-    backend, drop the Qt Charts module -- native-only, LGPLv3 Widgets only.
-
-# Refactoring status and recommendations
-
-The staged code-cleanup and C++17-modernization effort (stages 1-8 below) is
-complete; the original "biggest opportunities" -- string-handling churn at the
-char* / std::string / QString boundary, the LammpsWrapper plugin-vs-linked
-dispatch duplication, and a handful of oversized methods -- have all been
-addressed. The conventions that effort settled remain the standard for new and
-refactored code. See CLAUDE.md ("String handling & modern C++ conventions").
-
-**Settled north star:** QString is the canonical internal string type;
-ALL conversions to/from char* and std::string are confined to
-`LammpsWrapper` (the LAMMPS C API boundary). Callers pass and receive
-QString. The existing `LammpsWrapper::command/file/commandsString`
-overloads and `lastErrorMessage()` are the templates to follow.
-
-**Ground rules for every stage below:**
-- Work on a branch off `main` (not the `paper` branch).
-- One concern per commit; GPG-sign every commit.
-- Run `clang-format -i src/*.cpp src/*.h` before each commit.
-- Cleanup commits must not change behavior; build with
-  `-DENABLE_TESTING=ON` and keep `ctest` green after each stage.
-
-## Completed stages 1-8 (done; see git history on the `refactor/cleanup` branch)
-
-## Stage 8 plotting follow-ups (priority)
-
-- *Custom-fit parameter bounds.* `levmar` is currently unconstrained; the
-  Grace template offers per-parameter bounds. Add box constraints
-  (projected steps or a transform) and a bounds column to the "Custom fit"
-  parameters input.
-- *Visible legend for overlays.* The fit/overlay curve is now nameable
-  (`ChartViewer::setFitCurve(points, name)`), but both backends hide the
-  legend (`chart->legend()->hide()` in QtCharts). Optionally expose a
-  legend so the custom-fit "Label", smoothed/raw series, and fit curve are
-  identified.
-- *Reusing fitted models.* Offer "plot this fit's expression with the
-  fitted parameters" or send fitted params back into a "Custom function"
-  plot.
-
-**Deliberately NOT in scope:** multiple Y axes; log/log or date axes;
-spreadsheet/data editing; annotations or legend-as-objects; many-dataset
-overlay management beyond raw+derived; 3D/surface/bar/pie; session files.
-(These are exactly where Veusz/LabPlot earn their complexity.)
-
-**Survey references (minimalist scientific plotting + fitting + EOS):**
-Grace/Xmgrace (non-linear fit popup with named params a0..a9 + bounds +
-tolerance is the UI template; per-set line/symbol appearance);
-SciDAVis/LabPlot/Veusz (ASCII import -> columns -> fit flow to borrow,
-depth to avoid); BM4 EOS linear form (DFTTK, murnaghan2017); Lepton
-expression syntax + analytic differentiation (LAMMPS/OpenMM docs).
