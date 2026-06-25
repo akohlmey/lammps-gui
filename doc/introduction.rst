@@ -145,31 +145,19 @@ Visualization Components
   - **RegionInfo** - Stores settings for displaying a region in snapshot images.
 
 **ChartWindow (chartviewer.h/.cpp)**
-  Window for displaying thermodynamic data as charts using QtGraphs or QtCharts.
-  Supports line plots and multiple data series.  See
-  :cpp:class:`ChartWindow`
+  Window for displaying thermodynamic data as charts.  Supports line plots
+  and multiple data series.  See :cpp:class:`ChartWindow`
 
 **ChartViewer (chartviewer.h/.cpp)** Custom chart view widget that
   provides interactive features like zooming, smoothing, and panning for
-  data visualization.  ChartViewer delegates rendering to a
-  :cpp:class:`ChartBackend` interface, with concrete implementations for
-  the QtGraphs module (:cpp:class:`QtGraphsBackend`) and the QtCharts
-  module (:cpp:class:`QtChartsBackend`).  See :cpp:class:`ChartViewer`.
-  Using the QtCharts module can be enforced by setting
-  ``-D LAMMPS_GUI_USE_QTCHARTS=yes``.
+  data visualization.  ChartViewer owns neutral ``PlotSeries`` data objects
+  and renders them with :cpp:class:`PlotWidget`.  See :cpp:class:`ChartViewer`.
 
-**ChartBackend (chartbackend.h)** Abstract interface for chart rendering
-  backends.  Provides a common API for axis management, series display,
-  zoom control, and label management.  See :cpp:class:`ChartBackend`.
-
-**QtGraphsBackend (qtgraphsbackend.h/.cpp)** QtGraphs-based implementation
-  of :cpp:class:`ChartBackend`.  Uses QML-based QGraphsView via QQuickWidget
-  for rendering, with external labels for axis titles.
-  See :cpp:class:`QtGraphsBackend`.
-
-**QtChartsBackend (qtchartsbackend.h/.cpp)** QtCharts-based implementation
-  of :cpp:class:`ChartBackend`.  Uses QChart and QChartView for widget-based
-  rendering.  See :cpp:class:`QtChartsBackend`.
+**PlotWidget (plotwidget.h/.cpp)** Native ``QWidget`` + ``QPainter`` 2D
+  line/scatter chart renderer.  It is the only chart backend and depends
+  only on Qt Widgets -- no Qt Charts, Qt Graphs, or QML.  Axis-layout math
+  (nice ticks, label formatting) lives in the Qt-free ``plotaxismath``
+  helpers.  See :cpp:class:`PlotWidget`.
 
 **SlideShow (slideshow.h/.cpp)**
   Dialog for viewing multiple images as a slideshow or animation with
@@ -267,8 +255,7 @@ Support Components
 
 **VerticalLabel (qaddon.h/.cpp)**
   Label widget that renders text rotated 90 degrees for vertical
-  display.  Used in :cpp:class:`QtGraphsBackend` for the Y-axis title.
-  See :cpp:class:`VerticalLabel`
+  display.  See :cpp:class:`VerticalLabel`
 
 Helper Functions
 ----------------

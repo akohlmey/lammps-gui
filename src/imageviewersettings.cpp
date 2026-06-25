@@ -424,6 +424,49 @@ static void addColorMapItems(QComboBox *box)
     }
 }
 
+// Fetch and cast the widget at grid cell (row, col), advancing `col` past it.
+// Returns nullptr if the cell is empty or holds a different widget type. Used by
+// the dialog readers to walk a row of widgets by column position.
+template <typename T> static T *gridWidget(QGridLayout *layout, int row, int &col)
+{
+    auto *item = layout->itemAtPosition(row, col++);
+    return item ? qobject_cast<T *>(item->widget()) : nullptr;
+}
+
+// The three created widgets of a color-map selector row.
+struct ColorMapRow {
+    QComboBox *map; ///< the map-name combo (carries the object name)
+    QLineEdit *min; ///< the minimum-value edit
+    QLineEdit *max; ///< the maximum-value edit
+};
+
+// Build the "Map: [combo]  Min: [edit]  Max: [edit]" color-map selector row
+// shared by the atom ("amap") and bond ("bmap") sections. Adds the six widgets
+// into `layout` at grid row `idx`, advancing the column counter `n`, and returns
+// the widgets so the caller can wire them up. Only the combo gets an object name
+// (looked up later via findChild); the min/max edits are used through the
+// returned pointers. The caller advances `idx` after the row.
+static ColorMapRow addColorMapRow(QGridLayout *layout, int idx, int &n, const QString &comboName,
+                                  const QString &curMap, const QString &curMin,
+                                  const QString &curMax, QValidator *minmaxValidator)
+{
+    layout->addWidget(new QLabel("Map: "), idx, n++, 1, 1, Qt::AlignVCenter | Qt::AlignRight);
+    auto *map = new QComboBox;
+    map->setObjectName(comboName);
+    addColorMapItems(map);
+    selectComboItem(map, curMap);
+    layout->addWidget(map, idx, n++, 1, 1);
+    layout->addWidget(new QLabel("Min: "), idx, n++, 1, 1, Qt::AlignVCenter | Qt::AlignRight);
+    auto *mapmin = new QLineEdit(curMin);
+    mapmin->setValidator(minmaxValidator);
+    layout->addWidget(mapmin, idx, n++, 1, 1);
+    layout->addWidget(new QLabel("Max: "), idx, n++, 1, 1, Qt::AlignVCenter | Qt::AlignRight);
+    auto *mapmax = new QLineEdit(curMax);
+    mapmax->setValidator(minmaxValidator);
+    layout->addWidget(mapmax, idx, n++, 1, 1);
+    return {map, mapmin, mapmax};
+}
+
 void ImageViewer::atomSettings()
 {
     updatePeratom();
@@ -501,29 +544,51 @@ void ImageViewer::atomSettings()
 
     n = 0;
 
-    auto *vdwbutton = new QCheckBox("VDW style ", this);
-    vdwbutton->setChecked(vdwfactor > VDW_CUT);
-    vdwbutton->setObjectName("vdwbutton");
-    layout->addWidget(vdwbutton, idx, n++, 1, 1, Qt::AlignCenter);
-    layout->addWidget(new QLabel("Map: "), idx, n++, 1, 1, Qt::AlignVCenter | Qt::AlignRight);
-    auto *amap = new QComboBox;
-    amap->setObjectName("amap");
-    addColorMapItems(amap);
-    selectComboItem(amap, colormap);
-    if ((atomcolor == "type") || (atomcolor == "element")) amap->setEnabled(false);
     QRegularExpression validminmax(
         R"((auto|min|max|[+-]?\d+\.?\d*|[+-]?\d*\.?\d+)|[+-]?\d+\.?\d*[eE][+-]?\d+|[+-]?\d*\.?\d+[eE][+-]?\d+)");
     auto *minmaxvalidator = new QRegularExpressionValidator(validminmax, this);
 
-    layout->addWidget(amap, idx, n++, 1, 1);
-    layout->addWidget(new QLabel("Min: "), idx, n++, 1, 1, Qt::AlignVCenter | Qt::AlignRight);
-    auto *amapmin = new QLineEdit(mapmin);
-    amapmin->setValidator(minmaxvalidator);
-    layout->addWidget(amapmin, idx, n++, 1, 1);
-    layout->addWidget(new QLabel("Max: "), idx, n++, 1, 1, Qt::AlignVCenter | Qt::AlignRight);
-    auto *amapmax = new QLineEdit(mapmax);
-    amapmax->setValidator(minmaxvalidator);
-    layout->addWidget(amapmax, idx++, n++, 1, 1);
+    // atom color-map row.  Its first column holds the "Reverse" toggle, which
+    // mirrors the selected map (e.g. RWB -> BWR) without needing a separate entry.
+    auto *arevbutton = new QCheckBox("Reverse Map", this);
+    arevbutton->setChecked(revcolormap);
+    arevbutton->setObjectName("arevbutton");
+    layout->addWidget(arevbutton, idx, n++, 1, 1, Qt::AlignVCenter | Qt::AlignRight);
+
+    const ColorMapRow arow =
+        addColorMapRow(layout, idx, n, "amap", colormap, mapmin, mapmax, minmaxvalidator);
+    QComboBox *amap    = arow.map;
+    QLineEdit *amapmin = arow.min;
+    QLineEdit *amapmax = arow.max;
+    if ((atomcolor == "type") || (atomcolor == "element")) {
+        amap->setEnabled(false);
+        arevbutton->setEnabled(false);
+    }
+    ++idx;
+
+    // VDW style (atom van der Waals radii) and AutoBonds (distance-derived bonds)
+    // share a line between the atom and bond sections.  They are mutually
+    // exclusive -- drawing atoms at full VDW size leaves no room for explicit
+    // bonds -- and vdwbondSync() keeps at most one of them checked.
+    n               = 0;
+    auto *vdwbutton = new QCheckBox("VDW Style    ", this);
+    vdwbutton->setChecked(vdwfactor > VDW_CUT);
+    vdwbutton->setObjectName("vdwbutton");
+
+    auto *autobutton = new QCheckBox("AutoBonds", this);
+    autobutton->setChecked(autobond);
+    autobutton->setEnabled(hasAutobonds());
+    autobutton->setObjectName("autobutton");
+    auto *bcutoff = new QLineEdit(QString::number(bondcutoff));
+    bcutoff->setValidator(new QDoubleValidator(0.001, 10.0, 100, this));
+    bcutoff->setEnabled(hasAutobonds());
+
+    n = 0;
+    layout->addWidget(vdwbutton, idx, n++, 1, 1, Qt::AlignVCenter | Qt::AlignRight);
+    ++n;
+    layout->addWidget(autobutton, idx, n++, 1, 1, Qt::AlignVCenter | Qt::AlignRight);
+    layout->addWidget(new QLabel("Cutoff: "), idx, n++, 1, 1, Qt::AlignVCenter | Qt::AlignRight);
+    layout->addWidget(bcutoff, idx++, n++, 1, 1);
 
     n = 0;
 
@@ -581,37 +646,20 @@ void ImageViewer::atomSettings()
         showbonds = false;
     }
 
-    // bond color-map row, mirroring the atom Map/Min/Max row. The AutoBonds
-    // toggle and its cutoff field sit in the first column (mirroring the atoms'
-    // VDW toggle), which frees the bond row above for the Opacity field. The map
-    // fields are only used when bonds are colored by a per-bond compute value.
+    // bond color-map row, mirroring the atom Map/Min/Max row.  Its first column
+    // holds the "Reverse" toggle for the bond map (mirroring the atom row).  The
+    // map fields are only used when bonds are colored by a per-bond compute value.
     n                = 0;
-    auto *autobutton = new QCheckBox("AutoBonds:", this);
-    autobutton->setChecked(autobond);
-    autobutton->setEnabled(hasAutobonds());
-    autobutton->setObjectName("autobutton");
-    auto *bcutoff = new QLineEdit(QString::number(bondcutoff));
-    bcutoff->setValidator(new QDoubleValidator(0.001, 10.0, 100, this));
-    bcutoff->setEnabled(hasAutobonds());
-    auto *autolayout = new QHBoxLayout;
-    autolayout->setContentsMargins(0, 0, 0, 0);
-    autolayout->addWidget(autobutton);
-    autolayout->addWidget(bcutoff);
-    layout->addLayout(autolayout, idx, n++, 1, 1);
-    layout->addWidget(new QLabel("Map: "), idx, n++, 1, 1, Qt::AlignVCenter | Qt::AlignRight);
-    auto *bmap = new QComboBox;
-    bmap->setObjectName("bmap");
-    addColorMapItems(bmap);
-    selectComboItem(bmap, bondcolormap);
-    layout->addWidget(bmap, idx, n++, 1, 1);
-    layout->addWidget(new QLabel("Min: "), idx, n++, 1, 1, Qt::AlignVCenter | Qt::AlignRight);
-    auto *bmapmin = new QLineEdit(bondmapmin);
-    bmapmin->setValidator(minmaxvalidator);
-    layout->addWidget(bmapmin, idx, n++, 1, 1);
-    layout->addWidget(new QLabel("Max: "), idx, n++, 1, 1, Qt::AlignVCenter | Qt::AlignRight);
-    auto *bmapmax = new QLineEdit(bondmapmax);
-    bmapmax->setValidator(minmaxvalidator);
-    layout->addWidget(bmapmax, idx++, n++, 1, 1);
+    auto *brevbutton = new QCheckBox("Reverse Map", this);
+    brevbutton->setChecked(revbondcolormap);
+    brevbutton->setObjectName("brevbutton");
+    layout->addWidget(brevbutton, idx, n++, 1, 1, Qt::AlignVCenter | Qt::AlignRight);
+    const ColorMapRow brow = addColorMapRow(layout, idx, n, "bmap", bondcolormap, bondmapmin,
+                                            bondmapmax, minmaxvalidator);
+    QComboBox *bmap        = brow.map;
+    QLineEdit *bmapmin     = brow.min;
+    QLineEdit *bmapmax     = brow.max;
+    ++idx;
 
 #if QT_VERSION < QT_VERSION_CHECK(6, 7, 0)
     connect(vdwbutton, &QCheckBox::stateChanged, this, &ImageViewer::vdwbondSync);
@@ -621,13 +669,15 @@ void ImageViewer::atomSettings()
     connect(autobutton, &QCheckBox::checkStateChanged, this, &ImageViewer::vdwbondSync);
 #endif
 
-    // enable the bond map/min/max fields only when the bond Color is a per-bond
-    // value (a bond/local attribute), tracking changes to the bond Color combo
-    auto syncBondMap = [bmap, bmapmin, bmapmax, this](const QString &text) {
+    // enable the bond map/min/max fields (and its Reverse toggle) only when the
+    // bond Color is a per-bond value (a bond/local attribute), tracking changes
+    // to the bond Color combo
+    auto syncBondMap = [bmap, bmapmin, bmapmax, brevbutton, this](const QString &text) {
         const bool byvalue = bondLocalAttrs.contains(text);
         bmap->setEnabled(byvalue);
         bmapmin->setEnabled(byvalue);
         bmapmax->setEnabled(byvalue);
+        brevbutton->setEnabled(byvalue);
     };
     syncBondMap(bncolor->currentText());
     connect(bncolor, &QComboBox::currentTextChanged, this, syncBondMap);
@@ -802,7 +852,8 @@ void ImageViewer::atomSettings()
     atomdiam = adiam->currentText();
 
     if (atrans->hasAcceptableInput()) atomtrans = atrans->text().toDouble();
-    colormap = amap->currentText();
+    colormap    = amap->currentText();
+    revcolormap = arevbutton->isChecked();
     if (amapmin->hasAcceptableInput()) mapmin = amapmin->text();
     if (amapmax->hasAcceptableInput()) mapmax = amapmax->text();
 
@@ -827,7 +878,8 @@ void ImageViewer::atomSettings()
     }
 
     if (bntrans->hasAcceptableInput()) bondtrans = bntrans->text().toDouble();
-    bondcolormap = bmap->currentText();
+    bondcolormap    = bmap->currentText();
+    revbondcolormap = brevbutton->isChecked();
     if (bmapmin->hasAcceptableInput()) bondmapmin = bmapmin->text();
     if (bmapmax->hasAcceptableInput()) bondmapmax = bmapmax->text();
 
@@ -968,11 +1020,11 @@ void ImageViewer::buildFixComputeRows(QGridLayout *layout, int &idx,
         cstyle->addItem("const");
         cstyle->setCurrentIndex(item.second->colorstyle);
         layout->addWidget(cstyle, idx, n++);
-        auto *color = new QLineEdit(item.second->color.c_str());
+        auto *color = new QLineEdit(item.second->color);
         color->setCompleter(colorcompleter);
         color->setValidator(colorvalidator);
         color->setFixedSize(metrics.averageCharWidth() * 12, metrics.height() + 4);
-        color->setText(item.second->color.c_str());
+        color->setText(item.second->color);
         layout->addWidget(color, idx, n++);
         auto *trans = new QLineEdit(QString::number(item.second->opacity));
         trans->setValidator(transvalidator);
@@ -998,36 +1050,28 @@ void ImageViewer::buildFixComputeRows(QGridLayout *layout, int &idx,
 void ImageViewer::readFixComputeRows(QGridLayout *layout, int offset,
                                      std::map<std::string, ImageInfo *> &items)
 {
-    int n = 0;
     for (int idx = offset; idx < offset + static_cast<int>(items.size()); ++idx) {
-        n          = 0;
-        auto *item = layout->itemAtPosition(idx, n++);
-        if (!item) continue;
-        auto *label = qobject_cast<QLabel *>(item->widget());
+        int n       = 0;
+        auto *label = gridWidget<QLabel>(layout, idx, n);
+        if (!label) continue;
 
         auto id = label->text().toStdString();
         // compute ID is not registered with a widget; skip rest to avoid segfault
         if (items.count(id) == 0) continue;
 
         ++n; // nothing to do with label for style name
-        item                  = layout->itemAtPosition(idx, n++);
-        auto *box             = qobject_cast<QCheckBox *>(item->widget());
-        items[id]->enabled    = (box->isChecked());
-        item                  = layout->itemAtPosition(idx, n++);
-        auto *combo           = qobject_cast<QComboBox *>(item->widget());
-        items[id]->colorstyle = combo->currentIndex();
-        item                  = layout->itemAtPosition(idx, n++);
-        auto *line            = qobject_cast<QLineEdit *>(item->widget());
-        if (line && line->hasAcceptableInput()) items[id]->color = line->text().toStdString();
-        item = layout->itemAtPosition(idx, n++);
-        line = qobject_cast<QLineEdit *>(item->widget());
-        if (line && line->hasAcceptableInput()) items[id]->opacity = line->text().toDouble();
-        item = layout->itemAtPosition(idx, n++);
-        line = qobject_cast<QLineEdit *>(item->widget());
-        if (line && line->hasAcceptableInput()) items[id]->flag1 = line->text().toDouble();
-        item = layout->itemAtPosition(idx, n++);
-        line = qobject_cast<QLineEdit *>(item->widget());
-        if (line && line->hasAcceptableInput()) items[id]->flag2 = line->text().toDouble();
+        if (auto *box = gridWidget<QCheckBox>(layout, idx, n))
+            items[id]->enabled = box->isChecked();
+        if (auto *combo = gridWidget<QComboBox>(layout, idx, n))
+            items[id]->colorstyle = combo->currentIndex();
+        if (auto *line = gridWidget<QLineEdit>(layout, idx, n); line && line->hasAcceptableInput())
+            items[id]->color = line->text();
+        if (auto *line = gridWidget<QLineEdit>(layout, idx, n); line && line->hasAcceptableInput())
+            items[id]->opacity = line->text().toDouble();
+        if (auto *line = gridWidget<QLineEdit>(layout, idx, n); line && line->hasAcceptableInput())
+            items[id]->flag1 = line->text().toDouble();
+        if (auto *line = gridWidget<QLineEdit>(layout, idx, n); line && line->hasAcceptableInput())
+            items[id]->flag2 = line->text().toDouble();
     }
 }
 
@@ -1122,30 +1166,22 @@ void ImageViewer::fixSettings()
 
 void ImageViewer::readRegionRows(QGridLayout *layout)
 {
-    int n = 0;
     for (int idx = 4; idx < static_cast<int>(regions.size()) + 4; ++idx) {
-        n                    = 0;
-        auto *item           = layout->itemAtPosition(idx, n++);
-        auto *label          = qobject_cast<QLabel *>(item->widget());
-        auto id              = label->text().toStdString();
-        item                 = layout->itemAtPosition(idx, n++);
-        auto *box            = qobject_cast<QCheckBox *>(item->widget());
-        regions[id]->enabled = box->isChecked();
-        item                 = layout->itemAtPosition(idx, n++);
-        auto *combo          = qobject_cast<QComboBox *>(item->widget());
-        regions[id]->style   = combo->currentIndex();
-        item                 = layout->itemAtPosition(idx, n++);
-        auto *line           = qobject_cast<QLineEdit *>(item->widget());
-        if (line && line->hasAcceptableInput()) regions[id]->color = line->text().toStdString();
-        item = layout->itemAtPosition(idx, n++);
-        line = qobject_cast<QLineEdit *>(item->widget());
-        if (line && line->hasAcceptableInput()) regions[id]->diameter = line->text().toDouble();
-        item = layout->itemAtPosition(idx, n++);
-        line = qobject_cast<QLineEdit *>(item->widget());
-        if (line && line->hasAcceptableInput()) regions[id]->npoints = line->text().toInt();
-        item = layout->itemAtPosition(idx, n++);
-        line = qobject_cast<QLineEdit *>(item->widget());
-        if (line && line->hasAcceptableInput()) regions[id]->opacity = line->text().toDouble();
+        int n       = 0;
+        auto *label = gridWidget<QLabel>(layout, idx, n);
+        auto id     = label->text().toStdString();
+        if (auto *box = gridWidget<QCheckBox>(layout, idx, n))
+            regions[id]->enabled = box->isChecked();
+        if (auto *combo = gridWidget<QComboBox>(layout, idx, n))
+            regions[id]->style = combo->currentIndex();
+        if (auto *line = gridWidget<QLineEdit>(layout, idx, n); line && line->hasAcceptableInput())
+            regions[id]->color = line->text();
+        if (auto *line = gridWidget<QLineEdit>(layout, idx, n); line && line->hasAcceptableInput())
+            regions[id]->diameter = line->text().toDouble();
+        if (auto *line = gridWidget<QLineEdit>(layout, idx, n); line && line->hasAcceptableInput())
+            regions[id]->npoints = line->text().toInt();
+        if (auto *line = gridWidget<QLineEdit>(layout, idx, n); line && line->hasAcceptableInput())
+            regions[id]->opacity = line->text().toDouble();
     }
 }
 
@@ -1205,11 +1241,11 @@ void ImageViewer::regionSettings()
         style->addItem("points");
         style->setCurrentIndex(reg.second->style);
         layout->addWidget(style, idx, n++);
-        auto *color = new QLineEdit(reg.second->color.c_str());
+        auto *color = new QLineEdit(reg.second->color);
         color->setCompleter(colorcompleter);
         color->setValidator(colorvalidator);
         color->setFixedSize(metrics.averageCharWidth() * 12, metrics.height() + 4);
-        color->setText(reg.second->color.c_str());
+        color->setText(reg.second->color);
         layout->addWidget(color, idx, n++);
         auto *frame = new QLineEdit(QString::number(reg.second->diameter));
         frame->setValidator(framevalidator);

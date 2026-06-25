@@ -98,10 +98,13 @@ const ColorMapDef &colorMapDef(const QString &name)
 
 const QStringList &colorMapNames()
 {
-    static const QStringList names = {"BWR",       "RWB",     "PWT",    "BWG",     "BGR",
-                                      "Grayscale", "Viridis", "Plasma", "Inferno", "Magma",
-                                      "Cividis",   "Turbo",   "Teal",   "Rainbow", "Sequential",
-                                      "Landscape", "Basic"};
+    // BWR is intentionally not offered: it is exactly RWB with the scale
+    // reversed, so the dialog's Reverse option reproduces it.  It is still
+    // present in table() above so it keeps resolving as the fallback and any
+    // stale BWR selection still renders correctly.
+    static const QStringList names = {
+        "RWB",   "PWT",     "BWG",   "BGR",  "Grayscale", "Viridis",    "Plasma",    "Inferno",
+        "Magma", "Cividis", "Turbo", "Teal", "Rainbow",   "Sequential", "Landscape", "Basic"};
     return names;
 }
 

@@ -22,7 +22,48 @@
 #include <QPointF>
 #include <QString>
 
+#include <map>
+#include <memory>
+#include <string>
 #include <vector>
+
+namespace LeptonMini {
+class ExpressionProgram;
+}
+
+/**
+ * @brief A parsed and compiled LeptonMini expression with QString error reporting
+ *
+ * Confines the LeptonMini (std::string) parsing boundary to one translation
+ * unit, the way LammpsWrapper confines the LAMMPS C API. Construct from a
+ * QString expression, check @ref isValid / @ref error, then call @ref evaluate
+ * repeatedly with a name -> value variable map. @ref evaluate propagates the
+ * LeptonMini exception thrown for an unbound variable, so callers that may
+ * reference variables not present in the map should evaluate inside a try block.
+ */
+class CompiledExpression {
+public:
+    /** @brief Parse, optimize, and compile @p expression (a LeptonMini string) */
+    explicit CompiledExpression(const QString &expression);
+    ~CompiledExpression();
+    CompiledExpression()                                      = delete;
+    CompiledExpression(const CompiledExpression &)            = delete;
+    CompiledExpression(CompiledExpression &&)                 = delete;
+    CompiledExpression &operator=(const CompiledExpression &) = delete;
+    CompiledExpression &operator=(CompiledExpression &&)      = delete;
+
+    /** @brief True if the expression parsed and compiled successfully */
+    bool isValid() const { return valid; }
+    /** @brief Parse-error message (empty when @ref isValid is true) */
+    const QString &error() const { return errorMsg; }
+    /** @brief Evaluate with the given variable bindings (may throw on unbound vars) */
+    double evaluate(const std::map<std::string, double> &variables) const;
+
+private:
+    std::unique_ptr<LeptonMini::ExpressionProgram> program; ///< compiled program (null if invalid)
+    bool valid = false;                                     ///< parse/compile succeeded
+    QString errorMsg;                                       ///< parse error (empty when valid)
+};
 
 /**
  * @brief Result of sampling a custom expression over an x range

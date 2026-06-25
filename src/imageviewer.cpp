@@ -753,12 +753,16 @@ void ImageViewer::readImageSettings()
     ellipsoidcolor = "atom";
     linecolor      = "atom";
     tricolor       = "atom";
-    colormap       = settings.value(Keys::COLORMAP, "BWR").toString();
-    mapmin         = "auto";
-    mapmax         = "auto";
-    bondcolormap   = settings.value(Keys::BONDCOLORMAP, "BWR").toString();
-    bondmapmin     = "auto";
-    bondmapmax     = "auto";
+    // BWR was removed from the offered maps; it equals "RWB" reversed, so the
+    // historical blue-low/red-high default is now "RWB" with the reverse flag on
+    colormap        = settings.value(Keys::COLORMAP, "RWB").toString();
+    mapmin          = "auto";
+    mapmax          = "auto";
+    revcolormap     = false;
+    bondcolormap    = settings.value(Keys::BONDCOLORMAP, "RWB").toString();
+    bondmapmin      = "auto";
+    bondmapmax      = "auto";
+    revbondcolormap = false;
 
     showatoms      = true;
     showbonds      = lammps->extractSetting("molecule_flag") == 1;
@@ -976,14 +980,13 @@ void ImageViewer::acolorSync()
     if (!src) return;
     auto *dialog = qobject_cast<QWidget *>(src->parent());
 
-    // enable/disable colormap selector depending on atom coloring selection
-    auto *amap = dialog->findChild<QComboBox *>("amap");
-    if (amap) {
-        if ((src->currentText() == "type") || (src->currentText() == "element"))
-            amap->setEnabled(false);
-        else
-            amap->setEnabled(true);
-    }
+    // enable/disable colormap selector (and its Reverse toggle) depending on the
+    // atom coloring selection
+    auto *amap         = dialog->findChild<QComboBox *>("amap");
+    auto *arevbutton   = dialog->findChild<QCheckBox *>("arevbutton");
+    const bool byvalue = (src->currentText() != "type") && (src->currentText() != "element");
+    if (amap) amap->setEnabled(byvalue);
+    if (arevbutton) arevbutton->setEnabled(byvalue);
     auto *acolor = dialog->findChild<QComboBox *>("acolor");
     auto *bcolor = dialog->findChild<QComboBox *>("bcolor");
     auto *ecolor = dialog->findChild<QComboBox *>("ecolor");
@@ -1465,12 +1468,14 @@ DumpImageParams ImageViewer::gatherDumpImageParams(const QString &dumpfilename)
     p.backlight    = backlight;
 
     // colormap
-    p.colormap     = colormap;
-    p.mapmin       = mapmin;
-    p.mapmax       = mapmax;
-    p.bondcolormap = bondcolormap;
-    p.bondmapmin   = bondmapmin;
-    p.bondmapmax   = bondmapmax;
+    p.colormap        = colormap;
+    p.mapmin          = mapmin;
+    p.mapmax          = mapmax;
+    p.revcolormap     = revcolormap;
+    p.bondcolormap    = bondcolormap;
+    p.bondmapmin      = bondmapmin;
+    p.bondmapmax      = bondmapmax;
+    p.revbondcolormap = revbondcolormap;
 
     // regions / fixes / computes (non-owning pointer copies)
     p.computes = computes;
@@ -1557,8 +1562,9 @@ void ImageViewer::createImage()
         if (lammps->hasError()) lammps->getLastErrorMessage(nullptr, 0);
     }
 
-    // attempt to clean up if a previous write_dump command failed
-    lammps->command("if $(is_defined(dump,WRITE_DUMP)) then 'undump WRITE_DUMP'");
+    // attempt to clean up if a previous render left our dump defined
+    lammps->command("if $(is_defined(dump," + renderdumpid + ")) then 'undump " + renderdumpid +
+                    "'");
 
     // (re)create the per-bond coloring compute when bond color-by-value applies
     // (a bond/local attribute, real bonds, AutoBonds off); the explicit dump +
@@ -1586,13 +1592,41 @@ void ImageViewer::createImage()
     // (e.g. the per-bond compute). dump image needs a '*' in the file name (it is
     // replaced by the timestep) and "first yes" forces the single frame.
     const QString starfile = dumpdir.absoluteFilePath(filename + ".*.ppm");
-    {
-        StdoutSilencer guard;
-        lammps->command("dump WRITE_DUMP " + group + " image 1 '" + starfile + "'" + cmds.dumpargs);
-        lammps->command("dump_modify WRITE_DUMP first yes pad 0" + cmds.modifyargs);
-        lammps->command("run 0 post no");
-        lammps->command("undump WRITE_DUMP");
+
+    // A surviving "fix graphics/labels ... colorscale <id>" requires a dump image
+    // named <id> to still exist, but LammpsGui::renderImage purges the deck's dumps
+    // before opening the viewer, so the run 0 below would abort in the fix's init().
+    // The fix only *displays* that dump's color map (it does not define one), so we
+    // satisfy the dependency by naming our own render dump after the missing id: the
+    // fix then finds a valid "dump image" and the render proceeds. The id is read
+    // from the specific error and cached in renderdumpid, so the one-shot retry only
+    // happens on the first affected render.
+    static const QRegularExpression colorscaleErr(
+        QStringLiteral(R"(Dump ID (\S+) for colorscale not found)"));
+    QString dumpid = renderdumpid;
+    QString errmsg;
+    for (int attempt = 0; attempt < 2; ++attempt) {
+        {
+            StdoutSilencer guard;
+            lammps->command("dump " + dumpid + " " + group + " image 1 '" + starfile + "'" +
+                            cmds.dumpargs);
+            lammps->command("dump_modify " + dumpid + " first yes pad 0" + cmds.modifyargs);
+            lammps->command("run 0 post no");
+            lammps->command("undump " + dumpid);
+        }
+        errmsg              = lammps->lastErrorMessage();
+        const auto colmatch = colorscaleErr.match(errmsg);
+        // retry once under the missing colorscale dump id (unless we already use it)
+        if (colmatch.hasMatch() && (colmatch.captured(1) != dumpid)) {
+            dumpid = colmatch.captured(1);
+            lammps->command("if $(is_defined(dump," + dumpid + ")) then 'undump " + dumpid + "'");
+            continue;
+        }
+        break;
     }
+    // cache the working dump id only on success, so a deck with several distinct
+    // colorscale dumps (which a single render dump cannot satisfy) does not oscillate
+    if (errmsg.isEmpty()) renderdumpid = dumpid;
     const auto step = static_cast<long long>(lammps->getThermo("step"));
     const QString imagepath =
         dumpdir.absoluteFilePath(QString("%1.%2.ppm").arg(filename).arg(step));
@@ -1604,7 +1638,6 @@ void ImageViewer::createImage()
     }
 
     // display error message
-    const QString errmsg = lammps->lastErrorMessage();
     if (!errmsg.isEmpty()) {
         // ignore "Invalid LAMMPS handle", but report other errors
         if (!errmsg.contains("Invalid LAMMPS handle"))
@@ -1878,8 +1911,8 @@ void ImageViewer::updateFixes()
             if (match.captured(1) == "Compute") {
                 if (image_computes.contains(style)) {
                     if (computes.count(id) == 0) {
-                        const auto &color = defaultcolors[i % defaultcolors.size()].toStdString();
-                        computes[id]      = new ImageInfo(false, style, TYPE, color, 1.0, 0.0, 0.0);
+                        const QString &color = defaultcolors[i % defaultcolors.size()];
+                        computes[id] = new ImageInfo(false, style, TYPE, color, 1.0, 0.0, 0.0);
                         ++i;
                     } else {
                         computes[id]->style = style;
@@ -1888,8 +1921,8 @@ void ImageViewer::updateFixes()
             } else if (match.captured(1) == "Fix") {
                 if (image_fixes.contains(style)) {
                     if (fixes.count(id) == 0) {
-                        const auto &color = defaultcolors[i % defaultcolors.size()].toStdString();
-                        fixes[id]         = new ImageInfo(false, style, TYPE, color, 1.0, 0.0, 0.0);
+                        const QString &color = defaultcolors[i % defaultcolors.size()];
+                        fixes[id] = new ImageInfo(false, style, TYPE, color, 1.0, 0.0, 0.0);
                         ++i;
                     } else {
                         fixes[id]->style = style;
@@ -1925,10 +1958,10 @@ void ImageViewer::updateRegions()
         if (!name.isEmpty()) {
             std::string id = name.toStdString();
             if (regions.count(id) == 0) {
-                const auto &color = defaultcolors[i % defaultcolors.size()].toStdString();
-                auto *reginfo     = new RegionInfo(false, FRAME, color, DEFAULT_DIAMETER,
-                                                   DEFAULT_OPACITY, DEFAULT_NPOINTS);
-                regions[id]       = reginfo;
+                const QString &color = defaultcolors[i % defaultcolors.size()];
+                auto *reginfo        = new RegionInfo(false, FRAME, color, DEFAULT_DIAMETER,
+                                                      DEFAULT_OPACITY, DEFAULT_NPOINTS);
+                regions[id]          = reginfo;
             }
         }
     }
@@ -1963,8 +1996,11 @@ void ImageViewer::rebuildBondColorChoices(QComboBox *bncolor, bool allowByValue)
         bncolor->insertSeparator(bncolor->count());
         bncolor->addItems(bondLocalAttrs); // per-bond compute attributes -> color by value
     }
-    // restore the previous selection, or fall back to "atom" if it is no longer offered
-    if (bncolor->findText(current) >= 0)
+    // restore the previous selection, or fall back to "atom" if it is no longer
+    // offered. Guard against an empty "current" (a freshly created, still-empty
+    // combo): findText("") would match the inserted separator -- whose text is
+    // empty -- and leave the box showing a blank selection instead of "atom".
+    if (!current.isEmpty() && bncolor->findText(current) >= 0)
         selectComboItem(bncolor, current);
     else
         selectComboItem(bncolor, "atom");

@@ -14,6 +14,7 @@
 #include "colormaps.h"
 
 #include <QRegularExpression>
+#include <algorithm>
 
 // LAMMPS dump_image built-in defaults. The builder emits a color, color map,
 // light, or transparency setting only when it differs from these, so the
@@ -35,7 +36,7 @@ static void appendRegionArgs(QString &cmd, const DumpImageParams &p)
     for (const auto &reg : p.regions) {
         if (reg.second->enabled) {
             QString id(reg.first.c_str());
-            QString color(reg.second->color.c_str());
+            const QString &color = reg.second->color;
             switch (reg.second->style) {
                 case FRAME:
                     cmd += " region " + id + blank + color;
@@ -117,20 +118,34 @@ static bool appendFixComputeStyles(QString &cmd, const DumpImageParams &p)
 // Append the definition of a color map. @p kw is the dump_modify keyword
 // ("amap" for atoms, "bmap" for bonds); @p pfx prefixes the custom color-stop
 // names so an atom map and a bond map with different gradients do not collide in
-// the global color namespace (atoms use "map", bonds use "bm").
+// the global color namespace (atoms use "map", bonds use "bm").  When @p reverse
+// is set the map is mirrored: the stop order is flipped, and for continuous maps
+// the positions are remapped (pos -> 1 - pos) so they stay ascending and the
+// gradient is inverted (e.g. "RWB" reversed renders identically to "BWR").
 static void appendColorMapArgs(QString &cmd, const QString &kw, const QString &colormap,
-                               const QString &mapmin, const QString &mapmax, const QString &pfx)
+                               const QString &mapmin, const QString &mapmax, const QString &pfx,
+                               bool reverse)
 {
     const ColorMapDef &def = colorMapDef(colormap);
     const QString mmin     = (mapmin == "auto") ? QStringLiteral("min") : mapmin;
     const QString mmax     = (mapmax == "auto") ? QStringLiteral("max") : mapmax;
 
+    // work on a local copy of the stops so the optional reversal never mutates
+    // the shared definition returned by colorMapDef()
+    QList<ColorMapStop> stops = def.stops;
+    if (reverse) {
+        std::reverse(stops.begin(), stops.end());
+        if (def.continuous)
+            for (auto &s : stops)
+                s.pos = 1.0 - s.pos;
+    }
+
     // Resolve each stop to a color token: a LAMMPS named color used verbatim, or
     // a custom color "<pfx><n>" defined once via "color <pfx><n> R G B".  Distinct
     // RGB values share a single custom color, numbered in order of first use.
-    QStringList colorref; // per-stop color token, parallel to def.stops
+    QStringList colorref; // per-stop color token, parallel to stops
     QStringList rgbseen;  // distinct "R G B" strings; index + 1 -> custom number
-    for (const auto &s : def.stops) {
+    for (const auto &s : stops) {
         if (!s.name.isEmpty()) {
             colorref.append(s.name);
             continue;
@@ -146,13 +161,13 @@ static void appendColorMapArgs(QString &cmd, const QString &kw, const QString &c
         colorref.append(pfx + QString::number(idx + 1));
     }
 
-    const int n = def.stops.size();
+    const int n = stops.size();
     if (def.continuous) {
         cmd += QString(" %1 %2 %3 cf 0.0 %4").arg(kw, mmin, mmax).arg(n);
         for (int i = 0; i < n; ++i) {
             const QString pos = (i == 0)       ? QStringLiteral("min")
                                 : (i == n - 1) ? QStringLiteral("max")
-                                               : QString::number(def.stops[i].pos);
+                                               : QString::number(stops[i].pos);
             cmd += " " + pos + " " + colorref[i];
         }
     } else {
@@ -168,7 +183,7 @@ static void appendFixComputeColors(QString &cmd, const DumpImageParams &p)
     for (const auto &comp : p.computes) {
         if (comp.second->enabled) {
             QString id(comp.first.c_str());
-            QString color(comp.second->color.c_str());
+            const QString &color = comp.second->color;
             cmd += " ccolor " + id + blank + color;
             cmd += " ctrans " + id + blank + QString::number(comp.second->opacity);
             cmd += blank;
@@ -177,7 +192,7 @@ static void appendFixComputeColors(QString &cmd, const DumpImageParams &p)
     for (const auto &fix : p.fixes) {
         if (fix.second->enabled) {
             QString id(fix.first.c_str());
-            QString color(fix.second->color.c_str());
+            const QString &color = fix.second->color;
             cmd += " fcolor " + id + blank + color;
             cmd += " ftrans " + id + blank + QString::number(fix.second->opacity);
             cmd += blank;
@@ -331,9 +346,11 @@ DumpImageCommand buildDumpImageCommand(const DumpImageParams &p)
     // apply the selected color map only when atoms are colored by a per-atom
     // value; for type/element coloring the map is unused, so omit it
     const bool atomByValue = (atomColorTok != "type") && (atomColorTok != "element");
-    if (atomByValue) appendColorMapArgs(m, "amap", p.colormap, p.mapmin, p.mapmax, "map");
+    if (atomByValue)
+        appendColorMapArgs(m, "amap", p.colormap, p.mapmin, p.mapmax, "map", p.revcolormap);
     if (p.bondbyvalue)
-        appendColorMapArgs(m, "bmap", p.bondcolormap, p.bondmapmin, p.bondmapmax, "bm");
+        appendColorMapArgs(m, "bmap", p.bondcolormap, p.bondmapmin, p.bondmapmax, "bm",
+                           p.revbondcolormap);
 
     appendFixComputeColors(m, p);
 

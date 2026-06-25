@@ -36,7 +36,6 @@
 #include <QCheckBox>
 #include <QClipboard>
 #include <QCoreApplication>
-#include <QDataStream>
 #include <QDesktopServices>
 #include <QEvent>
 #include <QFileDialog>
@@ -608,11 +607,11 @@ void LammpsGui::setupAccelerators(QSettings &settings)
 
 LammpsGui::LammpsGui(QWidget *parent, const QString &filename, int width, int height) :
     QMainWindow(parent), textEdit(nullptr), menubar(nullptr), highlighter(nullptr),
-    capturer(new StdCapture), status(nullptr), cpuuse(nullptr), logwindow(nullptr),
-    imagewindow(nullptr), chartwindow(nullptr), slideshow(nullptr), logupdater(nullptr),
-    dirstatus(nullptr), progress(nullptr), prefdialog(nullptr), lammpsstatus(nullptr),
-    varwindow(nullptr), wizard(nullptr), runner(nullptr), isRunning(false), runCounter(0),
-    nthreads(1), mainx(width), mainy(height)
+    capturer(new StdCapture), status(nullptr), cpuuse(nullptr), lastCpuBucket(-1),
+    logwindow(nullptr), imagewindow(nullptr), chartwindow(nullptr), slideshow(nullptr),
+    logupdater(nullptr), dirstatus(nullptr), progress(nullptr), prefdialog(nullptr),
+    lammpsstatus(nullptr), varwindow(nullptr), wizard(nullptr), runner(nullptr), isRunning(false),
+    runCounter(0), nthreads(1), mainx(width), mainy(height)
 {
 #if QT_CONFIG(clipboard)
     hasClipboard = true;
@@ -1242,12 +1241,9 @@ void LammpsGui::inspectFile(const QString &fileName)
                 file.errorString());
         return;
     }
-
-    char magic[16] = "               ";
-    QDataStream in(&file);
-    in.readRawData(magic, 16);
     file.close();
-    if (strcmp(magic, LAMMPS_MAGIC) != 0) {
+
+    if (!isRestartFile(fileName)) {
         warning(this, "LAMMPS-GUI Warning", "File " + fileName + " is not a LAMMPS restart file.");
         return;
     }
@@ -1478,20 +1474,44 @@ int LammpsGui::updateRunStatus()
     lammps.getLastErrorMessage(nullptr, 0);
 
     cpuuse->setText(QString("%1%CPU").arg(percent_cpu, 4));
-    if (percent_cpu < 25.0 * nthreads) {
-        cpuuse->setStyleSheet("QLabel {background-color: black; color: white;}");
-    } else if (percent_cpu < 50.0 * nthreads) {
-        cpuuse->setStyleSheet("QLabel {background-color: darkblue; color: white;}");
-    } else if (percent_cpu > 100.0 * nthreads + 50.0) {
-        cpuuse->setStyleSheet("QLabel {background-color: firebrick; color: white;}");
-    } else if (percent_cpu < 100.0 * nthreads - 50.0) {
-        cpuuse->setStyleSheet("QLabel {background-color: firebrick; color: white;}");
-    } else if (percent_cpu > 100.0 * nthreads + 20.0) {
-        cpuuse->setStyleSheet("QLabel {background-color: gold; color: black;}");
-    } else if (percent_cpu < 100.0 * nthreads - 20.0) {
-        cpuuse->setStyleSheet("QLabel {background-color: gold; color: black;}");
-    } else {
-        cpuuse->setStyleSheet("QLabel {background-color: forestgreen; color: white;}");
+    // pick a color bucket for the CPU-usage label. Re-applying a stylesheet
+    // forces an expensive Qt style re-parse/polish, and this runs on every
+    // poll tick (~100 Hz) during a run, so only restyle when the bucket
+    // actually changes rather than every tick.
+    int bucket; // 0=black 1=darkblue 2=firebrick 3=gold 4=forestgreen
+    if (percent_cpu < 25.0 * nthreads)
+        bucket = 0;
+    else if (percent_cpu < 50.0 * nthreads)
+        bucket = 1;
+    else if (percent_cpu > 100.0 * nthreads + 50.0)
+        bucket = 2;
+    else if (percent_cpu < 100.0 * nthreads - 50.0)
+        bucket = 2;
+    else if (percent_cpu > 100.0 * nthreads + 20.0)
+        bucket = 3;
+    else if (percent_cpu < 100.0 * nthreads - 20.0)
+        bucket = 3;
+    else
+        bucket = 4;
+    if (bucket != lastCpuBucket) {
+        lastCpuBucket = bucket;
+        switch (bucket) {
+            case 0:
+                cpuuse->setStyleSheet("QLabel {background-color: black; color: white;}");
+                break;
+            case 1:
+                cpuuse->setStyleSheet("QLabel {background-color: darkblue; color: white;}");
+                break;
+            case 2:
+                cpuuse->setStyleSheet("QLabel {background-color: firebrick; color: white;}");
+                break;
+            case 3:
+                cpuuse->setStyleSheet("QLabel {background-color: gold; color: black;}");
+                break;
+            default:
+                cpuuse->setStyleSheet("QLabel {background-color: forestgreen; color: white;}");
+                break;
+        }
     }
 
     void *ptr = lammps.lastThermo("line", 0);
@@ -1783,6 +1803,7 @@ void LammpsGui::doRun(bool use_buffer)
     dirstatus->hide();
     progress->show();
     cpuuse->show();
+    lastCpuBucket = -1; // force the cpuuse stylesheet to be applied on the first poll
 
     int numthreads = nthreads;
     int accel      = settings.value(Keys::ACCELERATOR, AcceleratorTab::OpenMP).toInt();
@@ -2049,15 +2070,10 @@ void LammpsGui::about()
 {
     std::string version = "<b>This is LAMMPS-GUI version " LAMMPS_GUI_VERSION;
     version += " using Qt version " QT_VERSION_STR;
-#ifdef LAMMPS_GUI_USE_QTGRAPHS
-    version += " with QtGraphs";
-#else
-    version += " with QtCharts";
-#endif
     if (isLightTheme())
-        version += " using light theme";
+        version += " with light theme";
     else
-        version += " using dark theme";
+        version += " with dark theme";
     version += "</b><br><br>\n";
     if (lammps.hasPlugin()) {
         version += "LAMMPS library loaded as plugin";

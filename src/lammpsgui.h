@@ -22,11 +22,6 @@
 
 #include "lammpswrapper.h"
 
-// define magic string for LAMMPS restart files, if not already defined
-#if !defined(LAMMPS_MAGIC)
-#define LAMMPS_MAGIC "LammpS RestartT"
-#endif
-
 // forward declarations
 
 class QAction;
@@ -435,6 +430,7 @@ private:
     StdCapture *capturer;     ///< Captures stdout/stderr from LAMMPS
     QLabel *status;           ///< Status bar label for general status
     QLabel *cpuuse;           ///< Status bar label for CPU usage
+    int lastCpuBucket;        ///< Last applied cpuuse color bucket (-1 = none yet)
     LogWindow *logwindow;     ///< Window displaying LAMMPS output log
     ImageViewer *imagewindow; ///< Window for viewing single images
     ChartWindow *chartwindow; ///< Window for displaying charts

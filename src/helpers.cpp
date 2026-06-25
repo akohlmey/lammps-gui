@@ -17,6 +17,7 @@
 #include <QBrush>
 #include <QColor>
 #include <QCoreApplication>
+#include <QDataStream>
 #include <QDir>
 #include <QFile>
 #include <QFileDialog>
@@ -34,6 +35,7 @@
 #include <QWidget>
 
 #include <cstdio>
+#include <cstring>
 #include <fcntl.h>
 
 // define consistent function aliases to avoid complications from pre-processing
@@ -374,6 +376,20 @@ bool isImageFile(const QString &filename)
     // otherwise let Qt sniff the contents, but only for a file that exists
     if (!QFileInfo::exists(filename)) return false;
     return !QImageReader::imageFormat(filename).isEmpty();
+}
+
+bool isRestartFile(const QString &filename)
+{
+    // LAMMPS binary restart files start with this magic string
+    static const char magic[] = "LammpS RestartT";
+    char buffer[16]           = "               ";
+    QFile file(filename);
+    if (file.open(QIODevice::ReadOnly)) {
+        QDataStream in(&file);
+        in.readRawData(buffer, 16);
+        file.close();
+    }
+    return strcmp(buffer, magic) == 0;
 }
 
 // recursively remove all contents from a directory

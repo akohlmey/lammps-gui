@@ -36,8 +36,12 @@ def parse(src):
     """Return (ordered names, {name: (continuous, [(pos, (r, g, b)), ...])})."""
     text = open(src).read()
 
-    # display order from colorMapNames()
-    names_block = re.search(r"colorMapNames.*?\{(.*?)\};", text, re.DOTALL).group(1)
+    # display order from the names list inside colorMapNames(); anchor on the
+    # declaration so a preceding explanatory comment (which may quote map names)
+    # is not mistaken for list entries
+    names_block = re.search(
+        r"QStringList\s+names\s*=\s*\{(.*?)\};", text, re.DOTALL
+    ).group(1)
     order = re.findall(r'"(\w+)"', names_block)
 
     maps = {}

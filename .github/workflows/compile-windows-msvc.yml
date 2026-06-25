@@ -23,7 +23,7 @@ jobs:
 
     steps:
     - name: Checkout repository
-      uses: actions/checkout@v6
+      uses: actions/checkout@v7
       with:
         fetch-depth: 20
 
@@ -32,7 +32,6 @@ jobs:
       with:
         version: '6.8.*'
         arch: 'win64_msvc2022_64'
-        modules: 'qtcharts'
 
     - name: Building LAMMPS-GUI via CMake
       shell: cmd

@@ -12,6 +12,8 @@
 #ifndef CHARTVIEWER_H
 #define CHARTVIEWER_H
 
+#include "plotseries.h" // PlotSeries model + RefAnchor used by RefLine below
+
 #include <QComboBox>
 #include <QLabel>
 #include <QLineEdit>
@@ -27,12 +29,15 @@ class QCloseEvent;
 class QEvent;
 class QMenuBar;
 class QMenu;
+class QPushButton;
 class QSpinBox;
 class RangeSlider;
 
 class ChartViewer;
+struct ChartColumn;
 class LammpsGui;
 class PlotData;
+enum class LegendPos; // defined in plotwidget.h
 
 /**
  * @brief A labeled vertical reference line for chart overlays
@@ -41,10 +46,15 @@ class PlotData;
  * vertical markers at specific x positions (e.g. high-symmetry k-points
  * in phonon-dispersion plots).
  */
+/** @brief Orientation of a reference line: a vertical line at x, or a horizontal line at y */
+enum class RefOrient { Vertical, Horizontal };
+
 struct RefLine {
-    double x;      ///< X position of the line
-    QString label; ///< Text label (shown as the series name / tooltip)
-    QColor color;  ///< Line color (default: dark gray)
+    RefOrient orient = RefOrient::Vertical; ///< vertical (fixed x) or horizontal (fixed y)
+    double value;                           ///< x position (vertical) or y position (horizontal)
+    QString label;                          ///< text label (in line color)
+    QColor color;                           ///< line color (default: dark gray)
+    RefAnchor anchor = RefAnchor::Start;    ///< where the label sits along the line
 };
 
 /**
@@ -73,7 +83,7 @@ public:
      * @brief Get the number of charts currently displayed
      * @return Number of charts
      */
-    int numCharts() const { return charts.size(); }
+    int numCharts() const { return static_cast<int>(cols.size()); }
 
     /**
      * @brief Check if a chart at given index has the specified title
@@ -193,8 +203,23 @@ private:
     /// column per chart) for the data exporters.
     PlotData chartsToPlotData() const;
 
-    /// Return the chart currently selected in the columns combo box.
+    /// Return the single chart view (bound to the currently selected column),
+    /// or nullptr if no column exists yet.
     ChartViewer *currentChart();
+
+    /// Position in `cols` of the column matching the combo selection (-1 if none).
+    int activeIndex() const;
+
+    /// Set the processed-series Plot-combo slot label and remember it on the
+    /// active column (so it is restored when switching columns).
+    void setProcessedLabel(const QString &label);
+
+    /// Move both range-slider handles back to the full extent (no plot update).
+    void resetRangeSliders();
+
+    /// Re-derive the displayed plot range from the current slider-handle window
+    /// and the active column's data range (so a view-only change preserves zoom).
+    void applySliderWindow();
 
     LammpsGui *lammpsgui; ///< Main widget pointer for receiving signals
     bool doRaw, doSmooth; ///< Flags for displaying raw/smoothed data
@@ -213,28 +238,27 @@ private:
     QCheckBox *norm;              ///< Normalization checkbox
     RangeSlider *xrange, *yrange; ///< Range sliders for axes
 
-    QString filename;            ///< Log file path
-    QList<ChartViewer *> charts; ///< List of chart viewers
-    QList<RefLine> refLines;     ///< Current set of reference lines (applied to all charts)
+    QString filename;    ///< Log file path
+    ChartViewer *viewer; ///< The single chart view (renders the active column)
+    std::vector<std::unique_ptr<ChartColumn>> cols; ///< Per-column data/display state
+    int active;              ///< Index into cols of the rendered column (-1 = none)
+    QList<RefLine> refLines; ///< Current set of reference lines (applied to the active column)
+    LegendPos legendPos;     ///< In-plot legend placement (set in the Chart Style dialog)
+    double refLabelSize;     ///< Reference-label font point size (window-wide)
+    double refLabelDist;     ///< Reference-label gap from its line, in px (window-wide)
+    bool refLabelBoxed;      ///< Whether reference labels get a framed opaque background
 };
 
 /* -------------------------------------------------------------------- */
 
-#ifdef LAMMPS_GUI_USE_QTGRAPHS
-#include <QtGraphs/QAbstractAxis>
-#include <QtGraphs/QLineSeries>
-#include <QtGraphs/QScatterSeries>
-#include <QtGraphs/QValueAxis>
-#else
-#include <QLineSeries>
-#include <QScatterSeries>
-#include <QValueAxis>
-#endif
+#include "plotseries.h"
 
 #include <QColor>
-#include <memory>
 
-class ChartBackend;
+#include <memory>
+#include <vector>
+
+class PlotWidget;
 
 /**
  * @brief How a chart's raw data series is drawn
@@ -246,37 +270,89 @@ enum class ChartDisplayMode {
 };
 
 /**
+ * @brief The per-column data and display state of one chart
+ *
+ * Holds everything specific to a single plotted column: its neutral PlotSeries
+ * objects, cached data bounds, smoothing parameters, display style, and the
+ * overlay/reference-line state. It is a plain (non-QWidget) value type,
+ * move-only because of its unique_ptr<PlotSeries> members, so that a single
+ * renderer can eventually be pointed at any column on demand.
+ */
+struct ChartColumn {
+    int index      = -1;                       ///< Chart index (thermo column id)
+    double lastX   = -1.0;                     ///< Last (largest) x value appended
+    double rawXmin = 1.0e100;                  ///< Running min x of the raw series (live path)
+    double rawXmax = -1.0e100;                 ///< Running max x of the raw series
+    double rawYmin = 1.0e100;                  ///< Running min y of the raw series
+    double rawYmax = -1.0e100;                 ///< Running max y of the raw series
+    int window     = 10;                       ///< Smoothing window
+    int order      = 4;                        ///< Smoothing polynomial order
+    std::unique_ptr<PlotSeries> series;        ///< Raw data series (always present)
+    std::unique_ptr<PlotSeries> smooth;        ///< Smoothed data series (created on demand)
+    std::unique_ptr<PlotSeries> scatter;       ///< Raw data as points (created on demand)
+    std::unique_ptr<PlotSeries> smoothScatter; ///< Processed data as points (created on demand)
+    std::unique_ptr<PlotSeries> fit;           ///< Optional fit-curve overlay (created on demand)
+    QTime lastUpdate;                          ///< Time of last chart update
+    bool doRaw    = true;                      ///< Show raw data series
+    bool doSmooth = false;                     ///< Show smoothed data series
+    bool eosMode  = false; ///< True when fit is a BM EOS overlay (visibility follows doSmooth)
+    ChartDisplayMode dispmode = ChartDisplayMode::Lines; ///< How the raw series is drawn
+    QColor rawColor;                   ///< Raw series color override (invalid = theme default)
+    qreal rawWidth              = 3.0; ///< Raw series line width
+    qreal rawPointSize          = 8.0; ///< Raw series marker diameter
+    ChartDisplayMode smoothmode = ChartDisplayMode::Lines; ///< How the processed series is drawn
+    QColor smoothcolor;          ///< Processed series color (invalid = theme default)
+    qreal smoothwidth     = 3.0; ///< Processed series line width
+    qreal smoothpointsize = 8.0; ///< Processed series marker diameter
+    std::vector<std::unique_ptr<PlotSeries>> overlaySeries; ///< Extra series from secondary files
+    std::vector<std::unique_ptr<PlotSeries>> vlines;        ///< Reference line series (decorative)
+    QList<RefLine> reflineDefs; ///< Reference line definitions (parallel to vlines)
+    QString yTitle;             ///< This column's Y-axis label (restored on the shared plot)
+    QString procLabel = QStringLiteral("Smooth"); ///< Label of the processed-series slot in the
+                                                  ///< Plot combo ("Smooth", or a fit/function name)
+};
+
+/**
  * @brief Individual chart viewer for displaying a single time-series
  *
  * ChartViewer displays a single thermodynamic property as a function
- * of simulation time. It delegates rendering to a ChartBackend
- * (QtGraphsBackend or QtChartsBackend), supporting both raw and
- * smoothed data display, interactive zoom/pan, and data export.
+ * of simulation time. It owns the neutral PlotSeries data objects and
+ * renders them with a PlotWidget, supporting both raw and smoothed data
+ * display, interactive zoom/pan, and data export.
  *
- * @see ChartBackend, QtGraphsBackend, QtChartsBackend
+ * @see PlotWidget, PlotSeries
  */
 class ChartViewer : public QWidget {
     Q_OBJECT
 
 public:
     /**
-     * @brief Constructor
-     * @param title Chart title (property name)
-     * @param index Chart index
+     * @brief Constructor -- creates the renderer; no column is bound yet
      * @param parent Parent widget
      */
-    explicit ChartViewer(const QString &title, int index, QWidget *parent = nullptr);
+    explicit ChartViewer(QWidget *parent = nullptr);
 
     /**
      * @brief Destructor
      */
     ~ChartViewer() override;
 
-    ChartViewer()                               = delete;
     ChartViewer(const ChartViewer &)            = delete;
     ChartViewer(ChartViewer &&)                 = delete;
     ChartViewer &operator=(const ChartViewer &) = delete;
     ChartViewer &operator=(ChartViewer &&)      = delete;
+
+    /**
+     * @brief Bind this view to a column (or nullptr) and render it
+     *
+     * Unregisters the previous column's series from the shared plot and
+     * (re)attaches and draws @p c, restoring its Y-axis label. The column is
+     * owned by ChartWindow, not by the viewer.
+     */
+    void setColumn(ChartColumn *c);
+
+    /** @brief The column currently bound to this view (may be nullptr) */
+    ChartColumn *boundColumn() const { return col; }
 
     /**
      * @brief Append an (x, y) data point to the chart
@@ -294,11 +370,10 @@ public:
      */
     QRectF getMinMax() const;
 
-    /**
-     * @brief Get list of chart axes
-     * @return List of axes (X and Y)
-     */
-    QList<QAbstractAxis *> getAxes() const;
+    /** @brief Set the displayed X-axis range (used by the range sliders) */
+    void setXAxisRange(double min, double max);
+    /** @brief Set the displayed Y-axis range (used by the range sliders) */
+    void setYAxisRange(double min, double max);
 
     /**
      * @brief Reset zoom to show all data
@@ -323,13 +398,13 @@ public:
      * @brief Get chart index
      * @return Index of this chart
      */
-    int getIndex() const { return index; };
+    int getIndex() const { return col->index; };
 
     /**
      * @brief Get number of data points
      * @return Number of points in series
      */
-    int getCount() const { return series->count(); }
+    int getCount() const { return col->series->count(); }
 
     /**
      * @brief Get the series (data column) name
@@ -346,14 +421,14 @@ public:
      * @param index Data point index
      * @return Step number (X value)
      */
-    double getStep(int index) const { return (index < 0) ? 0.0 : series->at(index).x(); }
+    double getStep(int index) const { return (index < 0) ? 0.0 : col->series->at(index).x(); }
 
     /**
      * @brief Get data value at given index
      * @param index Data point index
      * @return Data value (Y value)
      */
-    double getData(int index) const { return (index < 0) ? 0.0 : series->at(index).y(); }
+    double getData(int index) const { return (index < 0) ? 0.0 : col->series->at(index).y(); }
 
     /**
      * @brief Set chart title
@@ -408,7 +483,7 @@ public:
     void clearOverlaySeries();
 
     /** @brief Number of overlay series currently displayed */
-    int overlaySeriesCount() const { return overlaySeries.size(); }
+    int overlaySeriesCount() const { return static_cast<int>(col->overlaySeries.size()); }
 
     /**
      * @brief Set vertical reference lines (replaces any existing set)
@@ -417,40 +492,52 @@ public:
      * Each line spans the full data y-range and is updated on every zoom reset.
      * Lines are identified by their position (x), label (series name), and color.
      */
-    void setVerticalLines(const QList<RefLine> &lines);
+    void setReferenceLines(const QList<RefLine> &lines);
 
     /** @brief Remove all vertical reference lines */
     void clearVerticalLines();
+
+    /** @brief Set the in-plot legend placement (corner, or off) */
+    void setLegendPos(LegendPos pos);
+
+    /** @brief Set the window-wide reference-label style (font size, gap, boxed) */
+    void setRefLabelStyle(double pointSize, double distance, bool boxed);
 
     /**
      * @brief Set how the raw data series is displayed
      * @param mode  Lines, points, or both
      * @param color Series color (invalid color falls back to the theme default)
      * @param width Line width (used for the line and lines+points modes)
+     * @param pointSize Marker diameter (used for the points and lines+points modes)
      */
-    void setDisplayStyle(ChartDisplayMode mode, const QColor &color, qreal width);
+    void setDisplayStyle(ChartDisplayMode mode, const QColor &color, qreal width, qreal pointSize);
 
     /** @brief Current display mode */
-    ChartDisplayMode displayMode() const { return dispmode; }
+    ChartDisplayMode displayMode() const { return col->dispmode; }
     /** @brief Current series color (may be invalid, meaning the theme default) */
-    QColor displayColor() const { return rawColor; }
+    QColor displayColor() const { return col->rawColor; }
     /** @brief Current line width */
-    qreal displayWidth() const { return rawWidth; }
+    qreal displayWidth() const { return col->rawWidth; }
+    /** @brief Current marker diameter */
+    qreal displayPointSize() const { return col->rawPointSize; }
 
     /**
      * @brief Set how the processed (smoothed) data series is displayed
      * @param mode  Lines, points, or both
      * @param color Series color (invalid color falls back to the theme default)
      * @param width Line width (used for the line and lines+points modes)
+     * @param pointSize Marker diameter (used for the points and lines+points modes)
      */
-    void setSmoothStyle(ChartDisplayMode mode, const QColor &color, qreal width);
+    void setSmoothStyle(ChartDisplayMode mode, const QColor &color, qreal width, qreal pointSize);
 
     /** @brief Current processed-series display mode */
-    ChartDisplayMode smoothMode() const { return smoothmode; }
+    ChartDisplayMode smoothMode() const { return col->smoothmode; }
     /** @brief Current processed-series color (may be invalid, meaning the theme default) */
-    QColor smoothColor() const { return smoothcolor; }
+    QColor smoothColor() const { return col->smoothcolor; }
     /** @brief Current processed-series line width */
-    qreal smoothWidth() const { return smoothwidth; }
+    qreal smoothWidth() const { return col->smoothwidth; }
+    /** @brief Current processed-series marker diameter */
+    qreal smoothPointSize() const { return col->smoothpointsize; }
 
     /**
      * @brief Overlay a fit curve on the chart
@@ -468,7 +555,7 @@ public:
                      bool eosFit = false);
 
     /** @brief True when the current fit overlay is a Birch-Murnaghan EOS fit */
-    bool isEosFit() const { return eosMode && fit && !fit->points().isEmpty(); }
+    bool isEosFit() const { return col->eosMode && col->fit && !col->fit->points.isEmpty(); }
 
     /**
      * @brief Get current chart title
@@ -491,29 +578,17 @@ public:
 private:
     /// Add (or restyle) a line series and its on-demand scatter twin to show
     /// the data as lines, points, or both, in the given color and width.
-    void renderSeries(QLineSeries *line, QScatterSeries *&points, ChartDisplayMode mode,
-                      const QColor &color, qreal width);
+    void renderSeries(PlotSeries *line, std::unique_ptr<PlotSeries> &points, ChartDisplayMode mode,
+                      const QColor &color, qreal width, qreal pointSize);
 
-    std::unique_ptr<ChartBackend> backend; ///< Rendering backend (QtGraphs or QtCharts)
-    double lastX;                          ///< Last (largest) x value appended
-    int index;                             ///< Chart index
-    int window, order;                     ///< Smoothing window and polynomial order
-    QLineSeries *series, *smooth;          ///< Raw and smoothed data series
-    QScatterSeries *scatter;               ///< Raw data drawn as points (created on demand)
-    QScatterSeries *smoothScatter;         ///< Processed data drawn as points (created on demand)
-    QLineSeries *fit;                      ///< Optional fit-curve overlay (created on demand)
-    QTime lastUpdate;                      ///< Time of last chart update
-    bool doRaw, doSmooth;                  ///< Flags for showing raw/smoothed data
-    bool eosMode;              ///< True when fit is a BM EOS overlay (visibility follows doSmooth)
-    ChartDisplayMode dispmode; ///< How the raw series is drawn
-    QColor rawColor;           ///< Raw series color override (invalid = theme default)
-    qreal rawWidth;            ///< Raw series line width
-    ChartDisplayMode smoothmode;        ///< How the processed series is drawn
-    QColor smoothcolor;                 ///< Processed series color (invalid = theme default)
-    qreal smoothwidth;                  ///< Processed series line width
-    QList<QLineSeries *> overlaySeries; ///< Extra data series added from secondary files
-    QList<QLineSeries *> vlines;        ///< Vertical reference line series (decorative)
-    QList<double> vlinePositions;       ///< X position of each vline (parallel to vlines)
+    /// Register a series with the renderer in the given color and width.
+    void addPlotSeries(PlotSeries *s, const QColor &color, qreal width);
+    /// Restyle an already-registered series and request a repaint.
+    void stylePlotSeries(PlotSeries *s, const QColor &color, qreal width);
+
+    PlotWidget *plot; ///< Renderer (Qt child of this widget)
+    int updChart;     ///< Cached live-update throttle interval (ms)
+    ChartColumn *col; ///< Column currently rendered (owned by ChartWindow, not here)
 };
 #endif
 

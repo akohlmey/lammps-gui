@@ -210,6 +210,9 @@ private:
     QString filename;                            ///< Image filename
     QString last_dumpargs;                       ///< Render args of the last image command
     QString last_modifyargs;                     ///< dump_modify args of the last image command
+    QString renderdumpid = "WRITE_DUMP";         ///< Id of our render dump; renamed to a missing
+                                                 ///< "fix graphics/labels" colorscale dump and
+                                                 ///< cached so the detection runs only once
     int xsize, ysize;                            ///< Image dimensions in pixels
     int hrot, vrot;                              ///< Horizontal and vertical rotation angles
     int bodyflag;                                ///< bflag1 setting (triangle, cylinder or both)
@@ -246,9 +249,11 @@ private:
     QString colormap;                            ///< Name of selected color map
     QString mapmin;                              ///< Choice of minimum value for colormap
     QString mapmax;                              ///< Choice of maximum value for colormap
+    bool revcolormap;                            ///< Reverse (mirror) the atom color map
     QString bondcolormap;                        ///< Name of selected bond color map
     QString bondmapmin;                          ///< Choice of minimum value for bond colormap
     QString bondmapmax;                          ///< Choice of maximum value for bond colormap
+    bool revbondcolormap;                        ///< Reverse (mirror) the bond color map
     QString bondcolor;                           ///< Custom bond color property
     QString bonddiam;                            ///< Custom bond diameter property
     QString bodycolor;                           ///< Custom body color property

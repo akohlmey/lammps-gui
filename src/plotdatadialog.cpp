@@ -11,8 +11,8 @@
 
 #include "plotdatadialog.h"
 
+#include "customfunc.h"
 #include "helpers.h"
-#include "lepton_mini.h"
 
 #include <QAbstractItemView>
 #include <QCheckBox>
@@ -159,14 +159,17 @@ void PlotDataDialog::computeColumn()
         if (nrow > 0) constants[var + "_first"] = workingData.column(c).front();
     }
 
+    CompiledExpression program(expr);
+    if (!program.isValid()) {
+        warning(this, "Compute Column",
+                QString("Could not evaluate the expression:\n%1").arg(program.error()));
+        return;
+    }
+
     std::vector<double> result;
     result.reserve(static_cast<std::size_t>(nrow));
 
     try {
-        LeptonMini::ParsedExpression parsed =
-            LeptonMini::Parser::parse(expr.toStdString()).optimize();
-        LeptonMini::ExpressionProgram program = parsed.createProgram();
-
         std::map<std::string, double> vars = constants;
         vars["row"]                        = 0.0;
         for (int r = 0; r < nrow; ++r) {
