@@ -108,12 +108,14 @@ DumpImageParams makeParams()
     p.backlight    = 0.2;
     p.version      = 20260330; // not greater than threshold -> no lights/hull
 
-    p.colormap     = "BWR";
-    p.mapmin       = "auto";
-    p.mapmax       = "auto";
-    p.bondcolormap = "BWR";
-    p.bondmapmin   = "auto";
-    p.bondmapmax   = "auto";
+    p.colormap        = "BWR";
+    p.mapmin          = "auto";
+    p.mapmax          = "auto";
+    p.revcolormap     = false;
+    p.bondcolormap    = "BWR";
+    p.bondmapmin      = "auto";
+    p.bondmapmax      = "auto";
+    p.revbondcolormap = false;
 
     return p;
 }
@@ -198,6 +200,46 @@ TEST(DumpImageCommand, NamedColormap)
     p.colormap        = "Grayscale";
     const QString cmd = buildCmd(p);
     EXPECT_TRUE(cmd.contains(" amap min max cf 0.0 2 min black max white")) << cmd.toStdString();
+}
+
+TEST(DumpImageCommand, ReversedContinuousColormap)
+{
+    // reversing a continuous map flips the stop order and mirrors positions, so
+    // Grayscale (black -> white) renders as white -> black
+    auto p            = makeParams();
+    p.atomcolor       = "vx";
+    p.colormap        = "Grayscale";
+    p.revcolormap     = true;
+    const QString cmd = buildCmd(p);
+    EXPECT_TRUE(cmd.contains(" amap min max cf 0.0 2 min white max black")) << cmd.toStdString();
+}
+
+TEST(DumpImageCommand, ReversedRwbMatchesBwrDirection)
+{
+    // "BWR" was dropped from the offered maps because it equals "RWB" reversed:
+    // reversing RWB must put the blue stop (0.000 0.227 0.427) at the minimum
+    auto p            = makeParams();
+    p.atomcolor       = "vx";
+    p.colormap        = "RWB";
+    p.revcolormap     = true;
+    const QString cmd = buildCmd(p);
+    EXPECT_TRUE(cmd.contains(" color map1 0.000 0.227 0.427")) << cmd.toStdString();
+    EXPECT_TRUE(cmd.contains(" amap min max cf 0.0 5 min map1"));
+}
+
+TEST(DumpImageCommand, ReversedDiscreteBondColormap)
+{
+    // reversing a discrete (sequence) bond map flips the color order; Basic ends
+    // with orange, so the reversed sequence must start with orange
+    auto p            = makeParams();
+    p.nbondtypes      = 1;
+    p.showbonds       = true;
+    p.bondbyvalue     = true;
+    p.bondcolor       = "c_b";
+    p.bondcolormap    = "Basic";
+    p.revbondcolormap = true;
+    const QString cmd = buildCmd(p);
+    EXPECT_TRUE(cmd.contains(" bmap min max sa 1.0 10 orange white purple")) << cmd.toStdString();
 }
 
 TEST(DumpImageCommand, ElementColoring)

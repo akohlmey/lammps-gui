@@ -753,12 +753,16 @@ void ImageViewer::readImageSettings()
     ellipsoidcolor = "atom";
     linecolor      = "atom";
     tricolor       = "atom";
-    colormap       = settings.value(Keys::COLORMAP, "BWR").toString();
-    mapmin         = "auto";
-    mapmax         = "auto";
-    bondcolormap   = settings.value(Keys::BONDCOLORMAP, "BWR").toString();
-    bondmapmin     = "auto";
-    bondmapmax     = "auto";
+    // BWR was removed from the offered maps; it equals "RWB" reversed, so the
+    // historical blue-low/red-high default is now "RWB" with the reverse flag on
+    colormap        = settings.value(Keys::COLORMAP, "RWB").toString();
+    mapmin          = "auto";
+    mapmax          = "auto";
+    revcolormap     = false;
+    bondcolormap    = settings.value(Keys::BONDCOLORMAP, "RWB").toString();
+    bondmapmin      = "auto";
+    bondmapmax      = "auto";
+    revbondcolormap = false;
 
     showatoms      = true;
     showbonds      = lammps->extractSetting("molecule_flag") == 1;
@@ -976,14 +980,13 @@ void ImageViewer::acolorSync()
     if (!src) return;
     auto *dialog = qobject_cast<QWidget *>(src->parent());
 
-    // enable/disable colormap selector depending on atom coloring selection
-    auto *amap = dialog->findChild<QComboBox *>("amap");
-    if (amap) {
-        if ((src->currentText() == "type") || (src->currentText() == "element"))
-            amap->setEnabled(false);
-        else
-            amap->setEnabled(true);
-    }
+    // enable/disable colormap selector (and its Reverse toggle) depending on the
+    // atom coloring selection
+    auto *amap         = dialog->findChild<QComboBox *>("amap");
+    auto *arevbutton   = dialog->findChild<QCheckBox *>("arevbutton");
+    const bool byvalue = (src->currentText() != "type") && (src->currentText() != "element");
+    if (amap) amap->setEnabled(byvalue);
+    if (arevbutton) arevbutton->setEnabled(byvalue);
     auto *acolor = dialog->findChild<QComboBox *>("acolor");
     auto *bcolor = dialog->findChild<QComboBox *>("bcolor");
     auto *ecolor = dialog->findChild<QComboBox *>("ecolor");
@@ -1465,12 +1468,14 @@ DumpImageParams ImageViewer::gatherDumpImageParams(const QString &dumpfilename)
     p.backlight    = backlight;
 
     // colormap
-    p.colormap     = colormap;
-    p.mapmin       = mapmin;
-    p.mapmax       = mapmax;
-    p.bondcolormap = bondcolormap;
-    p.bondmapmin   = bondmapmin;
-    p.bondmapmax   = bondmapmax;
+    p.colormap        = colormap;
+    p.mapmin          = mapmin;
+    p.mapmax          = mapmax;
+    p.revcolormap     = revcolormap;
+    p.bondcolormap    = bondcolormap;
+    p.bondmapmin      = bondmapmin;
+    p.bondmapmax      = bondmapmax;
+    p.revbondcolormap = revbondcolormap;
 
     // regions / fixes / computes (non-owning pointer copies)
     p.computes = computes;

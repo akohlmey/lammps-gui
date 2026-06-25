@@ -544,21 +544,51 @@ void ImageViewer::atomSettings()
 
     n = 0;
 
-    auto *vdwbutton = new QCheckBox("VDW style ", this);
-    vdwbutton->setChecked(vdwfactor > VDW_CUT);
-    vdwbutton->setObjectName("vdwbutton");
-    layout->addWidget(vdwbutton, idx, n++, 1, 1, Qt::AlignCenter);
     QRegularExpression validminmax(
         R"((auto|min|max|[+-]?\d+\.?\d*|[+-]?\d*\.?\d+)|[+-]?\d+\.?\d*[eE][+-]?\d+|[+-]?\d*\.?\d+[eE][+-]?\d+)");
     auto *minmaxvalidator = new QRegularExpressionValidator(validminmax, this);
+
+    // atom color-map row.  Its first column holds the "Reverse" toggle, which
+    // mirrors the selected map (e.g. RWB -> BWR) without needing a separate entry.
+    auto *arevbutton = new QCheckBox("Reverse Map", this);
+    arevbutton->setChecked(revcolormap);
+    arevbutton->setObjectName("arevbutton");
+    layout->addWidget(arevbutton, idx, n++, 1, 1, Qt::AlignVCenter | Qt::AlignRight);
 
     const ColorMapRow arow =
         addColorMapRow(layout, idx, n, "amap", colormap, mapmin, mapmax, minmaxvalidator);
     QComboBox *amap    = arow.map;
     QLineEdit *amapmin = arow.min;
     QLineEdit *amapmax = arow.max;
-    if ((atomcolor == "type") || (atomcolor == "element")) amap->setEnabled(false);
+    if ((atomcolor == "type") || (atomcolor == "element")) {
+        amap->setEnabled(false);
+        arevbutton->setEnabled(false);
+    }
     ++idx;
+
+    // VDW style (atom van der Waals radii) and AutoBonds (distance-derived bonds)
+    // share a line between the atom and bond sections.  They are mutually
+    // exclusive -- drawing atoms at full VDW size leaves no room for explicit
+    // bonds -- and vdwbondSync() keeps at most one of them checked.
+    n               = 0;
+    auto *vdwbutton = new QCheckBox("VDW Style    ", this);
+    vdwbutton->setChecked(vdwfactor > VDW_CUT);
+    vdwbutton->setObjectName("vdwbutton");
+
+    auto *autobutton = new QCheckBox("AutoBonds", this);
+    autobutton->setChecked(autobond);
+    autobutton->setEnabled(hasAutobonds());
+    autobutton->setObjectName("autobutton");
+    auto *bcutoff = new QLineEdit(QString::number(bondcutoff));
+    bcutoff->setValidator(new QDoubleValidator(0.001, 10.0, 100, this));
+    bcutoff->setEnabled(hasAutobonds());
+
+    n = 0;
+    layout->addWidget(vdwbutton, idx, n++, 1, 1, Qt::AlignVCenter | Qt::AlignRight);
+    ++n;
+    layout->addWidget(autobutton, idx, n++, 1, 1, Qt::AlignVCenter | Qt::AlignRight);
+    layout->addWidget(new QLabel("Cutoff: "), idx, n++, 1, 1, Qt::AlignVCenter | Qt::AlignRight);
+    layout->addWidget(bcutoff, idx++, n++, 1, 1);
 
     n = 0;
 
@@ -616,23 +646,14 @@ void ImageViewer::atomSettings()
         showbonds = false;
     }
 
-    // bond color-map row, mirroring the atom Map/Min/Max row. The AutoBonds
-    // toggle and its cutoff field sit in the first column (mirroring the atoms'
-    // VDW toggle), which frees the bond row above for the Opacity field. The map
-    // fields are only used when bonds are colored by a per-bond compute value.
+    // bond color-map row, mirroring the atom Map/Min/Max row.  Its first column
+    // holds the "Reverse" toggle for the bond map (mirroring the atom row).  The
+    // map fields are only used when bonds are colored by a per-bond compute value.
     n                = 0;
-    auto *autobutton = new QCheckBox("AutoBonds:", this);
-    autobutton->setChecked(autobond);
-    autobutton->setEnabled(hasAutobonds());
-    autobutton->setObjectName("autobutton");
-    auto *bcutoff = new QLineEdit(QString::number(bondcutoff));
-    bcutoff->setValidator(new QDoubleValidator(0.001, 10.0, 100, this));
-    bcutoff->setEnabled(hasAutobonds());
-    auto *autolayout = new QHBoxLayout;
-    autolayout->setContentsMargins(0, 0, 0, 0);
-    autolayout->addWidget(autobutton);
-    autolayout->addWidget(bcutoff);
-    layout->addLayout(autolayout, idx, n++, 1, 1);
+    auto *brevbutton = new QCheckBox("Reverse Map", this);
+    brevbutton->setChecked(revbondcolormap);
+    brevbutton->setObjectName("brevbutton");
+    layout->addWidget(brevbutton, idx, n++, 1, 1, Qt::AlignVCenter | Qt::AlignRight);
     const ColorMapRow brow = addColorMapRow(layout, idx, n, "bmap", bondcolormap, bondmapmin,
                                             bondmapmax, minmaxvalidator);
     QComboBox *bmap        = brow.map;
@@ -648,13 +669,15 @@ void ImageViewer::atomSettings()
     connect(autobutton, &QCheckBox::checkStateChanged, this, &ImageViewer::vdwbondSync);
 #endif
 
-    // enable the bond map/min/max fields only when the bond Color is a per-bond
-    // value (a bond/local attribute), tracking changes to the bond Color combo
-    auto syncBondMap = [bmap, bmapmin, bmapmax, this](const QString &text) {
+    // enable the bond map/min/max fields (and its Reverse toggle) only when the
+    // bond Color is a per-bond value (a bond/local attribute), tracking changes
+    // to the bond Color combo
+    auto syncBondMap = [bmap, bmapmin, bmapmax, brevbutton, this](const QString &text) {
         const bool byvalue = bondLocalAttrs.contains(text);
         bmap->setEnabled(byvalue);
         bmapmin->setEnabled(byvalue);
         bmapmax->setEnabled(byvalue);
+        brevbutton->setEnabled(byvalue);
     };
     syncBondMap(bncolor->currentText());
     connect(bncolor, &QComboBox::currentTextChanged, this, syncBondMap);
@@ -829,7 +852,8 @@ void ImageViewer::atomSettings()
     atomdiam = adiam->currentText();
 
     if (atrans->hasAcceptableInput()) atomtrans = atrans->text().toDouble();
-    colormap = amap->currentText();
+    colormap    = amap->currentText();
+    revcolormap = arevbutton->isChecked();
     if (amapmin->hasAcceptableInput()) mapmin = amapmin->text();
     if (amapmax->hasAcceptableInput()) mapmax = amapmax->text();
 
@@ -854,7 +878,8 @@ void ImageViewer::atomSettings()
     }
 
     if (bntrans->hasAcceptableInput()) bondtrans = bntrans->text().toDouble();
-    bondcolormap = bmap->currentText();
+    bondcolormap    = bmap->currentText();
+    revbondcolormap = brevbutton->isChecked();
     if (bmapmin->hasAcceptableInput()) bondmapmin = bmapmin->text();
     if (bmapmax->hasAcceptableInput()) bondmapmax = bmapmax->text();
 

@@ -249,9 +249,11 @@ private:
     QString colormap;                            ///< Name of selected color map
     QString mapmin;                              ///< Choice of minimum value for colormap
     QString mapmax;                              ///< Choice of maximum value for colormap
+    bool revcolormap;                            ///< Reverse (mirror) the atom color map
     QString bondcolormap;                        ///< Name of selected bond color map
     QString bondmapmin;                          ///< Choice of minimum value for bond colormap
     QString bondmapmax;                          ///< Choice of maximum value for bond colormap
+    bool revbondcolormap;                        ///< Reverse (mirror) the bond color map
     QString bondcolor;                           ///< Custom bond color property
     QString bonddiam;                            ///< Custom bond diameter property
     QString bodycolor;                           ///< Custom body color property

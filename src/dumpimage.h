@@ -134,9 +134,11 @@ struct DumpImageParams {
     QString colormap;     ///< name of the selected atom color map
     QString mapmin;       ///< minimum-value choice for the atom color map
     QString mapmax;       ///< maximum-value choice for the atom color map
+    bool revcolormap;     ///< reverse (mirror) the atom color map
     QString bondcolormap; ///< name of the selected bond color map
     QString bondmapmin;   ///< minimum-value choice for the bond color map
     QString bondmapmax;   ///< maximum-value choice for the bond color map
+    bool revbondcolormap; ///< reverse (mirror) the bond color map
 
     // ---- regions / fixes / computes ----
     std::map<std::string, ImageInfo *> computes; ///< per-compute graphics settings

@@ -431,10 +431,10 @@ Viewer toolbar.  It is opened by pressing the "Atoms/Bonds" button in
 the settings panel or by using the `Alt-A` keyboard shortcut.
 
 .. |atombond|  image:: JPG/lammps-gui-image-atom.png
-                     :width: 63%
+                     :width: 62%
 
 .. |autobond| image:: JPG/lammps-gui-autobond.png
-                     :width: 31%
+                     :width: 36%
 
 |autobond|  |atombond|
 
@@ -464,12 +464,10 @@ The dialog contains the following sections:
    - **Opacity**: The transparency of atoms (range: 0.0 -- 1.0, where 1.0
      is fully opaque and 0.0 is fully transparent).  Bonds have their own
      Opacity setting in the **Bonds** section below.
-   - **VDW style** (checkbox): Enable or disable space-filling sphere
-     rendering.  When unchecked, the ball-and-stick style is used.
-   - **Colormap**: Select the colormap used for coloring by a per-atom
+   - **Map**: Select the colormap used for coloring by a per-atom
      property.  This option is *not* available for atom color selections
      *type* and *element*\ .  Currently available continuous colormaps
-     are: *BWR* (blue-white-red), *RWB* (red-white-blue), *PWT*
+     are: *RWB* (red-white-blue), *PWT*
      (purple-white-teal), *BWG* (blue-white-green), *BGR*
      (blue-green-red), *Grayscale* (black-white), *Viridis* (from
      matplotlib), *Plasma* (from matplotlib), *Inferno* (from
@@ -483,9 +481,17 @@ The dialog contains the following sections:
      resulting images in the Slideshow Viewer window.  Then the color
      map setting can be fully customized according to the `dump_modify
      colormap documentation <https://docs.lammps.org/dump_image.html>`_.
+   - **Reverse** (checkbox): Mirror the selected colormap so its low and
+     high ends are swapped (for example, *RWB* becomes blue-white-red).
+     This replaces the former *BWR* entry, which is exactly *RWB*
+     reversed.  Enabled together with the **Map** selector.
    - **Min** / **Max**: Set the range of the colormap.  Use *auto* to
      have LAMMPS determine the range automatically or specify an
      explicit numeric value.
+   - **VDW style** (checkbox): Enable or disable space-filling sphere
+     rendering.  When unchecked, the ball-and-stick style is used.  This
+     toggle shares a line with the **AutoBonds** control of the **Bonds**
+     section below; the two are mutually exclusive.
 
 The color maps available for coloring atoms and bonds by value are shown
 below; the continuous maps are interpolated between color stops, while
@@ -536,12 +542,13 @@ Guide for step-by-step instructions.
    - **Cutoff**: The distance cutoff used for automatic bond detection
      (range: 0.001 -- 10.0 in distance units), in the text field next to
      the AutoBonds checkbox.  Only available when auto-bonds are enabled.
-   - **Map** / **Min** / **Max**: Select the colormap and value range
-     used when coloring bonds by a per-bond value (see **Color** above).
-     The same colormaps as the atom **Colormap** are offered, and these
-     fields are only enabled when a per-bond property is selected as the
-     bond color.  Use *auto* for **Min** / **Max** to let LAMMPS
-     determine the range automatically.
+   - **Reverse** / **Map** / **Min** / **Max**: Select the colormap and
+     value range used when coloring bonds by a per-bond value (see
+     **Color** above).  The same colormaps as the atom **Map** are
+     offered, and the **Reverse** checkbox mirrors the chosen map exactly
+     like its atom counterpart.  These fields are only enabled when a
+     per-bond property is selected as the bond color.  Use *auto* for
+     **Min** / **Max** to let LAMMPS determine the range automatically.
 
 **Bodies**
    Controls visualization of `body particles
