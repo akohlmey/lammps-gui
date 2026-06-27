@@ -169,6 +169,22 @@ QStringList defaultcolors = {"red",       "green",    "blue",       "yellow",   
                              "magenta",   "orange",   "chartreuse", "brown",    "darkred",
                              "darkgreen", "darkblue", "darkyellow", "darkcyan", "darkmagenta",
                              "silver",    "gray"};
+
+// Desaturate a pixmap while preserving its alpha channel. Used for the
+// render-status icon's "idle" state so we do not depend on the disabled-widget
+// visual, which does not refresh reliably on all platforms (e.g. macOS 12).
+QPixmap grayscalePixmap(const QPixmap &src)
+{
+    QImage img = src.toImage().convertToFormat(QImage::Format_ARGB32);
+    for (int y = 0; y < img.height(); ++y) {
+        auto *line = reinterpret_cast<QRgb *>(img.scanLine(y));
+        for (int x = 0; x < img.width(); ++x) {
+            const int v = qGray(line[x]);
+            line[x]     = qRgba(v, v, v, qAlpha(line[x]));
+        }
+    }
+    return QPixmap::fromImage(img);
+}
 } // namespace
 
 // 2) create a color gradient icon
@@ -378,8 +394,15 @@ ImageViewer::ImageViewer(const QString &fileName, LammpsWrapper *_lammps, Lammps
 #endif
 
     auto *renderstatus = new QLabel(QString());
-    renderstatus->setPixmap(pix.scaled(22, 22, Qt::KeepAspectRatio));
-    renderstatus->setEnabled(false);
+    // The render-status icon shows a full-color "active" pixmap while an image is
+    // rendering and a grayscale "idle" pixmap otherwise. Swap the two pixmaps
+    // explicitly (stored as properties) rather than relying on the disabled-widget
+    // visual, which does not refresh reliably on all platforms (e.g. macOS 12).
+    const QPixmap activePix = pix.scaled(22, 22, Qt::KeepAspectRatio, Qt::SmoothTransformation);
+    const QPixmap idlePix   = grayscalePixmap(activePix);
+    renderstatus->setProperty("activePix", activePix);
+    renderstatus->setProperty("idlePix", idlePix);
+    renderstatus->setPixmap(idlePix);
     renderstatus->setToolTip("Render status");
     renderstatus->setObjectName("renderstatus");
     auto *asize = new QLineEdit(QString::number(2.0 * atomSize, 'f', 2));
@@ -1495,7 +1518,7 @@ void ImageViewer::createImage()
     if (shutdown) return;
 
     auto *renderstatus = findChild<QLabel *>("renderstatus");
-    if (renderstatus) renderstatus->setEnabled(true);
+    if (renderstatus) renderstatus->setPixmap(renderstatus->property("activePix").value<QPixmap>());
     repaint();
 
     // The stop button halts a run via a walltime timeout whose state persists and
@@ -1633,7 +1656,7 @@ void ImageViewer::createImage()
     imageLabel->setMinimumSize(image.width(), image.height());
     imageLabel->resize(image.width(), image.height());
     adjustWindowSize();
-    if (renderstatus) renderstatus->setEnabled(false);
+    if (renderstatus) renderstatus->setPixmap(renderstatus->property("idlePix").value<QPixmap>());
     repaint();
     adjustWindowSize();
 
