@@ -31,6 +31,7 @@
 #include <QDesktopServices>
 #include <QDir>
 #include <QDoubleValidator>
+#include <QEventLoop>
 #include <QFile>
 #include <QFileDialog>
 #include <QFileInfo>
@@ -1523,6 +1524,15 @@ void ImageViewer::createImage()
     auto *renderstatus = findChild<QLabel *>("renderstatus");
     if (renderstatus) renderstatus->setPixmap(renderstatus->property("activePix").value<QPixmap>());
     repaint();
+#if defined(Q_OS_MACOS)
+    // Workaround for macOS: while the main thread is busy with the synchronous
+    // render below, the backing store is not flushed to the screen, so repaint()
+    // alone leaves the render-status icon stuck on its idle (gray) pixmap. Pump
+    // the event loop once -- excluding user input so this slot is not re-entered
+    // -- to push the active (colored) pixmap to the display.
+    if (renderstatus) renderstatus->repaint();
+    QApplication::processEvents(QEventLoop::ExcludeUserInputEvents);
+#endif
 
     // The stop button halts a run via a walltime timeout whose state persists and
     // makes any later "run" exit immediately (run.cpp: if (timer->is_timeout())
