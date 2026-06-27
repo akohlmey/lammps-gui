@@ -71,7 +71,10 @@ if (NOT BUILD_DOC_ONLY)
 
   # charts are rendered by the self-contained native QPainter backend; only the
   # LGPL Qt Widgets are needed (no Qt Charts / Graphs / Quick modules)
-  find_package(Qt6 6.2 REQUIRED COMPONENTS Gui Widgets Network)
+  # Qt Svg provides the SVG icon-engine plugin used to render the .svg icons;
+  # declaring it here ensures the plugin is found and bundled by the deployment
+  # tools (macdeployqt / windeployqt / flatpak)
+  find_package(Qt6 6.2 REQUIRED COMPONENTS Gui Widgets Network Svg)
   message(STATUS "Using Qt version ${Qt6_VERSION} with the native chart backend for LAMMPS-GUI")
 
   set(PROJECT_SOURCES
@@ -219,7 +222,7 @@ if (NOT BUILD_DOC_ONLY)
   target_include_directories(lammps-gui PRIVATE ${CMAKE_SOURCE_DIR}/thirdparty/rangeslider)
   target_link_libraries(lammps-gui PRIVATE lepton_mini)
   target_compile_definitions(lammps-gui PRIVATE LAMMPS_GUI_VERSION="${PROJECT_VERSION}")
-  target_link_libraries(lammps-gui PRIVATE Qt6::Gui Qt6::Widgets Qt6::Network)
+  target_link_libraries(lammps-gui PRIVATE Qt6::Gui Qt6::Widgets Qt6::Network Qt6::Svg)
 
   ###################
   # unit tests, only enabled on Linux
