@@ -559,18 +559,21 @@ ImageViewer::ImageViewer(const QString &fileName, LammpsWrapper *_lammps, Lammps
     topLayout->addLayout(buttonLayout);
     topLayout->setSpacing(LAYOUT_SPACING);
 
+    // a hidden dummy button as the first item works around a macOS bug where the
+    // first widget in a toolbar row misbehaves (here: renderstatus not refreshing)
+    menuLayout->addWidget(dummy1);
     menuLayout->addWidget(menuBar);
-    menuLayout->insertStretch(1, 10);
+    menuLayout->insertStretch(2, 10);
     menuLayout->addWidget(renderstatus);
     menuLayout->addWidget(new QLabel(" Atom Size: "));
     // hide item initially
-    menuLayout->itemAt(3)->widget()->setObjectName("AtomLabel");
-    menuLayout->itemAt(3)->widget()->hide();
+    menuLayout->itemAt(4)->widget()->setObjectName("AtomLabel");
+    menuLayout->itemAt(4)->widget()->hide();
     menuLayout->addWidget(asize);
     menuLayout->addWidget(new QLabel(" Bond Size: "));
     // hide item initially
-    menuLayout->itemAt(5)->widget()->setObjectName("BondLabel");
-    menuLayout->itemAt(5)->widget()->hide();
+    menuLayout->itemAt(6)->widget()->setObjectName("BondLabel");
+    menuLayout->itemAt(6)->widget()->hide();
     menuLayout->addWidget(bsize);
     menuLayout->addWidget(new QLabel(" <u>W</u>idth: "));
     menuLayout->addWidget(xval);
