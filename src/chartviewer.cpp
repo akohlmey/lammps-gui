@@ -308,12 +308,13 @@ ChartWindow::ChartWindow(const QString &_filename, LammpsGui *_lammpsgui, QWidge
     auto makeToolBtn = [](const QString &icon, const QString &tip) {
         auto *btn = new QPushButton(QIcon(icon), "");
         btn->setToolTip(tip);
-        btn->setFixedWidth(32);
         return btn;
     };
-    auto *styleBtn = makeToolBtn(":/icons/preferences-desktop-personal.png", "Chart Style...");
-    auto *refBtn   = makeToolBtn(":/icons/preferences-desktop.png", "Reference Lines...");
-    auto *ppBtn    = makeToolBtn(":/icons/application-plot.png", "Postprocess...");
+    auto *styleBtn = makeToolBtn(":/icons/preferences-desktop-personal.svg", "Chart Style...");
+    auto *refBtn   = makeToolBtn(":/icons/reference-lines.svg", "Reference Lines...");
+    auto *ppBtn    = makeToolBtn(":/icons/x-office-drawing.svg", "Postprocess...");
+    // square toolbar buttons with a snug, uniform icon (shared policy)
+    styleToolButtons(toolButtonSize(styleBtn), {styleBtn, refBtn, ppBtn});
     settings.beginGroup(Keys::GROUP_CHARTS);
     legendPos       = static_cast<LegendPos>(settings.value(Keys::LEGEND, 0).toInt());
     double defRefPt = font().pointSizeF();
@@ -337,39 +338,39 @@ ChartWindow::ChartWindow(const QString &_filename, LammpsGui *_lammpsgui, QWidge
     row2->addWidget(new QLabel(" Smooth:"));
     row2->addWidget(window);
     row2->addWidget(order);
-    saveAsAct = addMenuAction(file, "&Save Graph As...", ":/icons/document-save-as.png", this,
+    saveAsAct = addMenuAction(file, "&Save Graph As...", ":/icons/document-save-as.svg", this,
                               &ChartWindow::saveAs);
-    copyAct   = addMenuAction(file, "Copy &Graph to Clipboard", ":/icons/edit-copy.png", this,
+    copyAct   = addMenuAction(file, "Copy &Graph to Clipboard", ":/icons/edit-copy.svg", this,
                               &ChartWindow::copy);
     copyAct->setShortcut(QKeySequence(QKeySequence::Copy));
-    exportCsvAct = addMenuAction(file, "&Export data to CSV...", ":/icons/application-calc.png",
+    exportCsvAct = addMenuAction(file, "&Export data to CSV...", ":/icons/csv-file-icon.svg",
                                  this, &ChartWindow::exportCsv);
-    exportDatAct = addMenuAction(file, "Export data to &Gnuplot...", ":/icons/application-plot.png",
+    exportDatAct = addMenuAction(file, "Export data to &Gnuplot...", ":/icons/application-plot.svg",
                                  this, &ChartWindow::exportDat);
-    exportYamlAct = addMenuAction(file, "Export data to &YAML...", ":/icons/yaml-file-icon.png",
+    exportYamlAct = addMenuAction(file, "Export data to &YAML...", ":/icons/yaml-file-icon.svg",
                                   this, &ChartWindow::exportYaml);
     file->addSeparator();
-    addMenuAction(file, "Chart &Style...", ":/icons/preferences-desktop-personal.png", this,
+    addMenuAction(file, "Chart &Style...", ":/icons/preferences-desktop-personal.svg", this,
                   &ChartWindow::changeStyle);
-    refLinesAct = addMenuAction(file, "&Reference Lines...", ":/icons/preferences-desktop.png",
+    refLinesAct = addMenuAction(file, "&Reference Lines...", ":/icons/reference-lines.svg",
                                 this, &ChartWindow::referenceLines);
-    addMenuAction(file, "&Postprocess...", ":/icons/application-plot.png", this,
+    addMenuAction(file, "&Postprocess...", ":/icons/x-office-drawing.svg", this,
                   &ChartWindow::postProcess);
     // "Add Data from File..." is only relevant in standalone file-plot mode
     if (!lammpsgui) {
-        addDataAct = addMenuAction(file, "&Add Data from File...", ":/icons/application-plot.png",
+        addDataAct = addMenuAction(file, "&Add Data from File...", ":/icons/application-plot.svg",
                                    this, &ChartWindow::addDataFile);
     }
     file->addSeparator();
     stopAct =
-        addMenuAction(file, "Stop &Run", ":/icons/process-stop.png", this, &ChartWindow::stopRun);
+        addMenuAction(file, "Stop &Run", ":/icons/process-stop.svg", this, &ChartWindow::stopRun);
     stopAct->setShortcut(QKeySequence(Qt::CTRL | Qt::Key_Slash));
     // without a live simulation there is nothing to stop
     if (!lammpsgui) stopAct->setVisible(false); // no live simulation to stop
-    closeAct = addMenuAction(file, "&Close", ":/icons/window-close.png", this, &QWidget::close);
+    closeAct = addMenuAction(file, "&Close", ":/icons/window-close.svg", this, &QWidget::close);
     closeAct->setShortcut(QKeySequence(Qt::CTRL | Qt::Key_W));
     quitAct =
-        addMenuAction(file, "&Quit", ":/icons/application-exit.png", this, &ChartWindow::quit);
+        addMenuAction(file, "&Quit", ":/icons/application-exit.svg", this, &ChartWindow::quit);
     quitAct->setShortcut(QKeySequence(Qt::CTRL | Qt::Key_Q));
     if (!lammpsgui) quitAct->setVisible(false); // quit == close in standalone mode
     auto *layout = new QVBoxLayout;
@@ -1030,7 +1031,7 @@ void ChartWindow::postProcess()
         resultForm->addRow("RMS residual:", makeVal(f.rms, 6));
         dlgLayout->addLayout(resultForm);
 
-        auto *closeBtn = new QDialogButtonBox(QDialogButtonBox::Close);
+        auto *closeBtn = new QDialogButtonBox(QDialogButtonBox::Ok);
         connect(closeBtn, &QDialogButtonBox::rejected, resultDlg, &QDialog::accept);
         dlgLayout->addWidget(closeBtn);
         resultDlg->exec();

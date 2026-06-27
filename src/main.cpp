@@ -124,6 +124,12 @@ int main(int argc, char *argv[])
 
     Q_INIT_RESOURCE(lammpsgui);
 
+    // use our bundled icon theme so the standard text-edit context-menu actions
+    // (undo/redo/cut/copy/paste/delete/select-all), which Qt fetches via
+    // QIcon::fromTheme(), match our icon set instead of the desktop theme
+    QIcon::setThemeSearchPaths(QStringList() << ":/icons");
+    QIcon::setThemeName("lammpsgui");
+
     // -c/--chart: open a data file directly in a standalone chart window
     if (parser.isSet("chart")) {
         const QString fileName = parser.value("chart");

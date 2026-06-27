@@ -226,7 +226,7 @@ void information(QWidget *parent, const QString &title, const QString &text1, co
     mb.setWindowIcon(QIcon(Cfg::MAIN_ICON));
     // customize button icon
     auto *button = mb.button(QMessageBox::Close);
-    button->setIcon(QIcon(":/icons/window-close.png"));
+    button->setIcon(QIcon(":/icons/window-close.svg"));
     mb.exec();
 }
 
@@ -243,7 +243,7 @@ void critical(QWidget *parent, const QString &title, const QString &text1, const
     mb.setWindowIcon(QIcon(":/icons/lammps-gui-icon-128x128.png"));
     // customize button icon
     auto *button = mb.button(QMessageBox::Close);
-    button->setIcon(QIcon(":/icons/window-close.png"));
+    button->setIcon(QIcon(":/icons/window-close.svg"));
     mb.exec();
 }
 
@@ -260,7 +260,7 @@ void warning(QWidget *parent, const QString &title, const QString &text1, const 
     mb.setWindowIcon(QIcon(":/icons/lammps-gui-icon-128x128.png"));
     // customize button icon
     auto *button = mb.button(QMessageBox::Close);
-    button->setIcon(QIcon(":/icons/window-close.png"));
+    button->setIcon(QIcon(":/icons/window-close.svg"));
     mb.exec();
 }
 
@@ -428,11 +428,11 @@ int showUnsavedChangesDialog(QWidget *parent, const QString &filename, const QSt
     mb.setStandardButtons(QMessageBox::Yes | QMessageBox::No | QMessageBox::Cancel);
 
     auto *button = mb.button(QMessageBox::Yes);
-    button->setIcon(QIcon(":/icons/dialog-ok.png"));
+    button->setIcon(QIcon(":/icons/dialog-ok.svg"));
     button = mb.button(QMessageBox::No);
-    button->setIcon(QIcon(":/icons/dialog-no.png"));
+    button->setIcon(QIcon(":/icons/dialog-no.svg"));
     button = mb.button(QMessageBox::Cancel);
-    button->setIcon(QIcon(":/icons/dialog-cancel.png"));
+    button->setIcon(QIcon(":/icons/dialog-cancel.svg"));
 
     if (parent) mb.setFont(parent->font());
     return mb.exec();
@@ -486,6 +486,24 @@ bool isStdoutSilenced()
 void notifyCaptureState(bool active)
 {
     capture_is_active = active;
+}
+
+// shared tool-button sizing policy (see helpers.h)
+
+QSize toolButtonSize(const QAbstractButton *sample)
+{
+    const int side = sample->minimumSizeHint().height() + Cfg::TOOLBAR_BUTTON_MARGIN;
+    return {side, side};
+}
+
+void styleToolButtons(const QSize &size, std::initializer_list<QAbstractButton *> buttons)
+{
+    const QSize iconsize(Cfg::TOOLBAR_ICON_SIZE, Cfg::TOOLBAR_ICON_SIZE);
+    for (auto *button : buttons) {
+        button->setMinimumSize(size);
+        button->setMaximumSize(size);
+        button->setIconSize(iconsize);
+    }
 }
 
 // Local Variables:

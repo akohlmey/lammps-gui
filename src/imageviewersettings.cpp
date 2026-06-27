@@ -295,9 +295,9 @@ void ImageViewer::globalSettings()
 
     auto *bottomlayout = new QHBoxLayout;
     bottomlayout->setSpacing(LAYOUT_SPACING);
-    auto *cancel = new QPushButton(QIcon(":/icons/dialog-cancel.png"), "&Cancel");
-    auto *apply  = new QPushButton(QIcon(":/icons/dialog-ok.png"), "&Apply");
-    auto *help   = new QPushButton(QIcon(":/icons/help-browser.png"), "&Help");
+    auto *cancel = new QPushButton(QIcon(":/icons/dialog-cancel.svg"), "&Cancel");
+    auto *apply  = new QPushButton(QIcon(":/icons/dialog-ok.svg"), "&Apply");
+    auto *help   = new QPushButton(QIcon(":/icons/help-browser.svg"), "&Help");
     help->setObjectName("dump_image.html");
     cancel->setAutoDefault(false);
     help->setAutoDefault(false);
@@ -802,9 +802,9 @@ void ImageViewer::atomSettings()
 
     auto *bottomlayout = new QHBoxLayout;
     bottomlayout->setSpacing(LAYOUT_SPACING);
-    auto *cancel = new QPushButton(QIcon(":/icons/dialog-cancel.png"), "&Cancel");
-    auto *apply  = new QPushButton(QIcon(":/icons/dialog-ok.png"), "&Apply");
-    auto *help   = new QPushButton(QIcon(":/icons/help-browser.png"), "&Help");
+    auto *cancel = new QPushButton(QIcon(":/icons/dialog-cancel.svg"), "&Cancel");
+    auto *apply  = new QPushButton(QIcon(":/icons/dialog-ok.svg"), "&Apply");
+    auto *help   = new QPushButton(QIcon(":/icons/help-browser.svg"), "&Help");
     help->setObjectName("dump_image.html");
     cancel->setAutoDefault(false);
     help->setAutoDefault(false);
@@ -1039,7 +1039,7 @@ void ImageViewer::buildFixComputeRows(QGridLayout *layout, int &idx,
         flag2->setFixedSize(metrics.averageCharWidth() * 8, metrics.height() + 4);
         flag2->setText(QString::number(item.second->flag2));
         layout->addWidget(flag2, idx, n++);
-        auto *help = new QPushButton(QIcon(":/icons/system-help.png"), "");
+        auto *help = new QPushButton(QIcon(":/icons/system-help.svg"), "");
         help->setObjectName(helpmap.value(item.second->style, QString()));
         layout->addWidget(help, idx, n++);
         connect(help, &QPushButton::released, this, &ImageViewer::getHelp);
@@ -1136,9 +1136,9 @@ void ImageViewer::fixSettings()
         layout->addWidget(new QHline, idx++, 0, 1, MAXCOLS);
     }
 
-    auto *cancel = new QPushButton(QIcon(":/icons/dialog-cancel.png"), "&Cancel");
-    auto *apply  = new QPushButton(QIcon(":/icons/dialog-ok.png"), "&Apply");
-    auto *help   = new QPushButton(QIcon(":/icons/help-browser.png"), "&Help");
+    auto *cancel = new QPushButton(QIcon(":/icons/dialog-cancel.svg"), "&Cancel");
+    auto *apply  = new QPushButton(QIcon(":/icons/dialog-ok.svg"), "&Apply");
+    auto *help   = new QPushButton(QIcon(":/icons/help-browser.svg"), "&Help");
     help->setObjectName("dump_image.html");
     cancel->setAutoDefault(false);
     apply->setAutoDefault(true);
@@ -1270,9 +1270,9 @@ void ImageViewer::regionSettings()
 
     auto *bottomlayout = new QHBoxLayout;
     bottomlayout->setSpacing(LAYOUT_SPACING);
-    auto *cancel = new QPushButton(QIcon(":/icons/dialog-cancel.png"), "&Cancel");
-    auto *apply  = new QPushButton(QIcon(":/icons/dialog-ok.png"), "&Apply");
-    auto *help   = new QPushButton(QIcon(":/icons/help-browser.png"), "&Help");
+    auto *cancel = new QPushButton(QIcon(":/icons/dialog-cancel.svg"), "&Cancel");
+    auto *apply  = new QPushButton(QIcon(":/icons/dialog-ok.svg"), "&Apply");
+    auto *help   = new QPushButton(QIcon(":/icons/help-browser.svg"), "&Help");
     help->setObjectName("Howto_viz.html#visualizing-regions");
     cancel->setAutoDefault(false);
     help->setAutoDefault(false);
@@ -1450,8 +1450,8 @@ void ImageViewer::colorSettings()
     // Load/Save JSON row (above Cancel/Apply/Reset)
     auto *jsonlayout = new QHBoxLayout;
     jsonlayout->setSpacing(LAYOUT_SPACING);
-    auto *loadJson = new QPushButton(QIcon(":/icons/document-open.png"), "&Load from JSON...");
-    auto *saveJson = new QPushButton(QIcon(":/icons/document-save.png"), "&Save to JSON...");
+    auto *loadJson = new QPushButton(QIcon(":/icons/document-open.svg"), "&Load from JSON...");
+    auto *saveJson = new QPushButton(QIcon(":/icons/document-save.svg"), "&Save to JSON...");
     loadJson->setAutoDefault(false);
     saveJson->setAutoDefault(false);
     jsonlayout->addWidget(loadJson, Qt::AlignHCenter);
@@ -1460,9 +1460,9 @@ void ImageViewer::colorSettings()
 
     auto *bottomlayout = new QHBoxLayout;
     bottomlayout->setSpacing(LAYOUT_SPACING);
-    auto *cancel = new QPushButton(QIcon(":/icons/dialog-cancel.png"), "&Cancel");
-    auto *apply  = new QPushButton(QIcon(":/icons/dialog-ok.png"), "&Apply");
-    auto *reset  = new QPushButton(QIcon(":/icons/system-restart.png"), "&Reset");
+    auto *cancel = new QPushButton(QIcon(":/icons/dialog-cancel.svg"), "&Cancel");
+    auto *apply  = new QPushButton(QIcon(":/icons/dialog-ok.svg"), "&Apply");
+    auto *reset  = new QPushButton(QIcon(":/icons/system-restart.svg"), "&Reset");
     reset->setObjectName("dump_image.html");
     cancel->setAutoDefault(false);
     reset->setAutoDefault(false);

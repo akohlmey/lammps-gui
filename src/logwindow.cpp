@@ -65,7 +65,7 @@ LogWindow::LogWindow(const QString &_filename, LammpsGui *_lammpsgui, QWidget *p
     frame->setFrameStyle(QFrame::Box | QFrame::Plain);
     frame->setLineWidth(2);
 
-    auto *button = new QPushButton(QIcon(":/icons/warning.png"), "");
+    auto *button = new QPushButton(QIcon(":/icons/warning.svg"), "");
     button->setToolTip("Jump to next warning");
     connect(button, &QPushButton::released, this, &LogWindow::nextWarning);
 
@@ -267,12 +267,12 @@ void LogWindow::contextMenuEvent(QContextMenuEvent *event)
     // show augmented context menu
     auto *menu = createStandardContextMenu();
     menu->addSeparator();
-    addMenuAction(menu, QString("Save Log to File ..."), ":/icons/document-save-as.png", this,
+    addMenuAction(menu, QString("Save Log to File ..."), ":/icons/document-save-as.svg", this,
                   &LogWindow::saveAs)
         ->setShortcut(QKeySequence(Qt::CTRL | Qt::Key_S));
     // only show export-to-yaml entry if there is YAML format content.
     if (checkYaml()) {
-        addMenuAction(menu, QString("&Export YAML Data to File ..."), ":/icons/yaml-file-icon.png",
+        addMenuAction(menu, QString("&Export YAML Data to File ..."), ":/icons/yaml-file-icon.svg",
                       this, &LogWindow::extractYaml)
             ->setShortcut(QKeySequence(Qt::CTRL | Qt::Key_Y));
     }
@@ -282,16 +282,16 @@ void LogWindow::contextMenuEvent(QContextMenuEvent *event)
     auto url  = QRegularExpression(URL_REGEX).match(text);
     if (url.hasMatch()) {
         errorurl = url.captured(1);
-        addMenuAction(menu, "Open &URL in Web Browser", ":/icons/help-browser.png", this,
+        addMenuAction(menu, "Open &URL in Web Browser", ":/icons/help-browser.svg", this,
                       &LogWindow::openErrorUrl);
     }
-    addMenuAction(menu, "&Jump to next warning or error", ":/icons/warning.png", this,
+    addMenuAction(menu, "&Jump to next warning or error", ":/icons/warning.svg", this,
                   &LogWindow::nextWarning)
         ->setShortcut(QKeySequence(Qt::CTRL | Qt::Key_N));
     menu->addSeparator();
-    addMenuAction(menu, "&Close Window", ":/icons/window-close.png", this, &QWidget::close)
+    addMenuAction(menu, "&Close Window", ":/icons/window-close.svg", this, &QWidget::close)
         ->setShortcut(QKeySequence(Qt::CTRL | Qt::Key_W));
-    addMenuAction(menu, "&Quit LAMMPS-GUI", ":/icons/application-exit.png", this, &LogWindow::quit)
+    addMenuAction(menu, "&Quit LAMMPS-GUI", ":/icons/application-exit.svg", this, &LogWindow::quit)
         ->setShortcut(QKeySequence(Qt::CTRL | Qt::Key_Q));
     menu->exec(event->globalPos());
     delete menu;

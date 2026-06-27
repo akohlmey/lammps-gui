@@ -62,9 +62,9 @@ Preferences::Preferences(LammpsWrapper *_lammps, LammpsGui *_lammpsgui, QWidget 
     tabWidget->addTab(new ChartsTab(settings), "Cha&rts Settings");
 
     auto *button = buttonBox->button(QDialogButtonBox::Ok);
-    button->setIcon(QIcon(":/icons/dialog-ok.png"));
+    button->setIcon(QIcon(":/icons/dialog-ok.svg"));
     button = buttonBox->button(QDialogButtonBox::Cancel);
-    button->setIcon(QIcon(":/icons/dialog-cancel.png"));
+    button->setIcon(QIcon(":/icons/dialog-cancel.svg"));
 
     connect(buttonBox, &QDialogButtonBox::accepted, this, &Preferences::accept);
     connect(buttonBox, &QDialogButtonBox::rejected, this, &QDialog::reject);
@@ -312,9 +312,9 @@ GeneralTab::GeneralTab(QSettings *_settings, LammpsWrapper *_lammps, LammpsGui *
     settings->endGroup();
 
     auto *getallfont =
-        new QPushButton(QIcon(":/icons/preferences-desktop-font.png"), "Select &Default Font...");
+        new QPushButton(QIcon(":/icons/preferences-desktop-font.svg"), "Select &Default Font...");
     auto *gettextfont =
-        new QPushButton(QIcon(":/icons/preferences-desktop-font.png"), "Select &Text Font...");
+        new QPushButton(QIcon(":/icons/preferences-desktop-font.svg"), "Select &Text Font...");
     connect(getallfont, &QPushButton::released, this, &GeneralTab::newAllFont);
     connect(gettextfont, &QPushButton::released, this, &GeneralTab::newTextFont);
 
@@ -376,8 +376,8 @@ GeneralTab::GeneralTab(QSettings *_settings, LammpsWrapper *_lammps, LammpsGui *
         new QLineEdit(settings->value(Keys::PLUGIN_PATH, "liblammpsplugin.so").toString());
     auto *plugindownload = new QPushButton("Download &LAMMPS shared library...");
     auto *pluginbrowse   = new QPushButton("&Browse...");
-    plugindownload->setIcon(QIcon(":/icons/download-file.png"));
-    pluginbrowse->setIcon(QIcon(":/icons/document-open.png"));
+    plugindownload->setIcon(QIcon(":/icons/download-file.svg"));
+    pluginbrowse->setIcon(QIcon(":/icons/document-open.svg"));
 
     auto *pluginlayout = new QHBoxLayout;
     pluginedit->setObjectName("pluginedit");

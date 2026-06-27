@@ -37,7 +37,7 @@ SetVariables::SetVariables(QList<QPair<QString, QString>> &_vars, QWidget *paren
         auto *row  = new QHBoxLayout;
         auto *name = new QLineEdit(v.first);
         auto *val  = new QLineEdit(v.second);
-        auto *del  = new QPushButton(QIcon(":/icons/edit-delete.png"), "");
+        auto *del  = new QPushButton(QIcon(":/icons/edit-delete.svg"), "");
         name->setObjectName("varname");
         val->setObjectName("varval");
         del->setObjectName(QString::number(i));
@@ -87,7 +87,7 @@ void SetVariables::addRow()
     auto *row  = new QHBoxLayout;
     auto *name = new QLineEdit(QString());
     auto *val  = new QLineEdit(QString());
-    auto *del  = new QPushButton(QIcon(":/icons/edit-delete.png"), "");
+    auto *del  = new QPushButton(QIcon(":/icons/edit-delete.svg"), "");
     name->setObjectName("varname");
     val->setObjectName("varval");
     del->setObjectName(QString::number(nrows - 2));

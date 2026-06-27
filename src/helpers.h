@@ -15,8 +15,10 @@
 #include <QAction>
 #include <QIcon>
 #include <QMenu>
+#include <QSize>
 #include <QString>
 #include <QStringList>
+#include <initializer_list>
 #include <memory>
 #include <string>
 #include <vector>
@@ -24,6 +26,7 @@
 class QWidget;
 class QImage;
 class QFont;
+class QAbstractButton;
 
 // OS specific default fonts (managed via unique_ptr for automatic cleanup)
 extern std::unique_ptr<QFont> GUI_MONOFONT;
@@ -230,6 +233,33 @@ public:
     StdoutSilencer &operator=(const StdoutSilencer &) = delete;
     StdoutSilencer &operator=(StdoutSilencer &&)      = delete;
 };
+
+/**
+ * @brief Square size for a toolbar/status-bar button from a sample's size hint
+ *
+ * Implements the shared tool-button sizing policy: take the sample button's
+ * minimum size hint height, enlarge it by Cfg::TOOLBAR_BUTTON_MARGIN, and
+ * return a square of that side. Compute this once per button row and reuse it
+ * for the row's buttons (via styleToolButtons()) and any adjacent widgets
+ * (line edits, labels, spin boxes) that should share the button height.
+ *
+ * @param sample Representative button (typically the first in the row)
+ * @return Square button size in logical pixels
+ */
+extern QSize toolButtonSize(const QAbstractButton *sample);
+
+/**
+ * @brief Apply the shared tool-button policy to a set of buttons
+ *
+ * Fixes every button to @p size (a square from toolButtonSize()) and gives it
+ * the standard Cfg::TOOLBAR_ICON_SIZE icon, so only a small, uniform padding
+ * remains between icon and frame. The image viewer, slide show, chart window,
+ * and editor status bar all use this so their button rows look identical.
+ *
+ * @param size    Square button size (from toolButtonSize())
+ * @param buttons Buttons to size and assign the standard icon size
+ */
+extern void styleToolButtons(const QSize &size, std::initializer_list<QAbstractButton *> buttons);
 
 /**
  * @brief Append an action with an optional icon and a triggered() handler to a menu

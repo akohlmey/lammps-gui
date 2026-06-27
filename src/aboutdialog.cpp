@@ -93,7 +93,7 @@ AboutDialog::AboutDialog(const QString &version, const QString &info, const QStr
     auto *buttonLayout = new QHBoxLayout();
     buttonLayout->addStretch();
     auto *closeButton = new QPushButton("Close", this);
-    closeButton->setIcon(QIcon(":/icons/window-close.png"));
+    closeButton->setIcon(QIcon(":/icons/window-close.svg"));
     connect(closeButton, &QPushButton::clicked, this, &QDialog::close);
     buttonLayout->addWidget(closeButton);
     mainLayout->addLayout(buttonLayout);

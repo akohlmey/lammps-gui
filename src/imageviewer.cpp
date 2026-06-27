@@ -426,90 +426,72 @@ ImageViewer::ImageViewer(const QString &fileName, LammpsWrapper *_lammps, Lammps
     auto *dummy2 = new QPushButton(QIcon(), "");
     dummy2->hide();
 
-    auto *dossao = new QPushButton(QIcon(":/icons/hd-img.png"), "");
+    auto *dossao = new QPushButton(QIcon(":/icons/hd-img.svg"), "");
     dossao->setCheckable(true);
     dossao->setToolTip("Toggle SSAO rendering");
     dossao->setObjectName("ssao");
-    auto buttonhint = dossao->minimumSizeHint();
-    buttonhint.setWidth(buttonhint.height() * 4 / 3);
-    dossao->setMinimumSize(buttonhint);
-    dossao->setMaximumSize(buttonhint);
-    auto *doanti = new QPushButton(QIcon(":/icons/antialias.png"), "");
+    const QSize buttonhint = toolButtonSize(dossao);
+    auto *doanti           = new QPushButton(QIcon(":/icons/antialias.svg"), "");
     doanti->setCheckable(true);
     doanti->setToolTip("Toggle anti-aliasing");
     doanti->setObjectName("antialias");
-    doanti->setMinimumSize(buttonhint);
-    doanti->setMaximumSize(buttonhint);
-    auto *doshiny = new QPushButton(QIcon(":/icons/image-shiny.png"), "");
+    auto *doshiny = new QPushButton(QIcon(":/icons/image-shiny.svg"), "");
     doshiny->setCheckable(true);
     doshiny->setToolTip("Toggle shininess");
     doshiny->setObjectName("shiny");
-    doshiny->setMinimumSize(buttonhint);
-    doshiny->setMaximumSize(buttonhint);
-    auto *dovdw = new QPushButton(QIcon(":/icons/vdw-style.png"), "");
+    auto *dovdw = new QPushButton(QIcon(":/icons/vdw-style.svg"), "");
     dovdw->setCheckable(true);
     dovdw->setToolTip("Toggle VDW style representation");
     dovdw->setObjectName("vdw");
-    dovdw->setMinimumSize(buttonhint);
-    dovdw->setMaximumSize(buttonhint);
-    auto *dobond = new QPushButton(QIcon(":/icons/autobonds.png"), "");
+    auto *dobond = new QPushButton(QIcon(":/icons/autobonds.svg"), "");
     dobond->setCheckable(true);
     dobond->setToolTip("Toggle dynamic bond representation");
     dobond->setObjectName("autobond");
     dobond->setEnabled(false);
-    dobond->setMinimumSize(buttonhint);
-    dobond->setMaximumSize(buttonhint);
     auto *bondcut = new QLineEdit(QString::number(bondcutoff));
     bondcut->setMaxLength(5);
     bondcut->setObjectName("bondcut");
     bondcut->setToolTip("Set dynamic bond cutoff");
     QFontMetrics metrics(bondcut->fontMetrics());
-    bondcut->setFixedSize(metrics.averageCharWidth() * 6, metrics.height() + 4);
+    // keep the cutoff field height in sync with the toolbar buttons
+    bondcut->setFixedSize(metrics.averageCharWidth() * 6, buttonhint.height());
     bondcut->setEnabled(false);
     auto *dobox = new QPushButton(QIcon(":/icons/system-box.png"), "");
     dobox->setCheckable(true);
     dobox->setToolTip("Toggle displaying box");
     dobox->setObjectName("box");
-    dobox->setMinimumSize(buttonhint);
-    dobox->setMaximumSize(buttonhint);
     auto *doaxes = new QPushButton(QIcon(":/icons/axes-img.png"), "");
     doaxes->setCheckable(true);
     doaxes->setToolTip("Toggle displaying axes");
     doaxes->setObjectName("axes");
-    doaxes->setMinimumSize(buttonhint);
-    doaxes->setMaximumSize(buttonhint);
-    auto *zoomin = new QPushButton(QIcon(":/icons/gtk-zoom-in.png"), "");
+    auto *zoomin = new QPushButton(QIcon(":/icons/gtk-zoom-in.svg"), "");
     zoomin->setToolTip("Zoom in by 10 percent");
-    zoomin->setMinimumSize(buttonhint);
-    zoomin->setMaximumSize(buttonhint);
-    auto *zoomout = new QPushButton(QIcon(":/icons/gtk-zoom-out.png"), "");
+    auto *zoomout = new QPushButton(QIcon(":/icons/gtk-zoom-out.svg"), "");
     zoomout->setToolTip("Zoom out by 10 percent");
-    zoomout->setMinimumSize(buttonhint);
-    zoomout->setMaximumSize(buttonhint);
-    auto *rotleft = new QPushButton(QIcon(":/icons/object-rotate-left.png"), "");
+    auto *rotleft = new QPushButton(QIcon(":/icons/rotate-left.svg"), "");
     rotleft->setToolTip("Rotate left by 10 degrees");
-    rotleft->setMinimumSize(buttonhint);
-    rotleft->setMaximumSize(buttonhint);
-    auto *rotright = new QPushButton(QIcon(":/icons/object-rotate-right.png"), "");
+    auto *rotright = new QPushButton(QIcon(":/icons/rotate-right.svg"), "");
     rotright->setToolTip("Rotate right by 10 degrees");
-    rotright->setMinimumSize(buttonhint);
-    rotright->setMaximumSize(buttonhint);
-    auto *rotup = new QPushButton(QIcon(":/icons/gtk-go-up.png"), "");
+    auto *rotup = new QPushButton(QIcon(":/icons/rotate-up.svg"), "");
     rotup->setToolTip("Rotate up by 10 degrees");
-    rotup->setMinimumSize(buttonhint);
-    rotup->setMaximumSize(buttonhint);
-    auto *rotdown = new QPushButton(QIcon(":/icons/gtk-go-down.png"), "");
+    auto *rotdown = new QPushButton(QIcon(":/icons/rotate-down.svg"), "");
     rotdown->setToolTip("Rotate down by 10 degrees");
-    rotdown->setMinimumSize(buttonhint);
-    rotdown->setMaximumSize(buttonhint);
-    auto *recenter = new QPushButton(QIcon(":/icons/move-recenter.png"), "");
+    auto *recenter = new QPushButton(QIcon(":/icons/move-recenter.svg"), "");
     recenter->setToolTip("Recenter on group");
-    recenter->setMinimumSize(buttonhint);
-    recenter->setMaximumSize(buttonhint);
-    auto *reset = new QPushButton(QIcon(":/icons/gtk-zoom-fit.png"), "");
+    auto *reset = new QPushButton(QIcon(":/icons/gtk-zoom-fit.svg"), "");
     reset->setToolTip("Reset view to defaults");
-    reset->setMinimumSize(buttonhint);
-    reset->setMaximumSize(buttonhint);
+
+    // square toolbar buttons with a snug, uniform icon (shared policy)
+    styleToolButtons(buttonhint, {dossao, doanti, doshiny, dovdw, dobond, dobox, doaxes, zoomin,
+                                  zoomout, rotleft, rotright, rotup, rotdown, recenter, reset});
+
+    // match the first-row controls (menu bar and size fields) to the toolbar
+    // button height so both rows line up and the layout looks balanced
+    menuBar->setFixedHeight(buttonhint.height());
+    xval->setFixedHeight(buttonhint.height());
+    yval->setFixedHeight(buttonhint.height());
+    asize->setFixedHeight(buttonhint.height());
+    bsize->setFixedHeight(buttonhint.height());
 
     auto *setviz = new QPushButton("G&lobal");
     setviz->setToolTip("Open dialog for global graphics settings");
@@ -1058,14 +1040,14 @@ void ImageViewer::doZoomOut()
 
 void ImageViewer::doRotLeft()
 {
-    vrot -= 10;
+    vrot += 10;
     if (vrot < -180) vrot += 360;
     createImage();
 }
 
 void ImageViewer::doRotRight()
 {
-    vrot += 10;
+    vrot -= 10;
     if (vrot > 180) vrot -= 360;
     createImage();
 }
@@ -1734,31 +1716,31 @@ void ImageViewer::createActions()
 {
     QMenu *fileMenu = menuBar->addMenu("&File");
 
-    saveAsAct = addMenuAction(fileMenu, "&Save As...", ":/icons/document-save-as.png", this,
+    saveAsAct = addMenuAction(fileMenu, "&Save As...", ":/icons/document-save-as.svg", this,
                               &ImageViewer::saveAs);
     saveAsAct->setEnabled(false);
     saveAsAct->setShortcut(QKeySequence(Qt::CTRL | Qt::Key_S));
     fileMenu->addSeparator();
     copyAct =
-        addMenuAction(fileMenu, "Copy &Image", ":/icons/edit-copy.png", this, &ImageViewer::copy);
+        addMenuAction(fileMenu, "Copy &Image", ":/icons/edit-copy.svg", this, &ImageViewer::copy);
     copyAct->setShortcut(QKeySequence::Copy);
     copyAct->setEnabled(false);
-    cmdAct = addMenuAction(fileMenu, "Copy &dump image command", ":/icons/file-clipboard.png", this,
+    cmdAct = addMenuAction(fileMenu, "Copy &dump image command", ":/icons/file-clipboard.svg", this,
                            &ImageViewer::cmdToClipboard);
     cmdAct->setShortcut(QKeySequence(Qt::CTRL | Qt::Key_D));
     fileMenu->addSeparator();
-    addMenuAction(fileMenu, "&Load Colors from JSON...", ":/icons/document-open.png", this,
+    addMenuAction(fileMenu, "&Load Colors from JSON...", ":/icons/document-open.svg", this,
                   &ImageViewer::loadColors);
-    addMenuAction(fileMenu, "S&ave Colors to JSON...", ":/icons/document-save.png", this,
+    addMenuAction(fileMenu, "S&ave Colors to JSON...", ":/icons/document-save.svg", this,
                   &ImageViewer::saveColors);
-    addMenuAction(fileMenu, "&Reset Colors", ":/icons/system-restart.png", this, [this]() {
+    addMenuAction(fileMenu, "&Reset Colors", ":/icons/system-restart.svg", this, [this]() {
         resetColors();
         createImage();
     });
     fileMenu->addSeparator();
-    addMenuAction(fileMenu, "&Close", ":/icons/window-close.png", this, &QWidget::close)
+    addMenuAction(fileMenu, "&Close", ":/icons/window-close.svg", this, &QWidget::close)
         ->setShortcut(QKeySequence(Qt::CTRL | Qt::Key_W));
-    addMenuAction(fileMenu, "&Quit", ":/icons/application-exit.png", this, &ImageViewer::quit)
+    addMenuAction(fileMenu, "&Quit", ":/icons/application-exit.svg", this, &ImageViewer::quit)
         ->setShortcut(QKeySequence(Qt::CTRL | Qt::Key_Q));
 }
 
