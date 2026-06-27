@@ -262,6 +262,22 @@ extern QSize toolButtonSize(const QAbstractButton *sample);
 extern void styleToolButtons(const QSize &size, std::initializer_list<QAbstractButton *> buttons);
 
 /**
+ * @brief Apply the shared window-manager hints to a top-level output window
+ *
+ * Strips the dialog property (so the window is an independent top-level window,
+ * not a transient that stays above its parent) and removes the minimize button.
+ * The maximize button is also removed, except on macOS where it is kept because
+ * removing it makes the window non-resizable there. Used for the log, chart,
+ * image, slide-show, file-viewer and variables windows so they share one frame
+ * policy.
+ *
+ * @note setWindowFlags() re-shows a hidden widget, so call this before a final
+ *       hide() when the window must start hidden.
+ * @param window Top-level window to adjust (no-op if null)
+ */
+extern void applyWindowFlags(QWidget *window);
+
+/**
  * @brief Append an action with an optional icon and a triggered() handler to a menu
  * @param menu     Menu to append the new action to
  * @param text     Action label text

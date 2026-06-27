@@ -346,18 +346,7 @@ SlideShow::SlideShow(const QString &fileName, LammpsGui *_lammpsgui, QWidget *pa
     mainLayout->setSizeConstraint(QLayout::SetMinAndMaxSize);
     adjustWindowSize();
 
-    // set window flags for window manager
-    auto flags = windowFlags();
-    flags &= ~Qt::Dialog;
-    flags |= Qt::CustomizeWindowHint;
-    flags |= Qt::WindowMinimizeButtonHint;
-    // must add maximize button for macOS to allow resizing, but remove on other platforms
-#if defined(Q_OS_MACOS)
-    flags |= Qt::WindowMaximizeButtonHint;
-#else
-    flags &= ~Qt::WindowMaximizeButtonHint;
-#endif
-    setWindowFlags(flags);
+    applyWindowFlags(this);
 }
 
 void SlideShow::addImage(const QString &filename)

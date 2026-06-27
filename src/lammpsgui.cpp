@@ -129,26 +129,7 @@ void LammpsGui::setupUi(QSettings &settings, QFont &allFont, QFont &monoFont)
     if (mainy < Cfg::MINIMUM_HEIGHT) mainy = settings.value(Keys::MAINY, 512).toInt();
     resize(mainx, mainy);
 
-    varwindow = new QLabel(QString());
-    varwindow->setWindowTitle(QString("LAMMPS-GUI - Current Variables"));
-    varwindow->setWindowIcon(QIcon(Cfg::MAIN_ICON));
-    varwindow->setMinimumSize(100, 50);
-    varwindow->setText("(none)");
-    varwindow->setFont(monoFont);
-    varwindow->setFrameStyle(QFrame::Sunken);
-    varwindow->setFrameShape(QFrame::Panel);
-    varwindow->setAlignment(Qt::AlignVCenter);
-    varwindow->setContentsMargins(5, 5, 5, 5);
-    varwindow->setSizePolicy(QSizePolicy::MinimumExpanding, QSizePolicy::MinimumExpanding);
-    varwindow->hide();
-
-    // set window flags for window manager
-    auto flags = windowFlags();
-    flags &= ~Qt::Dialog;
-    flags |= Qt::CustomizeWindowHint;
-    flags |= Qt::WindowMinimizeButtonHint;
-    flags |= Qt::WindowMaximizeButtonHint;
-    setWindowFlags(flags);
+    createVariableWindow();
 }
 
 template <typename Func>
@@ -234,8 +215,8 @@ void LammpsGui::createRunMenu()
                   &LammpsGui::restartLammps);
     menu->addSeparator();
 
-    addMenuAction(menu, ":/icons/preferences-desktop.svg", "Set &Variables...",
-                  "Ctrl+Shift+V", &LammpsGui::editVariables);
+    addMenuAction(menu, ":/icons/preferences-desktop.svg", "Set &Variables...", "Ctrl+Shift+V",
+                  &LammpsGui::editVariables);
     menu->addSeparator();
 
     addMenuAction(menu, ":/icons/image-viewer.svg", "Create &Image", "Ctrl+I",
@@ -264,8 +245,8 @@ void LammpsGui::createViewMenu()
                   &LammpsGui::viewImage);
     addMenuAction(menu, ":/icons/image-x-generic.svg", "&Slide Show Window", "Ctrl+L",
                   &LammpsGui::viewSlides);
-    addMenuAction(menu, ":/icons/utilities-terminal.svg", "&Variables Window",
-                  "Ctrl+Shift+W", &LammpsGui::viewVariables);
+    addMenuAction(menu, ":/icons/utilities-terminal.svg", "&Variables Window", "Ctrl+Shift+W",
+                  &LammpsGui::viewVariables);
 }
 
 void LammpsGui::createTutorialMenu()
@@ -1738,6 +1719,7 @@ void LammpsGui::createLogWindow(QSettings &settings)
         QString("LAMMPS-GUI - Output - %1 - Run %2").arg(currentFile).arg(runCounter));
     logwindow->setWindowIcon(QIcon(Cfg::MAIN_ICON));
     logwindow->setMinimumSize(Cfg::MINIMUM_WIDTH, Cfg::MINIMUM_HEIGHT);
+
     if (settings.value(Keys::VIEWLOG, true).toBool())
         logwindow->show();
     else
@@ -2010,14 +1992,34 @@ void LammpsGui::viewImage()
     }
 }
 
+void LammpsGui::createVariableWindow()
+{
+    varwindow = new QLabel(QString());
+    varwindow->setWindowTitle(QString("LAMMPS-GUI - Current Variables"));
+    varwindow->setWindowIcon(QIcon(Cfg::MAIN_ICON));
+    varwindow->setMinimumSize(100, 50);
+    varwindow->setText("(none)");
+    varwindow->setFont(textEdit->font());
+    varwindow->setFrameStyle(QFrame::Sunken);
+    varwindow->setFrameShape(QFrame::Panel);
+    varwindow->setAlignment(Qt::AlignVCenter);
+    varwindow->setContentsMargins(5, 5, 5, 5);
+    varwindow->setSizePolicy(QSizePolicy::MinimumExpanding, QSizePolicy::MinimumExpanding);
+
+    // apply before hide(): applyWindowFlags() calls setWindowFlags(), which re-shows the widget
+    applyWindowFlags(varwindow);
+    varwindow->hide();
+}
+
 void LammpsGui::viewVariables()
 {
-    if (varwindow) {
-        if (varwindow->isVisible()) {
-            varwindow->hide();
-        } else {
-            varwindow->show();
-        }
+    // varwindow is destroyed when the editor is reset (newDocument()/openFile()),
+    // so recreate it on demand here -- mirrors viewSlides()
+    if (!varwindow) createVariableWindow();
+    if (varwindow->isVisible()) {
+        varwindow->hide();
+    } else {
+        varwindow->show();
     }
 }
 

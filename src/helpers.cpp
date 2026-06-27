@@ -506,6 +506,24 @@ void styleToolButtons(const QSize &size, std::initializer_list<QAbstractButton *
     }
 }
 
+// shared window-manager hint policy for output windows (see helpers.h)
+
+void applyWindowFlags(QWidget *window)
+{
+    if (!window) return;
+    auto flags = window->windowFlags();
+    flags &= ~Qt::Dialog;
+    flags |= Qt::CustomizeWindowHint;
+    flags &= ~Qt::WindowMinimizeButtonHint;
+#if defined(Q_OS_MACOS)
+    // keep the maximize button on macOS: removing it disables window resizing
+    flags |= Qt::WindowMaximizeButtonHint;
+#else
+    flags &= ~Qt::WindowMaximizeButtonHint;
+#endif
+    window->setWindowFlags(flags);
+}
+
 // Local Variables:
 // c-basic-offset: 4
 // End:
