@@ -312,7 +312,7 @@ ChartWindow::ChartWindow(const QString &_filename, LammpsGui *_lammpsgui, QWidge
     };
     auto *styleBtn = makeToolBtn(":/icons/preferences-desktop-personal.svg", "Chart Style...");
     auto *refBtn   = makeToolBtn(":/icons/reference-lines.svg", "Reference Lines...");
-    auto *ppBtn    = makeToolBtn(":/icons/x-office-drawing.svg", "Postprocess...");
+    auto *ppBtn    = makeToolBtn(":/icons/chart-smooth.svg", "Postprocess...");
     // square toolbar buttons with a snug, uniform icon (shared policy)
     styleToolButtons(toolButtonSize(styleBtn), {styleBtn, refBtn, ppBtn});
     settings.beginGroup(Keys::GROUP_CHARTS);
@@ -345,7 +345,7 @@ ChartWindow::ChartWindow(const QString &_filename, LammpsGui *_lammpsgui, QWidge
     copyAct->setShortcut(QKeySequence(QKeySequence::Copy));
     exportCsvAct = addMenuAction(file, "&Export data to CSV...", ":/icons/csv-file-icon.svg",
                                  this, &ChartWindow::exportCsv);
-    exportDatAct = addMenuAction(file, "Export data to &Gnuplot...", ":/icons/application-plot.svg",
+    exportDatAct = addMenuAction(file, "Export data to &Gnuplot...", ":/icons/txt-file-icon.svg",
                                  this, &ChartWindow::exportDat);
     exportYamlAct = addMenuAction(file, "Export data to &YAML...", ":/icons/yaml-file-icon.svg",
                                   this, &ChartWindow::exportYaml);
@@ -354,7 +354,7 @@ ChartWindow::ChartWindow(const QString &_filename, LammpsGui *_lammpsgui, QWidge
                   &ChartWindow::changeStyle);
     refLinesAct = addMenuAction(file, "&Reference Lines...", ":/icons/reference-lines.svg",
                                 this, &ChartWindow::referenceLines);
-    addMenuAction(file, "&Postprocess...", ":/icons/x-office-drawing.svg", this,
+    addMenuAction(file, "&Postprocess...", ":/icons/chart-smooth.svg", this,
                   &ChartWindow::postProcess);
     // "Add Data from File..." is only relevant in standalone file-plot mode
     if (!lammpsgui) {
