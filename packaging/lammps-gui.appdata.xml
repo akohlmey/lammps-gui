@@ -58,6 +58,18 @@
   <content_rating type="oars-1.1" />
 
   <releases>
+    <release version="2.0.9999" timestamp="1782556444">
+      <description>
+        <p>Another pre-release for the upcoming 2.1.0 version.</p>
+        <ul>
+          <li>Overhaul the icon library: redraw the icons and convert them to scalable SVG so they stay sharp on high-resolution and HiDPI/Retina displays, and drop the now-unused bitmap icons</li>
+          <li>Give the toolbars a consistent look: the image viewer, slide show, chart window, and editor status bar now use square buttons with larger, snug icons, with the neighboring input fields matched to the button height</li>
+          <li>Replace the desktop-theme icons on the standard text context menus (undo, redo, cut, copy, paste, delete, select all) with the application's own icons so right-click menus match the rest of the interface on every platform</li>
+          <li>Fix the "Variables Window" entry in the View menu, which had stopped opening the window after creating or loading an input file</li>
+          <li>Internal cleanup: share the toolbar-button sizing and window-manager hint logic through common helpers</li>
+        </ul>
+      </description>
+    </release>
     <release version="2.0.999" timestamp="1782228677">
       <description>
         <p>Pre-release for the upcoming 2.1.0 version.</p>
