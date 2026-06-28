@@ -1246,6 +1246,26 @@ void LammpsGui::inspectFile(const QString &fileName)
             infoviewer->show();
             ilist->info = infoviewer;
             dumpinfo.remove();
+            // read_restart restores the pair style but not the kspace style, so a
+            // pair style that uses long-range Coulomb/dispersion would make the
+            // render "run 0" in the image viewer abort with "...requires a KSpace
+            // style". Probe with a silenced no-op run and let LAMMPS be the oracle:
+            // only when it reports that a KSpace style is required do we add the
+            // harmless "kspace_style zero" (which computes nothing but satisfies the
+            // requirement). Pair styles that do not use kspace are left as "none"
+            // (the read_restart default) -- adding a kspace style would itself error
+            // there (no per-atom charge / incompatible pair style). lastErrorMessage()
+            // both reads and clears the error, so the probe leaves LAMMPS clean.
+            QString kspaceerr;
+            {
+                StdoutSilencer guard;
+                lammps.command("run 0 post no");
+                kspaceerr = lammps.lastErrorMessage();
+            }
+            if (kspaceerr.contains("requires a KSpace style")) {
+                StdoutSilencer guard;
+                lammps.command("kspace_style zero 1.0e-6");
+            }
             {
                 StdoutSilencer guard;
                 lammps.command(QString("write_data %1 pair ij noinit").arg(infodata));
