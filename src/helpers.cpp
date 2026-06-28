@@ -427,7 +427,9 @@ int showUnsavedChangesDialog(QWidget *parent, const QString &filename, const QSt
     mb.setWindowIcon(parent ? parent->windowIcon() : QIcon());
     mb.setText(QString("The buffer ") + filename + " has changes");
     mb.setInformativeText(question);
-    mb.setIcon(QMessageBox::Question);
+    const int extent = mb.style()->pixelMetric(QStyle::PM_MessageBoxIconSize, nullptr, &mb);
+    mb.setIconPixmap(
+        QIcon(":/icons/system-help.svg").pixmap(QSize(extent, extent), mb.devicePixelRatioF()));
     mb.setStandardButtons(QMessageBox::Yes | QMessageBox::No | QMessageBox::Cancel);
 
     auto *button = mb.button(QMessageBox::Yes);
