@@ -17,7 +17,7 @@ authors:
 affiliations:
   - name: Institute for Computational Molecular Science, Temple University, Philadelphia, PA, USA
     index: 1
-date: 22 June 2026
+date: 27 June 2026
 bibliography: paper.bib
 ---
 
@@ -73,7 +73,7 @@ syntax highlighting, line numbers, and a marker on the currently
 processed input line; the status bar shows CPU utilization and run
 progress; the Image Viewer shows the starting geometry; the Output window
 the screen output; and the Charts window a live plot of a thermodynamic
-data column.\label{fig:editor}](images/lammps-gui-deform.png){ width=70% }
+data column.\label{fig:editor}](images/lammps-gui-screen.png){ width=70% }
 
 Several other approaches to make running LAMMPS simulations more
 accessible exist, but they target different needs.  Commercial
@@ -143,8 +143,11 @@ continuous-integration builds on all supported platforms.
 # Acknowledgements
 
 Financial support by Sandia National Laboratories under PO 2149742 and
-PO 2407526 is gratefully acknowledged. The author thanks the LAMMPS
-developers and the authors of the LAMMPS tutorials for their feedback and
-for motivating many of the features described here.
+PO 2407526, by the US National Science Foundation via Major Research
+Infrastructure grants number 1625061 and 2216289, and by CCDC-ARL under
+Cooperative Agreement Number W911NF-21-2-0007 is gratefully
+acknowledged.  The author thanks the LAMMPS developers and the authors
+of the LAMMPS tutorials for their feedback and for motivating many of
+the features described here.
 
 # References
