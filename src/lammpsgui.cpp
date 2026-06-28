@@ -2019,7 +2019,16 @@ void LammpsGui::createVariableWindow()
     varwindow->setWindowIcon(QIcon(Cfg::MAIN_ICON));
     varwindow->setMinimumSize(100, 50);
     varwindow->setText("(none)");
-    varwindow->setFont(textEdit->font());
+
+    QSettings settings;
+    QFont monoFont;
+    QFontInfo monoInfo(*GUI_MONOFONT);
+    monoFont.setFamily(settings.value(Keys::MONOFAMILY, monoInfo.family()).toString());
+    monoFont.setPointSize(settings.value(Keys::MONOSIZE, monoInfo.pointSize()).toInt());
+    monoFont.setStyleHint(GUI_MONOFONT->styleHint());
+    monoFont.setFixedPitch(true);
+    varwindow->setFont(monoFont);
+
     varwindow->setFrameStyle(QFrame::Sunken);
     varwindow->setFrameShape(QFrame::Panel);
     varwindow->setAlignment(Qt::AlignVCenter);
