@@ -104,24 +104,13 @@ FileViewer::FileViewer(const QString &_filename, LammpsGui *_lammpsgui, const QS
     setReadOnly(true);
     setLineWrapMode(NoWrap);
     setMinimumSize(800, 500);
-    setWindowIcon(QIcon(":/icons/lammps-gui-icon-128x128.png"));
+    setWindowIcon(QIcon(Cfg::MAIN_ICON));
     if (title.isEmpty())
         setWindowTitle("LAMMPS-GUI - Viewer - " + fileName);
     else
         setWindowTitle(title);
 
-    // set window flags for window manager
-    auto flags = windowFlags();
-    flags &= ~Qt::Dialog;
-    flags |= Qt::CustomizeWindowHint;
-    flags |= Qt::WindowMinimizeButtonHint;
-    // must add maximize button for macOS to allow resizing, but remove on other platforms
-#if defined(Q_OS_MACOS)
-    flags |= Qt::WindowMaximizeButtonHint;
-#else
-    flags &= ~Qt::WindowMaximizeButtonHint;
-#endif
-    setWindowFlags(flags);
+    applyWindowFlags(this);
 }
 
 void FileViewer::quit()

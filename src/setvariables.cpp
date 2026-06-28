@@ -11,6 +11,8 @@
 
 #include "setvariables.h"
 
+#include "constants.h"
+
 #include <QDialogButtonBox>
 #include <QIcon>
 #include <QLabel>
@@ -37,7 +39,7 @@ SetVariables::SetVariables(QList<QPair<QString, QString>> &_vars, QWidget *paren
         auto *row  = new QHBoxLayout;
         auto *name = new QLineEdit(v.first);
         auto *val  = new QLineEdit(v.second);
-        auto *del  = new QPushButton(QIcon(":/icons/edit-delete.png"), "");
+        auto *del  = new QPushButton(QIcon(":/icons/edit-delete.svg"), "");
         name->setObjectName("varname");
         val->setObjectName("varval");
         del->setObjectName(QString::number(i));
@@ -52,7 +54,7 @@ SetVariables::SetVariables(QList<QPair<QString, QString>> &_vars, QWidget *paren
     layout->addSpacerItem(new QSpacerItem(10, 10, QSizePolicy::Minimum, QSizePolicy::Expanding));
 
     auto *buttonBox = new QDialogButtonBox(QDialogButtonBox::Ok | QDialogButtonBox::Cancel);
-    auto *add       = new QPushButton("&Add Row");
+    auto *add       = new QPushButton(QIcon(":/icons/expand-text.svg"),"&Add Row");
     add->setObjectName("addRow");
     buttonBox->addButton(add, QDialogButtonBox::ActionRole);
     connect(add, &QPushButton::released, this, &SetVariables::addRow);
@@ -61,7 +63,12 @@ SetVariables::SetVariables(QList<QPair<QString, QString>> &_vars, QWidget *paren
 
     layout->addWidget(buttonBox);
     setLayout(layout);
-    setWindowIcon(QIcon(":/icons/lammps-gui-icon-128x128.png"));
+    setWindowIcon(QIcon(Cfg::MAIN_ICON));
+    auto *button = buttonBox->button(QDialogButtonBox::Ok);
+    button->setIcon(QIcon(":/icons/dialog-ok.svg"));
+    button = buttonBox->button(QDialogButtonBox::Cancel);
+    button->setIcon(QIcon(":/icons/dialog-cancel.svg"));
+
     setWindowTitle("LAMMPS-GUI - Set Variables");
     resize(300, 200);
 }
@@ -87,7 +94,7 @@ void SetVariables::addRow()
     auto *row  = new QHBoxLayout;
     auto *name = new QLineEdit(QString());
     auto *val  = new QLineEdit(QString());
-    auto *del  = new QPushButton(QIcon(":/icons/edit-delete.png"), "");
+    auto *del  = new QPushButton(QIcon(":/icons/edit-delete.svg"), "");
     name->setObjectName("varname");
     val->setObjectName("varval");
     del->setObjectName(QString::number(nrows - 2));

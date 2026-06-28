@@ -420,6 +420,13 @@ private:
     /** @brief Create the status bar and its widgets */
     void createStatusBar();
 
+    /** @brief Create (or recreate) the floating "Current Variables" window.
+     *
+     * @c varwindow is torn down together with the other output windows when the
+     * editor is reset (newDocument()/openFile()), so it must be recreated on
+     * demand -- see viewVariables(). */
+    void createVariableWindow();
+
     // Central GUI elements
     CodeEditor *textEdit;           ///< Custom code editor widget
     QMenuBar *menubar;              ///< Menu bar with menus and actions

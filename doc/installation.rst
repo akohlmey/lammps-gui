@@ -324,6 +324,16 @@ The charts display is drawn by a self-contained native renderer
 build no longer depends on the Qt Charts or Qt Graphs modules.  No extra
 CMake settings are required to select a chart backend.
 
+The toolbar and menu icons are bundled in SVG format, so building and
+running LAMMPS-GUI also requires the **Qt Svg** module, which provides the
+SVG icon engine that Qt uses to render them.  On Linux distributions this
+module is often packaged separately from the Qt base libraries (for
+example the ``qt6-svg-dev`` development package, which pulls in the
+``libqt6svg6`` runtime, on Debian and Ubuntu).  The CMake configuration
+requires it, and if the module -- or, at run time, its icon-engine plugin
+-- is missing, the icons render blank.  The pre-compiled packages and
+installers already bundle it.
+
 .. versionchanged:: 2.0.0
 
    LAMMPS-GUI now *requires* Qt 6.2 or later. Support for Qt 5.x has been removed.

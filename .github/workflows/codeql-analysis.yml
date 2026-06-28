@@ -39,7 +39,8 @@ jobs:
                                 libomp-dev \
                                 mesa-common-dev \
                                 ninja-build \
-                                qt6-base-dev
+                                qt6-base-dev \
+                                qt6-svg-dev
 
     - name: Initialize CodeQL
       uses: github/codeql-action/init@v4

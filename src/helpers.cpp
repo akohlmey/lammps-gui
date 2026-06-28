@@ -27,10 +27,12 @@
 #include <QImageReader>
 #include <QMessageBox>
 #include <QPalette>
+#include <QPixmap>
 #include <QProcess>
 #include <QRegularExpression>
 #include <QStandardPaths>
 #include <QStringList>
+#include <QStyle>
 #include <QTemporaryFile>
 #include <QWidget>
 
@@ -213,6 +215,22 @@ QStringList splitLine(const QString &text)
     return list;
 }
 
+namespace {
+
+// Use one of our own SVG icons as the large QMessageBox icon instead
+// of the standard icon. Also set button and window icon consistently.
+
+void setDialogIcons(QMessageBox &mb, const QString &iconPath)
+{
+    const int extent = mb.style()->pixelMetric(QStyle::PM_MessageBoxIconSize, nullptr, &mb);
+    mb.setIconPixmap(QIcon(iconPath).pixmap(QSize(extent, extent), mb.devicePixelRatioF()));
+    mb.setWindowIcon(QIcon(Cfg::MAIN_ICON));
+    mb.setStandardButtons(QMessageBox::Ok);
+    auto *button = mb.button(QMessageBox::Ok);
+    button->setIcon(QIcon(":/icons/dialog-ok.svg"));
+}
+} // namespace
+
 // customized information dialog
 
 void information(QWidget *parent, const QString &title, const QString &text1, const QString &text2)
@@ -221,12 +239,7 @@ void information(QWidget *parent, const QString &title, const QString &text1, co
     mb.setWindowTitle(title);
     mb.setText(text1);
     if (!text2.isEmpty()) mb.setInformativeText(QString("<p>%1</p>").arg(text2));
-    mb.setIcon(QMessageBox::Information);
-    mb.setStandardButtons(QMessageBox::Close);
-    mb.setWindowIcon(QIcon(Cfg::MAIN_ICON));
-    // customize button icon
-    auto *button = mb.button(QMessageBox::Close);
-    button->setIcon(QIcon(":/icons/window-close.png"));
+    setDialogIcons(mb, ":/icons/help-tutorial.svg");
     mb.exec();
 }
 
@@ -238,12 +251,7 @@ void critical(QWidget *parent, const QString &title, const QString &text1, const
     mb.setWindowTitle(title);
     mb.setText(text1);
     if (!text2.isEmpty()) mb.setInformativeText(QString("<p>%1</p>").arg(text2));
-    mb.setIcon(QMessageBox::Critical);
-    mb.setStandardButtons(QMessageBox::Close);
-    mb.setWindowIcon(QIcon(":/icons/lammps-gui-icon-128x128.png"));
-    // customize button icon
-    auto *button = mb.button(QMessageBox::Close);
-    button->setIcon(QIcon(":/icons/window-close.png"));
+    setDialogIcons(mb, ":/icons/process-stop.svg");
     mb.exec();
 }
 
@@ -255,12 +263,7 @@ void warning(QWidget *parent, const QString &title, const QString &text1, const 
     mb.setWindowTitle(title);
     mb.setText(text1);
     if (!text2.isEmpty()) mb.setInformativeText(QString("<p>%1</p>").arg(text2));
-    mb.setIcon(QMessageBox::Warning);
-    mb.setStandardButtons(QMessageBox::Close);
-    mb.setWindowIcon(QIcon(":/icons/lammps-gui-icon-128x128.png"));
-    // customize button icon
-    auto *button = mb.button(QMessageBox::Close);
-    button->setIcon(QIcon(":/icons/window-close.png"));
+    setDialogIcons(mb, ":/icons/warning.svg");
     mb.exec();
 }
 
@@ -424,15 +427,17 @@ int showUnsavedChangesDialog(QWidget *parent, const QString &filename, const QSt
     mb.setWindowIcon(parent ? parent->windowIcon() : QIcon());
     mb.setText(QString("The buffer ") + filename + " has changes");
     mb.setInformativeText(question);
-    mb.setIcon(QMessageBox::Question);
+    const int extent = mb.style()->pixelMetric(QStyle::PM_MessageBoxIconSize, nullptr, &mb);
+    mb.setIconPixmap(
+        QIcon(":/icons/system-help.svg").pixmap(QSize(extent, extent), mb.devicePixelRatioF()));
     mb.setStandardButtons(QMessageBox::Yes | QMessageBox::No | QMessageBox::Cancel);
 
     auto *button = mb.button(QMessageBox::Yes);
-    button->setIcon(QIcon(":/icons/dialog-ok.png"));
+    button->setIcon(QIcon(":/icons/dialog-ok.svg"));
     button = mb.button(QMessageBox::No);
-    button->setIcon(QIcon(":/icons/dialog-no.png"));
+    button->setIcon(QIcon(":/icons/dialog-no.svg"));
     button = mb.button(QMessageBox::Cancel);
-    button->setIcon(QIcon(":/icons/dialog-cancel.png"));
+    button->setIcon(QIcon(":/icons/dialog-cancel.svg"));
 
     if (parent) mb.setFont(parent->font());
     return mb.exec();
@@ -486,6 +491,42 @@ bool isStdoutSilenced()
 void notifyCaptureState(bool active)
 {
     capture_is_active = active;
+}
+
+// shared tool-button sizing policy (see helpers.h)
+
+QSize toolButtonSize(const QAbstractButton *sample)
+{
+    const int side = sample->minimumSizeHint().height() + Cfg::TOOLBAR_BUTTON_MARGIN;
+    return {side, side};
+}
+
+void styleToolButtons(const QSize &size, std::initializer_list<QAbstractButton *> buttons)
+{
+    const QSize iconsize(Cfg::TOOLBAR_ICON_SIZE, Cfg::TOOLBAR_ICON_SIZE);
+    for (auto *button : buttons) {
+        button->setMinimumSize(size);
+        button->setMaximumSize(size);
+        button->setIconSize(iconsize);
+    }
+}
+
+// shared window-manager hint policy for output windows (see helpers.h)
+
+void applyWindowFlags(QWidget *window)
+{
+    if (!window) return;
+    auto flags = window->windowFlags();
+    flags &= ~Qt::Dialog;
+    flags |= Qt::CustomizeWindowHint;
+    flags &= ~Qt::WindowMinimizeButtonHint;
+#if defined(Q_OS_MACOS)
+    // keep the maximize button on macOS: removing it disables window resizing
+    flags |= Qt::WindowMaximizeButtonHint;
+#else
+    flags &= ~Qt::WindowMaximizeButtonHint;
+#endif
+    window->setWindowFlags(flags);
 }
 
 // Local Variables:

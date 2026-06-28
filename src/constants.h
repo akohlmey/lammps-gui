@@ -28,12 +28,14 @@
 namespace Cfg {
 
 // ---- UI dimensions -------------------------------------------------------
-constexpr int DEFAULT_BUFLEN      = 1024; ///< Default buffer length for error messages
-constexpr int MAX_DEFAULT_THREADS = 16;   ///< Maximum default thread count
-constexpr int MINIMUM_WIDTH       = 400;  ///< Minimum window width in pixels
-constexpr int MINIMUM_HEIGHT      = 300;  ///< Minimum window height in pixels
-constexpr int ICON_SCALE          = 22;   ///< Status bar icon dimension in pixels
-constexpr int PROGRESS_MAXIMUM    = 1000; ///< Maximum value for QProgressBar
+constexpr int DEFAULT_BUFLEN        = 1024; ///< Default buffer length for error messages
+constexpr int MAX_DEFAULT_THREADS   = 16;   ///< Maximum default thread count
+constexpr int MINIMUM_WIDTH         = 400;  ///< Minimum window width in pixels
+constexpr int MINIMUM_HEIGHT        = 300;  ///< Minimum window height in pixels
+constexpr int ICON_SCALE            = 22;   ///< Status bar icon dimension in pixels
+constexpr int TOOLBAR_ICON_SIZE     = 24;   ///< Icon size in pixels for tool/status-bar buttons
+constexpr int TOOLBAR_BUTTON_MARGIN = 6; ///< Pixels added to the size hint for square tool buttons
+constexpr int PROGRESS_MAXIMUM      = 1000; ///< Maximum value for QProgressBar
 
 // ---- File limits ---------------------------------------------------------
 constexpr int NUM_RECENT_FILES = 5; ///< Number of entries in the recent files list

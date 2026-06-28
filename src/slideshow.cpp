@@ -11,6 +11,7 @@
 
 #include "slideshow.h"
 
+#include "constants.h"
 #include "helpers.h"
 #include "lammpsgui.h"
 #include "qaddon.h"
@@ -114,13 +115,11 @@ SlideShow::SlideShow(const QString &fileName, LammpsGui *_lammpsgui, QWidget *pa
     imageName->setSizePolicy(QSizePolicy::Minimum, QSizePolicy::Fixed);
     imageName->setTextInteractionFlags(Qt::TextSelectableByMouse);
 
-    auto buttonhint = imageName->minimumSizeHint();
-    auto *stoprun   = new QPushButton(QIcon(":/icons/process-stop.png"), "");
+    auto *stoprun = new QPushButton(QIcon(":/icons/process-stop.svg"), "");
     stoprun->setToolTip("Stop running simulation");
-    buttonhint.setHeight(buttonhint.height() + LAYOUT_SPACING);
-    buttonhint.setWidth(buttonhint.height() * 4 / 3);
-    stoprun->setMinimumSize(buttonhint);
-    stoprun->setMaximumSize(buttonhint);
+    // shared toolbar button policy (matches the image viewer); the spin boxes
+    // and image-name/counter labels below are matched to the button height
+    const QSize buttonhint = toolButtonSize(stoprun);
     connect(stoprun, &QPushButton::released, this, &SlideShow::stopRun);
 
     imageCounter->setMinimumHeight(buttonhint.height());
@@ -152,26 +151,18 @@ SlideShow::SlideShow(const QString &fileName, LammpsGui *_lammpsgui, QWidget *pa
     dummy->setMinimumSize(QSize(0, 0));
     dummy->setMaximumSize(QSize(0, 0));
 
-    auto *tomovie = new QPushButton(QIcon(":/icons/export-movie.png"), "");
+    auto *tomovie = new QPushButton(QIcon(":/icons/export-movie.svg"), "");
     tomovie->setToolTip("Export to movie file");
     tomovie->setEnabled(hasExe("ffmpeg") || hasExe("magick") || hasExe("convert"));
-    tomovie->setMinimumSize(buttonhint);
-    tomovie->setMaximumSize(buttonhint);
 
-    auto *toimage = new QPushButton(QIcon(":/icons/document-save-as.png"), "");
+    auto *toimage = new QPushButton(QIcon(":/icons/document-save-as.svg"), "");
     toimage->setToolTip("Export to image file");
-    toimage->setMinimumSize(buttonhint);
-    toimage->setMaximumSize(buttonhint);
 
-    auto *toclip = new QPushButton(QIcon(":/icons/edit-copy.png"), "");
+    auto *toclip = new QPushButton(QIcon(":/icons/edit-copy.svg"), "");
     toclip->setToolTip("Copy image to clipboard");
-    toclip->setMinimumSize(buttonhint);
-    toclip->setMaximumSize(buttonhint);
 
-    auto *totrash = new QPushButton(QIcon(":/icons/trash.png"), "");
+    auto *totrash = new QPushButton(QIcon(":/icons/trash.svg"), "");
     totrash->setToolTip("Delete image files in the selected range");
-    totrash->setMinimumSize(buttonhint);
-    totrash->setMaximumSize(buttonhint);
 
     // a standalone slideshow (no live simulation) has no run to stop, and must
     // not offer to delete the user's own image files
@@ -233,66 +224,45 @@ SlideShow::SlideShow(const QString &fileName, LammpsGui *_lammpsgui, QWidget *pa
         updateSliderRange();
     });
 
-    auto *gofirst = new QPushButton(QIcon(":/icons/go-first.png"), "");
+    auto *gofirst = new QPushButton(QIcon(":/icons/go-first.svg"), "");
     gofirst->setToolTip("Go to first Image");
     gofirst->setObjectName("first");
     gofirst->setCheckable(false);
-    gofirst->setMinimumSize(buttonhint);
-    gofirst->setMaximumSize(buttonhint);
-    auto *goprev = new QPushButton(QIcon(":/icons/go-previous-2.png"), "");
+    auto *goprev = new QPushButton(QIcon(":/icons/go-previous-2.svg"), "");
     goprev->setToolTip("Go to previous Image");
-    goprev->setMinimumSize(buttonhint);
-    goprev->setMaximumSize(buttonhint);
-    auto *goplay = new QPushButton(QIcon(":/icons/media-playback-start-2.png"), "");
+    auto *goplay = new QPushButton(QIcon(":/icons/media-playback-start-2.svg"), "");
     goplay->setToolTip("Play animation");
     goplay->setCheckable(true);
     goplay->setChecked(playtimer);
     goplay->setObjectName("play");
-    goplay->setMinimumSize(buttonhint);
-    goplay->setMaximumSize(buttonhint);
-    auto *gonext = new QPushButton(QIcon(":/icons/go-next-2.png"), "");
+    auto *gonext = new QPushButton(QIcon(":/icons/go-next-2.svg"), "");
     gonext->setToolTip("Go to next Image");
-    gonext->setMinimumSize(buttonhint);
-    gonext->setMaximumSize(buttonhint);
-    auto *golast = new QPushButton(QIcon(":/icons/go-last.png"), "");
+    auto *golast = new QPushButton(QIcon(":/icons/go-last.svg"), "");
     golast->setToolTip("Go to last Image");
-    golast->setMinimumSize(buttonhint);
-    golast->setMaximumSize(buttonhint);
-    auto *goloop = new QPushButton(QIcon(":/icons/media-playlist-repeat.png"), "");
+    auto *goloop = new QPushButton(QIcon(":/icons/media-playlist-repeat.svg"), "");
     goloop->setToolTip("Loop animation");
     goloop->setCheckable(true);
     goloop->setChecked(doLoop);
-    goloop->setMinimumSize(buttonhint);
-    goloop->setMaximumSize(buttonhint);
 
-    auto *zoomin = new QPushButton(QIcon(":/icons/gtk-zoom-in.png"), "");
+    auto *zoomin = new QPushButton(QIcon(":/icons/gtk-zoom-in.svg"), "");
     zoomin->setToolTip("Zoom in by 10 percent");
-    zoomin->setMinimumSize(buttonhint);
-    zoomin->setMaximumSize(buttonhint);
-    auto *zoomout = new QPushButton(QIcon(":/icons/gtk-zoom-out.png"), "");
+    auto *zoomout = new QPushButton(QIcon(":/icons/gtk-zoom-out.svg"), "");
     zoomout->setToolTip("Zoom out by 10 percent");
-    zoomout->setMinimumSize(buttonhint);
-    zoomout->setMaximumSize(buttonhint);
-    auto *imgrotcw = new QPushButton(QIcon(":/icons/object-rotate-right.png"), "");
+    auto *imgrotcw = new QPushButton(QIcon(":/icons/object-rotate-right.svg"), "");
     imgrotcw->setToolTip("Rotate displayed image 90<sup>o</sup> clockwise");
-    imgrotcw->setMinimumSize(buttonhint);
-    imgrotcw->setMaximumSize(buttonhint);
-    auto *imgrotccw = new QPushButton(QIcon(":/icons/object-rotate-left.png"), "");
+    auto *imgrotccw = new QPushButton(QIcon(":/icons/object-rotate-left.svg"), "");
     imgrotccw->setToolTip("Rotate displayed image 90<sup>o</sup> counter-clockwise");
-    imgrotccw->setMinimumSize(buttonhint);
-    imgrotccw->setMaximumSize(buttonhint);
-    auto *imgfliph = new QPushButton(QIcon(":/icons/object-flip-horizontal.png"), "");
+    auto *imgfliph = new QPushButton(QIcon(":/icons/object-flip-horizontal.svg"), "");
     imgfliph->setToolTip("Mirror displayed image horizontally");
-    imgfliph->setMinimumSize(buttonhint);
-    imgfliph->setMaximumSize(buttonhint);
-    auto *imgflipv = new QPushButton(QIcon(":/icons/object-flip-vertical.png"), "");
+    auto *imgflipv = new QPushButton(QIcon(":/icons/object-flip-vertical.svg"), "");
     imgflipv->setToolTip("Mirror displayed image vertically");
-    imgflipv->setMinimumSize(buttonhint);
-    imgflipv->setMaximumSize(buttonhint);
-    auto *normal = new QPushButton(QIcon(":/icons/gtk-zoom-fit.png"), "");
+    auto *normal = new QPushButton(QIcon(":/icons/gtk-zoom-fit.svg"), "");
     normal->setToolTip("Reset zoom to normal");
-    normal->setMinimumSize(buttonhint);
-    normal->setMaximumSize(buttonhint);
+
+    // square toolbar buttons with a snug, uniform icon (shared policy)
+    styleToolButtons(buttonhint, {stoprun, tomovie, toimage, toclip, totrash, gofirst, goprev,
+                                  goplay, gonext, golast, goloop, zoomin, zoomout, imgrotcw,
+                                  imgrotccw, imgfliph, imgflipv, normal});
 
     connect(tomovie, &QPushButton::released, this, &SlideShow::movie);
     connect(toimage, &QPushButton::released, this, &SlideShow::saveCurrentImage);
@@ -365,7 +335,7 @@ SlideShow::SlideShow(const QString &fileName, LammpsGui *_lammpsgui, QWidget *pa
     mainLayout->setSpacing(LAYOUT_SPACING);
     goplay->setFocus();
 
-    setWindowIcon(QIcon(":/icons/lammps-gui-icon-128x128.png"));
+    setWindowIcon(QIcon(Cfg::MAIN_ICON));
     setWindowTitle(QString("LAMMPS-GUI - Slide Show: ") + QFileInfo(fileName).fileName());
 
     imagefiles.clear();
@@ -377,18 +347,7 @@ SlideShow::SlideShow(const QString &fileName, LammpsGui *_lammpsgui, QWidget *pa
     mainLayout->setSizeConstraint(QLayout::SetMinAndMaxSize);
     adjustWindowSize();
 
-    // set window flags for window manager
-    auto flags = windowFlags();
-    flags &= ~Qt::Dialog;
-    flags |= Qt::CustomizeWindowHint;
-    flags |= Qt::WindowMinimizeButtonHint;
-    // must add maximize button for macOS to allow resizing, but remove on other platforms
-#if defined(Q_OS_MACOS)
-    flags |= Qt::WindowMaximizeButtonHint;
-#else
-    flags &= ~Qt::WindowMaximizeButtonHint;
-#endif
-    setWindowFlags(flags);
+    applyWindowFlags(this);
 }
 
 void SlideShow::addImage(const QString &filename)

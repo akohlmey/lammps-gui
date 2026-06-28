@@ -129,26 +129,7 @@ void LammpsGui::setupUi(QSettings &settings, QFont &allFont, QFont &monoFont)
     if (mainy < Cfg::MINIMUM_HEIGHT) mainy = settings.value(Keys::MAINY, 512).toInt();
     resize(mainx, mainy);
 
-    varwindow = new QLabel(QString());
-    varwindow->setWindowTitle(QString("LAMMPS-GUI - Current Variables"));
-    varwindow->setWindowIcon(QIcon(Cfg::MAIN_ICON));
-    varwindow->setMinimumSize(100, 50);
-    varwindow->setText("(none)");
-    varwindow->setFont(monoFont);
-    varwindow->setFrameStyle(QFrame::Sunken);
-    varwindow->setFrameShape(QFrame::Panel);
-    varwindow->setAlignment(Qt::AlignVCenter);
-    varwindow->setContentsMargins(5, 5, 5, 5);
-    varwindow->setSizePolicy(QSizePolicy::MinimumExpanding, QSizePolicy::MinimumExpanding);
-    varwindow->hide();
-
-    // set window flags for window manager
-    auto flags = windowFlags();
-    flags &= ~Qt::Dialog;
-    flags |= Qt::CustomizeWindowHint;
-    flags |= Qt::WindowMinimizeButtonHint;
-    flags |= Qt::WindowMaximizeButtonHint;
-    setWindowFlags(flags);
+    createVariableWindow();
 }
 
 template <typename Func>
@@ -165,80 +146,80 @@ QAction *LammpsGui::addMenuAction(QMenu *menu, const QString &iconpath, const QS
 void LammpsGui::createFileMenu()
 {
     auto *menu = menubar->addMenu("&File");
-    addMenuAction(menu, ":/icons/document-new.png", "&New Input File", "Ctrl+N",
+    addMenuAction(menu, ":/icons/document-new.svg", "&New Input File", "Ctrl+N",
                   &LammpsGui::newDocument);
-    addMenuAction(menu, ":/icons/document-open.png", "&Open Input File", "Ctrl+O",
+    addMenuAction(menu, ":/icons/document-open.svg", "&Open Input File", "Ctrl+O",
                   &LammpsGui::open);
-    addMenuAction(menu, ":/icons/document-save.png", "&Save Input File", "Ctrl+S",
+    addMenuAction(menu, ":/icons/document-save.svg", "&Save Input File", "Ctrl+S",
                   &LammpsGui::save);
-    addMenuAction(menu, ":/icons/document-save-as.png", "Save Input File &As", "Ctrl+Shift+S",
+    addMenuAction(menu, ":/icons/document-save-as.svg", "Save Input File &As", "Ctrl+Shift+S",
                   &LammpsGui::saveAs);
     menu->addSeparator();
 
-    addMenuAction(menu, ":/icons/document-open.png", "&View Text File", "Ctrl+Shift+F",
+    addMenuAction(menu, ":/icons/txt-file-icon.svg", "&View Text File", "Ctrl+Shift+F",
                   &LammpsGui::view);
-    addMenuAction(menu, ":/icons/image-x-generic.png", "View &Image File(s)...", "Ctrl+Shift+J",
+    addMenuAction(menu, ":/icons/image-x-generic.svg", "View &Image File(s)...", "Ctrl+Shift+J",
                   &LammpsGui::openImages);
-    addMenuAction(menu, ":/icons/x-office-drawing.png", "&Plot Data File...", "Ctrl+Shift+P",
+    addMenuAction(menu, ":/icons/x-office-drawing.svg", "&Plot Data File...", "Ctrl+Shift+P",
                   &LammpsGui::plotDataFile);
-    addMenuAction(menu, ":/icons/document-open.png", "Inspect &Restart File", "Ctrl+Shift+R",
+    addMenuAction(menu, ":/icons/binary-file-icon.svg", "Inspect &Restart File", "Ctrl+Shift+R",
                   &LammpsGui::inspect);
     menu->addSeparator();
 
     recentActions.resize(Cfg::NUM_RECENT_FILES);
     for (int i = 0; i < Cfg::NUM_RECENT_FILES; ++i) {
-        recentActions[i] = addMenuAction(menu, ":/icons/document-open-recent.png",
+        recentActions[i] = addMenuAction(menu, ":/icons/document-open-recent.svg",
                                          QString("&%1.").arg(i + 1), "", &LammpsGui::openRecent);
     }
     menu->addSeparator();
 
-    addMenuAction(menu, ":/icons/application-exit.png", "&Quit", "Ctrl+Q", &LammpsGui::quit);
+    addMenuAction(menu, ":/icons/application-exit.svg", "&Quit", "Ctrl+Q", &LammpsGui::quit);
 }
 
 void LammpsGui::createEditMenu()
 {
     auto *menu = menubar->addMenu("&Edit");
-    addMenuAction(menu, ":/icons/edit-undo.png", "&Undo", "Ctrl+Z", &LammpsGui::undo);
-    addMenuAction(menu, ":/icons/edit-redo.png", "&Redo", "Ctrl+Shift+Z", &LammpsGui::redo);
+    addMenuAction(menu, ":/icons/edit-undo.svg", "&Undo", "Ctrl+Z", &LammpsGui::undo);
+    addMenuAction(menu, ":/icons/edit-redo.svg", "&Redo", "Ctrl+Shift+Z", &LammpsGui::redo);
     menu->addSeparator();
 
-    addMenuAction(menu, ":/icons/edit-copy.png", "&Copy", "Ctrl+C", &LammpsGui::copy)
+    addMenuAction(menu, ":/icons/edit-copy.svg", "&Copy", "Ctrl+C", &LammpsGui::copy)
         ->setEnabled(hasClipboard);
-    addMenuAction(menu, ":/icons/edit-cut.png", "Cu&t", "Ctrl+X", &LammpsGui::cut)
+    addMenuAction(menu, ":/icons/edit-cut.svg", "Cu&t", "Ctrl+X", &LammpsGui::cut)
         ->setEnabled(hasClipboard);
-    addMenuAction(menu, ":/icons/edit-paste.png", "&Paste", "Ctrl+V", &LammpsGui::paste)
+    addMenuAction(menu, ":/icons/edit-paste.svg", "&Paste", "Ctrl+V", &LammpsGui::paste)
         ->setEnabled(hasClipboard);
     menu->addSeparator();
 
-    addMenuAction(menu, ":/icons/search.png", "&Find and Replace...", "Ctrl+F",
+    addMenuAction(menu, ":/icons/search.svg", "&Find and Replace...", "Ctrl+F",
                   &LammpsGui::findAndReplace);
     menu->addSeparator();
 
-    addMenuAction(menu, ":/icons/preferences-desktop.png", "P&references...", "Ctrl+P",
+    addMenuAction(menu, ":/icons/preferences-desktop.svg", "P&references...", "Ctrl+P",
                   &LammpsGui::preferences);
-    addMenuAction(menu, ":/icons/document-revert.png", "Reset Preferences to &Defaults", "",
+    addMenuAction(menu, ":/icons/preferences-reset.svg", "Reset Preferences to &Defaults", "",
                   &LammpsGui::defaults);
 }
 
 void LammpsGui::createRunMenu()
 {
     auto *menu = menubar->addMenu("&Run");
-    addMenuAction(menu, ":/icons/system-run.png", "&Run LAMMPS from Editor Buffer", "Ctrl+Return",
+    addMenuAction(menu, ":/icons/system-run.svg", "&Run LAMMPS from Editor Buffer", "Ctrl+Return",
                   &LammpsGui::runBuffer);
-    addMenuAction(menu, ":/icons/run-file.png", "Run LAMMPS from &File", "Ctrl+Shift+Return",
+    addMenuAction(menu, ":/icons/run-file.svg", "Run LAMMPS from &File", "Ctrl+Shift+Return",
                   &LammpsGui::runFile);
-    addMenuAction(menu, ":/icons/process-stop.png", "&Stop LAMMPS", "Ctrl+/", &LammpsGui::stopRun);
+    addMenuAction(menu, ":/icons/process-stop.svg", "&Stop LAMMPS", "Ctrl+/", &LammpsGui::stopRun);
     menu->addSeparator();
 
-    addMenuAction(menu, ":/icons/system-restart.png", "Relaunch &LAMMPS Instance", "",
+    addMenuAction(menu, ":/icons/system-restart.svg", "Relaunch &LAMMPS Instance", "",
                   &LammpsGui::restartLammps);
     menu->addSeparator();
 
-    addMenuAction(menu, ":/icons/preferences-desktop-personal.png", "Set &Variables...",
-                  "Ctrl+Shift+V", &LammpsGui::editVariables);
+    addMenuAction(menu, ":/icons/preferences-desktop.svg", "Set &Variables...", "Ctrl+Shift+V",
+                  &LammpsGui::editVariables);
     menu->addSeparator();
 
-    addMenuAction(menu, ":/icons/emblem-photos.png", "Create &Image", "Ctrl+I",
+    addMenuAction(menu, ":/icons/image-viewer.svg", "Create &Image", "Ctrl+I",
                   &LammpsGui::renderImage);
     menu->addSeparator();
 
@@ -247,7 +228,7 @@ void LammpsGui::createRunMenu()
     ovito->setEnabled(hasExe("ovito"));
     ovito->setData("ovito");
 
-    auto *vmd = addMenuAction(menu, ":/icons/vmd.png", "View in VM&D", "Ctrl+Shift+D",
+    auto *vmd = addMenuAction(menu, ":/icons/vmd.svg", "View in VM&D", "Ctrl+Shift+D",
                               &LammpsGui::startExe);
     vmd->setEnabled(hasExe("vmd"));
     vmd->setData("vmd");
@@ -256,16 +237,16 @@ void LammpsGui::createRunMenu()
 void LammpsGui::createViewMenu()
 {
     auto *menu = menubar->addMenu("&View");
-    addMenuAction(menu, ":/icons/utilities-terminal.png", "&Output Window", "Ctrl+Shift+L",
+    addMenuAction(menu, ":/icons/utilities-terminal.svg", "&Output Window", "Ctrl+Shift+L",
                   &LammpsGui::viewLog);
-    addMenuAction(menu, ":/icons/x-office-drawing.png", "&Charts Window", "Ctrl+Shift+C",
+    addMenuAction(menu, ":/icons/x-office-drawing.svg", "&Charts Window", "Ctrl+Shift+C",
                   &LammpsGui::viewChart);
-    addMenuAction(menu, ":/icons/emblem-photos.png", "&Image Window", "Ctrl+Shift+I",
+    addMenuAction(menu, ":/icons/image-viewer.svg", "&Image Window", "Ctrl+Shift+I",
                   &LammpsGui::viewImage);
-    addMenuAction(menu, ":/icons/image-x-generic.png", "&Slide Show Window", "Ctrl+L",
+    addMenuAction(menu, ":/icons/image-x-generic.svg", "&Slide Show Window", "Ctrl+L",
                   &LammpsGui::viewSlides);
-    addMenuAction(menu, ":/icons/preferences-desktop-personal.png", "&Variables Window",
-                  "Ctrl+Shift+W", &LammpsGui::viewVariables);
+    addMenuAction(menu, ":/icons/utilities-terminal.svg", "&Variables Window", "Ctrl+Shift+W",
+                  &LammpsGui::viewVariables);
 }
 
 void LammpsGui::createTutorialMenu()
@@ -276,7 +257,7 @@ void LammpsGui::createTutorialMenu()
         const auto &coll = collections[c];
         QString title    = QString("&%1: %2").arg(c + 1).arg(coll.name);
         if (!coll.published) title += " (" + coll.status + ")";
-        auto *sub = menu->addMenu(title);
+        auto *sub = menu->addMenu(QIcon(":/icons/tutorial-logo.png"), title);
         // a planned collection has no tutorials yet: show it as a disabled entry
         if (coll.count() == 0) {
             sub->menuAction()->setEnabled(false);
@@ -299,14 +280,14 @@ void LammpsGui::createTutorialMenu()
 void LammpsGui::createAboutMenu()
 {
     auto *menu = menubar->addMenu("&About");
-    addMenuAction(menu, ":/icons/help-about.png", "&About LAMMPS-GUI", "Ctrl+Shift+A",
+    addMenuAction(menu, ":/icons/lammps-gui-icon-128x128.png", "&About LAMMPS-GUI", "Ctrl+Shift+A",
                   &LammpsGui::about);
-    addMenuAction(menu, ":/icons/help-faq.png", "Quick &Help", "Ctrl+Shift+H", &LammpsGui::help);
-    addMenuAction(menu, ":/icons/system-help.png", "LAMMPS-&GUI Documentation", "Ctrl+Shift+G",
+    addMenuAction(menu, ":/icons/help-faq.svg", "Quick &Help", "Ctrl+Shift+H", &LammpsGui::help);
+    addMenuAction(menu, ":/icons/system-help.svg", "LAMMPS-&GUI Documentation", "Ctrl+Shift+G",
                   &LammpsGui::howto);
-    addMenuAction(menu, ":/icons/help-browser.png", "LAMMPS Online &Manual", "Ctrl+Shift+M",
+    addMenuAction(menu, ":/icons/help-browser.svg", "LAMMPS Online &Manual", "Ctrl+Shift+M",
                   &LammpsGui::manual);
-    addMenuAction(menu, ":/icons/help-tutorial.png", "LAMMPS &Tutorial Website", "Ctrl+Shift+T",
+    addMenuAction(menu, ":/icons/tutorial-logo.png", "LAMMPS &Tutorial Website", "Ctrl+Shift+T",
                   &LammpsGui::tutorialWeb);
 
 #if defined(LAMMPS_GUI_USE_PLUGIN)
@@ -328,35 +309,28 @@ void LammpsGui::createStatusBar()
     lammpsstatus->hide();
     statusbar->addWidget(lammpsstatus);
 
-    auto *button = new QPushButton(QIcon(":/icons/document-save.png"), "");
-    button->setToolTip("Save edit buffer to file");
-    auto buttonhint = button->minimumSizeHint();
-    buttonhint.setWidth(buttonhint.height() * 4 / 3);
-    button->setMinimumSize(buttonhint);
-    button->setMaximumSize(buttonhint);
-    connect(button, &QPushButton::released, this, &LammpsGui::save);
-    statusbar->addWidget(button);
+    auto *savebtn = new QPushButton(QIcon(":/icons/document-save.svg"), "");
+    savebtn->setToolTip("Save edit buffer to file");
+    connect(savebtn, &QPushButton::released, this, &LammpsGui::save);
+    statusbar->addWidget(savebtn);
 
-    button = new QPushButton(QIcon(":/icons/system-run.png"), "");
-    button->setToolTip("Run LAMMPS on input");
-    button->setMinimumSize(buttonhint);
-    button->setMaximumSize(buttonhint);
-    connect(button, &QPushButton::released, this, &LammpsGui::runBuffer);
-    statusbar->addWidget(button);
+    auto *runbtn = new QPushButton(QIcon(":/icons/system-run.svg"), "");
+    runbtn->setToolTip("Run LAMMPS on input");
+    connect(runbtn, &QPushButton::released, this, &LammpsGui::runBuffer);
+    statusbar->addWidget(runbtn);
 
-    button = new QPushButton(QIcon(":/icons/process-stop.png"), "");
-    button->setToolTip("Stop LAMMPS");
-    button->setMinimumSize(buttonhint);
-    button->setMaximumSize(buttonhint);
-    connect(button, &QPushButton::released, this, &LammpsGui::stopRun);
-    statusbar->addWidget(button);
+    auto *stopbtn = new QPushButton(QIcon(":/icons/process-stop.svg"), "");
+    stopbtn->setToolTip("Stop LAMMPS");
+    connect(stopbtn, &QPushButton::released, this, &LammpsGui::stopRun);
+    statusbar->addWidget(stopbtn);
 
-    button = new QPushButton(QIcon(":/icons/emblem-photos.png"), "");
-    button->setToolTip("Create snapshot image");
-    button->setMinimumSize(buttonhint);
-    button->setMaximumSize(buttonhint);
-    connect(button, &QPushButton::released, this, &LammpsGui::renderImage);
-    statusbar->addWidget(button);
+    auto *imgbtn = new QPushButton(QIcon(":/icons/image-viewer.svg"), "");
+    imgbtn->setToolTip("Create snapshot image");
+    connect(imgbtn, &QPushButton::released, this, &LammpsGui::renderImage);
+    statusbar->addWidget(imgbtn);
+
+    // square status-bar buttons with a snug, uniform icon (shared policy)
+    styleToolButtons(toolButtonSize(savebtn), {savebtn, runbtn, stopbtn, imgbtn});
 
     cpuuse = new QLabel("   0%CPU");
     cpuuse->setFixedWidth(90);
@@ -468,11 +442,11 @@ void LammpsGui::setupPlugin(QSettings &settings)
                 "filesystem for a suitable LAMMPS library file, or exit LAMMPS-GUI.</p>");
 
             auto *downloadBtn = mb.addButton("Download Library...", QMessageBox::ApplyRole);
-            downloadBtn->setIcon(QIcon(":/icons/download-file.png"));
+            downloadBtn->setIcon(QIcon(":/icons/download-file.svg"));
             auto *browseBtn = mb.addButton("Browse Filesystem...", QMessageBox::AcceptRole);
-            browseBtn->setIcon(QIcon(":/icons/document-open.png"));
+            browseBtn->setIcon(QIcon(":/icons/document-open.svg"));
             auto *exitBtn = mb.addButton("Exit", QMessageBox::NoRole);
-            exitBtn->setIcon(QIcon(":/icons/application-exit.png"));
+            exitBtn->setIcon(QIcon(":/icons/application-exit.svg"));
 
             mb.setDefaultButton(downloadBtn);
             mb.setEscapeButton(exitBtn);
@@ -1220,9 +1194,9 @@ void LammpsGui::inspectFile(const QString &fileName)
         mb.setFont(font());
 
         auto *button = mb.button(QMessageBox::Yes);
-        button->setIcon(QIcon(":/icons/dialog-ok.png"));
+        button->setIcon(QIcon(":/icons/dialog-ok.svg"));
         button = mb.button(QMessageBox::No);
-        button->setIcon(QIcon(":/icons/dialog-no.png"));
+        button->setIcon(QIcon(":/icons/dialog-no.svg"));
 
         int rv = mb.exec();
         switch (rv) {
@@ -1272,6 +1246,26 @@ void LammpsGui::inspectFile(const QString &fileName)
             infoviewer->show();
             ilist->info = infoviewer;
             dumpinfo.remove();
+            // read_restart restores the pair style but not the kspace style, so a
+            // pair style that uses long-range Coulomb/dispersion would make the
+            // render "run 0" in the image viewer abort with "...requires a KSpace
+            // style". Probe with a silenced no-op run and let LAMMPS be the oracle:
+            // only when it reports that a KSpace style is required do we add the
+            // harmless "kspace_style zero" (which computes nothing but satisfies the
+            // requirement). Pair styles that do not use kspace are left as "none"
+            // (the read_restart default) -- adding a kspace style would itself error
+            // there (no per-atom charge / incompatible pair style). lastErrorMessage()
+            // both reads and clears the error, so the probe leaves LAMMPS clean.
+            QString kspaceerr;
+            {
+                StdoutSilencer guard;
+                lammps.command("run 0 post no");
+                kspaceerr = lammps.lastErrorMessage();
+            }
+            if (kspaceerr.contains("requires a KSpace style")) {
+                StdoutSilencer guard;
+                lammps.command("kspace_style zero 1.0e-6");
+            }
             {
                 StdoutSilencer guard;
                 lammps.command(QString("write_data %1 pair ij noinit").arg(infodata));
@@ -1745,6 +1739,7 @@ void LammpsGui::createLogWindow(QSettings &settings)
         QString("LAMMPS-GUI - Output - %1 - Run %2").arg(currentFile).arg(runCounter));
     logwindow->setWindowIcon(QIcon(Cfg::MAIN_ICON));
     logwindow->setMinimumSize(Cfg::MINIMUM_WIDTH, Cfg::MINIMUM_HEIGHT);
+
     if (settings.value(Keys::VIEWLOG, true).toBool())
         logwindow->show();
     else
@@ -2017,14 +2012,43 @@ void LammpsGui::viewImage()
     }
 }
 
+void LammpsGui::createVariableWindow()
+{
+    varwindow = new QLabel(QString());
+    varwindow->setWindowTitle(QString("LAMMPS-GUI - Current Variables"));
+    varwindow->setWindowIcon(QIcon(Cfg::MAIN_ICON));
+    varwindow->setMinimumSize(100, 50);
+    varwindow->setText("(none)");
+
+    QSettings settings;
+    QFont monoFont;
+    QFontInfo monoInfo(*GUI_MONOFONT);
+    monoFont.setFamily(settings.value(Keys::MONOFAMILY, monoInfo.family()).toString());
+    monoFont.setPointSize(settings.value(Keys::MONOSIZE, monoInfo.pointSize()).toInt());
+    monoFont.setStyleHint(GUI_MONOFONT->styleHint());
+    monoFont.setFixedPitch(true);
+    varwindow->setFont(monoFont);
+
+    varwindow->setFrameStyle(QFrame::Sunken);
+    varwindow->setFrameShape(QFrame::Panel);
+    varwindow->setAlignment(Qt::AlignVCenter);
+    varwindow->setContentsMargins(5, 5, 5, 5);
+    varwindow->setSizePolicy(QSizePolicy::MinimumExpanding, QSizePolicy::MinimumExpanding);
+
+    // apply before hide(): applyWindowFlags() calls setWindowFlags(), which re-shows the widget
+    applyWindowFlags(varwindow);
+    varwindow->hide();
+}
+
 void LammpsGui::viewVariables()
 {
-    if (varwindow) {
-        if (varwindow->isVisible()) {
-            varwindow->hide();
-        } else {
-            varwindow->show();
-        }
+    // varwindow is destroyed when the editor is reset (newDocument()/openFile()),
+    // so recreate it on demand here -- mirrors viewSlides()
+    if (!varwindow) createVariableWindow();
+    if (varwindow->isVisible()) {
+        varwindow->hide();
+    } else {
+        varwindow->show();
     }
 }
 
@@ -2197,9 +2221,9 @@ void LammpsGui::checkUpdate()
 
         // customize button icons
         auto *button = mb.button(QMessageBox::Yes);
-        button->setIcon(QIcon(":/icons/dialog-ok.png"));
+        button->setIcon(QIcon(":/icons/dialog-ok.svg"));
         button = mb.button(QMessageBox::No);
-        button->setIcon(QIcon(":/icons/dialog-no.png"));
+        button->setIcon(QIcon(":/icons/dialog-no.svg"));
 
         if (mb.exec() == QMessageBox::Yes) {
             if (downloader.download(dlUrl, libPath, true)) {
@@ -2268,10 +2292,10 @@ void LammpsGui::help()
         "accelerator packages and number of OpenMP threads. Due to its nature "
         "as a graphical application, it is <b>not</b> possible to use the "
         "LAMMPS-GUI in parallel with MPI.</p>");
-    mb.setIconPixmap(QPixmap(":/icons/lammps-gui-icon-128x128.png").scaled(64, 64));
+    mb.setIconPixmap(QPixmap(Cfg::MAIN_ICON).scaled(64, 64));
     mb.setStandardButtons(QMessageBox::Close);
     auto *button = mb.button(QMessageBox::Close);
-    button->setIcon(QIcon(":/icons/window-close.png"));
+    button->setIcon(QIcon(":/icons/window-close.svg"));
     mb.setFont(font());
     mb.exec();
 }
