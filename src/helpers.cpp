@@ -27,10 +27,12 @@
 #include <QImageReader>
 #include <QMessageBox>
 #include <QPalette>
+#include <QPixmap>
 #include <QProcess>
 #include <QRegularExpression>
 #include <QStandardPaths>
 #include <QStringList>
+#include <QStyle>
 #include <QTemporaryFile>
 #include <QWidget>
 
@@ -213,6 +215,22 @@ QStringList splitLine(const QString &text)
     return list;
 }
 
+namespace {
+
+// Use one of our own SVG icons as the large QMessageBox icon instead
+// of the standard icon. Also set button and window icon consistently.
+
+void setDialogIcons(QMessageBox &mb, const QString &iconPath)
+{
+    const int extent = mb.style()->pixelMetric(QStyle::PM_MessageBoxIconSize, nullptr, &mb);
+    mb.setIconPixmap(QIcon(iconPath).pixmap(QSize(extent, extent), mb.devicePixelRatioF()));
+    mb.setWindowIcon(QIcon(Cfg::MAIN_ICON));
+    mb.setStandardButtons(QMessageBox::Ok);
+    auto *button = mb.button(QMessageBox::Ok);
+    button->setIcon(QIcon(":/icons/dialog-ok.svg"));
+}
+} // namespace
+
 // customized information dialog
 
 void information(QWidget *parent, const QString &title, const QString &text1, const QString &text2)
@@ -221,12 +239,7 @@ void information(QWidget *parent, const QString &title, const QString &text1, co
     mb.setWindowTitle(title);
     mb.setText(text1);
     if (!text2.isEmpty()) mb.setInformativeText(QString("<p>%1</p>").arg(text2));
-    mb.setIcon(QMessageBox::Information);
-    mb.setStandardButtons(QMessageBox::Close);
-    mb.setWindowIcon(QIcon(Cfg::MAIN_ICON));
-    // customize button icon
-    auto *button = mb.button(QMessageBox::Close);
-    button->setIcon(QIcon(":/icons/window-close.svg"));
+    setDialogIcons(mb, ":/icons/help-tutorial.svg");
     mb.exec();
 }
 
@@ -238,12 +251,7 @@ void critical(QWidget *parent, const QString &title, const QString &text1, const
     mb.setWindowTitle(title);
     mb.setText(text1);
     if (!text2.isEmpty()) mb.setInformativeText(QString("<p>%1</p>").arg(text2));
-    mb.setIcon(QMessageBox::Critical);
-    mb.setStandardButtons(QMessageBox::Close);
-    mb.setWindowIcon(QIcon(":/icons/lammps-gui-icon-128x128.png"));
-    // customize button icon
-    auto *button = mb.button(QMessageBox::Close);
-    button->setIcon(QIcon(":/icons/window-close.svg"));
+    setDialogIcons(mb, ":/icons/process-stop.svg");
     mb.exec();
 }
 
@@ -255,12 +263,7 @@ void warning(QWidget *parent, const QString &title, const QString &text1, const 
     mb.setWindowTitle(title);
     mb.setText(text1);
     if (!text2.isEmpty()) mb.setInformativeText(QString("<p>%1</p>").arg(text2));
-    mb.setIcon(QMessageBox::Warning);
-    mb.setStandardButtons(QMessageBox::Close);
-    mb.setWindowIcon(QIcon(":/icons/lammps-gui-icon-128x128.png"));
-    // customize button icon
-    auto *button = mb.button(QMessageBox::Close);
-    button->setIcon(QIcon(":/icons/window-close.svg"));
+    setDialogIcons(mb, ":/icons/warning.svg");
     mb.exec();
 }
 
