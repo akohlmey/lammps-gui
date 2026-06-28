@@ -297,7 +297,7 @@ void ImageViewer::globalSettings()
     bottomlayout->setSpacing(LAYOUT_SPACING);
     auto *cancel = new QPushButton(QIcon(":/icons/dialog-cancel.svg"), "&Cancel");
     auto *apply  = new QPushButton(QIcon(":/icons/dialog-ok.svg"), "&Apply");
-    auto *help   = new QPushButton(QIcon(":/icons/help-browser.svg"), "&Help");
+    auto *help   = new QPushButton(QIcon(":/icons/system-help.svg"), "&Help");
     help->setObjectName("dump_image.html");
     cancel->setAutoDefault(false);
     help->setAutoDefault(false);
@@ -804,7 +804,7 @@ void ImageViewer::atomSettings()
     bottomlayout->setSpacing(LAYOUT_SPACING);
     auto *cancel = new QPushButton(QIcon(":/icons/dialog-cancel.svg"), "&Cancel");
     auto *apply  = new QPushButton(QIcon(":/icons/dialog-ok.svg"), "&Apply");
-    auto *help   = new QPushButton(QIcon(":/icons/help-browser.svg"), "&Help");
+    auto *help   = new QPushButton(QIcon(":/icons/system-help.svg"), "&Help");
     help->setObjectName("dump_image.html");
     cancel->setAutoDefault(false);
     help->setAutoDefault(false);
@@ -1138,7 +1138,7 @@ void ImageViewer::fixSettings()
 
     auto *cancel = new QPushButton(QIcon(":/icons/dialog-cancel.svg"), "&Cancel");
     auto *apply  = new QPushButton(QIcon(":/icons/dialog-ok.svg"), "&Apply");
-    auto *help   = new QPushButton(QIcon(":/icons/help-browser.svg"), "&Help");
+    auto *help   = new QPushButton(QIcon(":/icons/system-help.svg"), "&Help");
     help->setObjectName("dump_image.html");
     cancel->setAutoDefault(false);
     apply->setAutoDefault(true);
@@ -1272,7 +1272,7 @@ void ImageViewer::regionSettings()
     bottomlayout->setSpacing(LAYOUT_SPACING);
     auto *cancel = new QPushButton(QIcon(":/icons/dialog-cancel.svg"), "&Cancel");
     auto *apply  = new QPushButton(QIcon(":/icons/dialog-ok.svg"), "&Apply");
-    auto *help   = new QPushButton(QIcon(":/icons/help-browser.svg"), "&Help");
+    auto *help   = new QPushButton(QIcon(":/icons/system-help.svg"), "&Help");
     help->setObjectName("Howto_viz.html#visualizing-regions");
     cancel->setAutoDefault(false);
     help->setAutoDefault(false);
