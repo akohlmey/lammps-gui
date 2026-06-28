@@ -104,7 +104,7 @@ FileViewer::FileViewer(const QString &_filename, LammpsGui *_lammpsgui, const QS
     setReadOnly(true);
     setLineWrapMode(NoWrap);
     setMinimumSize(800, 500);
-    setWindowIcon(QIcon(":/icons/lammps-gui-icon-128x128.png"));
+    setWindowIcon(QIcon(Cfg::MAIN_ICON));
     if (title.isEmpty())
         setWindowTitle("LAMMPS-GUI - Viewer - " + fileName);
     else

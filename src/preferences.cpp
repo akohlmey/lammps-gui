@@ -73,7 +73,7 @@ Preferences::Preferences(LammpsWrapper *_lammps, LammpsGui *_lammpsgui, QWidget 
     layout->addWidget(tabWidget);
     layout->addWidget(buttonBox);
     setLayout(layout);
-    setWindowIcon(QIcon(":/icons/lammps-gui-icon-128x128.png"));
+    setWindowIcon(QIcon(Cfg::MAIN_ICON));
     setWindowTitle("LAMMPS-GUI - Preferences");
     resize(Cfg::PREFERENCES_WIDTH, Cfg::PREFERENCES_HEIGHT);
 }

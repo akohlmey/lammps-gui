@@ -38,14 +38,14 @@ AboutDialog::AboutDialog(const QString &version, const QString &info, const QStr
     QDialog(parent), infoScrollArea(nullptr), detailsScrollArea(nullptr)
 {
     setWindowTitle("About LAMMPS-GUI");
-    setWindowIcon(QIcon(":/icons/lammps-gui-icon-128x128.png"));
+    setWindowIcon(QIcon(Cfg::MAIN_ICON));
 
     auto *mainLayout = new QVBoxLayout(this);
 
     // Top section: icon + version text
     auto *topLayout = new QHBoxLayout();
     auto *iconLabel = new QLabel(this);
-    iconLabel->setPixmap(QPixmap(":/icons/lammps-gui-icon-128x128.png").scaled(64, 64));
+    iconLabel->setPixmap(QPixmap(Cfg::MAIN_ICON).scaled(64, 64));
     iconLabel->setFixedSize(64, 64);
     topLayout->addWidget(iconLabel);
     auto *versionLabel = new QLabel(version, this);

@@ -656,7 +656,7 @@ ImageViewer::ImageViewer(const QString &fileName, LammpsWrapper *_lammps, Lammps
     imageLayout->setSpacing(LAYOUT_SPACING);
     mainLayout->addLayout(imageLayout);
     mainLayout->setSpacing(LAYOUT_SPACING);
-    setWindowIcon(QIcon(":/icons/lammps-gui-icon-128x128.png"));
+    setWindowIcon(QIcon(Cfg::MAIN_ICON));
     setWindowTitle(QString("LAMMPS-GUI - Image Viewer - ") + QFileInfo(fileName).fileName());
     createActions();
 

@@ -2263,7 +2263,7 @@ void LammpsGui::help()
         "accelerator packages and number of OpenMP threads. Due to its nature "
         "as a graphical application, it is <b>not</b> possible to use the "
         "LAMMPS-GUI in parallel with MPI.</p>");
-    mb.setIconPixmap(QPixmap(":/icons/lammps-gui-icon-128x128.png").scaled(64, 64));
+    mb.setIconPixmap(QPixmap(Cfg::MAIN_ICON).scaled(64, 64));
     mb.setStandardButtons(QMessageBox::Close);
     auto *button = mb.button(QMessageBox::Close);
     button->setIcon(QIcon(":/icons/window-close.svg"));

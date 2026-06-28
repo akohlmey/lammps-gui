@@ -85,7 +85,7 @@ void ImageViewer::globalSettings()
 {
     QDialog setview;
     setview.setWindowTitle(QString("LAMMPS-GUI - Global image settings"));
-    setview.setWindowIcon(QIcon(":/icons/lammps-gui-icon-128x128.png"));
+    setview.setWindowIcon(QIcon(Cfg::MAIN_ICON));
     setview.setMinimumSize(MINIMUM_WIDTH, MINIMUM_HEIGHT);
     setview.setContentsMargins(CONTENT_MARGIN, CONTENT_MARGIN, CONTENT_MARGIN, CONTENT_MARGIN);
 
@@ -472,7 +472,7 @@ void ImageViewer::atomSettings()
     updatePeratom();
     QDialog setview;
     setview.setWindowTitle(QString("LAMMPS-GUI - Atom and bond settings for images"));
-    setview.setWindowIcon(QIcon(":/icons/lammps-gui-icon-128x128.png"));
+    setview.setWindowIcon(QIcon(Cfg::MAIN_ICON));
     setview.setMinimumSize(MINIMUM_WIDTH, MINIMUM_HEIGHT);
     setview.setContentsMargins(CONTENT_MARGIN, CONTENT_MARGIN, CONTENT_MARGIN, CONTENT_MARGIN);
 
@@ -1081,7 +1081,7 @@ void ImageViewer::fixSettings()
     if ((computes.size() + fixes.size()) == 0) return;
     QDialog fixview;
     fixview.setWindowTitle(QString("LAMMPS-GUI - Visualize Compute and Fix Graphics Objects"));
-    fixview.setWindowIcon(QIcon(":/icons/lammps-gui-icon-128x128.png"));
+    fixview.setWindowIcon(QIcon(Cfg::MAIN_ICON));
     fixview.setMinimumSize(MINIMUM_WIDTH, MINIMUM_HEIGHT);
     fixview.setContentsMargins(CONTENT_MARGIN, CONTENT_MARGIN, CONTENT_MARGIN, CONTENT_MARGIN);
 
@@ -1191,7 +1191,7 @@ void ImageViewer::regionSettings()
     if (regions.size() == 0) return;
     QDialog regionview;
     regionview.setWindowTitle(QString("LAMMPS-GUI - Visualize Regions"));
-    regionview.setWindowIcon(QIcon(":/icons/lammps-gui-icon-128x128.png"));
+    regionview.setWindowIcon(QIcon(Cfg::MAIN_ICON));
     regionview.setMinimumSize(MINIMUM_WIDTH, MINIMUM_HEIGHT);
     regionview.setContentsMargins(CONTENT_MARGIN, CONTENT_MARGIN, CONTENT_MARGIN, CONTENT_MARGIN);
 
@@ -1340,7 +1340,7 @@ void ImageViewer::colorSettings()
 
     QDialog colorview;
     colorview.setWindowTitle(QString("LAMMPS-GUI - Atom Type Colors"));
-    colorview.setWindowIcon(QIcon(":/icons/lammps-gui-icon-128x128.png"));
+    colorview.setWindowIcon(QIcon(Cfg::MAIN_ICON));
     colorview.setContentsMargins(CONTENT_MARGIN, CONTENT_MARGIN, CONTENT_MARGIN, CONTENT_MARGIN);
     QFontMetrics metrics(colorview.fontMetrics());
 

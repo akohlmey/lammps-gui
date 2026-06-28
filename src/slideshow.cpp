@@ -11,6 +11,7 @@
 
 #include "slideshow.h"
 
+#include "constants.h"
 #include "helpers.h"
 #include "lammpsgui.h"
 #include "qaddon.h"
@@ -334,7 +335,7 @@ SlideShow::SlideShow(const QString &fileName, LammpsGui *_lammpsgui, QWidget *pa
     mainLayout->setSpacing(LAYOUT_SPACING);
     goplay->setFocus();
 
-    setWindowIcon(QIcon(":/icons/lammps-gui-icon-128x128.png"));
+    setWindowIcon(QIcon(Cfg::MAIN_ICON));
     setWindowTitle(QString("LAMMPS-GUI - Slide Show: ") + QFileInfo(fileName).fileName());
 
     imagefiles.clear();

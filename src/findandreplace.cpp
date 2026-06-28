@@ -12,6 +12,7 @@
 #include "findandreplace.h"
 
 #include "codeeditor.h"
+#include "constants.h"
 #include "helpers.h"
 #include "lammpsgui.h"
 
@@ -76,7 +77,7 @@ FindAndReplace::FindAndReplace(CodeEditor *_editor, QWidget *parent) :
     connect(action, &QShortcut::activated, this, &FindAndReplace::quit);
 
     setLayout(layout);
-    setWindowIcon(QIcon(":/icons/lammps-gui-icon-128x128.png"));
+    setWindowIcon(QIcon(Cfg::MAIN_ICON));
     setWindowTitle("LAMMPS-GUI - Find and Replace");
 }
 
