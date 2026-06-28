@@ -197,7 +197,7 @@ void LammpsGui::createEditMenu()
 
     addMenuAction(menu, ":/icons/preferences-desktop.svg", "P&references...", "Ctrl+P",
                   &LammpsGui::preferences);
-    addMenuAction(menu, ":/icons/document-revert.svg", "Reset Preferences to &Defaults", "",
+    addMenuAction(menu, ":/icons/preferences-reset.svg", "Reset Preferences to &Defaults", "",
                   &LammpsGui::defaults);
 }
 

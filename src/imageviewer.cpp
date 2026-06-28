@@ -480,11 +480,11 @@ ImageViewer::ImageViewer(const QString &fileName, LammpsWrapper *_lammps, Lammps
     // keep the cutoff field height in sync with the toolbar buttons
     bondcut->setFixedSize(metrics.averageCharWidth() * 6, buttonhint.height());
     bondcut->setEnabled(false);
-    auto *dobox = new QPushButton(QIcon(":/icons/system-box.png"), "");
+    auto *dobox = new QPushButton(QIcon(":/icons/show-box.png"), "");
     dobox->setCheckable(true);
     dobox->setToolTip("Toggle displaying box");
     dobox->setObjectName("box");
-    auto *doaxes = new QPushButton(QIcon(":/icons/axes-img.png"), "");
+    auto *doaxes = new QPushButton(QIcon(":/icons/show-axes.png"), "");
     doaxes->setCheckable(true);
     doaxes->setToolTip("Toggle displaying axes");
     doaxes->setObjectName("axes");

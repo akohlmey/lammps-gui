@@ -32,10 +32,10 @@
     <!-- This file is updated with: grep 'mycmd ==' ../../src/input.cpp | sed -e 's/^.*mycmd == "\(.*\)".*$/\1/' > lammps_internal_commands.txt -->
     <file>lammps_internal_commands.txt</file>
     <file>icons/birch-murnaghan-eos.png</file>
-    <file>icons/axes-img.png</file>
+    <file>icons/show-axes.png</file>
     <file>icons/emblem-photos.png</file>
     <file>icons/ovito.png</file>
-    <file>icons/system-box.png</file>
+    <file>icons/show-box.png</file>
     <file>icons/tutorial-logo.png</file>
     <file>icons/antialias.svg</file>
     <file>icons/application-exit.svg</file>
@@ -51,7 +51,6 @@
     <file>icons/document-new.svg</file>
     <file>icons/document-open-recent.svg</file>
     <file>icons/document-open.svg</file>
-    <file>icons/document-revert.svg</file>
     <file>icons/document-save-as.svg</file>
     <file>icons/document-save.svg</file>
     <file>icons/download-file.svg</file>
@@ -91,6 +90,7 @@
     <file>icons/preferences-desktop-font.svg</file>
     <file>icons/preferences-desktop-personal.svg</file>
     <file>icons/preferences-desktop.svg</file>
+    <file>icons/preferences-reset.svg</file>
     <file>icons/process-stop.svg</file>
     <file>icons/reference-lines.svg</file>
     <file>icons/rotate-down.svg</file>
