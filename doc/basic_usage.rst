@@ -40,7 +40,7 @@ LAMMPS-GUI supports the following command-line options:
      - Open ``file`` directly in a standalone :ref:`Charts window <charts>`;
        a column-picker dialog is shown first
    * - ``-i <file>``, ``--image <file>``
-     - Open ``file`` in the :ref:`snapshot viewer <slideshow>`; may be given
+     - Open ``file`` in the :ref:`slide show viewer <slideshow>`; may be given
        multiple times to load several images at once
    * - ``-t <file>``, ``--text <file>``
      - Open ``file`` in a standalone text viewer

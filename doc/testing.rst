@@ -119,7 +119,7 @@ test_helpers.cpp
 ----------------
 
 Comprehensive tests for functions in ``src/helpers.h`` and ``src/helpers.cpp``.
-This module contains 38 test cases covering utility functions used throughout
+This module contains test cases covering the utility functions used throughout
 the application.
 
 **Date Comparison (dateCompare)**

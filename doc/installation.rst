@@ -255,14 +255,17 @@ automatically.
 
 The second Linux package variant uses `flatpak software deployment
 environment <https://flatpak.org>`_ and requires the flatpak management
-and runtime software to be installed.  After downloading the
-``LAMMPS-Linux-x86_64-GUI-<version>.flatpak`` file containing the
-flatpak bundle, you can install it with:
+and runtime software to be installed.  As with the binary tarball, there
+are two bundle variants: ``LAMMPS-Linux-x86_64-GUI-<LAMMPS version>.flatpak``
+is built in the LAMMPS repository in linked mode and includes the LAMMPS
+console executable, while ``LAMMPS-GUI-Linux-x86_64-<LAMMPS-GUI version>.flatpak``
+is built in the LAMMPS-GUI repository in plugin mode.  After downloading
+either bundle, you can install it with:
 
 .. code-block:: bash
 
    $ cd ~/Downloads
-   $ flatpak install --user LAMMPS-Linux-GUI-x86_64-<version>.flatpak
+   $ flatpak install --user LAMMPS-Linux-x86_64-GUI-<version>.flatpak
 
 .. image:: JPG/lammps-gui-menu.png
    :align: right
@@ -383,7 +386,7 @@ macOS
 When building on macOS, the build procedure will try to create a
 drag-n-drop installer, ``LAMMPS-GUI-macOS-multiarch-<version>.dmg``,
 when using the 'dmg' target (i.e. ``cmake --build <build dir> --target
-dmg`` or ``make dmg``.
+dmg`` or ``make dmg``).
 
 To build multi-arch executables that will run on both, arm64 and x86_64
 architectures natively, it is necessary to set the CMake variable ``-D

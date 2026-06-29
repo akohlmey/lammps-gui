@@ -99,7 +99,7 @@ the suggestion is to cite that publication for now:
    Gravelle, S., Alvares, C. M. S., Gissinger, J. R., &
    Kohlmeyer, A. (2025). A Set of Tutorials for the LAMMPS Simulation
    Package [Article v1.0]. Living Journal of Computational Molecular
-   Science, 6(1), 3027. https://doi.org/10.33011/livecoms.6.1.3037
+   Science, 6(1), 3037. https://doi.org/10.33011/livecoms.6.1.3037
 
 or in BibTeX format:
 
@@ -109,7 +109,7 @@ or in BibTeX format:
      author={Gravelle, Simon and Alvares, Cecilia M. S. and Gissinger, Jacob R. and Kohlmeyer, Axel},
      title={A Set of Tutorials for the {LAMMPS} Simulation Package [Article v1.0]},
      journal={Living Journal of Computational Molecular Science},
-     pages={3027},
+     pages={3037},
      volume={6},
      number={1},
      year={2025},

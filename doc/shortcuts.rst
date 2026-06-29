@@ -99,7 +99,7 @@ available (On macOS use the Command key instead of Ctrl/Control).
      -
      -
    * - Ctrl+Shift+U
-     - LAMMPS Update
+     - Check for LAMMPS update
      - Ctrl+Home
      - Go to Beginning
      - Ctrl+End

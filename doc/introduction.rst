@@ -277,11 +277,11 @@ used throughout the application:
   ``isStdoutSilenced`` and ``notifyCaptureState``)
 
 **Constants (constants.h)**
-  The ``GuiConstants`` namespace centralizes application-wide magic
-  numbers and repeated string literals, including default buffer sizes,
-  minimum window dimensions, file limits, resource paths, and status
-  messages.  Using named constants avoids typos and makes maintenance
-  easier.  See :cpp:type:`GuiConstants`
+  The ``Cfg`` namespace centralizes application-wide magic numbers and
+  repeated string literals, such as default buffer sizes, minimum window
+  dimensions, file limits, resource paths, and version constants, while
+  the ``Keys`` namespace holds every persisted ``QSettings`` key and group
+  name.  Using named constants avoids typos and makes maintenance easier.
 
 ===========
  Data Flow
