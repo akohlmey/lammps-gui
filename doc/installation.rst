@@ -30,8 +30,8 @@ Prerequisites and portability
 .. index:: CMake
 
 LAMMPS-GUI is programmed in C++ based on the C++17 standard and using
-the `Qt GUI framework <https://www.qt.io/product/framework>`_.  As of
-LAMMPS-GUI version 2.0.0 Qt version 6.2 or later is required.
+the `Qt GUI framework <https://www.qt.io/development/framework>`_.  As
+of LAMMPS-GUI version 2.0.0 Qt version 6.2 or later is required.
 LAMMPS-GUI can switch between a "light" and a "dark" theme according to
 the settings of the desktop environment.  Building LAMMPS-GUI from
 source requires CMake version 3.20 or later and a suitable C++ compiler.
@@ -254,8 +254,8 @@ automatically.
 .. index:: flatpak
 
 The second Linux package variant uses `flatpak software deployment
-environment <https://www.flatpak.org>`_ and requires the flatpak
-management and runtime software to be installed.  After downloading the
+environment <https://flatpak.org>`_ and requires the flatpak management
+and runtime software to be installed.  After downloading the
 ``LAMMPS-Linux-x86_64-GUI-<version>.flatpak`` file containing the
 flatpak bundle, you can install it with:
 
