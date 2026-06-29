@@ -58,6 +58,24 @@
   <content_rating type="oars-1.1" />
 
   <releases>
+    <release version="2.1.0" timestamp="1782648000">
+      <description>
+        <p>First stable release of the 2.x series. Internally, 2.x is a major reorganization and refactor of the code base that drops backward compatibility (Qt 5 and LAMMPS versions older than 30 March 2026) and instead builds on current LAMMPS features. It collects the work from the 2.0.x beta series since version 1.12.0.</p>
+        <ul>
+          <li>Require Qt 6.2 or newer (Qt 5.x support removed) and a LAMMPS library from 30 March 2026 or newer, with all GUI features unconditionally available</li>
+          <li>Replace the Qt Charts and Qt Graphs chart backends with a single self-contained native renderer that looks and behaves identically on every platform and Qt version</li>
+          <li>Plot external data files (whitespace/.dat, CSV, LAMMPS YAML, and JSON) in the chart window without running a simulation, with column selection, renaming, derived columns, and multi-file overlay</li>
+          <li>Add a Postprocess dialog with autocorrelation, polynomial and Birch-Murnaghan equation-of-state curve fits, and custom-function plotting and nonlinear curve fitting via a vendored subset of the Lepton expression parser</li>
+          <li>Add a Chart Style dialog with line and point display modes and independent raw and processed series styling, an optional in-plot legend, and reference lines</li>
+          <li>Color bonds in the snapshot viewer by a per-bond compute value with an independent bond color map, range, and opacity, and overhaul the color maps (single source of truth, corrected Viridis, Plasma, and Inferno, added Magma, Cividis, and Turbo, and a reversible-map option)</li>
+          <li>Improve the slide show and image viewing: open image files directly, standalone viewer modes, ImageMagick conversion, stable window sizing, Start/Stop range controls, and a color-coded slider</li>
+          <li>Reorganize the Tutorials menu into multiple collections (Soft Matter and a new Materials Science collection, plus a Granular / DEM placeholder)</li>
+          <li>Reorganize the File menu, add an Inspect Restart File action and -c/--chart, -i/--image, and -t/--text command-line flags, and let plugin builds browse for or download a compatible LAMMPS library with SHA-256 verification</li>
+          <li>Overhaul the icons to scalable SVG (sharp on high-resolution displays) with consistent toolbars and application-themed text context-menu icons</li>
+          <li>Add flatpak packaging and Linux, macOS, and Windows continuous integration, refactor extensively for consistency and testability, and thoroughly revise the documentation</li>
+        </ul>
+      </description>
+    </release>
     <release version="2.0.9999" timestamp="1782556444">
       <description>
         <p>Another pre-release for the upcoming 2.1.0 version.</p>
