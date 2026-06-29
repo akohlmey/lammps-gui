@@ -9,7 +9,7 @@ This file is a developer note and is not part of the published paper.
 
 - `paper.md` -- JOSS paper (Pandoc Markdown + YAML header). Single author.
 - `paper.bib` -- references for `paper.md` (BibTeX, DOIs where available).
-- `images/lammps-gui-deform.png` -- Figure 1, referenced from `paper.md`.
+- `images/lammps-gui-screen.png` -- Figure 1, referenced from `paper.md`.
 - The abandoned long-form CPC draft (`lammps-gui-library.tex` / `.bib`) is
   **not** on this branch; it is archived on the `paper` branch as source
   material in case it is ever needed again.
@@ -32,12 +32,16 @@ Author-side gates JOSS expects to be satisfied before review:
 - [x] Automated tests -- CTest suite (unit / command-line / GUI) run in CI.
 - [x] Community guidelines -- `.github/CONTRIBUTING.md`,
       `.github/CODE_OF_CONDUCT.md`, issue/PR templates.
-- [ ] **Tagged release** matching the submitted state (e.g. the current
-      v2.1.x). Create the tag before/at submission.
-- [ ] **Archive DOI** (Zenodo or similar) for the tagged release. JOSS
-      requires this after the review is accepted (not at submission); it is a
-      permanent archival snapshot of the reviewed version, separate from the
-      GitHub repository, and minting it early does no harm.
+- [x] **Tagged release** matching the submitted state -- `v3.0.0`
+      (GPG-signed, 2026-06-29).
+- [x] **Archive DOI** (Zenodo) for the tagged release. JOSS requires this
+      after the review is accepted (not at submission); it is a permanent
+      archival snapshot of the reviewed version, separate from the GitHub
+      repository, and minting it early does no harm. The repository is linked
+      to Zenodo: version DOI for v3.0.0 is `10.5281/zenodo.21035506` (use this
+      one for the reviewed release); the all-versions concept DOI is
+      `10.5281/zenodo.21035505`. Confirm the Zenodo record's title and author
+      list match `paper.md` before giving the DOI to JOSS.
 - [x] `CITATION.cff` at the repo root (GitHub shows a "Cite this
       repository" button). Update its `version`/`date-released` to match the
       release tag, and add a `preferred-citation` JOSS DOI once accepted.
