@@ -78,6 +78,9 @@ Charts Window
 By default, when starting a run, a *Charts* window opens that displays a
 plot of thermodynamic output of the LAMMPS calculation as shown below.
 
+.. index:: smoothing
+.. index:: Savitzky-Golay filter
+
 The "Data:" drop down menu on the top right allows selection of
 different properties that are computed and written as thermodynamic
 output to the output window.  Only one property can be shown at a time.
@@ -110,6 +113,10 @@ corresponds to.  Same as for the *Output* window, the chart window is
 replaced on each new run, but the behavior can be changed in the
 *Preferences* dialog.
 
+.. index:: CSV export
+.. index:: YAML export
+.. index:: data export
+
 From the *File* menu on the top left, it is possible to save an image
 of the currently displayed plot or export the data in either plain text
 columns (for use by plotting tools like `gnuplot
@@ -134,6 +141,9 @@ last change of output fields or timestep setting, while the export from
 the log will contain *all* YAML output but *segmented* into individual
 runs.
 
+.. index:: chart style
+.. index:: legend
+
 **Adjusting the chart style.** The *Chart Style...* entry in the chart
 window's *File* menu, or the chart-style quick-access button at the far
 left of the second toolbar row, opens a dialog to change how the data is
@@ -153,6 +163,8 @@ any of the four plot corners (*Top left*, *Top right*, *Bottom right*, or
    processed series were added, including the per-series point size and the
    optional in-plot legend.
 
+.. index:: reference lines
+
 **Reference lines.** The *Reference Lines...* entry in the chart window's
 *File* menu opens a dialog for adding straight annotation lines that are
 drawn on *every* chart in the window.  Each line is either *Vertical* (at a
@@ -168,6 +180,15 @@ fitted value.
 .. versionadded:: 2.1
 
    The *Reference Lines* dialog was added.
+
+.. index:: post-processing
+.. index:: curve fitting
+.. index:: autocorrelation
+.. index:: polynomial fit
+.. index:: Birch-Murnaghan EOS
+.. index:: equation of state
+.. index:: custom function
+.. index:: custom fit
 
 **Post-processing the data.** The *Postprocess...* entry in the chart
 window's *File* menu, or the quick-access button immediately to the right
@@ -224,6 +245,9 @@ and custom fit).
    The *Postprocess* dialog with the autocorrelation, polynomial,
    Birch-Murnaghan EOS, custom-function, and custom-fit analyses was
    added.
+
+.. index:: plotting external data
+.. index:: plot data file
 
 The same *Charts* window is also used to plot data from an external file
 opened with *File* -> *Plot Data File...* (`Ctrl-Shift-P`, see

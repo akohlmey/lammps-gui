@@ -7,6 +7,7 @@ Editor Window
 .. index:: editor window
 .. index:: text editor
 .. index:: editing features
+.. index:: syntax highlighting
 
 The *Editor* window of LAMMPS-GUI has most of the usual functionality
 that similar programs have: text selection via mouse or with cursor
@@ -15,6 +16,8 @@ Paste (`Ctrl-V`), Undo (`Ctrl-Z`), Redo (`Ctrl-Shift-Z`), Select All
 (`Ctrl-A`).  When trying to exit the editor with a modified buffer, a
 dialog will pop up asking whether to cancel the exit operation, or to
 save or not save the buffer contents to a file.
+
+.. index:: auto-save
 
 The editor has an auto-save mode that can be enabled or disabled in the
 *Preferences* dialog.  In auto-save mode, the editor buffer is

@@ -493,6 +493,9 @@ The dialog contains the following sections:
      toggle shares a line with the **AutoBonds** control of the **Bonds**
      section below; the two are mutually exclusive.
 
+.. index:: color map
+.. index:: reversible color map
+
 The color maps available for coloring atoms and bonds by value are shown
 below; the continuous maps are interpolated between color stops, while
 *Sequential*, *Landscape*, and *Basic* use discrete colors.
@@ -768,6 +771,9 @@ edited list of definitions to a file.  The list may be loaded later to
 restore a previous color assignment.
 
 .. _json_format:
+
+.. index:: JSON format
+.. index:: JSON color file
 
 .. admonition:: JSON file format for colors and lighting definitions
 

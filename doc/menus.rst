@@ -193,6 +193,7 @@ Tutorials
 .. index:: Tutorials menu
 .. index:: menus; Tutorials
 .. index:: LAMMPS tutorials
+.. index:: tutorial wizard
 
 The *Tutorials* menu supports several collections of LAMMPS tutorials for
 beginners and intermediate LAMMPS users.  The menu has one submenu per
