@@ -62,12 +62,6 @@ when quitting and recovered when starting again.
    *View Text File* entry now warns when given an image or binary file instead of
    trying to display it as text.
 
-..
-   Maintainer note (screenshots): consider adding a screenshot of the
-   snapshot viewer with several externally produced images loaded through
-   *View Image File(s)...*.  Holding off until the pending dialog/layout
-   redesign lands, since the snapshot viewer layout may change.
-
 **Plotting external data files.** The *Plot Data File...* entry
 (`Ctrl-Shift-P`) opens a dialog to select a file with column-oriented
 numeric data and plots it in a standalone :ref:`Charts window <charts>`

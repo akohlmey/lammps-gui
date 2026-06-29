@@ -160,6 +160,11 @@ to any of the four plot corners (*Top left*, *Top right*, *Bottom
 right*, or *Bottom left*).  The selected placement is remembered across
 sessions.
 
+.. figure:: JPG/lammps-gui-eos-plot.png
+   :align: center
+
+   An energy-versus-volume data set shown with adjusted chart styling.
+
 .. versionadded:: 2.1
 
    The *Chart Style* dialog and the independent styling of the raw and
@@ -182,6 +187,11 @@ size, the gap between the label and the line, and whether the labels are
 drawn in an opaque box apply to the whole window.  Reference lines are
 useful, for example, to mark a target temperature, a transition point,
 or a fitted value.
+
+.. figure:: JPG/lammps-gui-plot-lines.png
+   :align: center
+
+   The *Reference Lines* dialog.
 
 .. versionadded:: 2.1
 
@@ -249,6 +259,17 @@ treats the overlay as the "smoothed" series: selecting "Smoothed" or
 applies uniformly to all analysis types (polynomial, EOS, custom function,
 and custom fit).
 
+.. figure:: JPG/lammps-gui-post-function.png
+   :align: center
+
+   The *Postprocess* dialog with a *Custom function* expression entered.
+
+.. figure:: JPG/lammps-gui-eos-fit.png
+   :align: center
+
+   An example post-processing result: a Birch-Murnaghan equation-of-state
+   fit overlaid on energy-versus-volume data.
+
 .. versionadded:: 2.1
 
    The *Postprocess* dialog with the autocorrelation, polynomial,
@@ -272,11 +293,11 @@ standalone chart window are also launched when LAMMPS-GUI is invoked from
 the command line with the ``-c``/``--chart`` flag (see
 :ref:`command-line options <command-line-options>`).
 
-..
-   Maintainer note (screenshots): add screenshots of the *Chart Style*
-   dialog, the *Postprocess* dialog, and an example chart with a fitted
-   overlay curve.  Deferred until the pending dialog/layout redesign,
-   which is expected to change these dialogs.
+.. figure:: JPG/lammps-gui-import-data.png
+   :align: center
+
+   The column-picker dialog shown when opening an external data file with
+   *Plot Data File...*.
 
 The *Preferences* dialog has a *Charts* tab, where you can configure
 multiple chart-related settings, like the default title, colors for the
