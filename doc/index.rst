@@ -118,6 +118,33 @@ or in BibTeX format:
      DOI={10.33011/livecoms.6.1.3037}
    }
 
+.. only:: html
+
+   .. |doi-image-svg| image:: https://zenodo.org/badge/DOI/10.5281/zenodo.21035505.svg
+      :target: https://doi.org/10.5281/zenodo.21035505
+
+   Starting with version 3.0.0 LAMMPS-GUI releases are automatically
+   archived on `Zenodo <https://zenodo.org>`_ under |doi-image-svg|.
+
+.. only:: latex
+
+   .. |doi-image-png| image:: JPG/zenodo.21035505.png
+      :target: https://doi.org/10.5281/zenodo.21035505
+
+   Starting with version 3.0.0 LAMMPS-GUI releases are automatically
+   archived on `Zenodo <https://zenodo.org>`_ under |doi-image-png|.
+
+.. code-block:: bibtex
+
+   @software{lammps_gui_zenodo,
+     author       = {Kohlmeyer, Axel},
+     title        = {{LAMMPS-GUI}: A Cross-Platform Graphical Tool to
+                      Learn and Explore Molecular Dynamics with LAMMPS},
+     publisher    = {Zenodo},
+     doi          = {10.5281/zenodo.21035505},
+     url          = {https://doi.org/10.5281/zenodo.21035505},
+   }
+
 ------------------
 
 .. raw:: latex
