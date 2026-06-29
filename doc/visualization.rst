@@ -454,7 +454,7 @@ The dialog contains the following sections:
      selecting *type* or *element* the colors are fixed and can be only
      changed manually for ``dump_image`` output in the input using
      ``dump_modify acolor`` or ``dump_modify element``, respectively.
-     Otherwise, the colors are determined by the colormap selection
+     Otherwise, the colors are determined by the color map selection
      described below.
    - **Size**: Select the property used for atom sizing.  Options
      include *auto* (when element, diameter, or sigma data is
@@ -464,9 +464,9 @@ The dialog contains the following sections:
    - **Opacity**: The transparency of atoms (range: 0.0 -- 1.0, where 1.0
      is fully opaque and 0.0 is fully transparent).  Bonds have their own
      Opacity setting in the **Bonds** section below.
-   - **Map**: Select the colormap used for coloring by a per-atom
+   - **Map**: Select the color map used for coloring by a per-atom
      property.  This option is *not* available for atom color selections
-     *type* and *element*\ .  Currently available continuous colormaps
+     *type* and *element*\ .  Currently available continuous color maps
      are: *RWB* (red-white-blue), *PWT*
      (purple-white-teal), *BWG* (blue-white-green), *BGR*
      (blue-green-red), *Grayscale* (black-white), *Viridis* (from
@@ -474,18 +474,18 @@ The dialog contains the following sections:
      matplotlib), *Magma* (from matplotlib), *Cividis* (from matplotlib),
      *Turbo* (from matplotlib), *Teal*, and *Rainbow*.  *Sequential*,
      *Landscape*, and *Basic* are maps with discrete colors.  These are pre-defined
-     colormap settings and currently cannot be adjusted from LAMMPS-GUI
+     color map settings and currently cannot be adjusted from LAMMPS-GUI
      directly.  As for *all* image settings, further customizations can
      be realized by copying the dump image command line as customized by
      the Image Viewer to the editor and then run LAMMPS and observe the
      resulting images in the Slide Show window.  Then the color
      map setting can be fully customized according to the `dump_modify
      colormap documentation <https://docs.lammps.org/dump_image.html>`_.
-   - **Reverse** (checkbox): Mirror the selected colormap so its low and
+   - **Reverse** (checkbox): Mirror the selected color map so its low and
      high ends are swapped (for example, *RWB* becomes blue-white-red).
      This replaces the former *BWR* entry, which is exactly *RWB*
      reversed.  Enabled together with the **Map** selector.
-   - **Min** / **Max**: Set the range of the colormap.  Use *auto* to
+   - **Min** / **Max**: Set the range of the color map.  Use *auto* to
      have LAMMPS determine the range automatically or specify an
      explicit numeric value.
    - **VDW style** (checkbox): Enable or disable space-filling sphere
@@ -524,7 +524,7 @@ Guide for step-by-step instructions.
      of per-bond properties computed by ``compute bond/local`` -- *dist*,
      *dx*, *dy*, *dz*, *engpot*, *force*, *fx*, *fy*, *fz*, *engvib*,
      *engrot*, *engtrans*, *omega*, and *velvib*.  Selecting one of these
-     colors the bonds by that per-bond value using the bond colormap (see
+     colors the bonds by that per-bond value using the bond color map (see
      **Map** below); LAMMPS-GUI creates the required ``compute
      bond/local`` automatically.
    - **Size**: Select bond diameter mode.  Options include *atom*,
@@ -545,9 +545,9 @@ Guide for step-by-step instructions.
    - **Cutoff**: The distance cutoff used for automatic bond detection
      (range: 0.001 -- 10.0 in distance units), in the text field next to
      the AutoBonds checkbox.  Only available when auto-bonds are enabled.
-   - **Reverse** / **Map** / **Min** / **Max**: Select the colormap and
+   - **Reverse** / **Map** / **Min** / **Max**: Select the color map and
      value range used when coloring bonds by a per-bond value (see
-     **Color** above).  The same colormaps as the atom **Map** are
+     **Color** above).  The same color maps as the atom **Map** are
      offered, and the **Reverse** checkbox mirrors the chosen map exactly
      like its atom counterpart.  These fields are only enabled when a
      per-bond property is selected as the bond color.  Use *auto* for
