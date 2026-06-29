@@ -75,8 +75,8 @@ displayed within a tab.
 
 |guiprefs1|  |guiprefs2|  |guiprefs3|  |guiprefs4|  |guiprefs5|
 
-General Settings:
-^^^^^^^^^^^^^^^^^
+General Settings
+^^^^^^^^^^^^^^^^
 
 .. index:: general settings
 .. index:: preferences; general
@@ -150,8 +150,8 @@ General Settings:
      from the LAMMPS web server.  After changing this setting, LAMMPS-GUI
      needs to be re-launched.
 
-Accelerators:
-^^^^^^^^^^^^^
+Accelerators
+^^^^^^^^^^^^
 
 .. index:: accelerators
 .. index:: preferences; accelerators
@@ -176,8 +176,8 @@ changed depends on which accelerator package is chosen (or "None").
 
 .. _image_preferences:
 
-Snapshot Image:
-^^^^^^^^^^^^^^^
+Snapshot Image
+^^^^^^^^^^^^^^
 
 .. index:: snapshot image settings
 .. index:: preferences; snapshot image
@@ -216,8 +216,8 @@ These settings correspond to the available settings for the LAMMPS `dump
 image and corresponding dump_modify commands
 <https://docs.lammps.org/dump_image.html>`_.
 
-Editor Settings:
-^^^^^^^^^^^^^^^^
+Editor Settings
+^^^^^^^^^^^^^^^
 
 .. index:: editor settings
 .. index:: preferences; editor
@@ -235,8 +235,8 @@ the completion pop-up window, and whether auto-save mode is enabled.
 In auto-save mode, the editor buffer is saved before a run or before
 exiting LAMMPS-GUI.
 
-Charts Settings:
-^^^^^^^^^^^^^^^^
+Charts Settings
+^^^^^^^^^^^^^^^
 
 .. index:: charts settings
 .. index:: preferences; charts

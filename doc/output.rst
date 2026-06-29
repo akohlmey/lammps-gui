@@ -144,18 +144,25 @@ runs.
 .. index:: chart style
 .. index:: legend
 
-**Adjusting the chart style.** The *Chart Style...* entry in the chart
-window's *File* menu, or the chart-style quick-access button at the far
-left of the second toolbar row, opens a dialog to change how the data is
-drawn.  The *Raw data* and *Processed data* series each have independent
-settings for the display style (*Lines*, *Points*, or *Lines and Points*),
-the color, the line width, and the point size.  This makes it possible, for
-example, to show the raw data as faint points and the smoothed curve as a
-bold line.
-The *Legend* placement selector in the same dialog adds an in-plot legend
-that lists the visible named series; it can be turned *Off* or anchored to
-any of the four plot corners (*Top left*, *Top right*, *Bottom right*, or
-*Bottom left*).  The selected placement is remembered across sessions.
+Adjust chart style
+------------------
+
+.. image:: JPG/lammps-gui-eos-plot.png
+   :align: right
+   :scale: 33%
+
+The *Chart Style...* entry in the chart window's *File* menu, or the
+chart-style quick-access button at the far left of the second toolbar
+row, opens a dialog to change how the data is drawn.  The *Raw data* and
+*Processed data* series each have independent settings for the display
+style (*Lines*, *Points*, or *Lines and Points*), the color, the line
+width, and the point size.  This makes it possible, for example, to show
+the raw data as faint points and the smoothed curve as a bold line.  The
+*Legend* placement selector in the same dialog adds an in-plot legend
+that lists the visible named series; it can be turned *Off* or anchored
+to any of the four plot corners (*Top left*, *Top right*, *Bottom
+right*, or *Bottom left*).  The selected placement is remembered across
+sessions.
 
 .. versionadded:: 2.1
 
@@ -165,17 +172,24 @@ any of the four plot corners (*Top left*, *Top right*, *Bottom right*, or
 
 .. index:: reference lines
 
-**Reference lines.** The *Reference Lines...* entry in the chart window's
-*File* menu opens a dialog for adding straight annotation lines that are
-drawn on *every* chart in the window.  Each line is either *Vertical* (at a
-chosen x value) or *Horizontal* (at a chosen y value) and can carry a text
-label and an individually chosen color.  The label position along the line
+Reference lines
+---------------
+
+.. image:: JPG/lammps-gui-plot-lines.png
+   :align: right
+   :scale: 33%
+
+The *Reference Lines...* entry in the chart window's *File* menu opens a
+dialog for adding straight annotation lines that are drawn on *every*
+chart in the window.  Each line is either *Vertical* (at a chosen x
+value) or *Horizontal* (at a chosen y value) and can carry a text label
+and an individually chosen color.  The label position along the line
 (*Top*, *Center*, or *Bottom* for vertical lines; *Left*, *Center*, or
 *Right* for horizontal lines) is selected per line, while the label font
 size, the gap between the label and the line, and whether the labels are
 drawn in an opaque box apply to the whole window.  Reference lines are
-useful, for example, to mark a target temperature, a transition point, or a
-fitted value.
+useful, for example, to mark a target temperature, a transition point,
+or a fitted value.
 
 .. versionadded:: 2.1
 
@@ -190,10 +204,13 @@ fitted value.
 .. index:: custom function
 .. index:: custom fit
 
-**Post-processing the data.** The *Postprocess...* entry in the chart
-window's *File* menu, or the quick-access button immediately to the right
-of the *Chart Style...* button, runs an analysis on the data of the
-currently selected property.  The following analyses are available:
+Post-process data
+-----------------
+
+The *Postprocess...* entry in the chart window's *File* menu, or the
+quick-access button immediately to the right of the *Chart Style...*
+button, runs an analysis on the data of the currently selected property.
+The following analyses are available:
 
 - *Autocorrelation* computes the normalized autocorrelation function of
   the selected data up to a chosen maximum lag and shows it in a new
@@ -240,6 +257,19 @@ treats the overlay as the "smoothed" series: selecting "Smoothed" or
 applies uniformly to all analysis types (polynomial, EOS, custom function,
 and custom fit).
 
+.. figure:: JPG/lammps-gui-post-function.png
+   :align: center
+   :width: 50%
+
+   The *Postprocess* dialog with a *Custom function* expression entered.
+
+.. figure:: JPG/lammps-gui-eos-fit.png
+   :align: center
+   :width: 55%
+
+   An example post-processing result: a Birch-Murnaghan equation-of-state
+   fit overlaid on energy-versus-volume data.
+
 .. versionadded:: 2.1
 
    The *Postprocess* dialog with the autocorrelation, polynomial,
@@ -248,6 +278,9 @@ and custom fit).
 
 .. index:: plotting external data
 .. index:: plot data file
+
+Plot imported data
+------------------
 
 The same *Charts* window is also used to plot data from an external file
 opened with *File* -> *Plot Data File...* (`Ctrl-Shift-P`, see
@@ -263,11 +296,12 @@ standalone chart window are also launched when LAMMPS-GUI is invoked from
 the command line with the ``-c``/``--chart`` flag (see
 :ref:`command-line options <command-line-options>`).
 
-..
-   Maintainer note (screenshots): add screenshots of the *Chart Style*
-   dialog, the *Postprocess* dialog, and an example chart with a fitted
-   overlay curve.  Deferred until the pending dialog/layout redesign,
-   which is expected to change these dialogs.
+.. figure:: JPG/lammps-gui-import-data.png
+   :align: center
+   :width: 45%
+
+   The column-picker dialog shown when opening an external data file with
+   *Plot Data File...*.
 
 The *Preferences* dialog has a *Charts* tab, where you can configure
 multiple chart-related settings, like the default title, colors for the
