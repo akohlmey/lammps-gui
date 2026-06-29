@@ -18,6 +18,7 @@
 #include <QColor>
 #include <QCoreApplication>
 #include <QDataStream>
+#include <QDialogButtonBox>
 #include <QDir>
 #include <QFile>
 #include <QFileDialog>
@@ -29,6 +30,7 @@
 #include <QPalette>
 #include <QPixmap>
 #include <QProcess>
+#include <QPushButton>
 #include <QRegularExpression>
 #include <QStandardPaths>
 #include <QStringList>
@@ -441,6 +443,27 @@ int showUnsavedChangesDialog(QWidget *parent, const QString &filename, const QSt
 
     if (parent) mb.setFont(parent->font());
     return mb.exec();
+}
+
+// apply our bundled SVG icons to a dialog button box's standard buttons (see helpers.h)
+
+void styleDialogButtons(QDialogButtonBox *box)
+{
+    if (!box) return;
+
+    const struct {
+        QDialogButtonBox::StandardButton id;
+        const char *icon;
+    } iconmap[] = {
+        {QDialogButtonBox::Ok, ":/icons/dialog-ok.svg"},
+        {QDialogButtonBox::Yes, ":/icons/dialog-ok.svg"},
+        {QDialogButtonBox::No, ":/icons/dialog-no.svg"},
+        {QDialogButtonBox::Cancel, ":/icons/dialog-cancel.svg"},
+        {QDialogButtonBox::Close, ":/icons/window-close.svg"},
+    };
+    for (const auto &entry : iconmap) {
+        if (auto *button = box->button(entry.id)) button->setIcon(QIcon(entry.icon));
+    }
 }
 
 // silence stdout by redirecting to the null device

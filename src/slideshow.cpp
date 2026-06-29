@@ -395,16 +395,26 @@ void SlideShow::deleteImages()
     if ((lo < 0) || (hi < lo) || (hi >= imagefiles.size())) return;
 
     const int count = hi - lo + 1;
-    const auto reply =
-        QMessageBox::question(this, "Delete Images",
-                              QString("Delete %1 image file%2 (image %3 to %4) from disk?\n"
-                                      "This operation cannot be undone.")
-                                  .arg(count)
-                                  .arg(count == 1 ? "" : "s")
-                                  .arg(lo + 1)
-                                  .arg(hi + 1),
-                              QMessageBox::Yes | QMessageBox::No, QMessageBox::No);
-    if (reply != QMessageBox::Yes) return;
+    QMessageBox mb(this);
+    mb.setWindowTitle("Delete Images");
+    mb.setWindowIcon(QIcon(Cfg::MAIN_ICON));
+    mb.setText(QString("Delete %1 image file%2 (image %3 to %4) from disk?")
+                   .arg(count)
+                   .arg(count == 1 ? "" : "s")
+                   .arg(lo + 1)
+                   .arg(hi + 1));
+    mb.setInformativeText("This operation cannot be undone.");
+    mb.setIconPixmap(QIcon(":/icons/warning.svg").pixmap(QSize(64, 64), mb.devicePixelRatioF()));
+    mb.setStandardButtons(QMessageBox::Yes | QMessageBox::No);
+    mb.setDefaultButton(QMessageBox::No);
+    mb.setEscapeButton(QMessageBox::No);
+
+    auto *button = mb.button(QMessageBox::Yes);
+    button->setIcon(QIcon(":/icons/dialog-ok.svg"));
+    button = mb.button(QMessageBox::No);
+    button->setIcon(QIcon(":/icons/dialog-no.svg"));
+
+    if (mb.exec() != QMessageBox::Yes) return;
 
     // remove back-to-front so the lower indices stay valid while deleting
     for (int i = hi; i >= lo; --i) {

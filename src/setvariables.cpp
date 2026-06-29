@@ -12,6 +12,7 @@
 #include "setvariables.h"
 
 #include "constants.h"
+#include "helpers.h"
 
 #include <QDialogButtonBox>
 #include <QIcon>
@@ -54,7 +55,7 @@ SetVariables::SetVariables(QList<QPair<QString, QString>> &_vars, QWidget *paren
     layout->addSpacerItem(new QSpacerItem(10, 10, QSizePolicy::Minimum, QSizePolicy::Expanding));
 
     auto *buttonBox = new QDialogButtonBox(QDialogButtonBox::Ok | QDialogButtonBox::Cancel);
-    auto *add       = new QPushButton(QIcon(":/icons/expand-text.svg"),"&Add Row");
+    auto *add       = new QPushButton(QIcon(":/icons/expand-text.svg"), "&Add Row");
     add->setObjectName("addRow");
     buttonBox->addButton(add, QDialogButtonBox::ActionRole);
     connect(add, &QPushButton::released, this, &SetVariables::addRow);
@@ -64,10 +65,7 @@ SetVariables::SetVariables(QList<QPair<QString, QString>> &_vars, QWidget *paren
     layout->addWidget(buttonBox);
     setLayout(layout);
     setWindowIcon(QIcon(Cfg::MAIN_ICON));
-    auto *button = buttonBox->button(QDialogButtonBox::Ok);
-    button->setIcon(QIcon(":/icons/dialog-ok.svg"));
-    button = buttonBox->button(QDialogButtonBox::Cancel);
-    button->setIcon(QIcon(":/icons/dialog-cancel.svg"));
+    styleDialogButtons(buttonBox);
 
     setWindowTitle("LAMMPS-GUI - Set Variables");
     resize(300, 200);

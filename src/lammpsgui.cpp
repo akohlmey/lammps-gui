@@ -1187,7 +1187,8 @@ void LammpsGui::inspectFile(const QString &fileName)
                           "%2 GB of free RAM (or more) to proceed";
         mb.setDetailedText(details.arg(shortName).arg(file.size() / 134217728.0));
         mb.setInformativeText("Do you want to continue?");
-        mb.setIcon(QMessageBox::Question);
+        mb.setIconPixmap(
+            QIcon(":/icons/warning.svg").pixmap(QSize(64, 64), mb.devicePixelRatioF()));
         mb.setStandardButtons(QMessageBox::Yes | QMessageBox::No);
         mb.setDefaultButton(QMessageBox::No);
         mb.setEscapeButton(QMessageBox::No);
@@ -2214,7 +2215,6 @@ void LammpsGui::checkUpdate()
         mb.setWindowTitle("Check for LAMMPS Shared Library Update");
         mb.setText("An updated pre-compiled LAMMPS shared library is available. ");
         mb.setInformativeText("Do you want to download it now?");
-        mb.setIcon(QMessageBox::Question);
         mb.setStandardButtons(QMessageBox::Yes | QMessageBox::No);
         mb.setWindowIcon(QIcon(Cfg::MAIN_ICON));
         mb.setIconPixmap(QPixmap(":/icons/lammps-plugin.png").scaled(96, 96));

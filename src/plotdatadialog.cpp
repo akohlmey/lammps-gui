@@ -119,6 +119,7 @@ PlotDataDialog::PlotDataDialog(const PlotData &data, QWidget *parent) :
     layout->addWidget(deriveBox);
 
     auto *buttons = new QDialogButtonBox(QDialogButtonBox::Ok | QDialogButtonBox::Cancel);
+    styleDialogButtons(buttons);
     connect(buttons, &QDialogButtonBox::accepted, this, &QDialog::accept);
     connect(buttons, &QDialogButtonBox::rejected, this, &QDialog::reject);
     connect(addBtn, &QPushButton::clicked, this, &PlotDataDialog::computeColumn);
