@@ -1033,7 +1033,7 @@ void ChartWindow::postProcess()
         dlgLayout->addLayout(resultForm);
 
         auto *closeBtn = new QDialogButtonBox(QDialogButtonBox::Ok);
-        connect(closeBtn, &QDialogButtonBox::rejected, resultDlg, &QDialog::accept);
+        connect(closeBtn, &QDialogButtonBox::accepted, resultDlg, &QDialog::accept);
         dlgLayout->addWidget(closeBtn);
         resultDlg->exec();
     }
