@@ -76,13 +76,13 @@ and testing simulation setups.
    - Auto-adapting to features and packages available in the LAMMPS library in use
    - LAMMPS is running in a concurrent thread, so the GUI remains responsive
    - LAMMPS can be started and stopped with a mouse click or a hotkey
-   - Screen output is captured in an *Output* Window
+   - Screen output is captured in an *Output* window
    - Many adjustable settings and preferences are persistent, including the 5 most recent files
-   - Thermodynamic output is captured and displayed as line graph in a *Chart* Window
+   - Thermodynamic output is captured and displayed as a line graph in a *Charts* window
    - Interactive visualization of current state via calling `write_dump
      image <https://docs.lammps.org/dump_image.html>`_
    - Capture of images created by `dump image
-     <https://docs.lammps.org/dump_image.html>`_ in Slide show window
+     <https://docs.lammps.org/dump_image.html>`_ in the Slide Show window
    - Dialog to set variables, similar to the LAMMPS command-line flag '-v' / '-var'
    - Support for GPU, INTEL, KOKKOS/OpenMP, OPENMP, and OPT accelerator packages
    - Inspection of binary restart files created by LAMMPS

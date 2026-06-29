@@ -28,8 +28,8 @@ with suitable keywords.  The documentation is written in
 <https://www.sphinx-doc.org/en/master/usage/restructuredtext/index.html>`_
 and imports documentation of the source code from `Doxygen
 <https://doxygen.nl/>`_ using the `Breathe Sphinx plugin
-<https://breathe-doc.org>`_.  The documentation should translate cleanly to
-`HTML <https://en.wikipedia.org/wiki/HTML>`_ and `PDF
+<https://www.breathe-doc.org>`_.  The documentation should translate
+cleanly to `HTML <https://en.wikipedia.org/wiki/HTML>`_ and `PDF
 <https://en.wikipedia.org/wiki/PDF>`_ using the ``html`` or ``pdf``
 build targets.  Additionally the build targets ``spelling`` and
 ``linkcheck`` are available to run a spell checker on the documentation

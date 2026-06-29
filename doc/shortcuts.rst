@@ -69,7 +69,7 @@ available (On macOS use the Command key instead of Ctrl/Control).
      - Ctrl+P
      - Preferences
    * - Ctrl+Shift+A
-     - About LAMMPS
+     - About GUI
      - Ctrl+Shift+H
      - Quick Help
      - Ctrl+Shift+G
@@ -92,18 +92,18 @@ available (On macOS use the Command key instead of Ctrl/Control).
      - Context Help
      - Ctrl+Shift+T
      - LAMMPS Tutorial
+   * - Ctrl+Shift+U
+     - Update LAMMPS
+     - Ctrl+Home
+     - Go to Home
+     - Ctrl+End
+     - Go to End
    * - Ctrl+Shift+J
      - View Image File(s)
      - Ctrl+Shift+P
      - Plot Data File
      -
      -
-   * - Ctrl+Shift+U
-     - LAMMPS Update
-     - Ctrl+Home
-     - Go to Beginning
-     - Ctrl+End
-     - Go to End
 
 Further keybindings of the editor window `are documented with the Qt
 documentation

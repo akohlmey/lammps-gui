@@ -33,9 +33,9 @@ Automatic settings
 
 When possible, LAMMPS-GUI tries to detect which elements the atoms
 correspond to (via their mass) and then colorizes them in the image and
-sets their atom diameters accordingly.  If this is not possible - for
+sets their atom diameters accordingly.  If this is not possible -- for
 instance when using reduced (= 'lj') `units
-<https://docs.lammps.org/units.html>`_ - then LAMMPS-GUI will check the
+<https://docs.lammps.org/units.html>`_ -- then LAMMPS-GUI will check the
 current pair style and if it is a Lennard-Jones type potential, it will
 extract the *sigma* parameter for each atom type and assign atom
 diameters from those numbers.  When using an atom style where the atom
@@ -48,8 +48,8 @@ lattice spacing.
 For particles that use `atom styles
 <https://docs.lammps.org/atom_style.html>`_ "body", "ellipsoid", "line",
 or "tri" LAMMPS will visualize the particles according to their atom
-style information by default.  Other particles types will be visualized
-as sphere.  In the *Atom/Bond* settings dialog, this can be further
+style information by default.  Other particle types will be visualized
+as spheres.  In the *Atom/Bond* settings dialog, this can be further
 customized (or disabled).
 
 .. |gui-image1| image:: JPG/lammps-gui-image-water.png
@@ -225,7 +225,7 @@ there are:
 
 - **SSAO** (toggle): Enable or disable `Screen Space Ambient Occlusion
   <https://en.wikipedia.org/wiki/Screen_space_ambient_occlusion>`_
-  rendering for a more spatial, depth-shaded appearance images at the
+  rendering for a more spatial, depth-shaded appearance, at the
   expense of more CPU time.
 - **Anti-aliasing** (toggle): Render the image at double resolution and
   scale down for smoother edges.  `Full Scene Anti-Aliasing (FSAA)
@@ -248,7 +248,7 @@ there are:
 - **Box** (toggle): Show or hide the simulation box drawn as colored
   cylinders.
 - **Axes** (toggle): Show or hide the labeled coordinate axes arrows.
-- **Zoom in** / **Zoom out**: Adjust the zoom level between in 10
+- **Zoom in** / **Zoom out**: Adjust the zoom level in 10
   percent increments between 0.1x and 10.0x.
 - **Rotate left** / **Rotate right**: Rotate the view horizontally by
   10 degrees per click.
@@ -323,10 +323,10 @@ in this dialog correspond to options of the LAMMPS `dump image and
 dump_modify commands <https://docs.lammps.org/dump_image.html>`_.
 
 .. |global|  image:: JPG/lammps-gui-image-settings.png
-                     :width: 61%
+                     :width: 65%
 
 .. |boxaxes| image:: JPG/lammps-gui-image-box-axes.png
-                     :width: 29%
+                     :width: 33%
 
 |boxaxes|  |global|
 
@@ -478,7 +478,7 @@ The dialog contains the following sections:
      directly.  As for *all* image settings, further customizations can
      be realized by copying the dump image command line as customized by
      the Image Viewer to the editor and then run LAMMPS and observe the
-     resulting images in the Slideshow Viewer window.  Then the color
+     resulting images in the Slide Show window.  Then the color
      map setting can be fully customized according to the `dump_modify
      colormap documentation <https://docs.lammps.org/dump_image.html>`_.
    - **Reverse** (checkbox): Mirror the selected colormap so its low and
@@ -492,6 +492,9 @@ The dialog contains the following sections:
      rendering.  When unchecked, the ball-and-stick style is used.  This
      toggle shares a line with the **AutoBonds** control of the **Bonds**
      section below; the two are mutually exclusive.
+
+.. index:: color map
+.. index:: reversible color map
 
 The color maps available for coloring atoms and bonds by value are shown
 below; the continuous maps are interpolated between color stops, while
@@ -561,8 +564,8 @@ Guide for step-by-step instructions.
    - **Color** (selection): Use coloring by the *atom* color choice, the
      body *index*, or the atom *type* of the body particles.
    - **Style** (radio buttons): Select the body rendering style --
-     *Cylinders*, *Triangles*, or *Both*.  For cylinders - when used for
-     body particle rendering - also their diameter can be set (range:
+     *Cylinders*, *Triangles*, or *Both*.  For cylinders -- when used for
+     body particle rendering -- their diameter can also be set (range:
      0.1 -- 10.0).
 
 **Ellipsoids**
@@ -577,8 +580,8 @@ Guide for step-by-step instructions.
    - **Color** (selection): Use coloring by the *atom* color choice, the
      ellipsoid *index*, or the atom *type* of the ellipsoid particles.
    - **Style** (radio buttons): Select the ellipsoid rendering style --
-     *Cylinders*, *Triangles*, or *Both*.  For cylinders - when used for
-     ellipsoid particle rendering - also their diameter can be set (range:
+     *Cylinders*, *Triangles*, or *Both*.  For cylinders -- when used for
+     ellipsoid particle rendering -- their diameter can also be set (range:
      0.1 -- 10.0).
    - **Refine** (spinbox): Level of triangle mesh refinement.  At level
      1 the ellipsoids are represented by a deformed octahedron.  With a
@@ -613,8 +616,8 @@ Guide for step-by-step instructions.
      triangulated particle *index*, or the atom *type* of the
      triangulated particles.
    - **Style** (radio buttons): Select the particle rendering style --
-     *Cylinders*, *Triangles*, or *Both*.  For cylinders - when used for
-     triangle particle rendering - also their diameter can be set
+     *Cylinders*, *Triangles*, or *Both*.  For cylinders -- when used for
+     triangle particle rendering -- their diameter can also be set
      (range: 0.1 -- 10.0).
 
 Press **Apply** to apply the settings and re-render the image, or
@@ -694,10 +697,10 @@ using the `Alt-C` keyboard shortcut.  The dialog only appears when at
 least one compute or fix with graphics capabilities is defined.
 
 .. |fixsetting|  image:: JPG/lammps-gui-image-fix-graphics.png
-                     :width: 61%
+                     :width: 67%
 
 .. |hbonds| image:: JPG/lammps-gui-image-hbonds.png
-                     :width: 32%
+                     :width: 31%
 
 |hbonds|  |fixsetting|
 
@@ -768,6 +771,9 @@ edited list of definitions to a file.  The list may be loaded later to
 restore a previous color assignment.
 
 .. _json_format:
+
+.. index:: JSON format
+.. index:: JSON color file
 
 .. admonition:: JSON file format for colors and lighting definitions
 
@@ -928,7 +934,7 @@ These image transformations are useful when the simulation images need
 to be adjusted for presentation purposes.  The same transformations are
 also applied when exporting images or movies.
 
-The **playback controls** below the image allow to select the displayed
+The **playback controls** below the image let you select the displayed
 image, restrict the active range, and control the slideshow settings:
 
 - **Play**: Start playing the animation, advancing through the active

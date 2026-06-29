@@ -40,7 +40,7 @@ LAMMPS-GUI supports the following command-line options:
      - Open ``file`` directly in a standalone :ref:`Charts window <charts>`;
        a column-picker dialog is shown first
    * - ``-i <file>``, ``--image <file>``
-     - Open ``file`` in the :ref:`snapshot viewer <slideshow>`; may be given
+     - Open ``file`` in the :ref:`slide show viewer <slideshow>`; may be given
        multiple times to load several images at once
    * - ``-t <file>``, ``--text <file>``
      - Open ``file`` in a standalone text viewer
@@ -151,7 +151,7 @@ consistency, any unsaved changes in the buffer must be either saved to
 the file or undone before LAMMPS can be run from a file.
 
 The line number of the currently executed command is highlighted in
-green in the line number display for the *Editor* Window.
+green in the line number display for the *Editor* window.
 
 .. image:: JPG/lammps-gui-running.png
    :align: center

@@ -46,7 +46,7 @@ visualization facility of the `dump image command
 <https://docs.lammps.org/dump_image.html>`_.
 
 LAMMPS-GUI is Copyright (c) |copyright|, and distributed under the
-terms of the GNU public license version 2.0 or later (GPL-2.0-or-later).
+terms of the GNU General Public License version 2.0 or later (GPL-2.0-or-later).
 
 --------
 
@@ -99,7 +99,7 @@ the suggestion is to cite that publication for now:
    Gravelle, S., Alvares, C. M. S., Gissinger, J. R., &
    Kohlmeyer, A. (2025). A Set of Tutorials for the LAMMPS Simulation
    Package [Article v1.0]. Living Journal of Computational Molecular
-   Science, 6(1), 3027. https://doi.org/10.33011/livecoms.6.1.3037
+   Science, 6(1), 3037. https://doi.org/10.33011/livecoms.6.1.3037
 
 or in BibTeX format:
 
@@ -109,7 +109,7 @@ or in BibTeX format:
      author={Gravelle, Simon and Alvares, Cecilia M. S. and Gissinger, Jacob R. and Kohlmeyer, Axel},
      title={A Set of Tutorials for the {LAMMPS} Simulation Package [Article v1.0]},
      journal={Living Journal of Computational Molecular Science},
-     pages={3027},
+     pages={3037},
      volume={6},
      number={1},
      year={2025},
@@ -166,7 +166,7 @@ the internals of LAMMPS-GUI or contribute to its development.
    and not everything has been carefully checked.  It is therefore
    possible that it contains errors where the LLM has misinterpreted the
    LAMMPS-GUI source code.  If you spot any such errors or inconsistencies,
-   please submit a bug report issue to point them out or - even better -
+   please submit a bug report issue to point them out or -- even better --
    submit a pull request with the necessary corrections.
 
 .. toctree::

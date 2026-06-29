@@ -7,6 +7,7 @@ Editor Window
 .. index:: editor window
 .. index:: text editor
 .. index:: editing features
+.. index:: syntax highlighting
 
 The *Editor* window of LAMMPS-GUI has most of the usual functionality
 that similar programs have: text selection via mouse or with cursor
@@ -15,6 +16,8 @@ Paste (`Ctrl-V`), Undo (`Ctrl-Z`), Redo (`Ctrl-Shift-Z`), Select All
 (`Ctrl-A`).  When trying to exit the editor with a modified buffer, a
 dialog will pop up asking whether to cancel the exit operation, or to
 save or not save the buffer contents to a file.
+
+.. index:: auto-save
 
 The editor has an auto-save mode that can be enabled or disabled in the
 *Preferences* dialog.  In auto-save mode, the editor buffer is
@@ -45,7 +48,7 @@ context menu.  Most of the completion information is retrieved from the
 active LAMMPS instance and thus it shows only available options that
 have been enabled when compiling LAMMPS. That list, however, excludes
 accelerated styles and commands; for improved clarity, only the
-non-suffix version of styles are shown.
+non-suffix versions of styles are shown.
 
 Line Reformatting
 ^^^^^^^^^^^^^^^^^
@@ -77,10 +80,10 @@ Context Specific Help
 .. index:: LAMMPS documentation
 
 .. |gui-popup1| image:: JPG/lammps-gui-popup-help.png
-   :width: 48%
+   :width: 44%
 
 .. |gui-popup2| image:: JPG/lammps-gui-popup-view.png
-   :width: 48%
+   :width: 55%
 
 |gui-popup1|  |gui-popup2|
 
@@ -118,20 +121,20 @@ When LAMMPS-GUI is asked to "Inspect a Restart", it will read the
 restart file into a LAMMPS instance and then open three different
 windows.  The first window is a text viewer with the output of an `info
 command <https://docs.lammps.org/info.html>`_ with system information
-stored in the restart.  The second window is text viewer containing a
+stored in the restart.  The second window is a text viewer containing a
 data file generated with a `write_data command
 <https://docs.lammps.org/write_data.html>`_.  The third window is a
 :ref:`Snapshot Image Viewer <snapshot_viewer>` containing a
 visualization of the system in the restart.
 
 .. |inspect1| image:: JPG/lammps-gui-inspect-data.png
-   :width: 32%
+   :width: 30%
 
 .. |inspect2| image:: JPG/lammps-gui-inspect-info.png
-   :width: 32%
+   :width: 30%
 
 .. |inspect3| image:: JPG/lammps-gui-inspect-image.png
-   :width: 32%
+   :width: 35%
 
 |inspect1|  |inspect2|  |inspect3|
 
@@ -140,8 +143,8 @@ visualization of the system in the restart.
 
    If the restart file is larger than 250 MBytes, a dialog will ask for
    confirmation before continuing, since large restart files may require
-   large amounts of RAM since the entire system must be read into RAM.
-   Thus restart file for large simulations that have been run on an HPC
+   large amounts of RAM: the entire system must be read into memory.
+   Thus restart files for large simulations that have been run on an HPC
    cluster may overload a laptop or local workstation. The *Show
    Details...* button will display a rough estimate of the additional
    memory required.

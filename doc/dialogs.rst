@@ -85,7 +85,7 @@ General Settings:
 
    - **Echo input to output buffer:** when checked, all input commands,
      including variable expansions, are echoed to the :ref:`Output window
-     <logfile>`. This is equivalent to using ``-echo screen`` at the
+     <logfile>`. This is equivalent to using ``-echo screen`` on the
      command-line.  There is no log *file* produced by default, since
      LAMMPS-GUI uses ``-log none``.
    - **Include citation details:** when checked, full citation info will be
@@ -141,7 +141,7 @@ General Settings:
      environment variable was set externally, its value is displayed but
      cannot be changed.
    - **Path to LAMMPS Shared Library File:** this option is only visible
-     when LAMMPS-GUI was compiled to load the LAMMPS library at run-time
+     when LAMMPS-GUI was compiled to load the LAMMPS library at runtime
      instead of being linked to it directly.  Using the *Browse...* button
      or by changing the text, a different shared library file with a
      different compilation of LAMMPS with different settings or from a

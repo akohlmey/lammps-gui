@@ -39,16 +39,16 @@ class LammpsGui;
 class PlotData;
 enum class LegendPos; // defined in plotwidget.h
 
-/**
- * @brief A labeled vertical reference line for chart overlays
- *
- * Used by the "Reference Lines..." dialog to annotate charts with
- * vertical markers at specific x positions (e.g. high-symmetry k-points
- * in phonon-dispersion plots).
- */
 /** @brief Orientation of a reference line: a vertical line at x, or a horizontal line at y */
 enum class RefOrient { Vertical, Horizontal };
 
+/**
+ * @brief A labeled vertical or horizontal reference line for chart overlays
+ *
+ * Used by the "Reference Lines..." dialog to annotate charts with vertical
+ * markers at specific x positions (e.g. high-symmetry k-points in
+ * phonon-dispersion plots) or horizontal markers at specific y values.
+ */
 struct RefLine {
     RefOrient orient = RefOrient::Vertical; ///< vertical (fixed x) or horizontal (fixed y)
     double value;                           ///< x position (vertical) or y position (horizontal)

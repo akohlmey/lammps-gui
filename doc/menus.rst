@@ -6,7 +6,7 @@ Menus
 .. index:: menu bar
 .. index:: keyboard shortcuts
 
-The menu bar has entries *File*, *Edit*, *Run*, *View*, and
+The menu bar has entries *File*, *Edit*, *Run*, *View*, *Tutorials*, and
 *About*.  Instead of using the mouse to click on them, the individual
 menus can also be activated by hitting the `Alt` key together with the
 corresponding underlined letter, that is `Alt-F` activates the
@@ -36,7 +36,7 @@ File
      above.  If the selected file appears to be an image or a binary file, a warning
      is shown instead; use *View Image File(s)...* for image files.
    - *View Image File(s)...* opens a dialog to select one or more image files and shows
-     them together in a standalone :ref:`snapshot viewer <slideshow>` window.  This is
+     them together in a standalone :ref:`slide show <slideshow>` window.  This is
      useful for reviewing images created by an external (e.g. large parallel) simulation,
      or for revisiting images from an earlier run without rerunning it.  Image formats
      that Qt cannot read natively are converted on demand with
@@ -193,6 +193,7 @@ Tutorials
 .. index:: Tutorials menu
 .. index:: menus; Tutorials
 .. index:: LAMMPS tutorials
+.. index:: tutorial wizard
 
 The *Tutorials* menu supports several collections of LAMMPS tutorials for
 beginners and intermediate LAMMPS users.  The menu has one submenu per
@@ -243,10 +244,15 @@ the LAMMPS online documentation in a web browser window.
 The *LAMMPS Tutorial* entry will open the main page of the set of
 LAMMPS tutorials authored and maintained by Simon Gravelle at
 https://lammpstutorials.github.io/ in a web browser window.
+The *Check for LAMMPS update* entry -- available only in the plugin
+version of LAMMPS-GUI -- compares the downloaded LAMMPS shared library
+with the latest version available online and offers to download and
+install an update when a newer version is found; LAMMPS-GUI is then
+relaunched to activate it.
 
 -------------
 
 .. _Gravelle1:
 
 **(Gravelle1)** Gravelle, Alvares, Gissinger, Kohlmeyer,
-`Living Journal of Computational Molecular Science, 6(1), 3027. https://doi.org/10.33011/livecoms.6.1.3037 <https://doi.org/10.33011/livecoms.6.1.3037>`_ (2025)
+`Living Journal of Computational Molecular Science, 6(1), 3037. https://doi.org/10.33011/livecoms.6.1.3037 <https://doi.org/10.33011/livecoms.6.1.3037>`_ (2025)

@@ -78,26 +78,29 @@ Charts Window
 By default, when starting a run, a *Charts* window opens that displays a
 plot of thermodynamic output of the LAMMPS calculation as shown below.
 
-The "Data:" drop down menu on the top right allows selection of
+.. index:: smoothing
+.. index:: Savitzky-Golay filter
+
+The "Data:" drop-down menu on the top right allows selection of
 different properties that are computed and written as thermodynamic
 output to the output window.  Only one property can be shown at a time.
 The plots are updated regularly with new data as the run progresses, so
 they can be used to visually monitor the evolution of available
 properties.  The update interval can be set in the *Preferences* dialog.
 By default, the raw data for the selected property is plotted as a blue
-graph.  From the "Plot:" drop menu on the second row (immediately to the right of
+graph.  From the "Plot:" drop-down menu on the second row (immediately to the right of
 the *Chart Style...* and *Postprocess...* quick-access buttons),
 you can select whether to plot only raw data graph, only a smoothed data
 graph, or both graphs on top of each other.  The smoothing process uses
 a `Savitzky-Golay convolution filter
 <https://en.wikipedia.org/wiki/Savitzky%E2%80%93Golay_filter>`_.  The
 convolution window width (left) and order (right) parameters can be set
-in the boxes next to the drop down menu.  Default settings are 10 and 4
+in the boxes next to the drop-down menu.  Default settings are 10 and 4
 which means that the smoothing window includes 10 points each to the
 left and the right of the current data point for a total of 21 points
 and a fourth order polynomial is fitted to the data in the window.
 
-The "Title:" and "Y:" input boxes allow to edit the text shown as the
+The "Title:" and "Y:" input boxes let you edit the text shown as the
 plot title and the y-axis label, respectively.  The text entered in the
 "Title:" box is applied to *all* charts, while the "Y:" text changes
 only the y-axis label of the currently *selected* plot.  In standalone
@@ -109,6 +112,10 @@ The window title shows the current run number that this chart window
 corresponds to.  Same as for the *Output* window, the chart window is
 replaced on each new run, but the behavior can be changed in the
 *Preferences* dialog.
+
+.. index:: CSV export
+.. index:: YAML export
+.. index:: data export
 
 From the *File* menu on the top left, it is possible to save an image
 of the currently displayed plot or export the data in either plain text
@@ -134,6 +141,9 @@ last change of output fields or timestep setting, while the export from
 the log will contain *all* YAML output but *segmented* into individual
 runs.
 
+.. index:: chart style
+.. index:: legend
+
 **Adjusting the chart style.** The *Chart Style...* entry in the chart
 window's *File* menu, or the chart-style quick-access button at the far
 left of the second toolbar row, opens a dialog to change how the data is
@@ -153,6 +163,8 @@ any of the four plot corners (*Top left*, *Top right*, *Bottom right*, or
    processed series were added, including the per-series point size and the
    optional in-plot legend.
 
+.. index:: reference lines
+
 **Reference lines.** The *Reference Lines...* entry in the chart window's
 *File* menu opens a dialog for adding straight annotation lines that are
 drawn on *every* chart in the window.  Each line is either *Vertical* (at a
@@ -168,6 +180,15 @@ fitted value.
 .. versionadded:: 2.1
 
    The *Reference Lines* dialog was added.
+
+.. index:: post-processing
+.. index:: curve fitting
+.. index:: autocorrelation
+.. index:: polynomial fit
+.. index:: Birch-Murnaghan EOS
+.. index:: equation of state
+.. index:: custom function
+.. index:: custom fit
 
 **Post-processing the data.** The *Postprocess...* entry in the chart
 window's *File* menu, or the quick-access button immediately to the right
@@ -225,6 +246,9 @@ and custom fit).
    Birch-Murnaghan EOS, custom-function, and custom-fit analyses was
    added.
 
+.. index:: plotting external data
+.. index:: plot data file
+
 The same *Charts* window is also used to plot data from an external file
 opened with *File* -> *Plot Data File...* (`Ctrl-Shift-P`, see
 :ref:`the File menu <files>`); in that standalone mode there is no
@@ -264,7 +288,7 @@ size.
    <https://docs.lammps.org/Run_output.html>`_.  It is thus recommended
    to use a large enough value as argument `N` for the `thermo command
    <https://docs.lammps.org/thermo.html>`_ and to select plotting only
-   the "Raw" data in the *Charts Window* during such simulations.  It is
+   the "Raw" data in the *Charts* window during such simulations.  It is
    always possible to switch between the different display styles for
    charts during the simulation and after it has finished.
 
