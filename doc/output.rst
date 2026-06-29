@@ -147,6 +147,12 @@ runs.
 Adjust chart style
 ------------------
 
+.. figure:: JPG/lammps-gui-eos-plot.png
+   :align: right
+   :width: 40%
+
+   An energy-versus-volume data set shown with adjusted chart styling.
+
 The *Chart Style...* entry in the chart window's *File* menu, or the
 chart-style quick-access button at the far left of the second toolbar
 row, opens a dialog to change how the data is drawn.  The *Raw data* and
@@ -159,11 +165,6 @@ that lists the visible named series; it can be turned *Off* or anchored
 to any of the four plot corners (*Top left*, *Top right*, *Bottom
 right*, or *Bottom left*).  The selected placement is remembered across
 sessions.
-
-.. figure:: JPG/lammps-gui-eos-plot.png
-   :align: center
-
-   An energy-versus-volume data set shown with adjusted chart styling.
 
 .. versionadded:: 2.1
 
@@ -190,6 +191,7 @@ or a fitted value.
 
 .. figure:: JPG/lammps-gui-plot-lines.png
    :align: center
+   :width: 55%
 
    The *Reference Lines* dialog.
 
@@ -261,11 +263,13 @@ and custom fit).
 
 .. figure:: JPG/lammps-gui-post-function.png
    :align: center
+   :width: 50%
 
    The *Postprocess* dialog with a *Custom function* expression entered.
 
 .. figure:: JPG/lammps-gui-eos-fit.png
    :align: center
+   :width: 55%
 
    An example post-processing result: a Birch-Murnaghan equation-of-state
    fit overlaid on energy-versus-volume data.
@@ -278,6 +282,9 @@ and custom fit).
 
 .. index:: plotting external data
 .. index:: plot data file
+
+Plot imported data
+------------------
 
 The same *Charts* window is also used to plot data from an external file
 opened with *File* -> *Plot Data File...* (`Ctrl-Shift-P`, see
@@ -295,6 +302,7 @@ the command line with the ``-c``/``--chart`` flag (see
 
 .. figure:: JPG/lammps-gui-import-data.png
    :align: center
+   :width: 45%
 
    The column-picker dialog shown when opening an external data file with
    *Plot Data File...*.
