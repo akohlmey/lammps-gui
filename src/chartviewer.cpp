@@ -1332,8 +1332,15 @@ void ChartWindow::updateYLabel()
 {
     // the Y-axis label is per-column; update the active column and remember it
     if (active >= 0) {
-        cols[active]->yTitle = chartYlabel->text();
-        viewer->setYLabel(chartYlabel->text());
+        const QString label  = chartYlabel->text();
+        cols[active]->yTitle = label;
+        // The in-plot legend labels the raw series by its name; keep that in
+        // sync with the editable Y-axis title rather than the fixed thermo
+        // column id.  The raw points share the line's name so the two dedup
+        // into a single legend entry.
+        cols[active]->series->name = label;
+        if (cols[active]->scatter) cols[active]->scatter->name = label;
+        viewer->setYLabel(label);
     }
 }
 
