@@ -650,6 +650,7 @@ void ChartWindow::changeStyle()
     layout->addWidget(legendBox);
 
     auto *buttons = new QDialogButtonBox(QDialogButtonBox::Ok | QDialogButtonBox::Cancel);
+    styleDialogButtons(buttons);
     connect(buttons, &QDialogButtonBox::accepted, &dialog, &QDialog::accept);
     connect(buttons, &QDialogButtonBox::rejected, &dialog, &QDialog::reject);
     layout->addWidget(buttons);
@@ -782,6 +783,7 @@ void ChartWindow::postProcess()
     connect(analysisbox, &QComboBox::currentIndexChanged, &dialog, configure);
 
     auto *buttons = new QDialogButtonBox(QDialogButtonBox::Ok | QDialogButtonBox::Cancel);
+    styleDialogButtons(buttons);
     connect(buttons, &QDialogButtonBox::accepted, &dialog, &QDialog::accept);
     connect(buttons, &QDialogButtonBox::rejected, &dialog, &QDialog::reject);
     form->addRow(buttons);
@@ -964,6 +966,7 @@ void ChartWindow::postProcess()
         natForm->addRow("Atoms per unit cell N:", natSpin);
         eosLayout->addLayout(natForm);
         auto *eosBtns = new QDialogButtonBox(QDialogButtonBox::Ok | QDialogButtonBox::Cancel);
+        styleDialogButtons(eosBtns);
         connect(eosBtns, &QDialogButtonBox::accepted, &eosConfirm, &QDialog::accept);
         connect(eosBtns, &QDialogButtonBox::rejected, &eosConfirm, &QDialog::reject);
         eosLayout->addWidget(eosBtns);
@@ -1033,6 +1036,7 @@ void ChartWindow::postProcess()
         dlgLayout->addLayout(resultForm);
 
         auto *closeBtn = new QDialogButtonBox(QDialogButtonBox::Ok);
+        styleDialogButtons(closeBtn);
         connect(closeBtn, &QDialogButtonBox::accepted, resultDlg, &QDialog::accept);
         dlgLayout->addWidget(closeBtn);
         resultDlg->exec();
@@ -1247,6 +1251,7 @@ void ChartWindow::referenceLines()
     layout->addLayout(styleRow);
 
     auto *buttons = new QDialogButtonBox(QDialogButtonBox::Ok | QDialogButtonBox::Cancel);
+    styleDialogButtons(buttons);
     QObject::connect(buttons, &QDialogButtonBox::accepted, &dialog, &QDialog::accept);
     QObject::connect(buttons, &QDialogButtonBox::rejected, &dialog, &QDialog::reject);
     layout->addWidget(buttons);

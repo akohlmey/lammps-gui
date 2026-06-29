@@ -27,6 +27,7 @@ class QWidget;
 class QImage;
 class QFont;
 class QAbstractButton;
+class QDialogButtonBox;
 
 // OS specific default fonts (managed via unique_ptr for automatic cleanup)
 extern std::unique_ptr<QFont> GUI_MONOFONT;
@@ -175,6 +176,19 @@ extern void purgeDirectory(const QString &dir);
  */
 extern int showUnsavedChangesDialog(QWidget *parent, const QString &filename,
                                     const QString &question);
+
+/**
+ * @brief Apply the bundled SVG icons to a dialog button box's standard buttons
+ * @param box The button box whose standard buttons should be re-iconed
+ *
+ * Qt fetches @c QDialogButtonBox standard-button icons (Ok, Cancel, ...) via
+ * @c QIcon::fromTheme(), which falls back to the desktop theme because the
+ * bundled @c lammpsgui icon theme only carries the editor context-menu actions.
+ * This applies our own @c dialog-ok / @c dialog-cancel / @c dialog-no /
+ * @c window-close SVGs to whichever standard buttons the box contains, so every
+ * dialog button looks the same regardless of platform or desktop theme.
+ */
+extern void styleDialogButtons(QDialogButtonBox *box);
 
 /**
  * @brief Silence stdout by redirecting it to the null device

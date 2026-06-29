@@ -58,9 +58,9 @@
   <content_rating type="oars-1.1" />
 
   <releases>
-    <release version="2.1.0" timestamp="1782648000">
+    <release version="3.0.0" timestamp="1782648000">
       <description>
-        <p>First stable release of the 2.x series. Internally, 2.x is a major reorganization and refactor of the code base that drops backward compatibility (Qt 5 and LAMMPS versions older than 30 March 2026) and instead builds on current LAMMPS features. It collects the work from the 2.0.x beta series since version 1.12.0.</p>
+        <p>New major release after the 2.x development series. Internally, 2.x was a major reorganization and refactor effort of the code base that drops backward compatibility (Qt 5 and LAMMPS versions older than 30 March 2026) and instead builds on current LAMMPS features. It collects the work since version 1.12.0.</p>
         <ul>
           <li>Require Qt 6.2 or newer (Qt 5.x support removed) and a LAMMPS library from 30 March 2026 or newer, with all GUI features unconditionally available</li>
           <li>Replace the Qt Charts and Qt Graphs chart backends with a single self-contained native renderer that looks and behaves identically on every platform and Qt version</li>
@@ -78,7 +78,7 @@
     </release>
     <release version="2.0.9999" timestamp="1782556444">
       <description>
-        <p>Another pre-release for the upcoming 2.1.0 version.</p>
+        <p>Another pre-release for the upcoming 3.0.0 version.</p>
         <ul>
           <li>Overhaul the icon library: redraw the icons and convert them to scalable SVG so they stay sharp on high-resolution and HiDPI/Retina displays, and drop the now-unused bitmap icons</li>
           <li>Give the toolbars a consistent look: the image viewer, slide show, chart window, and editor status bar now use square buttons with larger, snug icons, with the neighboring input fields matched to the button height</li>
@@ -90,7 +90,7 @@
     </release>
     <release version="2.0.999" timestamp="1782228677">
       <description>
-        <p>Pre-release for the upcoming 2.1.0 version.</p>
+        <p>Pre-release for the upcoming 3.0.0 version.</p>
         <ul>
           <li>Replace the QtCharts and QtGraphs chart backends with a single self-contained native renderer (a QWidget plus QPainter 2D line and scatter plotter) so charts look and behave identically on every platform and Qt version, the build no longer depends on the Qt Charts or Qt Graphs modules, and a Qt-free axis-layout core (nice ticks, label formatting) is shared by all plots</li>
           <li>Collapse the multi-view chart layout into one shared plot widget that is rebound as you switch the displayed property, reducing memory use and redraw overhead</li>
