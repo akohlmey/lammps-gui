@@ -323,10 +323,10 @@ in this dialog correspond to options of the LAMMPS `dump image and
 dump_modify commands <https://docs.lammps.org/dump_image.html>`_.
 
 .. |global|  image:: JPG/lammps-gui-image-settings.png
-                     :width: 61%
+                     :width: 65%
 
 .. |boxaxes| image:: JPG/lammps-gui-image-box-axes.png
-                     :width: 29%
+                     :width: 33%
 
 |boxaxes|  |global|
 
@@ -694,10 +694,10 @@ using the `Alt-C` keyboard shortcut.  The dialog only appears when at
 least one compute or fix with graphics capabilities is defined.
 
 .. |fixsetting|  image:: JPG/lammps-gui-image-fix-graphics.png
-                     :width: 61%
+                     :width: 67%
 
 .. |hbonds| image:: JPG/lammps-gui-image-hbonds.png
-                     :width: 32%
+                     :width: 31%
 
 |hbonds|  |fixsetting|
 

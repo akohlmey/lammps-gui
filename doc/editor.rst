@@ -77,10 +77,10 @@ Context Specific Help
 .. index:: LAMMPS documentation
 
 .. |gui-popup1| image:: JPG/lammps-gui-popup-help.png
-   :width: 48%
+   :width: 44%
 
 .. |gui-popup2| image:: JPG/lammps-gui-popup-view.png
-   :width: 48%
+   :width: 55%
 
 |gui-popup1|  |gui-popup2|
 
@@ -125,13 +125,13 @@ data file generated with a `write_data command
 visualization of the system in the restart.
 
 .. |inspect1| image:: JPG/lammps-gui-inspect-data.png
-   :width: 32%
+   :width: 30%
 
 .. |inspect2| image:: JPG/lammps-gui-inspect-info.png
-   :width: 32%
+   :width: 30%
 
 .. |inspect3| image:: JPG/lammps-gui-inspect-image.png
-   :width: 32%
+   :width: 35%
 
 |inspect1|  |inspect2|  |inspect3|
 
