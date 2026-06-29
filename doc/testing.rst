@@ -464,8 +464,8 @@ Adding Tests
 Create a New Test File
 ======================
 
-1. Create a new test file in the `test/` directory (e.g., `test_newfile.cpp`)
-2. Add the test executable to `test/CMakeLists.txt`:
+1. Create a new test file in the ``test/`` directory (e.g., ``test_newfile.cpp``)
+2. Add the test executable to ``test/CMakeLists.txt``:
 
 .. code-block:: cmake
 
@@ -515,8 +515,8 @@ Dependencies
 Notes
 ^^^^^
 
-- Tests that require a Qt application context use a `HelpersTest` fixture that creates a `QCoreApplication` instance.
-- Platform-specific tests (e.g., `has_exe`) use conditional compilation to test appropriate commands on different operating systems.
+- Tests that require a Qt application context use a ``HelpersTest`` fixture that creates a ``QCoreApplication`` instance.
+- Platform-specific tests (e.g., ``has_exe``) use conditional compilation to test appropriate commands on different operating systems.
 - The test suite is designed to be easily extended with additional test files and test cases.
 - GoogleTest is fetched automatically during CMake configuration, so no manual installation is required.
 
@@ -524,6 +524,6 @@ CI Integration
 ^^^^^^^^^^^^^^
 
 The test suite integrates with existing CI workflows:
-- Tests run as part of the standard build process when `ENABLE_TESTING=ON`
+- Tests run as part of the standard build process when ``ENABLE_TESTING=ON``
 - CTest provides standard output for CI systems
 - Tests can be disabled for documentation-only builds

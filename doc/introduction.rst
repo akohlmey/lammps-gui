@@ -2,7 +2,7 @@
 Overview
 ********
 
-LAMMPS-GUI is built using C++17 and the Qt framework (Qt 6.2+).  The
+LAMMPS-GUI is built using C++17 and the Qt Framework (Qt 6.2+).  The
 application follows object-oriented design principles with separation of
 concerns between different components:
 

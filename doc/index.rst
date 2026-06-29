@@ -46,7 +46,7 @@ visualization facility of the `dump image command
 <https://docs.lammps.org/dump_image.html>`_.
 
 LAMMPS-GUI is Copyright (c) |copyright|, and distributed under the
-terms of the GNU public license version 2.0 or later (GPL-2.0-or-later).
+terms of the GNU General Public License version 2.0 or later (GPL-2.0-or-later).
 
 --------
 
@@ -166,7 +166,7 @@ the internals of LAMMPS-GUI or contribute to its development.
    and not everything has been carefully checked.  It is therefore
    possible that it contains errors where the LLM has misinterpreted the
    LAMMPS-GUI source code.  If you spot any such errors or inconsistencies,
-   please submit a bug report issue to point them out or - even better -
+   please submit a bug report issue to point them out or -- even better --
    submit a pull request with the necessary corrections.
 
 .. toctree::

@@ -151,7 +151,7 @@ consistency, any unsaved changes in the buffer must be either saved to
 the file or undone before LAMMPS can be run from a file.
 
 The line number of the currently executed command is highlighted in
-green in the line number display for the *Editor* Window.
+green in the line number display for the *Editor* window.
 
 .. image:: JPG/lammps-gui-running.png
    :align: center

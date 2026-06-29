@@ -69,7 +69,7 @@ available (On macOS use the Command key instead of Ctrl/Control).
      - Ctrl+P
      - Preferences
    * - Ctrl+Shift+A
-     - About LAMMPS
+     - About LAMMPS-GUI
      - Ctrl+Shift+H
      - Quick Help
      - Ctrl+Shift+G
