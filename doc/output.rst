@@ -147,11 +147,9 @@ runs.
 Adjust chart style
 ------------------
 
-.. figure:: JPG/lammps-gui-eos-plot.png
+.. image:: JPG/lammps-gui-eos-plot.png
    :align: right
-   :width: 40%
-
-   An energy-versus-volume data set shown with adjusted chart styling.
+   :scale: 33%
 
 The *Chart Style...* entry in the chart window's *File* menu, or the
 chart-style quick-access button at the far left of the second toolbar
@@ -177,6 +175,10 @@ sessions.
 Reference lines
 ---------------
 
+.. image:: JPG/lammps-gui-plot-lines.png
+   :align: right
+   :scale: 33%
+
 The *Reference Lines...* entry in the chart window's *File* menu opens a
 dialog for adding straight annotation lines that are drawn on *every*
 chart in the window.  Each line is either *Vertical* (at a chosen x
@@ -188,12 +190,6 @@ size, the gap between the label and the line, and whether the labels are
 drawn in an opaque box apply to the whole window.  Reference lines are
 useful, for example, to mark a target temperature, a transition point,
 or a fitted value.
-
-.. figure:: JPG/lammps-gui-plot-lines.png
-   :align: center
-   :width: 55%
-
-   The *Reference Lines* dialog.
 
 .. versionadded:: 2.1
 
