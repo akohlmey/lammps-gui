@@ -58,6 +58,16 @@
   <content_rating type="oars-1.1" />
 
   <releases>
+    <release version="3.0.1" timestamp="1782820800">
+      <description>
+        <p>Maintenance release following the 3.0.0 major release.</p>
+        <ul>
+          <li>Add a Zenodo DOI badge and a BibTeX entry for the archived releases to the documentation and citation metadata, so a specific release can be cited directly</li>
+          <li>Finish consolidating the code on QString internally by removing the remaining const char * and std::string overloads from the LAMMPS wrapper and parsing input lines directly as a QString</li>
+          <li>Minor build, continuous-integration, and documentation maintenance</li>
+        </ul>
+      </description>
+    </release>
     <release version="3.0.0" timestamp="1782648000">
       <description>
         <p>New major release after the 2.x development series. Internally, 2.x was a major reorganization and refactor effort of the code base that drops backward compatibility (Qt 5 and LAMMPS versions older than 30 March 2026) and instead builds on current LAMMPS features. It collects the work since version 1.12.0.</p>
