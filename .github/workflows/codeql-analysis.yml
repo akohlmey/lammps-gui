@@ -28,17 +28,36 @@ jobs:
       with:
         fetch-depth: 2
 
-    # No-build mode: CodeQL extracts the sources directly without compiling.
-    # This honors the paths filter in cpp.yml (paths are ignored for *built*
-    # C/C++), so only src/ is analyzed -- thirdparty/, plugin/, and generated
-    # build artifacts (moc_*.cpp) are excluded, and no Qt/CMake toolchain is
-    # needed.
+    - name: Install extra packages
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y \
+                                build-essential \
+                                cmake \
+                                libfontconfig1 \
+                                libglu1-mesa-dev \
+                                libomp-dev \
+                                mesa-common-dev \
+                                ninja-build \
+                                qt6-base-dev \
+                                qt6-svg-dev
+
     - name: Initialize CodeQL
       uses: github/codeql-action/init@v4
       with:
         languages: cpp
-        build-mode: none
         config-file: ./.github/codeql/cpp.yml
+
+    - name: Building LAMMPS-GUI via CMake
+      shell: bash
+      run: |
+        cmake -S . -B build \
+              -D LAMMPS_GUI_USE_PLUGIN=yes \
+              -D BUILD_DOC=no \
+              -D CMAKE_CXX_STANDARD=23 \
+              -D CMAKE_BUILD_TYPE=Debug \
+              -D CMAKE_CXX_FLAGS_DEBUG="-Og -g -Wall -Wextra"
+        cmake --build build --parallel 2
 
     - name: Perform CodeQL Analysis
       uses: github/codeql-action/analyze@v4
