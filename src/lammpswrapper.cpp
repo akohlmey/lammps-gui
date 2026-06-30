@@ -88,7 +88,7 @@ void *LammpsWrapper::extractAtom(const char *keyword)
     return val;
 }
 
-void *LammpsWrapper::extractCompute(const char *id, int style, int type)
+void *LammpsWrapper::extractCompute(const QString &id, int style, int type)
 {
     int mystyle = -1;
     int mytype  = -1;
@@ -129,12 +129,12 @@ void *LammpsWrapper::extractCompute(const char *id, int style, int type)
     }
 
     if (lammps_handle) {
-        return LMPFN(extract_compute)(lammps_handle, id, mystyle, mytype);
+        return LMPFN(extract_compute)(lammps_handle, id.toLocal8Bit(), mystyle, mytype);
     }
     return nullptr;
 }
 
-void *LammpsWrapper::extractFix(const char *id, int style, int type, int nrow, int ncol)
+void *LammpsWrapper::extractFix(const QString &id, int style, int type, int nrow, int ncol)
 {
     int mystyle = -1;
     int mytype  = -1;
@@ -175,16 +175,16 @@ void *LammpsWrapper::extractFix(const char *id, int style, int type, int nrow, i
     }
 
     if (lammps_handle) {
-        return LMPFN(extract_fix)(lammps_handle, id, mystyle, mytype, nrow, ncol);
+        return LMPFN(extract_fix)(lammps_handle, id.toLocal8Bit(), mystyle, mytype, nrow, ncol);
     }
     return nullptr;
 }
 
-int LammpsWrapper::extractVariableDatatype(const char *keyword)
+int LammpsWrapper::extractVariableDatatype(const QString &keyword)
 {
     int type = -1;
     if (lammps_handle) {
-        type = LMPFN(extract_variable_datatype)(lammps_handle, keyword);
+        type = LMPFN(extract_variable_datatype)(lammps_handle, keyword.toLocal8Bit());
     }
     switch (type) {
         case LMP_VAR_EQUAL:
@@ -320,24 +320,24 @@ bool LammpsWrapper::isRunning()
     return val != 0;
 }
 
-void LammpsWrapper::command(const char *input)
+void LammpsWrapper::command(const QString &input)
 {
     if (lammps_handle) {
-        LMPFN(command)(lammps_handle, input);
+        LMPFN(command)(lammps_handle, input.toLocal8Bit());
     }
 }
 
-void LammpsWrapper::file(const char *filename)
+void LammpsWrapper::file(const QString &filename)
 {
     if (lammps_handle) {
-        LMPFN(file)(lammps_handle, filename);
+        LMPFN(file)(lammps_handle, filename.toLocal8Bit());
     }
 }
 
-void LammpsWrapper::commandsString(const char *input)
+void LammpsWrapper::commandsString(const QString &input)
 {
     if (lammps_handle) {
-        LMPFN(commands_string)(lammps_handle, input);
+        LMPFN(commands_string)(lammps_handle, input.toLocal8Bit());
     }
 }
 
@@ -430,13 +430,13 @@ bool LammpsWrapper::hasPlugin() const
     return true;
 }
 
-bool LammpsWrapper::loadLib(const char *libfile)
+bool LammpsWrapper::loadLib(const QString &libfile)
 {
     if (plugin_handle) {
         close();
         liblammpsplugin_release((liblammpsplugin_t *)plugin_handle);
     }
-    plugin_handle = liblammpsplugin_load(libfile);
+    plugin_handle = liblammpsplugin_load(libfile.toLocal8Bit());
     if (!plugin_handle) return false;
     liblammpsplugin_t *lmp = (liblammpsplugin_t *)plugin_handle;
 
@@ -444,17 +444,17 @@ bool LammpsWrapper::loadLib(const char *libfile)
     if (lmp->abiversion != LAMMPSPLUGIN_ABI_VERSION) {
         liblammpsplugin_release(lmp);
         plugin_handle = nullptr;
-        fprintf(stderr, "LAMMPS library file %s rejected.\nIncompatible ABI: %d vs %d\n", libfile,
-                lmp->abiversion, LAMMPSPLUGIN_ABI_VERSION);
+        fprintf(stderr, "LAMMPS library file %s rejected.\nIncompatible ABI: %d vs %d\n",
+                (const char *)libfile.toLocal8Bit(), lmp->abiversion, LAMMPSPLUGIN_ABI_VERSION);
         return false;
     }
 
     // check if all required recently added library functions are present
-#define CHECKSYM(symbol)                                                                   \
-    if (lmp->symbol == NULL) {                                                             \
-        fprintf(stderr, "LAMMPS library file %s is missing lammps_%s function\n", libfile, \
-                #symbol);                                                                  \
-        return false;                                                                      \
+#define CHECKSYM(symbol)                                                          \
+    if (lmp->symbol == NULL) {                                                    \
+        fprintf(stderr, "LAMMPS library file %s is missing lammps_%s function\n", \
+                (const char *)libfile.toLocal8Bit(), #symbol);                    \
+        return false;                                                             \
     }
 
     CHECKSYM(get_thermo);

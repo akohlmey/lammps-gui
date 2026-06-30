@@ -13,7 +13,6 @@
 #define LAMMPSWRAPPER_H
 
 #include <QString>
-#include <string>
 
 /**
  * @brief C++ wrapper for the LAMMPS C library interface
@@ -70,64 +69,21 @@ public:
 
     /**
      * @brief Process commands from a LAMMPS input file
-     * @param fname Filename as C-style string
-     */
-    void file(const char *fname);
-
-    /**
-     * @brief Process commands from a LAMMPS input file
-     * @overload
      * @param fname Filename as Qt-style QString
      */
-    void file(const QString &fname) { file(fname.toStdString()); }
-
-    /**
-     * @brief Process commands from a LAMMPS input file
-     * @overload
-     * @param fname Filename as C++-style std::string
-     */
-    void file(const std::string &fname) { file(fname.c_str()); }
+    void file(const QString &fname);
 
     /**
      * @brief Execute a single LAMMPS command
-     *
-     * @param  cmd  Command string as C-style string
-     */
-    void command(const char *cmd);
-
-    /**
-     * @brief Execute a single LAMMPS command
-     * @overload
      * @param cmd Command string as Qt-style QString
      */
-    void command(const QString &cmd) { command(cmd.toStdString()); }
-
-    /**
-     * @brief Execute a single LAMMPS command
-     * @overload
-     * @param cmd Command string as C++-style std::string
-     */
-    void command(const std::string &cmd) { command(cmd.c_str()); }
+    void command(const QString &cmd);
 
     /**
      * @brief Execute multiple LAMMPS commands from a string
-     * @param cmd Commands string with newlines as C-style string
-     */
-    void commandsString(const char *cmd);
-
-    /**
-     * @brief Execute multiple LAMMPS commands from a string
-     * @overload
      * @param cmd Commands string with newlines as Qt-style QString
      */
-    void commandsString(const QString &cmd) { commandsString(cmd.toStdString()); }
-
-    /**
-     * @brief Execute multiple LAMMPS commands from a string
-     * @overload
-     * @param cmd Commands string with newlines as C++-style std::string
-     */
-    void commandsString(const std::string &cmd) { commandsString(cmd.c_str()); }
+    void commandsString(const QString &cmd);
 
     /**
      * @brief Force a timeout condition in LAMMPS
@@ -170,49 +126,23 @@ public:
 
     /**
      * @brief Extract data from a compute from LAMMPS
-     * @param id compute id to extract
-     * @param style style of data to extract
-     * @param type type of data to extract
-     * @return data cast to a void pointer.
-     */
-    void *extractCompute(const char *id, int style, int type);
-
-    /**
-     * @brief Extract data from a compute from LAMMPS
-     * @overload
      * @param id compute id as a QString
      * @param style style of data to extract
      * @param type type of data to extract
+     * @return data cast to a void pointer
      */
-    void *extractCompute(const QString &id, int style, int type)
-    {
-        return extractCompute(id.toLocal8Bit().constData(), style, type);
-    }
+    void *extractCompute(const QString &id, int style, int type);
 
     /**
      * @brief Extract data from a fix from LAMMPS
-     * @param id fix id to extract
+     * @param id fix id as a QString
      * @param style style of data to extract
      * @param type type of data to extract
      * @param nrow row index (only for global)
      * @param ncol column index (only for global)
      * @return data cast to a void pointer. Must be freed for global elements
      */
-    void *extractFix(const char *id, int style, int type, int nrow, int ncol);
-
-    /**
-     * @brief Extract data from a fix from LAMMPS
-     * @overload
-     * @param id fix id as a QString
-     * @param style style of data to extract
-     * @param type type of data to extract
-     * @param nrow row index (only for global)
-     * @param ncol column index (only for global)
-     */
-    void *extractFix(const QString &id, int style, int type, int nrow, int ncol)
-    {
-        return extractFix(id.toLocal8Bit().constData(), style, type, nrow, ncol);
-    }
+    void *extractFix(const QString &id, int style, int type, int nrow, int ncol);
 
     /**
      * @brief Extract a variable value from LAMMPS
@@ -223,20 +153,10 @@ public:
 
     /**
      * @brief Extract style of a variable from LAMMPS
-     * @param keyword Variable name to extract
+     * @param keyword variable name as a QString
      * @return Value type of variable as integer
      */
-    int extractVariableDatatype(const char *keyword);
-
-    /**
-     * @brief Extract style of a variable from LAMMPS
-     * @overload
-     * @param keyword variable name as a QString
-     */
-    int extractVariableDatatype(const QString &keyword)
-    {
-        return extractVariableDatatype(keyword.toLocal8Bit().constData());
-    }
+    int extractVariableDatatype(const QString &keyword);
 
     /**
      * @brief Check if a compute/fix/variable ID exists
@@ -410,14 +330,7 @@ public:
      * @param fname Library filename (QString version)
      * @return true on success, false on failure
      */
-    bool loadLib(const QString &fname) { return loadLib(fname.toLocal8Bit().constData()); }
-
-    /**
-     * @brief Load LAMMPS shared library (plugin mode)
-     * @param lammpslib Library filename (C-string version)
-     * @return true on success, false on failure
-     */
-    bool loadLib(const char *lammpslib);
+    bool loadLib(const QString &fname);
 
     /**
      * @brief Check if running in plugin mode

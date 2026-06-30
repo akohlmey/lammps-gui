@@ -1823,7 +1823,7 @@ void LammpsGui::doRun(bool use_buffer)
     clearVariables();
 
     // define "gui_run" variable set to runCounter value
-    lammps.command(std::string("variable gui_run index " + std::to_string(runCounter)));
+    lammps.command(QString("variable gui_run index %1").arg(runCounter));
     if (use_buffer) {
         // always add final newline since the text edit widget does not do it
         runner->setupRun(&lammps, (textEdit->toPlainText() + "\n").toStdString());
