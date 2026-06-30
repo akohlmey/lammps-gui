@@ -343,17 +343,17 @@ ChartWindow::ChartWindow(const QString &_filename, LammpsGui *_lammpsgui, QWidge
     copyAct   = addMenuAction(file, "Copy &Graph to Clipboard", ":/icons/edit-copy.svg", this,
                               &ChartWindow::copy);
     copyAct->setShortcut(QKeySequence(QKeySequence::Copy));
-    exportCsvAct = addMenuAction(file, "&Export data to CSV...", ":/icons/csv-file-icon.svg",
-                                 this, &ChartWindow::exportCsv);
-    exportDatAct = addMenuAction(file, "Export data to &Gnuplot...", ":/icons/txt-file-icon.svg",
-                                 this, &ChartWindow::exportDat);
+    exportCsvAct  = addMenuAction(file, "&Export data to CSV...", ":/icons/csv-file-icon.svg", this,
+                                  &ChartWindow::exportCsv);
+    exportDatAct  = addMenuAction(file, "Export data to &Gnuplot...", ":/icons/txt-file-icon.svg",
+                                  this, &ChartWindow::exportDat);
     exportYamlAct = addMenuAction(file, "Export data to &YAML...", ":/icons/yaml-file-icon.svg",
                                   this, &ChartWindow::exportYaml);
     file->addSeparator();
     addMenuAction(file, "Chart &Style...", ":/icons/preferences-desktop-personal.svg", this,
                   &ChartWindow::changeStyle);
-    refLinesAct = addMenuAction(file, "&Reference Lines...", ":/icons/reference-lines.svg",
-                                this, &ChartWindow::referenceLines);
+    refLinesAct = addMenuAction(file, "&Reference Lines...", ":/icons/reference-lines.svg", this,
+                                &ChartWindow::referenceLines);
     addMenuAction(file, "&Postprocess...", ":/icons/chart-smooth.svg", this,
                   &ChartWindow::postProcess);
     // "Add Data from File..." is only relevant in standalone file-plot mode
