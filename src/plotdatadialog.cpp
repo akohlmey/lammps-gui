@@ -48,7 +48,7 @@ static std::string sanitizeVarName(const QString &name)
     }
     if (!result.empty() && std::isdigit(static_cast<unsigned char>(result[0])))
         result = "_" + result;
-    return result.empty() ? "_col" : result;
+    return result.empty() ? std::string("_col") : std::move(result);
 }
 
 PlotDataDialog::PlotDataDialog(const PlotData &data, QWidget *parent) :
@@ -171,7 +171,7 @@ void PlotDataDialog::computeColumn()
     result.reserve(static_cast<std::size_t>(nrow));
 
     try {
-        std::map<std::string, double> vars = constants;
+        std::map<std::string, double> vars = std::move(constants);
         vars["row"]                        = 0.0;
         for (int r = 0; r < nrow; ++r) {
             for (int c = 0; c < ncol; ++c)
