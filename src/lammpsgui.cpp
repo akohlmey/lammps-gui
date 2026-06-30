@@ -2760,7 +2760,9 @@ void LammpsGui::setupTutorial(int collection, int tutno, const QString &dir, boo
     if (openwebpage) openTutorialWebpage(collection, tutno);
 
     if (purgedir) purgeDirectory(dir);
-    if (getsolution) directory.mkpath("solution");
+    if (getsolution && !directory.mkpath("solution"))
+        warning(this, "LAMMPS-GUI Warning",
+                "Could not create the \"solution\" subdirectory for the tutorial files.");
 
     URLDownloader downloader(this);
 

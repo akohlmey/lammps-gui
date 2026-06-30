@@ -661,7 +661,8 @@ void ChartWindow::changeStyle()
         chart->setSmoothStyle(static_cast<ChartDisplayMode>(procMode->currentData().toInt()),
                               procChosen, procWidthSpin->value(), procPointSpin->value());
         legendPos = static_cast<LegendPos>(legendCombo->currentData().toInt());
-        if (viewer) viewer->setLegendPos(legendPos);
+        // viewer is created unconditionally in the constructor and never reset to null
+        viewer->setLegendPos(legendPos);
         QSettings settings;
         settings.beginGroup(Keys::GROUP_CHARTS);
         settings.setValue(Keys::LEGEND, static_cast<int>(legendPos));
@@ -1272,7 +1273,7 @@ void ChartWindow::referenceLines()
     refLabelSize  = fontSpin->value();
     refLabelDist  = distSpin->value();
     refLabelBoxed = boxedCheck->isChecked();
-    if (viewer) viewer->setRefLabelStyle(refLabelSize, refLabelDist, refLabelBoxed);
+    viewer->setRefLabelStyle(refLabelSize, refLabelDist, refLabelBoxed);
     QSettings rls;
     rls.beginGroup(Keys::GROUP_CHARTS);
     rls.setValue(Keys::REFLABELSIZE, refLabelSize);

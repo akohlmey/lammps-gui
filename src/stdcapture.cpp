@@ -64,7 +64,7 @@ StdCapture::StdCapture() : m_oldStdOut(0), m_capturing(false), maxread(0), buf(b
     if (_pipe(m_pipe, 65536, O_BINARY) == -1) return;
 #else
     if (pipe(m_pipe) == -1) return;
-    fcntl(m_pipe[READ], F_SETFL, fcntl(m_pipe[READ], F_GETFL) | O_NONBLOCK);
+    if (fcntl(m_pipe[READ], F_SETFL, fcntl(m_pipe[READ], F_GETFL) | O_NONBLOCK) == -1) return;
 #endif
     m_oldStdOut = dup(fileno(stdout));
     if (m_oldStdOut == -1) return;
