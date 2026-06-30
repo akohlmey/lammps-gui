@@ -442,10 +442,12 @@ bool LammpsWrapper::loadLib(const QString &libfile)
 
     // check if ABI matches
     if (lmp->abiversion != LAMMPSPLUGIN_ABI_VERSION) {
+        // cache the ABI version before releasing lmp; the release frees it
+        const int abiversion = lmp->abiversion;
         liblammpsplugin_release(lmp);
         plugin_handle = nullptr;
         fprintf(stderr, "LAMMPS library file %s rejected.\nIncompatible ABI: %d vs %d\n",
-                (const char *)libfile.toLocal8Bit(), lmp->abiversion, LAMMPSPLUGIN_ABI_VERSION);
+                (const char *)libfile.toLocal8Bit(), abiversion, LAMMPSPLUGIN_ABI_VERSION);
         return false;
     }
 
