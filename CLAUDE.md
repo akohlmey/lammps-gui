@@ -74,6 +74,23 @@ ctest --test-dir build -R Framebuffer --output-on-failure   # GUI tests need Xvf
 - `CommandLine.*` — command-line flag smoke tests
 - `Framebuffer.*` — Python/PyAutoGUI GUI tests run inside Xvfb; require `xvfb-run` and one of: `magick`, `import`, `xfce4-screenshooter`, or `gnome-screenshooter`
 
+## Static analysis (CodeQL)
+
+The `codeql-analysis.yml` workflow runs CodeQL on every push to `develop` in
+**build mode** (it compiles via CMake) with the `security-and-quality` query
+suite; its config is `.github/codeql/cpp.yml`. Two settled points:
+
+- **`paths`/`paths-ignore` do nothing for built C/C++.** CodeQL honors them only
+  for interpreted languages or `build-mode: none`, so they cannot scope analysis
+  to `src/` or exclude `thirdparty/`, `plugin/`, or generated `build/` moc files;
+  dismiss those alerts in the code-scanning UI instead.
+- **Do not switch to `build-mode: none`.** It was tried and reverted: on this Qt
+  codebase, no-build extraction misparses the `slots`/`signals` macros (reported
+  as `int` bit-fields), cannot resolve cross-file references (false "unused"
+  statics), and has weak dataflow (false `constant-comparison`) -- roughly 50
+  false positives. Build mode analyzes the real compiled + moc output and is
+  accurate.
+
 ## Code Style
 
 All C++ source is formatted with **clang-format** using the config in `.clang-format` (LLVM base, 4-space indent, 100-column limit, custom brace wrapping). Before committing:
