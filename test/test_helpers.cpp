@@ -113,55 +113,55 @@ TEST_F(HelpersTest, DateCompareAllMonths)
 
 TEST_F(HelpersTest, SplitLineSimple)
 {
-    std::string input                 = "one two three";
-    auto result                       = splitLine(input);
-    std::vector<std::string> expected = {"one", "two", "three"};
+    QString input        = "one two three";
+    auto result          = splitLine(input);
+    QStringList expected = {"one", "two", "three"};
     EXPECT_EQ(result, expected);
 }
 
 TEST_F(HelpersTest, SplitLineEmpty)
 {
-    std::string input = "";
-    auto result       = splitLine(input);
+    QString input = "";
+    auto result   = splitLine(input);
     EXPECT_TRUE(result.empty());
 }
 
 TEST_F(HelpersTest, SplitLineWhitespaceOnly)
 {
-    std::string input = "   \t\n  ";
-    auto result       = splitLine(input);
+    QString input = "   \t\n  ";
+    auto result   = splitLine(input);
     EXPECT_TRUE(result.empty());
 }
 
 TEST_F(HelpersTest, SplitLineSingleQuotes)
 {
-    std::string input                 = "one 'two three' four";
-    auto result                       = splitLine(input);
-    std::vector<std::string> expected = {"one", "'two three'", "four"};
+    QString input        = "one 'two three' four";
+    auto result          = splitLine(input);
+    QStringList expected = {"one", "'two three'", "four"};
     EXPECT_EQ(result, expected);
 }
 
 TEST_F(HelpersTest, SplitLineDoubleQuotes)
 {
-    std::string input                 = "one \"two three\" four";
-    auto result                       = splitLine(input);
-    std::vector<std::string> expected = {"one", "\"two three\"", "four"};
+    QString input        = "one \"two three\" four";
+    auto result          = splitLine(input);
+    QStringList expected = {"one", "\"two three\"", "four"};
     EXPECT_EQ(result, expected);
 }
 
 TEST_F(HelpersTest, SplitLineEscapedQuotes)
 {
-    std::string input                 = "one \\'test\\' two";
-    auto result                       = splitLine(input);
-    std::vector<std::string> expected = {"one", "\\'test\\'", "two"};
+    QString input        = "one \\'test\\' two";
+    auto result          = splitLine(input);
+    QStringList expected = {"one", "\\'test\\'", "two"};
     EXPECT_EQ(result, expected);
 }
 
 TEST_F(HelpersTest, SplitLineMixedQuotes)
 {
-    std::string input                 = "word1 'single' \"double\" word2";
-    auto result                       = splitLine(input);
-    std::vector<std::string> expected = {"word1", "'single'", "\"double\"", "word2"};
+    QString input        = "word1 'single' \"double\" word2";
+    auto result          = splitLine(input);
+    QStringList expected = {"word1", "'single'", "\"double\"", "word2"};
     EXPECT_EQ(result, expected);
 }
 
@@ -171,8 +171,8 @@ TEST_F(HelpersTest, SplitLineTripleQuotes)
     // The implementation shows that """ at start triggers special parsing
     // but the exact behavior can be complex. We'll test that it at least
     // parses without crashing and returns some tokens.
-    std::string input = "word1 \"\"\"triple quoted text\"\"\" word2";
-    auto result       = splitLine(input);
+    QString input = "word1 \"\"\"triple quoted text\"\"\" word2";
+    auto result   = splitLine(input);
     // Just verify basic parsing works - we got some results
     EXPECT_GT(result.size(), 0);
     EXPECT_EQ(result[0], "word1");
@@ -182,17 +182,17 @@ TEST_F(HelpersTest, SplitLineTripleQuotes)
 
 TEST_F(HelpersTest, SplitLineMultipleSpaces)
 {
-    std::string input                 = "one    two\t\tthree\n\nfour";
-    auto result                       = splitLine(input);
-    std::vector<std::string> expected = {"one", "two", "three", "four"};
+    QString input        = "one    two\t\tthree\n\nfour";
+    auto result          = splitLine(input);
+    QStringList expected = {"one", "two", "three", "four"};
     EXPECT_EQ(result, expected);
 }
 
 TEST_F(HelpersTest, SplitLineLeadingTrailingWhitespace)
 {
-    std::string input                 = "  \t one two  \n";
-    auto result                       = splitLine(input);
-    std::vector<std::string> expected = {"one", "two"};
+    QString input        = "  \t one two  \n";
+    auto result          = splitLine(input);
+    QStringList expected = {"one", "two"};
     EXPECT_EQ(result, expected);
 }
 
@@ -411,27 +411,27 @@ TEST_F(HelpersTest, DateCompareWithUpdateSuffix)
 
 TEST_F(HelpersTest, SplitLineSingleWord)
 {
-    std::string input                 = "word";
-    auto result                       = splitLine(input);
-    std::vector<std::string> expected = {"word"};
+    QString input        = "word";
+    auto result          = splitLine(input);
+    QStringList expected = {"word"};
     EXPECT_EQ(result, expected);
 }
 
 TEST_F(HelpersTest, SplitLineHashComment)
 {
     // In LAMMPS, # starts a comment - splitLine should handle this
-    std::string input = "fix 1 all nve # this is a comment";
-    auto result       = splitLine(input);
+    QString input = "fix 1 all nve # this is a comment";
+    auto result   = splitLine(input);
     // After #, everything is ignored
-    EXPECT_GE(result.size(), 1u);
+    EXPECT_GE(result.size(), 1);
     EXPECT_EQ(result[0], "fix");
 }
 
 TEST_F(HelpersTest, SplitLineSpecialCharacters)
 {
-    std::string input = "pair_coeff * * 1.0 2.5";
-    auto result       = splitLine(input);
-    EXPECT_EQ(result.size(), 5u);
+    QString input = "pair_coeff * * 1.0 2.5";
+    auto result   = splitLine(input);
+    EXPECT_EQ(result.size(), 5);
     EXPECT_EQ(result[0], "pair_coeff");
     EXPECT_EQ(result[1], "*");
     EXPECT_EQ(result[2], "*");

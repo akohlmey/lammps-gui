@@ -157,8 +157,11 @@ wrapper are the templates to copy:
   (`idName`, `styleName`, `variableInfo`, `getLastErrorMessage`), which are
   legacy and slated for QString-returning overloads.
 
-Avoid `QString -> std::string -> QString` round-trips (the `splitLine`
-call sites are the current offenders).
+Avoid `QString -> std::string -> QString` round-trips. `splitLine` now
+parses the `QString` directly (via `utf16()`) and returns a `QStringList`;
+the `toStdString()` calls that remain sit at genuine boundaries to
+std::string-only subsystems (`LeptonMini`, `plotaxismath`, the LAMMPS
+runner) rather than being gratuitous conversions.
 
 **Match the existing modern-C++ baseline.** This code already uses
 `nullptr`, `auto`, range-based `for`, `override`, `constexpr`, `= default`,

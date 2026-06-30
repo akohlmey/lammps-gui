@@ -44,14 +44,6 @@ extern int dateCompare(const QString &one, const QString &two);
 /**
  * @brief Split a string into words while respecting quotes
  * @param text The string to split
- * @return Vector of words extracted from the string
- */
-extern std::vector<std::string> splitLine(const std::string &text);
-
-/**
- * @brief Split a string into words while respecting quotes
- * @overload
- * @param text The string to split
  * @return List of words extracted from the string
  */
 extern QStringList splitLine(const QString &text);
