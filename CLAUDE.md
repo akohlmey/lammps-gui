@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-LAMMPS-GUI (v2.x) is a Qt6-based graphical interface for the LAMMPS molecular dynamics simulation software. It provides a code editor with syntax highlighting and auto-completion, live LAMMPS simulation execution, log/chart/image visualization, and an integrated tutorial system. The project is GPLv2+ licensed (note: `thirdparty/rangeslider/rangeslider.{cpp,h}` is third-party under the CeCILL-A license).
+LAMMPS-GUI (v3.x) is a Qt6-based graphical interface for the LAMMPS molecular dynamics simulation software. It provides a code editor with syntax highlighting and auto-completion, live LAMMPS simulation execution, log/chart/image visualization, and an integrated tutorial system. The project is GPLv2+ licensed (note: `thirdparty/rangeslider/rangeslider.{cpp,h}` is third-party under the CeCILL-A license).
 
 - Online documentation: https://lammps-gui.lammps.org/
 - C++17, CMake ≥ 3.20, Qt6 (minimum 6.2; 6.10+ enables QtGraphs backend)
@@ -149,9 +149,9 @@ out of internal interfaces; pass and return `QString`.
 the only place `char *` is unavoidable). Do not sprinkle `toStdString()` /
 `.c_str()` / `char buf[N]` at call sites. Two patterns already in the
 wrapper are the templates to copy:
-- *Input:* provide three overloads -- `const char *`, `const QString &`,
-  `const std::string &` -- as `command()`, `file()`, and
-  `commandsString()` do, so callers pass whatever they hold.
+- *Input:* use either `const char *` or `const QString &`
+  as `extractSetting()`, `extractGlobal()` or `command()`, `file()`.
+  Do the former when only string constants are used as arguments.
 - *Output:* return a `QString` and manage the buffer internally, as
   `lastErrorMessage()` does. Prefer this over `char *`-out-param APIs
   (`idName`, `styleName`, `variableInfo`, `getLastErrorMessage`), which are
