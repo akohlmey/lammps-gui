@@ -1208,7 +1208,7 @@ void ChartWindow::referenceLines()
 
         // remove this row when "×" is clicked
         QObject::connect(delBtn, &QPushButton::clicked, &dialog,
-                         [rd, &rows, &colorBtns, colorBtn, row, listLayout]() {
+                         [rd, &rows, &colorBtns, colorBtn, row]() {
                              rows.removeOne(rd);
                              colorBtns.removeOne(colorBtn);
                              // hide all widgets in the row

@@ -672,7 +672,7 @@ void ImageViewer::atomSettings()
     // enable the bond map/min/max fields (and its Reverse toggle) only when the
     // bond Color is a per-bond value (a bond/local attribute), tracking changes
     // to the bond Color combo
-    auto syncBondMap = [bmap, bmapmin, bmapmax, brevbutton, this](const QString &text) {
+    auto syncBondMap = [bmap, bmapmin, bmapmax, brevbutton](const QString &text) {
         const bool byvalue = bondLocalAttrs.contains(text);
         bmap->setEnabled(byvalue);
         bmapmin->setEnabled(byvalue);
