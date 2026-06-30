@@ -204,23 +204,23 @@ void Highlighter::highlightBlock(const QString &text)
     for (auto &number : numbers) {
         auto num = number.globalMatch(text);
         while (num.hasNext()) {
-            auto match = num.next();
-            setFormat(match.capturedStart(), match.capturedLength(), formatNumber);
+            auto hit = num.next();
+            setFormat(hit.capturedStart(), hit.capturedLength(), formatNumber);
         }
     }
 
     // variables
     auto vars = isVariable.globalMatch(text);
     while (vars.hasNext()) {
-        auto match = vars.next();
-        setFormat(match.capturedStart(), match.capturedLength(), formatVariable);
+        auto hit = vars.next();
+        setFormat(hit.capturedStart(), hit.capturedLength(), formatVariable);
     }
 
     // references
     auto refs = isReference.globalMatch(text);
     while (refs.hasNext()) {
-        auto match = refs.next();
-        setFormat(match.capturedStart(), match.capturedLength(), formatVariable);
+        auto hit = refs.next();
+        setFormat(hit.capturedStart(), hit.capturedLength(), formatVariable);
     }
 
     // continuation character
@@ -231,8 +231,8 @@ void Highlighter::highlightBlock(const QString &text)
     // special keywords
     auto special = isSpecial.globalMatch(text);
     while (special.hasNext()) {
-        auto match = special.next();
-        setFormat(match.capturedStart(), match.capturedLength(), formatSpecial);
+        auto hit = special.next();
+        setFormat(hit.capturedStart(), hit.capturedLength(), formatSpecial);
     }
 
     // comments, must come before strings but after other keywords.
@@ -245,8 +245,8 @@ void Highlighter::highlightBlock(const QString &text)
     // strings, must come last so they can overwrite other formatting
     auto string = isString.globalMatch(text);
     while (string.hasNext()) {
-        auto match = string.next();
-        setFormat(match.capturedStart(), match.capturedLength(), formatString);
+        auto hit = string.next();
+        setFormat(hit.capturedStart(), hit.capturedLength(), formatString);
     }
 
     auto triple = isTriple.match(text);

@@ -124,8 +124,8 @@ void SetVariables::delRow()
 
         // renumber the delete pushbutton names
         for (int i = delrow; i < nrows - 3; ++i) {
-            auto *row    = layout->itemAt(i)->layout();
-            auto *widget = row->itemAt(2)->widget();
+            auto *rowlayout = layout->itemAt(i)->layout();
+            auto *widget    = rowlayout->itemAt(2)->widget();
             widget->setObjectName(QString::number(i));
         }
     }

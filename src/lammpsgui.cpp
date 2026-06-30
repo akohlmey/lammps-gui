@@ -891,7 +891,6 @@ void LammpsGui::startExe()
                 }
             }
             if (exe == "ovito") {
-                QStringList args;
                 args << datafile.fileName();
                 {
                     StdoutSilencer guard;
