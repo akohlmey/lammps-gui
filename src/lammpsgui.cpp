@@ -914,13 +914,9 @@ void LammpsGui::updateRecents(const QString &filename)
     if (settings.contains(Keys::RECENT))
         recent = settings.value(Keys::RECENT).value<QList<QString>>();
 
-    for (int i = 0; i < recent.size(); ++i) {
-        QFileInfo fi(recent[i]);
-        if (!fi.isReadable()) {
-            recent.removeAt(i);
-            i = 0;
-        }
-    }
+    recent.removeIf([](const QString &f) {
+        return !QFileInfo(f).isReadable();
+    });
 
     if (!filename.isEmpty() && !recent.contains(filename)) recent.prepend(filename);
     if (recent.size() > 5) recent.removeLast();
