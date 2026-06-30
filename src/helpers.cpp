@@ -155,7 +155,7 @@ QStringList splitLine(const QString &text)
             add = 0;
             len = 1;
             c   = *++buf;
-            while (((c != '\'') && (c != '\0')) || ((c == '\\') && (buf[1] == '\''))) {
+            while ((c != '\'') && (c != '\0')) {
                 if ((c == '\\') && (buf[1] == '\'')) {
                     ++buf;
                     ++len;
@@ -177,7 +177,7 @@ QStringList splitLine(const QString &text)
             add = 0;
             len = 1;
             c   = *++buf;
-            while (((c != '"') && (c != '\0')) || ((c == '\\') && (buf[1] == '"'))) {
+            while ((c != '"') && (c != '\0')) {
                 if ((c == '\\') && (buf[1] == '"')) {
                     ++buf;
                     ++len;
