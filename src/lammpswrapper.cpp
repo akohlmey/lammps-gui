@@ -479,7 +479,7 @@ bool LammpsWrapper::hasPlugin() const
     return false;
 }
 
-bool LammpsWrapper::loadLib(const char *)
+bool LammpsWrapper::loadLib(const QString &)
 {
     return true;
 }
