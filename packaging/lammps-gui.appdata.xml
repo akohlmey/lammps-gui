@@ -64,7 +64,7 @@
         <ul>
           <li>Add a Zenodo DOI badge and a BibTeX entry for the archived releases to the documentation and citation metadata, so a specific release can be cited directly</li>
           <li>Finish consolidating the code on QString internally by removing the remaining const char * and std::string overloads from the LAMMPS wrapper and parsing input lines directly as a QString</li>
-          <li>Add a daily Coverity Scan static-analysis workflow and broaden the CodeQL analysis to the security-and-quality query suite, and fix the defects they surfaced -- including the Recent Files list now reliably dropping entries whose files are no longer readable</li>
+          <li>Add a daily Coverity Scan static-analysis workflow and broaden the CodeQL analysis to the security-and-quality query suite, and fix the defects they surfaced -- including a use-after-free and a memory leak on the LAMMPS plugin load and unload error paths, several unchecked return values, and the Recent Files list now reliably dropping entries whose files are no longer readable</li>
           <li>Minor build, continuous-integration, and documentation maintenance</li>
         </ul>
       </description>
