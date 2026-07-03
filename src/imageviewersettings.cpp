@@ -285,11 +285,8 @@ void ImageViewer::globalSettings()
     back->setValue(backlight);
     back->setMaximumWidth(fwidth);
     lightlayout->addWidget(back, 2);
-    // only allow modifying lights for LAMMPS versions after 30 March 2026
-    if (lammps->version() > 20260330) {
-        layout->addLayout(lightlayout, idx++, 0, 1, MAXCOLS, Qt::AlignHCenter);
-        layout->addWidget(new QHline, idx++, 0, 1, MAXCOLS);
-    }
+    layout->addLayout(lightlayout, idx++, 0, 1, MAXCOLS, Qt::AlignHCenter);
+    layout->addWidget(new QHline, idx++, 0, 1, MAXCOLS);
 
     n = 0;
 

@@ -2652,7 +2652,6 @@ void LammpsGui::startLammps()
     lammps.open(narg, cargs.data());
     lammpsstatus->show();
 
-    // Must have at least LAMMPS version 30 March 2026
     if (lammps.version() < Cfg::MIN_LAMMPS_VERSION) {
         critical(this, "LAMMPS-GUI Error", "Incompatible LAMMPS Version:",
                  "LAMMPS-GUI version " LAMMPS_GUI_VERSION " requires\n"
