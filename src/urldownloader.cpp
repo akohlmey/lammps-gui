@@ -25,9 +25,11 @@
 #include <QNetworkProxy>
 #include <QNetworkReply>
 #include <QNetworkRequest>
+#include <QSaveFile>
 #include <QSettings>
 #include <QUrl>
 #include <QVBoxLayout>
+#include <QVariant>
 
 URLDownloader::URLDownloader(QWidget *parent) :
     manager(new QNetworkAccessManager), parentWidget(parent)
@@ -119,21 +121,41 @@ bool URLDownloader::download(const QString &url, const QString &file, bool showD
         return false;
     }
 
-    QFile outFile(file);
-    if (!outFile.open(QIODevice::WriteOnly)) {
-        lastError = QString("Cannot open file for writing: %1").arg(file);
-        reply->deleteLater();
+    const QByteArray data     = reply->readAll();
+    const QVariant clen       = reply->header(QNetworkRequest::ContentLengthHeader);
+    const QByteArray encoding = reply->rawHeader("Content-Encoding");
+    reply->deleteLater();
+
+    // reject an incomplete transfer: when the server advertised a content length
+    // and did not compress the body, it must match the number of bytes actually
+    // received.  Writing a truncated shared library would crash the dynamic
+    // linker when the file is later loaded via dlopen().
+    if (encoding.isEmpty() && clen.isValid() &&
+        clen.toLongLong() != static_cast<qint64>(data.size())) {
+        lastError = QString("Incomplete download of %1: expected %2 bytes but received %3")
+                        .arg(file)
+                        .arg(clen.toLongLong())
+                        .arg(data.size());
         return false;
     }
 
-    QByteArray data = reply->readAll();
-    reply->deleteLater();
-    if (outFile.write(data) != data.size()) {
-        lastError = QString("Failed to write data to file: %1").arg(file);
-        outFile.close();
+    // write to a temporary file that is atomically renamed into place only after
+    // a complete, successful write, so an interrupted or failed write can never
+    // leave a truncated file at the destination path.
+    QSaveFile outFile(file);
+    if (!outFile.open(QIODevice::WriteOnly)) {
+        lastError = QString("Cannot open file for writing: %1").arg(file);
         return false;
     }
-    outFile.close();
+    if (outFile.write(data) != data.size()) {
+        lastError = QString("Failed to write data to file: %1").arg(file);
+        outFile.cancelWriting();
+        return false;
+    }
+    if (!outFile.commit()) {
+        lastError = QString("Failed to finalize file: %1").arg(file);
+        return false;
+    }
 
     // verify SHA-256 checksum if a SHA256SUMS file is available
     if (!verifyChecksum(url, file)) {
