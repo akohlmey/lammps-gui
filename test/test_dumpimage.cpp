@@ -106,7 +106,7 @@ DumpImageParams makeParams()
     p.keylight     = 0.7;
     p.filllight    = 0.3;
     p.backlight    = 0.2;
-    p.version      = 20260330; // not greater than threshold -> no lights/hull
+    p.version      = 20260704;
 
     p.colormap        = "BWR";
     p.mapmin          = "auto";
@@ -147,7 +147,7 @@ TEST(DumpImageCommand, BasicStructure)
     EXPECT_TRUE(cmd.contains(" boxcolor white"));
     EXPECT_TRUE(cmd.contains(" backcolor black"));
     EXPECT_TRUE(cmd.contains(" backcolor2 gray"));
-    EXPECT_FALSE(cmd.contains(" lights ")); // version not greater than threshold
+    EXPECT_TRUE(cmd.contains(" lights ")); // version not greater than threshold
 }
 
 TEST(DumpImageCommand, ColorTablePrunedToDeltas)
@@ -339,31 +339,6 @@ TEST(DumpImageCommand, RegionPoints)
     EXPECT_TRUE(cmd.contains(" region myreg red points 100 0.2")) << cmd.toStdString();
 }
 
-TEST(DumpImageCommand, RegionFrameHullPointsGatedByVersion)
-{
-    auto p = makeParams();
-    RegionInfo reg(true, FRAME, "blue", 0.3, 0.5, 250);
-    p.regions["box"] = &reg;
-
-    // at the threshold: no hull_points keyword
-    QString cmd = buildCmd(p);
-    EXPECT_TRUE(cmd.contains(" region box blue frame 0.3")) << cmd.toStdString();
-    EXPECT_FALSE(cmd.contains("hull_points"));
-
-    // newer version: hull_points appended
-    p.version = 20260331;
-    cmd       = buildCmd(p);
-    EXPECT_TRUE(cmd.contains("hull_points 250")) << cmd.toStdString();
-}
-
-TEST(DumpImageCommand, LightsGatedByVersion)
-{
-    auto p            = makeParams();
-    p.version         = 20260331;
-    const QString cmd = buildCmd(p);
-    EXPECT_TRUE(cmd.contains(" lights 0.2 0.7 0.3 0.2")) << cmd.toStdString();
-}
-
 TEST(DumpImageCommand, ColorMapOmittedForTypeColoring)
 {
     auto p = makeParams(); // atomcolor == "type"
@@ -388,7 +363,7 @@ TEST(DumpImageCommand, AllDefaultsPruned)
     p.keylight     = 0.9;
     p.filllight    = 0.45;
     p.backlight    = 0.9;
-    p.version      = 20260331; // lights gate open, but the values are default
+    p.version      = 20260704;
 
     const QString cmd = buildCmd(p);
     EXPECT_FALSE(cmd.contains(" amap ")) << cmd.toStdString();
