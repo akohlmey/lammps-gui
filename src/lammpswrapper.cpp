@@ -21,6 +21,13 @@
 #endif
 
 #include <cstdio>
+#include <cstring>
+
+#include <QFile>
+
+#if defined(LAMMPS_GUI_USE_PLUGIN) && defined(Q_OS_LINUX)
+#include <elf.h>
+#endif
 
 // Dispatch a LAMMPS C-library function by its base name.  In plugin mode this
 // resolves to the dynamically loaded function table; in linked mode to the
@@ -430,8 +437,71 @@ bool LammpsWrapper::hasPlugin() const
     return true;
 }
 
+// Detect an obviously truncated or corrupt ELF shared object before it is
+// handed to dlopen().  A partial file -- for example from an interrupted
+// download -- makes the dynamic linker dereference relocation data past the end
+// of the file and crash the entire process instead of failing cleanly.  The
+// check is deliberately fail-safe: it returns true only on positive evidence of
+// truncation and otherwise lets the loader proceed.
+static bool pluginFileLooksTruncated(const QString &libfile)
+{
+#if defined(Q_OS_LINUX)
+    QFile f(libfile);
+    if (!f.open(QIODevice::ReadOnly)) return false;
+    const qint64 filesize = f.size();
+
+    Elf64_Ehdr ehdr;
+    if (f.read(reinterpret_cast<char *>(&ehdr), sizeof(ehdr)) != sizeof(ehdr)) return false;
+
+    // only validate native 64-bit little-endian ELF objects; anything else the
+    // dynamic loader rejects on its own without crashing
+    if (memcmp(ehdr.e_ident, ELFMAG, SELFMAG) != 0) return false;
+    if ((ehdr.e_ident[EI_CLASS] != ELFCLASS64) || (ehdr.e_ident[EI_DATA] != ELFDATA2LSB))
+        return false;
+
+    // the section header table is conventionally at the very end of the file, so
+    // a table that runs past EOF is a reliable indication of truncation
+    if (ehdr.e_shoff != 0) {
+        const qint64 shend = static_cast<qint64>(ehdr.e_shoff) +
+                             static_cast<qint64>(ehdr.e_shnum) * ehdr.e_shentsize;
+        if (shend > filesize) return true;
+    }
+
+    // every loadable segment must lie entirely within the file
+    if ((ehdr.e_phoff != 0) && (ehdr.e_phnum > 0)) {
+        const qint64 phend = static_cast<qint64>(ehdr.e_phoff) +
+                             static_cast<qint64>(ehdr.e_phnum) * ehdr.e_phentsize;
+        if (phend > filesize) return true;
+        if (!f.seek(ehdr.e_phoff)) return false;
+        for (unsigned i = 0; i < ehdr.e_phnum; ++i) {
+            Elf64_Phdr phdr;
+            if (f.read(reinterpret_cast<char *>(&phdr), sizeof(phdr)) != sizeof(phdr)) return true;
+            if (phdr.p_type != PT_LOAD) continue;
+            const qint64 segend =
+                static_cast<qint64>(phdr.p_offset) + static_cast<qint64>(phdr.p_filesz);
+            if (segend > filesize) return true;
+        }
+    }
+    return false;
+#else
+    Q_UNUSED(libfile);
+    return false;
+#endif
+}
+
 bool LammpsWrapper::loadLib(const QString &libfile)
 {
+    // reject an obviously truncated or corrupt library up front; handing such a
+    // file to dlopen() would crash the process inside the dynamic linker
+    if (pluginFileLooksTruncated(libfile)) {
+        fprintf(stderr,
+                "LAMMPS library file %s rejected.\n"
+                "The file appears truncated or corrupted (e.g. from an incomplete "
+                "download). Please remove it and install the library again.\n",
+                (const char *)libfile.toLocal8Bit());
+        return false;
+    }
+
     if (plugin_handle) {
         close();
         liblammpsplugin_release((liblammpsplugin_t *)plugin_handle);
