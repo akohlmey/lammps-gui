@@ -92,8 +92,14 @@ This document describes LAMMPS-GUI version |version|.
 Citing LAMMPS-GUI
 *****************
 
-There is currently no citation specifically describing LAMMPS-GUI, but
-an introduction to LAMMPS-GUI is included in the following publication
+There is currently no citation specifically describing LAMMPS-GUI
+but a manuscript has been submitted to JOSS.
+
+.. raw:: html
+
+   <a href="https://joss.theoj.org/papers/59eed23e3cdee45c6585356fb7c23ca8"><img src="https://joss.theoj.org/papers/59eed23e3cdee45c6585356fb7c23ca8/status.svg"></a>
+
+An introduction to LAMMPS-GUI is included in the following publication
 in LiveCoMS for the LAMMPS tutorials that are linked from LAMMPS-GUI, so
 the suggestion is to cite that publication for now:
 
