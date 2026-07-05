@@ -140,6 +140,16 @@ download -- different LAMMPS builds. The project is documented online
 [@lammpsgui_home] and is maintained with an automated test suite and
 continuous-integration builds on all supported platforms.
 
+# AI usage disclosure
+
+The design and architecture of LAMMPS-GUI were developed without the use of
+generative AI.  AI-based coding assistants (GitHub Copilot and Claude Code)
+were used more recently to support the refactoring and modularization of the
+existing code base, and to assist with editing this manuscript.  All
+AI-generated suggestions were reviewed, tested, and revised by the author,
+who takes full responsibility for the software and for the content of this
+paper.
+
 # Acknowledgements
 
 Financial support by Sandia National Laboratories under PO 2149742 and
