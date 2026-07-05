@@ -121,7 +121,11 @@ A recurring theme is the co-evolution of LAMMPS-GUI and LAMMPS:
 front-end needs drove improvements to the engine and its library
 interface -- catchable exceptions, a locked cache of live thermodynamic
 data, and greatly expanded snapshot rendering, collected into a dedicated
-GRAPHICS package [@kohlmeyer2025lammps]. In its default *plugin mode*,
+GRAPHICS package [@kohlmeyer2025lammps]. This rendering capability
+deliberately draws on the kind of functionality long provided by
+dedicated molecular visualization tools, but makes it available directly
+on a running simulation rather than only as post-processing on saved
+trajectory files. In its default *plugin mode*,
 LAMMPS-GUI loads the shared library at run time with no link-time
 dependency, so one binary can pair with -- or download -- different
 LAMMPS builds. The project is documented online [@lammpsgui_home] and
