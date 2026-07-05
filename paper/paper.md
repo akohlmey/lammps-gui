@@ -81,7 +81,7 @@ molecular-modeling packages typically provide structure editors that can
 export LAMMPS inputs and re-import results; Atomify compiles a modified
 version of LAMMPS to WebAssembly and runs simulations and visualization
 inside a web browser [@atomify_home]; and dedicated visualization
-programs such as OVITO [@ovito_home] and VMD [@vmd_home] render
+programs such as OVITO [@ovito2010] and VMD [@vmd1996] render
 trajectories with a breadth and quality that LAMMPS-GUI does not attempt
 to match.  None of these, however, integrates input editing, live
 simulation, output monitoring, plotting, and visualization into one
