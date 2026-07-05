@@ -75,6 +75,8 @@ progress; the Image Viewer shows the starting geometry; the Output window
 the screen output; and the Charts window a live plot of a thermodynamic
 data column.\label{fig:editor}](images/lammps-gui-screen.png){ width=70% }
 
+# State of the field
+
 Several other approaches to make running LAMMPS simulations more
 accessible exist, but they target different needs.  Commercial
 molecular-modeling packages typically provide structure editors that can
@@ -95,7 +97,7 @@ debugging of failing inputs by visualizing selected components, and the
 interactive construction of reproducible `dump image` visualization
 commands -- also make it useful to experienced researchers.
 
-# Functionality
+# Software design and functionality
 
 LAMMPS-GUI follows an object-oriented design in which a central window
 coordinates largely self-contained components, all access to LAMMPS being
