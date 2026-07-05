@@ -285,11 +285,8 @@ void ImageViewer::globalSettings()
     back->setValue(backlight);
     back->setMaximumWidth(fwidth);
     lightlayout->addWidget(back, 2);
-    // only allow modifying lights for LAMMPS versions after 30 March 2026
-    if (lammps->version() > 20260330) {
-        layout->addLayout(lightlayout, idx++, 0, 1, MAXCOLS, Qt::AlignHCenter);
-        layout->addWidget(new QHline, idx++, 0, 1, MAXCOLS);
-    }
+    layout->addLayout(lightlayout, idx++, 0, 1, MAXCOLS, Qt::AlignHCenter);
+    layout->addWidget(new QHline, idx++, 0, 1, MAXCOLS);
 
     n = 0;
 
@@ -672,7 +669,7 @@ void ImageViewer::atomSettings()
     // enable the bond map/min/max fields (and its Reverse toggle) only when the
     // bond Color is a per-bond value (a bond/local attribute), tracking changes
     // to the bond Color combo
-    auto syncBondMap = [bmap, bmapmin, bmapmax, brevbutton, this](const QString &text) {
+    auto syncBondMap = [bmap, bmapmin, bmapmax, brevbutton](const QString &text) {
         const bool byvalue = bondLocalAttrs.contains(text);
         bmap->setEnabled(byvalue);
         bmapmin->setEnabled(byvalue);

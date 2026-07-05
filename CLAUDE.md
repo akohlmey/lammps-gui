@@ -4,10 +4,10 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-LAMMPS-GUI (v2.x) is a Qt6-based graphical interface for the LAMMPS molecular dynamics simulation software. It provides a code editor with syntax highlighting and auto-completion, live LAMMPS simulation execution, log/chart/image visualization, and an integrated tutorial system. The project is GPLv2+ licensed (note: `thirdparty/rangeslider/rangeslider.{cpp,h}` is third-party under the CeCILL-A license).
+LAMMPS-GUI (v3.x) is a Qt6-based graphical interface for the LAMMPS molecular dynamics simulation software. It provides a code editor with syntax highlighting and auto-completion, live LAMMPS simulation execution, log/chart/image visualization, and an integrated tutorial system. The project is GPLv2+ licensed (note: `thirdparty/rangeslider/rangeslider.{cpp,h}` is third-party under the CeCILL-A license).
 
 - Online documentation: https://lammps-gui.lammps.org/
-- C++17, CMake ≥ 3.20, Qt6 (minimum 6.2; 6.10+ enables QtGraphs backend)
+- C++17, CMake ≥ 3.20, Qt6 (minimum 6.2; only the Gui, Widgets, Network, and Svg modules — charts are rendered natively, so no Qt Charts/Graphs/Quick)
 
 ## Build Commands
 
@@ -74,6 +74,23 @@ ctest --test-dir build -R Framebuffer --output-on-failure   # GUI tests need Xvf
 - `CommandLine.*` — command-line flag smoke tests
 - `Framebuffer.*` — Python/PyAutoGUI GUI tests run inside Xvfb; require `xvfb-run` and one of: `magick`, `import`, `xfce4-screenshooter`, or `gnome-screenshooter`
 
+## Static analysis (CodeQL)
+
+The `codeql-analysis.yml` workflow runs CodeQL on every push to `develop` in
+**build mode** (it compiles via CMake) with the `security-and-quality` query
+suite; its config is `.github/codeql/cpp.yml`. Two settled points:
+
+- **`paths`/`paths-ignore` do nothing for built C/C++.** CodeQL honors them only
+  for interpreted languages or `build-mode: none`, so they cannot scope analysis
+  to `src/` or exclude `thirdparty/`, `plugin/`, or generated `build/` moc files;
+  dismiss those alerts in the code-scanning UI instead.
+- **Do not switch to `build-mode: none`.** It was tried and reverted: on this Qt
+  codebase, no-build extraction misparses the `slots`/`signals` macros (reported
+  as `int` bit-fields), cannot resolve cross-file references (false "unused"
+  statics), and has weak dataflow (false `constant-comparison`) -- roughly 50
+  false positives. Build mode analyzes the real compiled + moc output and is
+  accurate.
+
 ## Code Style
 
 All C++ source is formatted with **clang-format** using the config in `.clang-format` (LLVM base, 4-space indent, 100-column limit, custom brace wrapping). Before committing:
@@ -89,7 +106,7 @@ File headers use `// -*- c++ -*-` Emacs mode line; maintain it on new files.
 - **Doxygen comments on all new public APIs.** Use `/** @brief ... */` Javadoc style for classes and methods; `///< description` for member variables. See `src/lammpsgui.h` for a comprehensive example.
 - **New public classes need a `.. doxygenclass::` entry in `doc/api_reference.rst`.** The `helpers.h` block uses `.. doxygenfile:: helpers.h :sections: func`, which renders only *free functions*, so a new helper class (e.g. an RAII guard) is otherwise missing from the generated API docs.
 - **Documentation changes in American English with plain ASCII characters** (no typographic quotes, em-dashes as `--`, etc.).
-- **New `.cpp`/`.h` files must be added to `PROJECT_SOURCES`** in `CMakeLists.txt` (around line 90). Qt's `AUTOMOC` handles `moc` generation automatically, but the file must be listed there.
+- **New `.cpp`/`.h` files must be added to `PROJECT_SOURCES`** in `CMakeLists.txt` (around line 80). Qt's `AUTOMOC` handles `moc` generation automatically, but the file must be listed there.
 
 ## Architecture
 
@@ -109,9 +126,9 @@ main.cpp
        ├─ ImageViewer (QDialog)        ← interactive dump-image viewer
        ├─ SlideShow (QDialog)          ← slideshow viewer for image sequences
        ├─ TutorialWizard (QWizard)     ← step-by-step tutorial setup wizard
-       ├─ ChartWindow                  ← thermo chart container
-       │    └─ ChartViewer × N        ← one chart per thermo column
-       │         └─ ChartBackend*     ← abstract; QtGraphsBackend or QtChartsBackend
+       ├─ ChartWindow                  ← thermo chart container; owns N ChartColumn data objects
+       │    └─ ChartViewer             ← single rebindable view of the active ChartColumn
+       │         └─ PlotWidget         ← QPainter 2D line/scatter renderer (sole chart backend)
        └─ Preferences (QDialog)        ← settings; stored via QSettings
 ```
 
@@ -119,7 +136,7 @@ main.cpp
 
 **Plugin vs. linked mode.** When built with `LAMMPS_GUI_USE_PLUGIN=ON` (default), the executable has no link-time dependency on LAMMPS. `plugin/liblammpsplugin.c` provides `dlopen`-based dispatch; `LammpsWrapper` calls through function pointers loaded at startup. This lets the GUI ship as a standalone binary that can download or swap LAMMPS shared libraries.
 
-**Native chart rendering.** Charts are drawn by a single self-contained renderer, `PlotWidget` (`src/plotwidget.{cpp,h}`), a `QWidget`+`QPainter` 2D line/scatter plotter that depends only on Qt Widgets — no Qt Charts, Qt Graphs, or QML. `ChartViewer` owns neutral `PlotSeries` data objects (`src/plotseries.h`) and feeds them to `PlotWidget` directly; axis-layout math (nice ticks, label formatting) lives in the Qt-free `plotaxismath` (`src/plotaxismath.{cpp,h}`). The old `ChartBackend`/QtCharts/QtGraphs abstraction was removed once the native renderer reached parity; history and rationale are in `doc/native-chart-backend.md`.
+**Native chart rendering.** Charts are drawn by a single self-contained renderer, `PlotWidget` (`src/plotwidget.{cpp,h}`), a `QWidget`+`QPainter` 2D line/scatter plotter that depends only on Qt Widgets — no Qt Charts, Qt Graphs, or QML. `ChartWindow` owns one `ChartColumn` per thermo column — the neutral `PlotSeries` data objects (`src/plotseries.h`) live there — plus a *single* `ChartViewer` that is rebound (via `setColumn()`) to whichever column is selected and renders it through `PlotWidget`; axis-layout math (nice ticks, label formatting) lives in the Qt-free `plotaxismath` (`src/plotaxismath.{cpp,h}`). Both the old one-`ChartViewer`-per-column layout and the `ChartBackend`/QtCharts/QtGraphs abstraction were removed once the native single-view renderer reached parity; history and rationale are in `doc/native-chart-backend.md`.
 
 **Threading model.** LAMMPS simulations run on a `LammpsRunner` (QThread). `StdCapture` intercepts the LAMMPS library's stdout by replacing the file descriptor before `LammpsRunner::run()` starts. A `QTimer` in `LammpsGui` polls `StdCapture::getChunk()` to feed `LogWindow` without blocking the UI thread.
 
@@ -149,16 +166,19 @@ out of internal interfaces; pass and return `QString`.
 the only place `char *` is unavoidable). Do not sprinkle `toStdString()` /
 `.c_str()` / `char buf[N]` at call sites. Two patterns already in the
 wrapper are the templates to copy:
-- *Input:* provide three overloads -- `const char *`, `const QString &`,
-  `const std::string &` -- as `command()`, `file()`, and
-  `commandsString()` do, so callers pass whatever they hold.
+- *Input:* use either `const char *` or `const QString &`
+  as `extractSetting()`, `extractGlobal()` or `command()`, `file()`.
+  Do the former when only string constants are used as arguments.
 - *Output:* return a `QString` and manage the buffer internally, as
   `lastErrorMessage()` does. Prefer this over `char *`-out-param APIs
   (`idName`, `styleName`, `variableInfo`, `getLastErrorMessage`), which are
   legacy and slated for QString-returning overloads.
 
-Avoid `QString -> std::string -> QString` round-trips (the `splitLine`
-call sites are the current offenders).
+Avoid `QString -> std::string -> QString` round-trips. `splitLine` now
+parses the `QString` directly (via `utf16()`) and returns a `QStringList`;
+the `toStdString()` calls that remain sit at genuine boundaries to
+std::string-only subsystems (`LeptonMini`, `plotaxismath`, the LAMMPS
+runner) rather than being gratuitous conversions.
 
 **Match the existing modern-C++ baseline.** This code already uses
 `nullptr`, `auto`, range-based `for`, `override`, `constexpr`, `= default`,
@@ -209,7 +229,7 @@ decisions and caveats as binding unless we explicitly revise them here.
 | `src/findandreplace.{cpp,h}` | Non-modal find/replace dialog for the editor |
 | `src/logwindow.{cpp,h}` | Log viewer; delegates warning highlighting to `FlagWarnings` |
 | `src/flagwarnings.{cpp,h}` | QSyntaxHighlighter for warnings/errors/URLs in log text |
-| `src/chartviewer.{cpp,h}` | `ChartWindow` (container) + `ChartViewer` (one chart per column); owns `PlotSeries`, renders via `PlotWidget` |
+| `src/chartviewer.{cpp,h}` | `ChartWindow` (container; owns N `ChartColumn` data objects) + a single rebindable `ChartViewer` that renders the active `ChartColumn`'s `PlotSeries` via `PlotWidget` |
 | `src/plotwidget.{cpp,h}` | `QWidget`+`QPainter` 2D line/scatter chart renderer — the only chart backend (no chart module/QML) |
 | `src/plotseries.h` | Neutral chart model value types (`PlotSeries`, `PlotAxis`) consumed by `PlotWidget` |
 | `src/plotaxismath.{cpp,h}` | Qt-free axis-layout helpers (nice ticks, tick values, printf label formatting) |

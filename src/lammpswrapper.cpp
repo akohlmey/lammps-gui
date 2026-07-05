@@ -21,6 +21,13 @@
 #endif
 
 #include <cstdio>
+#include <cstring>
+
+#include <QFile>
+
+#if defined(LAMMPS_GUI_USE_PLUGIN) && defined(Q_OS_LINUX)
+#include <elf.h>
+#endif
 
 // Dispatch a LAMMPS C-library function by its base name.  In plugin mode this
 // resolves to the dynamically loaded function table; in linked mode to the
@@ -88,7 +95,7 @@ void *LammpsWrapper::extractAtom(const char *keyword)
     return val;
 }
 
-void *LammpsWrapper::extractCompute(const char *id, int style, int type)
+void *LammpsWrapper::extractCompute(const QString &id, int style, int type)
 {
     int mystyle = -1;
     int mytype  = -1;
@@ -129,12 +136,12 @@ void *LammpsWrapper::extractCompute(const char *id, int style, int type)
     }
 
     if (lammps_handle) {
-        return LMPFN(extract_compute)(lammps_handle, id, mystyle, mytype);
+        return LMPFN(extract_compute)(lammps_handle, id.toLocal8Bit(), mystyle, mytype);
     }
     return nullptr;
 }
 
-void *LammpsWrapper::extractFix(const char *id, int style, int type, int nrow, int ncol)
+void *LammpsWrapper::extractFix(const QString &id, int style, int type, int nrow, int ncol)
 {
     int mystyle = -1;
     int mytype  = -1;
@@ -175,16 +182,16 @@ void *LammpsWrapper::extractFix(const char *id, int style, int type, int nrow, i
     }
 
     if (lammps_handle) {
-        return LMPFN(extract_fix)(lammps_handle, id, mystyle, mytype, nrow, ncol);
+        return LMPFN(extract_fix)(lammps_handle, id.toLocal8Bit(), mystyle, mytype, nrow, ncol);
     }
     return nullptr;
 }
 
-int LammpsWrapper::extractVariableDatatype(const char *keyword)
+int LammpsWrapper::extractVariableDatatype(const QString &keyword)
 {
     int type = -1;
     if (lammps_handle) {
-        type = LMPFN(extract_variable_datatype)(lammps_handle, keyword);
+        type = LMPFN(extract_variable_datatype)(lammps_handle, keyword.toLocal8Bit());
     }
     switch (type) {
         case LMP_VAR_EQUAL:
@@ -320,24 +327,24 @@ bool LammpsWrapper::isRunning()
     return val != 0;
 }
 
-void LammpsWrapper::command(const char *input)
+void LammpsWrapper::command(const QString &input)
 {
     if (lammps_handle) {
-        LMPFN(command)(lammps_handle, input);
+        LMPFN(command)(lammps_handle, input.toLocal8Bit());
     }
 }
 
-void LammpsWrapper::file(const char *filename)
+void LammpsWrapper::file(const QString &filename)
 {
     if (lammps_handle) {
-        LMPFN(file)(lammps_handle, filename);
+        LMPFN(file)(lammps_handle, filename.toLocal8Bit());
     }
 }
 
-void LammpsWrapper::commandsString(const char *input)
+void LammpsWrapper::commandsString(const QString &input)
 {
     if (lammps_handle) {
-        LMPFN(commands_string)(lammps_handle, input);
+        LMPFN(commands_string)(lammps_handle, input.toLocal8Bit());
     }
 }
 
@@ -430,31 +437,96 @@ bool LammpsWrapper::hasPlugin() const
     return true;
 }
 
-bool LammpsWrapper::loadLib(const char *libfile)
+// Detect an obviously truncated or corrupt ELF shared object before it is
+// handed to dlopen().  A partial file -- for example from an interrupted
+// download -- makes the dynamic linker dereference relocation data past the end
+// of the file and crash the entire process instead of failing cleanly.  The
+// check is deliberately fail-safe: it returns true only on positive evidence of
+// truncation and otherwise lets the loader proceed.
+static bool pluginFileLooksTruncated(const QString &libfile)
 {
+#if defined(Q_OS_LINUX)
+    QFile f(libfile);
+    if (!f.open(QIODevice::ReadOnly)) return false;
+    const qint64 filesize = f.size();
+
+    Elf64_Ehdr ehdr;
+    if (f.read(reinterpret_cast<char *>(&ehdr), sizeof(ehdr)) != sizeof(ehdr)) return false;
+
+    // only validate native 64-bit little-endian ELF objects; anything else the
+    // dynamic loader rejects on its own without crashing
+    if (memcmp(ehdr.e_ident, ELFMAG, SELFMAG) != 0) return false;
+    if ((ehdr.e_ident[EI_CLASS] != ELFCLASS64) || (ehdr.e_ident[EI_DATA] != ELFDATA2LSB))
+        return false;
+
+    // the section header table is conventionally at the very end of the file, so
+    // a table that runs past EOF is a reliable indication of truncation
+    if (ehdr.e_shoff != 0) {
+        const qint64 shend = static_cast<qint64>(ehdr.e_shoff) +
+                             static_cast<qint64>(ehdr.e_shnum) * ehdr.e_shentsize;
+        if (shend > filesize) return true;
+    }
+
+    // every loadable segment must lie entirely within the file
+    if ((ehdr.e_phoff != 0) && (ehdr.e_phnum > 0)) {
+        const qint64 phend = static_cast<qint64>(ehdr.e_phoff) +
+                             static_cast<qint64>(ehdr.e_phnum) * ehdr.e_phentsize;
+        if (phend > filesize) return true;
+        if (!f.seek(ehdr.e_phoff)) return false;
+        for (unsigned i = 0; i < ehdr.e_phnum; ++i) {
+            Elf64_Phdr phdr;
+            if (f.read(reinterpret_cast<char *>(&phdr), sizeof(phdr)) != sizeof(phdr)) return true;
+            if (phdr.p_type != PT_LOAD) continue;
+            const qint64 segend =
+                static_cast<qint64>(phdr.p_offset) + static_cast<qint64>(phdr.p_filesz);
+            if (segend > filesize) return true;
+        }
+    }
+    return false;
+#else
+    Q_UNUSED(libfile);
+    return false;
+#endif
+}
+
+bool LammpsWrapper::loadLib(const QString &libfile)
+{
+    // reject an obviously truncated or corrupt library up front; handing such a
+    // file to dlopen() would crash the process inside the dynamic linker
+    if (pluginFileLooksTruncated(libfile)) {
+        fprintf(stderr,
+                "LAMMPS library file %s rejected.\n"
+                "The file appears truncated or corrupted (e.g. from an incomplete "
+                "download). Please remove it and install the library again.\n",
+                (const char *)libfile.toLocal8Bit());
+        return false;
+    }
+
     if (plugin_handle) {
         close();
         liblammpsplugin_release((liblammpsplugin_t *)plugin_handle);
     }
-    plugin_handle = liblammpsplugin_load(libfile);
+    plugin_handle = liblammpsplugin_load(libfile.toLocal8Bit());
     if (!plugin_handle) return false;
     liblammpsplugin_t *lmp = (liblammpsplugin_t *)plugin_handle;
 
     // check if ABI matches
     if (lmp->abiversion != LAMMPSPLUGIN_ABI_VERSION) {
+        // cache the ABI version before releasing lmp; the release frees it
+        const int abiversion = lmp->abiversion;
         liblammpsplugin_release(lmp);
         plugin_handle = nullptr;
-        fprintf(stderr, "LAMMPS library file %s rejected.\nIncompatible ABI: %d vs %d\n", libfile,
-                lmp->abiversion, LAMMPSPLUGIN_ABI_VERSION);
+        fprintf(stderr, "LAMMPS library file %s rejected.\nIncompatible ABI: %d vs %d\n",
+                (const char *)libfile.toLocal8Bit(), abiversion, LAMMPSPLUGIN_ABI_VERSION);
         return false;
     }
 
     // check if all required recently added library functions are present
-#define CHECKSYM(symbol)                                                                   \
-    if (lmp->symbol == NULL) {                                                             \
-        fprintf(stderr, "LAMMPS library file %s is missing lammps_%s function\n", libfile, \
-                #symbol);                                                                  \
-        return false;                                                                      \
+#define CHECKSYM(symbol)                                                          \
+    if (lmp->symbol == NULL) {                                                    \
+        fprintf(stderr, "LAMMPS library file %s is missing lammps_%s function\n", \
+                (const char *)libfile.toLocal8Bit(), #symbol);                    \
+        return false;                                                             \
     }
 
     CHECKSYM(get_thermo);
@@ -479,7 +551,7 @@ bool LammpsWrapper::hasPlugin() const
     return false;
 }
 
-bool LammpsWrapper::loadLib(const char *)
+bool LammpsWrapper::loadLib(const QString &)
 {
     return true;
 }

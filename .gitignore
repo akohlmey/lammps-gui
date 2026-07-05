@@ -119,3 +119,8 @@ Thumbs.db
 /LAMMPS-GUI*
 /lammps-gui-src-*
 build-qt*
+
+# temporary generated or downloaded files
+/*.pdf
+/*.json
+/*.py

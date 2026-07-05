@@ -128,16 +128,18 @@ int dateCompare(const QString &one, const QString &two)
 
 // Convert string into words on whitespace while handling single and double
 // quotes. Adapted from LAMMPS_NS::utils::split_words() to preserve quotes.
+// Operates directly on the QString's UTF-16 data so callers never need a
+// QString <-> std::string round trip.
 
-std::vector<std::string> splitLine(const std::string &text)
+QStringList splitLine(const QString &text)
 {
-    std::vector<std::string> list;
-    const char *buf = text.c_str();
-    std::size_t beg = 0;
-    std::size_t len = 0;
-    std::size_t add = 0;
+    QStringList list;
+    const ushort *buf = text.utf16();
+    qsizetype beg     = 0;
+    qsizetype len     = 0;
+    qsizetype add     = 0;
 
-    char c = *buf;
+    ushort c = *buf;
     while (c) { // leading whitespace
         if (c == ' ' || c == '\t' || c == '\r' || c == '\n' || c == '\f') {
             c = *++buf;
@@ -153,7 +155,7 @@ std::vector<std::string> splitLine(const std::string &text)
             add = 0;
             len = 1;
             c   = *++buf;
-            while (((c != '\'') && (c != '\0')) || ((c == '\\') && (buf[1] == '\''))) {
+            while ((c != '\'') && (c != '\0')) {
                 if ((c == '\\') && (buf[1] == '\'')) {
                     ++buf;
                     ++len;
@@ -175,7 +177,7 @@ std::vector<std::string> splitLine(const std::string &text)
             add = 0;
             len = 1;
             c   = *++buf;
-            while (((c != '"') && (c != '\0')) || ((c == '\\') && (buf[1] == '"'))) {
+            while ((c != '"') && (c != '\0')) {
                 if ((c == '\\') && (buf[1] == '"')) {
                     ++buf;
                     ++len;
@@ -198,7 +200,7 @@ std::vector<std::string> splitLine(const std::string &text)
             }
             if ((c == ' ') || (c == '\t') || (c == '\r') || (c == '\n') || (c == '\f') ||
                 (c == '\0')) {
-                if (beg < text.size()) list.push_back(text.substr(beg, len));
+                if (beg < text.size()) list << text.mid(beg, len);
                 beg += len + add;
                 break;
             }
@@ -206,14 +208,6 @@ std::vector<std::string> splitLine(const std::string &text)
             ++len;
         }
     }
-    return list;
-}
-
-QStringList splitLine(const QString &text)
-{
-    QStringList list;
-    for (const auto &word : splitLine(text.toStdString()))
-        list << QString::fromStdString(word);
     return list;
 }
 

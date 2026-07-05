@@ -891,7 +891,6 @@ void LammpsGui::startExe()
                 }
             }
             if (exe == "ovito") {
-                QStringList args;
                 args << datafile.fileName();
                 {
                     StdoutSilencer guard;
@@ -914,13 +913,9 @@ void LammpsGui::updateRecents(const QString &filename)
     if (settings.contains(Keys::RECENT))
         recent = settings.value(Keys::RECENT).value<QList<QString>>();
 
-    for (int i = 0; i < recent.size(); ++i) {
-        QFileInfo fi(recent[i]);
-        if (!fi.isReadable()) {
-            recent.removeAt(i);
-            i = 0;
-        }
-    }
+    recent.removeIf([](const QString &f) {
+        return !QFileInfo(f).isReadable();
+    });
 
     if (!filename.isEmpty() && !recent.contains(filename)) recent.prepend(filename);
     if (recent.size() > 5) recent.removeLast();
@@ -1823,7 +1818,7 @@ void LammpsGui::doRun(bool use_buffer)
     clearVariables();
 
     // define "gui_run" variable set to runCounter value
-    lammps.command(std::string("variable gui_run index " + std::to_string(runCounter)));
+    lammps.command(QString("variable gui_run index %1").arg(runCounter));
     if (use_buffer) {
         // always add final newline since the text edit widget does not do it
         runner->setupRun(&lammps, (textEdit->toPlainText() + "\n").toStdString());
@@ -2657,7 +2652,6 @@ void LammpsGui::startLammps()
     lammps.open(narg, cargs.data());
     lammpsstatus->show();
 
-    // Must have at least LAMMPS version 30 March 2026
     if (lammps.version() < Cfg::MIN_LAMMPS_VERSION) {
         critical(this, "LAMMPS-GUI Error", "Incompatible LAMMPS Version:",
                  "LAMMPS-GUI version " LAMMPS_GUI_VERSION " requires\n"
@@ -2765,7 +2759,9 @@ void LammpsGui::setupTutorial(int collection, int tutno, const QString &dir, boo
     if (openwebpage) openTutorialWebpage(collection, tutno);
 
     if (purgedir) purgeDirectory(dir);
-    if (getsolution) directory.mkpath("solution");
+    if (getsolution && !directory.mkpath("solution"))
+        warning(this, "LAMMPS-GUI Warning",
+                "Could not create the \"solution\" subdirectory for the tutorial files.");
 
     URLDownloader downloader(this);
 

@@ -343,17 +343,17 @@ ChartWindow::ChartWindow(const QString &_filename, LammpsGui *_lammpsgui, QWidge
     copyAct   = addMenuAction(file, "Copy &Graph to Clipboard", ":/icons/edit-copy.svg", this,
                               &ChartWindow::copy);
     copyAct->setShortcut(QKeySequence(QKeySequence::Copy));
-    exportCsvAct = addMenuAction(file, "&Export data to CSV...", ":/icons/csv-file-icon.svg",
-                                 this, &ChartWindow::exportCsv);
-    exportDatAct = addMenuAction(file, "Export data to &Gnuplot...", ":/icons/txt-file-icon.svg",
-                                 this, &ChartWindow::exportDat);
+    exportCsvAct  = addMenuAction(file, "&Export data to CSV...", ":/icons/csv-file-icon.svg", this,
+                                  &ChartWindow::exportCsv);
+    exportDatAct  = addMenuAction(file, "Export data to &Gnuplot...", ":/icons/txt-file-icon.svg",
+                                  this, &ChartWindow::exportDat);
     exportYamlAct = addMenuAction(file, "Export data to &YAML...", ":/icons/yaml-file-icon.svg",
                                   this, &ChartWindow::exportYaml);
     file->addSeparator();
     addMenuAction(file, "Chart &Style...", ":/icons/preferences-desktop-personal.svg", this,
                   &ChartWindow::changeStyle);
-    refLinesAct = addMenuAction(file, "&Reference Lines...", ":/icons/reference-lines.svg",
-                                this, &ChartWindow::referenceLines);
+    refLinesAct = addMenuAction(file, "&Reference Lines...", ":/icons/reference-lines.svg", this,
+                                &ChartWindow::referenceLines);
     addMenuAction(file, "&Postprocess...", ":/icons/chart-smooth.svg", this,
                   &ChartWindow::postProcess);
     // "Add Data from File..." is only relevant in standalone file-plot mode
@@ -661,7 +661,8 @@ void ChartWindow::changeStyle()
         chart->setSmoothStyle(static_cast<ChartDisplayMode>(procMode->currentData().toInt()),
                               procChosen, procWidthSpin->value(), procPointSpin->value());
         legendPos = static_cast<LegendPos>(legendCombo->currentData().toInt());
-        if (viewer) viewer->setLegendPos(legendPos);
+        // viewer is created unconditionally in the constructor and never reset to null
+        viewer->setLegendPos(legendPos);
         QSettings settings;
         settings.beginGroup(Keys::GROUP_CHARTS);
         settings.setValue(Keys::LEGEND, static_cast<int>(legendPos));
@@ -1208,7 +1209,7 @@ void ChartWindow::referenceLines()
 
         // remove this row when "×" is clicked
         QObject::connect(delBtn, &QPushButton::clicked, &dialog,
-                         [rd, &rows, &colorBtns, colorBtn, row, listLayout]() {
+                         [rd, &rows, &colorBtns, colorBtn, row]() {
                              rows.removeOne(rd);
                              colorBtns.removeOne(colorBtn);
                              // hide all widgets in the row
@@ -1272,7 +1273,7 @@ void ChartWindow::referenceLines()
     refLabelSize  = fontSpin->value();
     refLabelDist  = distSpin->value();
     refLabelBoxed = boxedCheck->isChecked();
-    if (viewer) viewer->setRefLabelStyle(refLabelSize, refLabelDist, refLabelBoxed);
+    viewer->setRefLabelStyle(refLabelSize, refLabelDist, refLabelBoxed);
     QSettings rls;
     rls.beginGroup(Keys::GROUP_CHARTS);
     rls.setValue(Keys::REFLABELSIZE, refLabelSize);

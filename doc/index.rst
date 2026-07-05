@@ -75,14 +75,15 @@ This document describes LAMMPS-GUI version |version|.
    </h2>
    <hr>
    <h3>Test Status of the development branch:</h3>
-   <p>
+   <p align="left">
    <a href="https://github.com/akohlmey/lammps-gui/actions/workflows/compile-linux-qt6.yml"><img src="https://github.com/akohlmey/lammps-gui/actions/workflows/compile-linux-qt6.yml/badge.svg" alt="Compile with Qt 6.x" style="max-width: 100%;"></a>
    <a href="https://github.com/akohlmey/lammps-gui/actions/workflows/compile-macos-dmg.yml"><img src="https://github.com/akohlmey/lammps-gui/actions/workflows/compile-macos-dmg.yml/badge.svg" alt="Compile on macOS and build DMG" style="max-width: 100%;"></a>
-   <a href="https://github.com/akohlmey/lammps-gui/actions/workflows/codeql-analysis.yml"><img src="https://github.com/akohlmey/lammps-gui/actions/workflows/codeql-analysis.yml/badge.svg" alt="CodeQL Code Analysis" style="max-width: 100%;"></a>
-   <a href="https://github.com/akohlmey/lammps-gui/actions/workflows/build-html-docs.yml"><img src="https://github.com/akohlmey/lammps-gui/actions/workflows/build-html-docs.yml/badge.svg" alt="Build Documentation in HTML" style="max-width: 100%;"></a><br>
+   <a href="https://github.com/akohlmey/lammps-gui/actions/workflows/build-html-docs.yml"><img src="https://github.com/akohlmey/lammps-gui/actions/workflows/build-html-docs.yml/badge.svg" alt="Build Documentation in HTML" style="max-width: 100%;"></a>
    <a href="https://github.com/akohlmey/lammps-gui/actions/workflows/compile-windows-msvc.yml"><img src="https://github.com/akohlmey/lammps-gui/actions/workflows/compile-windows-msvc.yml/badge.svg" alt="Compile on Windows with MSVC" style="max-width: 100%;"></a>
    <a href="https://github.com/akohlmey/lammps-gui/actions/workflows/compile-mingw64-cross.yml"><img src="https://github.com/akohlmey/lammps-gui/actions/workflows/compile-mingw64-cross.yml/badge.svg" alt="Cross-compile for Windows with MinGW64" style="max-width: 100%;"></a>
    <a href="https://github.com/akohlmey/lammps-gui/actions/workflows/build-linux-flatpak.yml"><img src="https://github.com/akohlmey/lammps-gui/actions/workflows/build-linux-flatpak.yml/badge.svg" alt="Build LAMMPS-GUI as flatpak bundle" style="max-width: 100%;"></a>
+   <a href="https://github.com/akohlmey/lammps-gui/actions/workflows/codeql-analysis.yml"><img src="https://github.com/akohlmey/lammps-gui/actions/workflows/codeql-analysis.yml/badge.svg" alt="CodeQL Code Analysis" style="max-width: 100%;"></a>
+   <a href="https://scan.coverity.com/projects/akohlmey-lammps-gui"><img alt="Coverity Scan Build Status" src="https://scan.coverity.com/projects/33110/badge.svg"/></a>
    </p>
 
 ------------------
@@ -116,6 +117,33 @@ or in BibTeX format:
      month={Sep.},
      url={https://livecomsjournal.org/index.php/livecoms/article/view/v6i1e3037},
      DOI={10.33011/livecoms.6.1.3037}
+   }
+
+.. only:: html
+
+   .. |doi-image-svg| image:: https://zenodo.org/badge/DOI/10.5281/zenodo.21035505.svg
+      :target: https://doi.org/10.5281/zenodo.21035505
+
+   Starting with version 3.0.0 LAMMPS-GUI releases are automatically
+   archived on `Zenodo <https://zenodo.org>`_ under |doi-image-svg|.
+
+.. only:: latex
+
+   .. |doi-image-png| image:: JPG/zenodo.21035505.png
+      :target: https://doi.org/10.5281/zenodo.21035505
+
+   Starting with version 3.0.0 LAMMPS-GUI releases are automatically
+   archived on `Zenodo <https://zenodo.org>`_ under |doi-image-png|.
+
+.. code-block:: bibtex
+
+   @software{lammps_gui_zenodo,
+     author       = {Kohlmeyer, Axel},
+     title        = {{LAMMPS-GUI}: A Cross-Platform Graphical Tool to
+                      Learn and Explore Molecular Dynamics with LAMMPS},
+     publisher    = {Zenodo},
+     doi          = {10.5281/zenodo.21035505},
+     url          = {https://doi.org/10.5281/zenodo.21035505},
    }
 
 ------------------

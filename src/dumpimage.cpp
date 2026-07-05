@@ -41,19 +41,16 @@ static void appendRegionArgs(QString &cmd, const DumpImageParams &p)
                 case FRAME:
                     cmd += " region " + id + blank + color;
                     cmd += " frame " + QString::number(reg.second->diameter);
-                    if (p.version > 20260330)
-                        cmd += " hull_points " + QString::number(reg.second->npoints);
+                    cmd += " hull_points " + QString::number(reg.second->npoints);
                     break;
                 case FILLED:
                     cmd += " region " + id + blank + color + " filled";
-                    if (p.version > 20260330)
-                        cmd += " hull_points " + QString::number(reg.second->npoints);
+                    cmd += " hull_points " + QString::number(reg.second->npoints);
                     break;
                 case TRANSPARENT:
                     cmd += " region " + id + blank + color;
                     cmd += " transparent " + QString::number(reg.second->opacity);
-                    if (p.version > 20260330)
-                        cmd += " hull_points " + QString::number(reg.second->npoints);
+                    cmd += " hull_points " + QString::number(reg.second->npoints);
                     break;
                 case POINTS:
                 default:

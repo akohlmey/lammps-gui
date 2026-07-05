@@ -14,6 +14,7 @@
 #include "leastsquares.h"
 
 #include <cmath>
+#include <utility>
 
 namespace {
 
@@ -106,9 +107,9 @@ LevmarResult levmarFit(int numResiduals, int numParams, const std::vector<double
                     const double trialCost = sum_squares(rtrial);
                     if (trialCost < cost) {
                         const double rel = (cost - trialCost) / (cost > 0.0 ? cost : 1.0);
-                        params           = trial;
-                        r                = rtrial;
-                        jac              = jtrial;
+                        params           = std::move(trial);
+                        r                = std::move(rtrial);
+                        jac              = std::move(jtrial);
                         cost             = trialCost;
                         lambda *= LAMBDA_DOWN;
                         accepted = true;
@@ -131,7 +132,7 @@ LevmarResult levmarFit(int numResiduals, int numParams, const std::vector<double
     }
     if (iter >= maxIterations) res.message = "reached maximum iterations";
 
-    res.params     = params;
+    res.params     = std::move(params);
     res.rms        = std::sqrt(cost / static_cast<double>(m));
     res.iterations = iter;
     res.ok         = true;
