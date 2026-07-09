@@ -38,6 +38,7 @@
 #include <QTemporaryFile>
 #include <QWidget>
 
+#include <algorithm>
 #include <cstdio>
 #include <cstring>
 #include <fcntl.h>
@@ -377,6 +378,20 @@ bool isImageFile(const QString &filename)
     return !QImageReader::imageFormat(filename).isEmpty();
 }
 
+bool isMovieFile(const QString &filename)
+{
+    // container formats that FFmpeg can decode into a sequence of images
+    static const QStringList movieExtensions = {"mp4", "m4v",  "mkv", "webm", "avi", "mov",
+                                                "mpg", "mpeg", "ogv", "wmv",  "flv"};
+    const QString suffix                     = QFileInfo(filename).suffix().toLower();
+    if (movieExtensions.contains(suffix)) return true;
+
+    // a GIF is only a movie when it has more than a single frame
+    if ((suffix == "gif") && QFileInfo::exists(filename))
+        return QImageReader(filename).imageCount() > 1;
+    return false;
+}
+
 bool isRestartFile(const QString &filename)
 {
     // LAMMPS binary restart files start with this magic string
@@ -508,6 +523,77 @@ bool isStdoutSilenced()
 void notifyCaptureState(bool active)
 {
     capture_is_active = active;
+}
+
+// RAII guard collecting Qt log messages instead of printing them (see helpers.h)
+
+QtMessageSilencer *QtMessageSilencer::active = nullptr;
+
+// Only the outermost guard swaps the message handler and thus remembers the
+// real one. A nested guard that installed collect() again would make previous
+// point at collect() itself, and forwarding to it would never terminate.
+QtMessageSilencer::QtMessageSilencer() : outer(active), previous(nullptr)
+{
+    if (!active) previous = qInstallMessageHandler(collect);
+    active = this;
+}
+
+QtMessageSilencer::~QtMessageSilencer()
+{
+    active = outer;
+    if (!active) qInstallMessageHandler(previous);
+}
+
+QString QtMessageSilencer::messages() const
+{
+    return collected.join('\n');
+}
+
+void QtMessageSilencer::collect(QtMsgType type, const QMessageLogContext &context,
+                                const QString &message)
+{
+    auto *guard = active;
+    if (!guard) return;
+
+    // an error that aborts the program, or one the application may act on, must
+    // reach whoever was handling messages before the outermost guard took over
+    if ((type == QtFatalMsg) || (type == QtCriticalMsg)) {
+        const QtMessageSilencer *root = guard;
+        while (root->outer)
+            root = root->outer;
+        if (root->previous)
+            root->previous(type, context, message);
+        else
+            fprintf(stderr, "%s\n", qUtf8Printable(message));
+        return;
+    }
+    guard->collected << message;
+}
+
+// desaturate and flatten an image, keeping its alpha channel (see helpers.h)
+
+QImage grayscaleImage(const QImage &src)
+{
+    QImage img = src.convertToFormat(QImage::Format_ARGB32);
+    for (int y = 0; y < img.height(); ++y) {
+        auto *line = reinterpret_cast<QRgb *>(img.scanLine(y));
+        for (int x = 0; x < img.width(); ++x) {
+            // Dropping the color alone leaves an icon that still has all of its
+            // contrast and thus reads as active. Pull the gray levels towards a
+            // common midpoint as well, so the result looks unmistakably faded.
+            const double gray =
+                Cfg::GRAYSCALE_MIDPOINT +
+                (qGray(line[x]) - Cfg::GRAYSCALE_MIDPOINT) * Cfg::GRAYSCALE_CONTRAST;
+            const int v = std::clamp(qRound(gray), 0, 255);
+            line[x]     = qRgba(v, v, v, qAlpha(line[x]));
+        }
+    }
+    return img;
+}
+
+QPixmap grayscalePixmap(const QPixmap &src)
+{
+    return QPixmap::fromImage(grayscaleImage(src.toImage()));
 }
 
 // shared tool-button sizing policy (see helpers.h)

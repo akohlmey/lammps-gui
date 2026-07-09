@@ -171,21 +171,6 @@ QStringList defaultcolors = {"red",       "green",    "blue",       "yellow",   
                              "darkgreen", "darkblue", "darkyellow", "darkcyan", "darkmagenta",
                              "silver",    "gray"};
 
-// Desaturate a pixmap while preserving its alpha channel. Used for the
-// render-status icon's "idle" state so we do not depend on the disabled-widget
-// visual, which does not refresh reliably on all platforms (e.g. macOS 12).
-QPixmap grayscalePixmap(const QPixmap &src)
-{
-    QImage img = src.toImage().convertToFormat(QImage::Format_ARGB32);
-    for (int y = 0; y < img.height(); ++y) {
-        auto *line = reinterpret_cast<QRgb *>(img.scanLine(y));
-        for (int x = 0; x < img.width(); ++x) {
-            const int v = qGray(line[x]);
-            line[x]     = qRgba(v, v, v, qAlpha(line[x]));
-        }
-    }
-    return QPixmap::fromImage(img);
-}
 } // namespace
 
 // 2) create a color gradient icon
@@ -396,7 +381,7 @@ ImageViewer::ImageViewer(const QString &fileName, LammpsWrapper *_lammps, Lammps
 
     auto *renderstatus = new QLabel(QString());
     // The render-status icon shows a full-color "active" pixmap while an image is
-    // rendering and a grayscale "idle" pixmap otherwise. Swap the two pixmaps
+    // rendering and a faded "idle" pixmap otherwise. Swap the two pixmaps
     // explicitly (stored as properties) rather than relying on the disabled-widget
     // visual, which does not refresh reliably on all platforms (e.g. macOS 12).
     const QPixmap activePix = pix.scaled(22, 22, Qt::KeepAspectRatio, Qt::SmoothTransformation);

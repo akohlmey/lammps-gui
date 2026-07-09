@@ -114,6 +114,8 @@ if (NOT BUILD_DOC_ONLY)
     ${CMAKE_SOURCE_DIR}/src/helpers.cpp
     ${CMAKE_SOURCE_DIR}/src/highlighter.cpp
     ${CMAKE_SOURCE_DIR}/src/highlighter.h
+    ${CMAKE_SOURCE_DIR}/src/imagecache.cpp
+    ${CMAKE_SOURCE_DIR}/src/imagecache.h
     ${CMAKE_SOURCE_DIR}/src/imageviewer.cpp
     ${CMAKE_SOURCE_DIR}/src/imageviewer.h
     ${CMAKE_SOURCE_DIR}/src/imageviewer_internal.h
@@ -129,6 +131,8 @@ if (NOT BUILD_DOC_ONLY)
     ${CMAKE_SOURCE_DIR}/src/linenumberarea.h
     ${CMAKE_SOURCE_DIR}/src/logwindow.cpp
     ${CMAKE_SOURCE_DIR}/src/logwindow.h
+    ${CMAKE_SOURCE_DIR}/src/movieimport.cpp
+    ${CMAKE_SOURCE_DIR}/src/movieimport.h
     ${CMAKE_SOURCE_DIR}/src/plotdata.cpp
     ${CMAKE_SOURCE_DIR}/src/plotdata.h
     ${CMAKE_SOURCE_DIR}/src/plotdatadialog.cpp

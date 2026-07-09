@@ -150,7 +150,7 @@ main.cpp
 
 **Dialog widget wiring.** `ImageViewer` and the `Preferences` tabs connect widgets to slots via `setObjectName("...")` + later `findChild<T>("...")` rather than stored member pointers. Preserve object names exactly when refactoring these dialogs (a wrong/renamed name fails the lookup silently, with no compile error).
 
-**Shared helpers (prefer over re-rolling).** Use the `StdoutSilencer` RAII guard (`helpers.h`) instead of manual `silenceStdout()`/`restoreStdout()` pairs; `LammpsWrapper::lastErrorMessage()` instead of a hand-managed `getLastErrorMessage()` buffer; `LammpsGui::addMenuAction()` to build menu actions.
+**Shared helpers (prefer over re-rolling).** Use the `StdoutSilencer` RAII guard (`helpers.h`) instead of manual `silenceStdout()`/`restoreStdout()` pairs; the `QtMessageSilencer` RAII guard (`helpers.h`) around a call whose Qt-internal warnings are expected and handled (note it cannot catch messages a library prints straight to stderr, such as libpng's `libpng error:` lines); `LammpsWrapper::lastErrorMessage()` instead of a hand-managed `getLastErrorMessage()` buffer; `LammpsGui::addMenuAction()` to build menu actions.
 
 ### String handling & modern C++ conventions
 
@@ -246,6 +246,8 @@ decisions and caveats as binding unless we explicitly revise them here.
 | `src/dumpimage.{cpp,h}` | `DumpImageParams` struct + assembly of the LAMMPS `dump image` command from `ImageViewer` widget state |
 | `src/colormaps.{cpp,h}` | Named `dump image` color-map definitions (`ColorMapStop` color stops) |
 | `src/slideshow.{cpp,h}` | Slideshow viewer for sequences of dump images with playback controls |
+| `src/imagecache.{cpp,h}` | `ImageCache`: temp-dir-backed cache of ImageMagick-converted images and extracted movie frames, owned by `SlideShow` |
+| `src/movieimport.{cpp,h}` | `MovieInfo` + ffprobe/ffmpeg probe and frame-extraction free functions, plus the `MovieImportDialog` confirmation dialog |
 | `src/preferences.{cpp,h}` | Tabbed settings dialog (general, accelerators, editor, charts, images) |
 | `src/setvariables.{cpp,h}` | Dialog for editing index-style LAMMPS variable name/value pairs |
 | `src/tutorialwizard.{cpp,h}` | Step-by-step wizard for setting up and launching LAMMPS tutorials |

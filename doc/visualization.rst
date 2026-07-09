@@ -866,19 +866,34 @@ Image Viewer <snapshot_viewer>`.
 
 The same window can also display existing image files that were not
 created by the current session: select one or more files with *File* ->
-*Open Image File(s)* (see :ref:`the File menu <files>`) to review images
-produced by an external (for example large parallel) simulation, or to
-revisit images from an earlier run without rerunning it.  Image formats
-that Qt cannot read natively are converted on demand with `ImageMagick
-<https://imagemagick.org/>`_ if it is available.  When the slide show is
-opened this way, the controls that act on a running simulation (such as
-stopping the run or sending images to the trash) are hidden.
+*View Image or Movie File(s)...* (see :ref:`the File menu <files>`) to
+review images produced by an external (for example large parallel)
+simulation, or to revisit images from an earlier run without rerunning
+it.  Image formats that Qt cannot read natively are converted on demand
+with `ImageMagick <https://imagemagick.org/>`_ if it is available.  Each
+such file is converted only once and the converted copy is reused while
+the window is open, so displaying it repeatedly neither repeats the
+conversion nor repeats any complaint its format may provoke from Qt (the
+Targa/TGA decoder is a common source of those).  A file that can be read
+by neither is reported once on the console and then skipped.  When the
+slide show is opened this way, the controls that act on a running
+simulation (such as stopping the run or sending images to the trash) are
+hidden.
 
 .. versionadded:: 2.1
 
    Existing image files can be loaded into the slide show with *Open
    Image File(s)*, and image files opened with *File* -> *View* are shown
    here instead of as text.
+
+Movie files can be selected in the same dialog; their frames are then
+extracted into individual images as described in :ref:`Importing movie
+files <movie_import>` below.
+
+.. versionadded:: 3.0.2
+
+   Movie files can be imported into the slide show viewer, and converted
+   images are cached instead of being converted again for every display.
 
 From the slide show window the following global keyboard shortcuts are
 supported: `Ctrl-W`: close window, `Ctrl-Q`: quit application, `Ctrl-/`:
@@ -887,6 +902,44 @@ of the controls and listed in their documentation below.
 
 .. image:: JPG/lammps-gui-slideshow.png
    :align: center
+
+.. _movie_import:
+
+Importing movie files
+---------------------
+
+.. index:: movie import
+
+Movie files (``.mp4``, ``.mkv``, ``.webm``, ``.avi``, ``.mov``, and so on,
+as well as animated GIF files) can be opened with *File* -> *View Image or
+Movie File(s)...* just like image files.  Since the slide show viewer
+displays individual images, the frames of a movie must first be
+decompressed into a sequence of image files.  This requires the `FFmpeg
+<https://ffmpeg.org/>`_ programs ``ffmpeg`` and ``ffprobe``; it is the
+inverse of the movie export described below.
+
+When a movie file is selected, a dialog reports its properties and asks
+for confirmation before any frames are extracted:
+
+- **First frame** and **Last frame** select the range of the movie to
+  extract.
+- **Frame interval** thins out that range: an interval of 1 extracts every
+  frame, 2 every other frame, and so on.  This is useful to skim a long
+  movie without decompressing all of it.
+- **Estimated size** is how much temporary disk space the extracted
+  images are expected to need.  It is obtained by decoding a single frame
+  in the middle of the movie and multiplying its size by the number of
+  selected frames, so it is an approximation.  A highlighted warning
+  appears when the estimate exceeds one gigabyte, when it would use up
+  most of the free space on the volume holding the temporary folder, or
+  when more than 1000 images would be extracted.
+
+Because the frames are stored as individual images and not as a
+compressed video stream, they usually take up substantially more space
+than the movie file itself.  The extracted frames are written to a
+temporary folder and are deleted again when the slide show window is
+closed.  Below the navigation slider each extracted image is labeled with
+the name of the movie and its frame number in it.
 
 Slide show controls
 -------------------
@@ -929,7 +982,20 @@ following controls, organized from left to right:
   working directory without risk of accidentally deleting other files.
   This will, however, only delete images of the last run.  If that was
   stopped before completion or the output filename has changed, older
-  images created by previous runs will not be deleted.
+  images created by previous runs will not be deleted.  Deleting an image
+  also discards its converted copy from the image cache described next.
+- **Image cache**: An indicator that is grayed out while the image cache
+  is empty and shown in color once it holds anything.  Its tooltip reports
+  how many converted images and extracted movie frames are cached and how
+  much temporary disk space they occupy.  Pressing it discards the
+  converted images after a confirmation; they are converted again the next
+  time they are displayed, so nothing is lost but time.  Extracted movie
+  frames are never discarded this way, since re-creating them requires
+  running FFmpeg over the movie again, and the button is therefore
+  disabled when the cache holds nothing but frames.  The entire cache is
+  removed when the Slide Show window is closed.
+
+  .. versionadded:: 3.0.2
 
 - **Zoom in**: Increase the displayed image size by scaling it up. Every
   click on the button increases the zoom factor by 10 percent.

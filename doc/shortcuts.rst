@@ -99,7 +99,7 @@ available (On macOS use the Command key instead of Ctrl/Control).
      - Ctrl+End
      - Go to End
    * - Ctrl+Shift+J
-     - View Image File(s)
+     - View Image or Movie File(s)
      - Ctrl+Shift+P
      - Plot Data File
      -

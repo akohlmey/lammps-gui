@@ -85,6 +85,20 @@ constexpr int SMOOTH_ORDER_DEFAULT  = 4;   ///< Default smoothing polynomial ord
 constexpr int COMPLETION_CHARS_MIN = 1;  ///< Min characters before auto-completion triggers
 constexpr int COMPLETION_CHARS_MAX = 32; ///< Max characters before auto-completion triggers
 
+// ---- Inactive (grayed out) icons -----------------------------------------
+/** Gray level that the pixels of an inactive icon are faded towards */
+constexpr int GRAYSCALE_MIDPOINT = 145;
+/** Fraction of its contrast that an inactive icon keeps; 1.0 desaturates only */
+constexpr double GRAYSCALE_CONTRAST = 0.4;
+
+// ---- Movie frame import --------------------------------------------------
+constexpr int MOVIE_PROBE_TIMEOUT = 15000; ///< Timeout in milliseconds for an ffprobe run
+constexpr int MOVIE_WARN_FRAMES   = 1000;  ///< Warn when extracting more frames than this
+/** Warn when the extracted frames are estimated to need more than this many bytes */
+constexpr qint64 MOVIE_WARN_BYTES = 1024LL * 1024LL * 1024LL;
+/** Warn when the estimated size exceeds this fraction of the free space on the temporary volume */
+constexpr double MOVIE_WARN_DISKFRAC = 0.9;
+
 // ---- Resource paths ------------------------------------------------------
 /** path to LAMMPS-GUI Window Icon resource */
 inline const QString MAIN_ICON = QStringLiteral(":/icons/lammps-gui-icon-128x128.png");

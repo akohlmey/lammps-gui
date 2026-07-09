@@ -211,6 +211,56 @@ SlideShow Class
 
 -----
 
+ImageCache Class
+----------------
+
+``SlideShow`` owns an ``ImageCache`` (``src/imagecache.h``) that holds the
+temporary files it creates: the PNG copies of image formats that Qt cannot
+decode natively, and the frames extracted from imported movie files.  A source
+file is converted at most once, since the cache entries are validated against
+the modification time and the size of the source file, and the whole cache
+directory is removed when the slide show window is closed.
+
+.. doxygenclass:: ImageCache
+   :members:
+   :protected-members:
+
+-----
+
+Movie Frame Import
+------------------
+
+Movie files are turned into a sequence of images before they can be shown in
+the slide show viewer.  ``probeMovie()`` collects the properties of the video
+stream by running ``ffprobe``, ``MovieImportDialog`` lets the user confirm the
+extraction and select a frame range and interval, and ``extractMovieFrames()``
+runs ``ffmpeg`` to decode the selected frames into the ``ImageCache``.  The
+parsing and frame-counting helpers (``src/movieimport.h``) are free functions
+so that they can be unit tested without running either program.
+
+.. doxygenstruct:: MovieInfo
+   :members:
+
+-----
+
+.. doxygenclass:: MovieImportDialog
+   :members:
+   :protected-members:
+
+-----
+
+.. doxygenfunction:: probeMovie
+
+.. doxygenfunction:: parseProbeOutput
+
+.. doxygenfunction:: parseFrameRate
+
+.. doxygenfunction:: selectedFrameCount
+
+.. doxygenfunction:: extractMovieFrames
+
+-----
+
 Dialog Components
 =================
 
@@ -413,6 +463,15 @@ StdoutSilencer Class
 --------------------
 
 .. doxygenclass:: StdoutSilencer
+   :members:
+   :protected-members:
+
+-----
+
+QtMessageSilencer Class
+-----------------------
+
+.. doxygenclass:: QtMessageSilencer
    :members:
    :protected-members:
 

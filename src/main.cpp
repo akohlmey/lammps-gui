@@ -156,22 +156,40 @@ int main(int argc, char *argv[])
         return app.exec();
     }
 
-    // -i/--image: open one or more files in a standalone snapshot viewer
+    // -i/--image: open one or more image or movie files in a standalone snapshot viewer
     if (parser.isSet("image")) {
         const QStringList imageFiles = parser.values("image");
         if (imageFiles.isEmpty()) return 1;
         auto *viewer = new SlideShow(imageFiles.first());
         viewer->setAttribute(Qt::WA_DeleteOnClose);
         viewer->setWindowIcon(QIcon(Cfg::MAIN_ICON));
-        for (const QString &f : imageFiles)
-            viewer->addImage(f);
         viewer->show();
+
+        // the movie import dialog is modal to the (already visible) viewer
+        for (const QString &f : imageFiles) {
+            if (isMovieFile(f))
+                viewer->addMovie(f);
+            else
+                viewer->addImage(f);
+        }
+        // every movie import was canceled or failed: delete the viewer directly
+        // so its image cache is removed without a running event loop
+        if (viewer->imageCount() == 0) {
+            delete viewer;
+            return 0;
+        }
         return app.exec();
     }
 
     // -t/--text: open a file in a standalone text viewer
     if (parser.isSet("text")) {
         const QString fileName = parser.value("text");
+        if (isMovieFile(fileName)) {
+            critical(nullptr, "Cannot View Movie as Text",
+                     "\"" + QFileInfo(fileName).fileName() +
+                         "\" is a movie file. Use -i/--image to open it.");
+            return 1;
+        }
         if (isImageFile(fileName)) {
             critical(nullptr, "Cannot View Image as Text",
                      "\"" + QFileInfo(fileName).fileName() +

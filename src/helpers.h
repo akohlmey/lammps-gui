@@ -18,6 +18,7 @@
 #include <QSize>
 #include <QString>
 #include <QStringList>
+#include <QtGlobal>
 #include <initializer_list>
 #include <memory>
 #include <string>
@@ -115,6 +116,18 @@ extern void exportImage(QWidget *parent, QImage *image, const QString &title);
  * (e.g. tga, eps, sgi) so callers can route them through a conversion step.
  */
 [[nodiscard]] extern bool isImageFile(const QString &filename);
+
+/**
+ * @brief Check whether a file is a movie (video) file
+ * @param filename Path to the file
+ * @return true if the extension is a known movie type, or the file is an
+ *         animated GIF with more than one frame
+ *
+ * An animated GIF is both an image and a movie, and isImageFile() also claims
+ * it.  Callers that route a file to either destination must therefore test
+ * isMovieFile() first.
+ */
+[[nodiscard]] extern bool isMovieFile(const QString &filename);
 
 /**
  * @brief Check whether a file is a LAMMPS binary restart file
@@ -239,6 +252,73 @@ public:
     StdoutSilencer &operator=(const StdoutSilencer &) = delete;
     StdoutSilencer &operator=(StdoutSilencer &&)      = delete;
 };
+
+/**
+ * @brief RAII guard that collects Qt log messages instead of printing them
+ *
+ * Installs a Qt message handler on construction and restores the previous one
+ * on destruction.  Debug, info, and warning messages emitted while the guard is
+ * alive are collected and can be retrieved with messages(); they are never
+ * printed.  Critical and fatal messages are passed on to the previous handler,
+ * since those must not be swallowed.
+ *
+ * The intended use is a scope whose failure is expected and handled, such as
+ * asking Qt to decode an image in a format it may not support: some of Qt's
+ * image format plugins print a warning for every file they reject, which would
+ * otherwise be repeated for each file and each attempt.  Retrieve the collected
+ * text with messages() and report it once if the operation fails for good.
+ *
+ * @note The Qt message handler is process-wide, so the guard also captures
+ *       messages emitted by other threads while it is alive.  Keep the guarded
+ *       scope short and use it only from the main thread.
+ */
+class QtMessageSilencer {
+public:
+    QtMessageSilencer();
+    ~QtMessageSilencer();
+    QtMessageSilencer(const QtMessageSilencer &)            = delete;
+    QtMessageSilencer(QtMessageSilencer &&)                 = delete;
+    QtMessageSilencer &operator=(const QtMessageSilencer &) = delete;
+    QtMessageSilencer &operator=(QtMessageSilencer &&)      = delete;
+
+    /**
+     * @brief The messages collected so far, one per line
+     * @return Collected text, or an empty string if nothing was captured
+     */
+    [[nodiscard]] QString messages() const;
+
+private:
+    static void collect(QtMsgType type, const QMessageLogContext &context, const QString &message);
+
+    static QtMessageSilencer *active; ///< Innermost live guard, nullptr if none
+    QtMessageSilencer *outer;         ///< Guard this one replaced, for nesting
+    QtMessageHandler previous;        ///< Message handler to restore, may be nullptr
+    QStringList collected;            ///< Captured debug, info, and warning messages
+};
+
+/**
+ * @brief Fade an image into an unmistakably inactive version of itself
+ * @param src Image to convert
+ * @return Grayscale, low-contrast copy of @p src with the original transparency
+ *
+ * Removes the color and, in addition, pulls the gray levels towards
+ * Cfg::GRAYSCALE_MIDPOINT, keeping only Cfg::GRAYSCALE_CONTRAST of the original
+ * contrast: a merely desaturated icon retains all of its structure and still
+ * reads as active next to its colored counterpart.
+ */
+[[nodiscard]] extern QImage grayscaleImage(const QImage &src);
+
+/**
+ * @brief Fade a pixmap into an unmistakably inactive version of itself
+ * @param src Pixmap to convert
+ * @return Grayscale, low-contrast copy of @p src with the original transparency
+ *
+ * Applies grayscaleImage() to the pixmap.  Used for the "inactive" state of a
+ * status icon, so the widget does not depend on the disabled-widget visual,
+ * which does not refresh reliably on all platforms (e.g. macOS 12) and cannot
+ * be applied to an enabled widget at all.
+ */
+[[nodiscard]] extern QPixmap grayscalePixmap(const QPixmap &src);
 
 /**
  * @brief Square size for a toolbar/status-bar button from a sample's size hint

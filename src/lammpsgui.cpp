@@ -158,8 +158,8 @@ void LammpsGui::createFileMenu()
 
     addMenuAction(menu, ":/icons/txt-file-icon.svg", "&View Text File", "Ctrl+Shift+F",
                   &LammpsGui::view);
-    addMenuAction(menu, ":/icons/image-x-generic.svg", "View &Image File(s)...", "Ctrl+Shift+J",
-                  &LammpsGui::openImages);
+    addMenuAction(menu, ":/icons/image-x-generic.svg", "View &Image or Movie File(s)...",
+                  "Ctrl+Shift+J", &LammpsGui::openImages);
     addMenuAction(menu, ":/icons/x-office-drawing.svg", "&Plot Data File...", "Ctrl+Shift+P",
                   &LammpsGui::plotDataFile);
     addMenuAction(menu, ":/icons/binary-file-icon.svg", "Inspect &Restart File", "Ctrl+Shift+R",
@@ -1092,11 +1092,20 @@ void LammpsGui::openFile(const QString &fileName)
 // open file in read-only mode for viewing in separate window
 void LammpsGui::viewFile(const QString &fileName)
 {
+    // a movie file is also an image file when it is an animated GIF
+    if (isMovieFile(fileName)) {
+        warning(this, "Cannot View Movie as Text",
+                "\"" + QFileInfo(fileName).fileName() +
+                    "\" is a movie file and cannot be displayed in the text viewer.\n"
+                    "Use \"View Image or Movie File(s)...\" (Ctrl+Shift+J) to open it.");
+        return;
+    }
+
     if (isImageFile(fileName)) {
         warning(this, "Cannot View Image as Text",
                 "\"" + QFileInfo(fileName).fileName() +
                     "\" is an image file and cannot be displayed in the text viewer.\n"
-                    "Use \"View Image File(s)...\" (Ctrl+Shift+J) to open it.");
+                    "Use \"View Image or Movie File(s)...\" (Ctrl+Shift+J) to open it.");
         return;
     }
 
@@ -1118,21 +1127,34 @@ void LammpsGui::viewFile(const QString &fileName)
     }
 }
 
-// open one or more image files in a standalone snapshot viewer
+// open one or more image or movie files in a standalone snapshot viewer
 void LammpsGui::openImages()
 {
     const QStringList files = QFileDialog::getOpenFileNames(
-        this, "Open Image File(s)", currentDir,
-        "Image files (*.png *.jpg *.jpeg *.bmp *.ppm *.pgm *.gif *.tif *.tiff *.tga *.eps *.sgi "
-        "*.webp);;All files (*)");
+        this, "Open Image or Movie File(s)", currentDir,
+        "Image and movie files (*.png *.jpg *.jpeg *.bmp *.ppm *.pgm *.gif *.tif *.tiff *.tga "
+        "*.eps *.sgi *.webp *.mp4 *.m4v *.mkv *.webm *.avi *.mov *.mpg *.mpeg *.ogv *.wmv "
+        "*.flv);;Image files (*.png *.jpg *.jpeg *.bmp *.ppm *.pgm *.gif *.tif *.tiff *.tga *.eps "
+        "*.sgi *.webp);;Movie files (*.mp4 *.m4v *.mkv *.webm *.avi *.mov *.mpg *.mpeg *.ogv *.wmv "
+        "*.flv *.gif);;All files (*)");
     if (files.isEmpty()) return;
 
     auto *viewer = new SlideShow(files.first());
     viewer->setAttribute(Qt::WA_DeleteOnClose);
     viewer->setWindowIcon(QIcon(Cfg::MAIN_ICON));
-    for (const QString &f : files)
-        viewer->addImage(f);
     viewer->show();
+
+    // the import dialog of a movie file is modal to the (already visible)
+    // slide show window, so a movie must not be added before it is shown
+    for (const QString &f : files) {
+        if (isMovieFile(f))
+            viewer->addMovie(f);
+        else
+            viewer->addImage(f);
+    }
+
+    // every movie import was canceled or failed and no image was selected
+    if (viewer->imageCount() == 0) viewer->close();
 }
 
 void LammpsGui::purgeInspectList()

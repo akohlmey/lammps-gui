@@ -22,6 +22,7 @@ customizations
 dateCompare
 der
 Destructor
+desaturated
 dev
 dialogs
 dihedral
@@ -32,6 +33,9 @@ Doxygen
 dylib
 exe
 executables
+ffmpeg
+FFmpeg
+ffprobe
 flagwarnings
 flatpak
 Framebuffer
@@ -41,6 +45,7 @@ Golay
 GPG
 GPL
 Gravelle
+grayscale
 gui
 GUIEditorChecks
 hasExe
@@ -103,10 +108,14 @@ stdcapture
 stderr
 stdout
 Subclassed
+subdirectories
+subdirectory
 subfolder
 submenu
 supercomputing
 Sur
+Targa
+TGA
 Thermo
 thermo
 timestep

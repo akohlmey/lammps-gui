@@ -9,6 +9,7 @@
 // This software is distributed under the GNU General Public License version 2 or later.
 ////////////////////////////////////////////////////////////////////////////////////////
 
+#include "constants.h"
 #include "helpers.h"
 #include "stdcapture.h"
 
@@ -17,6 +18,7 @@
 #include <QCoreApplication>
 #include <QDir>
 #include <QFile>
+#include <QImage>
 #include <QString>
 
 #include <cstdio>
@@ -468,4 +470,78 @@ TEST_F(HelpersTest, IsImageFileByExtension)
     EXPECT_FALSE(isImageFile("log.lammps"));
     EXPECT_FALSE(isImageFile("data.yaml"));
     EXPECT_FALSE(isImageFile("noextension"));
+}
+
+TEST(QtMessageSilencer, CollectsWarningsInsteadOfPrintingThem)
+{
+    QString captured;
+    {
+        QtMessageSilencer silencer;
+        qWarning("first complaint");
+        qWarning("second complaint");
+        captured = silencer.messages();
+    }
+    // one message per line, in the order they were emitted. Note that qDebug()
+    // is not tested here: the default logging category drops debug output
+    // before it can reach any message handler.
+    EXPECT_EQ(captured, QString("first complaint\nsecond complaint"));
+}
+
+TEST(QtMessageSilencer, CollectsNothingWhenNothingIsEmitted)
+{
+    QtMessageSilencer silencer;
+    EXPECT_TRUE(silencer.messages().isEmpty());
+}
+
+TEST(QtMessageSilencer, RestoresThePreviousHandlerAndNests)
+{
+    {
+        QtMessageSilencer outer;
+        {
+            QtMessageSilencer inner;
+            qWarning("inner only");
+            EXPECT_EQ(inner.messages(), QString("inner only"));
+        }
+        // the inner guard swallowed its own message, not the outer one's
+        EXPECT_TRUE(outer.messages().isEmpty());
+        qWarning("outer only");
+        EXPECT_EQ(outer.messages(), QString("outer only"));
+    }
+    // after the outermost guard is gone, messages are no longer collected
+    QtMessageSilencer fresh;
+    EXPECT_TRUE(fresh.messages().isEmpty());
+}
+
+TEST(GrayscaleImage, RemovesColorAndPreservesAlpha)
+{
+    QImage img(2, 1, QImage::Format_ARGB32);
+    img.setPixel(0, 0, qRgba(255, 0, 0, 255)); // opaque red
+    img.setPixel(1, 0, qRgba(0, 255, 0, 64));  // translucent green
+    const QImage out = grayscaleImage(img);
+
+    for (int x = 0; x < 2; ++x) {
+        const QRgb px = out.pixel(x, 0);
+        EXPECT_EQ(qRed(px), qGreen(px));
+        EXPECT_EQ(qGreen(px), qBlue(px));
+    }
+    EXPECT_EQ(qAlpha(out.pixel(0, 0)), 255);
+    EXPECT_EQ(qAlpha(out.pixel(1, 0)), 64);
+}
+
+TEST(GrayscaleImage, FadesTowardsTheMidpoint)
+{
+    QImage img(2, 1, QImage::Format_ARGB32);
+    img.setPixel(0, 0, qRgba(0, 0, 0, 255));       // black
+    img.setPixel(1, 0, qRgba(255, 255, 255, 255)); // white
+    const QImage out = grayscaleImage(img);
+
+    const int dark  = qRed(out.pixel(0, 0));
+    const int light = qRed(out.pixel(1, 0));
+    // both ends move towards the midpoint, keeping only a fraction of the span
+    EXPECT_GT(dark, 0);
+    EXPECT_LT(light, 255);
+    EXPECT_LT(light - dark, 255 * Cfg::GRAYSCALE_CONTRAST + 1);
+    EXPECT_GT(light - dark, 255 * Cfg::GRAYSCALE_CONTRAST - 1);
+    // a desaturation-only conversion would have left the full black-to-white span
+    EXPECT_LT(light - dark, 200);
 }

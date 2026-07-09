@@ -14,6 +14,7 @@
 #include "constants.h"
 #include "helpers.h"
 #include "lammpsgui.h"
+#include "movieimport.h"
 #include "qaddon.h"
 #include "rangebandslider.h"
 
@@ -26,11 +27,12 @@
 #include <QGuiApplication>
 #include <QHBoxLayout>
 #include <QImage>
-#include <QImageReader>
 #include <QKeySequence>
 #include <QLabel>
+#include <QLocale>
 #include <QMessageBox>
 #include <QPalette>
+#include <QPixmap>
 #include <QProcess>
 #include <QPushButton>
 #include <QScreen>
@@ -50,43 +52,15 @@
 namespace {
 constexpr int LAYOUT_SPACING = 6;
 constexpr int EXTRA_HEIGHT   = 130;
-
-// Read an image file. If Qt cannot decode the format directly, and ImageMagick
-// (magick/convert) is available, convert it to a temporary PNG and read that.
-QImage readImageFile(const QString &filename)
-{
-    QImageReader reader(filename);
-    reader.setAutoTransform(true);
-    QImage img = reader.read();
-    if (!img.isNull()) return img;
-
-    // Qt could not read it: fall back to ImageMagick if present
-    if (!hasExe("magick") && !hasExe("convert")) return img; // still null
-    const QString cmd = hasExe("magick") ? "magick" : "convert";
-
-    QTemporaryFile tmp(QDir::tempPath() + "/lammpsgui_imgXXXXXX.png");
-    if (!tmp.open()) return img;
-    const QString pngname = tmp.fileName();
-    tmp.close();
-
-    QProcess proc;
-    proc.start(cmd, {filename, pngname});
-    if (proc.waitForFinished(-1) && (proc.exitStatus() == QProcess::NormalExit) &&
-        (proc.exitCode() == 0)) {
-        QImageReader pngreader(pngname);
-        pngreader.setAutoTransform(true);
-        img = pngreader.read();
-    }
-    return img;
-}
 } // namespace
 
 SlideShow::SlideShow(const QString &fileName, LammpsGui *_lammpsgui, QWidget *parent) :
     QDialog(parent), lammpsgui(_lammpsgui), playtimer(nullptr), imageLabel(new QLabel),
     scrollArea(new QScrollArea), scrollBar(new RangeBandSlider),
     imageCounter(new QLabel("Image   0 /   0 :")), imageName(new QLabel("(none)")),
-    startBox(new QSpinBox), stopBox(new QSpinBox), current(0), maxwidth(0), maxheight(0),
-    timerDelay(100), doLoop(true), imageRotation(0), imageFlipH(false), imageFlipV(false)
+    startBox(new QSpinBox), stopBox(new QSpinBox), cacheButton(new QPushButton), current(0),
+    maxwidth(0), maxheight(0), timerDelay(100), doLoop(true), imageRotation(0), imageFlipH(false),
+    imageFlipV(false)
 {
     imageLabel->setBackgroundRole(QPalette::Base);
     imageLabel->setSizePolicy(QSizePolicy::Minimum, QSizePolicy::Minimum);
@@ -163,6 +137,21 @@ SlideShow::SlideShow(const QString &fileName, LammpsGui *_lammpsgui, QWidget *pa
 
     auto *totrash = new QPushButton(QIcon(":/icons/trash.svg"), "");
     totrash->setToolTip("Delete image files in the selected range");
+
+    // The cache indicator is colored while the cache holds images and grayed
+    // out when it is empty. Both states are given to the icon for the disabled
+    // mode as well, since the icon must stay colored while the button is
+    // disabled because only movie frames, which are never discarded, are held.
+    const QPixmap cachePix =
+        QIcon(":/icons/image-cache.svg")
+            .pixmap(QSize(Cfg::TOOLBAR_ICON_SIZE, Cfg::TOOLBAR_ICON_SIZE), devicePixelRatioF());
+    const QPixmap grayPix = grayscalePixmap(cachePix);
+    cacheFullIcon.addPixmap(cachePix, QIcon::Normal);
+    cacheFullIcon.addPixmap(cachePix, QIcon::Disabled);
+    cacheEmptyIcon.addPixmap(grayPix, QIcon::Normal);
+    cacheEmptyIcon.addPixmap(grayPix, QIcon::Disabled);
+    cacheButton->setIcon(cacheEmptyIcon);
+    cacheButton->setObjectName("imagecache");
 
     // a standalone slideshow (no live simulation) has no run to stop, and must
     // not offer to delete the user's own image files
@@ -260,14 +249,15 @@ SlideShow::SlideShow(const QString &fileName, LammpsGui *_lammpsgui, QWidget *pa
     normal->setToolTip("Reset zoom to normal");
 
     // square toolbar buttons with a snug, uniform icon (shared policy)
-    styleToolButtons(buttonhint, {stoprun, tomovie, toimage, toclip, totrash, gofirst, goprev,
-                                  goplay, gonext, golast, goloop, zoomin, zoomout, imgrotcw,
+    styleToolButtons(buttonhint, {stoprun, tomovie, toimage, toclip, totrash, cacheButton, gofirst,
+                                  goprev, goplay, gonext, golast, goloop, zoomin, zoomout, imgrotcw,
                                   imgrotccw, imgfliph, imgflipv, normal});
 
     connect(tomovie, &QPushButton::released, this, &SlideShow::movie);
     connect(toimage, &QPushButton::released, this, &SlideShow::saveCurrentImage);
     connect(toclip, &QPushButton::released, this, &SlideShow::copy);
     connect(totrash, &QPushButton::released, this, &SlideShow::deleteImages);
+    connect(cacheButton, &QPushButton::released, this, &SlideShow::purgeCache);
     connect(delay, &QAbstractSpinBox::editingFinished, this, &SlideShow::setDelay);
 
     connect(gofirst, &QPushButton::released, this, &SlideShow::first);
@@ -288,6 +278,7 @@ SlideShow::SlideShow(const QString &fileName, LammpsGui *_lammpsgui, QWidget *pa
     toolsLayout->addWidget(toimage, 1);
     toolsLayout->addWidget(toclip, 1);
     toolsLayout->addWidget(totrash, 1);
+    toolsLayout->addWidget(cacheButton, 1);
     toolsLayout->addWidget(empty);
     toolsLayout->addWidget(dummy);
     toolsLayout->addWidget(zoomin, 1);
@@ -341,6 +332,7 @@ SlideShow::SlideShow(const QString &fileName, LammpsGui *_lammpsgui, QWidget *pa
     imagefiles.clear();
     scaleFactor = 1.0;
     current     = 0;
+    updateCacheIndicator();
 
     scrollArea->setVisible(true);
     setLayout(mainLayout);
@@ -350,12 +342,12 @@ SlideShow::SlideShow(const QString &fileName, LammpsGui *_lammpsgui, QWidget *pa
     applyWindowFlags(this);
 }
 
-void SlideShow::addImage(const QString &filename)
+void SlideShow::addImage(const QString &filename, const QString &label)
 {
     if (imagefiles.contains(filename)) return;
 
     // update max dimensions from header only — no full decode needed
-    const QSize sz = QImageReader(filename).size();
+    const QSize sz = cache.imageSize(filename);
     if (sz.isValid()) {
         maxwidth  = qMax(maxwidth, sz.width());
         maxheight = qMax(maxheight, sz.height());
@@ -363,6 +355,7 @@ void SlideShow::addImage(const QString &filename)
 
     const int lastidx = imagefiles.size();
     imagefiles.append(filename);
+    imagelabels.append(label.isEmpty() ? filename : label);
     scrollBar->setMaximum(lastidx);
 
     // Grow the active-range bounds with the sequence. If Stop was pinned to the
@@ -386,6 +379,48 @@ void SlideShow::addImage(const QString &filename)
             QString("Image %1 / %2 :").arg(current + 1, 3).arg(imagefiles.size(), 3));
         adjustWindowSize();
     }
+}
+
+int SlideShow::addMovie(const QString &filename)
+{
+    const MovieInfo info = probeMovie(filename);
+    if (!info.valid) {
+        warning(this, "Cannot Import Movie File",
+                "\"" + QFileInfo(filename).fileName() + "\" cannot be imported:", info.error);
+        return 0;
+    }
+
+    MovieImportDialog dialog(filename, info, this);
+    if (dialog.exec() != QDialog::Accepted) return 0;
+
+    const QString outdir = cache.makeSubDir(QFileInfo(filename).completeBaseName());
+    if (outdir.isEmpty()) {
+        warning(this, "Cannot Import Movie File",
+                "Cannot create a temporary folder for the frames of \"" +
+                    QFileInfo(filename).fileName() + "\"");
+        return 0;
+    }
+
+    QString error;
+    const int first    = dialog.firstFrame();
+    const int interval = dialog.frameInterval();
+    const QStringList frames =
+        extractMovieFrames(this, filename, outdir, first, dialog.lastFrame(), interval, error);
+    if (frames.isEmpty()) {
+        warning(this, "Cannot Import Movie File",
+                "No frames were extracted from \"" + QFileInfo(filename).fileName() + "\"", error);
+        return 0;
+    }
+
+    cache.registerFrames(outdir);
+
+    // the temporary file names carry no meaning, so show the movie file and
+    // the number of the frame in the movie instead
+    const QString base = QFileInfo(filename).fileName();
+    for (int i = 0; i < frames.size(); ++i)
+        addImage(frames[i], QString("%1 [frame %2]").arg(base).arg(first + i * interval));
+    updateCacheIndicator();
+    return frames.size();
 }
 
 void SlideShow::deleteImages()
@@ -418,9 +453,13 @@ void SlideShow::deleteImages()
 
     // remove back-to-front so the lower indices stay valid while deleting
     for (int i = hi; i >= lo; --i) {
+        // the conversion of a deleted file is useless and must not linger on
+        cache.forget(imagefiles[i]);
         QFile::remove(imagefiles[i]);
         imagefiles.removeAt(i);
+        imagelabels.removeAt(i);
     }
+    updateCacheIndicator();
 
     // nothing left: reset to the empty state
     if (imagefiles.isEmpty()) {
@@ -444,6 +483,7 @@ void SlideShow::deleteImages()
 void SlideShow::clear()
 {
     imagefiles.clear();
+    imagelabels.clear();
     image.fill(Qt::black);
     imageLabel->setPixmap(QPixmap::fromImage(image));
     imageLabel->setMinimumSize(image.width(), image.height());
@@ -456,6 +496,7 @@ void SlideShow::clear()
     stopBox->setRange(1, 1);
     stopBox->setValue(1);
     updateSliderRange();
+    updateCacheIndicator();
     adjustWindowSize();
     repaint();
 }
@@ -483,12 +524,76 @@ void SlideShow::updateSliderRange()
     scrollBar->setActiveRange(startIdx(), stopIdx());
 }
 
+void SlideShow::updateCacheIndicator()
+{
+    const int images = cache.cachedImages();
+    const int frames = cache.frameImages();
+
+    cacheButton->setIcon(cache.isEmpty() ? cacheEmptyIcon : cacheFullIcon);
+    // only the converted images can be discarded, so there is nothing to press
+    // for when the cache holds movie frames alone
+    cacheButton->setEnabled(images > 0);
+
+    if (cache.isEmpty()) {
+        cacheButton->setToolTip("The image cache is empty");
+        return;
+    }
+
+    QStringList held;
+    if (images > 0)
+        held << QString("%1 converted image%2 (%3)")
+                    .arg(images)
+                    .arg(images == 1 ? "" : "s", locale().formattedDataSize(cache.cachedBytes()));
+    if (frames > 0)
+        held << QString("%1 movie frame%2 (%3)")
+                    .arg(frames)
+                    .arg(frames == 1 ? "" : "s", locale().formattedDataSize(cache.frameBytes()));
+
+    QString tip = "Image cache: " + held.join(", ") + ".\n";
+    if (images > 0)
+        tip += "Click to discard the converted images. They are converted again when needed.";
+    else
+        tip += "Movie frames are kept until this window is closed.";
+    cacheButton->setToolTip(tip);
+}
+
+void SlideShow::purgeCache()
+{
+    const int images = cache.cachedImages();
+    if (images < 1) return;
+
+    QMessageBox mb(this);
+    mb.setWindowTitle("Discard Converted Images");
+    mb.setWindowIcon(QIcon(Cfg::MAIN_ICON));
+    mb.setText(QString("Discard %1 converted image%2 (%3) from the image cache?")
+                   .arg(images)
+                   .arg(images == 1 ? "" : "s", locale().formattedDataSize(cache.cachedBytes())));
+    mb.setInformativeText("The original image files are not touched.  Each of them is converted "
+                          "again the next time it is displayed.");
+    mb.setIconPixmap(
+        QIcon(":/icons/image-cache.svg").pixmap(QSize(64, 64), mb.devicePixelRatioF()));
+    mb.setStandardButtons(QMessageBox::Yes | QMessageBox::No);
+    mb.setDefaultButton(QMessageBox::Yes);
+    mb.setEscapeButton(QMessageBox::No);
+
+    auto *button = mb.button(QMessageBox::Yes);
+    button->setIcon(QIcon(":/icons/dialog-ok.svg"));
+    button = mb.button(QMessageBox::No);
+    button->setIcon(QIcon(":/icons/dialog-no.svg"));
+
+    if (mb.exec() != QMessageBox::Yes) return;
+
+    // the image on display was decoded into memory and stays valid
+    cache.purgeConversions();
+    updateCacheIndicator();
+}
+
 void SlideShow::loadImage(int idx)
 {
     if ((idx < 0) || (idx >= imagefiles.size())) return;
 
     do {
-        const QImage newImage = readImageFile(imagefiles[idx]);
+        const QImage newImage = cache.readImage(imagefiles[idx]);
 
         // There was an error reading the image file. Try reading the previous image instead.
         if (newImage.isNull()) {
@@ -500,13 +605,15 @@ void SlideShow::loadImage(int idx)
             applyImageTransform();
             imageCounter->setText(
                 QString("Image %1 / %2 :").arg(idx + 1, 3).arg(imagefiles.size(), 3));
-            imageName->setText(QString("%1").arg(imagefiles[idx]));
+            imageName->setText(imagelabels[idx]);
             current = idx;
             break;
         }
     } while (idx >= 0);
     scrollBar->setValue(idx);
     adjustWindowSize();
+    // a display may have converted the image and thus filled the cache
+    updateCacheIndicator();
 }
 
 void SlideShow::copy()

@@ -123,6 +123,33 @@ target_link_libraries(test_dumpimage PRIVATE GTest::gtest_main Qt6::Widgets)
 
 gtest_discover_tests(test_dumpimage)
 
+# Test executable for the movie probing and frame selection helpers
+add_executable(test_movieimport
+  test_movieimport.cpp
+  ${CMAKE_SOURCE_DIR}/src/movieimport.cpp
+  ${CMAKE_SOURCE_DIR}/src/helpers.cpp
+  ${CMAKE_SOURCE_DIR}/src/qaddon.cpp
+  ${CMAKE_SOURCE_DIR}/src/stdcapture.cpp
+)
+
+target_include_directories(test_movieimport PRIVATE ${CMAKE_SOURCE_DIR}/src)
+target_link_libraries(test_movieimport PRIVATE GTest::gtest_main Qt6::Widgets)
+
+gtest_discover_tests(test_movieimport)
+
+# Test executable for the converted image cache
+add_executable(test_imagecache
+  test_imagecache.cpp
+  ${CMAKE_SOURCE_DIR}/src/imagecache.cpp
+  ${CMAKE_SOURCE_DIR}/src/helpers.cpp
+  ${CMAKE_SOURCE_DIR}/src/stdcapture.cpp
+)
+
+target_include_directories(test_imagecache PRIVATE ${CMAKE_SOURCE_DIR}/src)
+target_link_libraries(test_imagecache PRIVATE GTest::gtest_main Qt6::Widgets)
+
+gtest_discover_tests(test_imagecache)
+
 # Test executable for the least-squares / linear-algebra toolkit (Qt-free)
 add_executable(test_leastsquares
   test_leastsquares.cpp

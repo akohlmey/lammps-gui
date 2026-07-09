@@ -12,12 +12,16 @@
 #ifndef SLIDESHOW_H
 #define SLIDESHOW_H
 
+#include "imagecache.h"
+
 #include <QDialog>
+#include <QIcon>
 #include <QImage>
 #include <QString>
 #include <QStringList>
 
 class QLabel;
+class QPushButton;
 class QScrollArea;
 class QSpinBox;
 class QTimer;
@@ -61,8 +65,26 @@ public:
     /**
      * @brief Add an image to the slideshow sequence
      * @param filename Path to image file to add
+     * @param label Text shown in place of the file name (optional)
      */
-    void addImage(const QString &filename);
+    void addImage(const QString &filename, const QString &label = QString());
+
+    /**
+     * @brief Extract the frames of a movie file and add them as images
+     * @param filename Path to the movie file
+     * @return Number of images added; 0 when canceled or on failure
+     *
+     * Probes the movie, asks the user to confirm the extraction and to select
+     * a frame range and interval, and decodes the selected frames into PNG
+     * files inside the image cache, where they are removed together with the
+     * rest of the cache when the slide show window is closed.
+     */
+    int addMovie(const QString &filename);
+
+    /**
+     * @brief Number of images currently in the slideshow sequence
+     */
+    [[nodiscard]] int imageCount() const { return imagefiles.size(); }
 
     /**
      * @brief Clear all images from slideshow
@@ -72,6 +94,7 @@ public:
 private slots:
     void quit();             ///< Close slideshow window
     void copy();             ///< Copy image to clipboard
+    void purgeCache();       ///< Discard the converted images held in the image cache
     void deleteImages();     ///< Delete image files in the selected range
     void stopRun();          ///< Stop running simulation
     void movie();            ///< Export images as movie file
@@ -130,8 +153,19 @@ private:
      */
     void updateSliderRange();
 
+    /**
+     * @brief Match the cache indicator to what the image cache currently holds
+     *
+     * The icon is shown in color while the cache holds anything and grayed out
+     * when it is empty.  It can only be pressed when there is something to
+     * discard, that is when at least one image has been converted: extracted
+     * movie frames are kept, since re-creating them means running FFmpeg again.
+     */
+    void updateCacheIndicator();
+
 private:
     LammpsGui *lammpsgui;       ///< Main widget pointer for receiving signals
+    ImageCache cache;           ///< Converted images and extracted movie frames
     QImage image;               ///< Currently displayed image
     QImage rawImage;            ///< Raw image before transformations
     QTimer *playtimer;          ///< Timer for automatic playback
@@ -142,6 +176,9 @@ private:
     QLabel *imageName;          ///< Label showing image filename
     QSpinBox *startBox;         ///< First image of the active range (1-based UI value)
     QSpinBox *stopBox;          ///< Last image of the active range (1-based UI value)
+    QPushButton *cacheButton;   ///< Image cache indicator, discards conversions when pressed
+    QIcon cacheFullIcon;        ///< Cache indicator icon for a cache holding images
+    QIcon cacheEmptyIcon;       ///< Grayed out cache indicator icon for an empty cache
     double scaleFactor = 1.0;   ///< Current zoom scale factor
 
     int current;             ///< Index of current image
@@ -149,6 +186,7 @@ private:
     int timerDelay;          ///< delay between images when playing images
     bool doLoop;             ///< Loop playback flag
     QStringList imagefiles;  ///< List of image file paths
+    QStringList imagelabels; ///< Display name of each image, parallel to imagefiles
     int imageRotation;       ///< Image rotation angle (0, 90, 180, 270)
     bool imageFlipH;         ///< Horizontal flip state
     bool imageFlipV;         ///< Vertical flip state
