@@ -98,7 +98,10 @@ void ImageViewer::globalSettings()
     auto *colorvalidator    = new QColorValidator(this);
     auto *transvalidator    = new QDoubleValidator(0.0, 1.0, 3, this);
     auto *fractionvalidator = new QDoubleValidator(0.00001, 5.0, 5, this);
+    auto *zoomvalidator     = new QDoubleValidator(ZOOM_MIN, ZOOM_MAX, 3, this);
+    auto *upvalidator       = new QDoubleValidator(this);
     auto fwidth             = setview.fontMetrics().size(Qt::TextSingleLine, "0.00000000").width();
+    const bool is3d         = lammps->extractSetting("dimension") == 3;
 
     auto *layout          = new QGridLayout;
     int idx               = 0;
@@ -184,7 +187,30 @@ void ImageViewer::globalSettings()
     auto *subdiam = new QLineEdit(QString::number(subboxdiam));
     subdiam->setValidator(fractionvalidator);
     subdiam->setMaximumWidth(fwidth);
-    layout->addWidget(subdiam, idx++, n++, 1, 1);
+    layout->addWidget(subdiam, idx, n++, 1, 1);
+
+    // the "view" angles have no effect on a 2d system, where LAMMPS looks down the z-axis
+    layout->addWidget(new QLabel("View theta: "), idx, n++, 1, 1,
+                      Qt::AlignVCenter | Qt::AlignRight);
+    auto *thetaval = new QSpinBox;
+    thetaval->setRange(0, 360);
+    thetaval->setSingleStep(10);
+    thetaval->setWrapping(true);
+    thetaval->setValue(hrot);
+    thetaval->setMaximumWidth(fwidth * 3 / 2);
+    thetaval->setEnabled(is3d);
+    thetaval->setToolTip("Viewing angle in degrees away from the +z axis");
+    layout->addWidget(thetaval, idx, n++, 1, 1);
+    layout->addWidget(new QLabel("View phi: "), idx, n++, 1, 1, Qt::AlignVCenter | Qt::AlignRight);
+    auto *phival = new QSpinBox;
+    phival->setRange(-180, 180);
+    phival->setSingleStep(10);
+    phival->setWrapping(true);
+    phival->setValue(vrot);
+    phival->setMaximumWidth(fwidth * 3 / 2);
+    phival->setEnabled(is3d);
+    phival->setToolTip("Azimuthal viewing angle in degrees around the z axis");
+    layout->addWidget(phival, idx++, n++, 1, 1);
     layout->addWidget(new QHline, idx++, 0, 1, MAXCOLS);
 
     n = 0;
@@ -206,7 +232,14 @@ void ImageViewer::globalSettings()
     b2color->setMaximumWidth(fwidth);
     b2color->setEnabled(usegradient);
     connect(gradient, &QCheckBox::toggled, b2color, &QLineEdit::setEnabled);
-    layout->addWidget(b2color, idx++, n++, 1, 1);
+    layout->addWidget(b2color, idx, n++, 1, 1);
+    layout->addWidget(new QLabel("Zoom: "), idx, n++, 1, 1, Qt::AlignVCenter | Qt::AlignRight);
+    auto *zoomval = new QLineEdit(QString::number(zoom));
+    zoomval->setValidator(zoomvalidator);
+    zoomval->setMaximumWidth(fwidth);
+    zoomval->setToolTip(
+        QString("Zoom factor of the view (range: %1 -- %2)").arg(ZOOM_MIN).arg(ZOOM_MAX));
+    layout->addWidget(zoomval, idx++, n++, 1, 1);
 
     n = 0;
     layout->addWidget(new QLabel("Quality:"), idx, n++, 1, 1);
@@ -247,6 +280,30 @@ void ImageViewer::globalSettings()
     zval->setValidator(transvalidator);
     zval->setMaximumWidth(fwidth);
     layout->addWidget(zval, idx++, n++, 1, 1);
+
+    n             = 0;
+    auto *uplabel = new QLabel("Camera up:");
+    uplabel->setToolTip("Direction pointing up in the image; must not be the zero vector");
+    layout->addWidget(uplabel, idx, n++, 1, 1);
+    layout->addWidget(new QLabel("X-direction: "), idx, n++, 1, 1,
+                      Qt::AlignVCenter | Qt::AlignRight);
+    auto *xupval = new QLineEdit(QString::number(xup));
+    xupval->setValidator(upvalidator);
+    xupval->setMaximumWidth(fwidth);
+    layout->addWidget(xupval, idx, n++, 1, 1);
+    layout->addWidget(new QLabel("Y-direction: "), idx, n++, 1, 1,
+                      Qt::AlignVCenter | Qt::AlignRight);
+    auto *yupval = new QLineEdit(QString::number(yup));
+    yupval->setValidator(upvalidator);
+    yupval->setMaximumWidth(fwidth);
+    layout->addWidget(yupval, idx, n++, 1, 1);
+    layout->addWidget(new QLabel("Z-direction: "), idx, n++, 1, 1,
+                      Qt::AlignVCenter | Qt::AlignRight);
+    auto *zupval = new QLineEdit(QString::number(zup));
+    zupval->setValidator(upvalidator);
+    zupval->setMaximumWidth(fwidth);
+    zupval->setEnabled(is3d);
+    layout->addWidget(zupval, idx++, n++, 1, 1);
 
     n = 0;
     layout->addWidget(new QHline, idx++, 0, 1, MAXCOLS);
@@ -347,6 +404,10 @@ void ImageViewer::globalSettings()
     if (bgcolor->hasAcceptableInput()) backcolor = bgcolor->text();
     if (b2color->hasAcceptableInput()) backcolor2 = b2color->text();
     usegradient = gradient->isChecked();
+    if (zoomval->hasAcceptableInput()) zoom = zoomval->text().toDouble();
+
+    hrot = thetaval->value();
+    vrot = phival->value();
 
     antialias = fsaa->isChecked();
     button    = findChild<QPushButton *>("antialias");
@@ -362,6 +423,19 @@ void ImageViewer::globalSettings()
     if (xval->hasAcceptableInput()) xcenter = xval->text().toDouble();
     if (yval->hasAcceptableInput()) ycenter = yval->text().toDouble();
     if (zval->hasAcceptableInput()) zcenter = zval->text().toDouble();
+
+    // LAMMPS rejects a zero-length up vector, so keep the previous one in that case
+    if (xupval->hasAcceptableInput() && yupval->hasAcceptableInput() &&
+        zupval->hasAcceptableInput()) {
+        const double ux = xupval->text().toDouble();
+        const double uy = yupval->text().toDouble();
+        const double uz = zupval->text().toDouble();
+        if ((ux != 0.0) || (uy != 0.0) || (uz != 0.0)) {
+            xup = ux;
+            yup = uy;
+            zup = uz;
+        }
+    }
 
     ambientlight = ambient->value();
     keylight     = key->value();

@@ -278,7 +278,7 @@ additional controls (most are explained in detail below):
   "none" restores normal group-based display.
 - **Global**: Opens the :ref:`Global image settings <global_settings>`
   dialog for fine-grained control of axes, box, background, quality,
-  and center settings.
+  view, center, and camera settings.
 - **Atoms/Bonds**: Opens the :ref:`Atom and bond settings
   <atom_settings>` dialog for detailed atom, bond, VDW, and special atom
   style visualization options.
@@ -323,10 +323,10 @@ in this dialog correspond to options of the LAMMPS `dump image and
 dump_modify commands <https://docs.lammps.org/dump_image.html>`_.
 
 .. |global|  image:: JPG/lammps-gui-image-settings.png
-                     :width: 65%
+                     :width: 62%
 
 .. |boxaxes| image:: JPG/lammps-gui-image-box-axes.png
-                     :width: 33%
+                     :width: 35%
 
 |boxaxes|  |global|
 
@@ -367,6 +367,11 @@ The dialog is organized into the following sections:
      box.
    - **Diameter**: The diameter of the sub-domain box edge sticks as
      fraction of the box size (range: 0.00001 -- 5.0).
+   - **View theta**: The viewing angle in degrees away from the
+     positive z-axis (default: 60).  Disabled for 2d systems, where
+     LAMMPS always looks down the z-axis.
+   - **View phi**: The azimuthal viewing angle in degrees around the
+     z-axis (default: 30).  Disabled for 2d systems.
 
 **Background**
    Sets the background color(s) of the rendered image.
@@ -375,6 +380,10 @@ The dialog is organized into the following sections:
    - **Topcolor**: The background color at the top of the image.  If
      the two colors differ, a vertical gradient is applied from bottom
      to top.
+   - **Zoom**: The zoom factor of the view (range: 0.1 -- 10.0, where
+     values larger than 1.0 zoom in).  This is the same setting that
+     the zoom in/out buttons of the settings panel change in steps of
+     10 percent.
 
 **Quality**
    Controls rendering quality options.
@@ -393,6 +402,15 @@ The dialog is organized into the following sections:
    - **X-direction**, **Y-direction**, **Z-direction**: Fractional
      coordinates (range: 0.0 -- 1.0) specifying the center of the
      view relative to the simulation box.
+
+**Camera up**
+   Sets the direction that points up in the rendered image.
+
+   - **X-direction**, **Y-direction**, **Z-direction**: The components
+     of the camera's up vector.  The vector does not need to be
+     normalized, but it must not be all zeros, or the values are
+     ignored.  The default is 0 0 1 for 3d systems and 0 1 0 for 2d
+     systems, where the Z-direction entry is disabled.
 
 **Lighting**
    Adjusts the settings for the four light sources used in the

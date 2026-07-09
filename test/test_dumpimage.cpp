@@ -92,6 +92,10 @@ DumpImageParams makeParams()
     p.ycenter = 0.5;
     p.zcenter = 0.5;
 
+    p.xup = 0.0;
+    p.yup = 0.0;
+    p.zup = 1.0;
+
     p.ntypes       = 2;
     p.color_list   = {{"red", QColor(255, 0, 0)}, {"blue", QColor(0, 0, 255)}};
     p.boxcolor     = "white";
@@ -142,6 +146,7 @@ TEST(DumpImageCommand, BasicStructure)
     EXPECT_FALSE(cmd.contains(" subbox ")); // not shown -> pruned
     EXPECT_FALSE(cmd.contains(" axes "));   // not shown -> pruned
     EXPECT_FALSE(cmd.contains(" center ")); // default box center -> pruned
+    EXPECT_FALSE(cmd.contains(" up "));     // default up direction -> pruned
     EXPECT_TRUE(cmd.contains(" modify"));
     EXPECT_TRUE(cmd.contains(" noinit")); // no active fix/compute
     EXPECT_TRUE(cmd.contains(" boxcolor white"));
@@ -379,6 +384,7 @@ TEST(DumpImageCommand, AllDefaultsPruned)
     EXPECT_FALSE(cmd.contains(" subbox "));
     EXPECT_FALSE(cmd.contains(" axes "));
     EXPECT_FALSE(cmd.contains(" center "));
+    EXPECT_FALSE(cmd.contains(" up "));
     EXPECT_TRUE(cmd.contains(" modify"));
 }
 
@@ -423,6 +429,25 @@ TEST(DumpImageCommand, SubboxAxesCenterEmittedWhenSet)
     EXPECT_TRUE(cmd.contains(" subbox yes 0.01")) << cmd.toStdString();
     EXPECT_TRUE(cmd.contains(" axes "));
     EXPECT_TRUE(cmd.contains(" center s 0.3 0.5 0.5"));
+}
+
+TEST(DumpImageCommand, UpDirectionEmittedWhenNotDefault)
+{
+    auto p = makeParams(); // 3d with the default up direction "0 0 1"
+    EXPECT_FALSE(buildCmd(p).contains(" up "));
+
+    p.yup = 1.0;
+    p.zup = 0.0;
+    EXPECT_TRUE(buildCmd(p).contains(" up 0 1 0"));
+
+    // in 2d the default flips to "0 1 0", so the same vector is now pruned ...
+    p.dimension = 2;
+    EXPECT_FALSE(buildCmd(p).contains(" up "));
+
+    // ... and the 3d default becomes a delta worth emitting
+    p.yup = 0.0;
+    p.zup = 1.0;
+    EXPECT_TRUE(buildCmd(p).contains(" up 0 0 1"));
 }
 
 TEST(DumpImageCommand, BondColorByValueEmitsComputeAndBmap)

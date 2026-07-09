@@ -279,6 +279,12 @@ DumpImageCommand buildDumpImageCommand(const DumpImageParams &p)
     if ((p.xcenter != 0.5) || (p.ycenter != 0.5) || (p.zcenter != 0.5))
         d += QString(" center s %1 %2 %3").arg(p.xcenter).arg(p.ycenter).arg(p.zcenter);
 
+    // the camera up direction defaults to "0 0 1" in 3d and "0 1 0" in 2d
+    const double defyup = (p.dimension == 2) ? 1.0 : 0.0;
+    const double defzup = (p.dimension == 2) ? 0.0 : 1.0;
+    if ((p.xup != 0.0) || (p.yup != defyup) || (p.zup != defzup))
+        d += QString(" up %1 %2 %3").arg(p.xup).arg(p.yup).arg(p.zup);
+
     // ---- dump_modify options ----
 
     // change global color definitions first so they apply everywhere, but emit

@@ -261,6 +261,7 @@ private:
     QString linecolor;                           ///< Custom line color property
     QString tricolor;                            ///< Custom triangle color property
     double xcenter, ycenter, zcenter;            ///< View center coordinates
+    double xup, yup, zup;                        ///< Camera up direction vector
     bool atomcustom;                             ///< Use custom atom color settings
     bool usegradient;                            ///< Vertical background gradient
     bool showbox;                                ///< Show simulation box flag

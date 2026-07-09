@@ -777,7 +777,14 @@ void ImageViewer::readImageSettings()
     tridiam        = 0.2;
     triflag        = CYLINDERS;
     xcenter = ycenter = zcenter = 0.5;
-    if (lammps->extractSetting("dimension") == 2) zcenter = 0.0;
+    // the camera up direction defaults to the z-axis in 3d and the y-axis in 2d
+    xup = yup = zup = 0.0;
+    if (lammps->extractSetting("dimension") == 2) {
+        zcenter = 0.0;
+        yup     = 1.0;
+    } else {
+        zup = 1.0;
+    }
     settings.endGroup();
 
     if (color_list.isEmpty()) resetColors(); // create list of default colors
@@ -1043,14 +1050,14 @@ void ImageViewer::toggleAxes()
 void ImageViewer::doZoomIn()
 {
     zoom = zoom * 1.1;
-    zoom = std::min(zoom, 10.0);
+    zoom = std::min(zoom, ZOOM_MAX);
     createImage();
 }
 
 void ImageViewer::doZoomOut()
 {
     zoom = zoom / 1.1;
-    zoom = std::max(zoom, 0.1);
+    zoom = std::max(zoom, ZOOM_MIN);
     createImage();
 }
 
@@ -1449,6 +1456,11 @@ DumpImageParams ImageViewer::gatherDumpImageParams(const QString &dumpfilename)
     p.xcenter = xcenter;
     p.ycenter = ycenter;
     p.zcenter = zcenter;
+
+    // camera up direction
+    p.xup = xup;
+    p.yup = yup;
+    p.zup = zup;
 
     // colors / lighting
     p.color_list   = color_list;

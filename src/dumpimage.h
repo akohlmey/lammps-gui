@@ -113,6 +113,11 @@ struct DumpImageParams {
     double ycenter; ///< view center y coordinate
     double zcenter; ///< view center z coordinate
 
+    // ---- camera up direction ----
+    double xup; ///< camera up vector x component
+    double yup; ///< camera up vector y component
+    double zup; ///< camera up vector z component
+
     // ---- colors / lighting ----
     int ntypes;                               ///< number of atom types
     QList<QPair<QString, QColor>> color_list; ///< per-type atom color table

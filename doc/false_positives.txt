@@ -2,6 +2,7 @@ AboutDialog
 accessors
 Alvares
 autocorrelation
+azimuthal
 backend
 backends
 camelCase
