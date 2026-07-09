@@ -93,9 +93,14 @@
     <file>icons/preferences-reset.svg</file>
     <file>icons/process-stop.svg</file>
     <file>icons/reference-lines.svg</file>
+    <!-- the PNGs are the fallback for Qt < 6.7, which cannot render the masks -->
+    <file>icons/rotate-down.png</file>
     <file>icons/rotate-down.svg</file>
+    <file>icons/rotate-left.png</file>
     <file>icons/rotate-left.svg</file>
+    <file>icons/rotate-right.png</file>
     <file>icons/rotate-right.svg</file>
+    <file>icons/rotate-up.png</file>
     <file>icons/rotate-up.svg</file>
     <file>icons/run-file.svg</file>
     <file>icons/search.svg</file>

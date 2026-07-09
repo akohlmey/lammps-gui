@@ -492,13 +492,21 @@ ImageViewer::ImageViewer(const QString &fileName, LammpsWrapper *_lammps, Lammps
     zoomin->setToolTip("Zoom in by 10 percent");
     auto *zoomout = new QPushButton(QIcon(":/icons/gtk-zoom-out.svg"), "");
     zoomout->setToolTip("Zoom out by 10 percent");
-    auto *rotleft = new QPushButton(QIcon(":/icons/rotate-left.svg"), "");
-    rotleft->setToolTip("Rotate left by 10 degrees");
+// the SVG versions do not render correctly with Qt before 6.7
+#if QT_VERSION >= QT_VERSION_CHECK(6, 7, 0)
+    auto *rotleft  = new QPushButton(QIcon(":/icons/rotate-left.svg"), "");
     auto *rotright = new QPushButton(QIcon(":/icons/rotate-right.svg"), "");
+    auto *rotup    = new QPushButton(QIcon(":/icons/rotate-up.svg"), "");
+    auto *rotdown  = new QPushButton(QIcon(":/icons/rotate-down.svg"), "");
+#else
+    auto *rotleft  = new QPushButton(QIcon(":/icons/rotate-left.png"), "");
+    auto *rotright = new QPushButton(QIcon(":/icons/rotate-right.png"), "");
+    auto *rotup    = new QPushButton(QIcon(":/icons/rotate-up.png"), "");
+    auto *rotdown  = new QPushButton(QIcon(":/icons/rotate-down.png"), "");
+#endif
+    rotleft->setToolTip("Rotate left by 10 degrees");
     rotright->setToolTip("Rotate right by 10 degrees");
-    auto *rotup = new QPushButton(QIcon(":/icons/rotate-up.svg"), "");
     rotup->setToolTip("Rotate up by 10 degrees");
-    auto *rotdown = new QPushButton(QIcon(":/icons/rotate-down.svg"), "");
     rotdown->setToolTip("Rotate down by 10 degrees");
     auto *recenter = new QPushButton(QIcon(":/icons/move-recenter.svg"), "");
     recenter->setToolTip("Recenter on group");

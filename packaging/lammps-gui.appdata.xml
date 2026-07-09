@@ -58,6 +58,17 @@
   <content_rating type="oars-1.1" />
 
   <releases>
+    <release version="3.0.2" timestamp="1783598400">
+      <description>
+        <p>Maintenance release with small feature additions and bug fixes.</p>
+        <ul>
+          <li>Expose more dump image settings in the Global image settings dialog of the snapshot viewer: the view angles theta and phi, the zoom factor, and the camera up direction</li>
+          <li>Fix the rotate icons of the snapshot viewer toolbar, where the arrow tail was drawn in front of the rotation axis instead of behind it: the icons used an SVG clipPath element, which Qt does not implement, so they now use an equivalent mask element and fall back to pre-rendered PNG images with Qt versions before 6.7, which cannot render masks either</li>
+          <li>Use a more portable implementation of the icon drop shadows for compatibility with older SVG libraries</li>
+          <li>Add a JOSS submission status badge to the README file and the documentation</li>
+        </ul>
+      </description>
+    </release>
     <release version="3.0.1" timestamp="1782820800">
       <description>
         <p>Maintenance release following the 3.0.0 major release.</p>
