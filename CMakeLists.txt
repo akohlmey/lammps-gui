@@ -246,6 +246,7 @@ if (NOT BUILD_DOC_ONLY)
         target_link_options(lammps-gui PUBLIC --coverage)
 
         find_program(GCOVR_BINARY gcovr)
+        include(FindPackageHandleStandardArgs)
         find_package_handle_standard_args(GCOVR DEFAULT_MSG GCOVR_BINARY)
         if(GCOVR_FOUND)
           message(STATUS "Code coverage reporting with gcovr is enabled")
