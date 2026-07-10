@@ -221,7 +221,7 @@ TEST(DumpImageCommand, ReversedContinuousColormap)
 
 TEST(DumpImageCommand, ReversedRwbMatchesBwrDirection)
 {
-    // "BWR" was dropped from the offered maps because it equals "RWB" reversed:
+    // "RWB" is the unlisted reversed alias of the offered "BWR" map:
     // reversing RWB must put the blue stop (0.000 0.227 0.427) at the minimum
     auto p            = makeParams();
     p.atomcolor       = "vx";

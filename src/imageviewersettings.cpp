@@ -1547,7 +1547,10 @@ void ImageViewer::colorSettings()
         mydialog->done(RESET_ALL_COLORS);
     });
 
-    // Connect Load JSON button: read a JSON file and update dialog widgets
+    // Connect Load JSON button: read a JSON file, stage the colors in the
+    // dialog widgets, and write the light levels straight into the members
+    // (the dialog has no light widgets); colorSettings() rolls the lights
+    // back if the dialog is cancelled
     connect(loadJson, &QPushButton::released, &colorview,
             [&colorview, layout, colorstart, numtypes, this]() {
                 // read and validate file
@@ -1654,10 +1657,23 @@ void ImageViewer::colorSettings()
         colorview.setMinimumSize(MINIMUM_WIDTH, MINIMUM_HEIGHT);
     }
 
+    // snapshot the light levels: the Load JSON handler applies them to the
+    // members immediately, so a cancelled dialog has to roll them back
+    const double oldambient = ambientlight;
+    const double oldkey     = keylight;
+    const double oldfill    = filllight;
+    const double oldback    = backlight;
+
     int cv = colorview.exec();
 
-    // return immediately on cancel
-    if (!cv) return;
+    // return immediately on cancel, undoing any lights loaded from JSON
+    if (!cv) {
+        ambientlight = oldambient;
+        keylight     = oldkey;
+        filllight    = oldfill;
+        backlight    = oldback;
+        return;
+    }
 
     if (cv == RESET_ALL_COLORS) {
         resetColors();

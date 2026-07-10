@@ -168,7 +168,7 @@ int get_pte_from_mass(double mass)
 
 QStringList defaultcolors = {"red",       "green",    "blue",       "yellow",   "cyan",
                              "magenta",   "orange",   "chartreuse", "brown",    "darkred",
-                             "darkgreen", "darkblue", "darkyellow", "darkcyan", "darkmagenta",
+                             "darkgreen", "darkblue", "olive",      "darkcyan", "darkmagenta",
                              "silver",    "gray"};
 
 } // namespace
@@ -255,14 +255,14 @@ QJsonObject loadJsonColors(QWidget *parent)
     if ((app != "LAMMPS") || (key != "colors")) {
         warning(parent, "Load Colors",
                 "JSON colors file '" + fileName + "' is not a LAMMPS colors file.");
-        return obj;
+        return {};
     }
     if (rev != 1) {
         warning(parent, "Load Colors",
                 QString("JSON colors file '%1' has incompatible revision %2 instead of 1")
                     .arg(fileName)
                     .arg(rev));
-        return obj;
+        return {};
     }
 
     auto arr = obj.value("colors").toArray();
@@ -744,13 +744,13 @@ void ImageViewer::readImageSettings()
     ellipsoidcolor = "atom";
     linecolor      = "atom";
     tricolor       = "atom";
-    // BWR was removed from the offered maps; it equals "RWB" reversed, so the
-    // historical blue-low/red-high default is now "RWB" with the reverse flag on
-    colormap        = settings.value(Keys::COLORMAP, "RWB").toString();
+    // the historical blue-low/red-high default map ("RWB" is its unlisted
+    // reversed alias, kept so stale selections still render)
+    colormap        = settings.value(Keys::COLORMAP, "BWR").toString();
     mapmin          = "auto";
     mapmax          = "auto";
     revcolormap     = false;
-    bondcolormap    = settings.value(Keys::BONDCOLORMAP, "RWB").toString();
+    bondcolormap    = settings.value(Keys::BONDCOLORMAP, "BWR").toString();
     bondmapmin      = "auto";
     bondmapmax      = "auto";
     revbondcolormap = false;
@@ -818,7 +818,7 @@ void ImageViewer::resetView()
     if (button) button->setChecked(showbox);
     button = findChild<QPushButton *>("axes");
     if (button) button->setChecked(showaxes);
-    auto *cb = findChild<QComboBox *>("combo");
+    auto *cb = findChild<QComboBox *>("group");
     if (cb) cb->setCurrentText("all");
     createImage();
 }
@@ -946,7 +946,7 @@ void ImageViewer::toggleBond()
         }
     }
 
-    button->setChecked(autobond);
+    if (button) button->setChecked(autobond);
     createImage();
 }
 
