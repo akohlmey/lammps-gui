@@ -142,7 +142,12 @@ void AboutDialog::setupAutoScroll(QScrollArea *area)
     auto *vbar = area->verticalScrollBar();
     if (!vbar || vbar->maximum() <= 0) return;
 
-    auto *scrollTimer = new QTimer(this);
+    // drop the timer from a previous showEvent(): re-showing the dialog would
+    // otherwise stack timers and multiply the scroll speed
+    delete area->findChild<QTimer *>("autoscroll");
+
+    auto *scrollTimer = new QTimer(area);
+    scrollTimer->setObjectName("autoscroll");
     scrollTimer->setInterval(50);
 
     connect(scrollTimer, &QTimer::timeout, this, [vbar, scrollTimer, this]() {
@@ -157,8 +162,9 @@ void AboutDialog::setupAutoScroll(QScrollArea *area)
         }
     });
 
-    // Start scrolling after 3 seconds
-    QTimer::singleShot(3000, this, [scrollTimer]() {
+    // Start scrolling after 3 seconds; the timer is the context object so the
+    // pending shot dies with it if the dialog is re-shown in the meantime
+    QTimer::singleShot(3000, scrollTimer, [scrollTimer]() {
         scrollTimer->start();
     });
 }

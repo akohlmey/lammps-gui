@@ -387,7 +387,8 @@ private:
         *integrateComp, *minimizeComp, *variableComp, *unitsComp, *groupComp, *varnameComp,
         *fixidComp, *compidComp, *fileComp, *extraComp;
 
-    int highlight;            ///< Current highlighted line number
+    int highlight;            ///< Current highlighted line number, NO_HIGHLIGHT if none
+    bool highlighterror;      ///< Highlighted line marks an error (red) instead of progress
     bool reformatOnReturn;    ///< Enable auto-reformatting on Enter
     bool automaticCompletion; ///< Enable auto-completion popup
     QString docver;           ///< LAMMPS documentation version string

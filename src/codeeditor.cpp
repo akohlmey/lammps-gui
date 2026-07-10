@@ -61,7 +61,7 @@ CodeEditor::CodeEditor(QWidget *parent) :
     groupComp(new QCompleter(this)), varnameComp(new QCompleter(this)),
     fixidComp(new QCompleter(this)), compidComp(new QCompleter(this)),
     fileComp(new QCompleter(this)), extraComp(new QCompleter(this)), highlight(NO_HIGHLIGHT),
-    reformatOnReturn(false), automaticCompletion(true), docver("")
+    highlighterror(false), reformatOnReturn(false), automaticCompletion(true), docver("")
 {
     helpAction = new QShortcut(QKeySequence::fromString("Ctrl+?"), parent);
     connect(helpAction, &QShortcut::activated, this, &CodeEditor::getHelp);
@@ -170,10 +170,10 @@ void CodeEditor::setCursor(int block)
 
 void CodeEditor::setHighlight(int block, bool error)
 {
-    if (error)
-        highlight = -block;
-    else
-        highlight = block;
+    // a separate error flag: encoding the error state in the sign of the
+    // block number cannot represent an error on block 0
+    highlight      = block;
+    highlighterror = error;
 
     // also reset the cursor
     setCursor(block);
@@ -443,9 +443,10 @@ void CodeEditor::keyPressEvent(QKeyEvent *event)
         return;
     }
 
-    // automatically reformat when hitting the return or enter key
-    QSettings settings;
-    reformatOnReturn = settings.value(Keys::RETURN, false).toBool();
+    // automatically reformat when hitting the return or enter key; the flag is
+    // maintained through setReformatOnReturn() when the preferences change --
+    // re-reading QSettings here would both override the setter and cost a
+    // settings lookup on every keystroke
     if (reformatOnReturn && ((key == Qt::Key_Return) || (key == Qt::Key_Enter))) {
         reformatCurrentLine();
     }
@@ -454,7 +455,6 @@ void CodeEditor::keyPressEvent(QKeyEvent *event)
     QPlainTextEdit::keyPressEvent(event);
 
     // if enabled, try pop up completion automatically after 2 characters
-    automaticCompletion = settings.value(Keys::AUTOMATIC, true).toBool();
     if (automaticCompletion) {
         auto cursor = textCursor();
         auto line   = cursor.block().text();
@@ -559,11 +559,11 @@ void CodeEditor::lineNumberAreaPaintEvent(QPaintEvent *event)
     while (block.isValid() && top <= event->rect().bottom()) {
         if (block.isVisible() && bottom >= event->rect().top()) {
             QString number = QString::number(blockNumber + 1) + " ";
-            if ((highlight == NO_HIGHLIGHT) || (blockNumber != std::abs(highlight))) {
+            if ((highlight == NO_HIGHLIGHT) || (blockNumber != highlight)) {
                 painter.setPen(palette().color(QPalette::WindowText));
             } else {
                 number = QString(">") + QString::number(blockNumber + 1) + "<";
-                if (highlight < 0)
+                if (highlighterror)
                     painter.fillRect(0, top, lineNumberArea->width(), fontMetrics().height(),
                                      Qt::darkRed);
                 else

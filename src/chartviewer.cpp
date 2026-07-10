@@ -77,8 +77,10 @@ constexpr int LAYOUT_SPACING     = 6;
 // axis is never degenerate. Shared by the X and Y branches of getMinMax().
 void padEmptyRange(double &lo, double &hi)
 {
+    // compare against the magnitude: dividing by a signed hi made the test
+    // true for every all-negative range, padding ranges that were not empty
     const double delta = hi - lo;
-    if ((delta / ((hi == 0.0) ? 1.0 : hi)) < 1.0e-10) {
+    if ((delta / ((hi == 0.0) ? 1.0 : fabs(hi))) < 1.0e-10) {
         if ((lo == 0.0) || (hi == 0.0)) {
             lo = -0.025;
             hi = 0.025;
@@ -247,11 +249,15 @@ ChartWindow::ChartWindow(const QString &_filename, LammpsGui *_lammpsgui, QWidge
     window->setValue(settings.value(Keys::SMOOTHWINDOW, Cfg::SMOOTH_WINDOW_DEFAULT).toInt());
     window->setEnabled(doSmooth);
     window->setToolTip("Smoothing Window Size");
+    // no keyboard tracking: valueChanged then fires once per committed edit
+    // instead of re-smoothing on every typed digit
+    window->setKeyboardTracking(false);
     order = new QSpinBox;
     order->setRange(Cfg::SMOOTH_ORDER_MIN, Cfg::SMOOTH_ORDER_MAX);
     order->setValue(settings.value(Keys::SMOOTHORDER, Cfg::SMOOTH_ORDER_DEFAULT).toInt());
     order->setEnabled(doSmooth);
     order->setToolTip("Smoothing Order");
+    order->setKeyboardTracking(false);
     settings.endGroup();
 
     columns = new QComboBox;
@@ -388,8 +394,6 @@ ChartWindow::ChartWindow(const QString &_filename, LammpsGui *_lammpsgui, QWidge
     if (chartXlabel)
         connect(chartXlabel, &QLineEdit::editingFinished, this, &ChartWindow::updateXLabel);
     connect(smooth, &QComboBox::currentIndexChanged, this, &ChartWindow::selectSmooth);
-    connect(window, &QAbstractSpinBox::editingFinished, this, &ChartWindow::updateSmooth);
-    connect(order, &QAbstractSpinBox::editingFinished, this, &ChartWindow::updateSmooth);
     connect(window, QOverload<int>::of(&QSpinBox::valueChanged), this, &ChartWindow::updateSmooth);
     connect(order, QOverload<int>::of(&QSpinBox::valueChanged), this, &ChartWindow::updateSmooth);
     connect(columns, &QComboBox::currentIndexChanged, this, &ChartWindow::changeChart);
@@ -1212,6 +1216,7 @@ void ChartWindow::referenceLines()
                          [rd, &rows, &colorBtns, colorBtn, row]() {
                              rows.removeOne(rd);
                              colorBtns.removeOne(colorBtn);
+                             delete rd;
                              // hide all widgets in the row
                              QLayoutItem *item;
                              while ((item = row->takeAt(0)) != nullptr) {
@@ -1257,7 +1262,10 @@ void ChartWindow::referenceLines()
     QObject::connect(buttons, &QDialogButtonBox::rejected, &dialog, &QDialog::reject);
     layout->addWidget(buttons);
 
-    if (dialog.exec() != QDialog::Accepted) return;
+    if (dialog.exec() != QDialog::Accepted) {
+        qDeleteAll(rows);
+        return;
+    }
 
     // rebuild the refLines list (window-wide) and apply to the active column;
     // changeChart re-applies them when switching to another column
@@ -1268,6 +1276,7 @@ void ChartWindow::referenceLines()
         const auto a      = static_cast<RefAnchor>(rd->anchorCombo->currentData().toInt());
         refLines.append({o, rd->xSpin->value(), rd->labelEdit->text().trimmed(), rd->color, a});
     }
+    qDeleteAll(rows);
 
     // store and apply the window-wide label style
     refLabelSize  = fontSpin->value();
