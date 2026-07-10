@@ -870,6 +870,17 @@ monitor the progress of the simulation.  It also can be used as an
 effective way to refine visualizations created with the :ref:`Snapshot
 Image Viewer <snapshot_viewer>`.
 
+.. warning::
+
+   When two or more ``dump image`` commands are active at the same time,
+   the slide show picks up the images from all of them and displays them
+   interleaved in the order they are written.  This is usually not
+   intended, but cannot be detected by LAMMPS-GUI before the run has
+   started and the images have already been mixed.  To avoid it, make
+   sure that only one ``dump image`` command is active at any time
+   during a run, for example by removing a no longer needed dump with an
+   `undump command <https://docs.lammps.org/undump.html>`_.
+
 The same window can also display existing image files that were not
 created by the current session: select one or more files with *File* ->
 *View Image or Movie File(s)...* (see :ref:`the File menu <files>`) to
