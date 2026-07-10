@@ -52,6 +52,7 @@ constexpr int LAYOUT_SPACING = 6;
 constexpr int NOTE_ICON_SIZE = 32;
 constexpr int KILL_TIMEOUT   = 1000;
 constexpr int PROGRESS_TICK  = 100;
+constexpr int PROGRESS_DELAY = 500; // ms before the extraction progress dialog appears
 
 // ffprobe reports numbers as JSON numbers or as strings, depending on the key
 int jsonToInt(const QJsonValue &val)
@@ -277,7 +278,7 @@ QStringList extractMovieFrames(QWidget *parent, const QString &filename, const Q
     progress.setWindowTitle("LAMMPS-GUI - Importing Movie Frames");
     progress.setWindowIcon(QIcon(Cfg::MAIN_ICON));
     progress.setWindowModality(Qt::WindowModal);
-    progress.setMinimumDuration(500);
+    progress.setMinimumDuration(PROGRESS_DELAY);
     progress.setAutoClose(false);
     progress.setAutoReset(false);
     progress.setValue(0);

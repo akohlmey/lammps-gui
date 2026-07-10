@@ -11,6 +11,8 @@
 
 #include "dumpimage.h"
 
+#include "constants.h"
+
 #include "colormaps.h"
 
 #include <QRegularExpression>
@@ -250,7 +252,7 @@ DumpImageCommand buildDumpImageCommand(const DumpImageParams &p)
     if (p.dimension == 3) {
         d += QString(" view %1 %2").arg(hhrot).arg(p.vrot);
     }
-    if (p.usessao) d += QString(" ssao yes 453983 %1").arg(p.ssaoval);
+    if (p.usessao) d += QString(" ssao yes %1 %2").arg(Cfg::SSAO_SEED).arg(p.ssaoval);
     if (p.showbox)
         d += QString(" box yes %1").arg(p.boxdiam);
     else
@@ -335,7 +337,7 @@ DumpImageCommand buildDumpImageCommand(const DumpImageParams &p)
 
     const bool lightsdefault = (p.ambientlight == DEF_AMBIENT) && (p.keylight == DEF_KEYLIGHT) &&
                                (p.filllight == DEF_FILLLIGHT) && (p.backlight == DEF_BACKLIGHT);
-    if ((p.version > 20260330) && !lightsdefault)
+    if ((p.version > Cfg::DUMP_LIGHTS_VERSION) && !lightsdefault)
         m += QString(" lights %1 %2 %3 %4")
                  .arg(p.ambientlight)
                  .arg(p.keylight)

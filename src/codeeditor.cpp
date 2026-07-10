@@ -1015,8 +1015,7 @@ void CodeEditor::getHelp()
     findHelp(page, help);
     if (docver.isEmpty()) setDocver();
     if (!page.isEmpty())
-        QDesktopServices::openUrl(
-            QUrl(QString("https://docs.lammps.org%1%2").arg(docver).arg(page)));
+        QDesktopServices::openUrl(QUrl(QString("%1%2%3").arg(Cfg::DOCS_URL, docver, page)));
 }
 
 void CodeEditor::findHelp(QString &page, QString &help)
@@ -1069,7 +1068,7 @@ void CodeEditor::openHelp()
     auto *act = qobject_cast<QAction *>(sender());
     if (docver.isEmpty()) setDocver();
     QDesktopServices::openUrl(
-        QUrl(QString("https://docs.lammps.org%1%2").arg(docver).arg(act->data().toString())));
+        QUrl(QString("%1%2%3").arg(Cfg::DOCS_URL, docver, act->data().toString())));
 }
 
 void CodeEditor::openUrl()

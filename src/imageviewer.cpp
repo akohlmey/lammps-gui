@@ -1554,8 +1554,9 @@ void ImageViewer::createImage()
 
         {
             StdoutSilencer guard;
-            QString molcreate = "create_atoms 0 single %1 %2 %3 mol %4 312944 group %5 units box";
-            group             = "imgviewer_tmp_mol";
+            QString molcreate = QString("create_atoms 0 single %1 %2 %3 mol %4 ") +
+                                QString::number(Cfg::CREATE_ATOMS_SEED) + " group %5 units box";
+            group = "imgviewer_tmp_mol";
             lammps->command(molcreate.arg(xmid).arg(ymid).arg(zmid).arg(molecule).arg(group));
             lammps->command(QString("neigh_modify exclude group all %1").arg(group));
             lammps->command("run 0 post no");
@@ -1735,11 +1736,10 @@ void ImageViewer::getHelp()
         } else if (page.startsWith("compute_") || page.startsWith("fix_")) {
             // jump to the "Dump image info" section for computes and fixes
             QDesktopServices::openUrl(
-                QUrl(QString("https://docs.lammps.org%1%2#dump-image-info").arg(docver).arg(page)));
+                QUrl(QString("%1%2%3#dump-image-info").arg(Cfg::DOCS_URL, docver, page)));
         } else {
             // general LAMMPS doc page
-            QDesktopServices::openUrl(
-                QUrl(QString("https://docs.lammps.org%1%2").arg(docver).arg(page)));
+            QDesktopServices::openUrl(QUrl(QString("%1%2%3").arg(Cfg::DOCS_URL, docver, page)));
         }
     }
 }

@@ -352,12 +352,12 @@ void LammpsGui::createStatusBar()
     // square status-bar buttons with a snug, uniform icon (shared policy)
     styleToolButtons(toolButtonSize(savebtn), {savebtn, runbtn, stopbtn, imgbtn});
 
-    cpuuse = new QLabel("   0%CPU");
+    cpuuse = new QLabel(Cfg::STATUS_ZERO_CPU);
     cpuuse->setFixedWidth(90);
     statusbar->addWidget(cpuuse);
     cpuuse->hide();
 
-    status = new QLabel("Ready.");
+    status = new QLabel(Cfg::STATUS_READY);
     status->setFixedWidth(300);
     statusbar->addWidget(status);
 
@@ -931,7 +931,7 @@ void LammpsGui::updateRecents(const QString &filename)
     });
 
     if (!filename.isEmpty() && !recent.contains(filename)) recent.prepend(filename);
-    if (recent.size() > 5) recent.removeLast();
+    if (recent.size() > Cfg::NUM_RECENT_FILES) recent.removeLast();
     if (!recent.empty())
         settings.setValue(Keys::RECENT, QVariant::fromValue(recent));
     else
@@ -1209,14 +1209,14 @@ void LammpsGui::inspectFile(const QString &fileName)
     ilist->image = nullptr;
     inspectList.append(ilist);
 
-    if (file.size() > 262144000L) {
+    if (file.size() > Cfg::INSPECT_WARN_SIZE) {
         QMessageBox mb;
         mb.setWindowTitle("  Warning:  Large Restart File  ");
         mb.setWindowIcon(windowIcon());
         mb.setText(QString("<center>The restart file ") + shortName + " is large</center>");
         QString details = "Inspecting the restart file %1 with LAMMPS-GUI may need an additional "
                           "%2 GB of free RAM (or more) to proceed";
-        mb.setDetailedText(details.arg(shortName).arg(file.size() / 134217728.0));
+        mb.setDetailedText(details.arg(shortName).arg(file.size() / Cfg::INSPECT_GB_PER_BYTE));
         mb.setInformativeText("Do you want to continue?");
         mb.setIconPixmap(
             QIcon(":/icons/warning.svg").pixmap(QSize(64, 64), mb.devicePixelRatioF()));
@@ -1723,7 +1723,7 @@ void LammpsGui::runDone()
 
     if (success) {
         status->setText(Cfg::STATUS_READY);
-        cpuuse->setText("   0%CPU");
+        cpuuse->setText(Cfg::STATUS_ZERO_CPU);
     } else {
         status->setText("Failed.");
         textEdit->setHighlight(nline, true);
@@ -2316,7 +2316,7 @@ void LammpsGui::help()
 void LammpsGui::manual()
 {
     if (docver.isEmpty()) setDocver();
-    QDesktopServices::openUrl(QUrl(QString("https://docs.lammps.org%1").arg(docver)));
+    QDesktopServices::openUrl(QUrl(Cfg::DOCS_URL + docver));
 }
 
 void LammpsGui::tutorialWeb()

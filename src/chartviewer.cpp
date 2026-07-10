@@ -226,7 +226,9 @@ ChartWindow::ChartWindow(const QString &_filename, LammpsGui *_lammpsgui, QWidge
     QString mytitle;
     if (lammpsgui) {
         // live simulation: use the configured title template
-        mytitle = settings.value(Keys::TITLE, "Thermo: %f").toString().replace("%f", filename);
+        mytitle = settings.value(Keys::TITLE, Cfg::CHART_TITLE_DEFAULT)
+                      .toString()
+                      .replace("%f", filename);
     } else {
         // standalone/plot mode: just the base filename, no "Thermo:" prefix
         mytitle = QFileInfo(filename).fileName();

@@ -974,7 +974,8 @@ ChartsTab::ChartsTab(QSettings *_settings, QWidget *parent) : QWidget(parent), s
 
     settings->beginGroup(Keys::GROUP_CHARTS);
     auto *titlelbl = new QLabel("Default chart title:");
-    auto *titletxt = new QLineEdit(settings->value(Keys::TITLE, "Thermo: %f").toString());
+    auto *titletxt =
+        new QLineEdit(settings->value(Keys::TITLE, Cfg::CHART_TITLE_DEFAULT).toString());
     titletxt->setObjectName("title");
     auto *titlehlp = new QLabel("(use %f for current input file)");
 

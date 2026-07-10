@@ -106,9 +106,35 @@ inline const QString MAIN_ICON = QStringLiteral(":/icons/lammps-gui-icon-128x128
 /** path to LAMMPS Icon resource */
 inline const QString LAMMPS_ICON = QStringLiteral(":/icons/lammps-icon-128x128.png");
 
+// ---- Restart file inspection ----------------------------------------------
+/** restart files larger than this (bytes) prompt a memory-use warning */
+constexpr qint64 INSPECT_WARN_SIZE = 262144000LL;
+/** divisor turning a restart file size into an estimated RAM demand in GB */
+constexpr double INSPECT_GB_PER_BYTE = 134217728.0;
+
+// ---- Fixed RNG seeds for LAMMPS commands ----------------------------------
+/** seed for the create_atoms command placing the temporary molecule */
+constexpr int CREATE_ATOMS_SEED = 312944;
+/** seed for the dump image ssao keyword */
+constexpr int SSAO_SEED = 453983;
+
+// ---- LAMMPS feature gates --------------------------------------------------
+/** first LAMMPS version whose dump image supports the lights keyword */
+constexpr int DUMP_LIGHTS_VERSION = 20260330;
+
+// ---- Documentation ---------------------------------------------------------
+/** base URL of the LAMMPS online documentation */
+inline const QString DOCS_URL = QStringLiteral("https://docs.lammps.org");
+
+// ---- Charts ----------------------------------------------------------------
+/** default chart title template; %f is replaced with the input file name */
+inline const QString CHART_TITLE_DEFAULT = QStringLiteral("Thermo: %f");
+
 // ---- Status messages -----------------------------------------------------
 /** status string when LAMMPS-GUI is ready */
 inline const QString STATUS_READY = QStringLiteral("Ready.");
+/** CPU utilization status label text when no simulation is running */
+inline const QString STATUS_ZERO_CPU = QStringLiteral("   0%CPU");
 
 } // namespace Cfg
 
