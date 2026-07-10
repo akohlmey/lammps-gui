@@ -647,6 +647,13 @@ void ImageViewer::atomSettings()
             selectComboItem(bncolor, bondcolor);
         }
     }
+    // without real bonds, AutoBonds is the only source of bonds and those are
+    // always colored by the atoms forming the bond, so only the diameter is
+    // selectable; vdwbondSync() applies the same rule on live toggles
+    if (!hasRealBonds && autobond) {
+        selectComboItem(bncolor, "atom");
+        bncolor->setEnabled(false);
+    }
     layout->addWidget(bncolor, idx, n++, 1, 1);
     layout->addWidget(new QLabel("Size: "), idx, n++, 1, 1, Qt::AlignVCenter | Qt::AlignRight);
 

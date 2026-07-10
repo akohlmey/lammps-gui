@@ -960,11 +960,17 @@ void ImageViewer::vdwbondSync()
     }
 
     // compute bond/local coloring needs real bonds, so it is unavailable while
-    // AutoBonds is on; refresh the bond Color choices to match the live state
+    // AutoBonds is on; refresh the bond Color choices to match the live state.
+    // Without real bonds, AutoBonds is the only source of bonds and those are
+    // always colored by the atoms forming the bond, so force the bond Color
+    // selection to "atom" and only leave the diameter selectable
     auto *bncolor = dialog->findChild<QComboBox *>("bncolor");
     if (bncolor) {
         const bool hasRealBonds = (lammps->extractSetting("molecule_flag") == 1);
         rebuildBondColorChoices(bncolor, hasRealBonds && !ab->isChecked());
+        const bool atomsonly = !hasRealBonds && ab->isChecked();
+        if (atomsonly) selectComboItem(bncolor, "atom");
+        bncolor->setEnabled(!atomsonly);
     }
 }
 
