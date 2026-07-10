@@ -2410,11 +2410,11 @@ QWizardPage *LammpsGui::tutorialDirectory(int collection, int ntutorial)
 
     purgeval->setChecked(false);
     purgeval->setObjectName("t_dirpurge");
-    layout->addWidget(purgeval, Qt::AlignVCenter | Qt::AlignLeft);
+    layout->addWidget(purgeval, 0, Qt::AlignVCenter | Qt::AlignLeft);
 
     solval->setChecked(settings.value(Keys::SOLUTION, false).toBool());
     solval->setObjectName("t_getsolution");
-    layout->addWidget(solval, Qt::AlignVCenter | Qt::AlignLeft);
+    layout->addWidget(solval, 0, Qt::AlignVCenter | Qt::AlignLeft);
 
     // only offer the webpage checkbox for collections that have online pages
     QCheckBox *webval = nullptr;
@@ -2422,7 +2422,7 @@ QWizardPage *LammpsGui::tutorialDirectory(int collection, int ntutorial)
         webval = new QCheckBox("&Open tutorial webpage in web browser");
         webval->setChecked(settings.value(Keys::WEBPAGE, true).toBool());
         webval->setObjectName("t_webopen");
-        layout->addWidget(webval, Qt::AlignVCenter | Qt::AlignLeft);
+        layout->addWidget(webval, 0, Qt::AlignVCenter | Qt::AlignLeft);
     }
 
     auto *label2 = new QLabel(

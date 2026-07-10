@@ -362,9 +362,9 @@ void ImageViewer::globalSettings()
     connect(apply, &QPushButton::released, &setview, &QDialog::accept);
     connect(help, &QPushButton::released, this, &ImageViewer::getHelp);
 
-    bottomlayout->addWidget(cancel, Qt::AlignHCenter);
-    bottomlayout->addWidget(apply, Qt::AlignHCenter);
-    bottomlayout->addWidget(help, Qt::AlignHCenter);
+    bottomlayout->addWidget(cancel, 0, Qt::AlignHCenter);
+    bottomlayout->addWidget(apply, 0, Qt::AlignHCenter);
+    bottomlayout->addWidget(help, 0, Qt::AlignHCenter);
     layout->addLayout(bottomlayout, idx++, 0, 1, MAXCOLS, Qt::AlignHCenter);
     setview.setLayout(layout);
 
@@ -886,9 +886,9 @@ void ImageViewer::atomSettings()
     connect(apply, &QPushButton::released, &setview, &QDialog::accept);
     connect(help, &QPushButton::released, this, &ImageViewer::getHelp);
 
-    bottomlayout->addWidget(cancel, Qt::AlignHCenter);
-    bottomlayout->addWidget(apply, Qt::AlignHCenter);
-    bottomlayout->addWidget(help, Qt::AlignHCenter);
+    bottomlayout->addWidget(cancel, 0, Qt::AlignHCenter);
+    bottomlayout->addWidget(apply, 0, Qt::AlignHCenter);
+    bottomlayout->addWidget(help, 0, Qt::AlignHCenter);
     layout->addLayout(bottomlayout, idx, 0, 1, MAXCOLS, Qt::AlignHCenter);
     setview.setLayout(layout);
 
@@ -1354,9 +1354,9 @@ void ImageViewer::regionSettings()
     connect(apply, &QPushButton::released, &regionview, &QDialog::accept);
     connect(help, &QPushButton::released, this, &ImageViewer::getHelp);
 
-    bottomlayout->addWidget(cancel, Qt::AlignHCenter);
-    bottomlayout->addWidget(apply, Qt::AlignHCenter);
-    bottomlayout->addWidget(help, Qt::AlignHCenter);
+    bottomlayout->addWidget(cancel, 0, Qt::AlignHCenter);
+    bottomlayout->addWidget(apply, 0, Qt::AlignHCenter);
+    bottomlayout->addWidget(help, 0, Qt::AlignHCenter);
     layout->addLayout(bottomlayout, idx, 0, 1, MAXCOLS, Qt::AlignHCenter);
     regionview.setLayout(layout);
 
@@ -1633,9 +1633,9 @@ void ImageViewer::colorSettings()
                 saveJsonColors(&colorview, colors, lights);
             });
 
-    bottomlayout->addWidget(cancel, Qt::AlignHCenter);
-    bottomlayout->addWidget(apply, Qt::AlignHCenter);
-    bottomlayout->addWidget(reset, Qt::AlignHCenter);
+    bottomlayout->addWidget(cancel, 0, Qt::AlignHCenter);
+    bottomlayout->addWidget(apply, 0, Qt::AlignHCenter);
+    bottomlayout->addWidget(reset, 0, Qt::AlignHCenter);
     mainLayout->addLayout(bottomlayout);
 
     // Size the dialog relative to screen dimensions (same approach as AboutDialog)
