@@ -331,7 +331,7 @@ void exportImage(QWidget *parent, QImage *image, const QString &title)
                 QFile::remove(fileName);
                 warning(parent, title + " Error",
                         "ImageMagick conversion failed while saving to file " + fileName + ":",
-                        stderrText.trimmed().isEmpty() ? "Details:\n" + stderrText.trimmed() : "");
+                        stderrText.trimmed().isEmpty() ? "" : "Details:\n" + stderrText.trimmed());
 
                 return;
             }
@@ -479,9 +479,13 @@ void styleDialogButtons(QDialogButtonBox *box)
 
 void silenceStdout()
 {
-    if (capture_is_active || stdout_silenced) return;
+    if (capture_is_active) return;
 
+    // count nested silence requests even when stdout is already redirected, so
+    // restoreStdout() only restores when the outermost request is released
     ++silenced_counter;
+    if (stdout_silenced) return;
+
     fflush(stdout);
     saved_stdout_fd = mydup(myfileno(stdout));
     if (saved_stdout_fd == -1) return;

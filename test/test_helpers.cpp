@@ -253,17 +253,21 @@ TEST_F(HelpersTest, RestoreStdoutWhenNotSilenced)
     EXPECT_FALSE(isStdoutSilenced());
 }
 
-TEST_F(HelpersTest, SilenceStdoutIdempotent)
+TEST_F(HelpersTest, SilenceStdoutNested)
 {
-    // Silencing twice should not cause issues
+    // nested silence requests are counted, so stdout stays silenced until the
+    // outermost request is released (StdoutSilencer guards pair calls 1:1)
     silenceStdout();
     EXPECT_TRUE(isStdoutSilenced());
-    silenceStdout(); // second call should be a no-op
+    silenceStdout();
     EXPECT_TRUE(isStdoutSilenced());
 
-    restoreStdout();
+    restoreStdout(); // releases only the inner request
+    EXPECT_TRUE(isStdoutSilenced());
+    restoreStdout(); // releasing the outermost request restores stdout
     EXPECT_FALSE(isStdoutSilenced());
-    // restoring a second time should not make a difference
+
+    // restoring with no pending silence request is a safe no-op
     restoreStdout();
     EXPECT_FALSE(isStdoutSilenced());
 }

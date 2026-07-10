@@ -113,7 +113,7 @@ CodeEditor::CodeEditor(QWidget *parent) :
             } else if (words.size() == 2) {
                 cmdMap[words.at(1)] = words.at(0);
             } else {
-                fprintf(stderr, "unhandled help item: %s", qPrintable(line));
+                fprintf(stderr, "unhandled help item: %s\n", qPrintable(line.trimmed()));
             }
         }
         help_index.close();
