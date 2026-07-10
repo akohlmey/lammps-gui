@@ -103,6 +103,7 @@ File headers use `// -*- c++ -*-` Emacs mode line; maintain it on new files.
 ## Commit & Code Conventions
 
 - **GPG-sign all commits.** Every commit must carry a verifiable GPG signature.
+- **No Co-Authored-Co-Authored-By: and Claude-Session: attribution.** AI attribution only in pull requests
 - **Doxygen comments on all new public APIs.** Use `/** @brief ... */` Javadoc style for classes and methods; `///< description` for member variables. See `src/lammpsgui.h` for a comprehensive example.
 - **New public classes need a `.. doxygenclass::` entry in `doc/api_reference.rst`.** The `helpers.h` block uses `.. doxygenfile:: helpers.h :sections: func`, which renders only *free functions*, so a new helper class (e.g. an RAII guard) is otherwise missing from the generated API docs.
 - **Documentation changes in American English with plain ASCII characters** (no typographic quotes, em-dashes as `--`, etc.).
