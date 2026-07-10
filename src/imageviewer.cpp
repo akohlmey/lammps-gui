@@ -637,7 +637,7 @@ ImageViewer::ImageViewer(const QString &fileName, LammpsWrapper *_lammps, Lammps
     connect(fixviz, &QPushButton::released, this, &ImageViewer::fixSettings);
     connect(regviz, &QPushButton::released, this, &ImageViewer::regionSettings);
     connect(colviz, &QPushButton::released, this, &ImageViewer::colorSettings);
-    connect(help, &QPushButton::released, this, &ImageViewer::resetColors);
+    connect(help, &QPushButton::released, this, &ImageViewer::getHelp);
     connect(combo, QOverload<int>::of(&QComboBox::currentIndexChanged), this,
             &ImageViewer::changeGroup);
     connect(molbox, QOverload<int>::of(&QComboBox::currentIndexChanged), this,
