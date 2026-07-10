@@ -13,7 +13,6 @@
 #include "constants.h"
 
 #include <QAbstractButton>
-#include <QApplication>
 #include <QBrush>
 #include <QColor>
 #include <QCoreApplication>
@@ -31,7 +30,6 @@
 #include <QPixmap>
 #include <QProcess>
 #include <QPushButton>
-#include <QRegularExpression>
 #include <QStandardPaths>
 #include <QStringList>
 #include <QStyle>

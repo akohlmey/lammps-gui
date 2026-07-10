@@ -23,11 +23,9 @@
 
 #include <QAction>
 #include <QApplication>
-#include <QButtonGroup>
 #include <QCheckBox>
 #include <QClipboard>
 #include <QColor>
-#include <QColorDialog>
 #include <QDesktopServices>
 #include <QDir>
 #include <QDoubleValidator>
@@ -41,7 +39,6 @@
 #include <QIcon>
 #include <QImage>
 #include <QImageReader>
-#include <QIntValidator>
 #include <QJsonArray>
 #include <QJsonDocument>
 #include <QJsonObject>
@@ -55,12 +52,9 @@
 #include <QPainter>
 #include <QPalette>
 #include <QPixmap>
-#include <QProcess>
 #include <QPushButton>
-#include <QRadioButton>
 #include <QRect>
 #include <QRegularExpression>
-#include <QRegularExpressionValidator>
 #include <QScreen>
 #include <QScrollArea>
 #include <QScrollBar>
@@ -69,13 +63,12 @@
 #include <QSpinBox>
 #include <QString>
 #include <QStringList>
-#include <QTemporaryFile>
 #include <QVBoxLayout>
 #include <QVariant>
 
 #include <algorithm>
 #include <cmath>
-#include <unordered_map>
+#include <cstring>
 #include <unordered_set>
 
 // clang-format off

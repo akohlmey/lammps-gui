@@ -17,7 +17,6 @@
 #include "lammpsgui.h"
 
 #include <QAction>
-#include <QApplication>
 #include <QDesktopServices>
 #include <QFile>
 #include <QFileDialog>

@@ -46,8 +46,6 @@
 #include <QWidget>
 
 #include <cstdlib>
-#include <string>
-#include <vector>
 
 CodeEditor::CodeEditor(QWidget *parent) :
     QPlainTextEdit(parent), currentComp(nullptr), commandComp(new QCompleter(this)),

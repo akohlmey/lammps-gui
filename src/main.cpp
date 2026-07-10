@@ -24,7 +24,6 @@
 #include <QFileInfo>
 #include <QFont>
 #include <QIcon>
-#include <QLocale>
 #include <QSettings>
 #include <QString>
 #include <QStringList>
@@ -32,8 +31,6 @@
 #include <QStyleFactory>
 #include <QtGlobal>
 
-#include <cstdio>
-#include <cstring>
 
 #define stringify(x) myxstr(x)
 #define myxstr(x) #x

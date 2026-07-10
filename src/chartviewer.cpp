@@ -41,7 +41,6 @@
 #include <QHBoxLayout>
 #include <QIcon>
 #include <QKeySequence>
-#include <QPen>
 #include <QScrollArea>
 
 #include <QLabel>
@@ -52,8 +51,6 @@
 #include <QMessageBox>
 #include <QPushButton>
 #include <QSettings>
-#include <QSignalBlocker>
-#include <QSpacerItem>
 #include <QSpinBox>
 #include <QStringList>
 #include <QTextStream>

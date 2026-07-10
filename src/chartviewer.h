@@ -14,6 +14,7 @@
 
 #include "plotseries.h" // PlotSeries model + RefAnchor used by RefLine below
 
+#include <QColor>
 #include <QComboBox>
 #include <QLabel>
 #include <QLineEdit>
@@ -246,10 +247,6 @@ private:
 };
 
 /* -------------------------------------------------------------------- */
-
-#include "plotseries.h"
-
-#include <QColor>
 
 #include <memory>
 #include <vector>

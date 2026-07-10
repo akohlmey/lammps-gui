@@ -25,61 +25,33 @@
 #include "qaddon.h"
 #include "stdcapture.h"
 
-#include <QAction>
-#include <QApplication>
 #include <QButtonGroup>
 #include <QCheckBox>
-#include <QClipboard>
 #include <QColor>
 #include <QColorDialog>
-#include <QDesktopServices>
-#include <QDir>
 #include <QDoubleValidator>
-#include <QFile>
-#include <QFileDialog>
-#include <QFileInfo>
 #include <QFontMetrics>
 #include <QGuiApplication>
 #include <QHBoxLayout>
 #include <QIcon>
-#include <QImage>
-#include <QImageReader>
 #include <QIntValidator>
 #include <QJsonArray>
-#include <QJsonDocument>
 #include <QJsonObject>
-#include <QKeyEvent>
-#include <QKeySequence>
 #include <QLabel>
 #include <QLineEdit>
-#include <QLinearGradient>
-#include <QMenu>
-#include <QMenuBar>
-#include <QPainter>
-#include <QPalette>
-#include <QPixmap>
-#include <QProcess>
 #include <QPushButton>
 #include <QRadioButton>
-#include <QRect>
 #include <QRegularExpression>
 #include <QRegularExpressionValidator>
 #include <QScreen>
 #include <QScrollArea>
 #include <QScrollBar>
-#include <QSettings>
-#include <QSizePolicy>
 #include <QSpinBox>
 #include <QString>
 #include <QStringList>
-#include <QTemporaryFile>
 #include <QVBoxLayout>
-#include <QVariant>
 
 #include <algorithm>
-#include <cmath>
-#include <unordered_map>
-#include <unordered_set>
 
 void ImageViewer::globalSettings()
 {
@@ -1614,9 +1586,9 @@ void ImageViewer::colorSettings()
                 saveJsonColors(&colorview, colors, lights);
             });
 
-    bottomlayout->addWidget(cancel, 0, Qt::AlignHCenter);
-    bottomlayout->addWidget(apply, 0, Qt::AlignHCenter);
-    bottomlayout->addWidget(reset, 0, Qt::AlignHCenter);
+    bottomlayout->addWidget(cancel, 1, Qt::AlignHCenter);
+    bottomlayout->addWidget(apply, 1, Qt::AlignHCenter);
+    bottomlayout->addWidget(reset, 1, Qt::AlignHCenter);
     mainLayout->addLayout(bottomlayout);
 
     // Size the dialog relative to screen dimensions (same approach as AboutDialog)

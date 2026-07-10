@@ -53,7 +53,6 @@
 #include <QProgressBar>
 #include <QPushButton>
 #include <QSettings>
-#include <QShortcut>
 #include <QStandardPaths>
 #include <QStatusBar>
 #include <QStringList>
@@ -67,7 +66,6 @@
 #include <cmath>
 #include <cstdint>
 #include <cstdlib>
-#include <cstring>
 #include <string>
 
 #include "constants.h"

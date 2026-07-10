@@ -22,9 +22,7 @@
 #include <QString>
 
 #include <cstdio>
-#include <cstring>
 #include <string>
-#include <vector>
 
 // Fixture for tests that need Qt application
 class HelpersTest : public ::testing::Test {

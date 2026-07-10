@@ -21,11 +21,10 @@
 #include <QtGlobal>
 #include <initializer_list>
 #include <memory>
-#include <string>
-#include <vector>
 
 class QWidget;
 class QImage;
+class QPixmap;
 class QFont;
 class QAbstractButton;
 class QDialogButtonBox;

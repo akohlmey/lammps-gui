@@ -24,7 +24,6 @@
 #include <QPixmap>
 #include <QString>
 #include <QStringList>
-#include <string>
 
 class QComboBox;
 class QWidget;

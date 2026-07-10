@@ -32,7 +32,6 @@ class QLabel;
 class QObject;
 class QRadioButton;
 class QScrollArea;
-class QStatusBar;
 class LammpsWrapper;
 class LammpsGui;
 class ImageInfo;

@@ -112,6 +112,7 @@ if (NOT BUILD_DOC_ONLY)
     ${CMAKE_SOURCE_DIR}/src/flagwarnings.cpp
     ${CMAKE_SOURCE_DIR}/src/flagwarnings.h
     ${CMAKE_SOURCE_DIR}/src/helpers.cpp
+    ${CMAKE_SOURCE_DIR}/src/helpers.h
     ${CMAKE_SOURCE_DIR}/src/highlighter.cpp
     ${CMAKE_SOURCE_DIR}/src/highlighter.h
     ${CMAKE_SOURCE_DIR}/src/imagecache.cpp
@@ -150,6 +151,7 @@ if (NOT BUILD_DOC_ONLY)
     ${CMAKE_SOURCE_DIR}/src/slideshow.cpp
     ${CMAKE_SOURCE_DIR}/src/slideshow.h
     ${CMAKE_SOURCE_DIR}/src/stdcapture.cpp
+    ${CMAKE_SOURCE_DIR}/src/stdcapture.h
     ${CMAKE_SOURCE_DIR}/src/tutorialwizard.cpp
     ${CMAKE_SOURCE_DIR}/src/tutorialwizard.h
     ${CMAKE_SOURCE_DIR}/src/urldownloader.cpp

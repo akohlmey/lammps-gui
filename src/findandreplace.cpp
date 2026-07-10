@@ -13,12 +13,9 @@
 
 #include "codeeditor.h"
 #include "constants.h"
-#include "helpers.h"
 #include "lammpsgui.h"
 
-#include <QApplication>
 #include <QCheckBox>
-#include <QDialogButtonBox>
 #include <QGridLayout>
 #include <QHBoxLayout>
 #include <QIcon>
@@ -26,7 +23,6 @@
 #include <QLineEdit>
 #include <QPushButton>
 #include <QShortcut>
-#include <QSizePolicy>
 #include <QTextCursor>
 
 /* ---------------------------------------------------------------------- */

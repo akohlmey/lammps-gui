@@ -30,7 +30,6 @@ class QFont;
 class QLabel;
 class QMenu;
 class QMenuBar;
-class QPlainTextEdit;
 class QProgressBar;
 class QSettings;
 class QStatusBar;
