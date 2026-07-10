@@ -16,8 +16,8 @@ namespace {
 
 // Build a DumpImageParams with sensible, neutral defaults that individual
 // tests then tweak. With these defaults no fix/compute/region is active and
-// do_vdw is false (vdwfactor < VDW_CUT); the version passes the lights gate,
-// so the non-default light levels below are emitted.
+// do_vdw is false (vdwfactor < VDW_CUT); the light levels below differ from
+// the LAMMPS defaults, so the lights keyword is emitted.
 DumpImageParams makeParams()
 {
     DumpImageParams p;
@@ -152,7 +152,7 @@ TEST(DumpImageCommand, BasicStructure)
     EXPECT_TRUE(cmd.contains(" boxcolor white"));
     EXPECT_TRUE(cmd.contains(" backcolor black"));
     EXPECT_TRUE(cmd.contains(" backcolor2 gray"));
-    EXPECT_TRUE(cmd.contains(" lights ")); // version passes the gate, lights differ from default
+    EXPECT_TRUE(cmd.contains(" lights ")); // light levels differ from the defaults
 }
 
 TEST(DumpImageCommand, ColorTablePrunedToDeltas)
