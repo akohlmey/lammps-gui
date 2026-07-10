@@ -37,12 +37,13 @@ public:
     LammpsWrapper();
 
     /**
-     * @brief Destructor (defaulted)
+     * @brief Destructor
      *
      * Does not close an open LAMMPS instance. Callers must invoke close()
-     * explicitly before destroying the wrapper.
+     * explicitly before destroying the wrapper. In plugin mode the handle
+     * to the dynamically loaded LAMMPS library is released.
      */
-    ~LammpsWrapper() = default;
+    ~LammpsWrapper();
 
     LammpsWrapper(const LammpsWrapper &)            = delete;
     LammpsWrapper(LammpsWrapper &&)                 = delete;

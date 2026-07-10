@@ -45,6 +45,14 @@ LammpsWrapper::LammpsWrapper() : lammps_handle(nullptr)
 #endif
 }
 
+LammpsWrapper::~LammpsWrapper()
+{
+#if defined(LAMMPS_GUI_USE_PLUGIN)
+    liblammpsplugin_release(static_cast<liblammpsplugin_t *>(plugin_handle));
+    plugin_handle = nullptr;
+#endif
+}
+
 void LammpsWrapper::open(int narg, char **args)
 {
     // since there may only be one LAMMPS instance in LAMMPS-GUI we don't open a second one
