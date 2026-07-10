@@ -71,6 +71,13 @@
           <li>Fix the rotate icons of the snapshot viewer toolbar, where the arrow tail was drawn in front of the rotation axis instead of behind it: the icons used an SVG clipPath element, which Qt does not implement, so they now use an equivalent mask element and fall back to pre-rendered PNG images with Qt versions before 6.7, which cannot render masks either</li>
           <li>Use a more portable implementation of the icon drop shadows for compatibility with older SVG libraries</li>
           <li>Add a JOSS submission status badge to the README file and the documentation</li>
+          <li>Fix a regression from version 3.0.0 where the Help button of the snapshot image viewer would reset all color and light customizations instead of opening the documentation</li>
+          <li>Fix the "Default chart title" and "Bond Cutoff" fields of the Preferences dialog, whose values were silently never saved</li>
+          <li>Failed renders in the snapshot image viewer no longer leave the render status indicator stuck or corrupt subsequent renders of molecule visualizations</li>
+          <li>Offer the atom and bond color map under its historical name BWR (blue at low values) again; the previous RWB default rendered low values red</li>
+          <li>Fix the "Reformat on Return" and automatic completion preferences, which were pinned to their default values regardless of the settings</li>
+          <li>An error in the first line of an input script is now highlighted red like errors in all other lines</li>
+          <li>Many small fixes: correct typos in the Quick Help text and tutorial descriptions, complete the missing paragraph markup in the materials-science tutorial descriptions, center the settings dialog buttons as intended, apply changes to the smoothing window/order once per edit instead of on every typed digit, and roll back light levels loaded from a colors file when the dialog is cancelled</li>
         </ul>
       </description>
     </release>
