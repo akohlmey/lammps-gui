@@ -32,6 +32,7 @@
 #include <QPixmap>
 #include <QProcess>
 #include <QPushButton>
+#include <QScrollArea>
 #include <QSettings>
 #include <QStandardPaths>
 #include <QStringList>
@@ -625,6 +626,41 @@ void styleToolButtons(const QSize &size, std::initializer_list<QAbstractButton *
         button->setMaximumSize(size);
         button->setIconSize(iconsize);
     }
+}
+
+// shared viewer window auto-resize policy (see helpers.h)
+
+QSize viewerFitSize(const QSize &content, const QSize &budget, int frame, int sbext)
+{
+    const int w = content.width() + frame;
+    const int h = content.height() + frame;
+
+    // an axis that overflows its budget is clamped and gets a scroll bar,
+    // which consumes part of the viewport on the other axis
+    return {std::min(w + ((h > budget.height()) ? sbext : 0), std::max(budget.width(), 0)),
+            std::min(h + ((w > budget.width()) ? sbext : 0), std::max(budget.height(), 0))};
+}
+
+QSize fitViewerWindow(QWidget *window, QScrollArea *area, const QSize &content, const QSize &budget,
+                      const QSize &lastFit)
+{
+    if (content.isEmpty()) return lastFit;
+
+    const int frame     = 2 * area->frameWidth();
+    const int sbext     = area->style()->pixelMetric(QStyle::PM_ScrollBarExtent, nullptr, area);
+    const QSize desired = viewerFitSize(content, budget, frame, sbext);
+    if (desired == lastFit) return lastFit;
+
+    // pin the scroll area only while the window is resized around it; a
+    // permanent minimum would override the user's own resizing afterwards
+    area->setMinimumSize(desired);
+    window->adjustSize();
+    area->setMinimumSize(QSize(0, 0));
+
+    // a hidden window is laid out with unpolished style metrics, so the
+    // applied size is only approximate; report no memoized size so the first
+    // call on the shown window (see the showEvent() overrides) fits again
+    return window->isVisible() ? desired : QSize();
 }
 
 // shared window-manager hint policy for output windows (see helpers.h)

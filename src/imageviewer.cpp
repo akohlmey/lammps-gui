@@ -57,12 +57,13 @@
 #include <QRegularExpression>
 #include <QScreen>
 #include <QScrollArea>
-#include <QScrollBar>
 #include <QSettings>
+#include <QShowEvent>
 #include <QSizePolicy>
 #include <QSpinBox>
 #include <QString>
 #include <QStringList>
+#include <QTimer>
 #include <QVBoxLayout>
 #include <QVariant>
 
@@ -490,10 +491,13 @@ ImageViewer::ImageViewer(const QString &fileName, LammpsWrapper *_lammps, Lammps
     recenter->setToolTip("Recenter on group");
     auto *reset = new QPushButton(QIcon(":/icons/gtk-zoom-fit.svg"), "");
     reset->setToolTip("Reset view to defaults");
+    auto *fitwin = new QPushButton(QIcon(":/icons/fit-window.svg"), "");
+    fitwin->setToolTip("Resize window to fit the image size");
 
     // square toolbar buttons with a snug, uniform icon (shared policy)
-    styleToolButtons(buttonhint, {dossao, doanti, doshiny, dovdw, dobond, dobox, doaxes, zoomin,
-                                  zoomout, rotleft, rotright, rotup, rotdown, recenter, reset});
+    styleToolButtons(buttonhint,
+                     {dossao, doanti, doshiny, dovdw, dobond, dobox, doaxes, zoomin, zoomout,
+                      rotleft, rotright, rotup, rotdown, recenter, reset, fitwin});
 
     // match the first-row controls (menu bar and size fields) to the toolbar
     // button height so both rows line up and the layout looks balanced
@@ -583,6 +587,7 @@ ImageViewer::ImageViewer(const QString &fileName, LammpsWrapper *_lammps, Lammps
     buttonLayout->addWidget(rotdown);
     buttonLayout->addWidget(recenter);
     buttonLayout->addWidget(reset);
+    buttonLayout->addWidget(fitwin);
     buttonLayout->insertStretch(-1, 1);
     buttonLayout->setSizeConstraint(QLayout::SetMinimumSize);
     buttonLayout->setContentsMargins(0, 0, 0, 0);
@@ -622,6 +627,7 @@ ImageViewer::ImageViewer(const QString &fileName, LammpsWrapper *_lammps, Lammps
     connect(rotdown, &QPushButton::released, this, &ImageViewer::doRotDown);
     connect(recenter, &QPushButton::released, this, &ImageViewer::doRecenter);
     connect(reset, &QPushButton::released, this, &ImageViewer::resetView);
+    connect(fitwin, &QPushButton::released, this, &ImageViewer::resetWindowSize);
     connect(setviz, &QPushButton::released, this, &ImageViewer::globalSettings);
     connect(atomviz, &QPushButton::released, this, &ImageViewer::atomSettings);
     connect(fixviz, &QPushButton::released, this, &ImageViewer::fixSettings);
@@ -1685,7 +1691,6 @@ void ImageViewer::createImage()
     adjustWindowSize();
     restoreRenderState();
     repaint();
-    adjustWindowSize();
     updateActions();
 }
 
@@ -1784,23 +1789,31 @@ void ImageViewer::updateActions()
 
 void ImageViewer::adjustWindowSize()
 {
-    if (image.isNull()) return;
-
-    auto *hbar        = scrollArea->horizontalScrollBar();
-    auto *vbar        = scrollArea->verticalScrollBar();
-    int desiredWidth  = image.width() + 2 + (vbar->isVisible() ? vbar->width() : 0);
-    int desiredHeight = image.height() + 2 + (hbar->isVisible() ? hbar->height() : 0);
+    // the render size is set in the settings panel, so the size to fit is
+    // known even before the first image has been rendered
+    if ((xsize < 1) || (ysize < 1)) return;
 
     // make sure the scroll area is not resized beyond a certain fraction of the screen
-    auto *screen = QGuiApplication::primaryScreen();
-    if (screen) {
-        auto screenSize = screen->availableSize();
-        desiredWidth    = std::min(desiredWidth, (screenSize.width() * 4 / 5) - EXTRA_WIDTH);
-        desiredHeight   = std::min(desiredHeight, (screenSize.height() * 9 / 10) - EXTRA_HEIGHT);
-    }
-    scrollArea->setMinimumSize(desiredWidth, desiredHeight);
-    scrollArea->resize(desiredWidth, desiredHeight);
-    adjustSize();
+    const QSize avail = screen()->availableSize();
+    const QSize budget((avail.width() * 4 / 5) - EXTRA_WIDTH,
+                       (avail.height() * 9 / 10) - EXTRA_HEIGHT);
+    lastFitSize = fitViewerWindow(this, scrollArea, QSize(xsize, ysize), budget, lastFitSize);
+}
+
+void ImageViewer::resetWindowSize()
+{
+    // discard both a manual window resize and the memoized fit
+    lastFitSize = QSize();
+    adjustWindowSize();
+}
+
+void ImageViewer::showEvent(QShowEvent *event)
+{
+    QDialog::showEvent(event);
+    // any fit computed while the window was hidden used unpolished style
+    // metrics and was not memoized (see fitViewerWindow()); apply the fit
+    // again as soon as the shown window has settled
+    if (!lastFitSize.isValid()) QTimer::singleShot(0, this, &ImageViewer::adjustWindowSize);
 }
 
 void ImageViewer::updatePeratom()

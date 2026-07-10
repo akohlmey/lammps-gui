@@ -546,3 +546,45 @@ TEST(GrayscaleImage, FadesTowardsTheMidpoint)
     // a desaturation-only conversion would have left the full black-to-white span
     EXPECT_LT(light - dark, 200);
 }
+
+// Tests for viewerFitSize (deterministic viewer window auto-resize)
+
+TEST(ViewerFitSize, ContentFitsBudget)
+{
+    // content plus frame fits: natural size, no scroll bar allowance
+    EXPECT_EQ(viewerFitSize(QSize(400, 300), QSize(1000, 800), 2, 16), QSize(402, 302));
+}
+
+TEST(ViewerFitSize, ExactFitAddsNoScrollBarRoom)
+{
+    EXPECT_EQ(viewerFitSize(QSize(998, 798), QSize(1000, 800), 2, 16), QSize(1000, 800));
+}
+
+TEST(ViewerFitSize, WidthOverflowAddsHorizontalBarRoom)
+{
+    // width is clamped; the horizontal scroll bar consumes viewport height
+    EXPECT_EQ(viewerFitSize(QSize(2000, 300), QSize(1000, 800), 2, 16), QSize(1000, 318));
+}
+
+TEST(ViewerFitSize, HeightOverflowAddsVerticalBarRoom)
+{
+    // height is clamped; the vertical scroll bar consumes viewport width
+    EXPECT_EQ(viewerFitSize(QSize(400, 2000), QSize(1000, 800), 2, 16), QSize(418, 800));
+}
+
+TEST(ViewerFitSize, BothOverflowClampsToBudget)
+{
+    EXPECT_EQ(viewerFitSize(QSize(2000, 2000), QSize(1000, 800), 2, 16), QSize(1000, 800));
+}
+
+TEST(ViewerFitSize, ScrollBarRoomStaysWithinBudget)
+{
+    // the extra scroll bar room must not push the other axis past its budget
+    EXPECT_EQ(viewerFitSize(QSize(2000, 790), QSize(1000, 800), 2, 16), QSize(1000, 800));
+}
+
+TEST(ViewerFitSize, NegativeBudgetClampsToZero)
+{
+    // tiny screens can make the budget negative; never return a negative size
+    EXPECT_EQ(viewerFitSize(QSize(400, 300), QSize(-10, -5), 2, 16), QSize(0, 0));
+}

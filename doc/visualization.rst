@@ -257,6 +257,12 @@ there are:
 - **Recenter**: Recenter the view on the center of mass of the currently
   selected group.
 - **Reset**: Reset the view to the default orientation and zoom level.
+- **Fit window**: Resize the window so the image is shown at its full
+  size, without scroll bars or unused space.  This undoes a manual
+  resize of the window; the window is never grown beyond a fraction of
+  the screen, so scroll bars remain for very large images.
+
+  .. versionadded:: 3.0.2
 
 The default image size, some default image quality settings, the view
 style and some colors can be changed in the :doc:`Preferences <dialogs>`
@@ -1011,6 +1017,12 @@ following controls, organized from left to right:
   axis.
 - **Reset image**: Reset the displayed image to the original image. This
   reverts all zoom, rotate, and mirror operations.
+- **Fit window**: Resize the window so the displayed image is shown at
+  its full size, without scroll bars or unused space.  This undoes a
+  manual resize of the window; the window is never grown beyond a
+  fraction of the screen, so scroll bars remain for very large images.
+
+  .. versionadded:: 3.0.2
 
 - **Stop Simulation** (`Ctrl-/`): Stop a running simulation.
 

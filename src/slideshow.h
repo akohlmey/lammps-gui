@@ -17,12 +17,14 @@
 #include <QDialog>
 #include <QIcon>
 #include <QImage>
+#include <QSize>
 #include <QString>
 #include <QStringList>
 
 class QLabel;
 class QPushButton;
 class QScrollArea;
+class QShowEvent;
 class QSpinBox;
 class QTimer;
 class LammpsGui;
@@ -113,6 +115,10 @@ private slots:
     void doImageRotateCcw(); ///< Rotate displayed image 90 degrees counter-clockwise
     void doImageFlipH();     ///< Mirror displayed image horizontally
     void doImageFlipV();     ///< Mirror displayed image vertically
+    void resetWindowSize();  ///< Resize window to fit the displayed image size
+
+protected:
+    void showEvent(QShowEvent *event) override; ///< Redo the initial window fit once shown
 
 private:
     /**
@@ -180,6 +186,7 @@ private:
     QIcon cacheFullIcon;        ///< Cache indicator icon for a cache holding images
     QIcon cacheEmptyIcon;       ///< Grayed out cache indicator icon for an empty cache
     double scaleFactor = 1.0;   ///< Current zoom scale factor
+    QSize lastFitSize;          ///< Scroll area size applied by the last auto-resize
 
     int current;             ///< Index of current image
     int maxwidth, maxheight; ///< Maximum image dimensions

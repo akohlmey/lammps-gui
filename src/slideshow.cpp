@@ -37,8 +37,8 @@
 #include <QPushButton>
 #include <QScreen>
 #include <QScrollArea>
-#include <QScrollBar>
 #include <QShortcut>
+#include <QShowEvent>
 #include <QSlider>
 #include <QSpacerItem>
 #include <QSpinBox>
@@ -241,11 +241,14 @@ SlideShow::SlideShow(const QString &fileName, LammpsGui *_lammpsgui, QWidget *pa
     imgflipv->setToolTip("Mirror displayed image vertically");
     auto *normal = new QPushButton(QIcon(":/icons/gtk-zoom-fit.svg"), "");
     normal->setToolTip("Reset zoom to normal");
+    auto *fitwin = new QPushButton(QIcon(":/icons/fit-window.svg"), "");
+    fitwin->setToolTip("Resize window to fit the displayed image size");
 
     // square toolbar buttons with a snug, uniform icon (shared policy)
-    styleToolButtons(buttonhint, {stoprun, tomovie, toimage, toclip, totrash, cacheButton, gofirst,
-                                  goprev, goplay, gonext, golast, goloop, zoomin, zoomout, imgrotcw,
-                                  imgrotccw, imgfliph, imgflipv, normal});
+    styleToolButtons(buttonhint,
+                     {stoprun,  tomovie,   toimage,  toclip,   totrash, cacheButton, gofirst,
+                      goprev,   goplay,    gonext,   golast,   goloop,  zoomin,      zoomout,
+                      imgrotcw, imgrotccw, imgfliph, imgflipv, normal,  fitwin});
 
     connect(tomovie, &QPushButton::released, this, &SlideShow::movie);
     connect(toimage, &QPushButton::released, this, &SlideShow::saveCurrentImage);
@@ -267,6 +270,7 @@ SlideShow::SlideShow(const QString &fileName, LammpsGui *_lammpsgui, QWidget *pa
     connect(imgfliph, &QPushButton::released, this, &SlideShow::doImageFlipH);
     connect(imgflipv, &QPushButton::released, this, &SlideShow::doImageFlipV);
     connect(normal, &QPushButton::released, this, &SlideShow::normalSize);
+    connect(fitwin, &QPushButton::released, this, &SlideShow::resetWindowSize);
 
     toolsLayout->addWidget(tomovie, 1);
     toolsLayout->addWidget(toimage, 1);
@@ -282,6 +286,7 @@ SlideShow::SlideShow(const QString &fileName, LammpsGui *_lammpsgui, QWidget *pa
     toolsLayout->addWidget(imgfliph, 1);
     toolsLayout->addWidget(imgflipv, 1);
     toolsLayout->addWidget(normal, 1);
+    toolsLayout->addWidget(fitwin, 1);
     toolsLayout->addSpacerItem(
         new QSpacerItem(10, 10, QSizePolicy::Expanding, QSizePolicy::Minimum));
     toolsLayout->addWidget(stoprun);
@@ -477,8 +482,11 @@ void SlideShow::clear()
     imagelabels.clear();
     image.fill(Qt::black);
     imageLabel->setPixmap(QPixmap::fromImage(image));
-    imageLabel->setMinimumSize(image.width(), image.height());
     imageLabel->resize(image.width(), image.height());
+    // forget the old sequence's dimensions so the next one sizes the window fresh
+    maxwidth    = 0;
+    maxheight   = 0;
+    lastFitSize = QSize();
     imageCounter->setText("Image   0 /   0 :");
     imageName->setText("(none)");
     scrollBar->setMaximum(1);
@@ -488,7 +496,6 @@ void SlideShow::clear()
     stopBox->setValue(1);
     updateSliderRange();
     updateCacheIndicator();
-    adjustWindowSize();
     repaint();
 }
 
@@ -823,21 +830,34 @@ void SlideShow::scaleImage(double factor)
 void SlideShow::adjustWindowSize()
 {
     if (maxwidth == 0 || maxheight == 0) return;
-    auto *hbar        = scrollArea->horizontalScrollBar();
-    auto *vbar        = scrollArea->verticalScrollBar();
-    int desiredWidth  = maxwidth + 2 + (vbar->isVisible() ? vbar->width() : 0);
-    int desiredHeight = maxheight + 2 + (hbar->isVisible() ? hbar->height() : 0);
+
+    // size of the largest image as displayed, i.e. with the current rotation
+    // and zoom applied the same way as applyImageTransform() applies them
+    QSize content(maxwidth, maxheight);
+    if ((imageRotation == 90) || (imageRotation == 270)) content.transpose();
+    content.setWidth(static_cast<int>(content.width() * scaleFactor));
+    content.setHeight(static_cast<int>(content.height() * scaleFactor));
 
     // make sure the scroll area is not resized beyond a certain fraction of the screen
-    auto *screen = QGuiApplication::primaryScreen();
-    if (screen) {
-        auto screenSize = screen->availableSize();
-        desiredWidth    = std::min(desiredWidth, screenSize.width() * 3 / 4);
-        desiredHeight   = std::min(desiredHeight, (screenSize.height() * 9 / 10) - EXTRA_HEIGHT);
-    }
-    scrollArea->setMinimumSize(desiredWidth, desiredHeight);
-    scrollArea->resize(desiredWidth, desiredHeight);
-    adjustSize();
+    const QSize avail = screen()->availableSize();
+    const QSize budget(avail.width() * 3 / 4, (avail.height() * 9 / 10) - EXTRA_HEIGHT);
+    lastFitSize = fitViewerWindow(this, scrollArea, content, budget, lastFitSize);
+}
+
+void SlideShow::resetWindowSize()
+{
+    // discard both a manual window resize and the memoized fit
+    lastFitSize = QSize();
+    adjustWindowSize();
+}
+
+void SlideShow::showEvent(QShowEvent *event)
+{
+    QDialog::showEvent(event);
+    // any fit computed while the window was hidden used unpolished style
+    // metrics and was not memoized (see fitViewerWindow()); apply the fit
+    // again as soon as the shown window has settled
+    if (!lastFitSize.isValid()) QTimer::singleShot(0, this, &SlideShow::adjustWindowSize);
 }
 
 void SlideShow::doImageRotateCw()

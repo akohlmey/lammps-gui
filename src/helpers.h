@@ -28,6 +28,7 @@ class QPixmap;
 class QFont;
 class QAbstractButton;
 class QDialogButtonBox;
+class QScrollArea;
 
 // OS specific default fonts (managed via unique_ptr for automatic cleanup)
 extern std::unique_ptr<QFont> GUI_MONOFONT;
@@ -368,6 +369,53 @@ extern void styleToolButtons(const QSize &size, std::initializer_list<QAbstractB
  * @param window Top-level window to adjust (no-op if null)
  */
 extern void applyWindowFlags(QWidget *window);
+
+/**
+ * @brief Compute the scroll area size that shows the given content, within a budget
+ *
+ * Pure size computation behind fitViewerWindow(). The natural size is the
+ * content plus the scroll area frame, with no scroll bars. An axis whose
+ * natural size exceeds the budget is clamped and gets a scroll bar, which
+ * consumes @p sbext pixels of viewport on the *other* axis, so that axis is
+ * enlarged accordingly (still within its budget). The result depends only on
+ * the arguments -- never on the current scroll bar visibility -- so repeated
+ * calls with the same input always yield the same size.
+ *
+ * @param content Size of the displayed content (image) in pixels
+ * @param budget  Largest allowed outer scroll area size (e.g. a screen fraction)
+ * @param frame   Total scroll area frame thickness (2 * frameWidth())
+ * @param sbext   Scroll bar thickness (QStyle::PM_ScrollBarExtent)
+ * @return Outer scroll area size that best fits the content within the budget
+ */
+[[nodiscard]] extern QSize viewerFitSize(const QSize &content, const QSize &budget, int frame,
+                                         int sbext);
+
+/**
+ * @brief Resize a viewer window so its scroll area just fits the displayed image
+ *
+ * Shared auto-resize policy of the image viewer and the slide show: the scroll
+ * area is sized via viewerFitSize() and the window is resized around it. The
+ * scroll area's minimum size is pinned only for the duration of the resize, so
+ * the user can freely shrink the window afterwards. When the computed size
+ * equals @p lastFit, the window is left untouched; passing the previous return
+ * value back in keeps navigating a sequence of equally-sized images from ever
+ * moving or resizing the window.
+ *
+ * While @p window is still hidden its layout uses unpolished style metrics, so
+ * the applied size is only approximate: the fit is applied but an invalid
+ * QSize is returned instead of the memoized size. The viewers use that in
+ * their showEvent() overrides to apply the fit once more on the shown window.
+ *
+ * @param window  Top-level viewer window to resize
+ * @param area    Scroll area inside @p window that shows the content
+ * @param content Size of the displayed content (image) in pixels
+ * @param budget  Largest allowed outer scroll area size (e.g. a screen fraction)
+ * @param lastFit Return value of the previous call (default QSize() initially)
+ * @return The scroll area size applied, or an invalid QSize while @p window is
+ *         hidden; pass this value back as @p lastFit on the next call
+ */
+extern QSize fitViewerWindow(QWidget *window, QScrollArea *area, const QSize &content,
+                             const QSize &budget, const QSize &lastFit);
 
 /**
  * @brief Append an action with an optional icon and a triggered() handler to a menu
