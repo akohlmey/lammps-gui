@@ -71,9 +71,12 @@ configuration:
    clang-format -i src/*.cpp src/*.h
 
 When adding new ``.cpp`` or ``.h`` files to ``src/``, also add them to
-the ``PROJECT_SOURCES`` list in the top-level ``CMakeLists.txt`` so
-they are picked up by the build (Qt's ``AUTOMOC`` handles ``moc``
-generation automatically once the file is listed).
+the ``PROJECT_SOURCES`` list in ``cmake/Sources.cmake`` so they are
+picked up by the build (Qt's ``AUTOMOC`` handles ``moc`` generation
+automatically once the file is listed).  The top-level
+``CMakeLists.txt`` contains only the configuration options and the
+executable target; the remaining build logic is organized into include
+files in the ``cmake/`` folder.
 
 All documentation should be written in American English using plain
 ASCII characters (no typographic quotes, em-dashes written as ``--``,
@@ -215,6 +218,6 @@ All contributions must:
 
 - Follow the existing code style and pass ``clang-format``
 - Include Doxygen documentation for new public APIs
-- Register new source files in ``PROJECT_SOURCES`` in ``CMakeLists.txt``
+- Register new source files in ``PROJECT_SOURCES`` in ``cmake/Sources.cmake``
 - Not break existing functionality
 - Have GPG-signed commits

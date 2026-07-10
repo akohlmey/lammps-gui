@@ -111,7 +111,7 @@ File headers use `// -*- c++ -*-` Emacs mode line; maintain it on new files.
 - **Doxygen comments on all new public APIs.** Use `/** @brief ... */` Javadoc style for classes and methods; `///< description` for member variables. See `src/lammpsgui.h` for a comprehensive example.
 - **New public classes need a `.. doxygenclass::` entry in `doc/api_reference.rst`.** The `helpers.h` block uses `.. doxygenfile:: helpers.h :sections: func`, which renders only *free functions*, so a new helper class (e.g. an RAII guard) is otherwise missing from the generated API docs.
 - **Documentation changes in American English with plain ASCII characters** (no typographic quotes, em-dashes as `--`, etc.).
-- **New `.cpp`/`.h` files must be added to `PROJECT_SOURCES`** in `CMakeLists.txt` (around line 80). Qt's `AUTOMOC` handles `moc` generation automatically, but the file must be listed there.
+- **New `.cpp`/`.h` files must be added to `PROJECT_SOURCES`** in `cmake/Sources.cmake`. Qt's `AUTOMOC` handles `moc` generation automatically, but the file must be listed there. The top-level `CMakeLists.txt` holds only the configuration options and the executable target; the remaining build logic lives in include files under `cmake/` (Platform, Sources, Testing, Sanitizer, Documentation, Packaging).
 
 ## Architecture
 
@@ -266,6 +266,7 @@ decisions and caveats as binding unless we explicitly revise them here.
 | `thirdparty/rangeslider/rangeslider.{cpp,h}` | Dual-handle range slider widget (third-party, **CeCILL-A license**) |
 | `thirdparty/lepton_mini/` | Vendored JIT-less subset of the Lepton expression parser, namespace `LeptonMini` (MIT); built as the `lepton_mini` static library |
 | `plugin/liblammpsplugin.{c,h}` | C shim for dynamic LAMMPS library loading |
+| `cmake/` | CMake include files: `Platform`, `Sources` (the `PROJECT_SOURCES` list), `Testing`, `Sanitizer`, `Documentation`, `Packaging` |
 | `resources/` | Qt resources: icons, help tables, commands list |
 | `test/` | Unit tests (GoogleTest) and Python GUI tests (PyAutoGUI/Xvfb) |
 | `doc/` | Sphinx documentation sources (`requirements.txt` for venv) |
