@@ -284,12 +284,27 @@ void LammpsGui::createTutorialMenu()
             continue;
         }
         for (int i = 0; i < coll.count(); ++i) {
-            auto *action =
-                addMenuAction(sub, coll.logoFor(i + 1),
-                              QString("Tutorial &%1: %2").arg(i + 1).arg(coll.titles.value(i)), "",
-                              [this, c, i]() {
-                                  startTutorial(c, i + 1);
-                              });
+            QAction *action;
+            int ip1 = i + 1;
+            int dec = ip1 / 10;
+            if (i < 9) {
+                action =
+                    addMenuAction(sub, coll.logoFor(ip1),
+                                  QString("Tutorial  &%1: %2").arg(ip1).arg(coll.titles.value(i)),
+                                  "", [this, c, ip1]() {
+                                      startTutorial(c, ip1);
+                                  });
+            } else {
+                action = addMenuAction(sub, coll.logoFor(ip1),
+                                       QString("Tutorial %1&%2: %3")
+                                           .arg(dec)
+                                           .arg(ip1 - dec * 10)
+                                           .arg(coll.titles.value(i)),
+                                       "", [this, c, ip1]() {
+                                           startTutorial(c, ip1);
+                                       });
+            }
+
             // Tutorials beyond the available count appear as a "coming attractions"
             // teaser: their titles are visible but the entries cannot be launched yet.
             if (i >= coll.available) action->setEnabled(false);
