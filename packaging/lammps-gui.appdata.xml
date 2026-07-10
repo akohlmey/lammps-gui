@@ -454,7 +454,7 @@
           <li>Rename "Restart LAMMPS" to "Relaunch LAMMPS Instance" and document it.</li>
           <li>Fix bug when recentering object in image viewer</li>
           <li>Fix crash when editing partially quoted strings</li>
-          <li>Closing the editor window will close the entire app, even when a simulation is still runnig. Prevent segfaults in that case.</li>
+          <li>Closing the editor window will close the entire app, even when a simulation is still running. Prevent segfaults in that case.</li>
           <li>Must delete variable when starting a new run, since we don't always re-launch LAMMPS "clear" does not clear variables</li>
           <li>Add support for some common accelerator package command options</li>
           <li>GPU: neighbor list on host/device, accelerate only pair style</li>

@@ -1637,10 +1637,10 @@ void LammpsGui::warnHighBufferUsage()
             QSettings().value(Keys::UPDFREQ, Cfg::DATA_UPDATE_INTERVAL_DEFAULT).toInt();
         int update_suggest = std::max(1, update_val / 5);
 
-        QString mesg1("<p align=\"justified\">The I/O buffer for capturing the LAMMPS screen "
+        QString mesg1("<p align=\"justify\">The I/O buffer for capturing the LAMMPS screen "
                       "output was used by up to %1%.</p>"
-                      "<p align=\"justified\"><b>This can slow down the simulation.</b></p>");
-        QString mesg2("<p align=\"justified\">Please consider reducing the amount of output "
+                      "<p align=\"justify\"><b>This can slow down the simulation.</b></p>");
+        QString mesg2("<p align=\"justify\">Please consider reducing the amount of output "
                       "to the screen, for example by increasing the thermo interval in the "
                       "input from %1 to %2, or reducing the data update interval in the "
                       "preferences from %3 to %4, or something similar.</p>");
@@ -1956,7 +1956,7 @@ void LammpsGui::renderImage()
             textEdit->setTextCursor(saved);
             // still no system box. bail out with a suitable message
             if (!lammps.extractSetting("box_exist")) {
-                warning(this, "ImageViewer File Creation Error",
+                warning(this, "Image Viewer File Creation Error",
                         "Cannot create snapshot image from an input not creating a system box");
                 return;
             }
@@ -1982,7 +1982,7 @@ void LammpsGui::renderImage()
         imagewindow = new ImageViewer(currentFile, &lammps, this);
         imagewindow->setMinimumSize(Cfg::MINIMUM_WIDTH, Cfg::MINIMUM_HEIGHT);
     } else {
-        warning(this, "ImageViewer File Creation Error",
+        warning(this, "Image Viewer File Creation Error",
                 "Cannot create snapshot image while LAMMPS is running");
         return;
     }
@@ -2220,7 +2220,8 @@ void LammpsGui::checkUpdate()
     if (!QFile::exists(libPath)) {
         information(this, "Check for LAMMPS Update",
                     "No pre-compiled LAMMPS library found in the configuration folder. "
-                    "Click on 'Download Library' in the preferences dialog to download one.");
+                    "Click on 'Download LAMMPS shared library' in the preferences dialog "
+                    "to download one.");
         return;
     }
 
@@ -2279,11 +2280,12 @@ void LammpsGui::help()
         "editing LAMMPS input files and linked to the LAMMPS "
         "library and thus can run LAMMPS directly using the contents of the "
         "text buffer as input. It can retrieve and display information from "
-        "LAMMPS while it is running and  display visualizations created "
+        "LAMMPS while it is running and display visualizations created "
         "with the dump image command.</p>"
         "<p>The main window of the LAMMPS-GUI is a text editor window with "
         "LAMMPS specific syntax highlighting. When typing <b>Ctrl-Enter</b> "
-        "or clicking on 'Run LAMMMPS' in the 'Run' menu, LAMMPS will be run "
+        "or clicking on 'Run LAMMPS from Editor Buffer' in the 'Run' menu, "
+        "LAMMPS will be run "
         "with the contents of editor buffer as input. The output of the LAMMPS "
         "run is captured and displayed in an Output window. The thermodynamic data "
         "is displayed in a chart window. Both are updated regularly during the "
@@ -2291,9 +2293,9 @@ void LammpsGui::help()
         "can be stopped cleanly by typing <b>Ctrl-/</b> or by clicking on "
         "'Stop LAMMPS' in the 'Run' menu. While LAMMPS is not running, "
         "an image of the simulated system can be created and shown in an image "
-        "viewer window by typing <b>Ctrl-i</b> or by clicking on 'View Image' "
+        "viewer window by typing <b>Ctrl-i</b> or by clicking on 'Create Image' "
         "in the 'Run' menu. Multiple image settings can be changed through the "
-        "buttons in the menu bar and the image will be re-renderd.  In case "
+        "buttons in the menu bar and the image will be re-rendered. In case "
         "an input file contains a dump image command, LAMMPS-GUI will load "
         "the images as they are created and display them in a slide show. </p>"
         "<p>When opening a file, the editor will determine the directory "
@@ -2458,7 +2460,7 @@ void LammpsGui::startTutorial(int collection, int tutno)
     wizard = new TutorialWizard(collection, tutno, this);
     const auto infotext =
         coll.blurbs.value(tutno - 1) +
-        QString("<hr width=\"33%\"\\>\n<p align=\"center\">Click on the \"Next\" button "
+        QString("<hr width=\"33%\">\n<p align=\"center\">Click on the \"Next\" button "
                 "to select a folder.</p>");
     wizard->setFont(font());
     wizard->addPage(tutorialIntro(collection, tutno, infotext));

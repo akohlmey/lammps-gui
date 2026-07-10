@@ -50,14 +50,15 @@ TutorialCollection molecular()
         "<p>In tutorial 1 you will learn about LAMMPS input files, their syntax and "
         "structure, how to create and set up models and their interactions, how to run a "
         "minimization and a molecular dynamics trajectory, how to plot thermodynamic data "
-        "and how to create visualizations of your system</p>",
+        "and how to create visualizations of your system.</p>",
         "<p>In tutorial 2 you will learn about setting up a simulation for a molecular "
         "system with bonds.  The target is to simulate a carbon nanotube with a "
         "conventional molecular force field under growing strain and observe the response "
         "to it.  Since bonds are represented by a harmonic potential, they cannot break.  "
         "This is then compared to simulating the same system with a reactive force field "
         "(AIREBO) where bonds may be broken and formed.</p>",
-        "<p>In tutorial 3 you will learn setting up a multi-component, a polymer molecule embedded "
+        "<p>In tutorial 3 you will learn about setting up a multi-component system, a polymer "
+        "molecule embedded "
         "in liquid water.  The model employs a long-range Coulomb solver and a stretching force is "
         "applied to the polymer. This is used to demonstrate how to use the type label facility in "
         "LAMMPS to make components more generic.</p>",
@@ -132,41 +133,41 @@ TutorialCollection matsci()
         "demonstrated to scan the lattice parameter of a metal crystal, plot its energy-volume "
         "curve, and fit it to an equation of state to determine the equilibrium lattice constant "
         "and bulk modulus.</p>",
-        "In tutorial 3 a single crystal is equilibrated and then subjected to tensile and "
+        "<p>In tutorial 3 a single crystal is equilibrated and then subjected to tensile and "
         "compressive strain, the stress-strain response is extracted, and dislocation nucleation "
         "is visualized.</p>",
-        "Tutorial 4 introduces grain boundaries: first a &Sigma;5(310) symmetric tilt boundary in "
-        "fcc aluminum is constructed and its energy computed, then a &Sigma;3(111) boundary in bcc "
-        "iron is strained to fracture and the per-atom stress is analyzed.</p>",
-        "In tutorial 5 an aluminum surface is indented with rigid objects and a shaped tool is "
+        "<p>Tutorial 4 introduces grain boundaries: first a &Sigma;5(310) symmetric tilt boundary "
+        "in fcc aluminum is constructed and its energy computed, then a &Sigma;3(111) boundary in "
+        "bcc iron is strained to fracture and the per-atom stress is analyzed.</p>",
+        "<p>In tutorial 5 an aluminum surface is indented with rigid objects and a shaped tool is "
         "stamped into the surface using a hybrid potential.</p>",
-        "In tutorial 6 the full elastic stiffness tensor of crystalline silicon is computed from "
-        "small-strain deformations using the Stillinger-Weber potential.</p>",
-        "In tutorial 7 the generalized stacking fault energy (&gamma;-surface) of fcc aluminum is "
-        "traced along the &lt;112&gt; direction in the (111) plane, "
+        "<p>In tutorial 6 the full elastic stiffness tensor of crystalline silicon is computed "
+        "from small-strain deformations using the Stillinger-Weber potential.</p>",
+        "<p>In tutorial 7 the generalized stacking fault energy (&gamma;-surface) of fcc aluminum "
+        "is traced along the &lt;112&gt; direction in the (111) plane, "
         "explaining dislocation glide and partial splitting.</p>",
-        "In tutorial 8 the thermal conductivity of silicon is computed using reverse "
+        "<p>In tutorial 8 the thermal conductivity of silicon is computed using reverse "
         "non-equilibrium molecular dynamics (NEMD), and its finite-size dependence is "
         "examined.</p>",
-        "In tutorial 9 the full phonon dispersion of fcc copper is obtained by accumulating "
+        "<p>In tutorial 9 the full phonon dispersion of fcc copper is obtained by accumulating "
         "displacement correlations during a finite-temperature MD run using <b><code>fix "
         "phonon</code></b>.</p>",
-        "In tutorial 10 the zone-center phonon frequencies of silicon are computed at zero "
+        "<p>In tutorial 10 the zone-center phonon frequencies of silicon are computed at zero "
         "temperature from the dynamical matrix, and their connection to elastic constants is "
         "discussed.</p>",
-        "In tutorial 11 a primary knock-on atom (PKA) displacement cascade is simulated in "
+        "<p>In tutorial 11 a primary knock-on atom (PKA) displacement cascade is simulated in "
         "bcc iron, and the resulting Frenkel-pair defects are counted on the fly with the "
         "<b><code>compute frenkel</code></b> command.</p>",
-        "In tutorial 12 the melting temperature of fcc aluminum is determined; first by "
+        "<p>In tutorial 12 the melting temperature of fcc aluminum is determined; first by "
         "direct NPT heating and then by the more rigorous two-phase coexistence method.</p>",
-        "In tutorial 13 the self-diffusion coefficient of liquid aluminum is measured from the "
+        "<p>In tutorial 13 the self-diffusion coefficient of liquid aluminum is measured from the "
         "mean-squared displacement, and its temperature dependence is fitted to an Arrhenius law "
         "to obtain an activation energy.</p>",
-        "In tutorial 14 the chemical short-range order of the high-entropy alloy CoCrFeNi is "
+        "<p>In tutorial 14 the chemical short-range order of the high-entropy alloy CoCrFeNi is "
         "equilibrated with a hybrid molecular dynamics / Monte Carlo simulation and quantified "
         "with the Warren-Cowley parameters for three different published potentials.</p>"};
 
-    c.available = c.blurbs.size(); // fully published: all tutorials are launchable
+    c.available = c.blurbs.size(); // all tutorials of this beta collection are launchable
     return c;
 }
 

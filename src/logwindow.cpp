@@ -57,7 +57,7 @@ LogWindow::LogWindow(const QString &_filename, LammpsGui *_lammpsgui, QWidget *p
     mono_font.setFixedPitch(true);
     document()->setDefaultFont(mono_font);
 
-    summary = new QLabel("0 Warnings / Errors  -  0 Lines");
+    summary = new QLabel("0 Warnings / Errors - 0 Lines");
     summary->setMargin(1);
 
     auto *frame = new QFrame;
@@ -161,7 +161,7 @@ void LogWindow::saveAs()
     QFile file(path.absoluteFilePath());
 
     if (!file.open(QIODevice::WriteOnly | QFile::Text)) {
-        warning(this, "LogWindow Warning", "Cannot save to file " + logFileName + ": ",
+        warning(this, "LogWindow Warning", "Cannot save to file " + logFileName + ":",
                 file.errorString());
         return;
     }

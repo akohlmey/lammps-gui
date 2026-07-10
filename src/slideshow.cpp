@@ -214,20 +214,20 @@ SlideShow::SlideShow(const QString &fileName, LammpsGui *_lammpsgui, QWidget *pa
     });
 
     auto *gofirst = new QPushButton(QIcon(":/icons/go-first.svg"), "");
-    gofirst->setToolTip("Go to first Image");
+    gofirst->setToolTip("Go to first image");
     gofirst->setObjectName("first");
     gofirst->setCheckable(false);
     auto *goprev = new QPushButton(QIcon(":/icons/go-previous-2.svg"), "");
-    goprev->setToolTip("Go to previous Image");
+    goprev->setToolTip("Go to previous image");
     auto *goplay = new QPushButton(QIcon(":/icons/media-playback-start-2.svg"), "");
     goplay->setToolTip("Play animation");
     goplay->setCheckable(true);
     goplay->setChecked(playtimer);
     goplay->setObjectName("play");
     auto *gonext = new QPushButton(QIcon(":/icons/go-next-2.svg"), "");
-    gonext->setToolTip("Go to next Image");
+    gonext->setToolTip("Go to next image");
     auto *golast = new QPushButton(QIcon(":/icons/go-last.svg"), "");
-    golast->setToolTip("Go to last Image");
+    golast->setToolTip("Go to last image");
     auto *goloop = new QPushButton(QIcon(":/icons/media-playlist-repeat.svg"), "");
     goloop->setToolTip("Loop animation");
     goloop->setCheckable(true);

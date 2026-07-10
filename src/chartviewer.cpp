@@ -903,7 +903,7 @@ void ChartWindow::postProcess()
         resetRangeSliders();        // a fit re-fits to the whole data set; match the sliders
         smooth->setCurrentIndex(2); // "Both" = raw data + fit overlay
 
-        QString report = QString("Custom fit of  f(x) = %1\n").arg(expr);
+        QString report = QString("Custom fit of f(x) = %1\n").arg(expr);
         if (!label.isEmpty()) report += QString("(%1)\n").arg(label);
         report += "\n";
         for (const auto &p : fit.params)
