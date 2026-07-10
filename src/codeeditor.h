@@ -315,13 +315,6 @@ private slots:
     void getHelp();
 
     /**
-     * @brief Find help page and section for a command
-     * @param page Output parameter for help page name
-     * @param help Output parameter for help section
-     */
-    void findHelp(QString &page, QString &help);
-
-    /**
      * @brief Open help URL in browser
      */
     void openHelp();
@@ -378,6 +371,13 @@ private slots:
     void uncommentLine();
 
 private:
+    /**
+     * @brief Find help page and section for a command
+     * @param page Output parameter for help page name
+     * @param help Output parameter for help section
+     */
+    void findHelp(QString &page, QString &help);
+
     QWidget *lineNumberArea; ///< Widget for displaying line numbers
     QShortcut *helpAction;   ///< Keyboard shortcut for help
 
@@ -402,7 +402,6 @@ private:
     QMap<QString, QString> angleMap;    ///< Angle style to help page mapping
     QMap<QString, QString> dihedralMap; ///< Dihedral style to help page mapping
     QMap<QString, QString> improperMap; ///< Improper style to help page mapping
-    QMap<QString, QString> dumpMap;     ///< Dump style to help page mapping
 };
 
 #endif

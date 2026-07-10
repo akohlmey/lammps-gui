@@ -1038,7 +1038,7 @@ void CodeEditor::setDocver()
 {
     LammpsWrapper *lammps = &qobject_cast<LammpsGui *>(parent())->lammps;
     docver                = "/";
-    if (lammps) {
+    {
         QString git_branch = static_cast<const char *>(lammps->extractGlobal("git_branch"));
         if ((git_branch == "stable") || (git_branch == "maintenance")) {
             docver = "/stable/";

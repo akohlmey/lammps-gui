@@ -312,7 +312,6 @@ void ImageViewer::globalSettings()
     lightlayout->addWidget(new QLabel("Lights: "), 3, Qt::AlignLeft);
     lightlayout->addWidget(new QLabel("Ambient: "), 2, Qt::AlignRight);
     auto *ambient = new QDoubleSpinBox;
-    ambient->setObjectName("ambient");
     ambient->setRange(0.0, 1.0);
     ambient->setSingleStep(0.05);
     ambient->setValue(ambientlight);
@@ -320,7 +319,6 @@ void ImageViewer::globalSettings()
     lightlayout->addWidget(ambient, 2);
     lightlayout->addWidget(new QLabel("Key: "), 2, Qt::AlignRight);
     auto *key = new QDoubleSpinBox;
-    key->setObjectName("key");
     key->setRange(0.0, 1.0);
     key->setSingleStep(0.05);
     key->setValue(keylight);
@@ -328,7 +326,6 @@ void ImageViewer::globalSettings()
     lightlayout->addWidget(key, 2);
     lightlayout->addWidget(new QLabel("Fill: "), 2, Qt::AlignRight);
     auto *fill = new QDoubleSpinBox;
-    fill->setObjectName("fill");
     fill->setRange(0.0, 1.0);
     fill->setSingleStep(0.05);
     fill->setValue(filllight);
@@ -336,7 +333,6 @@ void ImageViewer::globalSettings()
     lightlayout->addWidget(fill, 2);
     lightlayout->addWidget(new QLabel("Back: "), 2, Qt::AlignRight);
     auto *back = new QDoubleSpinBox;
-    back->setObjectName("back");
     back->setRange(0.0, 1.0);
     back->setSingleStep(0.05);
     back->setValue(backlight);
@@ -345,7 +341,6 @@ void ImageViewer::globalSettings()
     layout->addLayout(lightlayout, idx++, 0, 1, MAXCOLS, Qt::AlignHCenter);
     layout->addWidget(new QHline, idx++, 0, 1, MAXCOLS);
 
-    n = 0;
 
     auto *bottomlayout = new QHBoxLayout;
     bottomlayout->setSpacing(LAYOUT_SPACING);
@@ -362,9 +357,9 @@ void ImageViewer::globalSettings()
     connect(apply, &QPushButton::released, &setview, &QDialog::accept);
     connect(help, &QPushButton::released, this, &ImageViewer::getHelp);
 
-    bottomlayout->addWidget(cancel, 0, Qt::AlignHCenter);
-    bottomlayout->addWidget(apply, 0, Qt::AlignHCenter);
-    bottomlayout->addWidget(help, 0, Qt::AlignHCenter);
+    bottomlayout->addWidget(cancel, 1, Qt::AlignHCenter);
+    bottomlayout->addWidget(apply, 1, Qt::AlignHCenter);
+    bottomlayout->addWidget(help, 1, Qt::AlignHCenter);
     layout->addLayout(bottomlayout, idx++, 0, 1, MAXCOLS, Qt::AlignHCenter);
     setview.setLayout(layout);
 
@@ -812,7 +807,6 @@ void ImageViewer::atomSettings()
     elevel->setWrapping(false);
     layout->addWidget(elevel, idx, n++, 1, 1);
     ++idx;
-    ++n;
     if (lammps->extractSetting("ellipsoid_flag") != 1) {
         ellipsoidbutton->setEnabled(false);
         ellipsoidbutton->setChecked(false);
@@ -857,7 +851,6 @@ void ImageViewer::atomSettings()
     auto *ttbutton = addShapeButton(tgroup, "Triangles", triflag == TRIANGLES, layout, idx, n);
     auto *tbbutton = addShapeButton(tgroup, "Both", triflag == BOTH, layout, idx, n);
     ++idx;
-    ++n;
     if (lammps->extractSetting("tri_flag") != 1) {
         tributton->setEnabled(false);
         tributton->setChecked(false);
@@ -868,7 +861,6 @@ void ImageViewer::atomSettings()
         tbbutton->setEnabled(false);
     }
 
-    n = 0;
     layout->addWidget(new QHline, idx++, 0, 1, MAXCOLS);
 
     auto *bottomlayout = new QHBoxLayout;
@@ -886,9 +878,9 @@ void ImageViewer::atomSettings()
     connect(apply, &QPushButton::released, &setview, &QDialog::accept);
     connect(help, &QPushButton::released, this, &ImageViewer::getHelp);
 
-    bottomlayout->addWidget(cancel, 0, Qt::AlignHCenter);
-    bottomlayout->addWidget(apply, 0, Qt::AlignHCenter);
-    bottomlayout->addWidget(help, 0, Qt::AlignHCenter);
+    bottomlayout->addWidget(cancel, 1, Qt::AlignHCenter);
+    bottomlayout->addWidget(apply, 1, Qt::AlignHCenter);
+    bottomlayout->addWidget(help, 1, Qt::AlignHCenter);
     layout->addLayout(bottomlayout, idx, 0, 1, MAXCOLS, Qt::AlignHCenter);
     setview.setLayout(layout);
 
@@ -1095,20 +1087,16 @@ void ImageViewer::buildFixComputeRows(QGridLayout *layout, int &idx,
         color->setCompleter(colorcompleter);
         color->setValidator(colorvalidator);
         color->setFixedSize(metrics.averageCharWidth() * 12, metrics.height() + 4);
-        color->setText(item.second->color);
         layout->addWidget(color, idx, n++);
         auto *trans = new QLineEdit(QString::number(item.second->opacity));
         trans->setValidator(transvalidator);
         trans->setFixedSize(metrics.averageCharWidth() * 8, metrics.height() + 4);
-        trans->setText(QString::number(item.second->opacity));
         layout->addWidget(trans, idx, n++);
         auto *flag1 = new QLineEdit(QString::number(item.second->flag1));
         flag1->setFixedSize(metrics.averageCharWidth() * 8, metrics.height() + 4);
-        flag1->setText(QString::number(item.second->flag1));
         layout->addWidget(flag1, idx, n++);
         auto *flag2 = new QLineEdit(QString::number(item.second->flag2));
         flag2->setFixedSize(metrics.averageCharWidth() * 8, metrics.height() + 4);
-        flag2->setText(QString::number(item.second->flag2));
         layout->addWidget(flag2, idx, n++);
         auto *help = new QPushButton(QIcon(":/icons/system-help.svg"), "");
         help->setObjectName(helpmap.value(item.second->style, QString()));
@@ -1299,7 +1287,6 @@ void ImageViewer::regionSettings()
     for (const auto &reg : regions) {
         n = 0;
         layout->addWidget(new QLabel(reg.first.c_str()), idx, n++);
-        layout->setObjectName(QString(reg.first.c_str()));
 
         auto *check = new QCheckBox("");
         check->setChecked(reg.second->enabled);
@@ -1316,27 +1303,22 @@ void ImageViewer::regionSettings()
         color->setCompleter(colorcompleter);
         color->setValidator(colorvalidator);
         color->setFixedSize(metrics.averageCharWidth() * 12, metrics.height() + 4);
-        color->setText(reg.second->color);
         layout->addWidget(color, idx, n++);
         auto *frame = new QLineEdit(QString::number(reg.second->diameter));
         frame->setValidator(framevalidator);
         frame->setFixedSize(metrics.averageCharWidth() * 8, metrics.height() + 4);
-        frame->setText(QString::number(reg.second->diameter));
         layout->addWidget(frame, idx, n++);
         auto *points = new QLineEdit(QString::number(reg.second->npoints));
         points->setValidator(pointvalidator);
         points->setFixedSize(metrics.averageCharWidth() * 10, metrics.height() + 4);
-        points->setText(QString::number(reg.second->npoints));
         layout->addWidget(points, idx, n++);
         auto *trans = new QLineEdit(QString::number(reg.second->opacity));
         trans->setValidator(transvalidator);
         trans->setFixedSize(metrics.averageCharWidth() * 8, metrics.height() + 4);
-        trans->setText(QString::number(reg.second->opacity));
         layout->addWidget(trans, idx, n++);
         ++idx;
     }
 
-    n = 0;
     layout->addWidget(new QHline, idx++, 0, 1, MAXCOLS);
 
     auto *bottomlayout = new QHBoxLayout;
@@ -1354,9 +1336,9 @@ void ImageViewer::regionSettings()
     connect(apply, &QPushButton::released, &regionview, &QDialog::accept);
     connect(help, &QPushButton::released, this, &ImageViewer::getHelp);
 
-    bottomlayout->addWidget(cancel, 0, Qt::AlignHCenter);
-    bottomlayout->addWidget(apply, 0, Qt::AlignHCenter);
-    bottomlayout->addWidget(help, 0, Qt::AlignHCenter);
+    bottomlayout->addWidget(cancel, 1, Qt::AlignHCenter);
+    bottomlayout->addWidget(apply, 1, Qt::AlignHCenter);
+    bottomlayout->addWidget(help, 1, Qt::AlignHCenter);
     layout->addLayout(bottomlayout, idx, 0, 1, MAXCOLS, Qt::AlignHCenter);
     regionview.setLayout(layout);
 
@@ -1534,7 +1516,6 @@ void ImageViewer::colorSettings()
     auto *cancel = new QPushButton(QIcon(":/icons/dialog-cancel.svg"), "&Cancel");
     auto *apply  = new QPushButton(QIcon(":/icons/dialog-ok.svg"), "&Apply");
     auto *reset  = new QPushButton(QIcon(":/icons/system-restart.svg"), "&Reset");
-    reset->setObjectName("dump_image.html");
     cancel->setAutoDefault(false);
     reset->setAutoDefault(false);
     apply->setAutoDefault(true);

@@ -255,26 +255,6 @@ bool URLDownloader::verifyChecksum(const QString &url, const QString &file)
     return true;
 }
 
-bool URLDownloader::checkNetwork()
-{
-    lastError.clear();
-
-    QNetworkRequest request{QUrl("https://www.lammps.org")};
-    request.setAttribute(QNetworkRequest::RedirectPolicyAttribute,
-                         QNetworkRequest::NoLessSafeRedirectPolicy);
-
-    QNetworkReply *reply = manager->head(request);
-
-    QEventLoop loop;
-    QObject::connect(reply, &QNetworkReply::finished, &loop, &QEventLoop::quit);
-    loop.exec();
-
-    bool ok = (reply->error() == QNetworkReply::NoError);
-    if (!ok) lastError = reply->errorString();
-    reply->deleteLater();
-    return ok;
-}
-
 // Local Variables:
 // c-basic-offset: 4
 // End:

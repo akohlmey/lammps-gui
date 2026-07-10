@@ -109,10 +109,6 @@ inline const QString LAMMPS_ICON = QStringLiteral(":/icons/lammps-icon-128x128.p
 /** status string when LAMMPS-GUI is ready */
 inline const QString STATUS_READY = QStringLiteral("Ready.");
 
-// ---- Window title prefix -------------------------------------------------
-/** window title prefix string for LAMMPS-GUI windows */
-inline const QString TITLE_PREFIX = QStringLiteral("LAMMPS-GUI - ");
-
 } // namespace Cfg
 
 /**

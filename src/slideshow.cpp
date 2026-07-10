@@ -65,7 +65,6 @@ SlideShow::SlideShow(const QString &fileName, LammpsGui *_lammpsgui, QWidget *pa
     imageLabel->setBackgroundRole(QPalette::Base);
     imageLabel->setSizePolicy(QSizePolicy::Minimum, QSizePolicy::Minimum);
     imageLabel->setScaledContents(false);
-    imageLabel->minimumSizeHint();
 
     scrollArea->setBackgroundRole(QPalette::Dark);
     scrollArea->setWidget(imageLabel);
@@ -151,7 +150,6 @@ SlideShow::SlideShow(const QString &fileName, LammpsGui *_lammpsgui, QWidget *pa
     cacheEmptyIcon.addPixmap(grayPix, QIcon::Normal);
     cacheEmptyIcon.addPixmap(grayPix, QIcon::Disabled);
     cacheButton->setIcon(cacheEmptyIcon);
-    cacheButton->setObjectName("imagecache");
 
     // a standalone slideshow (no live simulation) has no run to stop, and must
     // not offer to delete the user's own image files
@@ -186,7 +184,6 @@ SlideShow::SlideShow(const QString &fileName, LammpsGui *_lammpsgui, QWidget *pa
     // growing maximum (see addImage()) until the user sets it explicitly.
     startBox->setRange(1, 1);
     startBox->setValue(1);
-    startBox->setObjectName("startframe");
     startBox->setToolTip("First image of the active range for play, step, movie, and delete");
     startBox->setMinimumWidth(dsize.width());
     startBox->setMaximumWidth(dsize.width());
@@ -195,7 +192,6 @@ SlideShow::SlideShow(const QString &fileName, LammpsGui *_lammpsgui, QWidget *pa
 
     stopBox->setRange(1, 1);
     stopBox->setValue(1);
-    stopBox->setObjectName("stopframe");
     stopBox->setToolTip("Last image of the active range for play, step, movie, and delete");
     stopBox->setMinimumWidth(dsize.width());
     stopBox->setMaximumWidth(dsize.width());
@@ -215,8 +211,6 @@ SlideShow::SlideShow(const QString &fileName, LammpsGui *_lammpsgui, QWidget *pa
 
     auto *gofirst = new QPushButton(QIcon(":/icons/go-first.svg"), "");
     gofirst->setToolTip("Go to first image");
-    gofirst->setObjectName("first");
-    gofirst->setCheckable(false);
     auto *goprev = new QPushButton(QIcon(":/icons/go-previous-2.svg"), "");
     goprev->setToolTip("Go to previous image");
     auto *goplay = new QPushButton(QIcon(":/icons/media-playback-start-2.svg"), "");
@@ -329,9 +323,6 @@ SlideShow::SlideShow(const QString &fileName, LammpsGui *_lammpsgui, QWidget *pa
     setWindowIcon(QIcon(Cfg::MAIN_ICON));
     setWindowTitle(QString("LAMMPS-GUI - Slide Show: ") + QFileInfo(fileName).fileName());
 
-    imagefiles.clear();
-    scaleFactor = 1.0;
-    current     = 0;
     updateCacheIndicator();
 
     scrollArea->setVisible(true);

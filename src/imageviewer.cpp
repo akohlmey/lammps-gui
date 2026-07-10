@@ -512,10 +512,8 @@ ImageViewer::ImageViewer(const QString &fileName, LammpsWrapper *_lammps, Lammps
 
     auto *setviz = new QPushButton("G&lobal");
     setviz->setToolTip("Open dialog for global graphics settings");
-    setviz->setObjectName("settings");
     auto *atomviz = new QPushButton("&Atoms/Bonds");
     atomviz->setToolTip("Open dialog for atom and bond settings");
-    atomviz->setObjectName("atoms");
     auto *fixviz = new QPushButton("&Compute/Fix");
     fixviz->setToolTip("Open dialog for visualizing extra graphics from computes and fixes");
     fixviz->setObjectName("image_styles");
@@ -526,7 +524,6 @@ ImageViewer::ImageViewer(const QString &fileName, LammpsWrapper *_lammps, Lammps
     regviz->setEnabled(false);
     auto *colviz = new QPushButton("C&olors");
     colviz->setToolTip("Open dialog for customizing colors");
-    colviz->setObjectName("colors");
     auto *help = new QPushButton("Help");
     help->setToolTip("Open online help");
     help->setObjectName("visualization.html");

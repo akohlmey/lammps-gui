@@ -42,7 +42,6 @@ public:
      */
     ~LammpsRunner() override = default;
 
-    LammpsRunner()                                = delete;
     LammpsRunner(const LammpsRunner &)            = delete;
     LammpsRunner(LammpsRunner &&)                 = delete;
     LammpsRunner &operator=(const LammpsRunner &) = delete;

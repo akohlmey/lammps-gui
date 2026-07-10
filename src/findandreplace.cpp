@@ -111,7 +111,7 @@ void FindAndReplace::replaceNext()
     auto flag   = withcase->isChecked() ? Qt::CaseSensitive : Qt::CaseInsensitive;
 
     // if selected text at cursor location matches search text, replace
-    if (QString::compare(cursor.selectedText(), search->text(), flag) == 0)
+    if (QString::compare(cursor.selectedText(), text, flag) == 0)
         cursor.insertText(replace->text());
 
     findNext();

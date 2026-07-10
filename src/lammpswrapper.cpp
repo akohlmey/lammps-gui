@@ -196,16 +196,12 @@ int LammpsWrapper::extractVariableDatatype(const QString &keyword)
     switch (type) {
         case LMP_VAR_EQUAL:
             return EQUAL_STYLE;
-            break;
         case LMP_VAR_ATOM:
             return ATOM_STYLE;
-            break;
         case LMP_VAR_VECTOR:
             return VECTOR_STYLE;
-            break;
         case LMP_VAR_STRING:
             return STRING_STYLE;
-            break;
         default:
             type = -1;
             break;

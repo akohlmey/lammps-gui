@@ -272,7 +272,7 @@ void LammpsGui::createTutorialMenu()
                               });
             // Tutorials beyond the available count appear as a "coming attractions"
             // teaser: their titles are visible but the entries cannot be launched yet.
-            if (action && i >= coll.available) action->setEnabled(false);
+            if (i >= coll.available) action->setEnabled(false);
         }
     }
 }
@@ -584,7 +584,7 @@ LammpsGui::LammpsGui(QWidget *parent, const QString &filename, int width, int he
     capturer(new StdCapture), status(nullptr), cpuuse(nullptr), lastCpuBucket(-1),
     logwindow(nullptr), imagewindow(nullptr), chartwindow(nullptr), slideshow(nullptr),
     logupdater(nullptr), dirstatus(nullptr), progress(nullptr), prefdialog(nullptr),
-    lammpsstatus(nullptr), varwindow(nullptr), wizard(nullptr), runner(nullptr), isRunning(false),
+    lammpsstatus(nullptr), varwindow(nullptr), wizard(nullptr), runner(nullptr),
     runCounter(0), nthreads(1), mainx(width), mainy(height)
 {
 #if QT_CONFIG(clipboard)
@@ -634,7 +634,6 @@ LammpsGui::LammpsGui(QWidget *parent, const QString &filename, int width, int he
     QDir::setCurrent(currentDir);
     dirstatus->setText(QString(" Directory: ") + currentDir);
 
-    inspectList.clear();
     setAutoFillBackground(true);
 
     setupPlugin(settings);
@@ -1042,7 +1041,6 @@ void LammpsGui::openFile(const QString &fileName)
                 break;
             case QMessageBox::Cancel:
                 return;
-                break;
             case QMessageBox::No: // fallthrough
             default:
                 // do nothing
@@ -1222,7 +1220,6 @@ void LammpsGui::inspectFile(const QString &fileName)
         switch (rv) {
             case QMessageBox::No:
                 return;
-                break;
             case QMessageBox::Yes: // fallthrough
             default:
                 // do nothing
@@ -1373,7 +1370,6 @@ void LammpsGui::quit()
                 break;
             case QMessageBox::Cancel:
                 return;
-                break;
             case QMessageBox::No: // fallthrough
             default:
                 // do nothing
@@ -1452,7 +1448,6 @@ void LammpsGui::logUpdate()
             logwindow->moveCursor(QTextCursor::End);
             logwindow->insertPlainText(text.c_str());
             logwindow->moveCursor(QTextCursor::End);
-            logwindow->textCursor().deleteChar();
         }
     }
 
@@ -1752,7 +1747,7 @@ void LammpsGui::restartLammps()
         StdoutSilencer guard;
         lammps.close();
     }
-};
+}
 
 void LammpsGui::createLogWindow(QSettings &settings)
 {
@@ -1817,7 +1812,6 @@ void LammpsGui::doRun(bool use_buffer)
             case QMessageBox::Cancel: // falthrough
             default:
                 return;
-                break;
         }
     }
 
@@ -1842,8 +1836,7 @@ void LammpsGui::doRun(bool use_buffer)
     if (!lammps.isOpen()) return;
     capturer->beginCapture();
 
-    runner    = new LammpsRunner(this);
-    isRunning = true;
+    runner = new LammpsRunner(this);
     ++runCounter;
 
     // must delete all variables since clear does not delete them
@@ -2704,8 +2697,7 @@ void LammpsGui::startLammps()
 bool LammpsGui::eventFilter(QObject *watched, QEvent *event)
 {
     if (event->type() == QEvent::Close) {
-        autoSave();
-        quit();
+        quit(); // quit() runs autoSave() itself
         return true;
     }
     return QWidget::eventFilter(watched, event);

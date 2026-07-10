@@ -103,11 +103,8 @@ LogWindow::LogWindow(const QString &_filename, LammpsGui *_lammpsgui, QWidget *p
     applyWindowFlags(this);
 }
 
-LogWindow::~LogWindow()
-{
-    delete warnings;
-    delete summary;
-}
+// warnings and summary are Qt-parented and cleaned up by their parents
+LogWindow::~LogWindow() = default;
 
 void LogWindow::closeEvent(QCloseEvent *event)
 {

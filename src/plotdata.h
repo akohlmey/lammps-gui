@@ -62,14 +62,6 @@ public:
      */
     const std::vector<double> &column(int c) const { return cols[c]; }
 
-    /** @brief Optional units string (e.g. the LAMMPS unit system); may be empty */
-    const QString &units() const { return unitstr; }
-    /**
-     * @brief Set the optional units string
-     * @param u Units string
-     */
-    void setUnits(const QString &u) { unitstr = u; }
-
     /**
      * @brief Reset the table to a fresh set of (empty) named columns
      * @param columnNames Names of the columns to create
@@ -98,13 +90,9 @@ public:
      */
     void addColumn(const QString &name, std::vector<double> data);
 
-    /** @brief Remove all columns and data */
-    void clear();
-
 private:
     QStringList names;                     ///< per-column names
     std::vector<std::vector<double>> cols; ///< column-major numeric payload
-    QString unitstr;                       ///< optional units string
 };
 
 /**

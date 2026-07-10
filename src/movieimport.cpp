@@ -421,17 +421,14 @@ MovieImportDialog::MovieImportDialog(const QString &filename, const MovieInfo &i
     // selection of the frames to extract
     firstBox->setRange(1, movieinfo.frames);
     firstBox->setValue(1);
-    firstBox->setObjectName("firstframe");
     firstBox->setToolTip("First frame of the movie to extract");
 
     lastBox->setRange(1, movieinfo.frames);
     lastBox->setValue(movieinfo.frames);
-    lastBox->setObjectName("lastframe");
     lastBox->setToolTip("Last frame of the movie to extract");
 
     stepBox->setRange(1, movieinfo.frames);
     stepBox->setValue(1);
-    stepBox->setObjectName("frameinterval");
     stepBox->setToolTip("Extract only every n-th frame of the selected range");
 
     // keep the range ordered: the first frame must never follow the last one

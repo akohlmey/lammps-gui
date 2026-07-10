@@ -180,11 +180,9 @@ void ChartWindow::applySliderWindow()
 
 ChartWindow::ChartWindow(const QString &_filename, LammpsGui *_lammpsgui, QWidget *parent) :
     QWidget(parent), lammpsgui(_lammpsgui), menu(new QMenuBar), file(new QMenu("&File")),
-    saveAsAct(nullptr), copyAct(nullptr), exportCsvAct(nullptr), exportDatAct(nullptr),
-    exportYamlAct(nullptr), closeAct(nullptr), stopAct(nullptr), quitAct(nullptr),
-    addDataAct(nullptr), refLinesAct(nullptr), smooth(nullptr), window(nullptr), order(nullptr),
-    chartTitle(nullptr), chartYlabel(nullptr), chartXlabel(nullptr), units(nullptr), norm(nullptr),
-    filename(_filename), viewer(nullptr), active(-1)
+    smooth(nullptr), window(nullptr), order(nullptr), chartTitle(nullptr), chartYlabel(nullptr),
+    chartXlabel(nullptr), units(nullptr), norm(nullptr), filename(_filename), viewer(nullptr),
+    active(-1)
 {
     QSettings settings;
     auto *top  = new QVBoxLayout;
@@ -262,7 +260,8 @@ ChartWindow::ChartWindow(const QString &_filename, LammpsGui *_lammpsgui, QWidge
 
     columns = new QComboBox;
     row1->addWidget(menu);
-    row1->addWidget(dummy);
+    // the second addWidget() would reparent the button out of row1 again, so
+    // the hidden macOS-workaround button lives in row2 only
     row2->addWidget(dummy);
     row1->addWidget(new QLabel("Title:"));
     // in standalone plot mode give the title half the stretch to make room for X-Axis label
@@ -344,38 +343,39 @@ ChartWindow::ChartWindow(const QString &_filename, LammpsGui *_lammpsgui, QWidge
     row2->addWidget(new QLabel(" Smooth:"));
     row2->addWidget(window);
     row2->addWidget(order);
-    saveAsAct = addMenuAction(file, "&Save Graph As...", ":/icons/document-save-as.svg", this,
-                              &ChartWindow::saveAs);
-    copyAct   = addMenuAction(file, "Copy &Graph to Clipboard", ":/icons/edit-copy.svg", this,
-                              &ChartWindow::copy);
+    addMenuAction(file, "&Save Graph As...", ":/icons/document-save-as.svg", this,
+                  &ChartWindow::saveAs);
+    auto *copyAct = addMenuAction(file, "Copy &Graph to Clipboard", ":/icons/edit-copy.svg", this,
+                                  &ChartWindow::copy);
     copyAct->setShortcut(QKeySequence(QKeySequence::Copy));
-    exportCsvAct  = addMenuAction(file, "&Export data to CSV...", ":/icons/csv-file-icon.svg", this,
-                                  &ChartWindow::exportCsv);
-    exportDatAct  = addMenuAction(file, "Export data to &Gnuplot...", ":/icons/txt-file-icon.svg",
-                                  this, &ChartWindow::exportDat);
-    exportYamlAct = addMenuAction(file, "Export data to &YAML...", ":/icons/yaml-file-icon.svg",
-                                  this, &ChartWindow::exportYaml);
+    addMenuAction(file, "&Export data to CSV...", ":/icons/csv-file-icon.svg", this,
+                  &ChartWindow::exportCsv);
+    addMenuAction(file, "Export data to &Gnuplot...", ":/icons/txt-file-icon.svg", this,
+                  &ChartWindow::exportDat);
+    addMenuAction(file, "Export data to &YAML...", ":/icons/yaml-file-icon.svg", this,
+                  &ChartWindow::exportYaml);
     file->addSeparator();
     addMenuAction(file, "Chart &Style...", ":/icons/preferences-desktop-personal.svg", this,
                   &ChartWindow::changeStyle);
-    refLinesAct = addMenuAction(file, "&Reference Lines...", ":/icons/reference-lines.svg", this,
-                                &ChartWindow::referenceLines);
+    addMenuAction(file, "&Reference Lines...", ":/icons/reference-lines.svg", this,
+                  &ChartWindow::referenceLines);
     addMenuAction(file, "&Postprocess...", ":/icons/chart-smooth.svg", this,
                   &ChartWindow::postProcess);
     // "Add Data from File..." is only relevant in standalone file-plot mode
     if (!lammpsgui) {
-        addDataAct = addMenuAction(file, "&Add Data from File...", ":/icons/application-plot.svg",
-                                   this, &ChartWindow::addDataFile);
+        addMenuAction(file, "&Add Data from File...", ":/icons/application-plot.svg", this,
+                      &ChartWindow::addDataFile);
     }
     file->addSeparator();
-    stopAct =
+    auto *stopAct =
         addMenuAction(file, "Stop &Run", ":/icons/process-stop.svg", this, &ChartWindow::stopRun);
     stopAct->setShortcut(QKeySequence(Qt::CTRL | Qt::Key_Slash));
     // without a live simulation there is nothing to stop
-    if (!lammpsgui) stopAct->setVisible(false); // no live simulation to stop
-    closeAct = addMenuAction(file, "&Close", ":/icons/window-close.svg", this, &QWidget::close);
+    if (!lammpsgui) stopAct->setVisible(false);
+    auto *closeAct =
+        addMenuAction(file, "&Close", ":/icons/window-close.svg", this, &QWidget::close);
     closeAct->setShortcut(QKeySequence(Qt::CTRL | Qt::Key_W));
-    quitAct =
+    auto *quitAct =
         addMenuAction(file, "&Quit", ":/icons/application-exit.svg", this, &ChartWindow::quit);
     quitAct->setShortcut(QKeySequence(Qt::CTRL | Qt::Key_Q));
     if (!lammpsgui) quitAct->setVisible(false); // quit == close in standalone mode
@@ -508,7 +508,6 @@ void ChartWindow::loadData(const PlotData &data, int xcol, const QList<int> &yco
     viewer->setXLabelFormat("%.6g");
     // now that data is loaded, (re)render the active column
     if (!cols.empty()) viewer->setColumn(cols[active >= 0 ? active : 0].get());
-    if (!data.units().isEmpty()) setUnits(data.units());
     // pre-fill the X-axis label field in standalone plot mode
     if (chartXlabel) chartXlabel->setText(xlabel);
     setRangeEnabled(true);

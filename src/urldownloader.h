@@ -61,31 +61,10 @@ public:
     bool download(const QString &url, const QString &file, bool showDialog = false);
 
     /**
-     * @brief Check if a website can be accessed over the network
-     *
-     * Attempts an HTTP HEAD request to www.lammps.org to verify that the
-     * network is reachable.
-     *
-     * @return true if the site can be reached, false otherwise
-     */
-    bool checkNetwork();
-
-    /**
      * @brief Return the last error message
      * @return Human-readable error description or empty string
      */
     QString errorString() const { return lastError; }
-
-    /**
-     * @brief Fetch raw content from a given HTTPS URL
-     *
-     * Performs a synchronous (blocking) GET request to the given URL and
-     * returns the response body as a QByteArray.
-     *
-     * @param url  The HTTPS URL to fetch from
-     * @return     Response body or empty QByteArray on error
-     */
-    QByteArray fetchRawContent(const QString &url);
 
     /**
      * @brief Return the remote SHA-256 checksum for a given URL
@@ -109,6 +88,17 @@ public:
 private:
     void configureProxy();
     bool verifyChecksum(const QString &url, const QString &file);
+
+    /**
+     * @brief Fetch raw content from a given HTTPS URL
+     *
+     * Performs a synchronous (blocking) GET request to the given URL and
+     * returns the response body as a QByteArray. Used by getRemoteChecksum().
+     *
+     * @param url  The HTTPS URL to fetch from
+     * @return     Response body or empty QByteArray on error
+     */
+    QByteArray fetchRawContent(const QString &url);
 
     QNetworkAccessManager *manager; ///< Qt network access manager
     QWidget *parentWidget;          ///< Parent widget for dialogs

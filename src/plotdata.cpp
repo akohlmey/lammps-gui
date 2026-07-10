@@ -47,13 +47,6 @@ void PlotData::addColumn(const QString &name, std::vector<double> data)
     cols.push_back(std::move(data));
 }
 
-void PlotData::clear()
-{
-    names.clear();
-    cols.clear();
-    unitstr.clear();
-}
-
 /* -------------------------------------------------------------------- */
 
 namespace {

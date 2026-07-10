@@ -226,10 +226,6 @@ private:
     QMenuBar *menu;       ///< Menu bar
     QMenu *file;          ///< File menu
     QComboBox *columns;   ///< Dropdown for selecting chart
-    QAction *saveAsAct, *copyAct, *exportCsvAct, *exportDatAct, *exportYamlAct; ///< Export actions
-    QAction *closeAct, *stopAct, *quitAct; ///< Window control actions
-    QAction *addDataAct;                   ///< "Add Data from File..." (standalone only)
-    QAction *refLinesAct;                  ///< "Reference Lines..."
     QComboBox *smooth;                     ///< Smoothing algorithm selector
     QSpinBox *window, *order;              ///< Smoothing parameters
     QLineEdit *chartTitle, *chartYlabel,
