@@ -236,6 +236,8 @@ target_link_libraries(test_fitting PRIVATE GTest::gtest_main)
 
 gtest_discover_tests(test_fitting)
 
+# only run framebuffer tests without sanitizers
+if(ENABLE_SANITIZER STREQUAL "none")
 ########################################################################
 # Tests that check the GUI environment and the GUI
 # IMPORTANT NOTE: we must use a different display number for the -n flag
@@ -269,3 +271,4 @@ add_test(NAME Framebuffer.GUIEditorChecks
 )
 set_tests_properties(Framebuffer.GUIEditorChecks
                      PROPERTIES ENVIRONMENT "${PYTHON_TEST_ENVIRONMENT}")
+endif()
