@@ -791,7 +791,7 @@ void SlideShow::loop()
 {
     auto *button = qobject_cast<QPushButton *>(sender());
     doLoop       = !doLoop;
-    button->setChecked(doLoop);
+    if (button) button->setChecked(doLoop);
 }
 
 void SlideShow::zoomIn()

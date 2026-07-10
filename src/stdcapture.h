@@ -36,7 +36,7 @@ public:
     /**
      * @brief Destructor - closes the capture pipe descriptors
      */
-    virtual ~StdCapture();
+    ~StdCapture();
 
     /**
      * @brief Start capturing stdout

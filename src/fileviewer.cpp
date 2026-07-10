@@ -87,6 +87,9 @@ FileViewer::FileViewer(const QString &_filename, LammpsGui *_lammpsgui, const QS
         QTextStream in(&file);
         content = in.readAll();
         file.close();
+    } else {
+        // report the failure in the viewer instead of showing an empty window
+        content = QString("\nCould not open file %1: %2\n").arg(fileName, file.errorString());
     }
 
     QSettings settings;

@@ -318,20 +318,21 @@ void ImageViewer::globalSettings()
     auto *cancel = new QPushButton(QIcon(":/icons/dialog-cancel.svg"), "&Cancel");
     auto *apply  = new QPushButton(QIcon(":/icons/dialog-ok.svg"), "&Apply");
     auto *help   = new QPushButton(QIcon(":/icons/system-help.svg"), "&Help");
-    help->setObjectName("dump_image.html");
     cancel->setAutoDefault(false);
+    help->setObjectName("dump_image.html");
     help->setAutoDefault(false);
     apply->setAutoDefault(true);
     apply->setDefault(true);
     apply->setFocus();
+
     connect(cancel, &QPushButton::released, &setview, &QDialog::reject);
     connect(apply, &QPushButton::released, &setview, &QDialog::accept);
     connect(help, &QPushButton::released, this, &ImageViewer::getHelp);
 
-    bottomlayout->addWidget(cancel, 1, Qt::AlignHCenter);
-    bottomlayout->addWidget(apply, 1, Qt::AlignHCenter);
-    bottomlayout->addWidget(help, 1, Qt::AlignHCenter);
-    layout->addLayout(bottomlayout, idx++, 0, 1, MAXCOLS, Qt::AlignHCenter);
+    bottomlayout->addWidget(cancel);
+    bottomlayout->addWidget(apply);
+    bottomlayout->addWidget(help);
+    layout->addLayout(bottomlayout, idx++, 0, 1, MAXCOLS);
     setview.setLayout(layout);
 
     int rv = setview.exec();
@@ -849,10 +850,10 @@ void ImageViewer::atomSettings()
     connect(apply, &QPushButton::released, &setview, &QDialog::accept);
     connect(help, &QPushButton::released, this, &ImageViewer::getHelp);
 
-    bottomlayout->addWidget(cancel, 1, Qt::AlignHCenter);
-    bottomlayout->addWidget(apply, 1, Qt::AlignHCenter);
-    bottomlayout->addWidget(help, 1, Qt::AlignHCenter);
-    layout->addLayout(bottomlayout, idx, 0, 1, MAXCOLS, Qt::AlignHCenter);
+    bottomlayout->addWidget(cancel);
+    bottomlayout->addWidget(apply);
+    bottomlayout->addWidget(help);
+    layout->addLayout(bottomlayout, idx, 0, 1, MAXCOLS);
     setview.setLayout(layout);
 
     int rv = setview.exec();
@@ -1159,7 +1160,8 @@ void ImageViewer::fixSettings()
         layout->addWidget(new QLabel("Color:"), idx, n++, Qt::AlignHCenter);
         layout->addWidget(new QLabel("Opacity:"), idx, n++, Qt::AlignHCenter);
         layout->addWidget(new QLabel("Flag #1:"), idx, n++, Qt::AlignHCenter);
-        layout->addWidget(new QLabel("Flag #2:"), idx++, n++, Qt::AlignHCenter);
+        layout->addWidget(new QLabel("Flag #2:"), idx, n++, Qt::AlignHCenter);
+        layout->addWidget(new QLabel("Help:"), idx++, n++, Qt::AlignHCenter);
         layout->addWidget(new QHline, idx++, 0, 1, MAXCOLS);
 
         buildFixComputeRows(layout, idx, fixes, fix_map);
@@ -1199,7 +1201,9 @@ void ImageViewer::readRegionRows(QGridLayout *layout)
     for (int idx = 4; idx < static_cast<int>(regions.size()) + 4; ++idx) {
         int n       = 0;
         auto *label = gridWidget<QLabel>(layout, idx, n);
-        auto id     = label->text().toStdString();
+        // guard against layout drift like readFixComputeRows() does
+        if (!label || !regions.count(label->text().toStdString())) continue;
+        auto id = label->text().toStdString();
         if (auto *box = gridWidget<QCheckBox>(layout, idx, n))
             regions[id]->enabled = box->isChecked();
         if (auto *combo = gridWidget<QComboBox>(layout, idx, n))
@@ -1307,10 +1311,10 @@ void ImageViewer::regionSettings()
     connect(apply, &QPushButton::released, &regionview, &QDialog::accept);
     connect(help, &QPushButton::released, this, &ImageViewer::getHelp);
 
-    bottomlayout->addWidget(cancel, 1, Qt::AlignHCenter);
-    bottomlayout->addWidget(apply, 1, Qt::AlignHCenter);
-    bottomlayout->addWidget(help, 1, Qt::AlignHCenter);
-    layout->addLayout(bottomlayout, idx, 0, 1, MAXCOLS, Qt::AlignHCenter);
+    bottomlayout->addWidget(cancel);
+    bottomlayout->addWidget(apply);
+    bottomlayout->addWidget(help);
+    layout->addLayout(bottomlayout, idx, 0, 1, MAXCOLS);
     regionview.setLayout(layout);
 
     int rv = regionview.exec();
@@ -1585,9 +1589,9 @@ void ImageViewer::colorSettings()
                 saveJsonColors(&colorview, colors, lights);
             });
 
-    bottomlayout->addWidget(cancel, 1, Qt::AlignHCenter);
-    bottomlayout->addWidget(apply, 1, Qt::AlignHCenter);
-    bottomlayout->addWidget(reset, 1, Qt::AlignHCenter);
+    bottomlayout->addWidget(cancel);
+    bottomlayout->addWidget(apply);
+    bottomlayout->addWidget(reset);
     mainLayout->addLayout(bottomlayout);
 
     // Size the dialog relative to screen dimensions (same approach as AboutDialog)
