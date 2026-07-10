@@ -113,6 +113,20 @@ ChartWindow Class
 
 -----
 
+ChartColumn Struct
+------------------
+
+``ChartWindow`` owns one ``ChartColumn`` per thermo column: a plain,
+move-only data holder (``src/chartviewer.h``) that bundles the column's
+``PlotSeries`` objects, cached data bounds, smoothing parameters, display
+style, and overlay/reference-line state.  The single ``ChartViewer`` is
+rebound (via ``setColumn()``) to whichever column is currently selected.
+
+.. doxygenstruct:: ChartColumn
+   :members:
+
+-----
+
 ChartViewer Class
 -----------------
 
