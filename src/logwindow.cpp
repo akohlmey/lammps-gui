@@ -169,7 +169,7 @@ void LogWindow::saveAs()
     QTextStream out(&file);
     QString text = toPlainText();
     out << text;
-    if (text.back().toLatin1() != '\n') out << "\n"; // add final newline if missing
+    if (!text.endsWith('\n')) out << "\n"; // add final newline if missing
     file.close();
 }
 

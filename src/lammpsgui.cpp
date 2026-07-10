@@ -996,7 +996,7 @@ void LammpsGui::updateVariables()
                 }
             }
             if (ref.hasMatch()) {
-                auto name = ref.captured(use.lastCapturedIndex());
+                auto name = ref.captured(ref.lastCapturedIndex());
                 if (!known.contains(name)) known.append(name);
             }
         }
@@ -1159,26 +1159,28 @@ void LammpsGui::openImages()
 
 void LammpsGui::purgeInspectList()
 {
-    for (auto *item : inspectList) {
-        if (item->info) {
-            if (!item->info->isVisible()) {
-                delete item->info;
-                item->info = nullptr;
-            }
+    // iterator loop: erase() both removes the entry (a range-for would be left
+    // with invalidated iterators) and hands back the next valid position
+    for (auto it = inspectList.begin(); it != inspectList.end();) {
+        auto *item = *it;
+        if (item->info && !item->info->isVisible()) {
+            delete item->info;
+            item->info = nullptr;
         }
-        if (item->data) {
-            if (!item->data->isVisible()) {
-                delete item->data;
-                item->data = nullptr;
-            }
+        if (item->data && !item->data->isVisible()) {
+            delete item->data;
+            item->data = nullptr;
         }
-        if (item->image) {
-            if (!item->image->isVisible()) {
-                delete item->image;
-                item->image = nullptr;
-            }
+        if (item->image && !item->image->isVisible()) {
+            delete item->image;
+            item->image = nullptr;
         }
-        if (!item->image && !item->data && !item->info) inspectList.removeOne(item);
+        if (!item->image && !item->data && !item->info) {
+            delete item;
+            it = inspectList.erase(it);
+        } else {
+            ++it;
+        }
     }
 }
 
@@ -1306,9 +1308,10 @@ void LammpsGui::inspectFile(const QString &fileName)
 
 void LammpsGui::writeFile(const QString &fileName)
 {
+    // empty name means the save dialog was cancelled: nothing to save to
+    if (fileName.isEmpty()) return;
+
     QFileInfo path(fileName);
-    currentFile = path.fileName();
-    currentDir  = path.absolutePath();
     QFile file(path.absoluteFilePath());
 
     if (!file.open(QIODevice::WriteOnly | QFile::Text)) {
@@ -1316,6 +1319,9 @@ void LammpsGui::writeFile(const QString &fileName)
                 file.errorString());
         return;
     }
+    // update the session state only after the file was opened successfully
+    currentFile = path.fileName();
+    currentDir  = path.absolutePath();
     setWindowTitle(QString("LAMMPS-GUI - Editor - " + currentFile));
     QDir::setCurrent(currentDir);
 
@@ -1324,7 +1330,7 @@ void LammpsGui::writeFile(const QString &fileName)
     QTextStream out(&file);
     QString text = textEdit->toPlainText();
     out << text;
-    if (text.back().toLatin1() != '\n') out << "\n"; // add final newline if missing
+    if (!text.endsWith('\n')) out << "\n"; // add final newline if missing
     file.close();
     dirstatus->setText(QString(" Directory: ") + currentDir);
     // update list of files for completion since we may have changed the working directory
@@ -1627,7 +1633,8 @@ void LammpsGui::warnHighBufferUsage()
         int thermo_val = lammps.extractSetting("thermo_every");
         int thermo_suggest =
             Cfg::THERMO_SUGGEST_MULTIPLIER * static_cast<int>(round(bufferuse * thermo_val));
-        int update_val     = QSettings().value(Keys::UPDFREQ, 100).toInt();
+        int update_val =
+            QSettings().value(Keys::UPDFREQ, Cfg::DATA_UPDATE_INTERVAL_DEFAULT).toInt();
         int update_suggest = std::max(1, update_val / 5);
 
         QString mesg1("<p align=\"justified\">The I/O buffer for capturing the LAMMPS screen "
@@ -1653,8 +1660,11 @@ void LammpsGui::finalizeChartData()
         else
             step = static_cast<int>(lammps.lastThermoAs<int64_t>("step", 0));
         const int ncols = lammps.lastThermoAs<int>("num", 0);
+        // decide once before the loop: testing numCharts() per column would stop
+        // creating charts as soon as the first addChart() call succeeded
+        const bool needcharts = (chartwindow->numCharts() == 0);
         for (int i = 0; i < ncols; ++i) {
-            if (chartwindow->numCharts() == 0) {
+            if (needcharts) {
                 QString label = lammps.lastThermoString("keyword", i);
                 // no need to store the timestep column
                 if (label == "Step") continue;
@@ -1869,7 +1879,7 @@ void LammpsGui::doRun(bool use_buffer)
 
     logupdater = new QTimer(this);
     connect(logupdater, &QTimer::timeout, this, &LammpsGui::logUpdate);
-    logupdater->start(settings.value(Keys::UPDFREQ, "10").toInt());
+    logupdater->start(settings.value(Keys::UPDFREQ, Cfg::DATA_UPDATE_INTERVAL_DEFAULT).toInt());
 }
 
 void LammpsGui::plotDataFile()
