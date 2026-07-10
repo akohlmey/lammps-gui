@@ -22,6 +22,8 @@
 #include <QFile>
 #include <QFileDialog>
 #include <QFileInfo>
+#include <QFont>
+#include <QFontInfo>
 #include <QIcon>
 #include <QImage>
 #include <QImageReader>
@@ -30,6 +32,7 @@
 #include <QPixmap>
 #include <QProcess>
 #include <QPushButton>
+#include <QSettings>
 #include <QStandardPaths>
 #include <QStringList>
 #include <QStyle>
@@ -81,6 +84,19 @@ bool capture_is_active = false;
 // will be allocated and initialized in main() to avoid segfault on macOS
 std::unique_ptr<QFont> GUI_MONOFONT;
 std::unique_ptr<QFont> GUI_ALLFONT;
+
+// build the configured fixed-width font from the settings (see helpers.h)
+QFont monoFontFromSettings()
+{
+    QSettings settings;
+    QFontInfo mono_info(*GUI_MONOFONT);
+    QFont mono_font;
+    mono_font.setFamily(settings.value(Keys::MONOFAMILY, mono_info.family()).toString());
+    mono_font.setPointSize(settings.value(Keys::MONOSIZE, mono_info.pointSize()).toInt());
+    mono_font.setStyleHint(GUI_MONOFONT->styleHint());
+    mono_font.setFixedPitch(true);
+    return mono_font;
+}
 
 // re-exec the current process in place; returns only if the re-exec failed
 void relaunchApplication()
@@ -312,28 +328,23 @@ void exportImage(QWidget *parent, QImage *image, const QString &title)
             QString cmd = "magick";
             QStringList args{tmpfile.fileName(), fileName};
             if (!hasExe("magick")) cmd = "convert";
-            auto *convert = new QProcess(parent);
-            convert->start(cmd, args);
-            if (!convert->waitForFinished(-1)) {
-                const QString errmesg = convert->errorString();
-                delete convert;
+            QProcess convert;
+            convert.start(cmd, args);
+            if (!convert.waitForFinished(-1)) {
                 QFile::remove(fileName);
                 warning(parent, title + " Error",
                         "ImageMagick conversion failed while saving to file " + fileName + ":",
-                        errmesg);
+                        convert.errorString());
                 return;
             }
-            if (convert->exitStatus() != QProcess::NormalExit || convert->exitCode() != 0) {
-                const QString stderrText = QString::fromLocal8Bit(convert->readAllStandardError());
-                delete convert;
+            if (convert.exitStatus() != QProcess::NormalExit || convert.exitCode() != 0) {
+                const QString stderrText = QString::fromLocal8Bit(convert.readAllStandardError());
                 QFile::remove(fileName);
                 warning(parent, title + " Error",
                         "ImageMagick conversion failed while saving to file " + fileName + ":",
                         stderrText.trimmed().isEmpty() ? "" : "Details:\n" + stderrText.trimmed());
-
                 return;
             }
-            delete convert;
             if (!QFile::exists(fileName)) {
                 warning(parent, title + " Error",
                         "ImageMagick reported success, but the output file " + fileName +

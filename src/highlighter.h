@@ -73,7 +73,7 @@ private:
     QRegularExpression isString;              ///< Regular strings
     QTextCharFormat formatString;             ///< Format for strings
 
-    int in_triple; ///< State flag for multi-line triple-quoted strings
+    bool in_triple; ///< State flag for multi-line triple-quoted strings
 };
 #endif
 // Local Variables:

@@ -72,6 +72,28 @@
 #include "tutorials.h"
 
 namespace {
+
+// read one thermo column value, converting from its native datatype
+double lastThermoData(LammpsWrapper &lammps, int datatype, int column)
+{
+    if (datatype == 0) // int
+        return lammps.lastThermoAs<int>("data", column);
+    if (datatype == 2) // double
+        return lammps.lastThermoAs<double>("data", column);
+    if (datatype == 4) // bigint
+        return static_cast<double>(lammps.lastThermoAs<int64_t>("data", column));
+    return 0.0;
+}
+
+// export the https_proxy environment variable into the LAMMPS instance, taken
+// from the environment or, failing that, from the preferences
+void applyProxySetting(LammpsWrapper &lammps, QSettings &settings)
+{
+    auto proxy = QString::fromLocal8Bit(qgetenv("https_proxy"));
+    if (proxy.isEmpty()) proxy = settings.value(Keys::HTTPS_PROXY, "").toString();
+    if (!proxy.isEmpty()) lammps.command(QString("shell putenv https_proxy=") + proxy);
+}
+
 const QString citeme("# When using LAMMPS-GUI in your project, please cite: "
                      "https://doi.org/10.33011/livecoms.6.1.3037\n");
 const QString bannerstyle("CodeEditor {background-position: center center; "
@@ -611,12 +633,7 @@ LammpsGui::LammpsGui(QWidget *parent, const QString &filename, int width, int he
     settings.setValue(Keys::ALLFAMILY, allFont.family());
     settings.setValue(Keys::ALLSIZE, allFont.pointSize());
 
-    QFont monoFont;
-    QFontInfo monoInfo(*GUI_MONOFONT);
-    monoFont.setFamily(settings.value(Keys::MONOFAMILY, monoInfo.family()).toString());
-    monoFont.setPointSize(settings.value(Keys::MONOSIZE, monoInfo.pointSize()).toInt());
-    monoFont.setStyleHint(GUI_MONOFONT->styleHint());
-    monoFont.setFixedPitch(true);
+    QFont monoFont = monoFontFromSettings();
     settings.setValue(Keys::MONOFAMILY, monoFont.family());
     settings.setValue(Keys::MONOSIZE, monoFont.pointSize());
 
@@ -744,9 +761,7 @@ LammpsGui::LammpsGui(QWidget *parent, const QString &filename, int width, int he
     settings.endGroup();
 
     // apply https proxy setting: prefer environment variable or fall back to preferences value
-    auto https_proxy = QString::fromLocal8Bit(qgetenv("https_proxy"));
-    if (https_proxy.isEmpty()) https_proxy = settings.value(Keys::HTTPS_PROXY, "").toString();
-    if (!https_proxy.isEmpty()) lammps.command(QString("shell putenv https_proxy=") + https_proxy);
+    applyProxySetting(lammps, settings);
 
     // finally show the window
     showNormal();
@@ -1483,7 +1498,7 @@ int LammpsGui::updateRunStatus()
     // update cpu usage
     int percent_cpu = static_cast<int>(lammps.getThermo("cpuuse"));
     // clear any pending error messages from polling those thermo keywords
-    lammps.getLastErrorMessage(nullptr, 0);
+    (void)lammps.lastErrorMessage(); // read-and-clear any pending error
 
     cpuuse->setText(QString("%1%CPU").arg(percent_cpu, 4));
     // pick a color bucket for the CPU-usage label. Re-applying a stylesheet
@@ -1576,14 +1591,7 @@ void LammpsGui::updateChartData(int step, int ncols)
 
     for (int i = 0; i < ncols; ++i) {
         const int datatype = lammps.lastThermoAs<int>("type", i);
-        double data        = 0.0;
-        if (datatype == 0) // int
-            data = lammps.lastThermoAs<int>("data", i);
-        else if (datatype == 2) // double
-            data = lammps.lastThermoAs<double>("data", i);
-        else if (datatype == 4) // bigint
-            data = static_cast<double>(lammps.lastThermoAs<int64_t>("data", i));
-        chartwindow->addData(step, data, i);
+        chartwindow->addData(step, lastThermoData(lammps, datatype, i), i);
     }
 }
 
@@ -1665,14 +1673,7 @@ void LammpsGui::finalizeChartData()
                 chartwindow->addChart(label, i);
             }
             const int datatype = lammps.lastThermoAs<int>("type", i);
-            double data        = 0.0;
-            if (datatype == 0) // int
-                data = lammps.lastThermoAs<int>("data", i);
-            else if (datatype == 2) // double
-                data = lammps.lastThermoAs<double>("data", i);
-            else if (datatype == 4) // bigint
-                data = static_cast<double>(lammps.lastThermoAs<int64_t>("data", i));
-            chartwindow->addData(step, data, i);
+            chartwindow->addData(step, lastThermoData(lammps, datatype, i), i);
         }
         chartwindow->resetZoom();
         chartwindow->setRangeEnabled(true);
@@ -1779,7 +1780,7 @@ void LammpsGui::createChartWindow(QSettings &settings)
     chartwindow->setMinimumSize(Cfg::MINIMUM_WIDTH, Cfg::MINIMUM_HEIGHT);
 
     const auto *unitptr = static_cast<const char *>(lammps.extractGlobal("units"));
-    if (unitptr) chartwindow->setUnits(QString("%1").arg(unitptr));
+    if (unitptr) chartwindow->setUnits(QString::fromUtf8(unitptr));
     auto normflag = lammps.extractSetting("thermo_norm");
     chartwindow->setNorm(normflag != 0);
     chartwindow->setRangeEnabled(false);
@@ -1851,9 +1852,7 @@ void LammpsGui::doRun(bool use_buffer)
     }
 
     // apply https proxy setting: prefer environment variable or fall back to preferences value
-    auto https_proxy = QString::fromLocal8Bit(qgetenv("https_proxy"));
-    if (https_proxy.isEmpty()) https_proxy = settings.value(Keys::HTTPS_PROXY, "").toString();
-    if (!https_proxy.isEmpty()) lammps.command(QString("shell putenv https_proxy=") + https_proxy);
+    applyProxySetting(lammps, settings);
 
     connect(runner, &LammpsRunner::resultReady, this, &LammpsGui::runDone);
     connect(runner, &LammpsRunner::finished, runner, &QObject::deleteLater);
@@ -2040,14 +2039,7 @@ void LammpsGui::createVariableWindow()
     varwindow->setMinimumSize(100, 50);
     varwindow->setText("(none)");
 
-    QSettings settings;
-    QFont monoFont;
-    QFontInfo monoInfo(*GUI_MONOFONT);
-    monoFont.setFamily(settings.value(Keys::MONOFAMILY, monoInfo.family()).toString());
-    monoFont.setPointSize(settings.value(Keys::MONOSIZE, monoInfo.pointSize()).toInt());
-    monoFont.setStyleHint(GUI_MONOFONT->styleHint());
-    monoFont.setFixedPitch(true);
-    varwindow->setFont(monoFont);
+    varwindow->setFont(monoFontFromSettings());
 
     varwindow->setFrameStyle(QFrame::Sunken);
     varwindow->setFrameShape(QFrame::Panel);
@@ -2745,7 +2737,7 @@ bool LammpsGui::downloadTutorialFiles(const QString &dir, const QList<DownloadIt
         QFile dlfile(localPath);
         QFileInfo dlpath(localPath);
         if (dlfile.open(QIODevice::ReadOnly)) {
-            QString line = (const char *)dlfile.readLine();
+            QString line = QString::fromLocal8Bit(dlfile.readLine());
             line         = line.trimmed();
             dlfile.close();
 
@@ -2805,7 +2797,7 @@ void LammpsGui::setupTutorial(int collection, int tutno, const QString &dir, boo
     QList<DownloadItem> downloads;
     if (manifest.open(QIODevice::ReadOnly)) {
         while (!manifest.atEnd()) {
-            line = (const char *)manifest.readLine();
+            line = QString::fromLocal8Bit(manifest.readLine());
             line = line.trimmed();
 
             // skip empty and comment lines

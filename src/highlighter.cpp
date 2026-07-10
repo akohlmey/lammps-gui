@@ -201,9 +201,9 @@ void Highlighter::highlightBlock(const QString &text)
     }
 
     // numbers
-    QRegularExpression numbers[] = {isNumber1, isNumber2, isNumber3, isNumber4};
-    for (auto &number : numbers) {
-        auto num = number.globalMatch(text);
+    const QRegularExpression *numbers[] = {&isNumber1, &isNumber2, &isNumber3, &isNumber4};
+    for (const auto *number : numbers) {
+        auto num = number->globalMatch(text);
         while (num.hasNext()) {
             auto hit = num.next();
             setFormat(hit.capturedStart(), hit.capturedLength(), formatNumber);

@@ -45,8 +45,6 @@
 #include <QVariant>
 #include <QWidget>
 
-#include <cstdlib>
-
 CodeEditor::CodeEditor(QWidget *parent) :
     QPlainTextEdit(parent), currentComp(nullptr), commandComp(new QCompleter(this)),
     fixComp(new QCompleter(this)), computeComp(new QCompleter(this)),
@@ -784,6 +782,25 @@ void CodeEditor::uncommentLine()
     }
 }
 
+// Pop up (or hide) the completion list of currentComp for the given prefix,
+// hiding the popup of a previously active completer. Shared by all completion
+// contexts past the first word in CodeEditor::runCompletion().
+void CodeEditor::popupCompletion(const QString &prefix, QAbstractItemView *oldPopup)
+{
+    currentComp->setCompletionPrefix(prefix);
+    if (oldPopup && (oldPopup != currentComp->popup())) oldPopup->hide();
+    auto *popup = currentComp->popup();
+    // if the word is already a complete command, remove an existing popup
+    if (prefix == currentComp->currentCompletion()) {
+        if (popup->isVisible()) popup->hide();
+        return;
+    }
+    QRect cr = cursorRect();
+    cr.setWidth(popup->sizeHintForColumn(0) + popup->verticalScrollBar()->sizeHint().width());
+    popup->setAlternatingRowColors(true);
+    currentComp->complete(cr);
+}
+
 void CodeEditor::runCompletion()
 {
     QAbstractItemView *popup = nullptr;
@@ -798,8 +815,8 @@ void CodeEditor::runCompletion()
     // QTextCursor::WordUnderCursor is unusable here since it recognizes '/' as word boundary.
     // Work around it by manually searching for the beginning and end position of the word
     // under the cursor and then using that substring.
-    int begin = qMin(cursor.positionInBlock(), line.length() - 1);
     line      = cursor.block().text();
+    int begin = qMin(cursor.positionInBlock(), line.length() - 1);
     while (begin >= 0) {
         if (line[begin].isSpace()) break;
         --begin;
@@ -876,21 +893,7 @@ void CodeEditor::runCompletion()
         else if (selected.startsWith("f_") || selected.startsWith("F_"))
             currentComp = fixidComp;
 
-        if (currentComp) {
-            currentComp->setCompletionPrefix(words[1]);
-            if (popup && (popup != currentComp->popup())) popup->hide();
-            popup = currentComp->popup();
-            // if the command is already a complete command, remove existing popup
-            if (words[1] == currentComp->currentCompletion()) {
-                if (popup->isVisible()) popup->hide();
-                return;
-            }
-            QRect cr = cursorRect();
-            cr.setWidth(popup->sizeHintForColumn(0) +
-                        popup->verticalScrollBar()->sizeHint().width());
-            popup->setAlternatingRowColors(true);
-            currentComp->complete(cr);
-        }
+        if (currentComp) popupCompletion(words[1], popup);
         // completions for third word
     } else if ((words.size() > 2) && (words[2] == selected)) {
         // no completion on comment lines
@@ -917,21 +920,7 @@ void CodeEditor::runCompletion()
             } else
                 currentComp = fileComp;
         }
-        if (currentComp) {
-            currentComp->setCompletionPrefix(words[2]);
-            if (popup && (popup != currentComp->popup())) popup->hide();
-            popup = currentComp->popup();
-            // if the command is already a complete command, remove existing popup
-            if (words[2] == currentComp->currentCompletion()) {
-                if (popup->isVisible()) popup->hide();
-                return;
-            }
-            QRect cr = cursorRect();
-            cr.setWidth(popup->sizeHintForColumn(0) +
-                        popup->verticalScrollBar()->sizeHint().width());
-            popup->setAlternatingRowColors(true);
-            currentComp->complete(cr);
-        }
+        if (currentComp) popupCompletion(words[2], popup);
         // completions for fourth word
     } else if ((words.size() > 3) && (words[3] == selected)) {
         // no completion on comment lines
@@ -958,21 +947,7 @@ void CodeEditor::runCompletion()
         else if ((words[0] == "read_data") && selected.startsWith("ex"))
             currentComp = extraComp;
 
-        if (currentComp) {
-            currentComp->setCompletionPrefix(words[3]);
-            if (popup && (popup != currentComp->popup())) popup->hide();
-            popup = currentComp->popup();
-            // if the command is already a complete command, remove existing popup
-            if (words[3] == currentComp->currentCompletion()) {
-                if (popup->isVisible()) popup->hide();
-                return;
-            }
-            QRect cr = cursorRect();
-            cr.setWidth(popup->sizeHintForColumn(0) +
-                        popup->verticalScrollBar()->sizeHint().width());
-            popup->setAlternatingRowColors(true);
-            currentComp->complete(cr);
-        }
+        if (currentComp) popupCompletion(words[3], popup);
         // reference located anywhere further right in the line
     } else if (words.size() > 4) {
         currentComp = nullptr;
@@ -985,21 +960,7 @@ void CodeEditor::runCompletion()
         else if ((words[0] == "read_data") && selected.startsWith("ex"))
             currentComp = extraComp;
 
-        if (currentComp) {
-            currentComp->setCompletionPrefix(selected);
-            if (popup && (popup != currentComp->popup())) popup->hide();
-            popup = currentComp->popup();
-            // if the command is already a complete command, remove existing popup
-            if (selected == currentComp->currentCompletion()) {
-                if (popup->isVisible()) popup->hide();
-                return;
-            }
-            QRect cr = cursorRect();
-            cr.setWidth(popup->sizeHintForColumn(0) +
-                        popup->verticalScrollBar()->sizeHint().width());
-            popup->setAlternatingRowColors(true);
-            currentComp->complete(cr);
-        }
+        if (currentComp) popupCompletion(selected, popup);
     }
 }
 

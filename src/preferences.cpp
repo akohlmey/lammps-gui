@@ -425,11 +425,7 @@ static void loadGuiFonts(QSettings *settings, QFont &all_font, QFont &mono_font)
     all_font.setPointSize(settings->value(Keys::ALLSIZE, all_info.pointSize()).toInt());
     all_font.setStyleHint(GUI_ALLFONT->styleHint());
 
-    QFontInfo mono_info(*GUI_MONOFONT);
-    mono_font.setFamily(settings->value(Keys::MONOFAMILY, mono_info.family()).toString());
-    mono_font.setPointSize(settings->value(Keys::MONOSIZE, mono_info.pointSize()).toInt());
-    mono_font.setStyleHint(GUI_MONOFONT->styleHint());
-    mono_font.setFixedPitch(true);
+    mono_font = monoFontFromSettings();
 }
 
 void GeneralTab::newAllFont()
@@ -719,7 +715,7 @@ void AcceleratorTab::updateAccel()
     auto *field = findChild<QLineEdit *>("nthreads");
     if (field) {
         if ((choice == AcceleratorTab::None) || (choice == AcceleratorTab::Opt) ||
-            (lammps->configHasOmpSupport() == 0)) {
+            !lammps->configHasOmpSupport()) {
             field->setText("1");
             field->setEnabled(false);
         } else {

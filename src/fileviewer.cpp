@@ -92,14 +92,7 @@ FileViewer::FileViewer(const QString &_filename, LammpsGui *_lammpsgui, const QS
         content = QString("\nCould not open file %1: %2\n").arg(fileName, file.errorString());
     }
 
-    QSettings settings;
-    QFont mono_font;
-    QFontInfo mono_info(*GUI_MONOFONT);
-    mono_font.setFamily(settings.value(Keys::MONOFAMILY, mono_info.family()).toString());
-    mono_font.setPointSize(settings.value(Keys::MONOSIZE, mono_info.pointSize()).toInt());
-    mono_font.setStyleHint(GUI_MONOFONT->styleHint());
-    mono_font.setFixedPitch(true);
-    document()->setDefaultFont(mono_font);
+    document()->setDefaultFont(monoFontFromSettings());
 
     document()->setPlainText(content);
     moveCursor(QTextCursor::Start, QTextCursor::MoveAnchor);

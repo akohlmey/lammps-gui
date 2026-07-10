@@ -34,6 +34,13 @@ extern std::unique_ptr<QFont> GUI_MONOFONT;
 extern std::unique_ptr<QFont> GUI_ALLFONT;
 
 /**
+ * @brief Build the configured fixed-width font from the application settings
+ * @return Fixed-pitch QFont with the family and point size stored in the
+ *         settings, falling back to the platform default GUI_MONOFONT
+ */
+QFont monoFontFromSettings();
+
+/**
  * @brief Compare two date strings in LAMMPS "DD MMM YYYY" format (e.g. "22 Jul 2025")
  * @param one First date string
  * @param two Second date string

@@ -690,10 +690,9 @@ void SlideShow::movie()
             args << "-r" << fps;
             args << fileName;
 
-            auto *ffmpeg = new QProcess(this);
-            ffmpeg->start("ffmpeg", args);
-            ffmpeg->waitForFinished(-1);
-            delete ffmpeg;
+            QProcess ffmpeg;
+            ffmpeg.start("ffmpeg", args);
+            ffmpeg.waitForFinished(-1);
         } else {
             warning(this, "SlideShow Error",
                     "Cannot create temporary file for generating movie:", concatfile.errorString());
@@ -713,10 +712,9 @@ void SlideShow::movie()
         args << fileName;
 
         // run the conversion command
-        auto *convert = new QProcess(this);
-        convert->start(cmd, args);
-        convert->waitForFinished(-1);
-        delete convert;
+        QProcess convert;
+        convert.start(cmd, args);
+        convert.waitForFinished(-1);
     }
 }
 

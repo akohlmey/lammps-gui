@@ -17,6 +17,7 @@
 #include <QString>
 #include <QStringList>
 
+class QAbstractItemView;
 class QCompleter;
 class QContextMenuEvent;
 class QDragEnterEvent;
@@ -377,6 +378,13 @@ private:
      * @param help Output parameter for help section
      */
     void findHelp(QString &page, QString &help);
+
+    /**
+     * @brief Pop up (or hide) the completion list of the active completer
+     * @param prefix   Word (prefix) under the cursor to complete
+     * @param oldPopup Popup of the previously active completer, hidden if different
+     */
+    void popupCompletion(const QString &prefix, QAbstractItemView *oldPopup);
 
     QWidget *lineNumberArea; ///< Widget for displaying line numbers
     QShortcut *helpAction;   ///< Keyboard shortcut for help

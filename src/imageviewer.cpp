@@ -1560,7 +1560,7 @@ void ImageViewer::createImage()
             lammps->command(QString("neigh_modify exclude group all %1").arg(group));
             lammps->command("run 0 post no");
         }
-        if (lammps->hasError()) lammps->getLastErrorMessage(nullptr, 0);
+        if (lammps->hasError()) (void)lammps->lastErrorMessage(); // clear pending error
     }
 
     // attempt to clean up if a previous render left our dump defined
@@ -1851,7 +1851,7 @@ void ImageViewer::updatePeratom()
             }
 
             // clear error status, if needed:
-            lammps->getLastErrorMessage(nullptr, 0);
+            (void)lammps->lastErrorMessage(); // read-and-clear any pending error
         }
 
         // add compatible fixes to the list
@@ -1875,7 +1875,7 @@ void ImageViewer::updatePeratom()
             }
 
             // clear error status, if needed:
-            lammps->getLastErrorMessage(nullptr, 0);
+            (void)lammps->lastErrorMessage(); // read-and-clear any pending error
         }
     }
     // some more general dump custom properties

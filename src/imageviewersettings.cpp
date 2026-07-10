@@ -1175,9 +1175,9 @@ void ImageViewer::fixSettings()
     cancel->setAutoDefault(false);
     apply->setAutoDefault(true);
     apply->setDefault(true);
-    layout->addWidget(cancel, idx, 0, 1, MAXCOLS / 3, Qt::AlignHCenter);
-    layout->addWidget(apply, idx, MAXCOLS / 3, 1, MAXCOLS / 3, Qt::AlignHCenter);
-    layout->addWidget(help, idx, 2 * (MAXCOLS / 3), 1, MAXCOLS / 3, Qt::AlignHCenter);
+    layout->addWidget(cancel, idx, 0, 1, MAXCOLS / 3);
+    layout->addWidget(apply, idx, MAXCOLS / 3, 1, MAXCOLS / 3);
+    layout->addWidget(help, idx, 2 * (MAXCOLS / 3), 1, MAXCOLS / 3);
     connect(cancel, &QPushButton::released, &fixview, &QDialog::reject);
     connect(apply, &QPushButton::released, &fixview, &QDialog::accept);
     connect(help, &QPushButton::released, this, &ImageViewer::getHelp);

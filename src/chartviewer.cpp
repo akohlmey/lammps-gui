@@ -70,6 +70,27 @@ constexpr int SLIDER_RANGE       = 1000;
 constexpr double SLIDER_FRACTION = 1.0 / static_cast<double>(SLIDER_RANGE);
 constexpr int LAYOUT_SPACING     = 6;
 
+// Translate the smoothing-choice index (Raw/Smooth/Both, kept in sync with
+// the preferences dialog) into the raw/smooth display flags.
+void smoothFlagsFromChoice(int choice, bool &doRaw, bool &doSmooth)
+{
+    switch (choice) {
+        case 0:
+            doRaw    = true;
+            doSmooth = false;
+            break;
+        case 1:
+            doRaw    = false;
+            doSmooth = true;
+            break;
+        case 2: // fallthrough
+        default:
+            doRaw    = true;
+            doSmooth = true;
+            break;
+    }
+}
+
 // Widen a (near) empty [lo, hi] range to a small symmetric/relative band so the
 // axis is never degenerate. Shared by the X and Y branches of getMinMax().
 void padEmptyRange(double &lo, double &hi)
@@ -216,21 +237,7 @@ ChartWindow::ChartWindow(const QString &_filename, LammpsGui *_lammpsgui, QWidge
 
     // plot smoothing
     int smoothchoice = settings.value(Keys::SMOOTHCHOICE, 0).toInt();
-    switch (smoothchoice) {
-        case 0:
-            doRaw    = true;
-            doSmooth = false;
-            break;
-        case 1:
-            doRaw    = false;
-            doSmooth = true;
-            break;
-        case 2: // fallthrough
-        default:
-            doRaw    = true;
-            doSmooth = true;
-            break;
-    }
+    smoothFlagsFromChoice(smoothchoice, doRaw, doSmooth);
     // list of choices must be kept in sync with list in preferences
     smooth = new QComboBox;
     smooth->addItem("Raw");
@@ -1291,21 +1298,7 @@ void ChartWindow::referenceLines()
 
 void ChartWindow::selectSmooth(int)
 {
-    switch (smooth->currentIndex()) {
-        case 0:
-            doRaw    = true;
-            doSmooth = false;
-            break;
-        case 1:
-            doRaw    = false;
-            doSmooth = true;
-            break;
-        case 2: // fallthrough
-        default:
-            doRaw    = true;
-            doSmooth = true;
-            break;
-    }
+    smoothFlagsFromChoice(smooth->currentIndex(), doRaw, doSmooth);
     // the processed-slot label does not depend on the Raw/Smooth/Both choice; it
     // is "Smooth" unless a post-process fit overrode it (set in postProcess and
     // restored on column switch in changeChart)
