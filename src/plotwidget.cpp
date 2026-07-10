@@ -15,7 +15,6 @@
 
 #include <QFont>
 #include <QFontMetricsF>
-#include <QImage>
 #include <QPaintEvent>
 #include <QPainter>
 #include <QPen>
@@ -84,11 +83,6 @@ void PlotWidget::setTitle(const QString &title)
     update();
 }
 
-QString PlotWidget::title() const
-{
-    return m_title;
-}
-
 void PlotWidget::setXTitle(const QString &title)
 {
     m_xaxis.title = title;
@@ -128,12 +122,6 @@ void PlotWidget::setYRange(double min, double max)
 void PlotWidget::setXLabelFormat(const QString &fmt)
 {
     m_xaxis.labelFormat = fmt;
-    update();
-}
-
-void PlotWidget::setYLabelFormat(const QString &fmt)
-{
-    m_yaxis.labelFormat = fmt;
     update();
 }
 
@@ -184,15 +172,6 @@ void PlotWidget::clearSeries()
         m_series.clear();
         update();
     }
-}
-
-QImage PlotWidget::renderToImage(const QSize &size) const
-{
-    QImage image(size, QImage::Format_RGB32);
-    image.fill(Qt::white);
-    QPainter p(&image);
-    doRender(p, QRectF(QPointF(0.0, 0.0), QSizeF(size)));
-    return image;
 }
 
 void PlotWidget::paintEvent(QPaintEvent *)

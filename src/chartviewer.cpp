@@ -1714,24 +1714,6 @@ bool appendColumnPoint(ChartColumn &col, double x, double y)
     return true;
 }
 
-// Replace a column's raw series with a full point list (file/standalone load),
-// recompute its cached bounds, then redraw.
-void setColumnPoints(PlotWidget *plot, ChartColumn &col, const QList<QPointF> &points)
-{
-    col.series->replace(points);
-    col.lastX   = points.isEmpty() ? -1.0 : points.last().x();
-    col.rawXmin = col.rawYmin = 1.0e100;
-    col.rawXmax = col.rawYmax = -1.0e100;
-    for (const auto &p : points) {
-        col.rawXmin = qMin(col.rawXmin, p.x());
-        col.rawXmax = qMax(col.rawXmax, p.x());
-        col.rawYmin = qMin(col.rawYmin, p.y());
-        col.rawYmax = qMax(col.rawYmax, p.y());
-    }
-    refreshColumn(plot, col);
-    resetColumnZoom(plot, col);
-}
-
 // Set the raw-series display style and redraw.
 void setColumnDisplayStyle(PlotWidget *plot, ChartColumn &col, ChartDisplayMode mode,
                            const QColor &color, qreal width, qreal pointSize)
@@ -1785,15 +1767,6 @@ void addColumnOverlay(PlotWidget *plot, ChartColumn &col, const QList<QPointF> &
     s->replace(pts);
     addColumnSeries(plot, s.get(), color, col.rawWidth);
     col.overlaySeries.push_back(std::move(s));
-    resetColumnZoom(plot, col);
-}
-
-// Remove all overlay series from the column and the plot.
-void clearColumnOverlay(PlotWidget *plot, ChartColumn &col)
-{
-    for (auto &s : col.overlaySeries)
-        plot->removeSeries(s.get());
-    col.overlaySeries.clear();
     resetColumnZoom(plot, col);
 }
 
@@ -1857,13 +1830,6 @@ void setColumnSmoothFlags(ChartColumn &col, bool doRaw, bool doSmooth, int windo
     col.doSmooth = doSmooth;
     col.window   = window;
     col.order    = order;
-}
-
-void setColumnSmoothParam(PlotWidget *plot, ChartColumn &col, bool doRaw, bool doSmooth, int window,
-                          int order)
-{
-    setColumnSmoothFlags(col, doRaw, doSmooth, window, order);
-    refreshColumn(plot, col);
 }
 
 // Replace a column's raw series with a full point list and recompute its cached
@@ -1934,20 +1900,6 @@ void ChartViewer::setColumn(ChartColumn *c)
 
 /* -------------------------------------------------------------------- */
 
-void ChartViewer::addPlotSeries(PlotSeries *s, const QColor &color, qreal width)
-{
-    addColumnSeries(plot, s, color, width);
-}
-
-/* -------------------------------------------------------------------- */
-
-void ChartViewer::stylePlotSeries(PlotSeries *s, const QColor &color, qreal width)
-{
-    styleColumnSeries(plot, s, color, width);
-}
-
-/* -------------------------------------------------------------------- */
-
 void ChartViewer::addPoint(double x, double y)
 {
     if (appendColumnPoint(*col, x, y)) {
@@ -1983,13 +1935,6 @@ QString ChartViewer::getName() const
 
 /* -------------------------------------------------------------------- */
 
-QString ChartViewer::getTLabel() const
-{
-    return plot->title();
-}
-
-/* -------------------------------------------------------------------- */
-
 QString ChartViewer::getXLabel() const
 {
     return plot->xTitle();
@@ -2018,13 +1963,6 @@ void ChartViewer::resetZoom()
 
 /* -------------------------------------------------------------------- */
 
-void ChartViewer::smoothParam(bool _doRaw, bool _doSmooth, int _window, int _order)
-{
-    setColumnSmoothParam(plot, *col, _doRaw, _doSmooth, _window, _order);
-}
-
-/* -------------------------------------------------------------------- */
-
 void ChartViewer::setTLabel(const QString &tlabel)
 {
     plot->setTitle(tlabel);
@@ -2049,13 +1987,6 @@ void ChartViewer::setXLabel(const QString &xlabel)
 void ChartViewer::setXLabelFormat(const QString &fmt)
 {
     plot->setXLabelFormat(fmt);
-}
-
-/* -------------------------------------------------------------------- */
-
-void ChartViewer::setPoints(const QList<QPointF> &points)
-{
-    setColumnPoints(plot, *col, points);
 }
 
 /* -------------------------------------------------------------------- */
@@ -2091,23 +2022,9 @@ void ChartViewer::addOverlaySeries(const QList<QPointF> &pts, const QString &nam
 
 /* -------------------------------------------------------------------- */
 
-void ChartViewer::clearOverlaySeries()
-{
-    clearColumnOverlay(plot, *col);
-}
-
-/* -------------------------------------------------------------------- */
-
 void ChartViewer::setReferenceLines(const QList<RefLine> &lines)
 {
     setColumnReferenceLines(plot, *col, lines);
-}
-
-/* -------------------------------------------------------------------- */
-
-void ChartViewer::clearVerticalLines()
-{
-    clearColumnVerticalLines(plot, *col);
 }
 
 /* -------------------------------------------------------------------- */
@@ -2125,13 +2042,6 @@ void ChartViewer::setRefLabelStyle(double pointSize, double distance, bool boxed
 }
 
 /* -------------------------------------------------------------------- */
-
-void ChartViewer::renderSeries(PlotSeries *line, std::unique_ptr<PlotSeries> &points,
-                               ChartDisplayMode mode, const QColor &color, qreal width,
-                               qreal pointSize)
-{
-    renderColumnSeries(plot, line, points, mode, color, width, pointSize);
-}
 
 void ChartViewer::updateSmooth()
 {

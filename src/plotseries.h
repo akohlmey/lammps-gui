@@ -64,8 +64,6 @@ struct PlotSeries {
     void setVisible(bool v) { visible = v; }
     /** @brief Whether the series is visible */
     bool isVisible() const { return visible; }
-    /** @brief Remove all points */
-    void clear() { points.clear(); }
 };
 
 /**
