@@ -4,7 +4,6 @@
 # lammps-gui target to exist (the coverage flags are applied to it).
 ##########################################################################
 
-option(ENABLE_TESTING "Build unit tests" OFF)
 if(ENABLE_TESTING AND (NOT CMAKE_CROSSCOMPILING) AND (CMAKE_SYSTEM_NAME STREQUAL "Linux"))
   message(STATUS "Testing is enabled")
   include(CTest)

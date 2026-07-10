@@ -5,6 +5,7 @@ project(lammps-gui
   LANGUAGES CXX
   DESCRIPTION "The LAMMPS GUI"
   HOMEPAGE_URL "https://lammps-gui.lammps.org/")
+
 include(GNUInstallDirs)
 
 ##################################################################################
@@ -14,6 +15,8 @@ option(LAMMPS_GUI_USE_PLUGIN "Load LAMMPS library dynamically at runtime" ON)
 # build html documentation by default
 option(BUILD_DOC "Build LAMMPS-GUI HTML documentation" ON)
 option(BUILD_DOC_ONLY "Build only the documentation, skip the application" OFF)
+# testing support is off by default
+option(ENABLE_TESTING "Build unit tests" OFF)
 ##################################################################################
 
 # add automatic Qt infrastructure rules
@@ -21,7 +24,7 @@ set(CMAKE_AUTOUIC OFF)
 set(CMAKE_AUTOMOC ON)
 set(CMAKE_AUTORCC ON)
 
-# follow the default setting of LAMMPS
+# same as LAMMPS' default
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
