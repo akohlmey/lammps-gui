@@ -1649,8 +1649,24 @@ void ImageViewer::createImage()
         lammps->command("uncompute " + bondComputeId);
     }
 
+    // restore the pre-render state on every exit path: remove the temporary
+    // molecule atoms/group created above and reset the render-status icon,
+    // otherwise a failed render leaves the icon stuck on "active" and the
+    // leftover atoms corrupt every subsequent render
+    auto restoreRenderState = [&]() {
+        if (molecule != "none") {
+            lammps->command("neigh_modify exclude none");
+            lammps->command(QString("delete_atoms group %1 compress no").arg(group));
+            lammps->command(QString("group %1 delete").arg(group));
+            group = oldgroup;
+        }
+        if (renderstatus)
+            renderstatus->setPixmap(renderstatus->property("idlePix").value<QPixmap>());
+    };
+
     // display error message
     if (!errmsg.isEmpty()) {
+        restoreRenderState();
         // ignore "Invalid LAMMPS handle", but report other errors
         if (!errmsg.contains("Invalid LAMMPS handle"))
             warning(this, "Image Viewer File Creation Error",
@@ -1666,24 +1682,21 @@ void ImageViewer::createImage()
         QFile::remove(dumpdir.absoluteFilePath(f));
 
     // read of new image failed. nothing left to do.
-    if (newImage.isNull()) return;
+    if (newImage.isNull()) {
+        restoreRenderState();
+        return;
+    }
 
-    // show show image
+    // show image
     image = newImage;
     imageLabel->setPixmap(QPixmap::fromImage(image));
     imageLabel->setMinimumSize(image.width(), image.height());
     imageLabel->resize(image.width(), image.height());
     adjustWindowSize();
-    if (renderstatus) renderstatus->setPixmap(renderstatus->property("idlePix").value<QPixmap>());
+    restoreRenderState();
     repaint();
     adjustWindowSize();
-
-    if (molecule != "none") {
-        lammps->command("neigh_modify exclude none");
-        lammps->command(QString("delete_atoms group %1 compress no").arg(group));
-        lammps->command(QString("group %1 delete").arg(group));
-        group = oldgroup;
-    }
+    updateActions();
 }
 
 void ImageViewer::saveAs()
