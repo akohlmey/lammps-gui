@@ -119,7 +119,7 @@ constexpr double pte_mass[] = {
  * except the value for H, which is taken from R.S. Rowland & R. Taylor,
  * J.Phys.Chem., 100, 7384 - 7391, 1996. Radii that are not available in
  * either of these publications have RvdW = 2.00 \AA
- * The radii for Ions (Na, K, Cl, Ca, Mg, and Cs are based on the CHARMM27
+ * The radii for ions (Na, K, Cl, Ca, Mg, and Cs) are based on the CHARMM27
  * Rmin/2 parameters for (SOD, POT, CLA, CAL, MG, CES) by default.
  */
 constexpr double pte_vdw_radius[] = {
@@ -1286,13 +1286,6 @@ bool ImageViewer::eventFilter(QObject *watched, QEvent *event)
     return QDialog::eventFilter(watched, event);
 }
 
-// This function creates a visualization of the current system using the
-// "dump image" command and reads and displays the renderd image.
-// To visualize molecules we create new atoms with create_atoms and
-// put them into a new, temporary group and then visualize that group.
-// After rendering the image, the atoms and group are deleted.
-// to update bond data, we also need to issue a "run 0" command.
-
 // Collect all widget state and LAMMPS-derived data required to assemble the
 // dump-image command into a plain struct, so the command itself is built by
 // the pure (GUI-free, testable) buildDumpImageCommand().  As a side effect
@@ -1511,6 +1504,12 @@ void ImageViewer::syncAtomSizeWidgets()
     }
 }
 
+// This function creates a visualization of the current system using the
+// "dump image" command and reads and displays the rendered image.
+// To visualize molecules we create new atoms with create_atoms and
+// put them into a new, temporary group and then visualize that group.
+// After rendering the image, the atoms and group are deleted.
+// To update bond data, we also need to issue a "run 0" command.
 void ImageViewer::createImage()
 {
     // no point in trying to update the image when triggered after the destructor started

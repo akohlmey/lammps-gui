@@ -118,7 +118,7 @@ protected:
     /** @brief Open a file in a read-only viewer dialog */
     void viewFile(const QString &filename);
 
-    /** @brief Open a file for inspection (data files, etc.) */
+    /** @brief Read a restart file into LAMMPS and open the inspection windows */
     void inspectFile(const QString &filename);
 
     /** @brief Write current editor content to a file */
@@ -127,10 +127,10 @@ protected:
     /** @brief Update the recent files list */
     void updateRecents(const QString &filename = "");
 
-    /** @brief Clear the list of index-style variables */
+    /** @brief Delete all variables defined in the LAMMPS instance */
     void clearVariables();
 
-    /** @brief Update variables in LAMMPS from the variables list */
+    /** @brief Rebuild the variables list from the editor buffer */
     void updateVariables();
 
     /**
@@ -220,7 +220,7 @@ private slots:
     /** @brief Open one or more image files in a standalone snapshot viewer */
     void openImages();
 
-    /** @brief Inspect a data file */
+    /** @brief Select and inspect a restart file */
     void inspect();
 
     /** @brief Open a file from the recent files list */

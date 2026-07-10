@@ -34,7 +34,7 @@ public:
     StdCapture &operator=(StdCapture &&)      = delete;
 
     /**
-     * @brief Destructor - restores stdout and frees buffers
+     * @brief Destructor - closes the capture pipe descriptors
      */
     virtual ~StdCapture();
 
@@ -78,7 +78,7 @@ private:
     int m_oldStdOut;        ///< Original stdout file descriptor
     bool m_capturing;       ///< Flag indicating if capture is active
     std::string m_captured; ///< Buffer for captured output
-    int maxread;            ///< Maximum bytes to read at once
+    int maxread;            ///< High-water mark of bytes read per chunk (for getBufferUse)
 
     std::vector<char> buf; ///< Internal read buffer
 };

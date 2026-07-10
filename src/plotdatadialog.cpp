@@ -153,7 +153,7 @@ void PlotDataDialog::computeColumn()
     const int ncol = workingData.columnCount();
     const int nrow = workingData.rowCount();
 
-    // build a map of sanitized column name → column index for LeptonMini variables
+    // map "<sanitized column name>_first" to the column's first-row value for LeptonMini
     std::map<std::string, double> constants;
     for (int c = 0; c < ncol; ++c) {
         const std::string var = sanitizeVarName(workingData.columnName(c));

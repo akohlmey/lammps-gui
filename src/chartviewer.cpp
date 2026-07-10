@@ -231,7 +231,7 @@ ChartWindow::ChartWindow(const QString &_filename, LammpsGui *_lammpsgui, QWidge
             doSmooth = true;
             break;
     }
-    // list of choices must be kepy in sync with list in preferences
+    // list of choices must be kept in sync with list in preferences
     smooth = new QComboBox;
     smooth->addItem("Raw");
     // the processed-series slot always holds the smoothed data ("Smooth"); a
@@ -1411,7 +1411,7 @@ PlotData ChartWindow::chartsToPlotData() const
     return data;
 }
 
-// write the assembled chart data to a file using the given formatter
+// write the already formatted chart data to a file
 static void writeExport(QWidget *parent, const QString &caption, const QString &defaultname,
                         const QString &filter, const QString &text)
 {
@@ -1507,9 +1507,9 @@ bool ChartWindow::eventFilter(QObject *watched, QEvent *event)
 
 // ---- column rendering pipeline ------------------------------------------
 // These free functions render a ChartColumn onto a given PlotWidget. They are
-// deliberately independent of any particular ChartViewer instance so that, once
-// the multi-view layout is collapsed, a single shared PlotWidget can be pointed
-// at any column. ChartViewer's methods below are thin forwarders onto them.
+// deliberately independent of any particular ChartViewer instance so that the
+// single shared PlotWidget can be pointed at any column. ChartViewer's methods
+// below are thin forwarders onto them.
 
 namespace {
 
@@ -1577,7 +1577,7 @@ QRectF columnMinMax(const ChartColumn &col)
             }
         }
     }
-    // note: vlines (vertical reference lines) are decorative and excluded
+    // note: vlines (reference lines) are decorative and excluded
 
     // avoid (nearly) empty ranges on either axis
     padEmptyRange(xmin, xmax);
@@ -1806,7 +1806,6 @@ void setColumnReferenceLines(PlotWidget *plot, ChartColumn &col, const QList<Ref
     plot->update();
 }
 
-// Apply smoothing flags/parameters to the column and redraw.
 // Apply smoothing flags/parameters to the column WITHOUT redrawing (so a
 // non-active column can be updated without touching the shared plot).
 void setColumnSmoothFlags(ChartColumn &col, bool doRaw, bool doSmooth, int window, int order)

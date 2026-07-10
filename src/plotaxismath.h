@@ -52,7 +52,7 @@ std::vector<double> tickValues(double min, double max, double interval, double a
  *               string defaults to "%g"
  * @return The formatted label
  *
- * Mirrors the semantics of QValueAxis::setLabelFormat(): an integer conversion
+ * Follows the usual printf conventions: an integer conversion
  * specifier (d, i, o, u, x, X, c) formats the value as an integer (rounded);
  * a floating specifier (e, E, f, F, g, G, a, A) formats it as a double. Any
  * length modifier in the format is normalized so passing, e.g., "%d" is safe.

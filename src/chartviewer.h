@@ -63,8 +63,8 @@ struct RefLine {
  *
  * ChartWindow provides a GUI for displaying and manipulating multiple
  * charts showing time-series data from LAMMPS simulations (thermodynamic
- * output). It supports features like data smoothing, normalization,
- * zoom/pan, and export to various formats (PNG, CSV, YAML, DAT).
+ * output). It supports data smoothing, zooming via range sliders, and
+ * export to various formats (PNG, CSV, YAML, DAT).
  */
 class ChartWindow : public QWidget {
     Q_OBJECT
@@ -167,7 +167,7 @@ private slots:
     void changeStyle();                   ///< Edit the current chart's display style
     void postProcess();                   ///< Run an analysis on the current chart's data
     void addDataFile();                   ///< Add data from another file as overlay series
-    void referenceLines();                ///< Edit vertical reference lines for all charts
+    void referenceLines();                ///< Edit reference lines for all charts
     void selectSmooth(int selection);     ///< Select smoothing algorithm
     void updateSmooth();                  ///< Update smoothing parameters
     void updateTLabel();                  ///< Update chart title
@@ -222,13 +222,13 @@ private:
     /// and the active column's data range (so a view-only change preserves zoom).
     void applySliderWindow();
 
-    LammpsGui *lammpsgui; ///< Main widget pointer for receiving signals
-    bool doRaw, doSmooth; ///< Flags for displaying raw/smoothed data
-    QMenuBar *menu;       ///< Menu bar
-    QMenu *file;          ///< File menu
-    QComboBox *columns;   ///< Dropdown for selecting chart
-    QComboBox *smooth;                     ///< Smoothing algorithm selector
-    QSpinBox *window, *order;              ///< Smoothing parameters
+    LammpsGui *lammpsgui;     ///< Main widget pointer for receiving signals
+    bool doRaw, doSmooth;     ///< Flags for displaying raw/smoothed data
+    QMenuBar *menu;           ///< Menu bar
+    QMenu *file;              ///< File menu
+    QComboBox *columns;       ///< Dropdown for selecting chart
+    QComboBox *smooth;        ///< Smoothing algorithm selector
+    QSpinBox *window, *order; ///< Smoothing parameters
     QLineEdit *chartTitle, *chartYlabel,
         *chartXlabel;             ///< Chart labels (chartXlabel standalone only)
     QLabel *units;                ///< Units display
@@ -268,8 +268,8 @@ enum class ChartDisplayMode {
  * Holds everything specific to a single plotted column: its neutral PlotSeries
  * objects, cached data bounds, smoothing parameters, display style, and the
  * overlay/reference-line state. It is a plain (non-QWidget) value type,
- * move-only because of its unique_ptr<PlotSeries> members, so that a single
- * renderer can eventually be pointed at any column on demand.
+ * move-only because of its unique_ptr<PlotSeries> members, so that the single
+ * shared renderer can be pointed at any column on demand.
  */
 struct ChartColumn {
     int index      = -1;                       ///< Chart index (thermo column id)
@@ -306,14 +306,14 @@ struct ChartColumn {
 };
 
 /**
- * @brief Individual chart viewer for displaying a single time-series
+ * @brief Rebindable view of a single ChartColumn
  *
- * ChartViewer displays a single thermodynamic property as a function
- * of simulation time. It owns the neutral PlotSeries data objects and
- * renders them with a PlotWidget, supporting both raw and smoothed data
- * display, interactive zoom/pan, and data export.
+ * ChartViewer renders whichever ChartColumn it is currently bound to
+ * (via setColumn()) with its PlotWidget, supporting both raw and
+ * smoothed data display. The column data objects are owned by
+ * ChartWindow; this class is only the view.
  *
- * @see PlotWidget, PlotSeries
+ * @see PlotWidget, PlotSeries, ChartColumn
  */
 class ChartViewer : public QWidget {
     Q_OBJECT
@@ -448,11 +448,12 @@ public:
     int overlaySeriesCount() const { return static_cast<int>(col->overlaySeries.size()); }
 
     /**
-     * @brief Set vertical reference lines (replaces any existing set)
+     * @brief Set reference lines (replaces any existing set)
      * @param lines List of reference line descriptors
      *
-     * Each line spans the full data y-range and is updated on every zoom reset.
-     * Lines are identified by their position (x), label (series name), and color.
+     * Each line spans the full data range perpendicular to its orientation
+     * and is updated on every zoom reset. Lines are described by their
+     * orientation, position, label (series name), anchor, and color.
      */
     void setReferenceLines(const QList<RefLine> &lines);
 

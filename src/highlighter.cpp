@@ -48,7 +48,8 @@ Highlighter::Highlighter(QTextDocument *parent) :
     isNumber1(QStringLiteral("(^|\\s+)[-+]?[0-9:*]+")), // integer and integer ranges
     isNumber2(QStringLiteral("(^|\\s+)[-+]?[0-9]+\\.[0-9]*[edED]?[-+]?[0-9]*")), // floating point 1
     isNumber3(QStringLiteral("(^|\\s+)[-+]?[0-9]*\\.[0-9]+[edED]?[-+]?[0-9]*")), // floating point 2
-    isNumber4(QStringLiteral("(^|\\s+)[-+]?[0-9]+([edED][-+]?[0-9]+)?")),        // floating point 3
+    isNumber4(QStringLiteral(
+        "(^|\\s+)[-+]?[0-9]+([edED][-+]?[0-9]+)?")), // integer with optional exponent
     isSpecial(QStringLiteral("(\\sINF|\\sEDGE|\\sNULL|\\sSELF|if\\s|then\\s|else\\s|elif\\s)")),
     isContinue(QStringLiteral("&$")), isComment(QStringLiteral("#.*")),
     isQuotedComment(QStringLiteral("(\".*#.*\"|'.*#.*')")),

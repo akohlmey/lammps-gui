@@ -90,7 +90,7 @@ void relaunchApplication()
     myexecl(path.c_str(), arg0.c_str(), static_cast<char *>(nullptr));
 }
 
-// compare two date strings return -1 if first is older than second, 0 if same, or 1 if
+// compare two date strings return -1 if first is older than second, 0 if same, or 1
 // otherwise
 
 int dateCompare(const QString &one, const QString &two)

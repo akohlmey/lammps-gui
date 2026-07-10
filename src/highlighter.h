@@ -59,7 +59,7 @@ private:
         formatSetup;                                         ///< Formats for setup commands
     QRegularExpression isStyle, isForce, isDefine, isUndo;   ///< Style and force commands
     QRegularExpression isParticle, isRun, isSetup, isSetup1; ///< Particle and run commands
-    QTextCharFormat formatParticle, formatRun; ///< Formats for various command types
+    QTextCharFormat formatParticle, formatRun;               ///< Formats for various command types
     QRegularExpression isVariable, isReference; ///< Variable definitions and references
     QTextCharFormat formatVariable;             ///< Format for variables
     QRegularExpression isNumber1, isNumber2, isNumber3, isNumber4; ///< Various number formats

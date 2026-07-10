@@ -91,7 +91,7 @@ public:
     /**
      * @brief Highlight a specific line (used for error indication)
      * @param block Block number to highlight
-     * @param error true for error highlight, false to clear
+     * @param error true for the error (red) highlight, false for the normal (green) one
      */
     void setHighlight(int block, bool error);
 
@@ -217,22 +217,22 @@ public:
     void setExtraList(const QStringList &words);
 
     /**
-     * @brief Update group ID list from current LAMMPS instance
+     * @brief Update group ID list from the editor buffer
      */
     void setGroupList();
 
     /**
-     * @brief Update variable name list from current LAMMPS instance
+     * @brief Update variable name list from the editor buffer and LAMMPS instance
      */
     void setVarNameList();
 
     /**
-     * @brief Update compute ID list from current LAMMPS instance
+     * @brief Update compute ID list from the editor buffer
      */
     void setComputeIDList();
 
     /**
-     * @brief Update fix ID list from current LAMMPS instance
+     * @brief Update fix ID list from the editor buffer
      */
     void setFixIDList();
 

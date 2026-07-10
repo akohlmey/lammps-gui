@@ -329,7 +329,7 @@ void CodeEditor::setVarNameList()
 
     QRegularExpression varcmd(QStringLiteral(R"(^\s*variable\s+(\S+)(\s+|$))"));
     auto saved = textCursor();
-    // reposition cursor to beginning of text and search for group commands
+    // reposition cursor to beginning of text and search for variable commands
     auto cursor = textCursor();
     cursor.movePosition(QTextCursor::Start);
     setTextCursor(cursor);
@@ -356,7 +356,7 @@ void CodeEditor::setComputeIDList()
     QRegularExpression compcmd(QStringLiteral(R"(^\s*compute\s+(\S+)\s+)"));
 
     auto saved = textCursor();
-    // reposition cursor to beginning of text and search for group commands
+    // reposition cursor to beginning of text and search for compute commands
     auto cursor = textCursor();
     cursor.movePosition(QTextCursor::Start);
     setTextCursor(cursor);
@@ -381,7 +381,7 @@ void CodeEditor::setFixIDList()
     QRegularExpression fixcmd(QStringLiteral(R"(^\s*fix\s+(\S+)\s+)"));
 
     auto saved = textCursor();
-    // reposition cursor to beginning of text and search for group commands
+    // reposition cursor to beginning of text and search for fix commands
     auto cursor = textCursor();
     cursor.movePosition(QTextCursor::Start);
     setTextCursor(cursor);

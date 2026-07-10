@@ -24,7 +24,7 @@
 /**
  * @brief Pre-resolved inputs for assembling a LAMMPS `dump image` command
  *
- * `ImageViewer::createImage()` populates this struct from its widget state and
+ * `ImageViewer::gatherDumpImageParams()` populates this struct from the widget state and
  * from a set of LAMMPS library queries (atom/setting/global data) before the
  * image is rendered.  All LAMMPS-derived values are captured here as plain
  * data so that buildDumpImageCommand() can run as a pure function -- it never

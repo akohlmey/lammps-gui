@@ -111,7 +111,7 @@ AboutDialog::AboutDialog(const QString &version, const QString &info, const QStr
     desiredWidth += 4 * LABEL_MARGIN;
     desiredWidth += infoScrollArea->verticalScrollBar()->sizeHint().width();
 
-    // add space icon and for close button
+    // add spacer icon and close button
     desiredHeight += iconLabel->height() + closeButton->height();
 
     // Apply size constraints based on screen dimensions

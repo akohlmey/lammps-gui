@@ -270,7 +270,7 @@ private:
     bool usessao;                                ///< SSAO enabled flag
     bool showatoms;                              ///< Show atoms
     bool showbonds;                              ///< Show bonds if atom style supports it
-    bool autobond;                               ///< Dynamics bonds from cutoff flag
+    bool autobond;                               ///< Dynamic bonds from cutoff flag
     bool showbodies;                             ///< Show bodies if atom style supports it
     bool showellipsoids;                         ///< Show ellipsoids if atom style supports it
     bool showlines;                              ///< Show lines if atom style supports it

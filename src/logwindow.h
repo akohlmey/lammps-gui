@@ -32,7 +32,7 @@ class LogWindow : public QPlainTextEdit {
 public:
     /**
      * @brief Constructor
-     * @param filename Path to log file to display
+     * @param filename Name of the input file the run belongs to (used for default save-file names)
      * @param lammpsgui Pointer to LammpsGui for sending signals
      * @param parent Parent widget
      */
@@ -51,7 +51,7 @@ public:
 
 private slots:
     void extractYaml();  ///< Extract YAML data to separate file
-    void quit();         ///< Close window
+    void quit();         ///< Quit the entire application (via LammpsGui::quit)
     void saveAs();       ///< Save log to file
     void stopRun();      ///< Stop running simulation
     void runBuffer();    ///< Start running simulation
@@ -92,7 +92,7 @@ protected:
     bool checkYaml();
 
 private:
-    QString filename;       ///< Path to log file
+    QString filename;       ///< Input file name used to derive default save-file names
     LammpsGui *lammpsgui;   ///< Main widget pointer for receiving signals
     QString errorurl;       ///< URL of last detected error
     FlagWarnings *warnings; ///< Warning highlighter

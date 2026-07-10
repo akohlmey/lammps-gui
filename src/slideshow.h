@@ -92,7 +92,7 @@ public:
     void clear();
 
 private slots:
-    void quit();             ///< Close slideshow window
+    void quit();             ///< Quit the entire application (via LammpsGui::quit)
     void copy();             ///< Copy image to clipboard
     void purgeCache();       ///< Discard the converted images held in the image cache
     void deleteImages();     ///< Delete image files in the selected range
@@ -108,7 +108,7 @@ private slots:
     void loop();             ///< Toggle looping mode
     void zoomIn();           ///< Zoom in on current image
     void zoomOut();          ///< Zoom out on current image
-    void normalSize();       ///< Reset zoom to 100%
+    void normalSize();       ///< Reset zoom to 100% and clear rotation and flips
     void doImageRotateCw();  ///< Rotate displayed image 90 degrees clockwise
     void doImageRotateCcw(); ///< Rotate displayed image 90 degrees counter-clockwise
     void doImageFlipH();     ///< Mirror displayed image horizontally

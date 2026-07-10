@@ -31,7 +31,6 @@
 #include <QStyleFactory>
 #include <QtGlobal>
 
-
 #define stringify(x) myxstr(x)
 #define myxstr(x) #x
 

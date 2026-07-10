@@ -47,7 +47,7 @@ public:
     explicit Preferences(LammpsWrapper *lammps, LammpsGui *lammpsgui, QWidget *parent = nullptr);
 
     /**
-     * @brief Destructor - saves settings on close
+     * @brief Destructor
      */
     ~Preferences() override;
 

@@ -575,7 +575,7 @@ AcceleratorTab::AcceleratorTab(QSettings *_settings, LammpsWrapper *_lammps, QWi
     QLabel *ntlabel     = nullptr;
     QLineEdit *ntchoice = nullptr;
     if (lammps->configHasOmpSupport()) {
-        // maximum number of threads is limited half of available threads and no more than 16
+        // maximum number of threads is limited to half of available threads and no more than 16
         // unless OMP_NUM_THREADS is set to a larger value
         int maxthreads = std::min(QThread::idealThreadCount() / 2, 16);
         maxthreads     = std::max(maxthreads, 1);
@@ -982,7 +982,7 @@ ChartsTab::ChartsTab(QSettings *_settings, QWidget *parent) : QWidget(parent), s
     titletxt->setObjectName("title");
     auto *titlehlp = new QLabel("(use %f for current input file)");
 
-    // list of choices must be kepy in sync with list in chartviewer
+    // list of choices must be kept in sync with list in chartviewer
     auto *smoothlbl = new QLabel("Default plot data choice:");
     auto *smoothval = new QComboBox;
     smoothval->addItem("Raw");

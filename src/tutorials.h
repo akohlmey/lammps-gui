@@ -28,7 +28,7 @@
  * tutorials.cpp, consumed by the Tutorials menu and the TutorialWizard.
  */
 struct TutorialCollection {
-    QString key;          ///< stable identifier, e.g. "molecular", "matsci"
+    QString key;          ///< stable identifier, e.g. "softmatter", "matsci"
     QString name;         ///< display name for the menu and wizard
     QString dirPrefix;    ///< working-directory folder prefix (e.g. "tutorial")
     QString author;       ///< short author/attribution line for the intro page

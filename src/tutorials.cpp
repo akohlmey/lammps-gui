@@ -92,7 +92,7 @@ TutorialCollection molecular()
 //
 // Input/solution files for all 14 tutorials are hosted publicly in the
 // matsci-tutorials-inputs repository, so the collection downloads like any other.
-// TODO: add per-tutorial logos, webUrl/slugs and set published = true once all 14 are released.
+// TODO: add webUrl/slugs and set published = true once all 14 are released.
 
 TutorialCollection matsci()
 {

@@ -366,7 +366,7 @@ void LammpsGui::setupPlugin(QSettings &settings)
         }
     }
 
-    // set platform specific paths, library file name,config directory, and filename patterns
+    // set platform specific paths, library file name, config directory, and filename patterns
     QStringList dirlist{"."};
     const auto libName = getLammpsLibName();
 #if defined(Q_OS_MACOS)
@@ -396,7 +396,8 @@ void LammpsGui::setupPlugin(QSettings &settings)
 
         // also check in the config dir location for a previously downloaded library
         dirlist.append(QStandardPaths::writableLocation(QStandardPaths::AppConfigLocation));
-        // check some more system paths on Linux or unix-like systems
+        // check some more system paths (only relevant for Linux and Unix-like
+        // systems; they simply do not exist elsewhere)
         dirlist.append({"/usr/lib", "/usr/lib64", "/lib/x86_64-linux-gnu", "/usr/local/lib",
                         "/usr/local/lib64"});
 
@@ -421,8 +422,8 @@ void LammpsGui::setupPlugin(QSettings &settings)
 
         // No suitable plugin was found automatically.  Show a dialog with three choices:
         // 1) Download a pre-compiled shared library from the LAMMPS webserver
-        // 2) Exit LAMMPS-GUI
         // 2) Browse the filesystem for a suitable shared library file
+        // 3) Exit LAMMPS-GUI
         while (pluginPath.isEmpty()) {
             // remove key for path to the plugin so we won't get stuck in a loop reading a bad file
             settings.remove(Keys::PLUGIN_PATH);
@@ -558,7 +559,7 @@ void LammpsGui::setupAccelerators(QSettings &settings)
     settings.setValue(Keys::INTELPREC, intelprec);
 
     // Check and initialize nthreads setting for when OpenMP support is compiled in.
-    // Default is to use OMP_NUM_THREADS setting, if that is not available, thenhalf of max
+    // Default is to use OMP_NUM_THREADS setting, if that is not available, then half of max
     // (assuming hyper-threading is enabled) and no more than Cfg::MAX_DEFAULT_THREADS
     // (=16). This is only if there is no preference set but do not override OMP_NUM_THREADS
     int default_threads = std::min(QThread::idealThreadCount() / 2, Cfg::MAX_DEFAULT_THREADS);
@@ -582,8 +583,8 @@ LammpsGui::LammpsGui(QWidget *parent, const QString &filename, int width, int he
     capturer(new StdCapture), status(nullptr), cpuuse(nullptr), lastCpuBucket(-1),
     logwindow(nullptr), imagewindow(nullptr), chartwindow(nullptr), slideshow(nullptr),
     logupdater(nullptr), dirstatus(nullptr), progress(nullptr), prefdialog(nullptr),
-    lammpsstatus(nullptr), varwindow(nullptr), wizard(nullptr), runner(nullptr),
-    runCounter(0), nthreads(1), mainx(width), mainy(height)
+    lammpsstatus(nullptr), varwindow(nullptr), wizard(nullptr), runner(nullptr), runCounter(0),
+    nthreads(1), mainx(width), mainy(height)
 {
 #if QT_CONFIG(clipboard)
     hasClipboard = true;
@@ -1807,7 +1808,7 @@ void LammpsGui::doRun(bool use_buffer)
                 break;
             case QMessageBox::No:
                 break;
-            case QMessageBox::Cancel: // falthrough
+            case QMessageBox::Cancel: // fallthrough
             default:
                 return;
         }
@@ -2633,7 +2634,7 @@ void LammpsGui::appendAcceleratorArgs(int accel, QSettings &settings)
 
 void LammpsGui::startLammps()
 {
-    // temporary extend lammpsArgs with additional arguments
+    // temporarily extend lammpsArgs with additional arguments
     int initial_narg = lammpsArgs.size();
     QSettings settings;
     int accel = settings.value(Keys::ACCELERATOR, AcceleratorTab::None).toInt();

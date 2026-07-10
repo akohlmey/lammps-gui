@@ -313,7 +313,6 @@ void ImageViewer::globalSettings()
     layout->addLayout(lightlayout, idx++, 0, 1, MAXCOLS, Qt::AlignHCenter);
     layout->addWidget(new QHline, idx++, 0, 1, MAXCOLS);
 
-
     auto *bottomlayout = new QHBoxLayout;
     bottomlayout->setSpacing(LAYOUT_SPACING);
     auto *cancel = new QPushButton(QIcon(":/icons/dialog-cancel.svg"), "&Cancel");
@@ -482,7 +481,7 @@ struct ColorMapRow {
 // shared by the atom ("amap") and bond ("bmap") sections. Adds the six widgets
 // into `layout` at grid row `idx`, advancing the column counter `n`, and returns
 // the widgets so the caller can wire them up. Only the combo gets an object name
-// (looked up later via findChild); the min/max edits are used through the
+// (looked up later via findChild for the atom map); the min/max edits are used through the
 // returned pointers. The caller advances `idx` after the row.
 static ColorMapRow addColorMapRow(QGridLayout *layout, int idx, int &n, const QString &comboName,
                                   const QString &curMap, const QString &curMin,

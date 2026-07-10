@@ -30,7 +30,7 @@ class QVBoxLayout;
  * unselected (unchecked) column is automatically used as the shared x-axis.
  * A small preview of the first rows is shown to help identify column content.
  *
- * A "Compute column" section at the bottom lets the user add derived columns
+ * A "Compute derived column" section at the bottom lets the user add derived columns
  * from expressions that reference the existing column names as variables
  * (e.g. @c nfcc/ntot or @c load_eV_per_Ang*1.602176634).  The column's
  * first-row value is also available under @c colname_first.
@@ -82,7 +82,7 @@ public:
     /**
      * @brief Return the working data with renames and derived columns applied
      *
-     * Includes any columns added via the "Compute column" section and
+     * Includes any columns added via the "Compute derived column" section and
      * applies the user's name edits.  Use this in place of calling
      * renameColumns() on the original data.
      * @return Updated PlotData ready for plotting
@@ -94,7 +94,7 @@ private slots:
     void computeColumn();
 
 private:
-    /** @brief Append one row (checkbox + name editor) for column @p colIndex */
+    /** @brief Append one row (checkbox with @p name + optional @p checked state) */
     void appendColumnRow(const QString &name, bool checked);
 
     PlotData workingData;       ///< Working copy of the data; derived cols appended here

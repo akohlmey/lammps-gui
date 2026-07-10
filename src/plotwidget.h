@@ -13,7 +13,7 @@
 #define PLOTWIDGET_H
 
 // Lightweight 2D line / scatter chart drawn directly with QPainter, with
-// no dependency on any Qt module.  It consumes the neutral PlotSeries / PlotAxis
+// no dependency on any Qt charts module.  It consumes the neutral PlotSeries / PlotAxis
 // model and reproduces the subset of chart features that LAMMPS-GUI actually uses:
 // linear axes with nice-number major ticks, minor subticks, major / minor gridlines,
 // printf-style tick labels, axis and chart titles, and multiple line / scatter

@@ -85,7 +85,7 @@ void permute(float_mat &A, int_vect &idx)
  * the index map. The algorithm is for implicit pivoting (i.e., the pivot is
  * chosen as if the max coefficient in each row is set to 1) based on the
  * scaling information in the vector scale. The map of swapped indices is
- * recorded in swp. The return value is +1 or -1 depending on whether the
+ * recorded in idx. The return value is +1 or -1 depending on whether the
  * number of row swaps was even or odd respectively. */
 int partial_pivot(float_mat &A, const std::size_t row, const std::size_t col, float_vect &scale,
                   int_vect &idx)
@@ -166,10 +166,10 @@ void lu_forwsubst(float_mat &A, float_mat &a, bool diag = true)
 /*! \brief Performs LU factorization in place.
  *
  * This is Crout's algorithm (cf., Num. Rec. in C, Section 2.3).  The map of
- * swapped indeces is recorded in idx. The return value is +1 or -1
+ * swapped indices is recorded in idx. The return value is +1 or -1
  * depending on whether the number of row swaps was even or odd
  * respectively.  idx must be preinitialized to a valid set of indices
- * (e.g., {1,2, ... ,A.nr_rows()}). */
+ * (i.e., {0, 1, ..., A.nr_rows()-1}). */
 int lu_factorize(float_mat &A, int_vect &idx)
 {
     float_vect scale(A.nr_rows()); // implicit pivot scaling
@@ -291,11 +291,11 @@ float_mat operator*(const float_mat &a, const float_mat &b)
 
 /*! \brief savitzky golay smoothing.
  *
- * This method means fitting a polynome of degree 'deg' to a sliding window
+ * This method means fitting a polynomial of degree 'deg' to a sliding window
  * of width 2w+1 throughout the data.  The needed coefficients are
  * generated dynamically by doing a least squares fit on a "symmetric" unit
- * vector of size 2w+1, e.g. for w=2 b=(0,0,1,0,0). evaluating the polynome
- * yields the sg-coefficients.  at the border non symmectric vectors b are
+ * vector of size 2w+1, e.g. for w=2 b=(0,0,1,0,0). evaluating the polynomial
+ * yields the sg-coefficients.  at the border non symmetric vectors b are
  * used. */
 float_vect sg_smooth(const float_vect &v, const std::size_t width, const int deg)
 {

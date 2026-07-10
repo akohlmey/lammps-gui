@@ -89,7 +89,8 @@ void FindAndReplace::findNext()
 
     if (!text.isEmpty()) {
         if (!editor->find(text, find_flags) && wrap->isChecked()) {
-            // nothing found from the current position to the end, reposition cursor and beginning
+            // nothing found from the current position to the end, reposition cursor at the
+            // beginning
             editor->moveCursor(QTextCursor::Start, QTextCursor::MoveAnchor);
             editor->find(text, find_flags);
         }
