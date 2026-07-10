@@ -794,6 +794,10 @@ LammpsGui::~LammpsGui()
     delete dirstatus;
     delete varwindow;
     delete slideshow;
+    // kept chart windows of previous runs delete themselves when closed, so
+    // their QPointer entries are null by now unless they are still open
+    for (const auto &window : oldChartWindows)
+        delete window;
 }
 
 void LammpsGui::newDocument()
@@ -1787,7 +1791,15 @@ void LammpsGui::createLogWindow(QSettings &settings)
 void LammpsGui::createChartWindow(QSettings &settings)
 {
     // if configured, delete old chart window before opening new one
-    if (settings.value(Keys::CHARTREPLACE, true).toBool()) delete chartwindow;
+    if (settings.value(Keys::CHARTREPLACE, true).toBool()) {
+        delete chartwindow;
+    } else if (chartwindow) {
+        // the old chart window stays open for comparison with the new run, but
+        // its pointer is replaced below: have it delete itself when closed and
+        // remember it so windows still open at exit are deleted, too
+        chartwindow->setAttribute(Qt::WA_DeleteOnClose);
+        oldChartWindows.append(chartwindow);
+    }
     chartwindow = new ChartWindow(currentFile, this);
     chartwindow->setWindowTitle(
         QString("LAMMPS-GUI - Charts - %1 - Run %2").arg(currentFile).arg(runCounter));

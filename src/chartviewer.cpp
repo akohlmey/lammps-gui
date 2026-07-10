@@ -197,7 +197,9 @@ void ChartWindow::applySliderWindow()
 }
 
 ChartWindow::ChartWindow(const QString &_filename, LammpsGui *_lammpsgui, QWidget *parent) :
-    QWidget(parent), lammpsgui(_lammpsgui), menu(new QMenuBar), file(new QMenu("&File")),
+    // the menu bar does not take ownership of the added file menu, so it must
+    // be created with the menu bar as its parent to be freed along with it
+    QWidget(parent), lammpsgui(_lammpsgui), menu(new QMenuBar), file(new QMenu("&File", menu)),
     smooth(nullptr), window(nullptr), order(nullptr), chartTitle(nullptr), chartYlabel(nullptr),
     chartXlabel(nullptr), units(nullptr), norm(nullptr), filename(_filename), viewer(nullptr),
     active(-1)
