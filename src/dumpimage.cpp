@@ -337,7 +337,7 @@ DumpImageCommand buildDumpImageCommand(const DumpImageParams &p)
 
     const bool lightsdefault = (p.ambientlight == DEF_AMBIENT) && (p.keylight == DEF_KEYLIGHT) &&
                                (p.filllight == DEF_FILLLIGHT) && (p.backlight == DEF_BACKLIGHT);
-    if ((p.version > Cfg::DUMP_LIGHTS_VERSION) && !lightsdefault)
+    if (!lightsdefault)
         m += QString(" lights %1 %2 %3 %4")
                  .arg(p.ambientlight)
                  .arg(p.keylight)

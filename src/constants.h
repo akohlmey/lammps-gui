@@ -118,10 +118,6 @@ constexpr int CREATE_ATOMS_SEED = 312944;
 /** seed for the dump image ssao keyword */
 constexpr int SSAO_SEED = 453983;
 
-// ---- LAMMPS feature gates --------------------------------------------------
-/** first LAMMPS version whose dump image supports the lights keyword */
-constexpr int DUMP_LIGHTS_VERSION = 20260330;
-
 // ---- Documentation ---------------------------------------------------------
 /** base URL of the LAMMPS online documentation */
 inline const QString DOCS_URL = QStringLiteral("https://docs.lammps.org");
