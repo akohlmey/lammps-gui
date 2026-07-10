@@ -80,6 +80,9 @@
           <li>Fix the "Reformat on Return" and automatic completion preferences, which were pinned to their default values regardless of the settings</li>
           <li>An error in the first line of an input script is now highlighted red like errors in all other lines</li>
           <li>Many small fixes: correct typos in the Quick Help text and tutorial descriptions, complete the missing paragraph markup in the materials-science tutorial descriptions, center the settings dialog buttons as intended, apply changes to the smoothing window/order once per edit instead of on every typed digit, and roll back light levels loaded from a colors file when the dialog is cancelled</li>
+          <li>Add support to enable collecting code coverage information during compilation</li>
+          <li>Add targets to report code coverage data</li>
+          <li>Add support to enable known code sanitizers for GNU and Clang compilers during compilation</li>
         </ul>
       </description>
     </release>
