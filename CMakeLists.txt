@@ -76,7 +76,7 @@ if (NOT BUILD_DOC_ONLY)
   # declaring it here ensures the plugin is found and bundled by the deployment
   # tools (macdeployqt / windeployqt / flatpak)
   find_package(Qt6 6.2 REQUIRED COMPONENTS Gui Widgets Network Svg)
-  message(STATUS "Using Qt version ${Qt6_VERSION} with the native chart backend for LAMMPS-GUI")
+  message(STATUS "Using Qt version ${Qt6_VERSION}")
 
   set(PROJECT_SOURCES
     ${CMAKE_SOURCE_DIR}/src/main.cpp
