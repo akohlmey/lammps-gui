@@ -715,7 +715,7 @@ void ImageViewer::readImageSettings()
     shinyfactor    = settings.value(Keys::SHINYSTYLE, true).toBool() ? SHINY_ON : SHINY_OFF;
     vdwfactor      = settings.value(Keys::VDWSTYLE, false).toBool() ? VDW_ON : VDW_OFF;
     autobond       = settings.value(Keys::AUTOBOND, false).toBool();
-    bondcutoff     = settings.value(Keys::BONDCUTOFF, 1.6).toDouble();
+    bondcutoff     = settings.value(Keys::BONDCUT, 1.6).toDouble();
     showbox        = settings.value(Keys::BOX, true).toBool();
     showsubbox     = false;
     boxdiam        = settings.value(Keys::BOXDIAM, 0.025).toDouble();

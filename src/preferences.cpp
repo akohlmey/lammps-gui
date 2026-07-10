@@ -172,6 +172,8 @@ void Preferences::accept()
     if (box) settings->setValue(Keys::VDWSTYLE, box->isChecked());
     box = tabWidget->findChild<QCheckBox *>("autobond");
     if (box) settings->setValue(Keys::AUTOBOND, box->isChecked());
+    field = tabWidget->findChild<QLineEdit *>("bondcut");
+    if (field) settings->setValue(Keys::BONDCUT, field->text());
     field = tabWidget->findChild<QLineEdit *>("backcolor");
     if (field && field->hasAcceptableInput()) settings->setValue(Keys::BACKCOLOR, field->text());
     field = tabWidget->findChild<QLineEdit *>("backcolor2");
@@ -214,12 +216,6 @@ void Preferences::accept()
 
     field = tabWidget->findChild<QLineEdit *>("proxyval");
     if (field) settings->setValue(Keys::HTTPS_PROXY, field->text());
-
-    if (needRelaunch) {
-        warning(this, "Relaunching LAMMPS-GUI", "LAMMPS library plugin path was changed.",
-                "LAMMPS-GUI must be relaunched to activate it.");
-        relaunchApplication();
-    }
 
     // reformatting settings
 
@@ -264,6 +260,16 @@ void Preferences::accept()
     if (spin) settings->setValue(Keys::CHARTX, spin->value());
     spin = tabWidget->findChild<QSpinBox *>("charty");
     if (spin) settings->setValue(Keys::CHARTY, spin->value());
+
+    // must come after all settings are stored: relaunchApplication() replaces
+    // the process image, so nothing after it runs and pending changes must be
+    // flushed to disk first
+    if (needRelaunch) {
+        warning(this, "Relaunching LAMMPS-GUI", "LAMMPS library plugin path was changed.",
+                "LAMMPS-GUI must be relaunched to activate it.");
+        settings->sync();
+        relaunchApplication();
+    }
 
     QDialog::accept();
 }
@@ -412,25 +418,31 @@ void GeneralTab::updateFonts(const QFont &all, const QFont &text)
     if (prefs) prefs->setFont(all);
 }
 
-void GeneralTab::newAllFont()
+// build the two application fonts (general and fixed-width) from the settings
+static void loadGuiFonts(QSettings *settings, QFont &all_font, QFont &mono_font)
 {
-    QFont all_font;
     QFontInfo all_info(*GUI_ALLFONT);
     all_font.setFamily(settings->value(Keys::ALLFAMILY, all_info.family()).toString());
     all_font.setPointSize(settings->value(Keys::ALLSIZE, all_info.pointSize()).toInt());
     all_font.setStyleHint(GUI_ALLFONT->styleHint());
 
-    QFont mono_font;
     QFontInfo mono_info(*GUI_MONOFONT);
     mono_font.setFamily(settings->value(Keys::MONOFAMILY, mono_info.family()).toString());
     mono_font.setPointSize(settings->value(Keys::MONOSIZE, mono_info.pointSize()).toInt());
     mono_font.setStyleHint(GUI_MONOFONT->styleHint());
     mono_font.setFixedPitch(true);
+}
+
+void GeneralTab::newAllFont()
+{
+    QFont all_font, mono_font;
+    loadGuiFonts(settings, all_font, mono_font);
 
     bool font_ok   = false;
     QFont new_font = QFontDialog::getFont(&font_ok, all_font, this, QString("Select Default Font"));
-    if (font_ok) updateFonts(new_font, mono_font);
+    if (!font_ok) return;
 
+    updateFonts(new_font, mono_font);
     settings->setValue(Keys::ALLFAMILY, new_font.family());
     settings->setValue(Keys::ALLSIZE, new_font.pointSize());
     settings->sync();
@@ -438,23 +450,14 @@ void GeneralTab::newAllFont()
 
 void GeneralTab::newTextFont()
 {
-    QFont all_font;
-    QFontInfo all_info(*GUI_ALLFONT);
-    all_font.setFamily(settings->value(Keys::ALLFAMILY, all_info.family()).toString());
-    all_font.setPointSize(settings->value(Keys::ALLSIZE, all_info.pointSize()).toInt());
-    all_font.setStyleHint(GUI_ALLFONT->styleHint());
-
-    QFont mono_font;
-    QFontInfo mono_info(*GUI_MONOFONT);
-    mono_font.setFamily(settings->value(Keys::MONOFAMILY, mono_info.family()).toString());
-    mono_font.setPointSize(settings->value(Keys::MONOSIZE, mono_info.pointSize()).toInt());
-    mono_font.setStyleHint(GUI_MONOFONT->styleHint());
-    mono_font.setFixedPitch(true);
+    QFont all_font, mono_font;
+    loadGuiFonts(settings, all_font, mono_font);
 
     bool font_ok   = false;
     QFont new_font = QFontDialog::getFont(&font_ok, mono_font, this, QString("Select Text Font"));
-    if (font_ok) updateFonts(all_font, new_font);
+    if (!font_ok) return;
 
+    updateFonts(all_font, new_font);
     settings->setValue(Keys::MONOFAMILY, new_font.family());
     settings->setValue(Keys::MONOSIZE, new_font.pointSize());
     settings->sync();
@@ -484,8 +487,7 @@ void GeneralTab::downloadPlugin()
         if (field) field->setText(canonical);
         settings->sync();
 
-        // ugly hack
-        qobject_cast<Preferences *>(parent()->parent()->parent())->setRelaunch(true);
+        if (auto *prefs = qobject_cast<Preferences *>(window())) prefs->setRelaunch(true);
     }
 }
 
@@ -515,8 +517,7 @@ void GeneralTab::pluginPath()
             field->setText(canonical);
             settings->sync();
 
-            // ugly hack
-            qobject_cast<Preferences *>(parent()->parent()->parent())->setRelaunch(true);
+            if (auto *prefs = qobject_cast<Preferences *>(window())) prefs->setRelaunch(true);
         }
     }
 }
@@ -979,6 +980,7 @@ ChartsTab::ChartsTab(QSettings *_settings, QWidget *parent) : QWidget(parent), s
     settings->beginGroup(Keys::GROUP_CHARTS);
     auto *titlelbl = new QLabel("Default chart title:");
     auto *titletxt = new QLineEdit(settings->value(Keys::TITLE, "Thermo: %f").toString());
+    titletxt->setObjectName("title");
     auto *titlehlp = new QLabel("(use %f for current input file)");
 
     // list of choices must be kepy in sync with list in chartviewer

@@ -153,7 +153,6 @@ inline const QString BACKCOLOR2   = QStringLiteral("backcolor2");
 inline const QString USEGRADIENT  = QStringLiteral("usegradient");
 inline const QString BONDCOLOR    = QStringLiteral("bondcolor");
 inline const QString BONDCUT      = QStringLiteral("bondcut");
-inline const QString BONDCUTOFF   = QStringLiteral("bondcutoff");
 inline const QString BONDDIAM     = QStringLiteral("bonddiam");
 inline const QString BOX          = QStringLiteral("box");
 inline const QString BOXCOLOR     = QStringLiteral("boxcolor");
