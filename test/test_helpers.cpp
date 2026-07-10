@@ -404,8 +404,7 @@ TEST_F(HelpersTest, DateCompareBothInvalid)
 
 TEST_F(HelpersTest, DateCompareWithUpdateSuffix)
 {
-    // LAMMPS dates can have "update N" suffix like "22 July 2025 update 2"
-    // dateCompare should handle the date part correctly
+    // dates with the same day-of-month but different months must compare by month
     QString date1 = "22 Jul 2025";
     QString date2 = "22 Aug 2025";
     EXPECT_EQ(dateCompare(date1, date2), -1);

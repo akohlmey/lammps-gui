@@ -13,6 +13,7 @@ include(GNUInstallDirs)
 option(LAMMPS_GUI_USE_PLUGIN "Load LAMMPS library dynamically at runtime" ON)
 # build html documentation by default
 option(BUILD_DOC "Build LAMMPS-GUI HTML documentation" ON)
+option(BUILD_DOC_ONLY "Build only the documentation, skip the application" OFF)
 ##################################################################################
 
 # add automatic Qt infrastructure rules
@@ -358,7 +359,7 @@ if(BUILD_DOC OR BUILD_DOC_ONLY)
     COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_SOURCE_DIR}/doc/ellipse.sty ${DOC_BUILD_DIR}/latex/
   )
 
-  # need latexmk and pdflatex for tranlating LaTeX to PDF
+  # need latexmk and pdflatex for translating LaTeX to PDF
   find_program(PDFLATEX_COMMAND pdflatex DOC "Path to pdflatex command")
   find_program(LATEXMK_COMMAND latexmk DOC "Path to latex command")
   if (PDFLATEX_COMMAND AND LATEXMK_COMMAND)
@@ -407,7 +408,7 @@ if (LAMMPS_GUI_USE_PLUGIN AND NOT BUILD_DOC_ONLY)
                                ${CMAKE_CURRENT_BINARY_DIR}/flatpak-repo
                                ${FLATPAK_BUNDLE} org.lammps.lammps-gui ${PROJECT_VERSION}
       COMMENT "Create Flatpak bundle file of LAMMPS-GUI"
-      BYPRODUCT ${FLATPAK_BUNDLE}
+      BYPRODUCTS ${FLATPAK_BUNDLE}
       WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
     )
   else()
@@ -434,12 +435,11 @@ if (LAMMPS_GUI_USE_PLUGIN AND NOT BUILD_DOC_ONLY)
       COMMAND ${CMAKE_SOURCE_DIR}/packaging/build_macos_dmg.sh ${PROJECT_VERSION}
       DEPENDS complete-bundle
       COMMENT "Create Drag-n-Drop installer disk image from app bundle"
-      BYPRODUCT LAMMPS-GUI-macOS-multiarch-${PROJECT_VERSION}.dmg
+      BYPRODUCTS LAMMPS-GUI-macOS-multiarch-${PROJECT_VERSION}.dmg
       WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
     )
   # settings for building on Windows with Visual Studio
   elseif(MSVC)
-    install(TARGETS lammps-gui DESTINATION ${CMAKE_INSTALL_BINDIR})
     install(FILES $<TARGET_RUNTIME_DLLS:lammps-gui> TYPE BIN)
     # find path to VC++ init batch file
     get_filename_component(VC_COMPILER_DIR "${CMAKE_CXX_COMPILER}" DIRECTORY)
@@ -447,19 +447,24 @@ if (LAMMPS_GUI_USE_PLUGIN AND NOT BUILD_DOC_ONLY)
     set(VC_INIT "${VC_BASE_DIR}/Auxiliary/Build/vcvarsall.bat")
     get_filename_component(QT6_BIN_DIR "${Qt6Core_DIR}/../../../bin" ABSOLUTE)
     get_filename_component(INSTNAME ${CMAKE_INSTALL_PREFIX} NAME)
-    install(CODE "execute_process(COMMAND \"${CMAKE_COMMAND}\" -D INSTNAME=${INSTNAME} -D VC_INIT=\"${VC_INIT}\" -D QT6_BIN_DIR=\"${QT6_BIN_DIR}\" -P \"${CMAKE_SOURCE_DIR}/packaging/build_windows_vs.cmake\" WORKING_DIRECTORY \"${CMAKE_INSTALL_PREFIX}/..\" COMMAND_ECHO STDOUT)")
+    # the deployment helper script is not part of this repository (yet), so
+    # skip the step with a warning instead of failing the whole install
+    if(EXISTS "${CMAKE_SOURCE_DIR}/packaging/build_windows_vs.cmake")
+      install(CODE "execute_process(COMMAND \"${CMAKE_COMMAND}\" -D INSTNAME=${INSTNAME} -D VC_INIT=\"${VC_INIT}\" -D QT6_BIN_DIR=\"${QT6_BIN_DIR}\" -P \"${CMAKE_SOURCE_DIR}/packaging/build_windows_vs.cmake\" WORKING_DIRECTORY \"${CMAKE_INSTALL_PREFIX}/..\" COMMAND_ECHO STDOUT)")
+    else()
+      message(WARNING "packaging/build_windows_vs.cmake not found; skipping the Windows deployment step")
+    endif()
   # settings for packaging Windows NSIS installer on Linux with MinGW cross-compiler
   elseif((CMAKE_SYSTEM_NAME STREQUAL "Windows") AND CMAKE_CROSSCOMPILING)
     set(QT_NO_QTPATHS_DEPLOYMENT_WARNING ON CACHE BOOL "" FORCE)
-    install(TARGETS lammps-gui DESTINATION ${CMAKE_INSTALL_BINDIR})
     add_custom_target(nsis
       COMMAND ${CMAKE_SOURCE_DIR}/packaging/build_windows_cross_nsis.sh ${CMAKE_INSTALL_PREFIX} ${PROJECT_VERSION} ${CMAKE_SOURCE_DIR}
       DEPENDS lammps-gui html pdf
       COMMENT "Create nsis installer with windows binaries"
-      BYPRODUCT LAMMPS-GUI-Win10-x86_64-${PROJECT_VERSION}.exe
+      BYPRODUCTS LAMMPS-GUI-Win10-x86_64-${PROJECT_VERSION}.exe
       WORKING_DIRECTORY ${CMAKE_BINARY_DIR})
-  elseif((CMAKE_SYSTEM_NAME STREQUAL "Linux") AND LAMMPS_GUI_USE_PLUGIN)
-    install(TARGETS lammps-gui DESTINATION ${CMAKE_INSTALL_BINDIR})
+  # LAMMPS_GUI_USE_PLUGIN is already required by the enclosing if() block
+  elseif(CMAKE_SYSTEM_NAME STREQUAL "Linux")
     install(FILES ${CMAKE_CURRENT_SOURCE_DIR}/packaging/lammps-gui.desktop DESTINATION ${CMAKE_INSTALL_DATADIR}/applications/)
     install(FILES ${CMAKE_CURRENT_SOURCE_DIR}/packaging/lammps-gui.appdata.xml DESTINATION ${CMAKE_INSTALL_DATADIR}/appdata/)
     install(FILES ${CMAKE_CURRENT_SOURCE_DIR}/packaging/lammps-input.xml DESTINATION ${CMAKE_INSTALL_DATADIR}/mime/packages/)
@@ -489,7 +494,7 @@ if (LAMMPS_GUI_USE_PLUGIN AND NOT BUILD_DOC_ONLY)
       COMMAND ${CMAKE_SOURCE_DIR}/packaging/build_linux_tgz.sh ${PROJECT_VERSION}
       DEPENDS lammps-gui
       COMMENT "Create compressed tar file of LAMMPS-GUI with dependent libraries and wrapper"
-      BYPRODUCT LAMMPS-GUI-Linux-x86_64-${PROJECT_VERSION}.tar.gz
+      BYPRODUCTS LAMMPS-GUI-Linux-x86_64-${PROJECT_VERSION}.tar.gz
       WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
     )
   endif()
@@ -501,7 +506,7 @@ if (GIT_FOUND AND EXISTS ${CMAKE_SOURCE_DIR}/.git)
     COMMAND ${GIT_EXECUTABLE} archive --prefix=lammps-gui-v${PROJECT_VERSION}/
             --output=${CMAKE_BINARY_DIR}/lammps-gui-src-v${PROJECT_VERSION}.tar.gz  HEAD
     COMMENT "Create compressed tar file of the LAMMPS-GUI sources"
-    BYPRODUCT lammps-gui-src-v${PROJECT_VERSION}.tar.gz
+    BYPRODUCTS lammps-gui-src-v${PROJECT_VERSION}.tar.gz
     WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
   )
 endif()

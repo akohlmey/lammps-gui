@@ -1,8 +1,9 @@
 // Unit tests for the converted-image cache (src/imagecache.cpp).
 //
-// The cache only engages for image formats that Qt cannot decode, so these
-// tests build their fixtures in ImageMagick's own MIFF format and are skipped
-// when neither "magick" nor "convert" is in the executable search path.
+// The cache only engages for image formats that Qt cannot decode, so the
+// conversion tests build their fixtures in ImageMagick's own MIFF format and
+// are skipped when neither "magick" nor "convert" is in the executable search
+// path; the tests that do not convert anything always run.
 
 #include "imagecache.h"
 

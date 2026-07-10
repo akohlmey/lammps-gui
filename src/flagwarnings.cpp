@@ -11,7 +11,6 @@
 
 #include "flagwarnings.h"
 
-#include "helpers.h"
 
 #include <QColor>
 #include <QFont>
