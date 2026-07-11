@@ -67,6 +67,7 @@
 #include <cstdint>
 #include <cstdlib>
 #include <string>
+#include <utility>
 
 #include "constants.h"
 #include "tutorials.h"
@@ -1871,6 +1872,13 @@ void LammpsGui::doRun(bool use_buffer)
 
     // define "gui_run" variable set to runCounter value
     lammps.command(QString("variable gui_run index %1").arg(runCounter));
+
+    // re-create index variables from the Set Variables dialog so they
+    // override definitions in the input, like -var does on the command line
+    for (const auto &var : std::as_const(variables)) {
+        if (!var.first.isEmpty() && !var.second.isEmpty())
+            lammps.command(QString("variable %1 index %2").arg(var.first, var.second));
+    }
     if (use_buffer) {
         // always add final newline since the text edit widget does not do it
         runner->setupRun(&lammps, (textEdit->toPlainText() + "\n").toStdString());
@@ -2672,18 +2680,6 @@ void LammpsGui::startLammps()
     if (settings.value(Keys::CITE, false).toBool()) {
         lammpsArgs.push_back("-cite");
         lammpsArgs.push_back("screen");
-    }
-
-    // add variables, if defined
-    for (auto &var : variables) {
-        QString name  = var.first;
-        QString value = var.second;
-        if (!name.isEmpty() && !value.isEmpty()) {
-            lammpsArgs.push_back("-var");
-            lammpsArgs.push_back(name.toStdString());
-            for (const auto &v : value.split(' ', Qt::SkipEmptyParts))
-                lammpsArgs.push_back(v.toStdString());
-        }
     }
 
     // Build temporary char* array for the LAMMPS C API which takes char**

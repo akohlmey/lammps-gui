@@ -83,6 +83,7 @@
           <li>Add support to enable collecting code coverage information during compilation</li>
           <li>Add targets to report code coverage data</li>
           <li>Add support to enable known code sanitizers for GNU and Clang compilers during compilation</li>
+          <li>Fix the Set Variables dialog, whose values no longer took precedence over index variable definitions in the input script: the variables are now re-created before each run instead of being passed only when the LAMMPS instance is first created, where they were immediately discarded by the cleanup of variables left over from the previous run</li>
         </ul>
       </description>
     </release>
