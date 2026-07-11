@@ -24,7 +24,6 @@
 #include <QPixmap>
 #include <QString>
 #include <QStringList>
-#include <string>
 
 class QComboBox;
 class QWidget;
@@ -37,6 +36,8 @@ inline constexpr double VDW_CUT          = 1.0;
 inline constexpr double SHINY_ON         = 0.6;
 inline constexpr double SHINY_OFF        = 0.2;
 inline constexpr double SHINY_CUT        = 0.4;
+inline constexpr double ZOOM_MIN         = 0.1;
+inline constexpr double ZOOM_MAX         = 10.0;
 inline constexpr int DEFAULT_NPOINTS     = 100000;
 inline constexpr double DEFAULT_DIAMETER = 0.2;
 inline constexpr double DEFAULT_OPACITY  = 0.5;

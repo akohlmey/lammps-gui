@@ -28,12 +28,13 @@
 namespace Cfg {
 
 // ---- UI dimensions -------------------------------------------------------
-constexpr int DEFAULT_BUFLEN        = 1024; ///< Default buffer length for error messages
-constexpr int MAX_DEFAULT_THREADS   = 16;   ///< Maximum default thread count
-constexpr int MINIMUM_WIDTH         = 400;  ///< Minimum window width in pixels
-constexpr int MINIMUM_HEIGHT        = 300;  ///< Minimum window height in pixels
-constexpr int ICON_SCALE            = 22;   ///< Status bar icon dimension in pixels
-constexpr int TOOLBAR_ICON_SIZE     = 24;   ///< Icon size in pixels for tool/status-bar buttons
+constexpr int DEFAULT_BUFLEN =
+    1024; ///< Default length for C-string buffers (error messages, names)
+constexpr int MAX_DEFAULT_THREADS   = 16;  ///< Maximum default thread count
+constexpr int MINIMUM_WIDTH         = 400; ///< Minimum window width in pixels
+constexpr int MINIMUM_HEIGHT        = 300; ///< Minimum window height in pixels
+constexpr int ICON_SCALE            = 22;  ///< Status bar icon dimension in pixels
+constexpr int TOOLBAR_ICON_SIZE     = 24;  ///< Icon size in pixels for tool/status-bar buttons
 constexpr int TOOLBAR_BUTTON_MARGIN = 6; ///< Pixels added to the size hint for square tool buttons
 constexpr int PROGRESS_MAXIMUM      = 1000; ///< Maximum value for QProgressBar
 
@@ -85,19 +86,51 @@ constexpr int SMOOTH_ORDER_DEFAULT  = 4;   ///< Default smoothing polynomial ord
 constexpr int COMPLETION_CHARS_MIN = 1;  ///< Min characters before auto-completion triggers
 constexpr int COMPLETION_CHARS_MAX = 32; ///< Max characters before auto-completion triggers
 
+// ---- Inactive (grayed out) icons -----------------------------------------
+/** Gray level that the pixels of an inactive icon are faded towards */
+constexpr int GRAYSCALE_MIDPOINT = 145;
+/** Fraction of its contrast that an inactive icon keeps; 1.0 desaturates only */
+constexpr double GRAYSCALE_CONTRAST = 0.4;
+
+// ---- Movie frame import --------------------------------------------------
+constexpr int MOVIE_PROBE_TIMEOUT = 15000; ///< Timeout in milliseconds for an ffprobe run
+constexpr int MOVIE_WARN_FRAMES   = 1000;  ///< Warn when extracting more frames than this
+/** Warn when the extracted frames are estimated to need more than this many bytes */
+constexpr qint64 MOVIE_WARN_BYTES = 1024LL * 1024LL * 1024LL;
+/** Warn when the estimated size exceeds this fraction of the free space on the temporary volume */
+constexpr double MOVIE_WARN_DISKFRAC = 0.9;
+
 // ---- Resource paths ------------------------------------------------------
 /** path to LAMMPS-GUI Window Icon resource */
 inline const QString MAIN_ICON = QStringLiteral(":/icons/lammps-gui-icon-128x128.png");
 /** path to LAMMPS Icon resource */
 inline const QString LAMMPS_ICON = QStringLiteral(":/icons/lammps-icon-128x128.png");
 
+// ---- Restart file inspection ----------------------------------------------
+/** restart files larger than this (bytes) prompt a memory-use warning */
+constexpr qint64 INSPECT_WARN_SIZE = 262144000LL;
+/** divisor turning a restart file size into an estimated RAM demand in GB */
+constexpr double INSPECT_GB_PER_BYTE = 134217728.0;
+
+// ---- Fixed RNG seeds for LAMMPS commands ----------------------------------
+/** seed for the create_atoms command placing the temporary molecule */
+constexpr int CREATE_ATOMS_SEED = 312944;
+/** seed for the dump image ssao keyword */
+constexpr int SSAO_SEED = 453983;
+
+// ---- Documentation ---------------------------------------------------------
+/** base URL of the LAMMPS online documentation */
+inline const QString DOCS_URL = QStringLiteral("https://docs.lammps.org");
+
+// ---- Charts ----------------------------------------------------------------
+/** default chart title template; %f is replaced with the input file name */
+inline const QString CHART_TITLE_DEFAULT = QStringLiteral("Thermo: %f");
+
 // ---- Status messages -----------------------------------------------------
 /** status string when LAMMPS-GUI is ready */
 inline const QString STATUS_READY = QStringLiteral("Ready.");
-
-// ---- Window title prefix -------------------------------------------------
-/** window title prefix string for LAMMPS-GUI windows */
-inline const QString TITLE_PREFIX = QStringLiteral("LAMMPS-GUI - ");
+/** CPU utilization status label text when no simulation is running */
+inline const QString STATUS_ZERO_CPU = QStringLiteral("   0%CPU");
 
 } // namespace Cfg
 
@@ -139,7 +172,6 @@ inline const QString BACKCOLOR2   = QStringLiteral("backcolor2");
 inline const QString USEGRADIENT  = QStringLiteral("usegradient");
 inline const QString BONDCOLOR    = QStringLiteral("bondcolor");
 inline const QString BONDCUT      = QStringLiteral("bondcut");
-inline const QString BONDCUTOFF   = QStringLiteral("bondcutoff");
 inline const QString BONDDIAM     = QStringLiteral("bonddiam");
 inline const QString BOX          = QStringLiteral("box");
 inline const QString BOXCOLOR     = QStringLiteral("boxcolor");

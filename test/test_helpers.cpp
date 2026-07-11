@@ -9,6 +9,7 @@
 // This software is distributed under the GNU General Public License version 2 or later.
 ////////////////////////////////////////////////////////////////////////////////////////
 
+#include "constants.h"
 #include "helpers.h"
 #include "stdcapture.h"
 
@@ -17,12 +18,11 @@
 #include <QCoreApplication>
 #include <QDir>
 #include <QFile>
+#include <QImage>
 #include <QString>
 
 #include <cstdio>
-#include <cstring>
 #include <string>
-#include <vector>
 
 // Fixture for tests that need Qt application
 class HelpersTest : public ::testing::Test {
@@ -251,17 +251,21 @@ TEST_F(HelpersTest, RestoreStdoutWhenNotSilenced)
     EXPECT_FALSE(isStdoutSilenced());
 }
 
-TEST_F(HelpersTest, SilenceStdoutIdempotent)
+TEST_F(HelpersTest, SilenceStdoutNested)
 {
-    // Silencing twice should not cause issues
+    // nested silence requests are counted, so stdout stays silenced until the
+    // outermost request is released (StdoutSilencer guards pair calls 1:1)
     silenceStdout();
     EXPECT_TRUE(isStdoutSilenced());
-    silenceStdout(); // second call should be a no-op
+    silenceStdout();
     EXPECT_TRUE(isStdoutSilenced());
 
-    restoreStdout();
+    restoreStdout(); // releases only the inner request
+    EXPECT_TRUE(isStdoutSilenced());
+    restoreStdout(); // releasing the outermost request restores stdout
     EXPECT_FALSE(isStdoutSilenced());
-    // restoring a second time should not make a difference
+
+    // restoring with no pending silence request is a safe no-op
     restoreStdout();
     EXPECT_FALSE(isStdoutSilenced());
 }
@@ -400,8 +404,7 @@ TEST_F(HelpersTest, DateCompareBothInvalid)
 
 TEST_F(HelpersTest, DateCompareWithUpdateSuffix)
 {
-    // LAMMPS dates can have "update N" suffix like "22 July 2025 update 2"
-    // dateCompare should handle the date part correctly
+    // dates with the same day-of-month but different months must compare by month
     QString date1 = "22 Jul 2025";
     QString date2 = "22 Aug 2025";
     EXPECT_EQ(dateCompare(date1, date2), -1);
@@ -468,4 +471,120 @@ TEST_F(HelpersTest, IsImageFileByExtension)
     EXPECT_FALSE(isImageFile("log.lammps"));
     EXPECT_FALSE(isImageFile("data.yaml"));
     EXPECT_FALSE(isImageFile("noextension"));
+}
+
+TEST(QtMessageSilencer, CollectsWarningsInsteadOfPrintingThem)
+{
+    QString captured;
+    {
+        QtMessageSilencer silencer;
+        qWarning("first complaint");
+        qWarning("second complaint");
+        captured = silencer.messages();
+    }
+    // one message per line, in the order they were emitted. Note that qDebug()
+    // is not tested here: the default logging category drops debug output
+    // before it can reach any message handler.
+    EXPECT_EQ(captured, QString("first complaint\nsecond complaint"));
+}
+
+TEST(QtMessageSilencer, CollectsNothingWhenNothingIsEmitted)
+{
+    QtMessageSilencer silencer;
+    EXPECT_TRUE(silencer.messages().isEmpty());
+}
+
+TEST(QtMessageSilencer, RestoresThePreviousHandlerAndNests)
+{
+    {
+        QtMessageSilencer outer;
+        {
+            QtMessageSilencer inner;
+            qWarning("inner only");
+            EXPECT_EQ(inner.messages(), QString("inner only"));
+        }
+        // the inner guard swallowed its own message, not the outer one's
+        EXPECT_TRUE(outer.messages().isEmpty());
+        qWarning("outer only");
+        EXPECT_EQ(outer.messages(), QString("outer only"));
+    }
+    // after the outermost guard is gone, messages are no longer collected
+    QtMessageSilencer fresh;
+    EXPECT_TRUE(fresh.messages().isEmpty());
+}
+
+TEST(GrayscaleImage, RemovesColorAndPreservesAlpha)
+{
+    QImage img(2, 1, QImage::Format_ARGB32);
+    img.setPixel(0, 0, qRgba(255, 0, 0, 255)); // opaque red
+    img.setPixel(1, 0, qRgba(0, 255, 0, 64));  // translucent green
+    const QImage out = grayscaleImage(img);
+
+    for (int x = 0; x < 2; ++x) {
+        const QRgb px = out.pixel(x, 0);
+        EXPECT_EQ(qRed(px), qGreen(px));
+        EXPECT_EQ(qGreen(px), qBlue(px));
+    }
+    EXPECT_EQ(qAlpha(out.pixel(0, 0)), 255);
+    EXPECT_EQ(qAlpha(out.pixel(1, 0)), 64);
+}
+
+TEST(GrayscaleImage, FadesTowardsTheMidpoint)
+{
+    QImage img(2, 1, QImage::Format_ARGB32);
+    img.setPixel(0, 0, qRgba(0, 0, 0, 255));       // black
+    img.setPixel(1, 0, qRgba(255, 255, 255, 255)); // white
+    const QImage out = grayscaleImage(img);
+
+    const int dark  = qRed(out.pixel(0, 0));
+    const int light = qRed(out.pixel(1, 0));
+    // both ends move towards the midpoint, keeping only a fraction of the span
+    EXPECT_GT(dark, 0);
+    EXPECT_LT(light, 255);
+    EXPECT_LT(light - dark, 255 * Cfg::GRAYSCALE_CONTRAST + 1);
+    EXPECT_GT(light - dark, 255 * Cfg::GRAYSCALE_CONTRAST - 1);
+    // a desaturation-only conversion would have left the full black-to-white span
+    EXPECT_LT(light - dark, 200);
+}
+
+// Tests for viewerFitSize (deterministic viewer window auto-resize)
+
+TEST(ViewerFitSize, ContentFitsBudget)
+{
+    // content plus frame fits: natural size, no scroll bar allowance
+    EXPECT_EQ(viewerFitSize(QSize(400, 300), QSize(1000, 800), 2, 16), QSize(402, 302));
+}
+
+TEST(ViewerFitSize, ExactFitAddsNoScrollBarRoom)
+{
+    EXPECT_EQ(viewerFitSize(QSize(998, 798), QSize(1000, 800), 2, 16), QSize(1000, 800));
+}
+
+TEST(ViewerFitSize, WidthOverflowAddsHorizontalBarRoom)
+{
+    // width is clamped; the horizontal scroll bar consumes viewport height
+    EXPECT_EQ(viewerFitSize(QSize(2000, 300), QSize(1000, 800), 2, 16), QSize(1000, 318));
+}
+
+TEST(ViewerFitSize, HeightOverflowAddsVerticalBarRoom)
+{
+    // height is clamped; the vertical scroll bar consumes viewport width
+    EXPECT_EQ(viewerFitSize(QSize(400, 2000), QSize(1000, 800), 2, 16), QSize(418, 800));
+}
+
+TEST(ViewerFitSize, BothOverflowClampsToBudget)
+{
+    EXPECT_EQ(viewerFitSize(QSize(2000, 2000), QSize(1000, 800), 2, 16), QSize(1000, 800));
+}
+
+TEST(ViewerFitSize, ScrollBarRoomStaysWithinBudget)
+{
+    // the extra scroll bar room must not push the other axis past its budget
+    EXPECT_EQ(viewerFitSize(QSize(2000, 790), QSize(1000, 800), 2, 16), QSize(1000, 800));
+}
+
+TEST(ViewerFitSize, NegativeBudgetClampsToZero)
+{
+    // tiny screens can make the budget negative; never return a negative size
+    EXPECT_EQ(viewerFitSize(QSize(400, 300), QSize(-10, -5), 2, 16), QSize(0, 0));
 }

@@ -23,11 +23,9 @@
 
 #include <QAction>
 #include <QApplication>
-#include <QButtonGroup>
 #include <QCheckBox>
 #include <QClipboard>
 #include <QColor>
-#include <QColorDialog>
 #include <QDesktopServices>
 #include <QDir>
 #include <QDoubleValidator>
@@ -41,7 +39,6 @@
 #include <QIcon>
 #include <QImage>
 #include <QImageReader>
-#include <QIntValidator>
 #include <QJsonArray>
 #include <QJsonDocument>
 #include <QJsonObject>
@@ -55,27 +52,24 @@
 #include <QPainter>
 #include <QPalette>
 #include <QPixmap>
-#include <QProcess>
 #include <QPushButton>
-#include <QRadioButton>
 #include <QRect>
 #include <QRegularExpression>
-#include <QRegularExpressionValidator>
 #include <QScreen>
 #include <QScrollArea>
-#include <QScrollBar>
 #include <QSettings>
+#include <QShowEvent>
 #include <QSizePolicy>
 #include <QSpinBox>
 #include <QString>
 #include <QStringList>
-#include <QTemporaryFile>
+#include <QTimer>
 #include <QVBoxLayout>
 #include <QVariant>
 
 #include <algorithm>
 #include <cmath>
-#include <unordered_map>
+#include <cstring>
 #include <unordered_set>
 
 // clang-format off
@@ -126,7 +120,7 @@ constexpr double pte_mass[] = {
  * except the value for H, which is taken from R.S. Rowland & R. Taylor,
  * J.Phys.Chem., 100, 7384 - 7391, 1996. Radii that are not available in
  * either of these publications have RvdW = 2.00 \AA
- * The radii for Ions (Na, K, Cl, Ca, Mg, and Cs are based on the CHARMM27
+ * The radii for ions (Na, K, Cl, Ca, Mg, and Cs) are based on the CHARMM27
  * Rmin/2 parameters for (SOD, POT, CLA, CAL, MG, CES) by default.
  */
 constexpr double pte_vdw_radius[] = {
@@ -168,24 +162,9 @@ int get_pte_from_mass(double mass)
 
 QStringList defaultcolors = {"red",       "green",    "blue",       "yellow",   "cyan",
                              "magenta",   "orange",   "chartreuse", "brown",    "darkred",
-                             "darkgreen", "darkblue", "darkyellow", "darkcyan", "darkmagenta",
+                             "darkgreen", "darkblue", "olive",      "darkcyan", "darkmagenta",
                              "silver",    "gray"};
 
-// Desaturate a pixmap while preserving its alpha channel. Used for the
-// render-status icon's "idle" state so we do not depend on the disabled-widget
-// visual, which does not refresh reliably on all platforms (e.g. macOS 12).
-QPixmap grayscalePixmap(const QPixmap &src)
-{
-    QImage img = src.toImage().convertToFormat(QImage::Format_ARGB32);
-    for (int y = 0; y < img.height(); ++y) {
-        auto *line = reinterpret_cast<QRgb *>(img.scanLine(y));
-        for (int x = 0; x < img.width(); ++x) {
-            const int v = qGray(line[x]);
-            line[x]     = qRgba(v, v, v, qAlpha(line[x]));
-        }
-    }
-    return QPixmap::fromImage(img);
-}
 } // namespace
 
 // 2) create a color gradient icon
@@ -270,14 +249,14 @@ QJsonObject loadJsonColors(QWidget *parent)
     if ((app != "LAMMPS") || (key != "colors")) {
         warning(parent, "Load Colors",
                 "JSON colors file '" + fileName + "' is not a LAMMPS colors file.");
-        return obj;
+        return {};
     }
     if (rev != 1) {
         warning(parent, "Load Colors",
                 QString("JSON colors file '%1' has incompatible revision %2 instead of 1")
                     .arg(fileName)
                     .arg(rev));
-        return obj;
+        return {};
     }
 
     auto arr = obj.value("colors").toArray();
@@ -396,7 +375,7 @@ ImageViewer::ImageViewer(const QString &fileName, LammpsWrapper *_lammps, Lammps
 
     auto *renderstatus = new QLabel(QString());
     // The render-status icon shows a full-color "active" pixmap while an image is
-    // rendering and a grayscale "idle" pixmap otherwise. Swap the two pixmaps
+    // rendering and a faded "idle" pixmap otherwise. Swap the two pixmaps
     // explicitly (stored as properties) rather than relying on the disabled-widget
     // visual, which does not refresh reliably on all platforms (e.g. macOS 12).
     const QPixmap activePix = pix.scaled(22, 22, Qt::KeepAspectRatio, Qt::SmoothTransformation);
@@ -492,22 +471,33 @@ ImageViewer::ImageViewer(const QString &fileName, LammpsWrapper *_lammps, Lammps
     zoomin->setToolTip("Zoom in by 10 percent");
     auto *zoomout = new QPushButton(QIcon(":/icons/gtk-zoom-out.svg"), "");
     zoomout->setToolTip("Zoom out by 10 percent");
-    auto *rotleft = new QPushButton(QIcon(":/icons/rotate-left.svg"), "");
-    rotleft->setToolTip("Rotate left by 10 degrees");
+// the SVG versions do not render correctly with Qt before 6.7
+#if QT_VERSION >= QT_VERSION_CHECK(6, 7, 0)
+    auto *rotleft  = new QPushButton(QIcon(":/icons/rotate-left.svg"), "");
     auto *rotright = new QPushButton(QIcon(":/icons/rotate-right.svg"), "");
+    auto *rotup    = new QPushButton(QIcon(":/icons/rotate-up.svg"), "");
+    auto *rotdown  = new QPushButton(QIcon(":/icons/rotate-down.svg"), "");
+#else
+    auto *rotleft  = new QPushButton(QIcon(":/icons/rotate-left.png"), "");
+    auto *rotright = new QPushButton(QIcon(":/icons/rotate-right.png"), "");
+    auto *rotup    = new QPushButton(QIcon(":/icons/rotate-up.png"), "");
+    auto *rotdown  = new QPushButton(QIcon(":/icons/rotate-down.png"), "");
+#endif
+    rotleft->setToolTip("Rotate left by 10 degrees");
     rotright->setToolTip("Rotate right by 10 degrees");
-    auto *rotup = new QPushButton(QIcon(":/icons/rotate-up.svg"), "");
     rotup->setToolTip("Rotate up by 10 degrees");
-    auto *rotdown = new QPushButton(QIcon(":/icons/rotate-down.svg"), "");
     rotdown->setToolTip("Rotate down by 10 degrees");
     auto *recenter = new QPushButton(QIcon(":/icons/move-recenter.svg"), "");
     recenter->setToolTip("Recenter on group");
     auto *reset = new QPushButton(QIcon(":/icons/gtk-zoom-fit.svg"), "");
     reset->setToolTip("Reset view to defaults");
+    auto *fitwin = new QPushButton(QIcon(":/icons/fit-window.svg"), "");
+    fitwin->setToolTip("Resize window to fit the image size");
 
     // square toolbar buttons with a snug, uniform icon (shared policy)
-    styleToolButtons(buttonhint, {dossao, doanti, doshiny, dovdw, dobond, dobox, doaxes, zoomin,
-                                  zoomout, rotleft, rotright, rotup, rotdown, recenter, reset});
+    styleToolButtons(buttonhint,
+                     {dossao, doanti, doshiny, dovdw, dobond, dobox, doaxes, zoomin, zoomout,
+                      rotleft, rotright, rotup, rotdown, recenter, reset, fitwin});
 
     // match the first-row controls (menu bar and size fields) to the toolbar
     // button height so both rows line up and the layout looks balanced
@@ -519,10 +509,8 @@ ImageViewer::ImageViewer(const QString &fileName, LammpsWrapper *_lammps, Lammps
 
     auto *setviz = new QPushButton("G&lobal");
     setviz->setToolTip("Open dialog for global graphics settings");
-    setviz->setObjectName("settings");
     auto *atomviz = new QPushButton("&Atoms/Bonds");
     atomviz->setToolTip("Open dialog for atom and bond settings");
-    atomviz->setObjectName("atoms");
     auto *fixviz = new QPushButton("&Compute/Fix");
     fixviz->setToolTip("Open dialog for visualizing extra graphics from computes and fixes");
     fixviz->setObjectName("image_styles");
@@ -533,7 +521,6 @@ ImageViewer::ImageViewer(const QString &fileName, LammpsWrapper *_lammps, Lammps
     regviz->setEnabled(false);
     auto *colviz = new QPushButton("C&olors");
     colviz->setToolTip("Open dialog for customizing colors");
-    colviz->setObjectName("colors");
     auto *help = new QPushButton("Help");
     help->setToolTip("Open online help");
     help->setObjectName("visualization.html");
@@ -600,6 +587,7 @@ ImageViewer::ImageViewer(const QString &fileName, LammpsWrapper *_lammps, Lammps
     buttonLayout->addWidget(rotdown);
     buttonLayout->addWidget(recenter);
     buttonLayout->addWidget(reset);
+    buttonLayout->addWidget(fitwin);
     buttonLayout->insertStretch(-1, 1);
     buttonLayout->setSizeConstraint(QLayout::SetMinimumSize);
     buttonLayout->setContentsMargins(0, 0, 0, 0);
@@ -639,12 +627,13 @@ ImageViewer::ImageViewer(const QString &fileName, LammpsWrapper *_lammps, Lammps
     connect(rotdown, &QPushButton::released, this, &ImageViewer::doRotDown);
     connect(recenter, &QPushButton::released, this, &ImageViewer::doRecenter);
     connect(reset, &QPushButton::released, this, &ImageViewer::resetView);
+    connect(fitwin, &QPushButton::released, this, &ImageViewer::resetWindowSize);
     connect(setviz, &QPushButton::released, this, &ImageViewer::globalSettings);
     connect(atomviz, &QPushButton::released, this, &ImageViewer::atomSettings);
     connect(fixviz, &QPushButton::released, this, &ImageViewer::fixSettings);
     connect(regviz, &QPushButton::released, this, &ImageViewer::regionSettings);
     connect(colviz, &QPushButton::released, this, &ImageViewer::colorSettings);
-    connect(help, &QPushButton::released, this, &ImageViewer::resetColors);
+    connect(help, &QPushButton::released, this, &ImageViewer::getHelp);
     connect(combo, QOverload<int>::of(&QComboBox::currentIndexChanged), this,
             &ImageViewer::changeGroup);
     connect(molbox, QOverload<int>::of(&QComboBox::currentIndexChanged), this,
@@ -722,7 +711,7 @@ void ImageViewer::readImageSettings()
     shinyfactor    = settings.value(Keys::SHINYSTYLE, true).toBool() ? SHINY_ON : SHINY_OFF;
     vdwfactor      = settings.value(Keys::VDWSTYLE, false).toBool() ? VDW_ON : VDW_OFF;
     autobond       = settings.value(Keys::AUTOBOND, false).toBool();
-    bondcutoff     = settings.value(Keys::BONDCUTOFF, 1.6).toDouble();
+    bondcutoff     = settings.value(Keys::BONDCUT, 1.6).toDouble();
     showbox        = settings.value(Keys::BOX, true).toBool();
     showsubbox     = false;
     boxdiam        = settings.value(Keys::BOXDIAM, 0.025).toDouble();
@@ -751,13 +740,13 @@ void ImageViewer::readImageSettings()
     ellipsoidcolor = "atom";
     linecolor      = "atom";
     tricolor       = "atom";
-    // BWR was removed from the offered maps; it equals "RWB" reversed, so the
-    // historical blue-low/red-high default is now "RWB" with the reverse flag on
-    colormap        = settings.value(Keys::COLORMAP, "RWB").toString();
+    // the historical blue-low/red-high default map ("RWB" is its unlisted
+    // reversed alias, kept so stale selections still render)
+    colormap        = settings.value(Keys::COLORMAP, "BWR").toString();
     mapmin          = "auto";
     mapmax          = "auto";
     revcolormap     = false;
-    bondcolormap    = settings.value(Keys::BONDCOLORMAP, "RWB").toString();
+    bondcolormap    = settings.value(Keys::BONDCOLORMAP, "BWR").toString();
     bondmapmin      = "auto";
     bondmapmax      = "auto";
     revbondcolormap = false;
@@ -777,7 +766,14 @@ void ImageViewer::readImageSettings()
     tridiam        = 0.2;
     triflag        = CYLINDERS;
     xcenter = ycenter = zcenter = 0.5;
-    if (lammps->extractSetting("dimension") == 2) zcenter = 0.0;
+    // the camera up direction defaults to the z-axis in 3d and the y-axis in 2d
+    xup = yup = zup = 0.0;
+    if (lammps->extractSetting("dimension") == 2) {
+        zcenter = 0.0;
+        yup     = 1.0;
+    } else {
+        zup = 1.0;
+    }
     settings.endGroup();
 
     if (color_list.isEmpty()) resetColors(); // create list of default colors
@@ -818,7 +814,7 @@ void ImageViewer::resetView()
     if (button) button->setChecked(showbox);
     button = findChild<QPushButton *>("axes");
     if (button) button->setChecked(showaxes);
-    auto *cb = findChild<QComboBox *>("combo");
+    auto *cb = findChild<QComboBox *>("group");
     if (cb) cb->setCurrentText("all");
     createImage();
 }
@@ -946,7 +942,7 @@ void ImageViewer::toggleBond()
         }
     }
 
-    button->setChecked(autobond);
+    if (button) button->setChecked(autobond);
     createImage();
 }
 
@@ -964,11 +960,17 @@ void ImageViewer::vdwbondSync()
     }
 
     // compute bond/local coloring needs real bonds, so it is unavailable while
-    // AutoBonds is on; refresh the bond Color choices to match the live state
+    // AutoBonds is on; refresh the bond Color choices to match the live state.
+    // Without real bonds, AutoBonds is the only source of bonds and those are
+    // always colored by the atoms forming the bond, so force the bond Color
+    // selection to "atom" and only leave the diameter selectable
     auto *bncolor = dialog->findChild<QComboBox *>("bncolor");
     if (bncolor) {
         const bool hasRealBonds = (lammps->extractSetting("molecule_flag") == 1);
         rebuildBondColorChoices(bncolor, hasRealBonds && !ab->isChecked());
+        const bool atomsonly = !hasRealBonds && ab->isChecked();
+        if (atomsonly) selectComboItem(bncolor, "atom");
+        bncolor->setEnabled(!atomsonly);
     }
 }
 
@@ -1043,14 +1045,14 @@ void ImageViewer::toggleAxes()
 void ImageViewer::doZoomIn()
 {
     zoom = zoom * 1.1;
-    zoom = std::min(zoom, 10.0);
+    zoom = std::min(zoom, ZOOM_MAX);
     createImage();
 }
 
 void ImageViewer::doZoomOut()
 {
     zoom = zoom / 1.1;
-    zoom = std::max(zoom, 0.1);
+    zoom = std::max(zoom, ZOOM_MIN);
     createImage();
 }
 
@@ -1296,13 +1298,6 @@ bool ImageViewer::eventFilter(QObject *watched, QEvent *event)
     return QDialog::eventFilter(watched, event);
 }
 
-// This function creates a visualization of the current system using the
-// "dump image" command and reads and displays the renderd image.
-// To visualize molecules we create new atoms with create_atoms and
-// put them into a new, temporary group and then visualize that group.
-// After rendering the image, the atoms and group are deleted.
-// to update bond data, we also need to issue a "run 0" command.
-
 // Collect all widget state and LAMMPS-derived data required to assemble the
 // dump-image command into a plain struct, so the command itself is built by
 // the pure (GUI-free, testable) buildDumpImageCommand().  As a side effect
@@ -1450,6 +1445,11 @@ DumpImageParams ImageViewer::gatherDumpImageParams(const QString &dumpfilename)
     p.ycenter = ycenter;
     p.zcenter = zcenter;
 
+    // camera up direction
+    p.xup = xup;
+    p.yup = yup;
+    p.zup = zup;
+
     // colors / lighting
     p.color_list   = color_list;
     p.boxcolor     = boxcolor;
@@ -1516,6 +1516,12 @@ void ImageViewer::syncAtomSizeWidgets()
     }
 }
 
+// This function creates a visualization of the current system using the
+// "dump image" command and reads and displays the rendered image.
+// To visualize molecules we create new atoms with create_atoms and
+// put them into a new, temporary group and then visualize that group.
+// After rendering the image, the atoms and group are deleted.
+// To update bond data, we also need to issue a "run 0" command.
 void ImageViewer::createImage()
 {
     // no point in trying to update the image when triggered after the destructor started
@@ -1560,13 +1566,14 @@ void ImageViewer::createImage()
 
         {
             StdoutSilencer guard;
-            QString molcreate = "create_atoms 0 single %1 %2 %3 mol %4 312944 group %5 units box";
-            group             = "imgviewer_tmp_mol";
+            QString molcreate = QString("create_atoms 0 single %1 %2 %3 mol %4 ") +
+                                QString::number(Cfg::CREATE_ATOMS_SEED) + " group %5 units box";
+            group = "imgviewer_tmp_mol";
             lammps->command(molcreate.arg(xmid).arg(ymid).arg(zmid).arg(molecule).arg(group));
             lammps->command(QString("neigh_modify exclude group all %1").arg(group));
             lammps->command("run 0 post no");
         }
-        if (lammps->hasError()) lammps->getLastErrorMessage(nullptr, 0);
+        if (lammps->hasError()) (void)lammps->lastErrorMessage(); // clear pending error
     }
 
     // attempt to clean up if a previous render left our dump defined
@@ -1644,8 +1651,24 @@ void ImageViewer::createImage()
         lammps->command("uncompute " + bondComputeId);
     }
 
+    // restore the pre-render state on every exit path: remove the temporary
+    // molecule atoms/group created above and reset the render-status icon,
+    // otherwise a failed render leaves the icon stuck on "active" and the
+    // leftover atoms corrupt every subsequent render
+    auto restoreRenderState = [&]() {
+        if (molecule != "none") {
+            lammps->command("neigh_modify exclude none");
+            lammps->command(QString("delete_atoms group %1 compress no").arg(group));
+            lammps->command(QString("group %1 delete").arg(group));
+            group = oldgroup;
+        }
+        if (renderstatus)
+            renderstatus->setPixmap(renderstatus->property("idlePix").value<QPixmap>());
+    };
+
     // display error message
     if (!errmsg.isEmpty()) {
+        restoreRenderState();
         // ignore "Invalid LAMMPS handle", but report other errors
         if (!errmsg.contains("Invalid LAMMPS handle"))
             warning(this, "Image Viewer File Creation Error",
@@ -1661,24 +1684,20 @@ void ImageViewer::createImage()
         QFile::remove(dumpdir.absoluteFilePath(f));
 
     // read of new image failed. nothing left to do.
-    if (newImage.isNull()) return;
+    if (newImage.isNull()) {
+        restoreRenderState();
+        return;
+    }
 
-    // show show image
+    // show image
     image = newImage;
     imageLabel->setPixmap(QPixmap::fromImage(image));
     imageLabel->setMinimumSize(image.width(), image.height());
     imageLabel->resize(image.width(), image.height());
     adjustWindowSize();
-    if (renderstatus) renderstatus->setPixmap(renderstatus->property("idlePix").value<QPixmap>());
+    restoreRenderState();
     repaint();
-    adjustWindowSize();
-
-    if (molecule != "none") {
-        lammps->command("neigh_modify exclude none");
-        lammps->command(QString("delete_atoms group %1 compress no").arg(group));
-        lammps->command(QString("group %1 delete").arg(group));
-        group = oldgroup;
-    }
+    updateActions();
 }
 
 void ImageViewer::saveAs()
@@ -1728,11 +1747,10 @@ void ImageViewer::getHelp()
         } else if (page.startsWith("compute_") || page.startsWith("fix_")) {
             // jump to the "Dump image info" section for computes and fixes
             QDesktopServices::openUrl(
-                QUrl(QString("https://docs.lammps.org%1%2#dump-image-info").arg(docver).arg(page)));
+                QUrl(QString("%1%2%3#dump-image-info").arg(Cfg::DOCS_URL, docver, page)));
         } else {
             // general LAMMPS doc page
-            QDesktopServices::openUrl(
-                QUrl(QString("https://docs.lammps.org%1%2").arg(docver).arg(page)));
+            QDesktopServices::openUrl(QUrl(QString("%1%2%3").arg(Cfg::DOCS_URL, docver, page)));
         }
     }
 }
@@ -1777,23 +1795,31 @@ void ImageViewer::updateActions()
 
 void ImageViewer::adjustWindowSize()
 {
-    if (image.isNull()) return;
-
-    auto *hbar        = scrollArea->horizontalScrollBar();
-    auto *vbar        = scrollArea->verticalScrollBar();
-    int desiredWidth  = image.width() + 2 + (vbar->isVisible() ? vbar->width() : 0);
-    int desiredHeight = image.height() + 2 + (hbar->isVisible() ? hbar->height() : 0);
+    // the render size is set in the settings panel, so the size to fit is
+    // known even before the first image has been rendered
+    if ((xsize < 1) || (ysize < 1)) return;
 
     // make sure the scroll area is not resized beyond a certain fraction of the screen
-    auto *screen = QGuiApplication::primaryScreen();
-    if (screen) {
-        auto screenSize = screen->availableSize();
-        desiredWidth    = std::min(desiredWidth, (screenSize.width() * 4 / 5) - EXTRA_WIDTH);
-        desiredHeight   = std::min(desiredHeight, (screenSize.height() * 9 / 10) - EXTRA_HEIGHT);
-    }
-    scrollArea->setMinimumSize(desiredWidth, desiredHeight);
-    scrollArea->resize(desiredWidth, desiredHeight);
-    adjustSize();
+    const QSize avail = screen()->availableSize();
+    const QSize budget((avail.width() * 4 / 5) - EXTRA_WIDTH,
+                       (avail.height() * 9 / 10) - EXTRA_HEIGHT);
+    lastFitSize = fitViewerWindow(this, scrollArea, QSize(xsize, ysize), budget, lastFitSize);
+}
+
+void ImageViewer::resetWindowSize()
+{
+    // discard both a manual window resize and the memoized fit
+    lastFitSize = QSize();
+    adjustWindowSize();
+}
+
+void ImageViewer::showEvent(QShowEvent *event)
+{
+    QDialog::showEvent(event);
+    // any fit computed while the window was hidden used unpolished style
+    // metrics and was not memoized (see fitViewerWindow()); apply the fit
+    // again as soon as the shown window has settled
+    if (!lastFitSize.isValid()) QTimer::singleShot(0, this, &ImageViewer::adjustWindowSize);
 }
 
 void ImageViewer::updatePeratom()
@@ -1844,7 +1870,7 @@ void ImageViewer::updatePeratom()
             }
 
             // clear error status, if needed:
-            lammps->getLastErrorMessage(nullptr, 0);
+            (void)lammps->lastErrorMessage(); // read-and-clear any pending error
         }
 
         // add compatible fixes to the list
@@ -1868,7 +1894,7 @@ void ImageViewer::updatePeratom()
             }
 
             // clear error status, if needed:
-            lammps->getLastErrorMessage(nullptr, 0);
+            (void)lammps->lastErrorMessage(); // read-and-clear any pending error
         }
     }
     // some more general dump custom properties

@@ -17,7 +17,6 @@
 #include "lammpsgui.h"
 
 #include <QAction>
-#include <QApplication>
 #include <QDesktopServices>
 #include <QFile>
 #include <QFileDialog>
@@ -49,15 +48,9 @@ LogWindow::LogWindow(const QString &_filename, LammpsGui *_lammpsgui, QWidget *p
     QSettings settings;
     resize(settings.value(Keys::LOGX, 500).toInt(), settings.value(Keys::LOGY, 320).toInt());
 
-    QFont mono_font;
-    QFontInfo mono_info(*GUI_MONOFONT);
-    mono_font.setFamily(settings.value(Keys::MONOFAMILY, mono_info.family()).toString());
-    mono_font.setPointSize(settings.value(Keys::MONOSIZE, mono_info.pointSize()).toInt());
-    mono_font.setStyleHint(GUI_MONOFONT->styleHint());
-    mono_font.setFixedPitch(true);
-    document()->setDefaultFont(mono_font);
+    document()->setDefaultFont(monoFontFromSettings());
 
-    summary = new QLabel("0 Warnings / Errors  -  0 Lines");
+    summary = new QLabel("0 Warnings / Errors - 0 Lines");
     summary->setMargin(1);
 
     auto *frame = new QFrame;
@@ -103,11 +96,8 @@ LogWindow::LogWindow(const QString &_filename, LammpsGui *_lammpsgui, QWidget *p
     applyWindowFlags(this);
 }
 
-LogWindow::~LogWindow()
-{
-    delete warnings;
-    delete summary;
-}
+// warnings and summary are Qt-parented and cleaned up by their parents
+LogWindow::~LogWindow() = default;
 
 void LogWindow::closeEvent(QCloseEvent *event)
 {
@@ -161,7 +151,7 @@ void LogWindow::saveAs()
     QFile file(path.absoluteFilePath());
 
     if (!file.open(QIODevice::WriteOnly | QFile::Text)) {
-        warning(this, "LogWindow Warning", "Cannot save to file " + logFileName + ": ",
+        warning(this, "LogWindow Warning", "Cannot save to file " + logFileName + ":",
                 file.errorString());
         return;
     }
@@ -169,7 +159,7 @@ void LogWindow::saveAs()
     QTextStream out(&file);
     QString text = toPlainText();
     out << text;
-    if (text.back().toLatin1() != '\n') out << "\n"; // add final newline if missing
+    if (!text.endsWith('\n')) out << "\n"; // add final newline if missing
     file.close();
 }
 

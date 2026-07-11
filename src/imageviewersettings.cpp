@@ -25,61 +25,33 @@
 #include "qaddon.h"
 #include "stdcapture.h"
 
-#include <QAction>
-#include <QApplication>
 #include <QButtonGroup>
 #include <QCheckBox>
-#include <QClipboard>
 #include <QColor>
 #include <QColorDialog>
-#include <QDesktopServices>
-#include <QDir>
 #include <QDoubleValidator>
-#include <QFile>
-#include <QFileDialog>
-#include <QFileInfo>
 #include <QFontMetrics>
 #include <QGuiApplication>
 #include <QHBoxLayout>
 #include <QIcon>
-#include <QImage>
-#include <QImageReader>
 #include <QIntValidator>
 #include <QJsonArray>
-#include <QJsonDocument>
 #include <QJsonObject>
-#include <QKeyEvent>
-#include <QKeySequence>
 #include <QLabel>
 #include <QLineEdit>
-#include <QLinearGradient>
-#include <QMenu>
-#include <QMenuBar>
-#include <QPainter>
-#include <QPalette>
-#include <QPixmap>
-#include <QProcess>
 #include <QPushButton>
 #include <QRadioButton>
-#include <QRect>
 #include <QRegularExpression>
 #include <QRegularExpressionValidator>
 #include <QScreen>
 #include <QScrollArea>
 #include <QScrollBar>
-#include <QSettings>
-#include <QSizePolicy>
 #include <QSpinBox>
 #include <QString>
 #include <QStringList>
-#include <QTemporaryFile>
 #include <QVBoxLayout>
-#include <QVariant>
 
 #include <algorithm>
-#include <cmath>
-#include <unordered_map>
-#include <unordered_set>
 
 void ImageViewer::globalSettings()
 {
@@ -98,7 +70,10 @@ void ImageViewer::globalSettings()
     auto *colorvalidator    = new QColorValidator(this);
     auto *transvalidator    = new QDoubleValidator(0.0, 1.0, 3, this);
     auto *fractionvalidator = new QDoubleValidator(0.00001, 5.0, 5, this);
+    auto *zoomvalidator     = new QDoubleValidator(ZOOM_MIN, ZOOM_MAX, 3, this);
+    auto *upvalidator       = new QDoubleValidator(this);
     auto fwidth             = setview.fontMetrics().size(Qt::TextSingleLine, "0.00000000").width();
+    const bool is3d         = lammps->extractSetting("dimension") == 3;
 
     auto *layout          = new QGridLayout;
     int idx               = 0;
@@ -184,7 +159,30 @@ void ImageViewer::globalSettings()
     auto *subdiam = new QLineEdit(QString::number(subboxdiam));
     subdiam->setValidator(fractionvalidator);
     subdiam->setMaximumWidth(fwidth);
-    layout->addWidget(subdiam, idx++, n++, 1, 1);
+    layout->addWidget(subdiam, idx, n++, 1, 1);
+
+    // the "view" angles have no effect on a 2d system, where LAMMPS looks down the z-axis
+    layout->addWidget(new QLabel("View theta: "), idx, n++, 1, 1,
+                      Qt::AlignVCenter | Qt::AlignRight);
+    auto *thetaval = new QSpinBox;
+    thetaval->setRange(0, 360);
+    thetaval->setSingleStep(10);
+    thetaval->setWrapping(true);
+    thetaval->setValue(hrot);
+    thetaval->setMaximumWidth(fwidth * 3 / 2);
+    thetaval->setEnabled(is3d);
+    thetaval->setToolTip("Viewing angle in degrees away from the +z axis");
+    layout->addWidget(thetaval, idx, n++, 1, 1);
+    layout->addWidget(new QLabel("View phi: "), idx, n++, 1, 1, Qt::AlignVCenter | Qt::AlignRight);
+    auto *phival = new QSpinBox;
+    phival->setRange(-180, 180);
+    phival->setSingleStep(10);
+    phival->setWrapping(true);
+    phival->setValue(vrot);
+    phival->setMaximumWidth(fwidth * 3 / 2);
+    phival->setEnabled(is3d);
+    phival->setToolTip("Azimuthal viewing angle in degrees around the z axis");
+    layout->addWidget(phival, idx++, n++, 1, 1);
     layout->addWidget(new QHline, idx++, 0, 1, MAXCOLS);
 
     n = 0;
@@ -206,7 +204,14 @@ void ImageViewer::globalSettings()
     b2color->setMaximumWidth(fwidth);
     b2color->setEnabled(usegradient);
     connect(gradient, &QCheckBox::toggled, b2color, &QLineEdit::setEnabled);
-    layout->addWidget(b2color, idx++, n++, 1, 1);
+    layout->addWidget(b2color, idx, n++, 1, 1);
+    layout->addWidget(new QLabel("Zoom: "), idx, n++, 1, 1, Qt::AlignVCenter | Qt::AlignRight);
+    auto *zoomval = new QLineEdit(QString::number(zoom));
+    zoomval->setValidator(zoomvalidator);
+    zoomval->setMaximumWidth(fwidth);
+    zoomval->setToolTip(
+        QString("Zoom factor of the view (range: %1 -- %2)").arg(ZOOM_MIN).arg(ZOOM_MAX));
+    layout->addWidget(zoomval, idx++, n++, 1, 1);
 
     n = 0;
     layout->addWidget(new QLabel("Quality:"), idx, n++, 1, 1);
@@ -248,6 +253,30 @@ void ImageViewer::globalSettings()
     zval->setMaximumWidth(fwidth);
     layout->addWidget(zval, idx++, n++, 1, 1);
 
+    n             = 0;
+    auto *uplabel = new QLabel("Camera up:");
+    uplabel->setToolTip("Direction pointing up in the image; must not be the zero vector");
+    layout->addWidget(uplabel, idx, n++, 1, 1);
+    layout->addWidget(new QLabel("X-direction: "), idx, n++, 1, 1,
+                      Qt::AlignVCenter | Qt::AlignRight);
+    auto *xupval = new QLineEdit(QString::number(xup));
+    xupval->setValidator(upvalidator);
+    xupval->setMaximumWidth(fwidth);
+    layout->addWidget(xupval, idx, n++, 1, 1);
+    layout->addWidget(new QLabel("Y-direction: "), idx, n++, 1, 1,
+                      Qt::AlignVCenter | Qt::AlignRight);
+    auto *yupval = new QLineEdit(QString::number(yup));
+    yupval->setValidator(upvalidator);
+    yupval->setMaximumWidth(fwidth);
+    layout->addWidget(yupval, idx, n++, 1, 1);
+    layout->addWidget(new QLabel("Z-direction: "), idx, n++, 1, 1,
+                      Qt::AlignVCenter | Qt::AlignRight);
+    auto *zupval = new QLineEdit(QString::number(zup));
+    zupval->setValidator(upvalidator);
+    zupval->setMaximumWidth(fwidth);
+    zupval->setEnabled(is3d);
+    layout->addWidget(zupval, idx++, n++, 1, 1);
+
     n = 0;
     layout->addWidget(new QHline, idx++, 0, 1, MAXCOLS);
     auto *lightlayout = new QHBoxLayout;
@@ -255,7 +284,6 @@ void ImageViewer::globalSettings()
     lightlayout->addWidget(new QLabel("Lights: "), 3, Qt::AlignLeft);
     lightlayout->addWidget(new QLabel("Ambient: "), 2, Qt::AlignRight);
     auto *ambient = new QDoubleSpinBox;
-    ambient->setObjectName("ambient");
     ambient->setRange(0.0, 1.0);
     ambient->setSingleStep(0.05);
     ambient->setValue(ambientlight);
@@ -263,7 +291,6 @@ void ImageViewer::globalSettings()
     lightlayout->addWidget(ambient, 2);
     lightlayout->addWidget(new QLabel("Key: "), 2, Qt::AlignRight);
     auto *key = new QDoubleSpinBox;
-    key->setObjectName("key");
     key->setRange(0.0, 1.0);
     key->setSingleStep(0.05);
     key->setValue(keylight);
@@ -271,7 +298,6 @@ void ImageViewer::globalSettings()
     lightlayout->addWidget(key, 2);
     lightlayout->addWidget(new QLabel("Fill: "), 2, Qt::AlignRight);
     auto *fill = new QDoubleSpinBox;
-    fill->setObjectName("fill");
     fill->setRange(0.0, 1.0);
     fill->setSingleStep(0.05);
     fill->setValue(filllight);
@@ -279,7 +305,6 @@ void ImageViewer::globalSettings()
     lightlayout->addWidget(fill, 2);
     lightlayout->addWidget(new QLabel("Back: "), 2, Qt::AlignRight);
     auto *back = new QDoubleSpinBox;
-    back->setObjectName("back");
     back->setRange(0.0, 1.0);
     back->setSingleStep(0.05);
     back->setValue(backlight);
@@ -288,27 +313,26 @@ void ImageViewer::globalSettings()
     layout->addLayout(lightlayout, idx++, 0, 1, MAXCOLS, Qt::AlignHCenter);
     layout->addWidget(new QHline, idx++, 0, 1, MAXCOLS);
 
-    n = 0;
-
     auto *bottomlayout = new QHBoxLayout;
     bottomlayout->setSpacing(LAYOUT_SPACING);
     auto *cancel = new QPushButton(QIcon(":/icons/dialog-cancel.svg"), "&Cancel");
     auto *apply  = new QPushButton(QIcon(":/icons/dialog-ok.svg"), "&Apply");
     auto *help   = new QPushButton(QIcon(":/icons/system-help.svg"), "&Help");
-    help->setObjectName("dump_image.html");
     cancel->setAutoDefault(false);
+    help->setObjectName("dump_image.html");
     help->setAutoDefault(false);
     apply->setAutoDefault(true);
     apply->setDefault(true);
     apply->setFocus();
+
     connect(cancel, &QPushButton::released, &setview, &QDialog::reject);
     connect(apply, &QPushButton::released, &setview, &QDialog::accept);
     connect(help, &QPushButton::released, this, &ImageViewer::getHelp);
 
-    bottomlayout->addWidget(cancel, Qt::AlignHCenter);
-    bottomlayout->addWidget(apply, Qt::AlignHCenter);
-    bottomlayout->addWidget(help, Qt::AlignHCenter);
-    layout->addLayout(bottomlayout, idx++, 0, 1, MAXCOLS, Qt::AlignHCenter);
+    bottomlayout->addWidget(cancel);
+    bottomlayout->addWidget(apply);
+    bottomlayout->addWidget(help);
+    layout->addLayout(bottomlayout, idx++, 0, 1, MAXCOLS);
     setview.setLayout(layout);
 
     int rv = setview.exec();
@@ -347,6 +371,10 @@ void ImageViewer::globalSettings()
     if (bgcolor->hasAcceptableInput()) backcolor = bgcolor->text();
     if (b2color->hasAcceptableInput()) backcolor2 = b2color->text();
     usegradient = gradient->isChecked();
+    if (zoomval->hasAcceptableInput()) zoom = zoomval->text().toDouble();
+
+    hrot = thetaval->value();
+    vrot = phival->value();
 
     antialias = fsaa->isChecked();
     button    = findChild<QPushButton *>("antialias");
@@ -362,6 +390,19 @@ void ImageViewer::globalSettings()
     if (xval->hasAcceptableInput()) xcenter = xval->text().toDouble();
     if (yval->hasAcceptableInput()) ycenter = yval->text().toDouble();
     if (zval->hasAcceptableInput()) zcenter = zval->text().toDouble();
+
+    // LAMMPS rejects a zero-length up vector, so keep the previous one in that case
+    if (xupval->hasAcceptableInput() && yupval->hasAcceptableInput() &&
+        zupval->hasAcceptableInput()) {
+        const double ux = xupval->text().toDouble();
+        const double uy = yupval->text().toDouble();
+        const double uz = zupval->text().toDouble();
+        if ((ux != 0.0) || (uy != 0.0) || (uz != 0.0)) {
+            xup = ux;
+            yup = uy;
+            zup = uz;
+        }
+    }
 
     ambientlight = ambient->value();
     keylight     = key->value();
@@ -441,7 +482,7 @@ struct ColorMapRow {
 // shared by the atom ("amap") and bond ("bmap") sections. Adds the six widgets
 // into `layout` at grid row `idx`, advancing the column counter `n`, and returns
 // the widgets so the caller can wire them up. Only the combo gets an object name
-// (looked up later via findChild); the min/max edits are used through the
+// (looked up later via findChild for the atom map); the min/max edits are used through the
 // returned pointers. The caller advances `idx` after the row.
 static ColorMapRow addColorMapRow(QGridLayout *layout, int idx, int &n, const QString &comboName,
                                   const QString &curMap, const QString &curMin,
@@ -606,6 +647,13 @@ void ImageViewer::atomSettings()
             selectComboItem(bncolor, bondcolor);
         }
     }
+    // without real bonds, AutoBonds is the only source of bonds and those are
+    // always colored by the atoms forming the bond, so only the diameter is
+    // selectable; vdwbondSync() applies the same rule on live toggles
+    if (!hasRealBonds && autobond) {
+        selectComboItem(bncolor, "atom");
+        bncolor->setEnabled(false);
+    }
     layout->addWidget(bncolor, idx, n++, 1, 1);
     layout->addWidget(new QLabel("Size: "), idx, n++, 1, 1, Qt::AlignVCenter | Qt::AlignRight);
 
@@ -738,7 +786,6 @@ void ImageViewer::atomSettings()
     elevel->setWrapping(false);
     layout->addWidget(elevel, idx, n++, 1, 1);
     ++idx;
-    ++n;
     if (lammps->extractSetting("ellipsoid_flag") != 1) {
         ellipsoidbutton->setEnabled(false);
         ellipsoidbutton->setChecked(false);
@@ -783,7 +830,6 @@ void ImageViewer::atomSettings()
     auto *ttbutton = addShapeButton(tgroup, "Triangles", triflag == TRIANGLES, layout, idx, n);
     auto *tbbutton = addShapeButton(tgroup, "Both", triflag == BOTH, layout, idx, n);
     ++idx;
-    ++n;
     if (lammps->extractSetting("tri_flag") != 1) {
         tributton->setEnabled(false);
         tributton->setChecked(false);
@@ -794,7 +840,6 @@ void ImageViewer::atomSettings()
         tbbutton->setEnabled(false);
     }
 
-    n = 0;
     layout->addWidget(new QHline, idx++, 0, 1, MAXCOLS);
 
     auto *bottomlayout = new QHBoxLayout;
@@ -812,10 +857,10 @@ void ImageViewer::atomSettings()
     connect(apply, &QPushButton::released, &setview, &QDialog::accept);
     connect(help, &QPushButton::released, this, &ImageViewer::getHelp);
 
-    bottomlayout->addWidget(cancel, Qt::AlignHCenter);
-    bottomlayout->addWidget(apply, Qt::AlignHCenter);
-    bottomlayout->addWidget(help, Qt::AlignHCenter);
-    layout->addLayout(bottomlayout, idx, 0, 1, MAXCOLS, Qt::AlignHCenter);
+    bottomlayout->addWidget(cancel);
+    bottomlayout->addWidget(apply);
+    bottomlayout->addWidget(help);
+    layout->addLayout(bottomlayout, idx, 0, 1, MAXCOLS);
     setview.setLayout(layout);
 
     int rv = setview.exec();
@@ -1021,20 +1066,16 @@ void ImageViewer::buildFixComputeRows(QGridLayout *layout, int &idx,
         color->setCompleter(colorcompleter);
         color->setValidator(colorvalidator);
         color->setFixedSize(metrics.averageCharWidth() * 12, metrics.height() + 4);
-        color->setText(item.second->color);
         layout->addWidget(color, idx, n++);
         auto *trans = new QLineEdit(QString::number(item.second->opacity));
         trans->setValidator(transvalidator);
         trans->setFixedSize(metrics.averageCharWidth() * 8, metrics.height() + 4);
-        trans->setText(QString::number(item.second->opacity));
         layout->addWidget(trans, idx, n++);
         auto *flag1 = new QLineEdit(QString::number(item.second->flag1));
         flag1->setFixedSize(metrics.averageCharWidth() * 8, metrics.height() + 4);
-        flag1->setText(QString::number(item.second->flag1));
         layout->addWidget(flag1, idx, n++);
         auto *flag2 = new QLineEdit(QString::number(item.second->flag2));
         flag2->setFixedSize(metrics.averageCharWidth() * 8, metrics.height() + 4);
-        flag2->setText(QString::number(item.second->flag2));
         layout->addWidget(flag2, idx, n++);
         auto *help = new QPushButton(QIcon(":/icons/system-help.svg"), "");
         help->setObjectName(helpmap.value(item.second->style, QString()));
@@ -1126,7 +1167,8 @@ void ImageViewer::fixSettings()
         layout->addWidget(new QLabel("Color:"), idx, n++, Qt::AlignHCenter);
         layout->addWidget(new QLabel("Opacity:"), idx, n++, Qt::AlignHCenter);
         layout->addWidget(new QLabel("Flag #1:"), idx, n++, Qt::AlignHCenter);
-        layout->addWidget(new QLabel("Flag #2:"), idx++, n++, Qt::AlignHCenter);
+        layout->addWidget(new QLabel("Flag #2:"), idx, n++, Qt::AlignHCenter);
+        layout->addWidget(new QLabel("Help:"), idx++, n++, Qt::AlignHCenter);
         layout->addWidget(new QHline, idx++, 0, 1, MAXCOLS);
 
         buildFixComputeRows(layout, idx, fixes, fix_map);
@@ -1140,9 +1182,9 @@ void ImageViewer::fixSettings()
     cancel->setAutoDefault(false);
     apply->setAutoDefault(true);
     apply->setDefault(true);
-    layout->addWidget(cancel, idx, 0, 1, MAXCOLS / 3, Qt::AlignHCenter);
-    layout->addWidget(apply, idx, MAXCOLS / 3, 1, MAXCOLS / 3, Qt::AlignHCenter);
-    layout->addWidget(help, idx, 2 * (MAXCOLS / 3), 1, MAXCOLS / 3, Qt::AlignHCenter);
+    layout->addWidget(cancel, idx, 0, 1, MAXCOLS / 3);
+    layout->addWidget(apply, idx, MAXCOLS / 3, 1, MAXCOLS / 3);
+    layout->addWidget(help, idx, 2 * (MAXCOLS / 3), 1, MAXCOLS / 3);
     connect(cancel, &QPushButton::released, &fixview, &QDialog::reject);
     connect(apply, &QPushButton::released, &fixview, &QDialog::accept);
     connect(help, &QPushButton::released, this, &ImageViewer::getHelp);
@@ -1166,7 +1208,9 @@ void ImageViewer::readRegionRows(QGridLayout *layout)
     for (int idx = 4; idx < static_cast<int>(regions.size()) + 4; ++idx) {
         int n       = 0;
         auto *label = gridWidget<QLabel>(layout, idx, n);
-        auto id     = label->text().toStdString();
+        // guard against layout drift like readFixComputeRows() does
+        if (!label || !regions.count(label->text().toStdString())) continue;
+        auto id = label->text().toStdString();
         if (auto *box = gridWidget<QCheckBox>(layout, idx, n))
             regions[id]->enabled = box->isChecked();
         if (auto *combo = gridWidget<QComboBox>(layout, idx, n))
@@ -1225,7 +1269,6 @@ void ImageViewer::regionSettings()
     for (const auto &reg : regions) {
         n = 0;
         layout->addWidget(new QLabel(reg.first.c_str()), idx, n++);
-        layout->setObjectName(QString(reg.first.c_str()));
 
         auto *check = new QCheckBox("");
         check->setChecked(reg.second->enabled);
@@ -1242,27 +1285,22 @@ void ImageViewer::regionSettings()
         color->setCompleter(colorcompleter);
         color->setValidator(colorvalidator);
         color->setFixedSize(metrics.averageCharWidth() * 12, metrics.height() + 4);
-        color->setText(reg.second->color);
         layout->addWidget(color, idx, n++);
         auto *frame = new QLineEdit(QString::number(reg.second->diameter));
         frame->setValidator(framevalidator);
         frame->setFixedSize(metrics.averageCharWidth() * 8, metrics.height() + 4);
-        frame->setText(QString::number(reg.second->diameter));
         layout->addWidget(frame, idx, n++);
         auto *points = new QLineEdit(QString::number(reg.second->npoints));
         points->setValidator(pointvalidator);
         points->setFixedSize(metrics.averageCharWidth() * 10, metrics.height() + 4);
-        points->setText(QString::number(reg.second->npoints));
         layout->addWidget(points, idx, n++);
         auto *trans = new QLineEdit(QString::number(reg.second->opacity));
         trans->setValidator(transvalidator);
         trans->setFixedSize(metrics.averageCharWidth() * 8, metrics.height() + 4);
-        trans->setText(QString::number(reg.second->opacity));
         layout->addWidget(trans, idx, n++);
         ++idx;
     }
 
-    n = 0;
     layout->addWidget(new QHline, idx++, 0, 1, MAXCOLS);
 
     auto *bottomlayout = new QHBoxLayout;
@@ -1280,10 +1318,10 @@ void ImageViewer::regionSettings()
     connect(apply, &QPushButton::released, &regionview, &QDialog::accept);
     connect(help, &QPushButton::released, this, &ImageViewer::getHelp);
 
-    bottomlayout->addWidget(cancel, Qt::AlignHCenter);
-    bottomlayout->addWidget(apply, Qt::AlignHCenter);
-    bottomlayout->addWidget(help, Qt::AlignHCenter);
-    layout->addLayout(bottomlayout, idx, 0, 1, MAXCOLS, Qt::AlignHCenter);
+    bottomlayout->addWidget(cancel);
+    bottomlayout->addWidget(apply);
+    bottomlayout->addWidget(help);
+    layout->addLayout(bottomlayout, idx, 0, 1, MAXCOLS);
     regionview.setLayout(layout);
 
     int rv = regionview.exec();
@@ -1460,7 +1498,6 @@ void ImageViewer::colorSettings()
     auto *cancel = new QPushButton(QIcon(":/icons/dialog-cancel.svg"), "&Cancel");
     auto *apply  = new QPushButton(QIcon(":/icons/dialog-ok.svg"), "&Apply");
     auto *reset  = new QPushButton(QIcon(":/icons/system-restart.svg"), "&Reset");
-    reset->setObjectName("dump_image.html");
     cancel->setAutoDefault(false);
     reset->setAutoDefault(false);
     apply->setAutoDefault(true);
@@ -1473,7 +1510,10 @@ void ImageViewer::colorSettings()
         mydialog->done(RESET_ALL_COLORS);
     });
 
-    // Connect Load JSON button: read a JSON file and update dialog widgets
+    // Connect Load JSON button: read a JSON file, stage the colors in the
+    // dialog widgets, and write the light levels straight into the members
+    // (the dialog has no light widgets); colorSettings() rolls the lights
+    // back if the dialog is cancelled
     connect(loadJson, &QPushButton::released, &colorview,
             [&colorview, layout, colorstart, numtypes, this]() {
                 // read and validate file
@@ -1556,9 +1596,9 @@ void ImageViewer::colorSettings()
                 saveJsonColors(&colorview, colors, lights);
             });
 
-    bottomlayout->addWidget(cancel, Qt::AlignHCenter);
-    bottomlayout->addWidget(apply, Qt::AlignHCenter);
-    bottomlayout->addWidget(reset, Qt::AlignHCenter);
+    bottomlayout->addWidget(cancel);
+    bottomlayout->addWidget(apply);
+    bottomlayout->addWidget(reset);
     mainLayout->addLayout(bottomlayout);
 
     // Size the dialog relative to screen dimensions (same approach as AboutDialog)
@@ -1580,10 +1620,23 @@ void ImageViewer::colorSettings()
         colorview.setMinimumSize(MINIMUM_WIDTH, MINIMUM_HEIGHT);
     }
 
+    // snapshot the light levels: the Load JSON handler applies them to the
+    // members immediately, so a cancelled dialog has to roll them back
+    const double oldambient = ambientlight;
+    const double oldkey     = keylight;
+    const double oldfill    = filllight;
+    const double oldback    = backlight;
+
     int cv = colorview.exec();
 
-    // return immediately on cancel
-    if (!cv) return;
+    // return immediately on cancel, undoing any lights loaded from JSON
+    if (!cv) {
+        ambientlight = oldambient;
+        keylight     = oldkey;
+        filllight    = oldfill;
+        backlight    = oldback;
+        return;
+    }
 
     if (cv == RESET_ALL_COLORS) {
         resetColors();

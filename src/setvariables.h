@@ -23,7 +23,7 @@
  * SetVariables provides a dialog for managing name-value pairs that
  * will be used as index-style variables in LAMMPS input scripts.
  * Users can add, delete, and edit variable definitions. The dialog
- * supports variable substitution using ${varname} syntax.
+ * shows the variables that the input script defines or uses.
  */
 class SetVariables : public QDialog {
     Q_OBJECT

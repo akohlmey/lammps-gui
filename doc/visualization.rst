@@ -257,6 +257,12 @@ there are:
 - **Recenter**: Recenter the view on the center of mass of the currently
   selected group.
 - **Reset**: Reset the view to the default orientation and zoom level.
+- **Fit window**: Resize the window so the image is shown at its full
+  size, without scroll bars or unused space.  This undoes a manual
+  resize of the window; the window is never grown beyond a fraction of
+  the screen, so scroll bars remain for very large images.
+
+  .. versionadded:: 3.0.2
 
 The default image size, some default image quality settings, the view
 style and some colors can be changed in the :doc:`Preferences <dialogs>`
@@ -278,7 +284,7 @@ additional controls (most are explained in detail below):
   "none" restores normal group-based display.
 - **Global**: Opens the :ref:`Global image settings <global_settings>`
   dialog for fine-grained control of axes, box, background, quality,
-  and center settings.
+  view, center, and camera settings.
 - **Atoms/Bonds**: Opens the :ref:`Atom and bond settings
   <atom_settings>` dialog for detailed atom, bond, VDW, and special atom
   style visualization options.
@@ -323,10 +329,10 @@ in this dialog correspond to options of the LAMMPS `dump image and
 dump_modify commands <https://docs.lammps.org/dump_image.html>`_.
 
 .. |global|  image:: JPG/lammps-gui-image-settings.png
-                     :width: 65%
+                     :width: 62%
 
 .. |boxaxes| image:: JPG/lammps-gui-image-box-axes.png
-                     :width: 33%
+                     :width: 35%
 
 |boxaxes|  |global|
 
@@ -367,6 +373,11 @@ The dialog is organized into the following sections:
      box.
    - **Diameter**: The diameter of the sub-domain box edge sticks as
      fraction of the box size (range: 0.00001 -- 5.0).
+   - **View theta**: The viewing angle in degrees away from the
+     positive z-axis (default: 60).  Disabled for 2d systems, where
+     LAMMPS always looks down the z-axis.
+   - **View phi**: The azimuthal viewing angle in degrees around the
+     z-axis (default: 30).  Disabled for 2d systems.
 
 **Background**
    Sets the background color(s) of the rendered image.
@@ -375,6 +386,10 @@ The dialog is organized into the following sections:
    - **Topcolor**: The background color at the top of the image.  If
      the two colors differ, a vertical gradient is applied from bottom
      to top.
+   - **Zoom**: The zoom factor of the view (range: 0.1 -- 10.0, where
+     values larger than 1.0 zoom in).  This is the same setting that
+     the zoom in/out buttons of the settings panel change in steps of
+     10 percent.
 
 **Quality**
    Controls rendering quality options.
@@ -393,6 +408,15 @@ The dialog is organized into the following sections:
    - **X-direction**, **Y-direction**, **Z-direction**: Fractional
      coordinates (range: 0.0 -- 1.0) specifying the center of the
      view relative to the simulation box.
+
+**Camera up**
+   Sets the direction that points up in the rendered image.
+
+   - **X-direction**, **Y-direction**, **Z-direction**: The components
+     of the camera's up vector.  The vector does not need to be
+     normalized, but it must not be all zeros, or the values are
+     ignored.  The default is 0 0 1 for 3d systems and 0 1 0 for 2d
+     systems, where the Z-direction entry is disabled.
 
 **Lighting**
    Adjusts the settings for the four light sources used in the
@@ -846,21 +870,47 @@ monitor the progress of the simulation.  It also can be used as an
 effective way to refine visualizations created with the :ref:`Snapshot
 Image Viewer <snapshot_viewer>`.
 
+.. warning::
+
+   When two or more ``dump image`` commands are active at the same time,
+   the slide show picks up the images from all of them and displays them
+   interleaved in the order they are written.  This is usually not
+   intended, but cannot be detected by LAMMPS-GUI before the run has
+   started and the images have already been mixed.  To avoid it, make
+   sure that only one ``dump image`` command is active at any time
+   during a run, for example by removing a no longer needed dump with an
+   `undump command <https://docs.lammps.org/undump.html>`_.
+
 The same window can also display existing image files that were not
 created by the current session: select one or more files with *File* ->
-*Open Image File(s)* (see :ref:`the File menu <files>`) to review images
-produced by an external (for example large parallel) simulation, or to
-revisit images from an earlier run without rerunning it.  Image formats
-that Qt cannot read natively are converted on demand with `ImageMagick
-<https://imagemagick.org/>`_ if it is available.  When the slide show is
-opened this way, the controls that act on a running simulation (such as
-stopping the run or sending images to the trash) are hidden.
+*View Image or Movie File(s)...* (see :ref:`the File menu <files>`) to
+review images produced by an external (for example large parallel)
+simulation, or to revisit images from an earlier run without rerunning
+it.  Image formats that Qt cannot read natively are converted on demand
+with `ImageMagick <https://imagemagick.org/>`_ if it is available.  Each
+such file is converted only once and the converted copy is reused while
+the window is open, so displaying it repeatedly neither repeats the
+conversion nor repeats any complaint its format may provoke from Qt (the
+Targa/TGA decoder is a common source of those).  A file that can be read
+by neither is reported once on the console and then skipped.  When the
+slide show is opened this way, the controls that act on a running
+simulation (such as stopping the run or sending images to the trash) are
+hidden.
 
 .. versionadded:: 2.1
 
    Existing image files can be loaded into the slide show with *Open
    Image File(s)*, and image files opened with *File* -> *View* are shown
    here instead of as text.
+
+Movie files can be selected in the same dialog; their frames are then
+extracted into individual images as described in :ref:`Importing movie
+files <movie_import>` below.
+
+.. versionadded:: 3.0.2
+
+   Movie files can be imported into the slide show viewer, and converted
+   images are cached instead of being converted again for every display.
 
 From the slide show window the following global keyboard shortcuts are
 supported: `Ctrl-W`: close window, `Ctrl-Q`: quit application, `Ctrl-/`:
@@ -869,6 +919,44 @@ of the controls and listed in their documentation below.
 
 .. image:: JPG/lammps-gui-slideshow.png
    :align: center
+
+.. _movie_import:
+
+Importing movie files
+---------------------
+
+.. index:: movie import
+
+Movie files (``.mp4``, ``.mkv``, ``.webm``, ``.avi``, ``.mov``, and so on,
+as well as animated GIF files) can be opened with *File* -> *View Image or
+Movie File(s)...* just like image files.  Since the slide show viewer
+displays individual images, the frames of a movie must first be
+decompressed into a sequence of image files.  This requires the `FFmpeg
+<https://ffmpeg.org/>`_ programs ``ffmpeg`` and ``ffprobe``; it is the
+inverse of the movie export described below.
+
+When a movie file is selected, a dialog reports its properties and asks
+for confirmation before any frames are extracted:
+
+- **First frame** and **Last frame** select the range of the movie to
+  extract.
+- **Frame interval** thins out that range: an interval of 1 extracts every
+  frame, 2 every other frame, and so on.  This is useful to skim a long
+  movie without decompressing all of it.
+- **Estimated size** is how much temporary disk space the extracted
+  images are expected to need.  It is obtained by decoding a single frame
+  in the middle of the movie and multiplying its size by the number of
+  selected frames, so it is an approximation.  A highlighted warning
+  appears when the estimate exceeds one gigabyte, when it would use up
+  most of the free space on the volume holding the temporary folder, or
+  when more than 1000 images would be extracted.
+
+Because the frames are stored as individual images and not as a
+compressed video stream, they usually take up substantially more space
+than the movie file itself.  The extracted frames are written to a
+temporary folder and are deleted again when the slide show window is
+closed.  Below the navigation slider each extracted image is labeled with
+the name of the movie and its frame number in it.
 
 Slide show controls
 -------------------
@@ -911,7 +999,20 @@ following controls, organized from left to right:
   working directory without risk of accidentally deleting other files.
   This will, however, only delete images of the last run.  If that was
   stopped before completion or the output filename has changed, older
-  images created by previous runs will not be deleted.
+  images created by previous runs will not be deleted.  Deleting an image
+  also discards its converted copy from the image cache described next.
+- **Image cache**: An indicator that is grayed out while the image cache
+  is empty and shown in color once it holds anything.  Its tooltip reports
+  how many converted images and extracted movie frames are cached and how
+  much temporary disk space they occupy.  Pressing it discards the
+  converted images after a confirmation; they are converted again the next
+  time they are displayed, so nothing is lost but time.  Extracted movie
+  frames are never discarded this way, since re-creating them requires
+  running FFmpeg over the movie again, and the button is therefore
+  disabled when the cache holds nothing but frames.  The entire cache is
+  removed when the Slide Show window is closed.
+
+  .. versionadded:: 3.0.2
 
 - **Zoom in**: Increase the displayed image size by scaling it up. Every
   click on the button increases the zoom factor by 10 percent.
@@ -927,6 +1028,12 @@ following controls, organized from left to right:
   axis.
 - **Reset image**: Reset the displayed image to the original image. This
   reverts all zoom, rotate, and mirror operations.
+- **Fit window**: Resize the window so the displayed image is shown at
+  its full size, without scroll bars or unused space.  This undoes a
+  manual resize of the window; the window is never grown beyond a
+  fraction of the screen, so scroll bars remain for very large images.
+
+  .. versionadded:: 3.0.2
 
 - **Stop Simulation** (`Ctrl-/`): Stop a running simulation.
 

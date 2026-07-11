@@ -41,7 +41,6 @@
 #include <QHBoxLayout>
 #include <QIcon>
 #include <QKeySequence>
-#include <QPen>
 #include <QScrollArea>
 
 #include <QLabel>
@@ -52,8 +51,6 @@
 #include <QMessageBox>
 #include <QPushButton>
 #include <QSettings>
-#include <QSignalBlocker>
-#include <QSpacerItem>
 #include <QSpinBox>
 #include <QStringList>
 #include <QTextStream>
@@ -73,12 +70,35 @@ constexpr int SLIDER_RANGE       = 1000;
 constexpr double SLIDER_FRACTION = 1.0 / static_cast<double>(SLIDER_RANGE);
 constexpr int LAYOUT_SPACING     = 6;
 
+// Translate the smoothing-choice index (Raw/Smooth/Both, kept in sync with
+// the preferences dialog) into the raw/smooth display flags.
+void smoothFlagsFromChoice(int choice, bool &doRaw, bool &doSmooth)
+{
+    switch (choice) {
+        case 0:
+            doRaw    = true;
+            doSmooth = false;
+            break;
+        case 1:
+            doRaw    = false;
+            doSmooth = true;
+            break;
+        case 2: // fallthrough
+        default:
+            doRaw    = true;
+            doSmooth = true;
+            break;
+    }
+}
+
 // Widen a (near) empty [lo, hi] range to a small symmetric/relative band so the
 // axis is never degenerate. Shared by the X and Y branches of getMinMax().
 void padEmptyRange(double &lo, double &hi)
 {
+    // compare against the magnitude: dividing by a signed hi made the test
+    // true for every all-negative range, padding ranges that were not empty
     const double delta = hi - lo;
-    if ((delta / ((hi == 0.0) ? 1.0 : hi)) < 1.0e-10) {
+    if ((delta / ((hi == 0.0) ? 1.0 : fabs(hi))) < 1.0e-10) {
         if ((lo == 0.0) || (hi == 0.0)) {
             lo = -0.025;
             hi = 0.025;
@@ -177,12 +197,12 @@ void ChartWindow::applySliderWindow()
 }
 
 ChartWindow::ChartWindow(const QString &_filename, LammpsGui *_lammpsgui, QWidget *parent) :
-    QWidget(parent), lammpsgui(_lammpsgui), menu(new QMenuBar), file(new QMenu("&File")),
-    saveAsAct(nullptr), copyAct(nullptr), exportCsvAct(nullptr), exportDatAct(nullptr),
-    exportYamlAct(nullptr), closeAct(nullptr), stopAct(nullptr), quitAct(nullptr),
-    addDataAct(nullptr), refLinesAct(nullptr), smooth(nullptr), window(nullptr), order(nullptr),
-    chartTitle(nullptr), chartYlabel(nullptr), chartXlabel(nullptr), units(nullptr), norm(nullptr),
-    filename(_filename), viewer(nullptr), active(-1)
+    // the menu bar does not take ownership of the added file menu, so it must
+    // be created with the menu bar as its parent to be freed along with it
+    QWidget(parent), lammpsgui(_lammpsgui), menu(new QMenuBar), file(new QMenu("&File", menu)),
+    smooth(nullptr), window(nullptr), order(nullptr), chartTitle(nullptr), chartYlabel(nullptr),
+    chartXlabel(nullptr), units(nullptr), norm(nullptr), filename(_filename), viewer(nullptr),
+    active(-1)
 {
     QSettings settings;
     auto *top  = new QVBoxLayout;
@@ -208,7 +228,9 @@ ChartWindow::ChartWindow(const QString &_filename, LammpsGui *_lammpsgui, QWidge
     QString mytitle;
     if (lammpsgui) {
         // live simulation: use the configured title template
-        mytitle = settings.value(Keys::TITLE, "Thermo: %f").toString().replace("%f", filename);
+        mytitle = settings.value(Keys::TITLE, Cfg::CHART_TITLE_DEFAULT)
+                      .toString()
+                      .replace("%f", filename);
     } else {
         // standalone/plot mode: just the base filename, no "Thermo:" prefix
         mytitle = QFileInfo(filename).fileName();
@@ -219,22 +241,8 @@ ChartWindow::ChartWindow(const QString &_filename, LammpsGui *_lammpsgui, QWidge
 
     // plot smoothing
     int smoothchoice = settings.value(Keys::SMOOTHCHOICE, 0).toInt();
-    switch (smoothchoice) {
-        case 0:
-            doRaw    = true;
-            doSmooth = false;
-            break;
-        case 1:
-            doRaw    = false;
-            doSmooth = true;
-            break;
-        case 2: // fallthrough
-        default:
-            doRaw    = true;
-            doSmooth = true;
-            break;
-    }
-    // list of choices must be kepy in sync with list in preferences
+    smoothFlagsFromChoice(smoothchoice, doRaw, doSmooth);
+    // list of choices must be kept in sync with list in preferences
     smooth = new QComboBox;
     smooth->addItem("Raw");
     // the processed-series slot always holds the smoothed data ("Smooth"); a
@@ -247,16 +255,21 @@ ChartWindow::ChartWindow(const QString &_filename, LammpsGui *_lammpsgui, QWidge
     window->setValue(settings.value(Keys::SMOOTHWINDOW, Cfg::SMOOTH_WINDOW_DEFAULT).toInt());
     window->setEnabled(doSmooth);
     window->setToolTip("Smoothing Window Size");
+    // no keyboard tracking: valueChanged then fires once per committed edit
+    // instead of re-smoothing on every typed digit
+    window->setKeyboardTracking(false);
     order = new QSpinBox;
     order->setRange(Cfg::SMOOTH_ORDER_MIN, Cfg::SMOOTH_ORDER_MAX);
     order->setValue(settings.value(Keys::SMOOTHORDER, Cfg::SMOOTH_ORDER_DEFAULT).toInt());
     order->setEnabled(doSmooth);
     order->setToolTip("Smoothing Order");
+    order->setKeyboardTracking(false);
     settings.endGroup();
 
     columns = new QComboBox;
     row1->addWidget(menu);
-    row1->addWidget(dummy);
+    // the second addWidget() would reparent the button out of row1 again, so
+    // the hidden macOS-workaround button lives in row2 only
     row2->addWidget(dummy);
     row1->addWidget(new QLabel("Title:"));
     // in standalone plot mode give the title half the stretch to make room for X-Axis label
@@ -338,38 +351,39 @@ ChartWindow::ChartWindow(const QString &_filename, LammpsGui *_lammpsgui, QWidge
     row2->addWidget(new QLabel(" Smooth:"));
     row2->addWidget(window);
     row2->addWidget(order);
-    saveAsAct = addMenuAction(file, "&Save Graph As...", ":/icons/document-save-as.svg", this,
-                              &ChartWindow::saveAs);
-    copyAct   = addMenuAction(file, "Copy &Graph to Clipboard", ":/icons/edit-copy.svg", this,
-                              &ChartWindow::copy);
+    addMenuAction(file, "&Save Graph As...", ":/icons/document-save-as.svg", this,
+                  &ChartWindow::saveAs);
+    auto *copyAct = addMenuAction(file, "Copy &Graph to Clipboard", ":/icons/edit-copy.svg", this,
+                                  &ChartWindow::copy);
     copyAct->setShortcut(QKeySequence(QKeySequence::Copy));
-    exportCsvAct  = addMenuAction(file, "&Export data to CSV...", ":/icons/csv-file-icon.svg", this,
-                                  &ChartWindow::exportCsv);
-    exportDatAct  = addMenuAction(file, "Export data to &Gnuplot...", ":/icons/txt-file-icon.svg",
-                                  this, &ChartWindow::exportDat);
-    exportYamlAct = addMenuAction(file, "Export data to &YAML...", ":/icons/yaml-file-icon.svg",
-                                  this, &ChartWindow::exportYaml);
+    addMenuAction(file, "&Export data to CSV...", ":/icons/csv-file-icon.svg", this,
+                  &ChartWindow::exportCsv);
+    addMenuAction(file, "Export data to &Gnuplot...", ":/icons/txt-file-icon.svg", this,
+                  &ChartWindow::exportDat);
+    addMenuAction(file, "Export data to &YAML...", ":/icons/yaml-file-icon.svg", this,
+                  &ChartWindow::exportYaml);
     file->addSeparator();
     addMenuAction(file, "Chart &Style...", ":/icons/preferences-desktop-personal.svg", this,
                   &ChartWindow::changeStyle);
-    refLinesAct = addMenuAction(file, "&Reference Lines...", ":/icons/reference-lines.svg", this,
-                                &ChartWindow::referenceLines);
+    addMenuAction(file, "&Reference Lines...", ":/icons/reference-lines.svg", this,
+                  &ChartWindow::referenceLines);
     addMenuAction(file, "&Postprocess...", ":/icons/chart-smooth.svg", this,
                   &ChartWindow::postProcess);
     // "Add Data from File..." is only relevant in standalone file-plot mode
     if (!lammpsgui) {
-        addDataAct = addMenuAction(file, "&Add Data from File...", ":/icons/application-plot.svg",
-                                   this, &ChartWindow::addDataFile);
+        addMenuAction(file, "&Add Data from File...", ":/icons/application-plot.svg", this,
+                      &ChartWindow::addDataFile);
     }
     file->addSeparator();
-    stopAct =
+    auto *stopAct =
         addMenuAction(file, "Stop &Run", ":/icons/process-stop.svg", this, &ChartWindow::stopRun);
     stopAct->setShortcut(QKeySequence(Qt::CTRL | Qt::Key_Slash));
     // without a live simulation there is nothing to stop
-    if (!lammpsgui) stopAct->setVisible(false); // no live simulation to stop
-    closeAct = addMenuAction(file, "&Close", ":/icons/window-close.svg", this, &QWidget::close);
+    if (!lammpsgui) stopAct->setVisible(false);
+    auto *closeAct =
+        addMenuAction(file, "&Close", ":/icons/window-close.svg", this, &QWidget::close);
     closeAct->setShortcut(QKeySequence(Qt::CTRL | Qt::Key_W));
-    quitAct =
+    auto *quitAct =
         addMenuAction(file, "&Quit", ":/icons/application-exit.svg", this, &ChartWindow::quit);
     quitAct->setShortcut(QKeySequence(Qt::CTRL | Qt::Key_Q));
     if (!lammpsgui) quitAct->setVisible(false); // quit == close in standalone mode
@@ -388,8 +402,6 @@ ChartWindow::ChartWindow(const QString &_filename, LammpsGui *_lammpsgui, QWidge
     if (chartXlabel)
         connect(chartXlabel, &QLineEdit::editingFinished, this, &ChartWindow::updateXLabel);
     connect(smooth, &QComboBox::currentIndexChanged, this, &ChartWindow::selectSmooth);
-    connect(window, &QAbstractSpinBox::editingFinished, this, &ChartWindow::updateSmooth);
-    connect(order, &QAbstractSpinBox::editingFinished, this, &ChartWindow::updateSmooth);
     connect(window, QOverload<int>::of(&QSpinBox::valueChanged), this, &ChartWindow::updateSmooth);
     connect(order, QOverload<int>::of(&QSpinBox::valueChanged), this, &ChartWindow::updateSmooth);
     connect(columns, &QComboBox::currentIndexChanged, this, &ChartWindow::changeChart);
@@ -504,7 +516,6 @@ void ChartWindow::loadData(const PlotData &data, int xcol, const QList<int> &yco
     viewer->setXLabelFormat("%.6g");
     // now that data is loaded, (re)render the active column
     if (!cols.empty()) viewer->setColumn(cols[active >= 0 ? active : 0].get());
-    if (!data.units().isEmpty()) setUnits(data.units());
     // pre-fill the X-axis label field in standalone plot mode
     if (chartXlabel) chartXlabel->setText(xlabel);
     setRangeEnabled(true);
@@ -899,7 +910,7 @@ void ChartWindow::postProcess()
         resetRangeSliders();        // a fit re-fits to the whole data set; match the sliders
         smooth->setCurrentIndex(2); // "Both" = raw data + fit overlay
 
-        QString report = QString("Custom fit of  f(x) = %1\n").arg(expr);
+        QString report = QString("Custom fit of f(x) = %1\n").arg(expr);
         if (!label.isEmpty()) report += QString("(%1)\n").arg(label);
         report += "\n";
         for (const auto &p : fit.params)
@@ -1212,6 +1223,7 @@ void ChartWindow::referenceLines()
                          [rd, &rows, &colorBtns, colorBtn, row]() {
                              rows.removeOne(rd);
                              colorBtns.removeOne(colorBtn);
+                             delete rd;
                              // hide all widgets in the row
                              QLayoutItem *item;
                              while ((item = row->takeAt(0)) != nullptr) {
@@ -1257,7 +1269,10 @@ void ChartWindow::referenceLines()
     QObject::connect(buttons, &QDialogButtonBox::rejected, &dialog, &QDialog::reject);
     layout->addWidget(buttons);
 
-    if (dialog.exec() != QDialog::Accepted) return;
+    if (dialog.exec() != QDialog::Accepted) {
+        qDeleteAll(rows);
+        return;
+    }
 
     // rebuild the refLines list (window-wide) and apply to the active column;
     // changeChart re-applies them when switching to another column
@@ -1268,6 +1283,7 @@ void ChartWindow::referenceLines()
         const auto a      = static_cast<RefAnchor>(rd->anchorCombo->currentData().toInt());
         refLines.append({o, rd->xSpin->value(), rd->labelEdit->text().trimmed(), rd->color, a});
     }
+    qDeleteAll(rows);
 
     // store and apply the window-wide label style
     refLabelSize  = fontSpin->value();
@@ -1286,21 +1302,7 @@ void ChartWindow::referenceLines()
 
 void ChartWindow::selectSmooth(int)
 {
-    switch (smooth->currentIndex()) {
-        case 0:
-            doRaw    = true;
-            doSmooth = false;
-            break;
-        case 1:
-            doRaw    = false;
-            doSmooth = true;
-            break;
-        case 2: // fallthrough
-        default:
-            doRaw    = true;
-            doSmooth = true;
-            break;
-    }
+    smoothFlagsFromChoice(smooth->currentIndex(), doRaw, doSmooth);
     // the processed-slot label does not depend on the Raw/Smooth/Both choice; it
     // is "Smooth" unless a post-process fit overrode it (set in postProcess and
     // restored on column switch in changeChart)
@@ -1406,7 +1408,7 @@ PlotData ChartWindow::chartsToPlotData() const
     return data;
 }
 
-// write the assembled chart data to a file using the given formatter
+// write the already formatted chart data to a file
 static void writeExport(QWidget *parent, const QString &caption, const QString &defaultname,
                         const QString &filter, const QString &text)
 {
@@ -1502,9 +1504,9 @@ bool ChartWindow::eventFilter(QObject *watched, QEvent *event)
 
 // ---- column rendering pipeline ------------------------------------------
 // These free functions render a ChartColumn onto a given PlotWidget. They are
-// deliberately independent of any particular ChartViewer instance so that, once
-// the multi-view layout is collapsed, a single shared PlotWidget can be pointed
-// at any column. ChartViewer's methods below are thin forwarders onto them.
+// deliberately independent of any particular ChartViewer instance so that the
+// single shared PlotWidget can be pointed at any column. ChartViewer's methods
+// below are thin forwarders onto them.
 
 namespace {
 
@@ -1572,7 +1574,7 @@ QRectF columnMinMax(const ChartColumn &col)
             }
         }
     }
-    // note: vlines (vertical reference lines) are decorative and excluded
+    // note: vlines (reference lines) are decorative and excluded
 
     // avoid (nearly) empty ranges on either axis
     padEmptyRange(xmin, xmax);
@@ -1705,24 +1707,6 @@ bool appendColumnPoint(ChartColumn &col, double x, double y)
     return true;
 }
 
-// Replace a column's raw series with a full point list (file/standalone load),
-// recompute its cached bounds, then redraw.
-void setColumnPoints(PlotWidget *plot, ChartColumn &col, const QList<QPointF> &points)
-{
-    col.series->replace(points);
-    col.lastX   = points.isEmpty() ? -1.0 : points.last().x();
-    col.rawXmin = col.rawYmin = 1.0e100;
-    col.rawXmax = col.rawYmax = -1.0e100;
-    for (const auto &p : points) {
-        col.rawXmin = qMin(col.rawXmin, p.x());
-        col.rawXmax = qMax(col.rawXmax, p.x());
-        col.rawYmin = qMin(col.rawYmin, p.y());
-        col.rawYmax = qMax(col.rawYmax, p.y());
-    }
-    refreshColumn(plot, col);
-    resetColumnZoom(plot, col);
-}
-
 // Set the raw-series display style and redraw.
 void setColumnDisplayStyle(PlotWidget *plot, ChartColumn &col, ChartDisplayMode mode,
                            const QColor &color, qreal width, qreal pointSize)
@@ -1779,15 +1763,6 @@ void addColumnOverlay(PlotWidget *plot, ChartColumn &col, const QList<QPointF> &
     resetColumnZoom(plot, col);
 }
 
-// Remove all overlay series from the column and the plot.
-void clearColumnOverlay(PlotWidget *plot, ChartColumn &col)
-{
-    for (auto &s : col.overlaySeries)
-        plot->removeSeries(s.get());
-    col.overlaySeries.clear();
-    resetColumnZoom(plot, col);
-}
-
 // Remove all reference lines from the column and the plot.
 void clearColumnVerticalLines(PlotWidget *plot, ChartColumn &col)
 {
@@ -1828,7 +1803,6 @@ void setColumnReferenceLines(PlotWidget *plot, ChartColumn &col, const QList<Ref
     plot->update();
 }
 
-// Apply smoothing flags/parameters to the column and redraw.
 // Apply smoothing flags/parameters to the column WITHOUT redrawing (so a
 // non-active column can be updated without touching the shared plot).
 void setColumnSmoothFlags(ChartColumn &col, bool doRaw, bool doSmooth, int window, int order)
@@ -1848,13 +1822,6 @@ void setColumnSmoothFlags(ChartColumn &col, bool doRaw, bool doSmooth, int windo
     col.doSmooth = doSmooth;
     col.window   = window;
     col.order    = order;
-}
-
-void setColumnSmoothParam(PlotWidget *plot, ChartColumn &col, bool doRaw, bool doSmooth, int window,
-                          int order)
-{
-    setColumnSmoothFlags(col, doRaw, doSmooth, window, order);
-    refreshColumn(plot, col);
 }
 
 // Replace a column's raw series with a full point list and recompute its cached
@@ -1925,20 +1892,6 @@ void ChartViewer::setColumn(ChartColumn *c)
 
 /* -------------------------------------------------------------------- */
 
-void ChartViewer::addPlotSeries(PlotSeries *s, const QColor &color, qreal width)
-{
-    addColumnSeries(plot, s, color, width);
-}
-
-/* -------------------------------------------------------------------- */
-
-void ChartViewer::stylePlotSeries(PlotSeries *s, const QColor &color, qreal width)
-{
-    styleColumnSeries(plot, s, color, width);
-}
-
-/* -------------------------------------------------------------------- */
-
 void ChartViewer::addPoint(double x, double y)
 {
     if (appendColumnPoint(*col, x, y)) {
@@ -1974,13 +1927,6 @@ QString ChartViewer::getName() const
 
 /* -------------------------------------------------------------------- */
 
-QString ChartViewer::getTLabel() const
-{
-    return plot->title();
-}
-
-/* -------------------------------------------------------------------- */
-
 QString ChartViewer::getXLabel() const
 {
     return plot->xTitle();
@@ -2009,13 +1955,6 @@ void ChartViewer::resetZoom()
 
 /* -------------------------------------------------------------------- */
 
-void ChartViewer::smoothParam(bool _doRaw, bool _doSmooth, int _window, int _order)
-{
-    setColumnSmoothParam(plot, *col, _doRaw, _doSmooth, _window, _order);
-}
-
-/* -------------------------------------------------------------------- */
-
 void ChartViewer::setTLabel(const QString &tlabel)
 {
     plot->setTitle(tlabel);
@@ -2040,13 +1979,6 @@ void ChartViewer::setXLabel(const QString &xlabel)
 void ChartViewer::setXLabelFormat(const QString &fmt)
 {
     plot->setXLabelFormat(fmt);
-}
-
-/* -------------------------------------------------------------------- */
-
-void ChartViewer::setPoints(const QList<QPointF> &points)
-{
-    setColumnPoints(plot, *col, points);
 }
 
 /* -------------------------------------------------------------------- */
@@ -2082,23 +2014,9 @@ void ChartViewer::addOverlaySeries(const QList<QPointF> &pts, const QString &nam
 
 /* -------------------------------------------------------------------- */
 
-void ChartViewer::clearOverlaySeries()
-{
-    clearColumnOverlay(plot, *col);
-}
-
-/* -------------------------------------------------------------------- */
-
 void ChartViewer::setReferenceLines(const QList<RefLine> &lines)
 {
     setColumnReferenceLines(plot, *col, lines);
-}
-
-/* -------------------------------------------------------------------- */
-
-void ChartViewer::clearVerticalLines()
-{
-    clearColumnVerticalLines(plot, *col);
 }
 
 /* -------------------------------------------------------------------- */
@@ -2116,13 +2034,6 @@ void ChartViewer::setRefLabelStyle(double pointSize, double distance, bool boxed
 }
 
 /* -------------------------------------------------------------------- */
-
-void ChartViewer::renderSeries(PlotSeries *line, std::unique_ptr<PlotSeries> &points,
-                               ChartDisplayMode mode, const QColor &color, qreal width,
-                               qreal pointSize)
-{
-    renderColumnSeries(plot, line, points, mode, color, width, pointSize);
-}
 
 void ChartViewer::updateSmooth()
 {

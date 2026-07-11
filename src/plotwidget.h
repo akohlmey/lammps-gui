@@ -13,7 +13,7 @@
 #define PLOTWIDGET_H
 
 // Lightweight 2D line / scatter chart drawn directly with QPainter, with
-// no dependency on any Qt module.  It consumes the neutral PlotSeries / PlotAxis
+// no dependency on any Qt charts module.  It consumes the neutral PlotSeries / PlotAxis
 // model and reproduces the subset of chart features that LAMMPS-GUI actually uses:
 // linear axes with nice-number major ticks, minor subticks, major / minor gridlines,
 // printf-style tick labels, axis and chart titles, and multiple line / scatter
@@ -27,7 +27,6 @@
 #include <QString>
 #include <QWidget>
 
-class QImage;
 class QPainter;
 class QPaintEvent;
 class QRectF;
@@ -51,8 +50,6 @@ public:
 
     /** @brief Set the chart title (drawn centered at the top) */
     void setTitle(const QString &title);
-    /** @brief Get the chart title */
-    QString title() const;
 
     /** @brief Set the X-axis title */
     void setXTitle(const QString &title);
@@ -70,8 +67,6 @@ public:
 
     /** @brief Set the printf-style tick label format of the X-axis */
     void setXLabelFormat(const QString &fmt);
-    /** @brief Set the printf-style tick label format of the Y-axis */
-    void setYLabelFormat(const QString &fmt);
 
     /** @brief Toggle major and minor gridline visibility on both axes */
     void setGrid(bool major, bool minor);
@@ -83,8 +78,6 @@ public:
      * overlays); reference lines and unnamed marker-only mirrors are excluded.
      */
     void setLegendPos(LegendPos pos);
-    /** @brief Current legend placement */
-    LegendPos legendPos() const { return m_legendPos; }
 
     /**
      * @brief Style applied to all reference-line labels
@@ -109,13 +102,6 @@ public:
     /** @brief Unregister all series (does not delete them) */
     void clearSeries();
 
-    /**
-     * @brief Render the chart into a freshly allocated image
-     * @param size Pixel size of the returned image
-     * @return The rendered image (white background)
-     */
-    QImage renderToImage(const QSize &size) const;
-
 protected:
     /** @brief Paint the chart onto the widget */
     void paintEvent(QPaintEvent *event) override;
@@ -123,7 +109,7 @@ protected:
     QSize sizeHint() const override;
 
 private:
-    /** @brief Shared painting routine used by paintEvent() and renderToImage() */
+    /** @brief Painting routine used by paintEvent() */
     void doRender(QPainter &p, const QRectF &target) const;
 
     PlotAxis m_xaxis;                       ///< X-axis configuration

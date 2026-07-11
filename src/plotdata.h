@@ -15,7 +15,7 @@
 // Column-oriented numeric data model and file parsers used to plot data from
 // external structured files (whitespace/.dat, CSV, LAMMPS YAML, JSON). The
 // numeric payload is stored as std::vector<double> so it can be fed directly
-// to the leastsquares toolkit for the planned polynomial / EOS fits.
+// to the leastsquares toolkit for the polynomial / EOS fits.
 
 #include <QByteArray>
 #include <QString>
@@ -25,9 +25,9 @@
 /**
  * @brief Column-oriented table of named numeric columns
  *
- * Holds a set of equally long columns of doubles, each with a name, plus an
- * optional units string. It is the GUI-free data model shared by the file
- * parsers and the chart window when plotting external data.
+ * Holds a set of equally long columns of doubles, each with a name. It is
+ * the GUI-free data model shared by the file parsers and the chart window
+ * when plotting external data.
  */
 class PlotData {
 public:
@@ -62,14 +62,6 @@ public:
      */
     const std::vector<double> &column(int c) const { return cols[c]; }
 
-    /** @brief Optional units string (e.g. the LAMMPS unit system); may be empty */
-    const QString &units() const { return unitstr; }
-    /**
-     * @brief Set the optional units string
-     * @param u Units string
-     */
-    void setUnits(const QString &u) { unitstr = u; }
-
     /**
      * @brief Reset the table to a fresh set of (empty) named columns
      * @param columnNames Names of the columns to create
@@ -78,7 +70,8 @@ public:
 
     /**
      * @brief Rename columns in place without clearing data
-     * @param newNames New names; length must match columnCount() (extra entries are ignored)
+     * @param newNames New names; entries beyond columnCount() are ignored,
+     *                 missing ones keep the old name
      */
     void renameColumns(const QStringList &newNames);
 
@@ -98,13 +91,9 @@ public:
      */
     void addColumn(const QString &name, std::vector<double> data);
 
-    /** @brief Remove all columns and data */
-    void clear();
-
 private:
     QStringList names;                     ///< per-column names
     std::vector<std::vector<double>> cols; ///< column-major numeric payload
-    QString unitstr;                       ///< optional units string
 };
 
 /**
@@ -131,7 +120,7 @@ PlotData parsePlotCsv(const QString &text, QString *error = nullptr);
 PlotData parsePlotWhitespace(const QString &text, QString *error = nullptr);
 
 /**
- * @brief Parse the LAMMPS thermo YAML form (`keywords:` + `data:`) into a PlotData
+ * @brief Parse YAML (LAMMPS thermo `keywords:`+`data:` or a sequence of maps) into a PlotData
  * @param text  File contents
  * @param error Optional out-parameter set to a message on failure
  * @return Parsed table (empty on failure)
@@ -151,8 +140,9 @@ PlotData parsePlotYaml(const QString &text, QString *error = nullptr);
 PlotData parsePlotJson(const QByteArray &bytes, QString *error = nullptr);
 
 /**
- * @brief Load a file into a PlotData, choosing the parser by file extension
- * @param filename Path to the data file (.csv, .yaml/.yml, .json, else whitespace)
+ * @brief Load a file into a PlotData, choosing the parser by file extension or content
+ * @param filename Path to the data file (.csv, .yaml/.yml, .json; else the
+ *                 whitespace format, with a content-sniffing fallback to YAML/JSON)
  * @param error    Optional out-parameter set to a message on failure
  * @return Parsed table (empty on failure)
  */

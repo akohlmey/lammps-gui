@@ -13,6 +13,7 @@
 
 #include <algorithm>
 #include <cmath>
+#include <limits>
 
 // constructor with sizes
 float_mat::float_mat(const std::size_t rows, const std::size_t cols, const double defval) :
@@ -23,28 +24,11 @@ float_mat::float_mat(const std::size_t rows, const std::size_t cols, const doubl
     }
 }
 
-// copy constructor for matrix
-float_mat::float_mat(const float_mat &m) : std::vector<float_vect>(m.size())
-{
+// copy constructor for matrix: the base vector's element-wise copy does it all
+float_mat::float_mat(const float_mat &m) = default;
 
-    auto inew = begin();
-    auto iold = m.begin();
-    for (/* empty */; iold < m.end(); ++inew, ++iold) {
-        const auto oldsz = iold->size();
-        inew->resize(oldsz);
-        const float_vect &oldvec(*iold);
-        *inew = oldvec;
-    }
-}
-
-// copy constructor for vector
-float_mat::float_mat(const float_vect &v) : std::vector<float_vect>(1)
-{
-
-    const auto oldsz = v.size();
-    front().resize(oldsz);
-    front() = v;
-}
+// constructor from a vector: a matrix with that vector as its single row
+float_mat::float_mat(const float_vect &v) : std::vector<float_vect>(1, v) {}
 
 //////////////////////
 // Helper functions //
@@ -85,7 +69,7 @@ void permute(float_mat &A, int_vect &idx)
  * the index map. The algorithm is for implicit pivoting (i.e., the pivot is
  * chosen as if the max coefficient in each row is set to 1) based on the
  * scaling information in the vector scale. The map of swapped indices is
- * recorded in swp. The return value is +1 or -1 depending on whether the
+ * recorded in idx. The return value is +1 or -1 depending on whether the
  * number of row swaps was even or odd respectively. */
 int partial_pivot(float_mat &A, const std::size_t row, const std::size_t col, float_vect &scale,
                   int_vect &idx)
@@ -166,10 +150,10 @@ void lu_forwsubst(float_mat &A, float_mat &a, bool diag = true)
 /*! \brief Performs LU factorization in place.
  *
  * This is Crout's algorithm (cf., Num. Rec. in C, Section 2.3).  The map of
- * swapped indeces is recorded in idx. The return value is +1 or -1
+ * swapped indices is recorded in idx. The return value is +1 or -1
  * depending on whether the number of row swaps was even or odd
  * respectively.  idx must be preinitialized to a valid set of indices
- * (e.g., {1,2, ... ,A.nr_rows()}). */
+ * (i.e., {0, 1, ..., A.nr_rows()-1}). */
 int lu_factorize(float_mat &A, int_vect &idx)
 {
     float_vect scale(A.nr_rows()); // implicit pivot scaling
@@ -214,7 +198,8 @@ float_vect sg_coeff(const float_vect &b, const std::size_t deg)
         }
     }
 
-    float_mat c(invert(transpose(A) * A) * (transpose(A) * transpose(b)));
+    const float_mat At(transpose(A)); // computed once, used twice
+    float_mat c(invert(At * A) * (At * transpose(b)));
 
     for (std::size_t i = 0; i < b.size(); ++i) {
         res[i] = c[0][0];
@@ -239,10 +224,17 @@ float_mat lin_solve(const float_mat &A, const float_mat &a)
     for (std::size_t j = 0; j < B.nr_rows(); ++j) {
         idx[j] = j; // init row swap label array
     }
-    lu_factorize(B, idx); // get the lu-decomp.
-    permute(b, idx);      // sort the inhomogeneity to match the lu-decomp
-    lu_forwsubst(B, b);   // solve the forward problem
-    lu_backsubst(B, b);   // solve the backward problem
+    // a singular matrix cannot be solved; return NaNs explicitly instead of
+    // dividing by zero pivots below (callers already guard against non-finite
+    // results, e.g. the Levenberg-Marquardt step check)
+    if (lu_factorize(B, idx) == 0) {
+        for (auto &row : b)
+            std::fill(row.begin(), row.end(), std::numeric_limits<double>::quiet_NaN());
+        return b;
+    }
+    permute(b, idx);    // sort the inhomogeneity to match the lu-decomp
+    lu_forwsubst(B, b); // solve the forward problem
+    lu_backsubst(B, b); // solve the backward problem
     return b;
 }
 
@@ -291,17 +283,21 @@ float_mat operator*(const float_mat &a, const float_mat &b)
 
 /*! \brief savitzky golay smoothing.
  *
- * This method means fitting a polynome of degree 'deg' to a sliding window
+ * This method means fitting a polynomial of degree 'deg' to a sliding window
  * of width 2w+1 throughout the data.  The needed coefficients are
  * generated dynamically by doing a least squares fit on a "symmetric" unit
- * vector of size 2w+1, e.g. for w=2 b=(0,0,1,0,0). evaluating the polynome
- * yields the sg-coefficients.  at the border non symmectric vectors b are
+ * vector of size 2w+1, e.g. for w=2 b=(0,0,1,0,0). evaluating the polynomial
+ * yields the sg-coefficients.  at the border non symmetric vectors b are
  * used. */
 float_vect sg_smooth(const float_vect &v, const std::size_t width, const int deg)
 {
     float_vect res(v.size(), 0.0);
     const std::size_t window = (2 * (std::size_t)width) + 1;
     const int endidx         = v.size() - 1;
+
+    // guard against inputs shorter than the smoothing window: the unsigned
+    // v.size() - window loop bounds below would underflow and run away
+    if (v.size() < window) return res;
 
     // do a regular sliding window average
     if (deg == 0) {

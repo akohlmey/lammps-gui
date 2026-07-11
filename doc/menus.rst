@@ -33,14 +33,18 @@ File
      will also switch the current working directory to that folder.
    - *View Text File* opens a dialog to select a file for viewing in a *separate*
      window (read-only) with support for on-the-fly decompression as explained
-     above.  If the selected file appears to be an image or a binary file, a warning
-     is shown instead; use *View Image File(s)...* for image files.
-   - *View Image File(s)...* opens a dialog to select one or more image files and shows
-     them together in a standalone :ref:`slide show <slideshow>` window.  This is
+     above.  If the selected file appears to be an image, a movie, or a binary file,
+     a warning is shown instead; use *View Image or Movie File(s)...* for those.
+   - *View Image or Movie File(s)...* opens a dialog to select one or more image files
+     and shows them together in a standalone :ref:`slide show <slideshow>` window.  This is
      useful for reviewing images created by an external (e.g. large parallel) simulation,
      or for revisiting images from an earlier run without rerunning it.  Image formats
      that Qt cannot read natively are converted on demand with
-     `ImageMagick <https://imagemagick.org/>`_ if it is available.
+     `ImageMagick <https://imagemagick.org/>`_ if it is available, and each file is
+     converted only once.  Movie files may be selected as well: their frames are
+     extracted into individual images with `FFmpeg <https://ffmpeg.org/>`_ after
+     confirming a dialog that also selects the frame range and interval, as explained
+     under :ref:`Importing movie files <movie_import>`.
    - *Plot Data File...* opens a dialog to select a file with column-oriented numeric
      data and plots it in a standalone :ref:`Charts window <charts>` without running a
      simulation.  See the description below for details.
@@ -61,6 +65,11 @@ when quitting and recovered when starting again.
    The *View Image File(s)...* and *Plot Data File...* entries were added.  The
    *View Text File* entry now warns when given an image or binary file instead of
    trying to display it as text.
+
+.. versionchanged:: 3.0.2
+
+   The *View Image File(s)...* entry was renamed to *View Image or Movie
+   File(s)...* and now also accepts movie files.
 
 **Plotting external data files.** The *Plot Data File...* entry
 (`Ctrl-Shift-P`) opens a dialog to select a file with column-oriented

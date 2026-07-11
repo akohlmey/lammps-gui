@@ -13,7 +13,6 @@
 #include "constants.h"
 
 #include <QAbstractButton>
-#include <QApplication>
 #include <QBrush>
 #include <QColor>
 #include <QCoreApplication>
@@ -23,6 +22,8 @@
 #include <QFile>
 #include <QFileDialog>
 #include <QFileInfo>
+#include <QFont>
+#include <QFontInfo>
 #include <QIcon>
 #include <QImage>
 #include <QImageReader>
@@ -31,13 +32,15 @@
 #include <QPixmap>
 #include <QProcess>
 #include <QPushButton>
-#include <QRegularExpression>
+#include <QScrollArea>
+#include <QSettings>
 #include <QStandardPaths>
 #include <QStringList>
 #include <QStyle>
 #include <QTemporaryFile>
 #include <QWidget>
 
+#include <algorithm>
 #include <cstdio>
 #include <cstring>
 #include <fcntl.h>
@@ -83,6 +86,19 @@ bool capture_is_active = false;
 std::unique_ptr<QFont> GUI_MONOFONT;
 std::unique_ptr<QFont> GUI_ALLFONT;
 
+// build the configured fixed-width font from the settings (see helpers.h)
+QFont monoFontFromSettings()
+{
+    QSettings settings;
+    QFontInfo mono_info(*GUI_MONOFONT);
+    QFont mono_font;
+    mono_font.setFamily(settings.value(Keys::MONOFAMILY, mono_info.family()).toString());
+    mono_font.setPointSize(settings.value(Keys::MONOSIZE, mono_info.pointSize()).toInt());
+    mono_font.setStyleHint(GUI_MONOFONT->styleHint());
+    mono_font.setFixedPitch(true);
+    return mono_font;
+}
+
 // re-exec the current process in place; returns only if the re-exec failed
 void relaunchApplication()
 {
@@ -91,7 +107,7 @@ void relaunchApplication()
     myexecl(path.c_str(), arg0.c_str(), static_cast<char *>(nullptr));
 }
 
-// compare two date strings return -1 if first is older than second, 0 if same, or 1 if
+// compare two date strings return -1 if first is older than second, 0 if same, or 1
 // otherwise
 
 int dateCompare(const QString &one, const QString &two)
@@ -313,28 +329,23 @@ void exportImage(QWidget *parent, QImage *image, const QString &title)
             QString cmd = "magick";
             QStringList args{tmpfile.fileName(), fileName};
             if (!hasExe("magick")) cmd = "convert";
-            auto *convert = new QProcess(parent);
-            convert->start(cmd, args);
-            if (!convert->waitForFinished(-1)) {
-                const QString errmesg = convert->errorString();
-                delete convert;
+            QProcess convert;
+            convert.start(cmd, args);
+            if (!convert.waitForFinished(-1)) {
                 QFile::remove(fileName);
                 warning(parent, title + " Error",
                         "ImageMagick conversion failed while saving to file " + fileName + ":",
-                        errmesg);
+                        convert.errorString());
                 return;
             }
-            if (convert->exitStatus() != QProcess::NormalExit || convert->exitCode() != 0) {
-                const QString stderrText = QString::fromLocal8Bit(convert->readAllStandardError());
-                delete convert;
+            if (convert.exitStatus() != QProcess::NormalExit || convert.exitCode() != 0) {
+                const QString stderrText = QString::fromLocal8Bit(convert.readAllStandardError());
                 QFile::remove(fileName);
                 warning(parent, title + " Error",
                         "ImageMagick conversion failed while saving to file " + fileName + ":",
-                        stderrText.trimmed().isEmpty() ? "Details:\n" + stderrText.trimmed() : "");
-
+                        stderrText.trimmed().isEmpty() ? "" : "Details:\n" + stderrText.trimmed());
                 return;
             }
-            delete convert;
             if (!QFile::exists(fileName)) {
                 warning(parent, title + " Error",
                         "ImageMagick reported success, but the output file " + fileName +
@@ -375,6 +386,20 @@ bool isImageFile(const QString &filename)
     // otherwise let Qt sniff the contents, but only for a file that exists
     if (!QFileInfo::exists(filename)) return false;
     return !QImageReader::imageFormat(filename).isEmpty();
+}
+
+bool isMovieFile(const QString &filename)
+{
+    // container formats that FFmpeg can decode into a sequence of images
+    static const QStringList movieExtensions = {"mp4", "m4v",  "mkv", "webm", "avi", "mov",
+                                                "mpg", "mpeg", "ogv", "wmv",  "flv"};
+    const QString suffix                     = QFileInfo(filename).suffix().toLower();
+    if (movieExtensions.contains(suffix)) return true;
+
+    // a GIF is only a movie when it has more than a single frame
+    if ((suffix == "gif") && QFileInfo::exists(filename))
+        return QImageReader(filename).imageCount() > 1;
+    return false;
 }
 
 bool isRestartFile(const QString &filename)
@@ -464,9 +489,13 @@ void styleDialogButtons(QDialogButtonBox *box)
 
 void silenceStdout()
 {
-    if (capture_is_active || stdout_silenced) return;
+    if (capture_is_active) return;
 
+    // count nested silence requests even when stdout is already redirected, so
+    // restoreStdout() only restores when the outermost request is released
     ++silenced_counter;
+    if (stdout_silenced) return;
+
     fflush(stdout);
     saved_stdout_fd = mydup(myfileno(stdout));
     if (saved_stdout_fd == -1) return;
@@ -510,6 +539,77 @@ void notifyCaptureState(bool active)
     capture_is_active = active;
 }
 
+// RAII guard collecting Qt log messages instead of printing them (see helpers.h)
+
+QtMessageSilencer *QtMessageSilencer::active = nullptr;
+
+// Only the outermost guard swaps the message handler and thus remembers the
+// real one. A nested guard that installed collect() again would make previous
+// point at collect() itself, and forwarding to it would never terminate.
+QtMessageSilencer::QtMessageSilencer() : outer(active), previous(nullptr)
+{
+    if (!active) previous = qInstallMessageHandler(collect);
+    active = this;
+}
+
+QtMessageSilencer::~QtMessageSilencer()
+{
+    active = outer;
+    if (!active) qInstallMessageHandler(previous);
+}
+
+QString QtMessageSilencer::messages() const
+{
+    return collected.join('\n');
+}
+
+void QtMessageSilencer::collect(QtMsgType type, const QMessageLogContext &context,
+                                const QString &message)
+{
+    auto *guard = active;
+    if (!guard) return;
+
+    // an error that aborts the program, or one the application may act on, must
+    // reach whoever was handling messages before the outermost guard took over
+    if ((type == QtFatalMsg) || (type == QtCriticalMsg)) {
+        const QtMessageSilencer *root = guard;
+        while (root->outer)
+            root = root->outer;
+        if (root->previous)
+            root->previous(type, context, message);
+        else
+            fprintf(stderr, "%s\n", qUtf8Printable(message));
+        return;
+    }
+    guard->collected << message;
+}
+
+// desaturate and flatten an image, keeping its alpha channel (see helpers.h)
+
+QImage grayscaleImage(const QImage &src)
+{
+    QImage img = src.convertToFormat(QImage::Format_ARGB32);
+    for (int y = 0; y < img.height(); ++y) {
+        auto *line = reinterpret_cast<QRgb *>(img.scanLine(y));
+        for (int x = 0; x < img.width(); ++x) {
+            // Dropping the color alone leaves an icon that still has all of its
+            // contrast and thus reads as active. Pull the gray levels towards a
+            // common midpoint as well, so the result looks unmistakably faded.
+            const double gray =
+                Cfg::GRAYSCALE_MIDPOINT +
+                (qGray(line[x]) - Cfg::GRAYSCALE_MIDPOINT) * Cfg::GRAYSCALE_CONTRAST;
+            const int v = std::clamp(qRound(gray), 0, 255);
+            line[x]     = qRgba(v, v, v, qAlpha(line[x]));
+        }
+    }
+    return img;
+}
+
+QPixmap grayscalePixmap(const QPixmap &src)
+{
+    return QPixmap::fromImage(grayscaleImage(src.toImage()));
+}
+
 // shared tool-button sizing policy (see helpers.h)
 
 QSize toolButtonSize(const QAbstractButton *sample)
@@ -526,6 +626,41 @@ void styleToolButtons(const QSize &size, std::initializer_list<QAbstractButton *
         button->setMaximumSize(size);
         button->setIconSize(iconsize);
     }
+}
+
+// shared viewer window auto-resize policy (see helpers.h)
+
+QSize viewerFitSize(const QSize &content, const QSize &budget, int frame, int sbext)
+{
+    const int w = content.width() + frame;
+    const int h = content.height() + frame;
+
+    // an axis that overflows its budget is clamped and gets a scroll bar,
+    // which consumes part of the viewport on the other axis
+    return {std::min(w + ((h > budget.height()) ? sbext : 0), std::max(budget.width(), 0)),
+            std::min(h + ((w > budget.width()) ? sbext : 0), std::max(budget.height(), 0))};
+}
+
+QSize fitViewerWindow(QWidget *window, QScrollArea *area, const QSize &content, const QSize &budget,
+                      const QSize &lastFit)
+{
+    if (content.isEmpty()) return lastFit;
+
+    const int frame     = 2 * area->frameWidth();
+    const int sbext     = area->style()->pixelMetric(QStyle::PM_ScrollBarExtent, nullptr, area);
+    const QSize desired = viewerFitSize(content, budget, frame, sbext);
+    if (desired == lastFit) return lastFit;
+
+    // pin the scroll area only while the window is resized around it; a
+    // permanent minimum would override the user's own resizing afterwards
+    area->setMinimumSize(desired);
+    window->adjustSize();
+    area->setMinimumSize(QSize(0, 0));
+
+    // a hidden window is laid out with unpolished style metrics, so the
+    // applied size is only approximate; report no memoized size so the first
+    // call on the shown window (see the showEvent() overrides) fits again
+    return window->isVisible() ? desired : QSize();
 }
 
 // shared window-manager hint policy for output windows (see helpers.h)

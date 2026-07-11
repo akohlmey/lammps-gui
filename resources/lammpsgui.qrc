@@ -64,6 +64,7 @@
     <file>icons/expand-text.svg</file>
     <file>icons/export-movie.svg</file>
     <file>icons/file-clipboard.svg</file>
+    <file>icons/fit-window.svg</file>
     <file>icons/format-indent-less-3.svg</file>
     <file>icons/go-first.svg</file>
     <file>icons/go-last.svg</file>
@@ -77,6 +78,7 @@
     <file>icons/help-browser.svg</file>
     <file>icons/help-faq.svg</file>
     <file>icons/help-tutorial.svg</file>
+    <file>icons/image-cache.svg</file>
     <file>icons/image-shiny.svg</file>
     <file>icons/image-viewer.svg</file>
     <file>icons/image-x-generic.svg</file>
@@ -93,9 +95,14 @@
     <file>icons/preferences-reset.svg</file>
     <file>icons/process-stop.svg</file>
     <file>icons/reference-lines.svg</file>
+    <!-- the PNGs are the fallback for Qt < 6.7, which cannot render the masks -->
+    <file>icons/rotate-down.png</file>
     <file>icons/rotate-down.svg</file>
+    <file>icons/rotate-left.png</file>
     <file>icons/rotate-left.svg</file>
+    <file>icons/rotate-right.png</file>
     <file>icons/rotate-right.svg</file>
+    <file>icons/rotate-up.png</file>
     <file>icons/rotate-up.svg</file>
     <file>icons/run-file.svg</file>
     <file>icons/search.svg</file>

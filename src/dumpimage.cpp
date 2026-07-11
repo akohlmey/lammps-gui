@@ -11,6 +11,8 @@
 
 #include "dumpimage.h"
 
+#include "constants.h"
+
 #include "colormaps.h"
 
 #include <QRegularExpression>
@@ -250,7 +252,7 @@ DumpImageCommand buildDumpImageCommand(const DumpImageParams &p)
     if (p.dimension == 3) {
         d += QString(" view %1 %2").arg(hhrot).arg(p.vrot);
     }
-    if (p.usessao) d += QString(" ssao yes 453983 %1").arg(p.ssaoval);
+    if (p.usessao) d += QString(" ssao yes %1 %2").arg(Cfg::SSAO_SEED).arg(p.ssaoval);
     if (p.showbox)
         d += QString(" box yes %1").arg(p.boxdiam);
     else
@@ -278,6 +280,12 @@ DumpImageCommand buildDumpImageCommand(const DumpImageParams &p)
     // center defaults to the box center "s 0.5 0.5 0.5"; emit only when moved
     if ((p.xcenter != 0.5) || (p.ycenter != 0.5) || (p.zcenter != 0.5))
         d += QString(" center s %1 %2 %3").arg(p.xcenter).arg(p.ycenter).arg(p.zcenter);
+
+    // the camera up direction defaults to "0 0 1" in 3d and "0 1 0" in 2d
+    const double defyup = (p.dimension == 2) ? 1.0 : 0.0;
+    const double defzup = (p.dimension == 2) ? 0.0 : 1.0;
+    if ((p.xup != 0.0) || (p.yup != defyup) || (p.zup != defzup))
+        d += QString(" up %1 %2 %3").arg(p.xup).arg(p.yup).arg(p.zup);
 
     // ---- dump_modify options ----
 
@@ -329,7 +337,7 @@ DumpImageCommand buildDumpImageCommand(const DumpImageParams &p)
 
     const bool lightsdefault = (p.ambientlight == DEF_AMBIENT) && (p.keylight == DEF_KEYLIGHT) &&
                                (p.filllight == DEF_FILLLIGHT) && (p.backlight == DEF_BACKLIGHT);
-    if ((p.version > 20260330) && !lightsdefault)
+    if (!lightsdefault)
         m += QString(" lights %1 %2 %3 %4")
                  .arg(p.ambientlight)
                  .arg(p.keylight)

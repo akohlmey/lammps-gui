@@ -26,7 +26,7 @@ TutorialWizard::TutorialWizard(int _collection, int _ntutorial, LammpsGui *_lamm
     setWindowIcon(QIcon(":/icons/tutorial-logo.png"));
 }
 
-// actions to perform when the wizard for tutorial 1 is complete
+// actions to perform when the wizard for a tutorial is complete
 // and the user has clicked on "Finish"
 
 void TutorialWizard::accept()

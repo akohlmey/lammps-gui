@@ -14,6 +14,7 @@
 
 #include "plotseries.h" // PlotSeries model + RefAnchor used by RefLine below
 
+#include <QColor>
 #include <QComboBox>
 #include <QLabel>
 #include <QLineEdit>
@@ -62,8 +63,8 @@ struct RefLine {
  *
  * ChartWindow provides a GUI for displaying and manipulating multiple
  * charts showing time-series data from LAMMPS simulations (thermodynamic
- * output). It supports features like data smoothing, normalization,
- * zoom/pan, and export to various formats (PNG, CSV, YAML, DAT).
+ * output). It supports data smoothing, zooming via range sliders, and
+ * export to various formats (PNG, CSV, YAML, DAT).
  */
 class ChartWindow : public QWidget {
     Q_OBJECT
@@ -166,7 +167,7 @@ private slots:
     void changeStyle();                   ///< Edit the current chart's display style
     void postProcess();                   ///< Run an analysis on the current chart's data
     void addDataFile();                   ///< Add data from another file as overlay series
-    void referenceLines();                ///< Edit vertical reference lines for all charts
+    void referenceLines();                ///< Edit reference lines for all charts
     void selectSmooth(int selection);     ///< Select smoothing algorithm
     void updateSmooth();                  ///< Update smoothing parameters
     void updateTLabel();                  ///< Update chart title
@@ -221,17 +222,13 @@ private:
     /// and the active column's data range (so a view-only change preserves zoom).
     void applySliderWindow();
 
-    LammpsGui *lammpsgui; ///< Main widget pointer for receiving signals
-    bool doRaw, doSmooth; ///< Flags for displaying raw/smoothed data
-    QMenuBar *menu;       ///< Menu bar
-    QMenu *file;          ///< File menu
-    QComboBox *columns;   ///< Dropdown for selecting chart
-    QAction *saveAsAct, *copyAct, *exportCsvAct, *exportDatAct, *exportYamlAct; ///< Export actions
-    QAction *closeAct, *stopAct, *quitAct; ///< Window control actions
-    QAction *addDataAct;                   ///< "Add Data from File..." (standalone only)
-    QAction *refLinesAct;                  ///< "Reference Lines..."
-    QComboBox *smooth;                     ///< Smoothing algorithm selector
-    QSpinBox *window, *order;              ///< Smoothing parameters
+    LammpsGui *lammpsgui;     ///< Main widget pointer for receiving signals
+    bool doRaw, doSmooth;     ///< Flags for displaying raw/smoothed data
+    QMenuBar *menu;           ///< Menu bar
+    QMenu *file;              ///< File menu
+    QComboBox *columns;       ///< Dropdown for selecting chart
+    QComboBox *smooth;        ///< Smoothing algorithm selector
+    QSpinBox *window, *order; ///< Smoothing parameters
     QLineEdit *chartTitle, *chartYlabel,
         *chartXlabel;             ///< Chart labels (chartXlabel standalone only)
     QLabel *units;                ///< Units display
@@ -250,10 +247,6 @@ private:
 };
 
 /* -------------------------------------------------------------------- */
-
-#include "plotseries.h"
-
-#include <QColor>
 
 #include <memory>
 #include <vector>
@@ -275,8 +268,8 @@ enum class ChartDisplayMode {
  * Holds everything specific to a single plotted column: its neutral PlotSeries
  * objects, cached data bounds, smoothing parameters, display style, and the
  * overlay/reference-line state. It is a plain (non-QWidget) value type,
- * move-only because of its unique_ptr<PlotSeries> members, so that a single
- * renderer can eventually be pointed at any column on demand.
+ * move-only because of its unique_ptr<PlotSeries> members, so that the single
+ * shared renderer can be pointed at any column on demand.
  */
 struct ChartColumn {
     int index      = -1;                       ///< Chart index (thermo column id)
@@ -313,14 +306,14 @@ struct ChartColumn {
 };
 
 /**
- * @brief Individual chart viewer for displaying a single time-series
+ * @brief Rebindable view of a single ChartColumn
  *
- * ChartViewer displays a single thermodynamic property as a function
- * of simulation time. It owns the neutral PlotSeries data objects and
- * renders them with a PlotWidget, supporting both raw and smoothed data
- * display, interactive zoom/pan, and data export.
+ * ChartViewer renders whichever ChartColumn it is currently bound to
+ * (via setColumn()) with its PlotWidget, supporting both raw and
+ * smoothed data display. The column data objects are owned by
+ * ChartWindow; this class is only the view.
  *
- * @see PlotWidget, PlotSeries
+ * @see PlotWidget, PlotSeries, ChartColumn
  */
 class ChartViewer : public QWidget {
     Q_OBJECT
@@ -351,9 +344,6 @@ public:
      */
     void setColumn(ChartColumn *c);
 
-    /** @brief The column currently bound to this view (may be nullptr) */
-    ChartColumn *boundColumn() const { return col; }
-
     /**
      * @brief Append an (x, y) data point to the chart
      * @param x X value (e.g. the simulation step, or an arbitrary abscissa)
@@ -381,24 +371,9 @@ public:
     void resetZoom();
 
     /**
-     * @brief Set smoothing parameters
-     * @param _doRaw Show raw data series
-     * @param _doSmooth Show smoothed data series
-     * @param _window Smoothing window size
-     * @param _order Polynomial order for Savitzky-Golay
-     */
-    void smoothParam(bool _doRaw, bool _doSmooth, int _window, int _order);
-
-    /**
      * @brief Recalculate and update smoothed data
      */
     void updateSmooth();
-
-    /**
-     * @brief Get chart index
-     * @return Index of this chart
-     */
-    int getIndex() const { return col->index; };
 
     /**
      * @brief Get number of data points
@@ -411,8 +386,7 @@ public:
      * @return The property/column name this chart was created with
      *
      * This is the per-column identifier (e.g. the thermo keyword), distinct
-     * from the shared plot title returned by getTLabel(). Used for data-export
-     * column headers.
+     * from the shared plot title. Used for data-export column headers.
      */
     QString getName() const;
 
@@ -460,15 +434,6 @@ public:
     void setXLabelFormat(const QString &fmt);
 
     /**
-     * @brief Replace all chart data with the given points in one shot
-     * @param points New (x, y) data points
-     *
-     * Bulk loader for file plotting; bypasses the monotonic-x guard and the
-     * throttled live-update path used by addPoint().
-     */
-    void setPoints(const QList<QPointF> &points);
-
-    /**
      * @brief Add an overlay data series from a second file
      * @param pts   (x, y) data points
      * @param name  Series name (shown as a tooltip / legend entry)
@@ -479,23 +444,18 @@ public:
      */
     void addOverlaySeries(const QList<QPointF> &pts, const QString &name, const QColor &color);
 
-    /** @brief Remove all overlay series added via addOverlaySeries() */
-    void clearOverlaySeries();
-
     /** @brief Number of overlay series currently displayed */
     int overlaySeriesCount() const { return static_cast<int>(col->overlaySeries.size()); }
 
     /**
-     * @brief Set vertical reference lines (replaces any existing set)
+     * @brief Set reference lines (replaces any existing set)
      * @param lines List of reference line descriptors
      *
-     * Each line spans the full data y-range and is updated on every zoom reset.
-     * Lines are identified by their position (x), label (series name), and color.
+     * Each line spans the full data range perpendicular to its orientation
+     * and is updated on every zoom reset. Lines are described by their
+     * orientation, position, label (series name), anchor, and color.
      */
     void setReferenceLines(const QList<RefLine> &lines);
-
-    /** @brief Remove all vertical reference lines */
-    void clearVerticalLines();
 
     /** @brief Set the in-plot legend placement (corner, or off) */
     void setLegendPos(LegendPos pos);
@@ -558,12 +518,6 @@ public:
     bool isEosFit() const { return col->eosMode && col->fit && !col->fit->points.isEmpty(); }
 
     /**
-     * @brief Get current chart title
-     * @return Chart title
-     */
-    QString getTLabel() const;
-
-    /**
      * @brief Get X-axis label
      * @return X-axis label
      */
@@ -576,16 +530,6 @@ public:
     QString getYLabel() const;
 
 private:
-    /// Add (or restyle) a line series and its on-demand scatter twin to show
-    /// the data as lines, points, or both, in the given color and width.
-    void renderSeries(PlotSeries *line, std::unique_ptr<PlotSeries> &points, ChartDisplayMode mode,
-                      const QColor &color, qreal width, qreal pointSize);
-
-    /// Register a series with the renderer in the given color and width.
-    void addPlotSeries(PlotSeries *s, const QColor &color, qreal width);
-    /// Restyle an already-registered series and request a repaint.
-    void stylePlotSeries(PlotSeries *s, const QColor &color, qreal width);
-
     PlotWidget *plot; ///< Renderer (Qt child of this widget)
     int updChart;     ///< Cached live-update throttle interval (ms)
     ChartColumn *col; ///< Column currently rendered (owned by ChartWindow, not here)

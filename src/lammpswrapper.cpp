@@ -45,6 +45,14 @@ LammpsWrapper::LammpsWrapper() : lammps_handle(nullptr)
 #endif
 }
 
+LammpsWrapper::~LammpsWrapper()
+{
+#if defined(LAMMPS_GUI_USE_PLUGIN)
+    liblammpsplugin_release(static_cast<liblammpsplugin_t *>(plugin_handle));
+    plugin_handle = nullptr;
+#endif
+}
+
 void LammpsWrapper::open(int narg, char **args)
 {
     // since there may only be one LAMMPS instance in LAMMPS-GUI we don't open a second one
@@ -73,7 +81,9 @@ int LammpsWrapper::extractSetting(const char *keyword)
 void *LammpsWrapper::extractGlobal(const char *keyword)
 {
     void *val = nullptr;
-    val       = LMPFN(extract_global)(lammps_handle, keyword);
+    if (lammps_handle) {
+        val = LMPFN(extract_global)(lammps_handle, keyword);
+    }
     return val;
 }
 
@@ -196,16 +206,12 @@ int LammpsWrapper::extractVariableDatatype(const QString &keyword)
     switch (type) {
         case LMP_VAR_EQUAL:
             return EQUAL_STYLE;
-            break;
         case LMP_VAR_ATOM:
             return ATOM_STYLE;
-            break;
         case LMP_VAR_VECTOR:
             return VECTOR_STYLE;
-            break;
         case LMP_VAR_STRING:
             return STRING_STYLE;
-            break;
         default:
             type = -1;
             break;
@@ -390,6 +396,9 @@ void LammpsWrapper::finalize()
         LMPFN(mpi_finalize)();
         LMPFN(kokkos_finalize)();
         LMPFN(python_finalize)();
+        // otherwise isOpen() reports an instance that no longer exists and a
+        // later close() would close the stale handle a second time
+        lammps_handle = nullptr;
     }
 }
 
@@ -498,17 +507,17 @@ bool LammpsWrapper::loadLib(const QString &libfile)
                 "LAMMPS library file %s rejected.\n"
                 "The file appears truncated or corrupted (e.g. from an incomplete "
                 "download). Please remove it and install the library again.\n",
-                (const char *)libfile.toLocal8Bit());
+                libfile.toLocal8Bit().constData());
         return false;
     }
 
     if (plugin_handle) {
         close();
-        liblammpsplugin_release((liblammpsplugin_t *)plugin_handle);
+        liblammpsplugin_release(static_cast<liblammpsplugin_t *>(plugin_handle));
     }
     plugin_handle = liblammpsplugin_load(libfile.toLocal8Bit());
     if (!plugin_handle) return false;
-    liblammpsplugin_t *lmp = (liblammpsplugin_t *)plugin_handle;
+    auto *lmp = static_cast<liblammpsplugin_t *>(plugin_handle);
 
     // check if ABI matches
     if (lmp->abiversion != LAMMPSPLUGIN_ABI_VERSION) {
@@ -517,15 +526,18 @@ bool LammpsWrapper::loadLib(const QString &libfile)
         liblammpsplugin_release(lmp);
         plugin_handle = nullptr;
         fprintf(stderr, "LAMMPS library file %s rejected.\nIncompatible ABI: %d vs %d\n",
-                (const char *)libfile.toLocal8Bit(), abiversion, LAMMPSPLUGIN_ABI_VERSION);
+                libfile.toLocal8Bit().constData(), abiversion, LAMMPSPLUGIN_ABI_VERSION);
         return false;
     }
 
-    // check if all required recently added library functions are present
+    // check if all required recently added library functions are present; on
+    // failure unload the library again so no unusable handle stays behind
 #define CHECKSYM(symbol)                                                          \
     if (lmp->symbol == NULL) {                                                    \
         fprintf(stderr, "LAMMPS library file %s is missing lammps_%s function\n", \
-                (const char *)libfile.toLocal8Bit(), #symbol);                    \
+                libfile.toLocal8Bit().constData(), #symbol);                      \
+        liblammpsplugin_release(lmp);                                             \
+        plugin_handle = nullptr;                                                  \
         return false;                                                             \
     }
 
@@ -543,6 +555,11 @@ bool LammpsWrapper::loadLib(const QString &libfile)
     // found a suitable version
     if (!lmpversion.isEmpty() && (dateCompare(lmpversion, Cfg::MIN_LAMMPS_VERSION_STR) >= 0))
         return true;
+
+    // the library loads but is too old: unload it again for consistency with
+    // the other failure paths
+    liblammpsplugin_release(lmp);
+    plugin_handle = nullptr;
     return false;
 }
 #else

@@ -41,8 +41,6 @@ SetVariables::SetVariables(QList<QPair<QString, QString>> &_vars, QWidget *paren
         auto *name = new QLineEdit(v.first);
         auto *val  = new QLineEdit(v.second);
         auto *del  = new QPushButton(QIcon(":/icons/edit-delete.svg"), "");
-        name->setObjectName("varname");
-        val->setObjectName("varval");
         del->setObjectName(QString::number(i));
         connect(del, &QPushButton::released, this, &SetVariables::delRow);
         row->addWidget(name);
@@ -93,8 +91,6 @@ void SetVariables::addRow()
     auto *name = new QLineEdit(QString());
     auto *val  = new QLineEdit(QString());
     auto *del  = new QPushButton(QIcon(":/icons/edit-delete.svg"), "");
-    name->setObjectName("varname");
-    val->setObjectName("varval");
     del->setObjectName(QString::number(nrows - 2));
     connect(del, &QPushButton::released, this, &SetVariables::delRow);
     row->addWidget(name);
@@ -114,12 +110,12 @@ void SetVariables::delRow()
         while (row->layout()->count() > 0) {
             auto *item = row->layout()->takeAt(0);
             if (item) {
-                row->layout()->removeItem(item);
-                delete item->widget();
+                // deleteLater(): one of these widgets is the button whose slot
+                // is executing right now; the sender must not be deleted here
+                if (item->widget()) item->widget()->deleteLater();
                 delete item;
             }
         }
-        layout->removeItem(row);
         delete row->layout();
 
         // renumber the delete pushbutton names

@@ -60,7 +60,7 @@ StdCapture::StdCapture() : m_oldStdOut(0), m_capturing(false), maxread(0), buf(b
 
     m_pipe[READ]  = 0;
     m_pipe[WRITE] = 0;
-#if _WIN32
+#ifdef _WIN32
     if (_pipe(m_pipe, 65536, O_BINARY) == -1) return;
 #else
     if (pipe(m_pipe) == -1) return;

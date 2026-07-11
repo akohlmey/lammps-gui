@@ -53,8 +53,8 @@ public:
 /**
  * @brief Validator for color name inputs
  *
- * Ensures color inputs are valid color names or hex codes.
- * Provides fix-up functionality for common typos.
+ * Ensures color inputs are names from the LAMMPS color list.
+ * Fix-up trims whitespace and lowercases the input.
  */
 class QColorValidator : public QValidator {
 public:

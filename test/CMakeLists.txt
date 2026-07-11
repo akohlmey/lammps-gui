@@ -1,5 +1,5 @@
 # CMakeLists.txt for LAMMPS-GUI unit tests
-cmake_minimum_required(VERSION 3.20)
+# (only entered via add_subdirectory() from the top-level CMakeLists.txt)
 
 # Fetch GoogleTest
 include(FetchContent)
@@ -12,8 +12,7 @@ FetchContent_Declare(
 set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
 FetchContent_MakeAvailable(googletest)
 
-# Enable testing
-enable_testing()
+# testing is already enabled via include(CTest) in the top-level CMakeLists.txt
 include(GoogleTest)
 
 # Find Qt6 (Qt5 is no longer supported)
@@ -26,7 +25,7 @@ find_program(XVFB_RUNNER
   DOC "Path to Xvfb runner script")
 
 find_program(SHOOTER_BINARY
-  NAMES magick import xfce4-screenshooter gnome-screenshooter
+  NAMES magick import xfce4-screenshooter gnome-screenshot
   REQUIRED
   DOC "Path to a supported screenshooter program")
 cmake_path(GET SHOOTER_BINARY FILENAME SHOOTER)
@@ -47,7 +46,7 @@ add_custom_command(
 add_custom_target(setup_tests ALL
   ${CMAKE_COMMAND} -E echo "Setting up virtual environment for testing"
   DEPENDS ${TESTENV_BINARY_DIR}
-  SOURCES requirements.txt shooter.magick shooter.import shooter.xfce4-screenshooter shooter.gnome-screenshooter
+  SOURCES requirements.txt shooter.magick shooter.import shooter.xfce4-screenshooter shooter.gnome-screenshot
 )
 set_target_properties(setup_tests PROPERTIES ADDITIONAL_CLEAN_FILES ${CMAKE_CURRENT_BINARY_DIR}/testenv)
 
@@ -102,8 +101,6 @@ gtest_discover_tests(test_stdcapture)
 add_executable(test_flagwarnings
   test_flagwarnings.cpp
   ${CMAKE_SOURCE_DIR}/src/flagwarnings.cpp
-  ${CMAKE_SOURCE_DIR}/src/helpers.cpp
-  ${CMAKE_SOURCE_DIR}/src/stdcapture.cpp
 )
 
 target_include_directories(test_flagwarnings PRIVATE ${CMAKE_SOURCE_DIR}/src)
@@ -122,6 +119,31 @@ target_include_directories(test_dumpimage PRIVATE ${CMAKE_SOURCE_DIR}/src)
 target_link_libraries(test_dumpimage PRIVATE GTest::gtest_main Qt6::Widgets)
 
 gtest_discover_tests(test_dumpimage)
+
+# Test executable for the movie probing and frame selection helpers
+add_executable(test_movieimport
+  test_movieimport.cpp
+  ${CMAKE_SOURCE_DIR}/src/movieimport.cpp
+  ${CMAKE_SOURCE_DIR}/src/helpers.cpp
+  ${CMAKE_SOURCE_DIR}/src/qaddon.cpp
+)
+
+target_include_directories(test_movieimport PRIVATE ${CMAKE_SOURCE_DIR}/src)
+target_link_libraries(test_movieimport PRIVATE GTest::gtest_main Qt6::Widgets)
+
+gtest_discover_tests(test_movieimport)
+
+# Test executable for the converted image cache
+add_executable(test_imagecache
+  test_imagecache.cpp
+  ${CMAKE_SOURCE_DIR}/src/imagecache.cpp
+  ${CMAKE_SOURCE_DIR}/src/helpers.cpp
+)
+
+target_include_directories(test_imagecache PRIVATE ${CMAKE_SOURCE_DIR}/src)
+target_link_libraries(test_imagecache PRIVATE GTest::gtest_main Qt6::Widgets)
+
+gtest_discover_tests(test_imagecache)
 
 # Test executable for the least-squares / linear-algebra toolkit (Qt-free)
 add_executable(test_leastsquares
@@ -214,10 +236,12 @@ target_link_libraries(test_fitting PRIVATE GTest::gtest_main)
 
 gtest_discover_tests(test_fitting)
 
+# only run framebuffer tests without sanitizers
+if(ENABLE_SANITIZER STREQUAL "none")
 ########################################################################
 # Tests that check the GUI environment and the GUI
 # IMPORTANT NOTE: we must use a different display number for the -n flag
-# for each XFVB_RUNNER invocation, to allow parallel execution of tests.
+# for each XVFB_RUNNER invocation, to allow parallel execution of tests.
 
 # set up environment for python testing
 set(PYTHON_TEST_ENVIRONMENT PYTHONUNBUFFERED=1)
@@ -247,3 +271,4 @@ add_test(NAME Framebuffer.GUIEditorChecks
 )
 set_tests_properties(Framebuffer.GUIEditorChecks
                      PROPERTIES ENVIRONMENT "${PYTHON_TEST_ENVIRONMENT}")
+endif()

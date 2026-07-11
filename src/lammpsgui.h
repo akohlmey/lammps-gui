@@ -16,6 +16,7 @@
 
 #include <QList>
 #include <QPair>
+#include <QPointer>
 #include <QString>
 #include <string>
 #include <vector>
@@ -30,7 +31,6 @@ class QFont;
 class QLabel;
 class QMenu;
 class QMenuBar;
-class QPlainTextEdit;
 class QProgressBar;
 class QSettings;
 class QStatusBar;
@@ -119,7 +119,7 @@ protected:
     /** @brief Open a file in a read-only viewer dialog */
     void viewFile(const QString &filename);
 
-    /** @brief Open a file for inspection (data files, etc.) */
+    /** @brief Read a restart file into LAMMPS and open the inspection windows */
     void inspectFile(const QString &filename);
 
     /** @brief Write current editor content to a file */
@@ -128,10 +128,10 @@ protected:
     /** @brief Update the recent files list */
     void updateRecents(const QString &filename = "");
 
-    /** @brief Clear the list of index-style variables */
+    /** @brief Delete all variables defined in the LAMMPS instance */
     void clearVariables();
 
-    /** @brief Update variables in LAMMPS from the variables list */
+    /** @brief Rebuild the variables list from the editor buffer */
     void updateVariables();
 
     /**
@@ -221,7 +221,7 @@ private slots:
     /** @brief Open one or more image files in a standalone snapshot viewer */
     void openImages();
 
-    /** @brief Inspect a data file */
+    /** @brief Select and inspect a restart file */
     void inspect();
 
     /** @brief Open a file from the recent files list */
@@ -441,14 +441,19 @@ private:
     LogWindow *logwindow;     ///< Window displaying LAMMPS output log
     ImageViewer *imagewindow; ///< Window for viewing single images
     ChartWindow *chartwindow; ///< Window for displaying charts
-    SlideShow *slideshow;     ///< Window for image slideshow
-    QTimer *logupdater;       ///< Timer for periodic log updates
-    QLabel *dirstatus;        ///< Status bar label showing current directory
-    QProgressBar *progress;   ///< Progress bar for long operations
-    Preferences *prefdialog;  ///< Preferences dialog
-    QLabel *lammpsstatus;     ///< Status bar label for LAMMPS state
-    QLabel *varwindow;        ///< Window showing variable definitions
-    TutorialWizard *wizard;   ///< Tutorial wizard dialog
+    /// Chart windows of previous runs kept open for comparison when the
+    /// "replace on new run" preference is off. They delete themselves when
+    /// closed (the QPointer entries reset to null) and any still-open
+    /// windows are deleted when the main window is destroyed.
+    QList<QPointer<ChartWindow>> oldChartWindows;
+    SlideShow *slideshow;    ///< Window for image slideshow
+    QTimer *logupdater;      ///< Timer for periodic log updates
+    QLabel *dirstatus;       ///< Status bar label showing current directory
+    QProgressBar *progress;  ///< Progress bar for long operations
+    Preferences *prefdialog; ///< Preferences dialog
+    QLabel *lammpsstatus;    ///< Status bar label for LAMMPS state
+    QLabel *varwindow;       ///< Window showing variable definitions
+    TutorialWizard *wizard;  ///< Tutorial wizard dialog
 
     /**
      * @brief Container for inspect dialog widgets
@@ -471,7 +476,6 @@ private:
     LammpsRunner *runner;                ///< Thread for running LAMMPS simulations
     QString docver;                      ///< LAMMPS documentation version string
     QString pluginPath;                  ///< Path to LAMMPS shared library (plugin mode)
-    bool isRunning;                      ///< Whether a simulation is currently running
     int runCounter;                      ///< Counter for simulation runs
     std::vector<std::string> lammpsArgs; ///< Command-line arguments for LAMMPS
 

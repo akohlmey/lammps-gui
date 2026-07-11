@@ -13,12 +13,9 @@
 
 #include "codeeditor.h"
 #include "constants.h"
-#include "helpers.h"
 #include "lammpsgui.h"
 
-#include <QApplication>
 #include <QCheckBox>
-#include <QDialogButtonBox>
 #include <QGridLayout>
 #include <QHBoxLayout>
 #include <QIcon>
@@ -26,7 +23,6 @@
 #include <QLineEdit>
 #include <QPushButton>
 #include <QShortcut>
-#include <QSizePolicy>
 #include <QTextCursor>
 
 /* ---------------------------------------------------------------------- */
@@ -93,7 +89,8 @@ void FindAndReplace::findNext()
 
     if (!text.isEmpty()) {
         if (!editor->find(text, find_flags) && wrap->isChecked()) {
-            // nothing found from the current position to the end, reposition cursor and beginning
+            // nothing found from the current position to the end, reposition cursor at the
+            // beginning
             editor->moveCursor(QTextCursor::Start, QTextCursor::MoveAnchor);
             editor->find(text, find_flags);
         }
@@ -111,7 +108,7 @@ void FindAndReplace::replaceNext()
     auto flag   = withcase->isChecked() ? Qt::CaseSensitive : Qt::CaseInsensitive;
 
     // if selected text at cursor location matches search text, replace
-    if (QString::compare(cursor.selectedText(), search->text(), flag) == 0)
+    if (QString::compare(cursor.selectedText(), text, flag) == 0)
         cursor.insertText(replace->text());
 
     findNext();

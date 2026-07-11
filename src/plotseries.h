@@ -50,8 +50,8 @@ struct PlotSeries {
     QString refLabel;                           ///< text drawn next to a reference line
     RefAnchor refAnchor = RefAnchor::Start;     ///< where the label sits along the line
 
-    // convenience accessors mirroring the subset of the Qt series API used by
-    // ChartViewer, so callers need not poke the points list directly
+    // convenience accessors for the chart code, so callers need not poke the
+    // points list directly
     /** @brief Append one (x, y) point */
     void append(double x, double y) { points.append(QPointF(x, y)); }
     /** @brief Replace all points */
@@ -64,8 +64,6 @@ struct PlotSeries {
     void setVisible(bool v) { visible = v; }
     /** @brief Whether the series is visible */
     bool isVisible() const { return visible; }
-    /** @brief Remove all points */
-    void clear() { points.clear(); }
 };
 
 /**

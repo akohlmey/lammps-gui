@@ -63,16 +63,20 @@ cmake --build build -j$(nproc)
 ctest --test-dir build --output-on-failure
 ```
 
-Run a subset by name pattern:
+Run a subset by name pattern (tests are registered under their GoogleTest suite
+names, e.g. `HelpersTest.*`, not the executable names):
 ```bash
-ctest --test-dir build -R test_helpers --output-on-failure
+ctest --test-dir build -R HelpersTest --output-on-failure
 ctest --test-dir build -R Framebuffer --output-on-failure   # GUI tests need Xvfb + screenshooter
 ```
 
 **Test categories:**
-- `test_helpers` / `test_stdcapture` / `test_flagwarnings` — C++ unit tests (GoogleTest v1.17.0, fetched automatically via FetchContent)
+- `test_*` executables — C++ unit tests (GoogleTest v1.17.0, fetched automatically
+  via FetchContent); one per tested module: helpers, stdcapture, flagwarnings,
+  dumpimage, movieimport, imagecache, leastsquares, plotdata, lepton, levmar,
+  customfunc, analysis, plotaxismath, and fitting
 - `CommandLine.*` — command-line flag smoke tests
-- `Framebuffer.*` — Python/PyAutoGUI GUI tests run inside Xvfb; require `xvfb-run` and one of: `magick`, `import`, `xfce4-screenshooter`, or `gnome-screenshooter`
+- `Framebuffer.*` — Python/PyAutoGUI GUI tests run inside Xvfb; require `xvfb-run` and one of: `magick`, `import`, `xfce4-screenshooter`, or `gnome-screenshot`
 
 ## Static analysis (CodeQL)
 
@@ -103,10 +107,11 @@ File headers use `// -*- c++ -*-` Emacs mode line; maintain it on new files.
 ## Commit & Code Conventions
 
 - **GPG-sign all commits.** Every commit must carry a verifiable GPG signature.
+- **No `Co-Authored-By:` or `Claude-Session:` attribution in commit messages.** AI attribution belongs in pull request descriptions only.
 - **Doxygen comments on all new public APIs.** Use `/** @brief ... */` Javadoc style for classes and methods; `///< description` for member variables. See `src/lammpsgui.h` for a comprehensive example.
 - **New public classes need a `.. doxygenclass::` entry in `doc/api_reference.rst`.** The `helpers.h` block uses `.. doxygenfile:: helpers.h :sections: func`, which renders only *free functions*, so a new helper class (e.g. an RAII guard) is otherwise missing from the generated API docs.
 - **Documentation changes in American English with plain ASCII characters** (no typographic quotes, em-dashes as `--`, etc.).
-- **New `.cpp`/`.h` files must be added to `PROJECT_SOURCES`** in `CMakeLists.txt` (around line 80). Qt's `AUTOMOC` handles `moc` generation automatically, but the file must be listed there.
+- **New `.cpp`/`.h` files must be added to `PROJECT_SOURCES`** in `cmake/Sources.cmake`. Qt's `AUTOMOC` handles `moc` generation automatically, but the file must be listed there. The top-level `CMakeLists.txt` holds only the configuration options and the executable target; the remaining build logic lives in include files under `cmake/` (Platform, Sources, Testing, Sanitizer, Documentation, Packaging).
 
 ## Architecture
 
@@ -146,17 +151,16 @@ main.cpp
 
 **Constants and settings keys.** `src/constants.h` holds two intentionally short, internal namespaces: `Cfg` (application-wide magic numbers and repeated string literals -- UI dimensions, update intervals, resource paths, version constants) and `Keys` (every persisted QSettings key and group name). New hardcoded values and any new QSettings key go there. Reference them qualified -- `Cfg::PREFERENCES_WIDTH`, `Keys::ZOOM` -- never via `using namespace`/aliases: the namespaces are deliberately terse so the qualifier stays cheap, and the `Keys::` prefix keeps the generic key names (e.g. `NAME`, `TYPE`, `ID`) readable and collision-free. A mistyped settings key is then a compile error, not a silently lost setting.
 
-**Minimum LAMMPS version.** `Cfg::MIN_LAMMPS_VERSION` (currently `20260330`) is enforced at startup; the GUI warns and may refuse to run with older LAMMPS builds.
+**Minimum LAMMPS version.** `Cfg::MIN_LAMMPS_VERSION` (see `src/constants.h` for the current value) is enforced at startup; the GUI warns and may refuse to run with older LAMMPS builds.
 
 **Dialog widget wiring.** `ImageViewer` and the `Preferences` tabs connect widgets to slots via `setObjectName("...")` + later `findChild<T>("...")` rather than stored member pointers. Preserve object names exactly when refactoring these dialogs (a wrong/renamed name fails the lookup silently, with no compile error).
 
-**Shared helpers (prefer over re-rolling).** Use the `StdoutSilencer` RAII guard (`helpers.h`) instead of manual `silenceStdout()`/`restoreStdout()` pairs; `LammpsWrapper::lastErrorMessage()` instead of a hand-managed `getLastErrorMessage()` buffer; `LammpsGui::addMenuAction()` to build menu actions.
+**Shared helpers (prefer over re-rolling).** Use the `StdoutSilencer` RAII guard (`helpers.h`) instead of manual `silenceStdout()`/`restoreStdout()` pairs; the `QtMessageSilencer` RAII guard (`helpers.h`) around a call whose Qt-internal warnings are expected and handled (note it cannot catch messages a library prints straight to stderr, such as libpng's `libpng error:` lines); `LammpsWrapper::lastErrorMessage()` instead of a hand-managed `getLastErrorMessage()` buffer; `LammpsGui::addMenuAction()` to build menu actions; `monoFontFromSettings()` for the configured fixed-width font; `styleDialogButtons()` to apply the bundled SVG icons to a `QDialogButtonBox`; `toolButtonSize()`/`styleToolButtons()` for square toolbar buttons; `applyWindowFlags()` for the shared output-window WM hints.
 
 ### String handling & modern C++ conventions
 
-These are the settled conventions for new and refactored code. A staged
-plan for bringing existing code into line lives under "Refactoring status
-and recommendations" in `TODO.md`.
+These are the settled conventions for new and refactored code; the staged
+cleanup that brought the existing code into line is complete.
 
 **QString is the canonical internal string type.** It already dominates
 (~350 declarations vs. ~25 `std::string`). Keep `char *` and `std::string`
@@ -170,9 +174,9 @@ wrapper are the templates to copy:
   as `extractSetting()`, `extractGlobal()` or `command()`, `file()`.
   Do the former when only string constants are used as arguments.
 - *Output:* return a `QString` and manage the buffer internally, as
-  `lastErrorMessage()` does. Prefer this over `char *`-out-param APIs
-  (`idName`, `styleName`, `variableInfo`, `getLastErrorMessage`), which are
-  legacy and slated for QString-returning overloads.
+  `lastErrorMessage()`, `idName()`, `styleName()`, and `variableInfo()` do
+  (their `char *`-buffer variants are private implementation details behind
+  the QString-returning public API).
 
 Avoid `QString -> std::string -> QString` round-trips. `splitLine` now
 parses the `QString` directly (via `utf16()`) and returns a `QStringList`;
@@ -246,20 +250,23 @@ decisions and caveats as binding unless we explicitly revise them here.
 | `src/dumpimage.{cpp,h}` | `DumpImageParams` struct + assembly of the LAMMPS `dump image` command from `ImageViewer` widget state |
 | `src/colormaps.{cpp,h}` | Named `dump image` color-map definitions (`ColorMapStop` color stops) |
 | `src/slideshow.{cpp,h}` | Slideshow viewer for sequences of dump images with playback controls |
-| `src/preferences.{cpp,h}` | Tabbed settings dialog (general, accelerators, editor, charts, images) |
+| `src/imagecache.{cpp,h}` | `ImageCache`: temp-dir-backed cache of ImageMagick-converted images and extracted movie frames, owned by `SlideShow` |
+| `src/movieimport.{cpp,h}` | `MovieInfo` + ffprobe/ffmpeg probe and frame-extraction free functions, plus the `MovieImportDialog` confirmation dialog |
+| `src/preferences.{cpp,h}` | Tabbed settings dialog (general, accelerators, snapshot image, editor, charts) |
 | `src/setvariables.{cpp,h}` | Dialog for editing index-style LAMMPS variable name/value pairs |
 | `src/tutorialwizard.{cpp,h}` | Step-by-step wizard for setting up and launching LAMMPS tutorials |
 | `src/tutorials.{cpp,h}` | `TutorialCollection` metadata/registry for the available tutorial collections |
 | `src/fileviewer.{cpp,h}` | Read-only text viewer for files referenced in input scripts |
 | `src/aboutdialog.{cpp,h}` | Auto-scrolling About dialog showing LAMMPS version and style info |
 | `src/urldownloader.{cpp,h}` | HTTPS file downloader (respects `https_proxy` setting) |
-| `src/helpers.{cpp,h}` | Platform utilities, dialog helpers, stdout silence/restore |
+| `src/helpers.{cpp,h}` | Platform utilities, dialog/font/toolbar helpers, stdout and Qt-message silencing |
 | `src/qaddon.{cpp,h}` | Utility widgets: `QHline`, `QColorCompleter`, `QColorValidator`, `VerticalLabel` |
 | `src/rangebandslider.{cpp,h}` | Horizontal `QSlider` that paints an active sub-range on its track (distinct from the third-party `rangeslider`) |
 | `src/constants.h` | `Cfg` namespace (magic numbers, string constants) and `Keys` namespace (QSettings keys) |
 | `thirdparty/rangeslider/rangeslider.{cpp,h}` | Dual-handle range slider widget (third-party, **CeCILL-A license**) |
 | `thirdparty/lepton_mini/` | Vendored JIT-less subset of the Lepton expression parser, namespace `LeptonMini` (MIT); built as the `lepton_mini` static library |
 | `plugin/liblammpsplugin.{c,h}` | C shim for dynamic LAMMPS library loading |
+| `cmake/` | CMake include files: `Platform`, `Sources` (the `PROJECT_SOURCES` list), `Testing`, `Sanitizer`, `Documentation`, `Packaging` |
 | `resources/` | Qt resources: icons, help tables, commands list |
 | `test/` | Unit tests (GoogleTest) and Python GUI tests (PyAutoGUI/Xvfb) |
 | `doc/` | Sphinx documentation sources (`requirements.txt` for venv) |

@@ -18,20 +18,28 @@
 #include <QSize>
 #include <QString>
 #include <QStringList>
+#include <QtGlobal>
 #include <initializer_list>
 #include <memory>
-#include <string>
-#include <vector>
 
 class QWidget;
 class QImage;
+class QPixmap;
 class QFont;
 class QAbstractButton;
 class QDialogButtonBox;
+class QScrollArea;
 
 // OS specific default fonts (managed via unique_ptr for automatic cleanup)
 extern std::unique_ptr<QFont> GUI_MONOFONT;
 extern std::unique_ptr<QFont> GUI_ALLFONT;
+
+/**
+ * @brief Build the configured fixed-width font from the application settings
+ * @return Fixed-pitch QFont with the family and point size stored in the
+ *         settings, falling back to the platform default GUI_MONOFONT
+ */
+QFont monoFontFromSettings();
 
 /**
  * @brief Compare two date strings in LAMMPS "DD MMM YYYY" format (e.g. "22 Jul 2025")
@@ -115,6 +123,18 @@ extern void exportImage(QWidget *parent, QImage *image, const QString &title);
  * (e.g. tga, eps, sgi) so callers can route them through a conversion step.
  */
 [[nodiscard]] extern bool isImageFile(const QString &filename);
+
+/**
+ * @brief Check whether a file is a movie (video) file
+ * @param filename Path to the file
+ * @return true if the extension is a known movie type, or the file is an
+ *         animated GIF with more than one frame
+ *
+ * An animated GIF is both an image and a movie, and isImageFile() also claims
+ * it.  Callers that route a file to either destination must therefore test
+ * isMovieFile() first.
+ */
+[[nodiscard]] extern bool isMovieFile(const QString &filename);
 
 /**
  * @brief Check whether a file is a LAMMPS binary restart file
@@ -241,6 +261,73 @@ public:
 };
 
 /**
+ * @brief RAII guard that collects Qt log messages instead of printing them
+ *
+ * Installs a Qt message handler on construction and restores the previous one
+ * on destruction.  Debug, info, and warning messages emitted while the guard is
+ * alive are collected and can be retrieved with messages(); they are never
+ * printed.  Critical and fatal messages are passed on to the previous handler,
+ * since those must not be swallowed.
+ *
+ * The intended use is a scope whose failure is expected and handled, such as
+ * asking Qt to decode an image in a format it may not support: some of Qt's
+ * image format plugins print a warning for every file they reject, which would
+ * otherwise be repeated for each file and each attempt.  Retrieve the collected
+ * text with messages() and report it once if the operation fails for good.
+ *
+ * @note The Qt message handler is process-wide, so the guard also captures
+ *       messages emitted by other threads while it is alive.  Keep the guarded
+ *       scope short and use it only from the main thread.
+ */
+class QtMessageSilencer {
+public:
+    QtMessageSilencer();
+    ~QtMessageSilencer();
+    QtMessageSilencer(const QtMessageSilencer &)            = delete;
+    QtMessageSilencer(QtMessageSilencer &&)                 = delete;
+    QtMessageSilencer &operator=(const QtMessageSilencer &) = delete;
+    QtMessageSilencer &operator=(QtMessageSilencer &&)      = delete;
+
+    /**
+     * @brief The messages collected so far, one per line
+     * @return Collected text, or an empty string if nothing was captured
+     */
+    [[nodiscard]] QString messages() const;
+
+private:
+    static void collect(QtMsgType type, const QMessageLogContext &context, const QString &message);
+
+    static QtMessageSilencer *active; ///< Innermost live guard, nullptr if none
+    QtMessageSilencer *outer;         ///< Guard this one replaced, for nesting
+    QtMessageHandler previous;        ///< Message handler to restore, may be nullptr
+    QStringList collected;            ///< Captured debug, info, and warning messages
+};
+
+/**
+ * @brief Fade an image into an unmistakably inactive version of itself
+ * @param src Image to convert
+ * @return Grayscale, low-contrast copy of @p src with the original transparency
+ *
+ * Removes the color and, in addition, pulls the gray levels towards
+ * Cfg::GRAYSCALE_MIDPOINT, keeping only Cfg::GRAYSCALE_CONTRAST of the original
+ * contrast: a merely desaturated icon retains all of its structure and still
+ * reads as active next to its colored counterpart.
+ */
+[[nodiscard]] extern QImage grayscaleImage(const QImage &src);
+
+/**
+ * @brief Fade a pixmap into an unmistakably inactive version of itself
+ * @param src Pixmap to convert
+ * @return Grayscale, low-contrast copy of @p src with the original transparency
+ *
+ * Applies grayscaleImage() to the pixmap.  Used for the "inactive" state of a
+ * status icon, so the widget does not depend on the disabled-widget visual,
+ * which does not refresh reliably on all platforms (e.g. macOS 12) and cannot
+ * be applied to an enabled widget at all.
+ */
+[[nodiscard]] extern QPixmap grayscalePixmap(const QPixmap &src);
+
+/**
  * @brief Square size for a toolbar/status-bar button from a sample's size hint
  *
  * Implements the shared tool-button sizing policy: take the sample button's
@@ -282,6 +369,53 @@ extern void styleToolButtons(const QSize &size, std::initializer_list<QAbstractB
  * @param window Top-level window to adjust (no-op if null)
  */
 extern void applyWindowFlags(QWidget *window);
+
+/**
+ * @brief Compute the scroll area size that shows the given content, within a budget
+ *
+ * Pure size computation behind fitViewerWindow(). The natural size is the
+ * content plus the scroll area frame, with no scroll bars. An axis whose
+ * natural size exceeds the budget is clamped and gets a scroll bar, which
+ * consumes @p sbext pixels of viewport on the *other* axis, so that axis is
+ * enlarged accordingly (still within its budget). The result depends only on
+ * the arguments -- never on the current scroll bar visibility -- so repeated
+ * calls with the same input always yield the same size.
+ *
+ * @param content Size of the displayed content (image) in pixels
+ * @param budget  Largest allowed outer scroll area size (e.g. a screen fraction)
+ * @param frame   Total scroll area frame thickness (2 * frameWidth())
+ * @param sbext   Scroll bar thickness (QStyle::PM_ScrollBarExtent)
+ * @return Outer scroll area size that best fits the content within the budget
+ */
+[[nodiscard]] extern QSize viewerFitSize(const QSize &content, const QSize &budget, int frame,
+                                         int sbext);
+
+/**
+ * @brief Resize a viewer window so its scroll area just fits the displayed image
+ *
+ * Shared auto-resize policy of the image viewer and the slide show: the scroll
+ * area is sized via viewerFitSize() and the window is resized around it. The
+ * scroll area's minimum size is pinned only for the duration of the resize, so
+ * the user can freely shrink the window afterwards. When the computed size
+ * equals @p lastFit, the window is left untouched; passing the previous return
+ * value back in keeps navigating a sequence of equally-sized images from ever
+ * moving or resizing the window.
+ *
+ * While @p window is still hidden its layout uses unpolished style metrics, so
+ * the applied size is only approximate: the fit is applied but an invalid
+ * QSize is returned instead of the memoized size. The viewers use that in
+ * their showEvent() overrides to apply the fit once more on the shown window.
+ *
+ * @param window  Top-level viewer window to resize
+ * @param area    Scroll area inside @p window that shows the content
+ * @param content Size of the displayed content (image) in pixels
+ * @param budget  Largest allowed outer scroll area size (e.g. a screen fraction)
+ * @param lastFit Return value of the previous call (default QSize() initially)
+ * @return The scroll area size applied, or an invalid QSize while @p window is
+ *         hidden; pass this value back as @p lastFit on the next call
+ */
+extern QSize fitViewerWindow(QWidget *window, QScrollArea *area, const QSize &content,
+                             const QSize &budget, const QSize &lastFit);
 
 /**
  * @brief Append an action with an optional icon and a triggered() handler to a menu

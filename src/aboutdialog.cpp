@@ -75,15 +75,7 @@ AboutDialog::AboutDialog(const QString &version, const QString &info, const QStr
         detailsLabel->setMargin(LABEL_MARGIN);
         detailsLabel->setTextInteractionFlags(Qt::TextSelectableByMouse);
 
-        // Get fixed-width font from QSettings
-        QSettings settings;
-        QFont mono_font;
-        QFontInfo mono_info(*GUI_MONOFONT);
-        mono_font.setFamily(settings.value(Keys::MONOFAMILY, mono_info.family()).toString());
-        mono_font.setPointSize(settings.value(Keys::MONOSIZE, mono_info.pointSize()).toInt());
-        mono_font.setStyleHint(GUI_MONOFONT->styleHint());
-        mono_font.setFixedPitch(true);
-        detailsLabel->setFont(mono_font);
+        detailsLabel->setFont(monoFontFromSettings());
 
         detailsScrollArea->setWidget(detailsLabel);
         mainLayout->addWidget(detailsScrollArea, 1);
@@ -111,7 +103,7 @@ AboutDialog::AboutDialog(const QString &version, const QString &info, const QStr
     desiredWidth += 4 * LABEL_MARGIN;
     desiredWidth += infoScrollArea->verticalScrollBar()->sizeHint().width();
 
-    // add space icon and for close button
+    // add spacer icon and close button
     desiredHeight += iconLabel->height() + closeButton->height();
 
     // Apply size constraints based on screen dimensions
@@ -142,7 +134,12 @@ void AboutDialog::setupAutoScroll(QScrollArea *area)
     auto *vbar = area->verticalScrollBar();
     if (!vbar || vbar->maximum() <= 0) return;
 
-    auto *scrollTimer = new QTimer(this);
+    // drop the timer from a previous showEvent(): re-showing the dialog would
+    // otherwise stack timers and multiply the scroll speed
+    delete area->findChild<QTimer *>("autoscroll");
+
+    auto *scrollTimer = new QTimer(area);
+    scrollTimer->setObjectName("autoscroll");
     scrollTimer->setInterval(50);
 
     connect(scrollTimer, &QTimer::timeout, this, [vbar, scrollTimer, this]() {
@@ -157,8 +154,9 @@ void AboutDialog::setupAutoScroll(QScrollArea *area)
         }
     });
 
-    // Start scrolling after 3 seconds
-    QTimer::singleShot(3000, this, [scrollTimer]() {
+    // Start scrolling after 3 seconds; the timer is the context object so the
+    // pending shot dies with it if the dialog is re-shown in the meantime
+    QTimer::singleShot(3000, scrollTimer, [scrollTimer]() {
         scrollTimer->start();
     });
 }

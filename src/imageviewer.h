@@ -19,6 +19,7 @@
 #include <QList>
 #include <QMap>
 #include <QPair>
+#include <QSize>
 #include <QString>
 #include <QStringList>
 #include <map>
@@ -32,7 +33,7 @@ class QLabel;
 class QObject;
 class QRadioButton;
 class QScrollArea;
-class QStatusBar;
+class QShowEvent;
 class LammpsWrapper;
 class LammpsGui;
 class ImageInfo;
@@ -82,6 +83,7 @@ private slots:
     void setBondSize();       ///< Set explicit bond display size
     void editSize();          ///< Edit image dimensions
     void resetView();         ///< Reset view to defaults
+    void resetWindowSize();   ///< Resize window to fit the configured image size
     void toggleSsao();        ///< Toggle screen-space ambient occlusion
     void toggleAnti();        ///< Toggle antialiasing
     void toggleShiny();       ///< Toggle shiny/specular rendering
@@ -122,6 +124,7 @@ public:
 
 protected:
     bool eventFilter(QObject *watched, QEvent *event) override; ///< Intercept Alt-keystrokes
+    void showEvent(QShowEvent *event) override; ///< Redo the initial window fit once shown
 
 private:
     void createActions();     ///< Setup menu actions
@@ -191,6 +194,7 @@ private:
     QMenuBar *menuBar;       ///< Menu bar
     QLabel *imageLabel;      ///< Label displaying the image
     QScrollArea *scrollArea; ///< Scrollable area for image
+    QSize lastFitSize;       ///< Scroll area size applied by the last auto-resize
     double atomSize;         ///< Explicit atom display size (as radius)
     double bondSize;         ///< Explicit bond display size (as diameter)
 
@@ -261,6 +265,7 @@ private:
     QString linecolor;                           ///< Custom line color property
     QString tricolor;                            ///< Custom triangle color property
     double xcenter, ycenter, zcenter;            ///< View center coordinates
+    double xup, yup, zup;                        ///< Camera up direction vector
     bool atomcustom;                             ///< Use custom atom color settings
     bool usegradient;                            ///< Vertical background gradient
     bool showbox;                                ///< Show simulation box flag
@@ -270,7 +275,7 @@ private:
     bool usessao;                                ///< SSAO enabled flag
     bool showatoms;                              ///< Show atoms
     bool showbonds;                              ///< Show bonds if atom style supports it
-    bool autobond;                               ///< Dynamics bonds from cutoff flag
+    bool autobond;                               ///< Dynamic bonds from cutoff flag
     bool showbodies;                             ///< Show bodies if atom style supports it
     bool showellipsoids;                         ///< Show ellipsoids if atom style supports it
     bool showlines;                              ///< Show lines if atom style supports it
