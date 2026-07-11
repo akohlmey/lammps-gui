@@ -117,6 +117,10 @@ if(BUILD_DOC OR BUILD_DOC_ONLY)
     COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_SOURCE_DIR}/doc/idxlayout.sty ${DOC_BUILD_DIR}/latex/
     COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_SOURCE_DIR}/doc/ellipse.sty ${DOC_BUILD_DIR}/latex/
   )
+  # Make latex target depend on doxygen if available
+  if(DOXYGEN_FOUND)
+    add_dependencies(latex doxygen)
+  endif()
 
   # need latexmk and pdflatex for translating LaTeX to PDF
   find_program(PDFLATEX_COMMAND pdflatex DOC "Path to pdflatex command")
