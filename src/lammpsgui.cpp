@@ -460,8 +460,10 @@ void LammpsGui::setupPlugin(QSettings &settings)
 
         // No suitable plugin was found automatically.  Show a dialog with three choices:
         // 1) Download a pre-compiled shared library from the LAMMPS webserver
+        //    (not offered when no compatible pre-compiled library exists, i.e. with MSVC)
         // 2) Browse the filesystem for a suitable shared library file
         // 3) Exit LAMMPS-GUI
+        const bool candownload = !getLammpsDownloadUrl().isEmpty();
         while (pluginPath.isEmpty()) {
             // remove key for path to the plugin so we won't get stuck in a loop reading a bad file
             settings.remove(Keys::PLUGIN_PATH);
@@ -471,21 +473,29 @@ void LammpsGui::setupPlugin(QSettings &settings)
             mb.setWindowIcon(QIcon(Cfg::MAIN_ICON));
             mb.setIconPixmap(QPixmap(":/icons/lammps-plugin.png").scaled(96, 96));
             mb.setText("No suitable LAMMPS shared library found.");
-            mb.setInformativeText(
+            QString infotext =
                 "<p align=\"justify\">Either the shared library path has been reset, the "
                 "configured or default library file was not found, or the selected library failed "
-                "to load.</p><p align=\"justify\">You may now either download a pre-compiled LAMMPS"
-                " shared library file for your platform from the LAMMPS webserver, browse the "
-                "filesystem for a suitable LAMMPS library file, or exit LAMMPS-GUI.</p>");
+                "to load.</p><p align=\"justify\">You may now either ";
+            if (candownload)
+                infotext += "download a pre-compiled LAMMPS shared library file for your platform "
+                            "from the LAMMPS webserver, browse the ";
+            else
+                infotext += "browse the ";
+            infotext += "filesystem for a suitable LAMMPS library file, or exit LAMMPS-GUI.</p>";
+            mb.setInformativeText(infotext);
 
-            auto *downloadBtn = mb.addButton("Download Library...", QMessageBox::ApplyRole);
-            downloadBtn->setIcon(QIcon(":/icons/download-file.svg"));
+            QPushButton *downloadBtn = nullptr;
+            if (candownload) {
+                downloadBtn = mb.addButton("Download Library...", QMessageBox::ApplyRole);
+                downloadBtn->setIcon(QIcon(":/icons/download-file.svg"));
+            }
             auto *browseBtn = mb.addButton("Browse Filesystem...", QMessageBox::AcceptRole);
             browseBtn->setIcon(QIcon(":/icons/document-open.svg"));
             auto *exitBtn = mb.addButton("Exit", QMessageBox::NoRole);
             exitBtn->setIcon(QIcon(":/icons/application-exit.svg"));
 
-            mb.setDefaultButton(downloadBtn);
+            mb.setDefaultButton(candownload ? downloadBtn : browseBtn);
             mb.setEscapeButton(exitBtn);
             mb.exec();
 
@@ -522,7 +532,7 @@ void LammpsGui::setupPlugin(QSettings &settings)
                     continue;
                 }
                 auto libPath = configDir + QDir::separator() + libName;
-                auto dlUrl   = QString("https://download.lammps.org/lammps-gui/%1").arg(libName);
+                auto dlUrl   = getLammpsDownloadUrl();
 
                 URLDownloader downloader(this);
                 if (downloader.download(dlUrl, libPath, true)) {
@@ -2235,6 +2245,15 @@ void LammpsGui::checkUpdate()
     const auto configDir = QStandardPaths::writableLocation(QStandardPaths::AppConfigLocation);
     auto libPath         = configDir + QDir::separator() + libName;
     auto dlUrl           = getLammpsDownloadUrl();
+
+    if (dlUrl.isEmpty()) {
+        information(this, "Check for LAMMPS Update",
+                    "The pre-compiled LAMMPS shared libraries from the LAMMPS webserver "
+                    "are not compatible with this LAMMPS-GUI executable. Please compile "
+                    "a matching LAMMPS shared library yourself and select it in the "
+                    "preferences dialog.");
+        return;
+    }
 
     if (!QFile::exists(libPath)) {
         information(this, "Check for LAMMPS Update",

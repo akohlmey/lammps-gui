@@ -381,6 +381,13 @@ GeneralTab::GeneralTab(QSettings *_settings, LammpsWrapper *_lammps, LammpsGui *
     plugindownload->setIcon(QIcon(":/icons/download-file.svg"));
     pluginbrowse->setIcon(QIcon(":/icons/document-open.svg"));
 
+    // no compatible pre-compiled LAMMPS library exists for MSVC compiled executables
+    if (getLammpsDownloadUrl().isEmpty()) {
+        plugindownload->setEnabled(false);
+        plugindownload->setToolTip("The pre-compiled LAMMPS shared libraries are not "
+                                   "compatible with this LAMMPS-GUI executable");
+    }
+
     auto *pluginlayout = new QHBoxLayout;
     pluginedit->setObjectName("pluginedit");
     pluginlayout->addWidget(pluginedit);

@@ -95,6 +95,7 @@ extern QString getLammpsLibName();
 /**
  * @brief Provide platform specific URL for downloading a LAMMPS shared library
  * @return String with the URL or an empty string if compiled without plugin support
+ *         or with a compiler that is incompatible with the pre-compiled libraries (MSVC)
  */
 extern QString getLammpsDownloadUrl();
 

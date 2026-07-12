@@ -402,25 +402,25 @@ Windows
 On Windows either native compilation from within Visual Studio 2022 or
 Visual Studio 2026 with Visual C++ is supported and tested, or
 compilation with the MinGW / GCC cross-compiler environment on Fedora
-Linux.
+Linux.  All pre-compiled LAMMPS-GUI packages for Windows are created
+with the MinGW64 cross-compiler; the native Visual C++ compilation is a
+development configuration without deployment or packaging support.
 
 *Visual Studio*
 
 Using CMake and Ninja as the build system is required.  Qt needs to be
 installed; a binary Qt package downloaded from https://www.qt.io was
-tested, which installs into the ``C:\\Qt`` folder by default.
-There is a custom `x64-GUI-MSVC` build configuration provided in the
-``CMakeSettings.json`` file that Visual Studio uses to store different
-compilation settings for the project.  Choosing this configuration will
-activate building the `lammps-gui.exe` executable in addition to LAMMPS
-through importing package selection from the ``windows.cmake`` preset
-file and enabling building LAMMPS-GUI and disabling building with MPI.
-When requesting an installation from the `Build` menu in Visual Studio,
-it will create a compressed ``LAMMPS-GUI-Win10-amd64.zip`` zip file with
-the executables and required dependent .dll files.  This zip file can be
-uncompressed and ``lammps-gui.exe`` run directly from there.  The
-uncompressed folder can be added to the ``PATH`` environment and LAMMPS
-and LAMMPS-GUI can be launched from anywhere from the command-line.
+tested, which installs into the ``C:\\Qt`` folder by default.  The
+compilation is verified by a GitHub action for every proposed change,
+and the compiled ``lammps-gui.exe`` executable is run directly from the
+build folder.  Please note that the pre-compiled LAMMPS shared libraries
+downloaded by LAMMPS-GUI are built with the MinGW64 cross-compiler and
+use a different C runtime than Visual C++, so they are not compatible
+with a Visual C++ compiled executable; the download options are
+therefore disabled in this configuration.  Instead, a LAMMPS shared
+library must also be compiled with Visual C++ and then either be
+selected manually in the ``Preferences`` dialog (plugin mode) or be
+linked directly (with ``-D LAMMPS_GUI_USE_PLUGIN=no``).
 
 *MinGW64 Cross-compiler*
 

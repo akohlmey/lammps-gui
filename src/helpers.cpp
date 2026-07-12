@@ -302,7 +302,14 @@ QString getLammpsDownloadUrl()
 {
     const QString libName = getLammpsLibName();
     if (libName.isEmpty()) return libName;
+#if defined(_MSC_VER)
+    // the pre-compiled LAMMPS libraries on the webserver are built with MinGW, which
+    // uses a different C runtime than MSVC: the library would load through the C API,
+    // but the fd-level stdout capture silently breaks across the two runtimes
+    return QStringLiteral("");
+#else
     return QStringLiteral("https://download.lammps.org/lammps-gui/") + libName;
+#endif
 }
 
 // save image directly and if that fails, save to PNG and convert with ImageMagick
