@@ -1534,8 +1534,9 @@ QList<QPointF> calc_sgsmooth(const QList<QPointF> &input, std::size_t window, in
     return input;
 }
 
-// Data-only min/max of a column: the cached raw bounds plus any smoothed, fit,
-// or overlay curves. Pure -- touches no PlotWidget.
+// Min/max of a column: the cached raw bounds plus any smoothed, fit, or overlay
+// curves, widened by a small y margin so extrema are not drawn on the plot
+// frame itself. Pure -- touches no PlotWidget.
 QRectF columnMinMax(const ChartColumn &col)
 {
     qreal xmin = col.rawXmin;
@@ -1579,6 +1580,12 @@ QRectF columnMinMax(const ChartColumn &col)
     // avoid (nearly) empty ranges on either axis
     padEmptyRange(xmin, xmax);
     padEmptyRange(ymin, ymax);
+
+    // add a little buffer space between the data extremes and the y-axis limits;
+    // a tighter framing is still available through the range sliders
+    const double ypad = Cfg::CHART_YPAD_FRACTION * (ymax - ymin);
+    ymin -= ypad;
+    ymax += ypad;
 
     return {xmin, ymax, xmax - xmin, ymin - ymax};
 }
