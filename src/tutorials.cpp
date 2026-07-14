@@ -112,60 +112,79 @@ TutorialCollection matsci()
 
     c.titles = {"Crystalline metals and the EAM potential",
                 "Variables, automation, and the energy-volume curve",
+                "Point defects: vacancies and interstitials",
+                "Surfaces: energy, relaxation, and reconstruction",
                 "Uniaxial deformation of a single crystal",
+                "Nanowires: surfaces, solutes, and~failure",
                 "Grain boundaries: construction and fracture",
                 "Nanoindentation and nano-stamping",
                 "Elastic constants of crystalline silicon",
                 "Generalized stacking fault energy",
+                "Building a dislocation from its displacement field",
                 "Thermal conductivity by reverse NEMD",
-                "Phonon dispersion from MD",
-                "Zone-center phonons from the dynamical matrix",
+                "Phonon dispersion from MD and the dynamical matrix",
                 "Radiation damage cascade",
                 "Melting point determination",
                 "Diffusion in a liquid metal",
-                "Chemical short-range order in a high-entropy alloy"};
+                "Chemical short-range order in a high-entropy alloy",
+                "Oxides and charge-transfer~potentials"};
 
     c.blurbs = {
-        "<p>In tutorial 1 a face-centered cubic metal is constructed, an EAM potential is applied, "
-        "and the equilibrium lattice constant and cohesive energy of the crystal are obtained by "
-        "energy minimization.</p>",
-        "<p>In tutorial 2 the use of variables, loops, and command-line arguments in LAMMPS is "
-        "demonstrated to scan the lattice parameter of a metal crystal, plot its energy-volume "
-        "curve, and fit it to an equation of state to determine the equilibrium lattice constant "
-        "and bulk modulus.</p>",
-        "<p>In tutorial 3 a single crystal is equilibrated and then subjected to tensile and "
-        "compressive strain, the stress-strain response is extracted, and dislocation nucleation "
-        "is visualized.</p>",
-        "<p>Tutorial 4 introduces grain boundaries: first a &Sigma;5(310) symmetric tilt boundary "
-        "in fcc aluminum is constructed and its energy computed, then a &Sigma;3(111) boundary in "
-        "bcc iron is strained to fracture and the per-atom stress is analyzed.</p>",
-        "<p>In tutorial 5 an aluminum surface is indented with rigid objects and a shaped tool is "
-        "stamped into the surface using a hybrid potential.</p>",
-        "<p>In tutorial 6 the full elastic stiffness tensor of crystalline silicon is computed "
-        "from small-strain deformations using the Stillinger-Weber potential.</p>",
-        "<p>In tutorial 7 the generalized stacking fault energy (&gamma;-surface) of fcc aluminum "
-        "is traced along the &lt;112&gt; direction in the (111) plane, "
-        "explaining dislocation glide and partial splitting.</p>",
-        "<p>In tutorial 8 the thermal conductivity of silicon is computed using reverse "
-        "non-equilibrium molecular dynamics (NEMD), and its finite-size dependence is "
+        "<p>In tutorial 1, a face-centered cubic cystal structure of a bulk metal is constructed, "
+        "an EAM potential is applied, and the equilibrium lattice constant and cohesive energy of "
+        "the crystal are obtained by energy minimization.</p>",
+        "<p>In tutorial 2, the use of variables, loops, and command-line arguments in LAMMPS is "
+        "demonstrated to scan the lattice parameter of a metal crystal, plot its "
+        "energy&ndash;volume curve, and fit it to an equation of state to determine the "
+        "equilibrium lattice constant and bulk modulus.</p>",
+        "<p>In tutorial 3, vacancies and self-interstitials are created in an fcc metal and their "
+        "formation energies are computed from energy minimization.</p>",
+        "<p>In tutorial 4, free surfaces are introduced: the surface energies of the low-index "
+        "aluminum surfaces are computed and compared, and surface relaxation and reconstruction "
+        "are examined.</p>",
+        "<p>In tutorial 5, a single crystal is equilibrated and then subjected to tensile and "
+        "compressive strain, the stress&ndash;strain response is extracted, and dislocation "
+        "nucleation is visualized.</p>",
+        "<p>In tutorial 6, a single crystal is equilibrated and then subjected to tensile and "
+        "compressive strain, the stress&ndash;strain response is extracted, and dislocation "
+        "nucleation is visualized.</p>",
+        "<p>In tutorial 7, grain boundaries are introduced: first a &Sigma;5(310) symmetric tilt "
+        "boundary in fcc aluminum is constructed and its energy computed, then a &Sigma;3(111) "
+        "boundary in bcc iron is strained to fracture and the per-atom stress is analyzed and "
+        "visualized.</p>",
+        "<p>In tutorial 8, an aluminum surface is indented with different shape rigid objects "
+        "(sphere and plane) and a shaped tool is stamped into the surface using a hybrid "
+        "potential.</p>",
+        "<p>In tutorial 9, the full elastic stiffness tensor of crystalline silicon is computed "
+        "from small-strain deformations using the Stillinger&ndash;Weber potential.</p>",
+        "<p>In tutorial 10, the generalized stacking-fault energy (&gamma;-surface) of fcc "
+        "aluminum is traced along the &lt;112&gt; direction in the (111) plane. This is then used "
+        "to explain dislocation glide and partial splitting.</p>",
+        "<p>In tutorial 11, an isolated screw dislocation is created directly from its elastic "
+        "displacement field, and its dissociation into Shockley partial dislocations is analyzed "
+        "and compared with elasticity theory.</p>",
+        "<p>In tutorial 12, the thermal conductivity of silicon is computed using reverse "
+        "non-equilibrium molecular dynamics (rNEMD), and its finite-size dependence is "
         "examined.</p>",
-        "<p>In tutorial 9 the full phonon dispersion of fcc copper is obtained by accumulating "
-        "displacement correlations during a finite-temperature MD run using <b><code>fix "
-        "phonon</code></b>.</p>",
-        "<p>In tutorial 10 the zone-center phonon frequencies of silicon are computed at zero "
-        "temperature from the dynamical matrix, and their connection to elastic constants is "
-        "discussed.</p>",
-        "<p>In tutorial 11 a primary knock-on atom (PKA) displacement cascade is simulated in "
-        "bcc iron, and the resulting Frenkel-pair defects are counted on the fly with the "
-        "<b><code>compute frenkel</code></b> command.</p>",
-        "<p>In tutorial 12 the melting temperature of fcc aluminum is determined; first by "
-        "direct NPT heating and then by the more rigorous two-phase coexistence method.</p>",
-        "<p>In tutorial 13 the self-diffusion coefficient of liquid aluminum is measured from the "
+        "<p>In tutorial 13, the full phonon dispersion of fcc copper is obtained by accumulating "
+        "displacement correlations during a finite-temperature MD run using <code>fix "
+        "phonon</code>, and the zone-center phonon frequencies of silicon are then computed at "
+        "zero temperature from the dynamical matrix.</p>",
+        "<p>In tutorial 14, a primary knock-on atom (PKA) displacement cascade is simulated in bcc "
+        "iron, and the resulting Frenkel-pair defects are counted and visualized on the fly.</p>",
+        "<p>In tutorial 15, the melting temperature of fcc aluminum is determined first by direct "
+        "NPT heating and then by the two-phase coexistence method; the thermal expansion "
+        "coefficient is extracted from the heating run along the way.</p>",
+        "<p>In tutorial 16, the self-diffusion coefficient of liquid aluminum is measured from the "
         "mean-squared displacement, and its temperature dependence is fitted to an Arrhenius law "
         "to obtain an activation energy.</p>",
-        "<p>In tutorial 14 the chemical short-range order of the high-entropy alloy CoCrFeNi is "
-        "equilibrated with a hybrid molecular dynamics / Monte Carlo simulation and quantified "
-        "with the Warren-Cowley parameters for three different published potentials.</p>"};
+        "<p>In tutorial 17, the chemical short-range order of the high-entropy alloy CoCrFeNi is "
+        "studied with a hybrid molecular dynamics / Monte Carlo simulation and quantified by the "
+        "Warren&ndash;Cowley parameters for three different potentials.</p>",
+        "<p>In tutorial 18, the charge-transfer COMB potential is introduced with rutile "
+        "TiO<sub>2</sub>: the atomic charges equilibrate self-consistently and respond as the "
+        "geometry changes from bulk to surface to step, and the treatment of charges is contrasted "
+        "across three SiO<sub>2</sub> potentials.</p>"};
 
     c.available = c.blurbs.size(); // all tutorials of this beta collection are launchable
     return c;

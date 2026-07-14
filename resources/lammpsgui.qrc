@@ -27,6 +27,10 @@
     <file>icons/matsci12-logo.png</file>
     <file>icons/matsci13-logo.png</file>
     <file>icons/matsci14-logo.png</file>
+    <file>icons/matsci15-logo.png</file>
+    <file>icons/matsci16-logo.png</file>
+    <file>icons/matsci17-logo.png</file>
+    <file>icons/matsci18-logo.png</file>
     <file>help_index.table</file>
     <file>image_style.table</file>
     <!-- This file is updated with: grep 'mycmd ==' ../../src/input.cpp | sed -e 's/^.*mycmd == "\(.*\)".*$/\1/' > lammps_internal_commands.txt -->
