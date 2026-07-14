@@ -5,8 +5,8 @@ name: "Coverity Scan static analysis"
 
 on:
   schedule:
-    # daily at 04:37 UTC (off the top of the hour to dodge scheduler contention)
-    - cron: '37 4 * * *'
+    # weekly on Thursday at 02:37 UTC (off the top of the hour to dodge scheduler contention)
+    - cron: '37 2 * * THU'
 
   workflow_dispatch:
 
