@@ -102,6 +102,7 @@
           <li>Fix the Set Variables dialog, whose values no longer took precedence over index variable definitions in the input script: the variables are now re-created before each run instead of being passed only when the LAMMPS instance is first created, where they were immediately discarded by the cleanup of variables left over from the previous run</li>
           <li>Make the column selection when plotting external data files explicit: each column now has an exclusive radio button that marks it as the x-axis and a check box that plots it on the y-axis, and columns with neither selected are ignored. When the x-axis choice moves to a different column, the previous x-axis column is plotted again. Previously the first column without a check mark silently became the x-axis. Derived columns can now also be selected as the x-axis</li>
           <li>Add a little buffer space between the largest and smallest data value and the y-axis limits of a chart, so extrema like the minimum of an energy-volume curve are no longer drawn on the plot frame itself; a tighter framing remains available through the range sliders</li>
+          <li>The atom Size setting of the snapshot image viewer can now select atom-style variables defined in the current simulation state, whose per-atom values are then used directly as atom diameters -- for example to apply a scaling factor to a per-atom property or to per-atom data from computes and fixes referenced by the variable</li>
         </ul>
       </description>
     </release>

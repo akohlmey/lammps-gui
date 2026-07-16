@@ -261,6 +261,26 @@ TEST(DumpImageCommand, ElementColoring)
     EXPECT_TRUE(cmd.contains("adiam 1 1.7"));
 }
 
+TEST(DumpImageCommand, AtomSizeByVariable)
+{
+    auto p       = makeParams();
+    p.atomcustom = true;
+    p.atomdiam   = "v_scale";
+
+    // the variable reference becomes the diameter attribute of the dump image
+    // command instead of "type"
+    QString cmd = buildCmd(p);
+    EXPECT_TRUE(cmd.contains(" type v_scale ")) << cmd.toStdString();
+    EXPECT_FALSE(cmd.contains(" adiam "));
+
+    // the variable also takes precedence over per-atom diameter data with
+    // active VDW mode, where "diameter" would otherwise be selected
+    p.usediameter = true;
+    p.vdwfactor   = 2.0; // do_vdw true
+    cmd           = buildCmd(p);
+    EXPECT_TRUE(cmd.contains(" type v_scale ")) << cmd.toStdString();
+}
+
 TEST(DumpImageCommand, NoAtoms)
 {
     auto p            = makeParams();

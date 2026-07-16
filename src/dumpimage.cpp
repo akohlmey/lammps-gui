@@ -221,6 +221,8 @@ DumpImageCommand buildDumpImageCommand(const DumpImageParams &p)
     } else {
         if ((p.atomdiam == "diameter") && p.usediameter && do_vdw)
             d += blank + "diameter";
+        else if (p.atomdiam.startsWith("v_"))
+            d += blank + p.atomdiam;
         else
             d += " type";
     }

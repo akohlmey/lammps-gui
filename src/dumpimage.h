@@ -47,7 +47,8 @@ struct DumpImageParams {
     bool usesigma;     ///< Lennard-Jones sigma usable as atom radius
     bool showatoms;    ///< draw atoms
     QString atomcolor; ///< custom atom color property
-    QString atomdiam;  ///< custom atom diameter property
+    QString atomdiam;  ///< custom atom diameter property (attribute name, a "v_" atom-style
+                       ///< variable reference, or a numeric diameter)
     double vdwfactor;  ///< van der Waals radius scaling factor
     double atomSize;   ///< explicit atom size (radius)
     QString elements;  ///< pre-built `element <X> <Y> ...` argument string

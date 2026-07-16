@@ -1351,8 +1351,12 @@ DumpImageParams ImageViewer::gatherDumpImageParams(const QString &dumpfilename)
     // resolve the final adiams string depending on the atom-size handling; this
     // mirrors the show/hide decisions made in syncAtomSizeWidgets()
     if (showatoms) {
-        if (atomcustom && (atomdiam != "element") && (atomdiam != "diameter") &&
-            (atomdiam != "sigma")) {
+        if (atomcustom && atomdiam.startsWith("v_")) {
+            // an atom-style variable provides the per-atom diameters directly,
+            // so the per-type dump_modify adiam settings are not used
+            adiams.clear();
+        } else if (atomcustom && (atomdiam != "element") && (atomdiam != "diameter") &&
+                   (atomdiam != "sigma")) {
             adiams.clear();
             for (int i = 1; i <= ntypes; ++i)
                 adiams += QString("adiam %1 %2 ").arg(i).arg(vdwfactor * atomSize);
@@ -1500,7 +1504,8 @@ void ImageViewer::syncAtomSizeWidgets()
     if (!showatoms) {
         showsize = false;
     } else if (atomcustom) {
-        showsize = (atomdiam != "element") && (atomdiam != "diameter") && (atomdiam != "sigma");
+        showsize = (atomdiam != "element") && (atomdiam != "diameter") && (atomdiam != "sigma") &&
+                   !atomdiam.startsWith("v_");
     } else {
         showsize = !(useelements || usediameter || usesigma);
     }

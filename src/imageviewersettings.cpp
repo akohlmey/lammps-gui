@@ -553,18 +553,28 @@ void ImageViewer::atomSettings()
     layout->addWidget(acolor, idx, n++, 1, 1);
     layout->addWidget(new QLabel("Size: "), idx, n++, 1, 1, Qt::AlignVCenter | Qt::AlignRight);
 
-    QRegularExpression validatom(R"((element|diameter|sigma|type|none|^\d+\.?\d*|^\d*\.?\d+))");
+    QRegularExpression validatom(
+        R"((element|diameter|sigma|type|none|v_\w+|^\d+\.?\d*|^\d*\.?\d+))");
     QStringList aditems;
     if (useelements) aditems << "element";
     if (usediameter) aditems << "diameter";
     if (usesigma) aditems << "sigma";
-    aditems << "type" << "3.50" << "5.00" << "3.00" << "2.00";
+    aditems << "type";
+    // atom-style variables provide per-atom diameters, e.g. to apply a scaling
+    // factor; updatePeratom() has just collected the defined ones for the Color
+    // combo box list
+    for (const auto &prop : atom_properties)
+        if (prop.startsWith("v_")) aditems << prop;
+    aditems << "3.50" << "5.00" << "3.00" << "2.00";
     if ((atomSize > 0.1) && (atomSize < 5.0)) {
         aditems << QString::number(2.0 * atomSize, 'f', 2);
     } else {
         aditems << QString::number(2.0 * atomSize, 'g', 3);
     }
-    if (atomdiam != "none") aditems << atomdiam;
+    // re-offer the previous selection, except for a variable reference: the
+    // still-defined variables are already in the list and a stale reference
+    // would make LAMMPS fail to render
+    if ((atomdiam != "none") && !atomdiam.startsWith("v_")) aditems << atomdiam;
     aditems.removeDuplicates();
 
     auto *adiam = new QComboBox;
@@ -930,7 +940,7 @@ void ImageViewer::atomSettings()
         auto *edit  = findChild<QLineEdit *>("atomSize");
         auto *label = findChild<QLabel *>("AtomLabel");
         if ((atomdiam != "element") && (atomdiam != "type") && (atomdiam != "diameter") &&
-            (atomdiam != "sigma") && (atomdiam != "none")) {
+            (atomdiam != "sigma") && (atomdiam != "none") && !atomdiam.startsWith("v_")) {
             if (edit) {
                 edit->setEnabled(true);
                 edit->show();

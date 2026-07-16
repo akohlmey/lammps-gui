@@ -482,9 +482,15 @@ The dialog contains the following sections:
      described below.
    - **Size**: Select the property used for atom sizing.  Options
      include *auto* (when element, diameter, or sigma data is
-     available), *type*, *element*, and a few pre-defined choices for
-     custom atom diameters.  The text field can be edited and a
-     different custom diameter entered.
+     available), *type*, *element*, atom-style variables (`v_<name>`)
+     defined in the current simulation state, and a few pre-defined
+     choices for custom atom diameters.  The text field can be edited
+     and a different custom diameter entered.  Selecting an atom-style
+     variable uses its per-atom value directly as the atom diameter;
+     this allows, for example, to apply a scaling factor to a per-atom
+     property.  Per-atom data from computes and fixes are not offered
+     directly, but they can be referenced from an atom-style variable,
+     which then also allows to scale them to suitable diameters.
    - **Opacity**: The transparency of atoms (range: 0.0 -- 1.0, where 1.0
      is fully opaque and 0.0 is fully transparent).  Bonds have their own
      Opacity setting in the **Bonds** section below.
