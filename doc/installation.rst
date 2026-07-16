@@ -30,7 +30,7 @@ Prerequisites and portability
 .. index:: CMake
 
 LAMMPS-GUI is programmed in C++ based on the C++17 standard and using
-the `Qt GUI framework <https://www.qt.io/development/framework>`_.  As
+the `Qt GUI framework <https://www.qt.io/development/qt-framework>`_.  As
 of LAMMPS-GUI version 2.0.0 Qt version 6.2 or later is required.
 LAMMPS-GUI can switch between a "light" and a "dark" theme according to
 the settings of the desktop environment.  Building LAMMPS-GUI from

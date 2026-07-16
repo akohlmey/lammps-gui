@@ -49,6 +49,7 @@ extensions = [
         'breathe',
         'sphinxcontrib.jquery',
         'sphinx_sitemap',
+        'notfound.extension',
         ]
 
 # Breathe configuration
@@ -114,9 +115,20 @@ lexers['LAMMPS'] = LAMMPSLexer.LAMMPSLexer(startinline=True)
 # avoid syntax highlighting in blocks that don't specify language
 highlight_language = 'none'
 
-# configure sitemap generation
+# configure sitemap generation; the error page must not be indexed
 sitemap_url_scheme = "{link}"
 sitemap_filename = "sitemap.xml"
+sitemap_excludes = ["404.html"]
+
+# configure the custom "404 Not Found" error page (content in 404.rst).
+# GitHub Pages serves that page for missing URLs at any depth, so the
+# extension must generate absolute asset and link URLs; the pages of this
+# site are served from the root of the lammps-gui.lammps.org domain
+notfound_urls_prefix = '/'
+
+# the site-root-relative links of the 404 page cannot be resolved by the
+# link checker (they only exist on the deployed website)
+linkcheck_ignore = [r'^/']
 
 # configure spelling extensions, if present
 import importlib.util
