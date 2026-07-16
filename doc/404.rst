@@ -5,7 +5,7 @@ Page Not Found
 
 .. image:: JPG/lammps-gui-desert.jpg
    :align: center
-   :width: 50%
+   :width: 66%
 
 Sorry, the page you requested does not exist on this server or has moved.
 
