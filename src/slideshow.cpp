@@ -704,6 +704,8 @@ void SlideShow::movie()
 
             // set bitrate and pixel format for decent quality and maximum compatibility
             args << "-r" << fps;
+            // set metadata
+            args << "-metadata" << "encoding_tool=LAMMPS-GUI v" LAMMPS_GUI_VERSION;
 
             args << fileName;
 
@@ -713,7 +715,7 @@ void SlideShow::movie()
             if (ffmpeg.exitCode()) {
                 auto err = ffmpeg.readAllStandardError();
                 // trim off the verbose FFMpeg configuration dump and skip to the error message
-                int eol  = err.indexOf("Error");
+                int eol = err.indexOf("Error");
                 if (eol > 0) err.replace(0, eol, "");
                 critical(this, "Movie Creation Error", "FFMpeg returned:", err);
             }
