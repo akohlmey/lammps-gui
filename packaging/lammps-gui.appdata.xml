@@ -58,19 +58,22 @@
   <content_rating type="oars-1.1" />
 
   <releases>
-    <release version="3.0.3" timestamp="1783600400">
+    <release version="3.0.4" timestamp="1783600400">
       <description>
         <p>Maintenance release with small feature additions and bug fixes.</p>
         <ul>
           <li>Update the list of materials science tutorials to 18 to correspond the latest status of the collection</li>
           <li>Import additional tutorial logos and blurbs for all 18 tutorials</li>
           <li>Reenable setting index style variables from Set Variables dialog which broke when making variable behavior more consistent for image creation</li>
+          <li>Support setting the atom size from atom style variables</li>
           <li>Update citation section with newly available information</li>
           <li>Add a missing dependency to always render PDF files correctly</li>
           <li>Prevent MSVC builds of LAMMPS-GUI from downloading a GCC compiled LAMMPS shared library</li>
           <li>Document that MSVC support is for development but not packaging</li>
           <li>Make the column selection when plotting external data more intuitive</li>
           <li>Add a little buffer space between the largest and smallest data value and the y-axis limits of a chart</li>
+          <li>Add a custom 404 error page</li>
+          <li>Catch and display FFMpeg and ImageMagick errors and tune encoding settings for H.264 and WebM</li>
         </ul>
       </description>
     </release>
