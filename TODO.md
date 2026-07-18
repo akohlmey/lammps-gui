@@ -2,6 +2,14 @@ LAMMPS-GUI TODO list:
 
 # New feature ideas
 
+## more Run menu features
+  - add option to extend a run with N more steps
+    (open dialog with fields to add run command settings and number of steps and then dispatch)
+    (NB, we need to have a flag to determine if the system is in a runnable state, e.g. has been run before)
+    possible use case: Click on STOP, write restart (see below), continue run
+    or: run didn't produce a long enough animation and needs more steps
+  - add option to write out a restart file with the current state of the system
+
 ## Implement data file manager GUI with the following features:
   - import coordinates and topology via VMD molfile plugins
   - import coordinates and topology from intermol
