@@ -720,7 +720,7 @@ void SlideShow::movie()
             ffmpeg.waitForFinished(-1);
 #undef OPEN_FLAGS
 #if defined(Q_OS_WIN32)
-            curdir.rmpath(concatfile.fileName();
+            curdir.rmpath(concatfile.fileName());
 #endif
             if (ffmpeg.exitCode()) {
                 auto err = ffmpeg.readAllStandardError();
