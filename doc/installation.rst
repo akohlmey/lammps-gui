@@ -430,14 +430,14 @@ drag-n-drop installer, ``LAMMPS-GUI-macOS-multiarch-<version>.dmg``,
 when using the 'dmg' target (i.e. ``cmake --build <build dir> --target
 dmg`` or ``make dmg``).
 
-To build multi-arch executables that will run on both, arm64 and x86_64
-architectures natively, it is necessary to set the CMake variable ``-D
-CMAKE_OSX_ARCHITECTURES=arm64;x86_64``.  To achieve wide compatibility
-with different macOS versions, you can also set ``-D
+To build multi-arch executables on macOS that will run on both, arm64
+and x86_64 architectures natively, it is necessary to set the CMake
+variable ``-D CMAKE_OSX_ARCHITECTURES=arm64;x86_64``.  To achieve wide
+compatibility with different macOS versions, you can also set ``-D
 CMAKE_OSX_DEPLOYMENT_TARGET=12.0`` which will set compatibility to macOS
-12 (Monterey) and later, even if you are compiling on a more recent macOS
-version.  These are the settings used when building the pre-compiled
-LAMMPS-GUI packages.
+12 (Monterey) and later, even if you are compiling on a more recent
+macOS version.  These are the settings currently used when building the
+pre-compiled LAMMPS-GUI packages.
 
 Windows
 """""""
@@ -448,6 +448,12 @@ compilation with the MinGW / GCC cross-compiler environment on Fedora
 Linux.  All pre-compiled LAMMPS-GUI packages for Windows are created
 with the MinGW64 cross-compiler; the native Visual C++ compilation is a
 development configuration without deployment or packaging support.
+
+Since LAMMPS-GUI version 3.0.5, the build process includes generating
+cryptographically signed executables and installer packages.  This is
+enabled by default but can be turned off with ``-D CODE_SIGNING=no``
+during CMake configuration and setting the environment variable
+``SIGN_DISABLE`` to 1.
 
 *Visual Studio*
 
