@@ -157,20 +157,63 @@ Windows 10 and later
    :align: right
    :width: 25%
 
-After downloading either the ``LAMMPS-Win10-64bit-GUI-<LAMMPS version>.exe``
-or the ``LAMMPS-GUI-Win10-x86_64-<LAMMPS-GUI version>.exe`` installer
-package, you need to execute it, and start the installation process.
-Depending on your security settings of your web browser, you may have to
-explicitly tell it to download the file and then confirm **twice** to
-*keep the downloaded file* despite the claims that it may be dangerous
-and insecure.  Since the installer packages are currently not
-cryptographically signed, you may also have to enable "Developer Mode"
-in the Windows System Settings to be able to run the installer.
-
 .. image:: JPG/windows-download-keep1.png
-   :align: center
-   :width: 33%
+   :align: right
+   :width: 25%
 
+After downloading either the ``LAMMPS-Win10-64bit-GUI-<LAMMPS
+version>.exe`` or the ``LAMMPS-GUI-Win10-x86_64-<LAMMPS-GUI
+version>.exe`` installer package, you need to execute it, and start the
+installation process.  Depending on your security settings of your web
+browser, you may have to explicitly tell it to download the file and
+then confirm **twice** to *keep the downloaded file* despite the claims
+that it may be dangerous and insecure.  The main reason for that is that
+one needs to pay for being a registered developer and obtain a
+corresponding cryptographic signature to sign the binaries with.
+
+.. admonition:: Managing Microsoft Defender SmartScreen protection
+   :class: hint
+
+   Since LAMMPS-GUI version 3.0.5 the Windows installer packages and the
+   included executables are cryptographically signed with a
+   *self-signed* certificate.  You now have two options:
+
+   **Option A: just ignore the warnings**
+
+   When the message "Windows protected your PC" appears, click *More info*,
+   and then *Run anyway*.  You may also have to enable "Developer Mode"
+   in the Windows System Settings to be able to run the installer.
+   Using a cryptographic signature still guarantees the file has not
+   been modified since we built it, so you have that extra protection.
+   This may be needed since these installer packages sometimes cause
+   false positives with anti-virus software and are reported as containing
+   a trojan
+
+   **Option B: install and trust our self-signed certificate**
+
+   You can download our self-signed public certificate from
+   https://download.lammps.org/lammps-gui/LAMMPS-GUI.cer (The SHA-256
+   hash of this file is
+   ``2a90ba8d0d3406fba6d67e6edb3f4904b1684756abf777bd2c58464ab1dff2cd``) and
+   then open a "Command Prompt" with **Administrator** permissions.  At
+   the prompt you run the following two commands to import and trust the
+   certificate.
+
+   ``certutil -addstore Root LAMMPS-GUI.cer``
+
+   ``certutil -addstore TrustedPublisher LAMMPS-GUI.cer``
+
+   **Security note:** Adding a certificate to the Root store means your
+   computer will trust *anything* signed with the matching private key.
+   Only install certificates from publishers you trust, obtained over
+   HTTPS from their official site.
+
+   If you ever wish to *remove* this certificate, you can do it with
+   with the following commands.
+
+   ``certutil -delstore Root "The LAMMPS Developers"``
+
+   ``certutil -delstore TrustedPublisher "The LAMMPS Developers"``
 
 MacOS 12 and later
 """"""""""""""""""
