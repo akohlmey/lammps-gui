@@ -58,6 +58,14 @@
   <content_rating type="oars-1.1" />
 
   <releases>
+    <release version="3.0.5" timestamp="1784426451">
+      <description>
+        <p>Maintenance release with small feature additions and bug fixes.</p>
+        <ul>
+          <li>Update citation info file</li>
+        </ul>
+      </description>
+    </release>
     <release version="3.0.4" timestamp="1783600400">
       <description>
         <p>Maintenance release with small feature additions and bug fixes.</p>
