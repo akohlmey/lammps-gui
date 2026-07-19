@@ -658,11 +658,17 @@ void SlideShow::movie()
 
     if (hasExe("ffmpeg")) {
         QDir curdir(".");
+#if defined(Q_OS_WIN32)
+        QFile concatfile("lammps-gui-concatfile.tmp");
+#define OPEN_FLAGS QIODevice::WriteOnly|QIODevice::Text
+#else
         QTemporaryFile concatfile;
-        if (concatfile.open()) {
+#define OPEN_FLAGS
+#endif
+        if (concatfile.open(OPEN_FLAGS)) {
             for (const auto &img : frames) {
                 concatfile.write("file '");
-                concatfile.write(curdir.absoluteFilePath(img).toLocal8Bit());
+                concatfile.write(img.toLocal8Bit());
                 concatfile.write("'\n");
             }
             concatfile.close();
@@ -712,6 +718,10 @@ void SlideShow::movie()
             QProcess ffmpeg;
             ffmpeg.start("ffmpeg", args);
             ffmpeg.waitForFinished(-1);
+#undef OPEN_FLAGS
+#if defined(Q_OS_WIN32)
+            curdir.rmpath(concatfile.fileName();
+#endif
             if (ffmpeg.exitCode()) {
                 auto err = ffmpeg.readAllStandardError();
                 // trim off the verbose FFMpeg configuration dump and skip to the error message
