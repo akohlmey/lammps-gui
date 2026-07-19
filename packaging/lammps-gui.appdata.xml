@@ -63,6 +63,7 @@
         <p>Maintenance release with small feature additions and bug fixes.</p>
         <ul>
           <li>Update citation info file</li>
+          <li>Replace ugly Windows FFMpeg concat file hack with a portable solution</li>
         </ul>
       </description>
     </release>

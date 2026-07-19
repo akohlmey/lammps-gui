@@ -658,17 +658,18 @@ void SlideShow::movie()
 
     if (hasExe("ffmpeg")) {
         QDir curdir(".");
-#if defined(Q_OS_WIN32)
-        QFile concatfile("lammps-gui-concatfile.tmp");
-#define OPEN_FLAGS QIODevice::WriteOnly|QIODevice::Text
-#else
         QTemporaryFile concatfile;
-#define OPEN_FLAGS
-#endif
-        if (concatfile.open(OPEN_FLAGS)) {
+        if (concatfile.open()) {
             for (const auto &img : frames) {
-                concatfile.write("file '");
-                concatfile.write(img.toLocal8Bit());
+                // the concat demuxer resolves any entry without a protocol prefix relative
+                // to the list file's directory; a Windows drive letter is not a protocol,
+                // so absolute C:/... paths would be mangled into <tempdir>/C:/...
+                // An explicit file: URL is always taken verbatim.  FFmpeg expects UTF-8
+                // and single quotes in the path must be escaped shell-style.
+                QString entry = curdir.absoluteFilePath(img);
+                entry.replace('\'', "'\\''");
+                concatfile.write("file 'file:");
+                concatfile.write(entry.toUtf8());
                 concatfile.write("'\n");
             }
             concatfile.close();
@@ -718,10 +719,6 @@ void SlideShow::movie()
             QProcess ffmpeg;
             ffmpeg.start("ffmpeg", args);
             ffmpeg.waitForFinished(-1);
-#undef OPEN_FLAGS
-#if defined(Q_OS_WIN32)
-            curdir.rmpath(concatfile.fileName());
-#endif
             if (ffmpeg.exitCode()) {
                 auto err = ffmpeg.readAllStandardError();
                 // trim off the verbose FFMpeg configuration dump and skip to the error message
