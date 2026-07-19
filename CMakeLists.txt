@@ -3,7 +3,7 @@ cmake_minimum_required(VERSION 3.20)
 project(lammps-gui
   VERSION 3.0.5
   LANGUAGES CXX
-  DESCRIPTION "The LAMMPS GUI"
+  DESCRIPTION "The LAMMPS Graphical User Interface"
   HOMEPAGE_URL "https://lammps-gui.lammps.org/")
 
 include(GNUInstallDirs)
@@ -40,6 +40,8 @@ if (NOT BUILD_DOC_ONLY)
 
   # install prefix, compiler and platform quirks, plugin loader, bundle resources
   include(${CMAKE_SOURCE_DIR}/cmake/Platform.cmake)
+  # support for signing executables
+  include(${CMAKE_SOURCE_DIR}/cmake/Signing.cmake)
 
   # charts are rendered by the self-contained native QPainter backend; only the
   # LGPL Qt Widgets are needed (no Qt Charts / Graphs / Quick modules)
@@ -58,7 +60,7 @@ if (NOT BUILD_DOC_ONLY)
     ${PROJECT_SOURCES}
   )
 
-  # when compiling for macOS request compilation of an app-bundle
+  # when compiling for macOS, request compilation of an app-bundle
   if(APPLE)
     string(TIMESTAMP CURRENT_YEAR "%Y")
     set_target_properties(lammps-gui PROPERTIES
@@ -72,9 +74,16 @@ if (NOT BUILD_DOC_ONLY)
     # purge app bundle directory during configure
     file(REMOVE_RECURSE ${CMAKE_BINARY_DIR}/lammps-gui.app)
   endif()
+
+  # when compiling for Windows, call the WinMain entry point for a pure GUI application
+  if(WIN32)
+    set_target_properties(lammps-gui PROPERTIES WIN32_EXECUTABLE TRUE)
+  endif()
+
   install(TARGETS lammps-gui DESTINATION ${CMAKE_INSTALL_BINDIR})
 
   qt_finalize_executable(lammps-gui)
+  sign_target(lammps-gui)
 
   # compilation settings
   if(LAMMPS_GUI_USE_PLUGIN)

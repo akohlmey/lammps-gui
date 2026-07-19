@@ -31,11 +31,40 @@
 #include <QStyleFactory>
 #include <QtGlobal>
 
+#if defined(Q_OS_WIN32)
+#include <cstdio>
+#include <io.h>
+#define WIN32_LEAN_AND_MEAN
+#include <windows.h>
+
+// In a GUI-subsystem (WIN32_EXECUTABLE) build the process starts without a console and
+// the CRT leaves the standard streams without valid file descriptors.  That silently
+// discards all LAMMPS output before the dup2()-based capture in StdCapture can grab it.
+// If launched from a terminal, attach to that console; otherwise rebind the streams to
+// the NUL device so they get valid descriptors.  Streams whose descriptor is already
+// valid (e.g. redirected to a file by the parent process) are left untouched.
+static void initConsoleIO()
+{
+    bool has_console = AttachConsole(ATTACH_PARENT_PROCESS);
+    auto fd_invalid  = [](FILE *fp) {
+        int fd = _fileno(fp);
+        return (fd < 0) || (_get_osfhandle(fd) < 0);
+    };
+    if (fd_invalid(stdin)) freopen(has_console ? "CONIN$" : "NUL:", "r", stdin);
+    if (fd_invalid(stdout)) freopen(has_console ? "CONOUT$" : "NUL:", "w", stdout);
+    if (fd_invalid(stderr)) freopen(has_console ? "CONOUT$" : "NUL:", "w", stderr);
+}
+#else
+// nothing to do
+static void initConsoleIO() {}
+#endif
+
 #define stringify(x) myxstr(x)
 #define myxstr(x) #x
 
 int main(int argc, char *argv[])
 {
+    initConsoleIO();
 #if defined(Q_OS_MACOS)
     // macOS does not support the "C" locale with UTF-8 encoding,
     // Since Qt requires UTF-8 we use "en_US" instead.

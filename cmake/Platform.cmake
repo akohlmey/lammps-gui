@@ -34,10 +34,13 @@ if(LAMMPS_GUI_USE_PLUGIN)
   set(PLUGIN_LOADER_SRC ${LAMMPS_PLUGINLIB_DIR}/liblammpsplugin.c)
 endif()
 
-# include resource compiler to embed icons into the executable on Windows
-if(CMAKE_SYSTEM_NAME STREQUAL "Windows")
+# include resource compiler to embed icons and metadata into the executable on Windows
+if(WIN32)
   enable_language(RC)
-  set(ICON_RC_FILE ${CMAKE_SOURCE_DIR}/resources/lmpicons.rc)
+  configure_file(${CMAKE_SOURCE_DIR}/resources/lmpicons.rc ${CMAKE_BINARY_DIR}/lmpicons.rc)
+  file(COPY ${CMAKE_SOURCE_DIR}/resources/lammps-gui.ico  ${CMAKE_SOURCE_DIR}/resources/lmpfile.ico
+    DESTINATION ${CMAKE_BINARY_DIR})
+  set(ICON_RC_FILE ${CMAKE_BINARY_DIR}/lmpicons.rc)
 endif()
 
 # icon, readme, and installer resources for the macOS app bundle; prefer
