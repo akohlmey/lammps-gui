@@ -46,7 +46,7 @@
 #include <fcntl.h>
 
 // define consistent function aliases to avoid complications from pre-processing
-#ifdef _WIN32
+#if defined(Q_OS_WIN32)
 #include <io.h>
 #include <process.h>
 
@@ -70,7 +70,7 @@ namespace {
 const QStringList months({"Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct",
                           "Nov", "Dec"});
 
-#ifdef _WIN32
+#if defined(Q_OS_WIN32)
 constexpr char NULL_DEVICE[] = "NUL:";
 #else
 constexpr char NULL_DEVICE[] = "/dev/null";
