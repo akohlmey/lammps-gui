@@ -22,6 +22,8 @@ jobs:
     runs-on: ubuntu-latest
     container:
       image: fedora:latest
+    env:
+      SIGN_DISABLE: 1
 
     steps:
     - name: Install system dependencies
@@ -69,7 +71,8 @@ jobs:
       run: |
         mingw64-cmake -S . -B build \
               -D LAMMPS_GUI_USE_PLUGIN=yes \
-              -D BUILD_DOC=yes
+              -D BUILD_DOC=yes \
+              -D CODE_SIGNING=no
         cmake --build build --parallel 2
 
     - name: Build NSIS installer
