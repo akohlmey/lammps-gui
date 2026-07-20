@@ -36,11 +36,13 @@ endif()
 
 # include resource compiler to embed icons and metadata into the executable on Windows
 if(WIN32)
+  string(TIMESTAMP CURRENT_YEAR "%Y")
   enable_language(RC)
-  configure_file(${CMAKE_SOURCE_DIR}/resources/lmpicons.rc ${CMAKE_BINARY_DIR}/lmpicons.rc)
+  configure_file(${CMAKE_SOURCE_DIR}/resources/lmpresources.rc.in ${CMAKE_BINARY_DIR}/lmpresources.rc @ONLY)
+  configure_file(${CMAKE_SOURCE_DIR}/packaging/lammps-gui.manifest.in ${CMAKE_BINARY_DIR}/lammps-gui.manifest @ONLY)
   file(COPY ${CMAKE_SOURCE_DIR}/resources/lammps-gui.ico  ${CMAKE_SOURCE_DIR}/resources/lmpfile.ico
     DESTINATION ${CMAKE_BINARY_DIR})
-  set(ICON_RC_FILE ${CMAKE_BINARY_DIR}/lmpicons.rc)
+  set(ICON_RC_FILE ${CMAKE_BINARY_DIR}/lmpresources.rc)
 endif()
 
 # icon, readme, and installer resources for the macOS app bundle; prefer
