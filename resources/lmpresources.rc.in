@@ -36,8 +36,8 @@ END
 
 // Application manifest: declares no-elevation, Win8.1/10/11 compatibility,
 // long path support and UTF-8 as the active code page.
-1 24 "lammps-gui.manifest"
+2 24 "lammps-gui.manifest"
 
 // embed icon files
-2 ICON "lammps-gui.ico"
-3 ICON "lmpfile.ico"
+3 ICON "lammps-gui.ico"
+4 ICON "lmpfile.ico"
