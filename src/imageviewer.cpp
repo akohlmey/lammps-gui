@@ -1645,6 +1645,8 @@ void ImageViewer::createImage()
     // happens on the first affected render.
     static const QRegularExpression colorscaleErr(
         QStringLiteral(R"(Dump ID (\S+) for colorscale not found)"));
+    static const QRegularExpression neighMultiErr(
+        QStringLiteral("Cannot use comm mode multi without multi-style neighbor lists"));
     QString dumpid = renderdumpid;
     QString errmsg;
     for (int attempt = 0; attempt < 2; ++attempt) {
@@ -1661,7 +1663,15 @@ void ImageViewer::createImage()
         // retry once under the missing colorscale dump id (unless we already use it)
         if (colmatch.hasMatch() && (colmatch.captured(1) != dumpid)) {
             dumpid = colmatch.captured(1);
+            StdoutSilencer guard;
             lammps->command("if $(is_defined(dump," + dumpid + ")) then 'undump " + dumpid + "'");
+            continue;
+        }
+        const auto neighmatch = neighMultiErr.match(errmsg);
+        // retry once more after turning off comm_modify multi
+        if (neighmatch.hasMatch()) {
+            StdoutSilencer guard;
+            lammps->command("comm_modify mode single");
             continue;
         }
         break;
