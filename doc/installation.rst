@@ -471,6 +471,16 @@ library must also be compiled with Visual C++ and then either be
 selected manually in the ``Preferences`` dialog (plugin mode) or be
 linked directly (with ``-D LAMMPS_GUI_USE_PLUGIN=no``).
 
+In addition, LAMMPS-GUI and the LAMMPS shared library must be compiled
+with the *same* build configuration, i.e. both as ``Release`` or both as
+``Debug`` builds.  Debug and Release builds link different, mutually
+isolated Visual C++ runtime DLLs (``ucrtbased.dll`` versus
+``ucrtbase.dll``), and capturing the LAMMPS screen output only works
+when the executable and the library share the same C runtime instance.
+With mismatched build configurations, simulations run normally, but the
+captured output remains empty because the LAMMPS library writes to the
+console of a different C runtime.
+
 *MinGW64 Cross-compiler*
 
 The standard CMake build procedure for cross-compilation can be applied.
