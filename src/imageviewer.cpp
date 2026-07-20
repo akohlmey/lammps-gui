@@ -1359,12 +1359,14 @@ DumpImageParams ImageViewer::gatherDumpImageParams(const QString &dumpfilename)
                 }
             }
         } else if (strncmp(pair_style, "colloid", 7) == 0) {
-            auto **d1 = static_cast<double **>(lammps->extractPair("d1"));
-            if (d1) {
+            auto **diameter = static_cast<double **>(lammps->extractPair("d1"));
+            auto **sigma = static_cast<double **>(lammps->extractPair("sigma"));
+            if (diameter && sigma) {
                 usesigma = true;
                 for (int i = 1; i <= ntypes; ++i) {
-                    if (d1[i][i] > 0.0)
-                        adiams += QString("adiam %1 %2 ").arg(i).arg(vdwfactor * d1[i][i]);
+                    double diamval = sigma[i][i] + 0.5 * diameter[i][i];
+                    if (diamval > 0.0)
+                        adiams += QString("adiam %1 %2 ").arg(i).arg(vdwfactor * diamval);
                 }
             }
         }
