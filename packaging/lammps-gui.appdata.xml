@@ -63,7 +63,7 @@
         <p>Maintenance release with small feature additions and bug fixes.</p>
         <ul>
           <li>Add more detailed resource data and a manifest</li>
-          <li></li>
+          <li>Try to extract diameter information from more kinds of pair styles</li>
         </ul>
       </description>
     </release>
