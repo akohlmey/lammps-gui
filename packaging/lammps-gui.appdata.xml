@@ -58,10 +58,21 @@
   <content_rating type="oars-1.1" />
 
   <releases>
-    <release version="3.0.5" timestamp="1784426451">
+    <release version="3.0.6" timestamp="1784512535">
       <description>
         <p>Maintenance release with small feature additions and bug fixes.</p>
         <ul>
+          <li>Add more detailed resource data and a manifest</li>
+          <li></li>
+        </ul>
+      </description>
+    </release>
+    <release version="3.0.5" timestamp="1784426451">
+      <description>
+        <p>Windows-only maintenance release with Windows specific updates.</p>
+        <ul>
+          <li>Add tooling to implement cryptographic signing of executables and the installer</li>
+          <li>Create a GUI executable with a workaround to still use the console capture</li>
           <li>Update citation info file</li>
           <li>Replace ugly Windows FFMpeg concat file hack with a portable solution</li>
         </ul>
