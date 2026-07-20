@@ -1336,14 +1336,35 @@ DumpImageParams ImageViewer::gatherDumpImageParams(const QString &dumpfilename)
 
     usediameter = lammps->extractSetting("radius_flag") != 0;
     usesigma    = false;
-    // if we cannot use element info or diameter data, try to use Lennard-Jones sigma for radius
-    if (!useelements && !usediameter && pair_style && (strncmp(pair_style, "lj/", 3) == 0)) {
-        auto **sigma = static_cast<double **>(lammps->extractPair("sigma"));
-        if (sigma) {
-            usesigma = true;
-            for (int i = 1; i <= ntypes; ++i) {
-                if (sigma[i][i] > 0.0)
-                    adiams += QString("adiam %1 %2 ").arg(i).arg(vdwfactor * sigma[i][i]);
+    // if we cannot use element info or diameter data,
+    // try to extract a number from the pair style, e.g. the Lennard-Jones sigma for radius
+    if (!useelements && !usediameter && pair_style) {
+        if (strncmp(pair_style, "lj/", 3) == 0) {
+            auto **sigma = static_cast<double **>(lammps->extractPair("sigma"));
+            if (sigma) {
+                usesigma = true;
+                for (int i = 1; i <= ntypes; ++i) {
+                    if (sigma[i][i] > 0.0)
+                        adiams += QString("adiam %1 %2 ").arg(i).arg(vdwfactor * sigma[i][i]);
+                }
+            }
+        } else if (strncmp(pair_style, "morse", 5) == 0) {
+            auto **r0 = static_cast<double **>(lammps->extractPair("r0"));
+            if (r0) {
+                usesigma = true;
+                for (int i = 1; i <= ntypes; ++i) {
+                    if (r0[i][i] > 0.0)
+                        adiams += QString("adiam %1 %2 ").arg(i).arg(vdwfactor * r0[i][i]);
+                }
+            }
+        } else if (strncmp(pair_style, "colloid", 7) == 0) {
+            auto **d1 = static_cast<double **>(lammps->extractPair("d1"));
+            if (d1) {
+                usesigma = true;
+                for (int i = 1; i <= ntypes; ++i) {
+                    if (d1[i][i] > 0.0)
+                        adiams += QString("adiam %1 %2 ").arg(i).arg(vdwfactor * d1[i][i]);
+                }
             }
         }
     }
