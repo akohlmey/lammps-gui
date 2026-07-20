@@ -25,6 +25,7 @@
 #include <QGridLayout>
 #include <QHBoxLayout>
 #include <QIcon>
+#include <QImage>
 #include <QJsonArray>
 #include <QJsonDocument>
 #include <QJsonObject>
@@ -33,6 +34,7 @@
 #include <QLabel>
 #include <QLocale>
 #include <QPalette>
+#include <QPixmap>
 #include <QProcess>
 #include <QProgressDialog>
 #include <QPushButton>
@@ -44,6 +46,7 @@
 
 #include <algorithm>
 #include <cmath>
+#include <cstdlib>
 
 /* ---------------------------------------------------------------------- */
 
@@ -53,6 +56,8 @@ constexpr int NOTE_ICON_SIZE = 32;
 constexpr int KILL_TIMEOUT   = 1000;
 constexpr int PROGRESS_TICK  = 100;
 constexpr int PROGRESS_DELAY = 500; // ms before the extraction progress dialog appears
+constexpr int PREVIEW_SIZE   = 160; // bounding box of the sample frame thumbnail
+constexpr int SAMPLE_DELAY   = 400; // ms of range-edit inactivity before re-sampling
 
 // ffprobe reports numbers as JSON numbers or as strings, depending on the key
 int jsonToInt(const QJsonValue &val)
@@ -90,13 +95,22 @@ int countPackets(const QString &filename)
     return ok ? packets : 0;
 }
 
-// Decode a single frame near the given time to a PNG file and return its size.
-// The seek is approximate (to the preceding key frame) since the exact frame
-// does not matter for estimating how much space a whole sequence will need.
-qint64 sampleFrameSize(const QString &filename, double seconds)
+// A decoded sample frame: the size of its PNG encoding calibrates the disk
+// space estimate and the decoded image feeds the thumbnail in the dialog.
+struct FrameSample {
+    qint64 bytes = 0; ///< size of the encoded PNG file, 0 when decoding failed
+    QImage image;     ///< the decoded frame, null when decoding failed
+};
+
+// Decode a single frame near the given time to a PNG file and return its size
+// and content. The seek is approximate (to the preceding key frame) since the
+// exact frame matters neither for the space estimate nor for the thumbnail.
+FrameSample sampleFrame(const QString &filename, double seconds)
 {
+    FrameSample sample;
+
     QTemporaryFile tmp(QDir::tempPath() + "/lammpsgui_sampleXXXXXX.png");
-    if (!tmp.open()) return 0;
+    if (!tmp.open()) return sample;
     const QString pngname = tmp.fileName();
     tmp.close();
 
@@ -107,10 +121,14 @@ qint64 sampleFrameSize(const QString &filename, double seconds)
     if (!proc.waitForFinished(Cfg::MOVIE_PROBE_TIMEOUT)) {
         proc.kill();
         proc.waitForFinished(KILL_TIMEOUT);
-        return 0;
+        return sample;
     }
-    if ((proc.exitStatus() != QProcess::NormalExit) || (proc.exitCode() != 0)) return 0;
-    return QFileInfo(pngname).size();
+    if ((proc.exitStatus() != QProcess::NormalExit) || (proc.exitCode() != 0)) return sample;
+
+    // read the image before the temporary file is removed with the object
+    sample.bytes = QFileInfo(pngname).size();
+    sample.image.load(pngname);
+    return sample;
 }
 
 // Remove the frames of an aborted or failed extraction
@@ -144,6 +162,20 @@ int selectedFrameCount(int first, int last, int interval)
 {
     if ((interval < 1) || (last < first)) return 0;
     return (last - first) / interval + 1;
+}
+
+double frameToSeconds(int frame, const MovieInfo &info)
+{
+    if ((frame < 1) || (info.frames < 1) || (info.duration <= 0.0)) return 0.0;
+    return info.duration * (frame - 1) / info.frames;
+}
+
+bool sampleOutdated(int first, int last, int samplepos, int totalframes)
+{
+    if ((totalframes < 1) || (last < first)) return false;
+    const int mid       = first + (last - first) / 2;
+    const int threshold = std::max(1, totalframes / 10);
+    return std::abs(mid - samplepos) > threshold;
 }
 
 MovieInfo parseProbeOutput(const QByteArray &json)
@@ -368,19 +400,14 @@ QStringList extractMovieFrames(QWidget *parent, const QString &filename, const Q
 
 MovieImportDialog::MovieImportDialog(const QString &filename, const MovieInfo &info,
                                      QWidget *parent) :
-    QDialog(parent), movieinfo(info), samplebytes(0), diskfree(0), firstBox(new QSpinBox),
-    lastBox(new QSpinBox), stepBox(new QSpinBox), countLabel(new QLabel), sizeLabel(new QLabel),
-    noteIcon(new QLabel), noteLabel(new QLabel)
+    QDialog(parent), movieinfo(info), moviefile(filename), samplebytes(0), diskfree(0),
+    samplepos(0), firstBox(new QSpinBox), lastBox(new QSpinBox), stepBox(new QSpinBox),
+    countLabel(new QLabel), sizeLabel(new QLabel), noteIcon(new QLabel), noteLabel(new QLabel),
+    previewImage(new QLabel), previewText(new QLabel), sampleTimer(new QTimer(this))
 {
     setWindowTitle("LAMMPS-GUI - Import Movie Frames");
     setWindowIcon(QIcon(Cfg::MAIN_ICON));
 
-    // decoding one frame in the middle of the movie calibrates the size
-    // estimate; the first frame is often a title or an empty box and thus
-    // compresses far better than a typical frame of the trajectory
-    QApplication::setOverrideCursor(Qt::WaitCursor);
-    samplebytes = sampleFrameSize(filename, 0.5 * movieinfo.duration);
-    QApplication::restoreOverrideCursor();
     const QStorageInfo storage(QDir::tempPath());
     if (storage.isValid() && storage.isReady()) diskfree = storage.bytesAvailable();
 
@@ -418,6 +445,29 @@ MovieImportDialog::MovieImportDialog(const QString &filename, const MovieInfo &i
                           row++, 1);
     propLayout->setColumnStretch(1, 10);
     propLayout->setSpacing(LAYOUT_SPACING);
+
+    // thumbnail of the frame that calibrates the size estimate, shown next to
+    // the movie properties; sized from the frame aspect ratio so the dialog
+    // layout does not change when the thumbnail is replaced
+    previewImage->setFixedSize(QSize(movieinfo.width, movieinfo.height)
+                                   .scaled(PREVIEW_SIZE, PREVIEW_SIZE, Qt::KeepAspectRatio));
+    previewImage->setAlignment(Qt::AlignCenter);
+    previewImage->setFrameStyle(QFrame::Sunken);
+    previewImage->setFrameShape(QFrame::Panel);
+    previewText->setText("(no preview)");
+    previewText->setAlignment(Qt::AlignHCenter);
+
+    auto *previewLayout = new QVBoxLayout;
+    previewLayout->addStretch(1);
+    previewLayout->addWidget(previewImage, 0, Qt::AlignHCenter);
+    previewLayout->addWidget(previewText, 0, Qt::AlignHCenter);
+    previewLayout->addStretch(1);
+    previewLayout->setSpacing(LAYOUT_SPACING);
+
+    auto *infoLayout = new QHBoxLayout;
+    infoLayout->addLayout(propLayout, 10);
+    infoLayout->addLayout(previewLayout);
+    infoLayout->setSpacing(LAYOUT_SPACING);
 
     // selection of the frames to extract
     firstBox->setRange(1, movieinfo.frames);
@@ -484,7 +534,7 @@ MovieImportDialog::MovieImportDialog(const QString &filename, const MovieInfo &i
     auto *mainLayout = new QVBoxLayout;
     mainLayout->addLayout(headLayout);
     mainLayout->addWidget(new QHline);
-    mainLayout->addLayout(propLayout);
+    mainLayout->addLayout(infoLayout);
     mainLayout->addWidget(new QHline);
     mainLayout->addLayout(selLayout);
     mainLayout->addWidget(noteFrame);
@@ -492,7 +542,18 @@ MovieImportDialog::MovieImportDialog(const QString &filename, const MovieInfo &i
     mainLayout->setSpacing(LAYOUT_SPACING);
     setLayout(mainLayout);
 
-    updateEstimate();
+    // delay re-sampling until the range has stopped changing for a moment, and
+    // never re-sample once the dialog is confirmed or dismissed
+    sampleTimer->setSingleShot(true);
+    sampleTimer->setInterval(SAMPLE_DELAY);
+    connect(sampleTimer, &QTimer::timeout, this, &MovieImportDialog::updateSample);
+    connect(this, &QDialog::finished, sampleTimer, &QTimer::stop);
+
+    // decoding one frame in the middle of the selected range (initially the
+    // whole movie) calibrates the size estimate and fills the thumbnail; the
+    // first frame is often a title or an empty box and thus compresses far
+    // better than a typical frame of the trajectory
+    updateSample();
 }
 
 int MovieImportDialog::firstFrame() const
@@ -510,10 +571,41 @@ int MovieImportDialog::frameInterval() const
     return stepBox->value();
 }
 
+void MovieImportDialog::updateSample()
+{
+    const int target = firstBox->value() + (lastBox->value() - firstBox->value()) / 2;
+
+    QApplication::setOverrideCursor(Qt::WaitCursor);
+    const FrameSample sample = sampleFrame(moviefile, frameToSeconds(target, movieinfo));
+    QApplication::restoreOverrideCursor();
+
+    // adopt the position even when decoding failed, so that a movie that
+    // cannot be decoded does not cause endless re-sampling of the same frame
+    samplepos = target;
+    if (sample.bytes > 0) samplebytes = sample.bytes;
+    if (!sample.image.isNull()) {
+        const qreal dpr = devicePixelRatioF();
+        QPixmap pix     = QPixmap::fromImage(sample.image.scaled(
+            previewImage->size() * dpr, Qt::KeepAspectRatio, Qt::SmoothTransformation));
+        pix.setDevicePixelRatio(dpr);
+        previewImage->setPixmap(pix);
+        previewText->setText(QString("Sample: frame %1").arg(samplepos));
+    }
+    updateEstimate();
+}
+
 void MovieImportDialog::updateEstimate()
 {
     const int count = selectedFrameCount(firstBox->value(), lastBox->value(), stepBox->value());
     countLabel->setText(QString::number(count));
+
+    // recalibrate the estimate from a frame near the middle of the selected
+    // range when that has moved away from the currently sampled frame
+    if ((count > 0) &&
+        sampleOutdated(firstBox->value(), lastBox->value(), samplepos, movieinfo.frames))
+        sampleTimer->start();
+    else
+        sampleTimer->stop();
 
     const qint64 estimate = samplebytes * count;
     if (samplebytes > 0)

@@ -960,12 +960,22 @@ for confirmation before any frames are extracted:
   frame, 2 every other frame, and so on.  This is useful to skim a long
   movie without decompressing all of it.
 - **Estimated size** is how much temporary disk space the extracted
-  images are expected to need.  It is obtained by decoding a single frame
-  in the middle of the movie and multiplying its size by the number of
-  selected frames, so it is an approximation.  A highlighted warning
-  appears when the estimate exceeds one gigabyte, when it would use up
-  most of the free space on the volume holding the temporary folder, or
-  when more than 1000 images would be extracted.
+  images are expected to need.  It is obtained by decoding a single
+  sample frame near the middle of the selected range and multiplying its
+  size by the number of selected frames, so it is an approximation.  The
+  sample frame is shown as a thumbnail next to the movie properties.
+  When the middle of the selected range moves away from the sampled
+  frame by more than a tenth of the movie, a new sample frame is decoded
+  after a moment, and the thumbnail and the estimate are refreshed from
+  it.  A highlighted warning appears when the estimate exceeds one
+  gigabyte, when it would use up most of the free space on the volume
+  holding the temporary folder, or when more than 1000 images would be
+  extracted.
+
+.. versionadded:: 3.0.6
+
+   The sample frame thumbnail and the refresh of the size estimate when
+   the selected range moves were added.
 
 Because the frames are stored as individual images and not as a
 compressed video stream, they usually take up substantially more space
