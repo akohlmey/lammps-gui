@@ -44,6 +44,7 @@
 #include <QFontInfo>
 #include <QGridLayout>
 #include <QGuiApplication>
+#include <QInputDialog>
 #include <QLabel>
 #include <QLineEdit>
 #include <QMenu>
@@ -66,6 +67,7 @@
 #include <cmath>
 #include <cstdint>
 #include <cstdlib>
+#include <limits>
 #include <string>
 #include <utility>
 
@@ -232,6 +234,7 @@ void LammpsGui::createRunMenu()
     addMenuAction(menu, ":/icons/run-file.svg", "Run LAMMPS from &File", "Ctrl+Shift+Return",
                   &LammpsGui::runFile);
     addMenuAction(menu, ":/icons/process-stop.svg", "&Stop LAMMPS", "Ctrl+/", &LammpsGui::stopRun);
+    addMenuAction(menu, ":/icons/go-last.svg", "&Extend Run...", "Ctrl+E", &LammpsGui::extendRun);
     menu->addSeparator();
 
     addMenuAction(menu, ":/icons/system-restart.svg", "Relaunch &LAMMPS Instance", "",
@@ -634,7 +637,7 @@ LammpsGui::LammpsGui(QWidget *parent, const QString &filename, int width, int he
     logwindow(nullptr), imagewindow(nullptr), chartwindow(nullptr), slideshow(nullptr),
     logupdater(nullptr), dirstatus(nullptr), progress(nullptr), prefdialog(nullptr),
     lammpsstatus(nullptr), varwindow(nullptr), wizard(nullptr), runner(nullptr), runCounter(0),
-    nthreads(1), mainx(width), mainy(height)
+    extendSteps(Cfg::EXTEND_STEPS_DEFAULT), nthreads(1), mainx(width), mainy(height)
 {
 #if QT_CONFIG(clipboard)
     hasClipboard = true;
@@ -1915,7 +1918,6 @@ void LammpsGui::doRun(bool use_buffer)
     if (!lammps.isOpen()) return;
     capturer->beginCapture();
 
-    runner = new LammpsRunner(this);
     ++runCounter;
 
     // must delete all variables since clear does not delete them
@@ -1930,19 +1932,16 @@ void LammpsGui::doRun(bool use_buffer)
         if (!var.first.isEmpty() && !var.second.isEmpty())
             lammps.command(QString("variable %1 index %2").arg(var.first, var.second));
     }
-    if (use_buffer) {
-        // always add final newline since the text edit widget does not do it
-        runner->setupRun(&lammps, (textEdit->toPlainText() + "\n").toStdString());
-    } else {
-        runner->setupRun(&lammps, {}, currentFile.toStdString());
-    }
 
     // apply https proxy setting: prefer environment variable or fall back to preferences value
     applyProxySetting(lammps, settings);
 
-    connect(runner, &LammpsRunner::resultReady, this, &LammpsGui::runDone);
-    connect(runner, &LammpsRunner::finished, runner, &QObject::deleteLater);
-    runner->start();
+    if (use_buffer) {
+        // always add final newline since the text edit widget does not do it
+        launchRunner((textEdit->toPlainText() + "\n").toStdString(), {}, true);
+    } else {
+        launchRunner({}, currentFile.toStdString(), true);
+    }
 
     createLogWindow(settings);
 
@@ -1953,10 +1952,70 @@ void LammpsGui::doRun(bool use_buffer)
         slideshow->clear();
         slideshow->hide();
     }
+}
 
+void LammpsGui::launchRunner(std::string input, std::string file, bool clearfirst)
+{
+    runner = new LammpsRunner(this);
+    runner->setupRun(&lammps, std::move(input), std::move(file), clearfirst);
+
+    connect(runner, &LammpsRunner::resultReady, this, &LammpsGui::runDone);
+    connect(runner, &LammpsRunner::finished, runner, &QObject::deleteLater);
+    runner->start();
+
+    QSettings settings;
     logupdater = new QTimer(this);
     connect(logupdater, &QTimer::timeout, this, &LammpsGui::logUpdate);
     logupdater->start(settings.value(Keys::UPDFREQ, Cfg::DATA_UPDATE_INTERVAL_DEFAULT).toInt());
+}
+
+void LammpsGui::extendRun()
+{
+    if (lammps.isRunning()) {
+        warning(this, "LAMMPS-GUI Warning", "Must stop the current run before extending it");
+        return;
+    }
+    if (!hasSystemState()) {
+        warning(this, "LAMMPS-GUI Warning",
+                "Cannot extend a run without a system state.\n"
+                "Must run the input at least to the point where the system is defined.");
+        return;
+    }
+
+    bool ok = false;
+    const int nsteps =
+        QInputDialog::getInt(this, "Extend Run", "Number of steps to add:", extendSteps, 1,
+                             std::numeric_limits<int>::max(), 1, &ok);
+    if (!ok) return;
+    extendSteps = nsteps;
+
+    QSettings settings;
+    progress->setValue(0);
+    dirstatus->hide();
+    progress->show();
+    cpuuse->show();
+    lastCpuBucket = -1; // force the cpuuse stylesheet to be applied on the first poll
+    status->setText(QString("Extending run by %1 steps ...").arg(nsteps));
+    status->repaint();
+
+    capturer->beginCapture();
+
+    // append to the windows of the extended run; create them only when missing
+    // (e.g. when extending the state of an inspected restart file)
+    if (!logwindow) createLogWindow(settings);
+    if (!chartwindow) createChartWindow(settings);
+
+    logwindow->moveCursor(QTextCursor::End);
+    logwindow->insertPlainText(
+        QString("\n========== Extending run by %1 steps ==========\n\n").arg(nsteps));
+    logwindow->moveCursor(QTextCursor::End);
+
+    // "timer timeout off" resets the expired walltime timer that the Stop button
+    // leaves behind; "pre no post no" continues from the current state without
+    // repeating the setup (LAMMPS ignores both flags when no run came before,
+    // e.g. on the state of an inspected restart file, where setup is required)
+    launchRunner(QString("timer timeout off\nrun %1 pre no post no\n").arg(nsteps).toStdString(),
+                 {}, false);
 }
 
 void LammpsGui::plotDataFile()

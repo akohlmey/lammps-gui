@@ -66,6 +66,7 @@
           <li>Try to extract diameter information from more kinds of pair styles</li>
           <li>Support choosing between a static and a dynamic view center in the Image Viewer</li>
           <li>Add File menu entry to write a restart file with the current state of the system</li>
+          <li>Add Run menu entry to extend the previous run by a given number of steps</li>
         </ul>
       </description>
     </release>

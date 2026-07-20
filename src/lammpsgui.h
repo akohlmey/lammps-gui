@@ -149,6 +149,18 @@ protected:
      */
     bool hasSystemState();
 
+    /**
+     * @brief Create and start a LammpsRunner thread and the log update timer
+     * @param input      String of LAMMPS commands to execute (can be empty)
+     * @param file       Input file path to execute (can be empty)
+     * @param clearfirst If true, wipe the current LAMMPS system state first
+     *
+     * Shared tail of doRun() and extendRun(): dispatches the given input to a
+     * new runner thread, connects its completion to runDone(), and starts the
+     * periodic polling of captured output and thermo data.
+     */
+    void launchRunner(std::string input, std::string file, bool clearfirst);
+
     /** @brief Initialize and start a new LAMMPS instance */
     void startLammps();
 
@@ -271,6 +283,9 @@ private slots:
 
     /** @brief Run LAMMPS from saved file */
     void runFile() { doRun(false); }
+
+    /** @brief Extend the previous run by a number of steps queried in a dialog */
+    void extendRun();
 
     /** @brief Restart LAMMPS with a new instance */
     void restartLammps();
@@ -489,6 +504,7 @@ private:
     QString docver;                      ///< LAMMPS documentation version string
     QString pluginPath;                  ///< Path to LAMMPS shared library (plugin mode)
     int runCounter;                      ///< Counter for simulation runs
+    int extendSteps;                     ///< Last used step count of the Extend Run dialog
     std::vector<std::string> lammpsArgs; ///< Command-line arguments for LAMMPS
 
 protected:

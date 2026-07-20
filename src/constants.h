@@ -41,6 +41,9 @@ constexpr int PROGRESS_MAXIMUM      = 1000; ///< Maximum value for QProgressBar
 // ---- File limits ---------------------------------------------------------
 constexpr int NUM_RECENT_FILES = 5; ///< Number of entries in the recent files list
 
+// ---- Run control ---------------------------------------------------------
+constexpr int EXTEND_STEPS_DEFAULT = 1000; ///< Default number of steps in the Extend Run dialog
+
 // ---- LAMMPS version requirement ------------------------------------------
 constexpr int MIN_LAMMPS_VERSION =
     20260704; ///< Minimum LAMMPS version (4 July 2026) as YYYYMMDD format number
