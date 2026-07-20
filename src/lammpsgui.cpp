@@ -185,6 +185,8 @@ void LammpsGui::createFileMenu()
                   &LammpsGui::plotDataFile);
     addMenuAction(menu, ":/icons/binary-file-icon.svg", "Inspect &Restart File", "Ctrl+Shift+R",
                   &LammpsGui::inspect);
+    addMenuAction(menu, ":/icons/document-save-as.svg", "&Write Restart File...", "",
+                  &LammpsGui::writeRestart);
     menu->addSeparator();
 
     recentActions.resize(Cfg::NUM_RECENT_FILES);
@@ -861,6 +863,45 @@ void LammpsGui::inspect()
 {
     QString fileName = QFileDialog::getOpenFileName(this, "Open the restart file");
     inspectFile(fileName);
+}
+
+bool LammpsGui::hasSystemState()
+{
+    return lammps.isOpen() && !lammps.isRunning() && (lammps.extractSetting("box_exist") != 0);
+}
+
+void LammpsGui::writeRestart()
+{
+    // LAMMPS is not re-entrant, so we can only issue commands when it is not running
+    if (lammps.isRunning()) {
+        warning(this, "LAMMPS-GUI Warning",
+                "Must stop the current run before writing a restart file");
+        return;
+    }
+    if (!hasSystemState()) {
+        warning(this, "LAMMPS-GUI Warning",
+                "Cannot write a restart file without a system state.\n"
+                "Must run the input at least to the point where the system is defined.");
+        return;
+    }
+
+    QString fileName = QFileDialog::getSaveFileName(
+        this, "Write Restart File", QFileInfo(currentFile).completeBaseName() + ".restart",
+        "LAMMPS restart files (*.restart *.rest);;All files (*)");
+    if (fileName.isEmpty()) return;
+
+    {
+        StdoutSilencer guard;
+        lammps.command(QString("write_restart '%1'").arg(fileName));
+    }
+
+    const QString errmsg = lammps.lastErrorMessage();
+    if (!errmsg.isEmpty()) {
+        critical(this, "LAMMPS-GUI Error", "<p>Error writing restart file:</p>",
+                 QString("<p><pre>%1</pre></p>").arg(errmsg));
+    } else {
+        status->setText(QString("Wrote restart file %1").arg(fileName));
+    }
 }
 
 void LammpsGui::openRecent()

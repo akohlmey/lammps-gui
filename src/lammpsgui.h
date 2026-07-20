@@ -140,6 +140,15 @@ protected:
      */
     void doRun(bool use_buffer);
 
+    /**
+     * @brief Check whether the LAMMPS instance holds a usable system state
+     * @return true if LAMMPS is open, idle, and a simulation box is defined
+     *
+     * Guard for operations that act on the current system state outside of a
+     * run, like writing a restart file or extending the previous run.
+     */
+    bool hasSystemState();
+
     /** @brief Initialize and start a new LAMMPS instance */
     void startLammps();
 
@@ -223,6 +232,9 @@ private slots:
 
     /** @brief Select and inspect a restart file */
     void inspect();
+
+    /** @brief Write a restart file with the current state of the system */
+    void writeRestart();
 
     /** @brief Open a file from the recent files list */
     void openRecent();
