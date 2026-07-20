@@ -2,24 +2,6 @@ LAMMPS-GUI TODO list:
 
 # New feature ideas
 
-## more menu features
-  - add entry to the Run menu to extend a run with N more steps
-    (open dialog a field asking for the number of steps to add then dispatch)
-    the should use "timer timeout off" followed by "run <steps> pre no post no"
-    it should insert a message in the output window that the run was extended by <steps> steps
-    and capture and insert the output after that.
-    (NB, we may need to have a flag to determine if the system is in a runnable state,
-    e.g. has been run before and refuse to launch otherwise)
-    possible use case: Click on STOP, write restart (see below), continue run
-    or: run didn't produce a long enough animation and needs more steps for better animation or plot
-  - add option to the File mene write out a restart file with the current state of the system
-
-## more image viewer features
-  - the "Center" label should become a dropdown item with two choices "Center (static)" and "Center (dynamic)".
-    this would then trigger the choice of character following the "center" keyword in "dump image"
-    the default is static / s and now we would be able to also choose dynamic / d.
-    
-
 ## Implement data file manager GUI with the following features:
   - import coordinates and topology via VMD molfile plugins
   - import coordinates and topology from intermol
