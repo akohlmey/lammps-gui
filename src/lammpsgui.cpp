@@ -888,9 +888,9 @@ void LammpsGui::writeRestart()
         return;
     }
 
-    QString fileName = QFileDialog::getSaveFileName(
-        this, "Write Restart File", QFileInfo(currentFile).completeBaseName() + ".restart",
-        "LAMMPS restart files (*.restart *.rest);;All files (*)");
+    QString fileName =
+        QFileDialog::getSaveFileName(this, "Write Restart File", currentFile + ".restart",
+                                     "LAMMPS restart files (*.restart *.rest);;All files (*)");
     if (fileName.isEmpty()) return;
 
     {
