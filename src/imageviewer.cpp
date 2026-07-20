@@ -1340,7 +1340,8 @@ DumpImageParams ImageViewer::gatherDumpImageParams(const QString &dumpfilename)
     // if we cannot use element info or diameter data,
     // try to extract a number from the pair style, e.g. the Lennard-Jones sigma for radius
     if (!useelements && !usediameter && pair_style) {
-        if (strncmp(pair_style, "lj/", 3) == 0) {
+        if ((strncmp(pair_style, "lj/", 3) == 0) || (strncmp(pair_style, "born/", 5) == 0) ||
+            (strncmp(pair_style, "mie/", 4) == 0)) {
             auto **sigma = static_cast<double **>(lammps->extractPair("sigma"));
             if (sigma) {
                 usesigma = true;
@@ -1349,7 +1350,7 @@ DumpImageParams ImageViewer::gatherDumpImageParams(const QString &dumpfilename)
                         adiams += QString("adiam %1 %2 ").arg(i).arg(vdwfactor * sigma[i][i]);
                 }
             }
-        } else if (strncmp(pair_style, "morse", 5) == 0) {
+        } else if ((strncmp(pair_style, "morse", 5) == 0) || (strncmp(pair_style, "nm/", 3) == 0)) {
             auto **r0 = static_cast<double **>(lammps->extractPair("r0"));
             if (r0) {
                 usesigma = true;
@@ -1360,7 +1361,7 @@ DumpImageParams ImageViewer::gatherDumpImageParams(const QString &dumpfilename)
             }
         } else if (strncmp(pair_style, "colloid", 7) == 0) {
             auto **diameter = static_cast<double **>(lammps->extractPair("d1"));
-            auto **sigma = static_cast<double **>(lammps->extractPair("sigma"));
+            auto **sigma    = static_cast<double **>(lammps->extractPair("sigma"));
             if (diameter && sigma) {
                 usesigma = true;
                 for (int i = 1; i <= ntypes; ++i) {
