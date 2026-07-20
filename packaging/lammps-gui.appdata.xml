@@ -58,7 +58,7 @@
   <content_rating type="oars-1.1" />
 
   <releases>
-    <release version="3.0.6" timestamp="1784512535">
+    <release version="3.0.6" timestamp="1784576289">
       <description>
         <p>Maintenance release with small feature additions and bug fixes.</p>
         <ul>

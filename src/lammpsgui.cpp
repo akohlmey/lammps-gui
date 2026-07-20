@@ -185,6 +185,8 @@ void LammpsGui::createFileMenu()
                   "Ctrl+Shift+J", &LammpsGui::openImages);
     addMenuAction(menu, ":/icons/x-office-drawing.svg", "&Plot Data File...", "Ctrl+Shift+P",
                   &LammpsGui::plotDataFile);
+    menu->addSeparator();
+
     addMenuAction(menu, ":/icons/binary-file-icon.svg", "Inspect &Restart File", "Ctrl+Shift+R",
                   &LammpsGui::inspect);
     addMenuAction(menu, ":/icons/document-save-as.svg", "&Write Restart File...", "",
