@@ -102,8 +102,8 @@ available (On macOS use the Command key instead of Ctrl/Control).
      - View Image or Movie File(s)
      - Ctrl+Shift+P
      - Plot Data File
-     -
-     -
+     - Ctrl+E
+     - Extend Run
 
 Further keybindings of the editor window `are documented with the Qt
 documentation

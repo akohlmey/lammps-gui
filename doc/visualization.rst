@@ -403,11 +403,21 @@ The dialog is organized into the following sections:
      -- 1.0, where 0.0 is matte and 1.0 is fully shiny).
 
 **Center**
-   Adjusts the center point of the rendered view.
+   Adjusts the center point of the rendered view.  The drop-down list
+   selects between **Center (static)**, where the center fractions refer
+   to the simulation box, and **Center (dynamic)**, where they refer to
+   the bounding box of the currently displayed atoms in each frame.
+   The dynamic setting is mainly useful for the copied ``dump image``
+   command when creating a movie of a system that drifts or expands.
+
+   .. versionadded:: 3.0.6
+
+      The choice between a static and a dynamic center was added.
 
    - **X-direction**, **Y-direction**, **Z-direction**: Fractional
      coordinates (range: 0.0 -- 1.0) specifying the center of the
-     view relative to the simulation box.
+     view relative to the simulation box (static) or the bounding
+     box of the displayed atoms (dynamic).
 
 **Camera up**
    Sets the direction that points up in the rendered image.

@@ -52,6 +52,13 @@ File
      `LAMMPS restart <https://docs.lammps.org/write_restart.html>`_ three
      windows with :ref:`information about the file are opened
      <inspect_restart>`.
+   - *Write Restart File...* opens a dialog to select a file name and then
+     writes a `LAMMPS restart file
+     <https://docs.lammps.org/write_restart.html>`_ with the current state
+     of the system.  This requires a system state, e.g. from running an
+     input.  A typical use case is to preserve the state of a run that was
+     interrupted with the *Stop LAMMPS* entry of the :ref:`Run menu
+     <run_menu>` before extending it.
    - *Quit* exits LAMMPS-GUI. If there are unsaved changes, a dialog will
      appear to either cancel the operation, or to save, or to not save the
      modified buffer.
@@ -70,6 +77,10 @@ when quitting and recovered when starting again.
 
    The *View Image File(s)...* entry was renamed to *View Image or Movie
    File(s)...* and now also accepts movie files.
+
+.. versionadded:: 3.0.6
+
+   The *Write Restart File...* entry was added.
 
 **Plotting external data files.** The *Plot Data File...* entry
 (`Ctrl-Shift-P`) opens a dialog to select a file with column-oriented
@@ -138,6 +149,24 @@ timestep.  The *Stop LAMMPS* entry will do this by calling the
 <https://docs.lammps.org/Library_utility.html#_CPPv420lammps_force_timeoutPv>`_
 library function, which is equivalent to a `timer timeout 0
 <https://docs.lammps.org/timer.html>`_ command.
+
+The *Extend Run...* entry (keyboard shortcut `Ctrl-E`) opens a dialog
+asking for a number of steps and then continues the previous run for
+that many more steps without clearing the system.  This requires a
+system state, e.g. from a previous run or an inspected restart file.
+The continuation executes a `timer timeout off
+<https://docs.lammps.org/timer.html>`_ command, which resets the
+expired timer in case the previous run was interrupted with *Stop
+LAMMPS*, followed by ``run <steps> pre no post no``.  The captured
+output and thermodynamic data are appended to the existing *Output*
+and *Charts* windows after a message noting the extension.  Typical
+use cases are continuing a run that was stopped (e.g. after writing a
+restart file first), or extending a run that did not produce enough
+frames for a smooth animation or enough data for a plot.
+
+.. versionadded:: 3.0.6
+
+   The *Extend Run...* entry was added.
 
 The *Relaunch LAMMPS Instance* will destroy the current LAMMPS thread
 and free its data and then create a new thread with a new LAMMPS
