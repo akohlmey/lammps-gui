@@ -110,9 +110,10 @@ struct DumpImageParams {
     double axesdiam;   ///< axes diameter
 
     // ---- view center ----
-    double xcenter; ///< view center x coordinate
-    double ycenter; ///< view center y coordinate
-    double zcenter; ///< view center z coordinate
+    bool dynamiccenter; ///< use the dynamic ("d") instead of the static ("s") center flavor
+    double xcenter;     ///< view center x coordinate
+    double ycenter;     ///< view center y coordinate
+    double zcenter;     ///< view center z coordinate
 
     // ---- camera up direction ----
     double xup; ///< camera up vector x component

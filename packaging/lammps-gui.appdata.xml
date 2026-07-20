@@ -64,6 +64,7 @@
         <ul>
           <li>Add more detailed resource data and a manifest</li>
           <li>Try to extract diameter information from more kinds of pair styles</li>
+          <li>Support choosing between a static and a dynamic view center in the Image Viewer</li>
         </ul>
       </description>
     </release>

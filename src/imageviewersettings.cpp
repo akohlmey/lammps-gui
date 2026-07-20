@@ -29,6 +29,7 @@
 #include <QCheckBox>
 #include <QColor>
 #include <QColorDialog>
+#include <QComboBox>
 #include <QDoubleValidator>
 #include <QFontMetrics>
 #include <QGuiApplication>
@@ -232,8 +233,15 @@ void ImageViewer::globalSettings()
     shiny->setMaximumWidth(fwidth);
     layout->addWidget(shiny, idx++, n++, 1, 1);
 
-    n = 0;
-    layout->addWidget(new QLabel("Center:"), idx, n++, 1, 1);
+    n            = 0;
+    auto *ccombo = new QComboBox;
+    ccombo->addItem("Center (static)");
+    ccombo->addItem("Center (dynamic)");
+    ccombo->setCurrentIndex(dynamiccenter ? 1 : 0);
+    ccombo->setToolTip("Static: center fractions apply to the simulation box.\n"
+                       "Dynamic: center fractions apply to the bounding box "
+                       "of the displayed atoms in each frame.");
+    layout->addWidget(ccombo, idx, n++, 1, 1);
     layout->addWidget(new QLabel("X-direction: "), idx, n++, 1, 1,
                       Qt::AlignVCenter | Qt::AlignRight);
     auto *xval = new QLineEdit(QString::number(xcenter));
@@ -387,6 +395,7 @@ void ImageViewer::globalSettings()
     button = findChild<QPushButton *>("shiny");
     if (button) button->setChecked(shinyfactor > SHINY_CUT);
 
+    dynamiccenter = (ccombo->currentIndex() == 1);
     if (xval->hasAcceptableInput()) xcenter = xval->text().toDouble();
     if (yval->hasAcceptableInput()) ycenter = yval->text().toDouble();
     if (zval->hasAcceptableInput()) zcenter = zval->text().toDouble();

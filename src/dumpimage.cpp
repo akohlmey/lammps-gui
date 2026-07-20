@@ -279,8 +279,12 @@ DumpImageCommand buildDumpImageCommand(const DumpImageParams &p)
 
     const bool dofixes = appendFixComputeStyles(d, p);
 
-    // center defaults to the box center "s 0.5 0.5 0.5"; emit only when moved
-    if ((p.xcenter != 0.5) || (p.ycenter != 0.5) || (p.zcenter != 0.5))
+    // center defaults to the static box center "s 0.5 0.5 0.5"; a dynamic center
+    // differs from that default even at unmoved fractions, so it is always
+    // emitted, while a static center is emitted only when moved
+    if (p.dynamiccenter)
+        d += QString(" center d %1 %2 %3").arg(p.xcenter).arg(p.ycenter).arg(p.zcenter);
+    else if ((p.xcenter != 0.5) || (p.ycenter != 0.5) || (p.zcenter != 0.5))
         d += QString(" center s %1 %2 %3").arg(p.xcenter).arg(p.ycenter).arg(p.zcenter);
 
     // the camera up direction defaults to "0 0 1" in 3d and "0 1 0" in 2d

@@ -88,9 +88,10 @@ DumpImageParams makeParams()
     p.axeslen    = 0.2;
     p.axesdiam   = 0.1;
 
-    p.xcenter = 0.5;
-    p.ycenter = 0.5;
-    p.zcenter = 0.5;
+    p.dynamiccenter = false;
+    p.xcenter       = 0.5;
+    p.ycenter       = 0.5;
+    p.zcenter       = 0.5;
 
     p.xup = 0.0;
     p.yup = 0.0;
@@ -449,6 +450,19 @@ TEST(DumpImageCommand, SubboxAxesCenterEmittedWhenSet)
     EXPECT_TRUE(cmd.contains(" subbox yes 0.01")) << cmd.toStdString();
     EXPECT_TRUE(cmd.contains(" axes "));
     EXPECT_TRUE(cmd.contains(" center s 0.3 0.5 0.5"));
+}
+
+TEST(DumpImageCommand, DynamicCenterAlwaysEmitted)
+{
+    auto p          = makeParams();
+    p.dynamiccenter = true;
+
+    // a dynamic center differs from the LAMMPS default "s 0.5 0.5 0.5"
+    // even at the default fractions, so it must never be pruned
+    EXPECT_TRUE(buildCmd(p).contains(" center d 0.5 0.5 0.5")) << buildCmd(p).toStdString();
+
+    p.xcenter = 0.3;
+    EXPECT_TRUE(buildCmd(p).contains(" center d 0.3 0.5 0.5"));
 }
 
 TEST(DumpImageCommand, UpDirectionEmittedWhenNotDefault)

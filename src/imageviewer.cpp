@@ -766,6 +766,7 @@ void ImageViewer::readImageSettings()
     tridiam        = 0.2;
     triflag        = CYLINDERS;
     xcenter = ycenter = zcenter = 0.5;
+    dynamiccenter               = false;
     // the camera up direction defaults to the z-axis in 3d and the y-axis in 2d
     xup = yup = zup = 0.0;
     if (lammps->extractSetting("dimension") == 2) {
@@ -1466,9 +1467,10 @@ DumpImageParams ImageViewer::gatherDumpImageParams(const QString &dumpfilename)
     p.axesdiam   = axesdiam;
 
     // view center
-    p.xcenter = xcenter;
-    p.ycenter = ycenter;
-    p.zcenter = zcenter;
+    p.dynamiccenter = dynamiccenter;
+    p.xcenter       = xcenter;
+    p.ycenter       = ycenter;
+    p.zcenter       = zcenter;
 
     // camera up direction
     p.xup = xup;
