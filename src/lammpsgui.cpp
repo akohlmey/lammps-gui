@@ -2011,10 +2011,12 @@ void LammpsGui::extendRun()
     logwindow->moveCursor(QTextCursor::End);
 
     // "timer timeout off" resets the expired walltime timer that the Stop button
-    // leaves behind; "pre no post no" continues from the current state without
-    // repeating the setup (LAMMPS ignores both flags when no run came before,
-    // e.g. on the state of an inspected restart file, where setup is required)
-    launchRunner(QString("timer timeout off\nrun %1 pre no post no\n").arg(nsteps).toStdString(),
+    // leaves behind. The setup phase must not be skipped with "pre no": each run
+    // executes on a new runner thread with its own OpenMP thread pool, and only
+    // the setup re-initializes the per-thread data of threaded accelerator
+    // packages for that pool (e.g. FixOMP::init()), so "pre no" crashes such
+    // runs; "post no" skips the timing summary of the extension.
+    launchRunner(QString("timer timeout off\nrun %1 pre yes post no\n").arg(nsteps).toStdString(),
                  {}, false);
 }
 

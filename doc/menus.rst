@@ -157,7 +157,7 @@ system state, e.g. from a previous run or an inspected restart file.
 The continuation executes a `timer timeout off
 <https://docs.lammps.org/timer.html>`_ command, which resets the
 expired timer in case the previous run was interrupted with *Stop
-LAMMPS*, followed by ``run <steps> pre no post no``.  The captured
+LAMMPS*, followed by ``run <steps> pre yes post no``.  The captured
 output and thermodynamic data are appended to the existing *Output*
 and *Charts* windows after a message noting the extension.  Typical
 use cases are continuing a run that was stopped (e.g. after writing a
