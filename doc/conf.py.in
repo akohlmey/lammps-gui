@@ -33,7 +33,7 @@ def get_git_info():
 
 project = 'LAMMPS-GUI'
 author = 'Axel Kohlmeyer'
-copyright = '2023 - {}, {}'.format(date.today().year, author)
+copyright = '2023 - {} by {}'.format(date.today().year, author)
 version = '@PROJECT_VERSION@'
 release = get_git_info()
 language = 'en'
