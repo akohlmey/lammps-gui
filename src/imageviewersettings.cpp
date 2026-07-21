@@ -111,6 +111,7 @@ void ImageViewer::globalSettings()
     layout->addWidget(cbutton, idx++, n++, 1, 1);
 
     n = 1;
+
     layout->addWidget(new QLabel("Length: "), idx, n++, 1, 1, Qt::AlignVCenter | Qt::AlignRight);
     auto *alval = new QLineEdit(QString::number(axeslen));
     alval->setValidator(fractionvalidator);
@@ -215,6 +216,7 @@ void ImageViewer::globalSettings()
     layout->addWidget(zoomval, idx++, n++, 1, 1);
 
     n = 0;
+
     layout->addWidget(new QLabel("Quality:"), idx, n++, 1, 1);
     n++;
     auto *fsaa = new QCheckBox("FSAA  ", this);
@@ -233,51 +235,49 @@ void ImageViewer::globalSettings()
     shiny->setMaximumWidth(fwidth);
     layout->addWidget(shiny, idx++, n++, 1, 1);
 
-    n            = 0;
+    n = 0;
+
     auto *ccombo = new QComboBox;
-    ccombo->addItem("Center (static)");
-    ccombo->addItem("Center (dynamic)");
+    ccombo->addItem("Static:");
+    ccombo->addItem("Dynamic:");
     ccombo->setCurrentIndex(dynamiccenter ? 1 : 0);
-    ccombo->setToolTip("Static: center fractions apply to the simulation box.\n"
-                       "Dynamic: center fractions apply to the bounding box "
-                       "of the displayed atoms in each frame.");
+    ccombo->setToolTip("Static: center fractions are applied only once.\n"
+                       "Dynamic: center fractions are applied every step.");
     layout->addWidget(ccombo, idx, n++, 1, 1);
-    layout->addWidget(new QLabel("X-direction: "), idx, n++, 1, 1,
-                      Qt::AlignVCenter | Qt::AlignRight);
+    layout->addWidget(new QLabel("X-Center: "), idx, n++, 1, 1, Qt::AlignVCenter | Qt::AlignRight);
     auto *xval = new QLineEdit(QString::number(xcenter));
     xval->setValidator(transvalidator);
     xval->setMaximumWidth(fwidth);
     layout->addWidget(xval, idx, n++, 1, 1);
-    layout->addWidget(new QLabel("Y-direction: "), idx, n++, 1, 1,
-                      Qt::AlignVCenter | Qt::AlignRight);
+    layout->addWidget(new QLabel("Y-Center: "), idx, n++, 1, 1, Qt::AlignVCenter | Qt::AlignRight);
     auto *yval = new QLineEdit(QString::number(ycenter));
     yval->setValidator(transvalidator);
     yval->setMaximumWidth(fwidth);
     layout->addWidget(yval, idx, n++, 1, 1);
-    layout->addWidget(new QLabel("Z-direction: "), idx, n++, 1, 1,
-                      Qt::AlignVCenter | Qt::AlignRight);
+    layout->addWidget(new QLabel("Z-Center: "), idx, n++, 1, 1, Qt::AlignVCenter | Qt::AlignRight);
     auto *zval = new QLineEdit(QString::number(zcenter));
     zval->setValidator(transvalidator);
     zval->setMaximumWidth(fwidth);
     layout->addWidget(zval, idx++, n++, 1, 1);
 
-    n             = 0;
+    n = 0;
+
     auto *uplabel = new QLabel("Camera up:");
     uplabel->setToolTip("Direction pointing up in the image; must not be the zero vector");
     layout->addWidget(uplabel, idx, n++, 1, 1);
-    layout->addWidget(new QLabel("X-direction: "), idx, n++, 1, 1,
+    layout->addWidget(new QLabel("X-Direction: "), idx, n++, 1, 1,
                       Qt::AlignVCenter | Qt::AlignRight);
     auto *xupval = new QLineEdit(QString::number(xup));
     xupval->setValidator(upvalidator);
     xupval->setMaximumWidth(fwidth);
     layout->addWidget(xupval, idx, n++, 1, 1);
-    layout->addWidget(new QLabel("Y-direction: "), idx, n++, 1, 1,
+    layout->addWidget(new QLabel("Y-Direction: "), idx, n++, 1, 1,
                       Qt::AlignVCenter | Qt::AlignRight);
     auto *yupval = new QLineEdit(QString::number(yup));
     yupval->setValidator(upvalidator);
     yupval->setMaximumWidth(fwidth);
     layout->addWidget(yupval, idx, n++, 1, 1);
-    layout->addWidget(new QLabel("Z-direction: "), idx, n++, 1, 1,
+    layout->addWidget(new QLabel("Z-Direction: "), idx, n++, 1, 1,
                       Qt::AlignVCenter | Qt::AlignRight);
     auto *zupval = new QLineEdit(QString::number(zup));
     zupval->setValidator(upvalidator);
@@ -286,6 +286,7 @@ void ImageViewer::globalSettings()
     layout->addWidget(zupval, idx++, n++, 1, 1);
 
     n = 0;
+
     layout->addWidget(new QHline, idx++, 0, 1, MAXCOLS);
     auto *lightlayout = new QHBoxLayout;
     lightlayout->setSpacing(LAYOUT_SPACING);
