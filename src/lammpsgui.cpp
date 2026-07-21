@@ -820,6 +820,21 @@ LammpsGui::~LammpsGui()
 
 void LammpsGui::newDocument()
 {
+    if (textEdit->document()->isModified()) {
+        int rv = showUnsavedChangesDialog(
+            this, currentFile, "Do you want to save the current file before starting a new input?");
+        switch (rv) {
+            case QMessageBox::Yes:
+                save();
+                break;
+            case QMessageBox::Cancel:
+                return;
+            case QMessageBox::No: // fallthrough
+            default:
+                // do nothing
+                break;
+        }
+    }
     currentFile.clear();
     textEdit->document()->setPlainText(citeme);
     textEdit->document()->setModified(false);
@@ -1180,6 +1195,9 @@ void LammpsGui::openFile(const QString &fileName)
 // open file in read-only mode for viewing in separate window
 void LammpsGui::viewFile(const QString &fileName)
 {
+    // empty name means the file dialog was canceled. nothing to do here
+    if (fileName.isEmpty()) return;
+
     // a movie file is also an image file when it is an animated GIF
     if (isMovieFile(fileName)) {
         warning(this, "Cannot View Movie as Text",
@@ -1275,6 +1293,9 @@ void LammpsGui::purgeInspectList()
 // read restart file into LAMMPS instance and launch image viewer
 void LammpsGui::inspectFile(const QString &fileName)
 {
+    // empty name means the file dialog was canceled. nothing to do here
+    if (fileName.isEmpty()) return;
+
     QFile file(fileName);
     auto shortName = QFileInfo(fileName).fileName();
 
