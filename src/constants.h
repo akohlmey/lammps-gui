@@ -108,6 +108,11 @@ constexpr int GRAYSCALE_MIDPOINT = 145;
 /** Fraction of its contrast that an inactive icon keeps; 1.0 desaturates only */
 constexpr double GRAYSCALE_CONTRAST = 0.4;
 
+// ---- Network downloads ---------------------------------------------------
+/** Abort a download when no data arrives for this many milliseconds; a stalled
+ *  connection otherwise blocks the download event loop indefinitely */
+constexpr int DOWNLOAD_STALL_TIMEOUT = 60000;
+
 // ---- Movie frame import --------------------------------------------------
 constexpr int MOVIE_PROBE_TIMEOUT = 15000; ///< Timeout in milliseconds for an ffprobe run
 constexpr int MOVIE_WARN_FRAMES   = 1000;  ///< Warn when extracting more frames than this

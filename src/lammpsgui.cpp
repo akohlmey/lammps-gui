@@ -3096,6 +3096,23 @@ void LammpsGui::openTutorialWebpage(int collection, int tutno)
     if (!weburl.isEmpty()) QDesktopServices::openUrl(QUrl(weburl));
 }
 
+namespace {
+
+// deliberately does not speculate about the cause of the failure: users tend to
+// take such hints literally and then chase a problem they do not have
+void tutorialDownloadFailed(QWidget *parent, const QString &detail)
+{
+    critical(parent, "LAMMPS-GUI Error",
+             "<p>Download of the tutorial files over the network is currently failing. "
+             "Please try again in a while.</p>"
+             "<p>If the problem persists, please report it in the LAMMPS forum at "
+             "<a href=\"https://matsci.org/lammps\">https://matsci.org/lammps</a> or by email "
+             "to developers@lammps.org.</p>",
+             detail);
+}
+
+} // namespace
+
 bool LammpsGui::downloadTutorialFiles(const QString &dir, const QList<DownloadItem> &downloads,
                                       URLDownloader &downloader, const QString &baseUrl)
 {
@@ -3121,8 +3138,7 @@ bool LammpsGui::downloadTutorialFiles(const QString &dir, const QList<DownloadIt
             progress->hide();
             dirstatus->show();
             status->repaint();
-            critical(this, "LAMMPS-GUI Error",
-                     "Tutorial files download error:", downloader.errorString());
+            tutorialDownloadFailed(this, downloader.errorString());
             return false;
         }
 
@@ -3179,8 +3195,7 @@ void LammpsGui::setupTutorial(int collection, int tutno, const QString &dir, boo
     // must check for error after download, e.g. when there is no network.
     QString manifestPath = dir + QDir::separator() + ".manifest";
     if (!downloader.download(baseUrl.arg(tutno).arg(".manifest"), manifestPath)) {
-        critical(this, "LAMMPS-GUI Error",
-                 "Tutorial files download error:", downloader.errorString());
+        tutorialDownloadFailed(this, downloader.errorString());
         return;
     }
 
