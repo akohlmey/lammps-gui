@@ -313,13 +313,14 @@ QString getLammpsDownloadUrl()
 }
 
 // save image directly and if that fails, save to PNG and convert with ImageMagick
-void exportImage(QWidget *parent, QImage *image, const QString &title)
+void exportImage(QWidget *parent, QImage *image, const QString &title, const QString &defaultname)
 {
     if (!image) return;
-    QString fileName = QFileDialog::getSaveFileName(
-        parent, "Export Current Image to Image File", ".",
-        "Image Files (*.png *.jpg *.jpeg *.gif *.bmp *.tga *.ppm *.tiff *.webp *.pgm *.xpm *.xbm)");
+    QString fileName = QFileDialog::getSaveFileName(parent, "Export Current Image to Image File",
+                                                    QDir::current().absoluteFilePath(defaultname),
+                                                    Cfg::FILTER_IMAGE);
     if (fileName.isEmpty()) return;
+    fileName = ensureFileSuffix(fileName, "png");
 
     // try direct save and if it fails write to PNG and then convert with ImageMagick if available
     if (!image->save(fileName)) {
@@ -380,14 +381,19 @@ bool looksLikeBinaryFile(const QString &filename)
     return chunk.contains('\0');
 }
 
+// known image extensions, including formats Qt cannot read natively but
+// that ImageMagick can convert for display (tga, eps, sgi, ...)
+static const QStringList imageExtensions = {"png", "jpg", "jpeg", "bmp", "ppm", "pgm", "pbm",
+                                            "gif", "tif", "tiff", "tga", "eps", "sgi", "webp",
+                                            "xpm", "ico", "svg",  "jp2", "heic"};
+
+// container formats that FFmpeg can decode into a sequence of images
+static const QStringList movieExtensions = {"mp4", "m4v",  "mkv", "webm", "avi", "mov",
+                                            "mpg", "mpeg", "ogv", "wmv",  "flv"};
+
 bool isImageFile(const QString &filename)
 {
-    // known image extensions, including formats Qt cannot read natively but
-    // that ImageMagick can convert for display (tga, eps, sgi, ...)
-    static const QStringList imageExtensions = {"png", "jpg", "jpeg", "bmp", "ppm", "pgm", "pbm",
-                                                "gif", "tif", "tiff", "tga", "eps", "sgi", "webp",
-                                                "xpm", "ico", "svg",  "jp2", "heic"};
-    const QString suffix                     = QFileInfo(filename).suffix().toLower();
+    const QString suffix = QFileInfo(filename).suffix().toLower();
     if (imageExtensions.contains(suffix)) return true;
 
     // otherwise let Qt sniff the contents, but only for a file that exists
@@ -397,16 +403,42 @@ bool isImageFile(const QString &filename)
 
 bool isMovieFile(const QString &filename)
 {
-    // container formats that FFmpeg can decode into a sequence of images
-    static const QStringList movieExtensions = {"mp4", "m4v",  "mkv", "webm", "avi", "mov",
-                                                "mpg", "mpeg", "ogv", "wmv",  "flv"};
-    const QString suffix                     = QFileInfo(filename).suffix().toLower();
+    const QString suffix = QFileInfo(filename).suffix().toLower();
     if (movieExtensions.contains(suffix)) return true;
 
     // a GIF is only a movie when it has more than a single frame
     if ((suffix == "gif") && QFileInfo::exists(filename))
         return QImageReader(filename).imageCount() > 1;
     return false;
+}
+
+QString defaultFileStem(const QString &filename)
+{
+    // non-image, non-movie extensions that are also stripped from the stem
+    static const QStringList otherExtensions = {"lmp", "txt",  "csv", "dat",     "yaml",
+                                                "yml", "json", "log", "restart", "rst"};
+
+    QString stem = QFileInfo(filename).fileName();
+    if (stem.startsWith("in.")) stem.remove(0, 3);
+
+    // strip all trailing known extensions, so e.g. "melt.lmp.txt" becomes "melt"
+    int dot = stem.lastIndexOf('.');
+    while (dot > 0) {
+        const QString ext = stem.mid(dot + 1).toLower();
+        if (!otherExtensions.contains(ext) && !imageExtensions.contains(ext) &&
+            !movieExtensions.contains(ext))
+            break;
+        stem.truncate(dot);
+        dot = stem.lastIndexOf('.');
+    }
+    if (stem.isEmpty()) stem = QStringLiteral("lammps");
+    return stem;
+}
+
+QString ensureFileSuffix(const QString &filename, const QString &suffix)
+{
+    if (filename.isEmpty() || !QFileInfo(filename).suffix().isEmpty()) return filename;
+    return filename + '.' + suffix;
 }
 
 bool isRestartFile(const QString &filename)

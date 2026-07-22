@@ -32,6 +32,7 @@
 #include <QComboBox>
 #include <QDialog>
 #include <QDialogButtonBox>
+#include <QDir>
 #include <QDoubleSpinBox>
 #include <QEvent>
 #include <QFileDialog>
@@ -40,6 +41,7 @@
 #include <QGroupBox>
 #include <QHBoxLayout>
 #include <QIcon>
+#include <QImage>
 #include <QKeySequence>
 #include <QScrollArea>
 
@@ -1059,9 +1061,8 @@ void ChartWindow::addDataFile()
 {
     if (cols.empty()) return;
 
-    const QString fileName = QFileDialog::getOpenFileName(
-        this, "Add Data from File", QString(),
-        "Data files (*.dat *.csv *.yaml *.yml *.json *.txt);;All files (*)");
+    const QString fileName = QFileDialog::getOpenFileName(this, "Add Data from File",
+                                                          QDir::currentPath(), Cfg::FILTER_DATA);
     if (fileName.isEmpty()) return;
 
     QString error;
@@ -1380,11 +1381,9 @@ void ChartWindow::updateYRange(int low, int high)
 void ChartWindow::saveAs()
 {
     if (cols.empty()) return;
-    QString defaultname = filename + "." + columns->currentText() + ".png";
-    if (filename.isEmpty()) defaultname = columns->currentText() + ".png";
-    QString fileName = QFileDialog::getSaveFileName(this, "Save Chart as Image", defaultname,
-                                                    "Image Files (*.jpg *.png *.bmp *.ppm)");
-    if (!fileName.isEmpty()) viewer->grab().save(fileName);
+    const QString defaultname = defaultFileStem(filename) + "." + columns->currentText() + ".png";
+    QImage chartimage         = viewer->grab().toImage();
+    exportImage(this, &chartimage, "ChartWindow", defaultname);
 }
 
 PlotData ChartWindow::chartsToPlotData() const
@@ -1410,10 +1409,12 @@ PlotData ChartWindow::chartsToPlotData() const
 
 // write the already formatted chart data to a file
 static void writeExport(QWidget *parent, const QString &caption, const QString &defaultname,
-                        const QString &filter, const QString &text)
+                        const QString &filter, const QString &suffix, const QString &text)
 {
-    const QString fileName = QFileDialog::getSaveFileName(parent, caption, defaultname, filter);
+    QString fileName = QFileDialog::getSaveFileName(
+        parent, caption, QDir::current().absoluteFilePath(defaultname), filter);
     if (fileName.isEmpty()) return;
+    fileName = ensureFileSuffix(fileName, suffix);
     QFile file(fileName);
     if (file.open(QIODevice::WriteOnly | QIODevice::Text)) {
         QTextStream out(&file);
@@ -1425,25 +1426,22 @@ static void writeExport(QWidget *parent, const QString &caption, const QString &
 void ChartWindow::exportDat()
 {
     if (cols.empty()) return;
-    const QString defaultname = filename.isEmpty() ? "lammpsdata.dat" : filename + ".dat";
-    writeExport(this, "Save Chart as Gnuplot data", defaultname, "Gnuplot data (*.dat)",
-                writePlotDat(chartsToPlotData(), filename));
+    writeExport(this, "Save Chart as Gnuplot data", defaultFileStem(filename) + ".dat",
+                Cfg::FILTER_GNUPLOT, "dat", writePlotDat(chartsToPlotData(), filename));
 }
 
 void ChartWindow::exportCsv()
 {
     if (cols.empty()) return;
-    const QString defaultname = filename.isEmpty() ? "lammpsdata.csv" : filename + ".csv";
-    writeExport(this, "Save Chart as CSV data", defaultname, "CSV data (*.csv)",
-                writePlotCsv(chartsToPlotData()));
+    writeExport(this, "Save Chart as CSV data", defaultFileStem(filename) + ".csv", Cfg::FILTER_CSV,
+                "csv", writePlotCsv(chartsToPlotData()));
 }
 
 void ChartWindow::exportYaml()
 {
     if (cols.empty()) return;
-    const QString defaultname = filename.isEmpty() ? "lammpsdata.yaml" : filename + ".yaml";
-    writeExport(this, "Save Chart as YAML data", defaultname, "YAML data (*.yaml *.yml)",
-                writePlotYaml(chartsToPlotData()));
+    writeExport(this, "Save Chart as YAML data", defaultFileStem(filename) + ".yaml",
+                Cfg::FILTER_YAML, "yaml", writePlotYaml(chartsToPlotData()));
 }
 
 void ChartWindow::changeChart(int)

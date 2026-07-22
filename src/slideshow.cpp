@@ -55,8 +55,8 @@ constexpr int EXTRA_HEIGHT   = 130;
 } // namespace
 
 SlideShow::SlideShow(const QString &fileName, LammpsGui *_lammpsgui, QWidget *parent) :
-    QDialog(parent), lammpsgui(_lammpsgui), playtimer(nullptr), imageLabel(new QLabel),
-    scrollArea(new QScrollArea), scrollBar(new RangeBandSlider),
+    QDialog(parent), lammpsgui(_lammpsgui), filename(fileName), playtimer(nullptr),
+    imageLabel(new QLabel), scrollArea(new QScrollArea), scrollBar(new RangeBandSlider),
     imageCounter(new QLabel("Image   0 /   0 :")), imageName(new QLabel("(none)")),
     startBox(new QSpinBox), stopBox(new QSpinBox), cacheButton(new QPushButton), current(0),
     maxwidth(0), maxheight(0), timerDelay(100), doLoop(true), imageRotation(0), imageFlipH(false),
@@ -640,15 +640,16 @@ void SlideShow::stopRun()
 
 void SlideShow::saveCurrentImage()
 {
-    exportImage(this, &image, "SlideShow");
+    exportImage(this, &image, "SlideShow", defaultFileStem(filename) + ".png");
 }
 
 void SlideShow::movie()
 {
-    QString fileName =
-        QFileDialog::getSaveFileName(this, "Export to Movie File", ".",
-                                     "Movie Files (*.mp4 *.mkv *.avi *.mpg *.mpeg *.gif *.webm)");
+    QString fileName = QFileDialog::getSaveFileName(
+        this, "Export to Movie File",
+        QDir::current().absoluteFilePath(defaultFileStem(filename) + ".mp4"), Cfg::FILTER_MOVIE);
     if (fileName.isEmpty()) return;
+    fileName = ensureFileSuffix(fileName, "mp4");
 
     // restrict the exported frames to the active [Start, Stop] range
     const int lo = startIdx();

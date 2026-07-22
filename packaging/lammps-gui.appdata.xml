@@ -69,6 +69,7 @@
           <li>Add Run menu entry to extend the previous run by a given number of steps</li>
           <li>Tweak some icons for better readability at 24x24px size</li>
           <li>Show the sample frame behind the movie import size estimate as a thumbnail</li>
+          <li>Consistent file dialogs: always start in the input file directory, offer default file names derived from the input file name, and filter for the expected file types</li>
         </ul>
       </description>
     </release>
