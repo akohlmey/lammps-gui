@@ -670,6 +670,13 @@ void CodeEditor::contextMenuEvent(QContextMenuEvent *event)
     }
     menu->addSeparator();
 
+    // offer the Set Variables dialog when the line defines an index variable
+    if (matchIndexVariable(textCursor().block().text()).valid) {
+        addMenuAction(menu, "Set Variables...", ":/icons/preferences-desktop.svg", gui,
+                      &LammpsGui::editVariables);
+        menu->addSeparator();
+    }
+
     // print augmented context menu if an entry was found
     if (!help.isEmpty()) {
         addMenuAction(menu, QString("Display available completions for '%1'").arg(help),

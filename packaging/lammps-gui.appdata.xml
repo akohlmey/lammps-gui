@@ -87,6 +87,7 @@
           <li>Show tutorial downloads in a progress dialog with a Cancel button, visible from the first network request on</li>
           <li>Keep the Set Variables dialog in sync with index variable edits in the input script: a changed definition in the input wins over an earlier dialog override</li>
           <li>Mark values in the Set Variables dialog that override the input script in bold and draw a thin frame around the overridden value in the editor</li>
+          <li>Offer the Set Variables dialog in the editor context menu when the current line defines an index style variable</li>
         </ul>
       </description>
     </release>

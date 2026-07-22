@@ -153,6 +153,10 @@ context menu that open the corresponding documentation page in the
 online LAMMPS documentation in a web browser window.  When using the
 keyboard, the first of those entries is chosen.
 
+If the current line defines an index style variable, the context menu
+also has a *Set Variables...* entry that opens the corresponding
+:ref:`dialog <set_variables>` from the *Edit* menu.
+
 If the word under the cursor is a file, then additionally the context
 menu has an entry to open the file in a read-only text viewer window.
 If the file is a LAMMPS restart file, instead the menu entry offers to

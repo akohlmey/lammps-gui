@@ -218,6 +218,8 @@ success, a dialog confirms that the input passed and points to the
    The *Check Input via Heuristics* and *Check Input via Dry Run*
    entries were added.
 
+.. _set_variables:
+
 The *Set Variables...* entry opens a dialog box where `index style
 variables <https://docs.lammps.org/variable.html>`_ can be set. Those
 variables are passed to the LAMMPS instance when it is created and are
