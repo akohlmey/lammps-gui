@@ -172,14 +172,24 @@ frames for a smooth animation or enough data for a plot.
 
    The *Extend Run...* entry was added.
 
-The *Check Input* entry (keyboard shortcut `Ctrl-K`) runs a fast static
-check of the editor buffer and reports its findings in a dialog: unknown
-commands and style names (validated against the loaded LAMMPS library),
-unbalanced quotes, dangling line continuations, variables used before
-they are defined, references to undefined groups, missing input files,
-and missing required arguments.  The same check runs automatically
+The *Relaunch LAMMPS Instance* will destroy the current LAMMPS thread
+and free its data and then create a new thread with a new LAMMPS
+instance.  This is usually not needed, since LAMMPS-GUI tries to detect
+when this is needed and does it automatically.  This is available
+in case it missed something and LAMMPS behaves in unexpected ways.
+
+The *Check Input via Heuristics* entry (keyboard shortcut `Ctrl-K`)
+runs a fast static check of the editor buffer and reports its findings
+in a dialog: unknown commands and style names (validated against the
+loaded LAMMPS library), unbalanced quotes, dangling line continuations,
+variables used before they are defined, references to undefined groups,
+references to computes, fixes, or variables that are defined nowhere in
+the buffer, missing input files, missing required arguments, and
+non-numeric arguments where strictly numeric values are required.  When
+no problems are found, a corresponding message is shown; otherwise the
+cursor moves to the first finding.  The same check runs automatically
 before every run (this can be disabled in the *General Settings* of the
-*Preferences* dialog); in that case only error level findings trigger a
+*Preferences* dialog); in that case only error-level findings trigger a
 dialog asking whether to run anyway, while warnings are only noted in
 the status bar.  The checker is designed to avoid false alarms: any
 word containing a ``$`` substitution is exempt from checking, and
@@ -199,17 +209,14 @@ effects: output files may be created or overwritten and `shell
 <https://docs.lammps.org/shell.html>`_ commands are executed, which is
 why the action first asks for confirmation.  The captured output is
 shown in an *Output* window; errors are reported with the usual error
-dialog and the offending line is highlighted in the editor.
+dialog and the offending line is highlighted in the editor.  On
+success, a dialog confirms that the input passed and points to the
+*Output* window for any LAMMPS warnings.
 
 .. versionadded:: 3.0.6
 
-   The *Check Input* and *Check Input via Dry Run* entries were added.
-
-The *Relaunch LAMMPS Instance* will destroy the current LAMMPS thread
-and free its data and then create a new thread with a new LAMMPS
-instance.  This is usually not needed, since LAMMPS-GUI tries to detect
-when this is needed and does it automatically.  This is available
-in case it missed something and LAMMPS behaves in unexpected ways.
+   The *Check Input via Heuristics* and *Check Input via Dry Run*
+   entries were added.
 
 The *Set Variables...* entry opens a dialog box where `index style
 variables <https://docs.lammps.org/variable.html>`_ can be set. Those

@@ -105,7 +105,7 @@ available (On macOS use the Command key instead of Ctrl/Control).
      - Ctrl+E
      - Extend Run
    * - Ctrl+K
-     - Check Input
+     - Check Input via Heuristics
      - Ctrl+Shift+K
      - Check Input via Dry Run
      -

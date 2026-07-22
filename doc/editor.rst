@@ -50,6 +50,11 @@ have been enabled when compiling LAMMPS. That list, however, excludes
 accelerated styles and commands; for improved clarity, only the
 non-suffix versions of styles are shown.
 
+Like the syntax highlighting, the completion and the context-specific
+help are aware of ``&`` line continuations: on a continuation line,
+completions and help are offered for the command that is being
+continued.
+
 Syntax Highlighting
 ^^^^^^^^^^^^^^^^^^^
 
@@ -71,11 +76,16 @@ Sub-styles of hybrid styles are recognized the same way LAMMPS parses
 them -- by checking against the known styles of the loaded library --
 and are shown in their own color, both in the arguments of the
 ``*_style`` command and in the sub-style position of the corresponding
-``*_coeff`` commands, where they also auto-complete.  On `dump image
-<https://docs.lammps.org/dump_image.html>`_ and ``dump_modify`` lines
-the dump image keywords are marked, and color names are displayed in
-their actual color; keywords and color names auto-complete in the
-positions where they are expected.
+``*_coeff`` commands, where they also auto-complete.  Words in those
+positions that are not a known style are treated as arguments of the
+sub-styles and are never marked as unknown.  On `dump image
+<https://docs.lammps.org/dump_image.html>`_ lines the dump image
+keywords are marked, and on both ``dump image`` and ``dump_modify``
+lines color names are displayed in their actual color; keywords and
+color names auto-complete in the positions where they are expected.
+Color names with too little contrast against the editor background
+(for example ``yellow`` on a light theme) are placed on a small dark
+or light chip so they remain readable.
 
 Command and style names that are not known to the LAMMPS library that
 LAMMPS-GUI has loaded -- for example due to a typo or because the
@@ -83,12 +93,20 @@ corresponding package was not included when the library was compiled --
 are marked with a wavy underline.  The marker is not shown for the word
 at the cursor position, so partially typed names are not flagged while
 typing, and it is suppressed for names constructed with ``$``
-substitutions.
+substitutions.  When LAMMPS-GUI is running without a usable LAMMPS
+library (for example in plugin mode before a library has been
+selected), the known-name information is unavailable and no words are
+marked.
 
 .. versionchanged:: 3.0.6
 
-   The highlighting is aware of ``&`` line continuations and marks
-   unknown command and style names.
+   The highlighting is aware of ``&`` line continuations, colors
+   arguments by their role, recognizes sub-styles of hybrid styles,
+   renders dump image keywords and color names, and marks unknown
+   command and style names.  Completion and context help are aware of
+   line continuations as well.  The ``*_modify`` commands form a new
+   command color group and the file input commands (``include``,
+   ``read_data``, etc.) now share the color of the output commands.
 
 Line Reformatting
 ^^^^^^^^^^^^^^^^^
