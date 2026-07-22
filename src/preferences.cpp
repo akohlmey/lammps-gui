@@ -215,6 +215,8 @@ void Preferences::accept()
 
     field = tabWidget->findChild<QLineEdit *>("proxyval");
     if (field) settings->setValue(Keys::HTTPS_PROXY, field->text());
+    spin = tabWidget->findChild<QSpinBox *>("downloadtimeout");
+    if (spin) settings->setValue(Keys::DOWNLOAD_TIMEOUT, spin->value());
 
     // reformatting settings
 
@@ -374,6 +376,21 @@ GeneralTab::GeneralTab(QSettings *_settings, LammpsWrapper *_lammps, LammpsGui *
     } else {
         layout->addWidget(new QLabel(https_proxy), nrow++, 1);
     }
+
+    auto *timeoutlabel = new QLabel("Download timeout (seconds):");
+    auto *timeoutval   = new QSpinBox;
+    timeoutval->setRange(Cfg::DOWNLOAD_TIMEOUT_MIN, Cfg::DOWNLOAD_TIMEOUT_MAX);
+    timeoutval->setValue(
+        qBound(Cfg::DOWNLOAD_TIMEOUT_MIN,
+               settings->value(Keys::DOWNLOAD_TIMEOUT, Cfg::DOWNLOAD_TIMEOUT_DEFAULT).toInt(),
+               Cfg::DOWNLOAD_TIMEOUT_MAX));
+    timeoutval->setObjectName("downloadtimeout");
+    timeoutval->setToolTip(
+        "Abort a download when no data has arrived for this many seconds.\n"
+        "Increase this value on a slow internet connection, so that large\n"
+        "downloads like the LAMMPS shared library are not canceled prematurely.");
+    layout->addWidget(timeoutlabel, nrow, 0);
+    layout->addWidget(timeoutval, nrow++, 1);
 
 #if defined(LAMMPS_GUI_USE_PLUGIN)
     layout->addWidget(new QHline, nrow++, 0, 1, 2);

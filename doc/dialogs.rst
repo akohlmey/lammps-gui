@@ -140,6 +140,12 @@ General Settings
      tutorial files from the *Tutorials* menu.  If the ``https_proxy``
      environment variable was set externally, its value is displayed but
      cannot be changed.
+   - **Download timeout:** Sets the time, in seconds, after which a
+     download (of tutorial files or the LAMMPS shared library) is aborted
+     with an error message when no data has arrived.  The default is 10
+     seconds.  Users with a slow internet connection may want to increase
+     this value so that the download of larger files, for example the
+     LAMMPS shared library, is not canceled prematurely.
    - **Path to LAMMPS Shared Library File:** this option is only visible
      when LAMMPS-GUI was compiled to load the LAMMPS library at runtime
      instead of being linked to it directly.  Using the *Browse...* button

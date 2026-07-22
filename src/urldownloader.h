@@ -129,7 +129,8 @@ private:
     QWidget *parentWidget;                ///< Parent widget for dialogs
     QString lastError;                    ///< Last error message
     QPointer<QNetworkReply> currentReply; ///< In-flight request, for abort()
-    bool aborted = false;                 ///< Set by abort(); never reset
+    bool aborted     = false;             ///< Set by abort(); never reset
+    int stallTimeout = 0;                 ///< Stall timeout in seconds, from the preferences
 };
 
 #endif // URLDOWNLOADER_H

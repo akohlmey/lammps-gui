@@ -38,7 +38,11 @@ URLDownloader::URLDownloader(QWidget *parent) :
     // a stalled connection must eventually fail the transfer: download() blocks
     // in an event loop until the reply finishes, so without this timeout it
     // would wait forever without any feedback to the user
-    manager->setTransferTimeout(Cfg::DOWNLOAD_STALL_TIMEOUT);
+    stallTimeout =
+        qBound(Cfg::DOWNLOAD_TIMEOUT_MIN,
+               QSettings().value(Keys::DOWNLOAD_TIMEOUT, Cfg::DOWNLOAD_TIMEOUT_DEFAULT).toInt(),
+               Cfg::DOWNLOAD_TIMEOUT_MAX);
+    manager->setTransferTimeout(stallTimeout * 1000);
     configureProxy();
 }
 
@@ -127,8 +131,8 @@ bool URLDownloader::download(const QString &url, const QString &file, bool showD
             lastError = "Download canceled";
         else if ((reply->error() == QNetworkReply::TimeoutError) ||
                  (reply->error() == QNetworkReply::OperationCanceledError))
-            lastError = QString("Connection timed out: no data received for %1 seconds")
-                            .arg(Cfg::DOWNLOAD_STALL_TIMEOUT / 1000);
+            lastError =
+                QString("Connection timed out: no data received for %1 seconds").arg(stallTimeout);
         else
             lastError = reply->errorString();
         reply->deleteLater();
