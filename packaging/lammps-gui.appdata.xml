@@ -85,6 +85,8 @@
           <li>Abort a download when no data arrives for a configurable time (General Settings, default 10 seconds) instead of waiting forever without feedback on a stalled connection</li>
           <li>Report a failed tutorial download with a clear error dialog pointing to the LAMMPS forum instead of failing silently</li>
           <li>Show tutorial downloads in a progress dialog with a Cancel button, visible from the first network request on</li>
+          <li>Keep the Set Variables dialog in sync with index variable edits in the input script: a changed definition in the input wins over an earlier dialog override</li>
+          <li>Mark values in the Set Variables dialog that override the input script in bold and draw a thin frame around the overridden value in the editor</li>
         </ul>
       </description>
     </release>
