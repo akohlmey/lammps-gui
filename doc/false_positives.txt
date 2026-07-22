@@ -2,6 +2,7 @@ AboutDialog
 accessors
 Alvares
 anticorrelation
+argIndex
 autocorrelation
 azimuthal
 backend
@@ -10,8 +11,8 @@ camelCase
 cecill
 checkboxes
 CheckSize
-CMake
 cmake
+CMake
 colormap
 colormaps
 completers
@@ -41,9 +42,10 @@ dylib
 elif
 exe
 executables
-ffmpeg
 FFmpeg
+ffmpeg
 ffprobe
+findVarRefs
 flagwarnings
 flatpak
 Framebuffer
@@ -66,6 +68,7 @@ imagecache
 isLightTheme
 kspace
 lammps
+lammpsImageColors
 launchable
 leastsquares
 Lennard
@@ -153,8 +156,8 @@ thermo
 timestep
 timesteps
 tokenizeLine
-tokenizer
 Tokenizer
+tokenizer
 Tokenizes
 toolchain
 tooltip
