@@ -234,6 +234,20 @@ rows for additional variables can be added through the *Add Row*
 button and existing rows can be deleted by clicking on the *X* icons
 on the right.
 
+.. versionchanged:: 3.0.6
+
+   The dialog follows edits to the input script: when a ``variable ...
+   index`` command in the editor is changed, the dialog picks up the
+   new value the next time it is opened or a run is started, even if
+   the value had been changed in the dialog before.  A value edited in
+   the dialog so that it differs from the input script is shown in
+   bold with a tooltip listing the script value, and the overridden
+   value in the editor is surrounded by a thin frame as a reminder
+   that the input script line is not what LAMMPS will use.  Values
+   from the dialog are passed to LAMMPS before the input script runs,
+   so they take precedence over ``variable ... index`` commands in the
+   input, exactly like the ``-var`` command line flag to LAMMPS.
+
 The *Create Image* entry will send a `dump image
 <https://docs.lammps.org/dump_image.html>`_ command to the LAMMPS
 instance, read the resulting file, and show it in an *Image Viewer*

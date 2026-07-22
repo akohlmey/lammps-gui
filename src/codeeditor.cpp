@@ -42,6 +42,8 @@
 #include <QTextBlock>
 #include <QTextCursor>
 #include <QTextDocumentFragment>
+#include <QTextLayout>
+#include <QToolTip>
 #include <QUrl>
 #include <QVariant>
 #include <QWidget>
@@ -514,6 +516,89 @@ void CodeEditor::resizeEvent(QResizeEvent *e)
 
     QRect cr = contentsRect();
     lineNumberArea->setGeometry(QRect(cr.left(), cr.top(), lineNumberAreaWidth(), cr.height()));
+}
+
+void CodeEditor::setVariableOverrides(const QList<VariableEntry> &vars)
+{
+    variableOverrides.clear();
+    for (const auto &var : vars)
+        if (isOverridden(var)) variableOverrides.insert(var.name, var);
+    viewport()->update();
+}
+
+namespace {
+// an override marker is only valid while the definition line still assigns
+// the value the override was based on: as soon as the line is edited the
+// script value wins and the marker is stale
+bool isMarkedOverride(const QHash<QString, VariableEntry> &overrides,
+                      const IndexVariableMatch &match)
+{
+    if (!match.valid) return false;
+    const auto entry = overrides.constFind(match.name);
+    return (entry != overrides.constEnd()) && (entry->scriptValue == match.value);
+}
+} // namespace
+
+void CodeEditor::paintEvent(QPaintEvent *event)
+{
+    QPlainTextEdit::paintEvent(event);
+    if (variableOverrides.isEmpty()) return;
+
+    QPainter painter(viewport());
+    painter.setRenderHint(QPainter::Antialiasing);
+    painter.setPen(QPen(palette().color(QPalette::Highlight), 1.0));
+    painter.setBrush(Qt::NoBrush);
+
+    const QPointF offset = contentOffset();
+    QTextBlock block     = firstVisibleBlock();
+    while (block.isValid()) {
+        const QRectF geom = blockBoundingGeometry(block).translated(offset);
+        if (geom.top() > event->rect().bottom()) break;
+        if (block.isVisible() && (geom.bottom() >= event->rect().top())) {
+            const auto match = matchIndexVariable(block.text());
+            if (isMarkedOverride(variableOverrides, match)) {
+                // frame the value text; with line wrapping enabled it may
+                // span multiple text lines of the same block
+                const auto *layout = block.layout();
+                const int start    = match.valueStart;
+                const int end      = match.valueStart + match.valueLength;
+                const auto first   = layout->lineForTextPosition(start);
+                const auto last    = layout->lineForTextPosition(end > start ? end - 1 : start);
+                if (first.isValid() && last.isValid()) {
+                    for (int i = first.lineNumber(); i <= last.lineNumber(); ++i) {
+                        const auto line = layout->lineAt(i);
+                        const qreal x1  = line.cursorToX(qMax(start, line.textStart()));
+                        const qreal x2 =
+                            line.cursorToX(qMin(end, line.textStart() + line.textLength()));
+                        const QRectF frame(geom.left() + x1 - 2.0, geom.top() + line.y() + 0.5,
+                                           x2 - x1 + 4.0, line.height() - 1.0);
+                        painter.drawRoundedRect(frame, 2.0, 2.0);
+                    }
+                }
+            }
+        }
+        block = block.next();
+    }
+}
+
+bool CodeEditor::event(QEvent *event)
+{
+    if ((event->type() == QEvent::ToolTip) && !variableOverrides.isEmpty()) {
+        auto *helpEvent   = static_cast<QHelpEvent *>(event);
+        const auto cursor = cursorForPosition(helpEvent->pos());
+        const auto match  = matchIndexVariable(cursor.block().text());
+        const int pos     = cursor.positionInBlock();
+        if (isMarkedOverride(variableOverrides, match) && (pos >= match.valueStart) &&
+            (pos <= match.valueStart + match.valueLength)) {
+            QToolTip::showText(helpEvent->globalPos(),
+                               QString("Value is overridden from the Set Variables dialog: %1")
+                                   .arg(variableOverrides.value(match.name).value),
+                               this);
+            return true;
+        }
+        QToolTip::hideText();
+    }
+    return QPlainTextEdit::event(event);
 }
 
 void CodeEditor::lineNumberAreaPaintEvent(QPaintEvent *event)

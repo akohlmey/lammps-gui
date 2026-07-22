@@ -1055,11 +1055,13 @@ void LammpsGui::updateVariables()
 {
     // fresh parse: any dialog overrides for the previous buffer are dropped
     variables = parseInputVariables(textEdit->toPlainText());
+    textEdit->setVariableOverrides(variables);
 }
 
 void LammpsGui::refreshVariables()
 {
     variables = mergeInputVariables(parseInputVariables(textEdit->toPlainText()), variables);
+    textEdit->setVariableOverrides(variables);
 }
 
 // open file and switch CWD to path of file
@@ -2793,6 +2795,7 @@ void LammpsGui::editVariables()
     vars.setFont(font());
     if (vars.exec() == QDialog::Accepted) {
         variables = newvars;
+        textEdit->setVariableOverrides(variables);
         if (lammps.isRunning()) {
             stopRun();
             runner->wait();
