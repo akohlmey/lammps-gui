@@ -195,7 +195,7 @@ constexpr int CMD_SHIFT = 6;        ///< bit position of the command spec index
 constexpr int CMD_MASK  = 0x1fff;   ///< 13 bits for the command spec index + 1
 constexpr int ARG_SHIFT = 19;       ///< bit position of the argument counter
 constexpr int ARG_MASK  = 0xff;     ///< 8 bits for the argument counter
-constexpr int ARG_MAX   = ARG_MASK; ///< saturation value of the argument counter
+constexpr int ARG_MAXX  = ARG_MASK; ///< saturation value of the argument counter
 
 /// extract the flag bits from a block state
 inline int flags(int state)
@@ -219,7 +219,7 @@ inline int argsUsed(int state)
 inline int pack(int flagbits, int cmdidx, int nargs)
 {
     return (flagbits & FLAG_MASK) | (((cmdidx + 1) & CMD_MASK) << CMD_SHIFT) |
-           ((qMin(nargs, ARG_MAX) & ARG_MASK) << ARG_SHIFT);
+           ((qMin(nargs, ARG_MAXX) & ARG_MASK) << ARG_SHIFT);
 }
 
 /// replace the command spec index in a block state (-1 for none)
