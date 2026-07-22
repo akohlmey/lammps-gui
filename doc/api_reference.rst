@@ -80,6 +80,30 @@ Highlighter Class
 
 -----
 
+LammpsSyntax Class
+------------------
+
+.. doxygenclass:: LammpsSyntax
+   :members:
+
+-----
+
+InputScanner Class
+------------------
+
+.. doxygenclass:: InputScanner
+   :members:
+
+-----
+
+Syntax Engine Functions
+-----------------------
+
+.. doxygenfile:: lammpssyntax.h
+   :sections: func
+
+-----
+
 LAMMPS Interface
 ================
 

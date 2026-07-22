@@ -109,6 +109,8 @@ constexpr double MOVIE_WARN_DISKFRAC = 0.9;
 inline const QString MAIN_ICON = QStringLiteral(":/icons/lammps-gui-icon-128x128.png");
 /** path to LAMMPS Icon resource */
 inline const QString LAMMPS_ICON = QStringLiteral(":/icons/lammps-icon-128x128.png");
+/** path to the command spec table resource for the syntax engine */
+inline const QString SYNTAX_SPEC_TABLE = QStringLiteral(":/command_specs.table");
 
 // ---- Restart file inspection ----------------------------------------------
 /** restart files larger than this (bytes) prompt a memory-use warning */

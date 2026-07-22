@@ -52,6 +52,8 @@ set(PROJECT_SOURCES
   ${CMAKE_SOURCE_DIR}/src/imageviewersettings.cpp
   ${CMAKE_SOURCE_DIR}/src/lammpsrunner.cpp
   ${CMAKE_SOURCE_DIR}/src/lammpsrunner.h
+  ${CMAKE_SOURCE_DIR}/src/lammpssyntax.cpp
+  ${CMAKE_SOURCE_DIR}/src/lammpssyntax.h
   ${CMAKE_SOURCE_DIR}/src/lammpswrapper.cpp
   ${CMAKE_SOURCE_DIR}/src/lammpswrapper.h
   ${CMAKE_SOURCE_DIR}/src/leastsquares.cpp

@@ -97,6 +97,19 @@ target_link_libraries(test_stdcapture PRIVATE GTest::gtest_main Qt6::Widgets)
 
 gtest_discover_tests(test_stdcapture)
 
+# Test executable for the LAMMPS input syntax engine (Qt Core only)
+add_executable(test_lammpssyntax
+  test_lammpssyntax.cpp
+  ${CMAKE_SOURCE_DIR}/src/lammpssyntax.cpp
+)
+
+target_include_directories(test_lammpssyntax PRIVATE ${CMAKE_SOURCE_DIR}/src)
+target_compile_definitions(test_lammpssyntax PRIVATE
+  COMMAND_SPECS_TABLE="${CMAKE_SOURCE_DIR}/resources/command_specs.table")
+target_link_libraries(test_lammpssyntax PRIVATE GTest::gtest_main Qt6::Core)
+
+gtest_discover_tests(test_lammpssyntax)
+
 # Test executable for FlagWarnings
 add_executable(test_flagwarnings
   test_flagwarnings.cpp
