@@ -102,6 +102,11 @@ SyntaxChecker Class
 .. doxygenclass:: SyntaxChecker
    :members:
 
+.. doxygenstruct:: LintIssue
+   :members:
+
+.. doxygenenum:: LintSeverity
+
 -----
 
 Syntax Engine Functions
@@ -109,6 +114,38 @@ Syntax Engine Functions
 
 .. doxygenfile:: lammpssyntax.h
    :sections: func
+
+-----
+
+Syntax Engine Types
+-------------------
+
+.. doxygenenum:: StyleCat
+
+.. doxygenenum:: CmdCat
+
+.. doxygenenum:: ArgRole
+
+.. doxygenenum:: TokType
+
+.. doxygenenum:: CompleterKind
+
+.. doxygenstruct:: ArgSpec
+   :members:
+
+.. doxygenstruct:: CommandSpec
+   :members:
+
+.. doxygenstruct:: Token
+   :members:
+
+.. doxygenstruct:: LineTokens
+   :members:
+
+.. doxygenstruct:: CompletionTarget
+   :members:
+
+.. doxygennamespace:: SyntaxState
 
 -----
 

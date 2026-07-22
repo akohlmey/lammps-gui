@@ -25,6 +25,8 @@ class QPaintEvent;
  *
  * Shared between the color completers/validators of the Image Viewer
  * dialogs and the editor's syntax registry.
+ *
+ * @return sorted list of the valid color names
  */
 const QStringList &lammpsImageColors();
 

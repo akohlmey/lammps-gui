@@ -37,19 +37,21 @@ struct LintIssue {
  * Scans an input buffer with the syntax engine's InputScanner and applies a
  * set of deterministic checks against the introspected name registry:
  * unknown commands and style names, quoting and line continuation problems,
- * references to undefined variables and groups, missing input files, and
- * missing required arguments.
+ * references to undefined variables and groups, references to computes,
+ * fixes, or variables defined nowhere in the buffer, missing input files,
+ * missing required arguments, and non-numeric arguments in a curated list
+ * of strictly numeric positions.
  *
  * The design priority is the absence of false positives: any word containing
  * a '$' substitution is exempt from every check, a substitution anywhere on a
  * line disables its argument-count check, and script features that make
- * static analysis unreliable disable whole rule groups (an include disables
- * the definition-tracking rules buffer-wide; jump/label loops disable
- * order-dependent rules and downgrade unknown commands to warnings; if/then
- * and python scripting disable the whole-buffer reference warnings; shell,
+ * static analysis unreliable disable whole rule groups.  Any of include
+ * files, jump/label loops, if/then commands, or python scripting disables
+ * all definition-tracking rules (variable, group, and reference checks);
+ * jump/label additionally downgrades unknown commands to warnings; shell,
  * geturl, and include disable file-existence checks downstream; read_restart
  * disables group and ID checks downstream; plugin disables unknown-name
- * errors downstream).  Only ERROR severity findings should gate a run.
+ * errors downstream.  Only ERROR severity findings should gate a run.
  */
 class SyntaxChecker {
 public:
@@ -87,6 +89,7 @@ public:
      * @param issues findings to format
      * @param maxShown maximum number of findings listed (-1 = all); when
      *        truncated, a final "... and N more" line is appended
+     * @return the formatted list
      */
     static QString formatIssues(const QList<LintIssue> &issues, int maxShown = -1);
 

@@ -190,12 +190,12 @@ constexpr int COMMENT  = 1 << 3; ///< the continuation is inside a comment
 constexpr int SINGLEQ  = 1 << 4; ///< inside an open single-quoted string
 constexpr int DOUBLEQ  = 1 << 5; ///< inside an open double-quoted string
 
-constexpr int FLAG_MASK = 0x3f;
-constexpr int CMD_SHIFT = 6;
-constexpr int CMD_MASK  = 0x1fff; ///< 13 bits for the command spec index + 1
-constexpr int ARG_SHIFT = 19;
-constexpr int ARG_MASK  = 0xff; ///< 8 bits for the argument counter
-constexpr int ARG_MAX   = ARG_MASK;
+constexpr int FLAG_MASK = 0x3f;     ///< mask covering all flag bits
+constexpr int CMD_SHIFT = 6;        ///< bit position of the command spec index
+constexpr int CMD_MASK  = 0x1fff;   ///< 13 bits for the command spec index + 1
+constexpr int ARG_SHIFT = 19;       ///< bit position of the argument counter
+constexpr int ARG_MASK  = 0xff;     ///< 8 bits for the argument counter
+constexpr int ARG_MAX   = ARG_MASK; ///< saturation value of the argument counter
 
 /// extract the flag bits from a block state
 inline int flags(int state)
@@ -291,6 +291,9 @@ QHash<int, QString> argumentTexts(const LineTokens &lt, const QString &line);
  *
  * Accepts integers, floating point numbers with optional e/E/d/D exponent,
  * and integer ranges / type wildcards built from digits, ':', and '*'.
+ *
+ * @param word word to test
+ * @return true if the word is number-like
  */
 bool isNumberWord(const QString &word);
 
@@ -307,7 +310,10 @@ bool isNumberWord(const QString &word);
  */
 class LammpsSyntax {
 public:
+    /** @brief Constructor; seeds the static keyword sets */
     LammpsSyntax();
+
+    /** @brief Destructor */
     ~LammpsSyntax() = default;
 
     LammpsSyntax(const LammpsSyntax &)            = delete;
@@ -320,6 +326,9 @@ public:
      *
      * The unfiltered set is used for name validity checks; a sorted list with
      * accelerator-suffixed variants removed is derived for completions.
+     *
+     * @param cat category to populate
+     * @param names full list of valid names for the category
      */
     void setStyles(StyleCat cat, const QStringList &names);
 
@@ -328,6 +337,7 @@ public:
 
     /**
      * @brief Load a command spec table from a file or Qt resource
+     * @param path file system path or Qt resource path of the table
      * @return true if the file could be read and contained no malformed entries
      */
     bool loadCommandSpecs(const QString &path);
@@ -337,6 +347,8 @@ public:
      *
      * Later entries override earlier entries with the same command name.
      * Malformed lines are skipped.
+     *
+     * @param text complete table text
      * @return true if no malformed entries were found
      */
     bool loadCommandSpecsFromString(const QString &text);
@@ -369,6 +381,7 @@ public:
      * @brief Sorted completion word list for a category
      *
      * Accelerator-suffixed style variants are filtered out.
+     * @param cat category of the word list
      * @param withNone prepend the "none" style (pair/bond/... styles)
      */
     QStringList completionList(StyleCat cat, bool withNone) const;
@@ -439,7 +452,10 @@ public:
         int line  = 0;                     ///< 1-based line number
     };
 
-    InputScanner()  = default;
+    /** @brief Constructor */
+    InputScanner() = default;
+
+    /** @brief Destructor */
     ~InputScanner() = default;
 
     InputScanner(const InputScanner &)            = default;
