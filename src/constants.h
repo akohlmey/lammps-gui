@@ -111,7 +111,9 @@ constexpr double GRAYSCALE_CONTRAST = 0.4;
 // ---- Network downloads ---------------------------------------------------
 /** Abort a download when no data arrives for this many milliseconds; a stalled
  *  connection otherwise blocks the download event loop indefinitely */
-constexpr int DOWNLOAD_STALL_TIMEOUT = 60000;
+constexpr int DOWNLOAD_STALL_TIMEOUT    = 60000;
+constexpr int DOWNLOAD_DIALOG_WIDTH     = 500; ///< Min width of the download progress dialog
+constexpr int DOWNLOAD_DIALOG_LOGO_SIZE = 96;  ///< Logo size in the download progress dialog
 
 // ---- Movie frame import --------------------------------------------------
 constexpr int MOVIE_PROBE_TIMEOUT = 15000; ///< Timeout in milliseconds for an ffprobe run

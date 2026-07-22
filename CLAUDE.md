@@ -258,7 +258,8 @@ decisions and caveats as binding unless we explicitly revise them here.
 | `src/tutorials.{cpp,h}` | `TutorialCollection` metadata/registry for the available tutorial collections |
 | `src/fileviewer.{cpp,h}` | Read-only text viewer for files referenced in input scripts |
 | `src/aboutdialog.{cpp,h}` | Auto-scrolling About dialog showing LAMMPS version and style info |
-| `src/urldownloader.{cpp,h}` | HTTPS file downloader (respects `https_proxy` setting) |
+| `src/urldownloader.{cpp,h}` | HTTPS file downloader (respects `https_proxy` setting; stall timeout + abort) |
+| `src/downloadprogress.{cpp,h}` | Splash-style transient progress dialog with Cancel for batch downloads (tutorial wizard) |
 | `src/helpers.{cpp,h}` | Platform utilities, dialog/font/toolbar helpers, stdout and Qt-message silencing |
 | `src/qaddon.{cpp,h}` | Utility widgets: `QHline`, `QColorCompleter`, `QColorValidator`, `VerticalLabel` |
 | `src/rangebandslider.{cpp,h}` | Horizontal `QSlider` that paints an active sub-range on its track (distinct from the third-party `rangeslider`) |

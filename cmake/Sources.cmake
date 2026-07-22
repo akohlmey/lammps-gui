@@ -30,6 +30,8 @@ set(PROJECT_SOURCES
   ${CMAKE_SOURCE_DIR}/src/tutorials.h
   ${CMAKE_SOURCE_DIR}/src/customfunc.cpp
   ${CMAKE_SOURCE_DIR}/src/customfunc.h
+  ${CMAKE_SOURCE_DIR}/src/downloadprogress.cpp
+  ${CMAKE_SOURCE_DIR}/src/downloadprogress.h
   ${CMAKE_SOURCE_DIR}/src/dumpimage.cpp
   ${CMAKE_SOURCE_DIR}/src/dumpimage.h
   ${CMAKE_SOURCE_DIR}/src/fileviewer.cpp

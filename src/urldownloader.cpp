@@ -65,10 +65,22 @@ void URLDownloader::configureProxy()
     }
 }
 
+void URLDownloader::abort()
+{
+    aborted = true;
+    if (currentReply) currentReply->abort();
+}
+
 bool URLDownloader::download(const QString &url, const QString &file, bool showDialog,
                              bool keepBackup)
 {
     lastError.clear();
+
+    // one cancellation stops the whole batch: refuse further downloads, too
+    if (aborted) {
+        lastError = "Download canceled";
+        return false;
+    }
 
     QDialog *dlg = nullptr;
     if (showDialog) {
@@ -96,21 +108,25 @@ bool URLDownloader::download(const QString &url, const QString &file, bool showD
                          QNetworkRequest::NoLessSafeRedirectPolicy);
 
     QNetworkReply *reply = manager->get(request);
+    currentReply         = reply;
 
     // block until the download finishes
     QEventLoop loop;
     QObject::connect(reply, &QNetworkReply::finished, &loop, &QEventLoop::quit);
     loop.exec();
+    currentReply = nullptr;
 
     // close the dialog now that the download is complete
     delete dlg;
 
     if (reply->error() != QNetworkReply::NoError) {
-        // report the transfer timeout with the stall duration; nothing in this
-        // class cancels a request, so a canceled reply can only be the timeout,
-        // too (Qt versions differ in which of the two errors they use for it)
-        if ((reply->error() == QNetworkReply::TimeoutError) ||
-            (reply->error() == QNetworkReply::OperationCanceledError))
+        // a canceled reply is either the user aborting or the transfer timeout;
+        // report the latter with the stall duration (Qt versions differ in
+        // which of the two error codes a transfer timeout produces)
+        if (aborted)
+            lastError = "Download canceled";
+        else if ((reply->error() == QNetworkReply::TimeoutError) ||
+                 (reply->error() == QNetworkReply::OperationCanceledError))
             lastError = QString("Connection timed out: no data received for %1 seconds")
                             .arg(Cfg::DOWNLOAD_STALL_TIMEOUT / 1000);
         else
@@ -192,15 +208,19 @@ bool URLDownloader::download(const QString &url, const QString &file, bool showD
 
 QByteArray URLDownloader::fetchRawContent(const QString &url)
 {
+    if (aborted) return {};
+
     QNetworkRequest request{QUrl(url)};
     request.setAttribute(QNetworkRequest::RedirectPolicyAttribute,
                          QNetworkRequest::NoLessSafeRedirectPolicy);
 
     QNetworkReply *reply = manager->get(request);
+    currentReply         = reply;
 
     QEventLoop loop;
     QObject::connect(reply, &QNetworkReply::finished, &loop, &QEventLoop::quit);
     loop.exec();
+    currentReply = nullptr;
 
     QByteArray data;
     if (reply->error() == QNetworkReply::NoError) {

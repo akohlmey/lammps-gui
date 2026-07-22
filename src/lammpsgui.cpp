@@ -14,6 +14,7 @@
 #include "aboutdialog.h"
 #include "chartviewer.h"
 #include "codeeditor.h"
+#include "downloadprogress.h"
 #include "fileviewer.h"
 #include "findandreplace.h"
 #include "helpers.h"
@@ -3114,31 +3115,23 @@ void tutorialDownloadFailed(QWidget *parent, const QString &detail)
 } // namespace
 
 bool LammpsGui::downloadTutorialFiles(const QString &dir, const QList<DownloadItem> &downloads,
-                                      URLDownloader &downloader, const QString &baseUrl)
+                                      URLDownloader &downloader, const QString &baseUrl,
+                                      DownloadProgress &dlg)
 {
-    int i   = 0;
-    int num = downloads.size();
-    if (!num) num = 1;
-
-    progress->setValue(0);
-    progress->show();
-    dirstatus->hide();
+    int i         = 0;
+    const int num = downloads.size();
 
     for (const auto &item : downloads) {
         ++i;
-        status->setText(QString("Downloading file %1 of %2").arg(i).arg(num));
-        progress->setValue(
-            static_cast<int>(static_cast<double>(i) / static_cast<double>(num) * 1000.0));
-        status->repaint();
+        dlg.setProgress(QString("File %1 of %2: %3").arg(i).arg(num).arg(item.fname), i, num);
 
         QString localPath = dir + QDir::separator() + item.fname;
         if (!downloader.download(baseUrl.arg(item.ntutorial).arg(item.fname), localPath)) {
-            // download failed. abort, restore status line, and launch error dialog
-            status->setText("Error.");
-            progress->hide();
-            dirstatus->show();
-            status->repaint();
-            tutorialDownloadFailed(this, downloader.errorString());
+            // accept(), not close(): closing implies reject() and would trigger
+            // the caller's cancel connection, masking the failure as a cancellation
+            dlg.accept();
+            // no error dialog when the user canceled the download
+            if (!downloader.wasAborted()) tutorialDownloadFailed(this, downloader.errorString());
             return false;
         }
 
@@ -3191,11 +3184,25 @@ void LammpsGui::setupTutorial(int collection, int tutno, const QString &dir, boo
 
     URLDownloader downloader(this);
 
+    // splash-style progress dialog, visible from the very first network round
+    // trip: that request may stall until the transfer timeout and previously
+    // had no feedback at all, making the download look like a silent no-op
+    DownloadProgress dlg(QString("Downloading %1 Tutorial %2").arg(coll.name).arg(tutno),
+                         QPixmap(coll.logoFor(tutno)), this);
+    connect(&dlg, &QDialog::rejected, &dlg, [&downloader]() {
+        downloader.abort();
+    });
+    dlg.setBusy("Retrieving the list of tutorial files ...");
+
     // download and process manifest for selected tutorial
     // must check for error after download, e.g. when there is no network.
     QString manifestPath = dir + QDir::separator() + ".manifest";
     if (!downloader.download(baseUrl.arg(tutno).arg(".manifest"), manifestPath)) {
-        tutorialDownloadFailed(this, downloader.errorString());
+        // accept(), not close(): closing implies reject() and would trigger
+        // the cancel connection above, masking the failure as a cancellation
+        dlg.accept();
+        // no error dialog when the user canceled the download
+        if (!downloader.wasAborted()) tutorialDownloadFailed(this, downloader.errorString());
         return;
     }
 
@@ -3226,7 +3233,8 @@ void LammpsGui::setupTutorial(int collection, int tutno, const QString &dir, boo
         manifest.remove();
     }
 
-    if (!downloadTutorialFiles(dir, downloads, downloader, baseUrl)) return;
+    if (!downloadTutorialFiles(dir, downloads, downloader, baseUrl, dlg)) return;
+    dlg.accept();
 
     if (!first.isEmpty()) openFile(dir + QDir::separator() + first);
 }

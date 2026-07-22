@@ -13,9 +13,11 @@
 #define URLDOWNLOADER_H
 
 #include <QByteArray>
+#include <QPointer>
 #include <QString>
 
 class QNetworkAccessManager;
+class QNetworkReply;
 class QWidget;
 
 /**
@@ -77,6 +79,19 @@ public:
     QString errorString() const { return lastError; }
 
     /**
+     * @brief Abort the current download and any further ones on this instance
+     *
+     * Safe to call from a slot triggered while download() blocks in its event
+     * loop (e.g. the Cancel button of a progress dialog).  The in-flight
+     * request is aborted and all subsequent download() calls on this instance
+     * fail immediately, so one cancellation stops a whole batch of downloads.
+     */
+    void abort();
+
+    /** @brief Return whether the download was canceled via abort() */
+    bool wasAborted() const { return aborted; }
+
+    /**
      * @brief Return the remote SHA-256 checksum for a given URL
      *
      * Fetches the SHA256SUMS file from the same remote directory as the resource at \p url,
@@ -110,9 +125,11 @@ private:
      */
     QByteArray fetchRawContent(const QString &url);
 
-    QNetworkAccessManager *manager; ///< Qt network access manager
-    QWidget *parentWidget;          ///< Parent widget for dialogs
-    QString lastError;              ///< Last error message
+    QNetworkAccessManager *manager;       ///< Qt network access manager
+    QWidget *parentWidget;                ///< Parent widget for dialogs
+    QString lastError;                    ///< Last error message
+    QPointer<QNetworkReply> currentReply; ///< In-flight request, for abort()
+    bool aborted = false;                 ///< Set by abort(); never reset
 };
 
 #endif // URLDOWNLOADER_H

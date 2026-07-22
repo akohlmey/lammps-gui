@@ -41,6 +41,7 @@ class QWizardPage;
 
 class ChartWindow;
 class CodeEditor;
+class DownloadProgress;
 class GeneralTab;
 class Highlighter;
 class ImageViewer;
@@ -409,9 +410,16 @@ private:
         QString fname;
     };
 
-    /** @brief Download the listed tutorial files from @p baseUrl with progress; false on error */
+    /**
+     * @brief Download the listed tutorial files from @p baseUrl; false on error
+     *
+     * Per-file progress is shown in @p dlg; on failure the dialog is closed
+     * and replaced by an error dialog.  On success the dialog stays open (the
+     * caller closes it when the whole setup is complete).
+     */
     bool downloadTutorialFiles(const QString &dir, const QList<DownloadItem> &downloads,
-                               URLDownloader &downloader, const QString &baseUrl);
+                               URLDownloader &downloader, const QString &baseUrl,
+                               DownloadProgress &dlg);
 
     /** @brief Create and show/hide the output log window for a run */
     void createLogWindow(QSettings &settings);

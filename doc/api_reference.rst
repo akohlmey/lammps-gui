@@ -449,6 +449,15 @@ URLDownloader Class
 
 -----
 
+DownloadProgress Class
+----------------------
+
+.. doxygenclass:: DownloadProgress
+   :members:
+   :protected-members:
+
+-----
+
 FileViewer Class
 ----------------
 
