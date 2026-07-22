@@ -1639,6 +1639,9 @@ int LammpsGui::updateRunStatus()
         }
     }
 
+    // lastThermo("line") is 0-based like the editor block numbers (the LAMMPS
+    // thermo line counter starts at -1 and is pre-incremented), so the value
+    // is passed to setHighlight() without an offset
     void *ptr = lammps.lastThermo("line", 0);
     if (ptr) textEdit->setHighlight(*static_cast<int *>(ptr), false);
 
@@ -1815,6 +1818,7 @@ void LammpsGui::runDone()
 
     int nline = CodeEditor::NO_HIGHLIGHT;
     if (valid) {
+        // lastThermo("line") is 0-based like the editor block numbers, no offset needed
         void *ptr = lammps.lastThermo("line", 0);
         if (ptr) nline = *static_cast<int *>(ptr);
     }
