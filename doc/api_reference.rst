@@ -96,6 +96,14 @@ InputScanner Class
 
 -----
 
+SyntaxChecker Class
+-------------------
+
+.. doxygenclass:: SyntaxChecker
+   :members:
+
+-----
+
 Syntax Engine Functions
 -----------------------
 
