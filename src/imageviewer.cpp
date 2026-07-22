@@ -225,8 +225,8 @@ QPixmap color_icon(const QColor &color)
 QJsonObject loadJsonColors(QWidget *parent)
 {
     QJsonObject obj;
-    QString fileName = QFileDialog::getOpenFileName(parent, "Load Colors from JSON", "",
-                                                    "JSON files (*.json);;All files (*)");
+    QString fileName = QFileDialog::getOpenFileName(parent, "Load Colors from JSON",
+                                                    QDir::currentPath(), Cfg::FILTER_JSON);
     if (fileName.isEmpty()) return obj;
 
     QFile file(fileName);
@@ -285,9 +285,11 @@ void saveJsonColors(QWidget *parent, const QJsonArray &colors, const QJsonObject
     root["colors"]      = colors;
     root["lights"]      = lights;
 
-    QString fileName = QFileDialog::getSaveFileName(parent, "Save Colors to JSON", "",
-                                                    "JSON files (*.json);;All files (*)");
+    QString fileName = QFileDialog::getSaveFileName(parent, "Save Colors to JSON",
+                                                    QDir::current().absoluteFilePath("colors.json"),
+                                                    Cfg::FILTER_JSON);
     if (fileName.isEmpty()) return;
+    fileName = ensureFileSuffix(fileName, "json");
 
     QFile file(fileName);
     if (!file.open(QIODevice::WriteOnly)) {
@@ -1744,7 +1746,7 @@ void ImageViewer::createImage()
 
 void ImageViewer::saveAs()
 {
-    exportImage(this, &image, "ImageViewer");
+    exportImage(this, &image, "ImageViewer", defaultFileStem(filename) + ".png");
 }
 
 void ImageViewer::copy()

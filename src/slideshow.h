@@ -171,6 +171,7 @@ private:
 
 private:
     LammpsGui *lammpsgui;       ///< Main widget pointer for receiving signals
+    QString filename;           ///< Input or first image file name for default save-file names
     ImageCache cache;           ///< Converted images and extracted movie frames
     QImage image;               ///< Currently displayed image
     QImage rawImage;            ///< Raw image before transformations

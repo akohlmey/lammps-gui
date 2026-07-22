@@ -101,11 +101,34 @@ extern QString getLammpsDownloadUrl();
 
 /**
  * @brief Save image directly or convert with ImageMagick
- * @param parent  Pointer to parent widget
- * @param image   Pointer to image class
- * @param title   Warning dialog title if failed
+ * @param parent       Pointer to parent widget
+ * @param image        Pointer to image class
+ * @param title        Warning dialog title if failed
+ * @param defaultname  Default file name offered by the save dialog (resolved
+ *                     relative to the current working directory)
  */
-extern void exportImage(QWidget *parent, QImage *image, const QString &title);
+extern void exportImage(QWidget *parent, QImage *image, const QString &title,
+                        const QString &defaultname);
+
+/**
+ * @brief Derive the default save-file name stem from an input or data file name
+ * @param filename Name of the file the stem is derived from (may include a path)
+ * @return the stem to build default save-file names from
+ *
+ * Strips any directory part, a leading "in." prefix, and any trailing known
+ * file extensions (input, plottable data, log, restart, image, and movie
+ * formats), so "in.melt", "melt.lmp", or "melt.lmp.txt" all yield "melt".
+ * Falls back to "lammps" when nothing remains.
+ */
+[[nodiscard]] extern QString defaultFileStem(const QString &filename);
+
+/**
+ * @brief Append a default suffix to a file name that has no suffix
+ * @param filename File name selected in a save dialog
+ * @param suffix   Default suffix (without the leading dot)
+ * @return the file name with the default suffix appended if it had none
+ */
+[[nodiscard]] extern QString ensureFileSuffix(const QString &filename, const QString &suffix);
 
 /**
  * @brief Check if an executable is in the executable search path

@@ -901,19 +901,21 @@ void LammpsGui::newDocument()
 
 void LammpsGui::open()
 {
-    QString fileName = QFileDialog::getOpenFileName(this, "Open the file");
+    QString fileName =
+        QFileDialog::getOpenFileName(this, "Open the file", QDir::currentPath(), Cfg::FILTER_INPUT);
     openFile(fileName);
 }
 
 void LammpsGui::view()
 {
-    QString fileName = QFileDialog::getOpenFileName(this, "Open the file");
+    QString fileName = QFileDialog::getOpenFileName(this, "Open the file", QDir::currentPath());
     viewFile(fileName);
 }
 
 void LammpsGui::inspect()
 {
-    QString fileName = QFileDialog::getOpenFileName(this, "Open the restart file");
+    QString fileName = QFileDialog::getOpenFileName(this, "Open the restart file",
+                                                    QDir::currentPath(), Cfg::FILTER_RESTART);
     inspectFile(fileName);
 }
 
@@ -937,10 +939,12 @@ void LammpsGui::writeRestart()
         return;
     }
 
-    QString fileName =
-        QFileDialog::getSaveFileName(this, "Write Restart File", currentFile + ".restart",
-                                     "LAMMPS restart files (*.restart *.rest);;All files (*)");
+    QString fileName = QFileDialog::getSaveFileName(
+        this, "Write Restart File",
+        QDir::current().absoluteFilePath(defaultFileStem(currentFile) + ".restart"),
+        Cfg::FILTER_RESTART);
     if (fileName.isEmpty()) return;
+    fileName = ensureFileSuffix(fileName, "restart");
 
     {
         StdoutSilencer guard;
@@ -1483,14 +1487,22 @@ void LammpsGui::save()
     purgeInspectList();
     QString fileName = currentFile;
     // If we don't have a filename from before, get one.
-    if (fileName.isEmpty()) fileName = QFileDialog::getSaveFileName(this, "Save");
+    if (fileName.isEmpty()) {
+        fileName = QFileDialog::getSaveFileName(
+            this, "Save", QDir::current().absoluteFilePath(defaultFileStem(currentFile) + ".lmp"),
+            Cfg::FILTER_INPUT);
+        fileName = ensureFileSuffix(fileName, "lmp");
+    }
 
     writeFile(fileName);
 }
 
 void LammpsGui::saveAs()
 {
-    QString fileName = QFileDialog::getSaveFileName(this, "Save as");
+    QString fileName = QFileDialog::getSaveFileName(
+        this, "Save as", QDir::current().absoluteFilePath(defaultFileStem(currentFile) + ".lmp"),
+        Cfg::FILTER_INPUT);
+    fileName = ensureFileSuffix(fileName, "lmp");
     writeFile(fileName);
 }
 
@@ -2080,9 +2092,8 @@ void LammpsGui::extendRun()
 
 void LammpsGui::plotDataFile()
 {
-    QString fileName = QFileDialog::getOpenFileName(
-        this, "Open Data File to Plot", QString(),
-        "Data files (*.dat *.csv *.yaml *.yml *.json *.txt);;All files (*)");
+    QString fileName = QFileDialog::getOpenFileName(this, "Open Data File to Plot",
+                                                    QDir::currentPath(), Cfg::FILTER_DATA);
     if (fileName.isEmpty()) return;
 
     QString error;

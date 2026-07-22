@@ -687,3 +687,71 @@ TEST(ViewerFitSize, NegativeBudgetClampsToZero)
     // tiny screens can make the budget negative; never return a negative size
     EXPECT_EQ(viewerFitSize(QSize(400, 300), QSize(-10, -5), 2, 16), QSize(0, 0));
 }
+
+// Tests for defaultFileStem function
+
+TEST(DefaultFileStem, LeadingInPrefix)
+{
+    EXPECT_EQ(defaultFileStem("in.melt"), QString("melt"));
+}
+
+TEST(DefaultFileStem, TrailingInputExtensions)
+{
+    EXPECT_EQ(defaultFileStem("melt.lmp"), QString("melt"));
+    EXPECT_EQ(defaultFileStem("melt.txt"), QString("melt"));
+    EXPECT_EQ(defaultFileStem("melt.lmp.txt"), QString("melt"));
+    EXPECT_EQ(defaultFileStem("in.melt.lmp"), QString("melt"));
+}
+
+TEST(DefaultFileStem, EverythingElseRemains)
+{
+    EXPECT_EQ(defaultFileStem("melt"), QString("melt"));
+    EXPECT_EQ(defaultFileStem("melt-2d"), QString("melt-2d"));
+    EXPECT_EQ(defaultFileStem("melt.2d"), QString("melt.2d"));
+    EXPECT_EQ(defaultFileStem("melt.data"), QString("melt.data"));
+    EXPECT_EQ(defaultFileStem("in.melt (ACF)"), QString("melt (ACF)"));
+}
+
+TEST(DefaultFileStem, StripsDirectoryPart)
+{
+    EXPECT_EQ(defaultFileStem("/some/path/in.melt"), QString("melt"));
+    EXPECT_EQ(defaultFileStem("path/to/melt.lmp"), QString("melt"));
+}
+
+TEST(DefaultFileStem, KnownDerivedExtensions)
+{
+    // data, log, restart, image, and movie files fed to the viewers
+    EXPECT_EQ(defaultFileStem("thermo.csv"), QString("thermo"));
+    EXPECT_EQ(defaultFileStem("thermo.dat"), QString("thermo"));
+    EXPECT_EQ(defaultFileStem("thermo.yaml"), QString("thermo"));
+    EXPECT_EQ(defaultFileStem("melt.log"), QString("melt"));
+    EXPECT_EQ(defaultFileStem("melt.restart"), QString("melt"));
+    EXPECT_EQ(defaultFileStem("snap.png"), QString("snap"));
+    EXPECT_EQ(defaultFileStem("movie.mp4"), QString("movie"));
+    EXPECT_EQ(defaultFileStem("MELT.LMP"), QString("MELT"));
+}
+
+TEST(DefaultFileStem, EmptyFallsBackToLammps)
+{
+    EXPECT_EQ(defaultFileStem(""), QString("lammps"));
+    EXPECT_EQ(defaultFileStem("in."), QString("lammps"));
+}
+
+// Tests for ensureFileSuffix function
+
+TEST(EnsureFileSuffix, AppendsWhenMissing)
+{
+    EXPECT_EQ(ensureFileSuffix("melt", "log"), QString("melt.log"));
+    EXPECT_EQ(ensureFileSuffix("/some/path/melt", "png"), QString("/some/path/melt.png"));
+}
+
+TEST(EnsureFileSuffix, KeepsExistingSuffix)
+{
+    EXPECT_EQ(ensureFileSuffix("melt.out", "log"), QString("melt.out"));
+    EXPECT_EQ(ensureFileSuffix("in.melt", "lmp"), QString("in.melt"));
+}
+
+TEST(EnsureFileSuffix, EmptyStaysEmpty)
+{
+    EXPECT_EQ(ensureFileSuffix("", "log"), QString(""));
+}
