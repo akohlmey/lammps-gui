@@ -236,7 +236,8 @@ void LammpsGui::createRunMenu()
     addMenuAction(menu, ":/icons/run-file.svg", "Run LAMMPS from &File", "Ctrl+Shift+Return",
                   &LammpsGui::runFile);
     addMenuAction(menu, ":/icons/process-stop.svg", "&Stop LAMMPS", "Ctrl+/", &LammpsGui::stopRun);
-    addMenuAction(menu, ":/icons/extend-run.svg", "&Extend Run...", "Ctrl+E", &LammpsGui::extendRun);
+    addMenuAction(menu, ":/icons/extend-run.svg", "&Extend Run...", "Ctrl+E",
+                  &LammpsGui::extendRun);
     menu->addSeparator();
 
     addMenuAction(menu, ":/icons/system-restart.svg", "Relaunch &LAMMPS Instance", "",
