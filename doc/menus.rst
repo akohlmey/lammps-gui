@@ -188,7 +188,7 @@ the buffer, missing input files, missing required arguments, and
 non-numeric arguments where strictly numeric values are required.  When
 no problems are found, a corresponding message is shown; otherwise the
 cursor moves to the first finding.  The same check runs automatically
-before every run (this can be disabled in the *General Settings* of the
+before every run (this can be disabled in the *Editor Settings* of the
 *Preferences* dialog); in that case only error-level findings trigger a
 dialog asking whether to run anyway, while warnings are only noted in
 the status bar.  The checker is designed to avoid false alarms: any

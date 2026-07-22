@@ -91,12 +91,6 @@ General Settings
    - **Include citation details:** when checked, full citation info will be
      included in the Output window.  This is equivalent to using ``-cite
      screen`` on the command-line.
-   - **Check input for problems before a run:** when checked (the
-     default), the static input check (see the *Check Input via
-     Heuristics* entry of the :ref:`Run menu <run_menu>`) runs
-     automatically before every run.  Only error-level findings, which
-     would make LAMMPS reject the input, open a dialog asking whether to
-     run anyway; warnings are only noted in the status bar.
    - **Show Output window by default:** when checked, the screen output of
      a LAMMPS run will be collected in an Output window during the run.
    - **Show Charts window by default:** when checked, the thermodynamic
@@ -240,6 +234,13 @@ reformatting when hitting the 'Enter' key, the automatic display of
 the completion pop-up window, and whether auto-save mode is enabled.
 In auto-save mode, the editor buffer is saved before a run or before
 exiting LAMMPS-GUI.
+
+The last setting enables or disables (default: enabled) the static
+input check (see the *Check Input via Heuristics* entry of the
+:ref:`Run menu <run_menu>`) that runs automatically before every run.
+Only error-level findings, which would make LAMMPS reject the input,
+open a dialog asking whether to run anyway; warnings are only noted in
+the status bar.
 
 Charts Settings
 ^^^^^^^^^^^^^^^

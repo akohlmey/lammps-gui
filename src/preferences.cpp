@@ -188,8 +188,6 @@ void Preferences::accept()
     if (box) settings->setValue(Keys::ECHO, box->isChecked());
     box = tabWidget->findChild<QCheckBox *>("cite");
     if (box) settings->setValue(Keys::CITE, box->isChecked());
-    box = tabWidget->findChild<QCheckBox *>("lintcheck");
-    if (box) settings->setValue(Keys::LINTCHECK, box->isChecked());
     box = tabWidget->findChild<QCheckBox *>("logreplace");
     if (box) settings->setValue(Keys::LOGREPLACE, box->isChecked());
     box = tabWidget->findChild<QCheckBox *>("chartreplace");
@@ -236,6 +234,10 @@ void Preferences::accept()
     box = tabWidget->findChild<QCheckBox *>("savval");
     if (box) settings->setValue(Keys::AUTOSAVE, box->isChecked());
     settings->endGroup();
+
+    // stored outside the reformat group; also read by doRun()
+    box = tabWidget->findChild<QCheckBox *>("lintcheck");
+    if (box) settings->setValue(Keys::LINTCHECK, box->isChecked());
 
     // chart window settings
 
@@ -287,9 +289,6 @@ GeneralTab::GeneralTab(QSettings *_settings, LammpsWrapper *_lammps, LammpsGui *
     auto *cite = new QCheckBox("Include citation details");
     cite->setObjectName("cite");
     cite->setChecked(settings->value(Keys::CITE, false).toBool());
-    auto *lint = new QCheckBox("Check input for problems before a run");
-    lint->setObjectName("lintcheck");
-    lint->setChecked(settings->value(Keys::LINTCHECK, true).toBool());
     auto *logv = new QCheckBox("Show Output window by default");
     logv->setObjectName("viewlog");
     logv->setChecked(settings->value(Keys::VIEWLOG, true).toBool());
@@ -343,7 +342,6 @@ GeneralTab::GeneralTab(QSettings *_settings, LammpsWrapper *_lammps, LammpsGui *
     layout->addWidget(new QHline, nrow++, 0, 1, 2);
     layout->addWidget(echo, nrow, 0);
     layout->addWidget(cite, nrow++, 1);
-    layout->addWidget(lint, nrow++, 0, 1, 2);
     layout->addWidget(new QHline, nrow++, 0, 1, 2);
     layout->addWidget(logv, nrow, 0);
     layout->addWidget(logr, nrow++, 1);
@@ -929,6 +927,7 @@ EditorTab::EditorTab(QSettings *_settings, QWidget *parent) : QWidget(parent), s
     auto *retlbl   = new QLabel("Reformat with 'Enter':");
     auto *autolbl  = new QLabel("Automatic completion:");
     auto *savlbl   = new QLabel("Auto-save on 'Run' and 'Quit':");
+    auto *lintlbl  = new QLabel("Check input before 'Run':");
     auto *cmdval   = new QSpinBox;
     auto *typeval  = new QSpinBox;
     auto *idval    = new QSpinBox;
@@ -956,6 +955,11 @@ EditorTab::EditorTab(QSettings *_settings, QWidget *parent) : QWidget(parent), s
     savval->setChecked(settings->value(Keys::AUTOSAVE, false).toBool());
     settings->endGroup();
 
+    // the pre-run check setting is stored outside the reformat group
+    auto *lintval = new QCheckBox;
+    lintval->setObjectName("lintcheck");
+    lintval->setChecked(settings->value(Keys::LINTCHECK, true).toBool());
+
     int i = 0;
     grid->addWidget(reformat, i++, 0, 1, 2, Qt::AlignTop | Qt::AlignHCenter);
     grid->addWidget(cmdlbl, i, 0, Qt::AlignTop);
@@ -973,6 +977,8 @@ EditorTab::EditorTab(QSettings *_settings, QWidget *parent) : QWidget(parent), s
     grid->addWidget(new QLabel(" "), i++, 0);
     grid->addWidget(savlbl, i, 0, Qt::AlignTop);
     grid->addWidget(savval, i++, 1, Qt::AlignVCenter);
+    grid->addWidget(lintlbl, i, 0, Qt::AlignTop);
+    grid->addWidget(lintval, i++, 1, Qt::AlignVCenter);
 
     grid->addItem(new QSpacerItem(100, 100, QSizePolicy::Minimum, QSizePolicy::Expanding), i, 0);
     grid->addItem(new QSpacerItem(100, 100, QSizePolicy::Minimum, QSizePolicy::Expanding), i, 1);

@@ -284,7 +284,7 @@ void LammpsGui::createRunMenu()
                   &LammpsGui::restartLammps);
     menu->addSeparator();
 
-    addMenuAction(menu, ":/icons/document-check.svg", "Chec&k Input", "Ctrl+K",
+    addMenuAction(menu, ":/icons/document-check.svg", "Chec&k Input via Heuristics", "Ctrl+K",
                   &LammpsGui::checkInput);
     addMenuAction(menu, ":/icons/system-dryrun.svg", "Check Input via &Dry Run", "Ctrl+Shift+K",
                   &LammpsGui::dryRunBuffer);
@@ -1999,10 +1999,19 @@ void LammpsGui::checkInput()
     const auto issues =
         checker.check(textEdit->toPlainText(), presetVariableNames(), QDir::currentPath());
     if (issues.isEmpty()) {
+        textEdit->setHighlight(CodeEditor::NO_HIGHLIGHT, false);
         information(this, "LAMMPS-GUI - Input Check", "No problems found.");
         return;
     }
     showLintDialog(this, issues, false);
+    // highlight the first error-level finding like a run error; with only
+    // warnings just move the cursor to the first finding
+    for (const auto &issue : issues) {
+        if (issue.severity == LintSeverity::Error) {
+            textEdit->setHighlight(issue.line - 1, true);
+            return;
+        }
+    }
     textEdit->setCursor(issues.first().line - 1);
 }
 
