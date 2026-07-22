@@ -532,6 +532,14 @@ TEST(LammpsSyntaxTest, ShippedSpecTableLoads)
     EXPECT_EQ(syntax.argSpec(syntax.commandIndex("pair_style"), 1).cat, StyleCat::Pair);
     EXPECT_EQ(syntax.argSpec(syntax.commandIndex("units"), 1).cat, StyleCat::Units);
 
+    // hybrid sub-style positions
+    EXPECT_EQ(syntax.argSpec(syntax.commandIndex("pair_style"), 2).role, ArgRole::SubStyle);
+    EXPECT_EQ(syntax.argSpec(syntax.commandIndex("pair_style"), 7).role, ArgRole::SubStyle);
+    EXPECT_EQ(syntax.argSpec(syntax.commandIndex("pair_coeff"), 3).role, ArgRole::SubStyle);
+    EXPECT_EQ(syntax.argSpec(syntax.commandIndex("pair_coeff"), 3).cat, StyleCat::Pair);
+    EXPECT_EQ(syntax.argSpec(syntax.commandIndex("bond_coeff"), 2).role, ArgRole::SubStyle);
+    EXPECT_EQ(syntax.argSpec(syntax.commandIndex("bond_coeff"), 2).cat, StyleCat::Bond);
+
     // display categories are preserved from the historically grown scheme
     EXPECT_EQ(syntax.commandCategory("lattice"), CmdCat::Lattice);
     EXPECT_EQ(syntax.commandCategory("thermo_style"), CmdCat::Output);
@@ -554,11 +562,14 @@ LammpsSyntax &completionSyntax()
     static LammpsSyntax syntax;
     static bool loaded = false;
     if (!loaded) {
-        syntax.loadCommandSpecsFromString(QStringLiteral("fix particle 3 defid,group,style:fix\n"
-                                                         "pair_style particle 1 style:pair\n"
-                                                         "pair_coeff particle 2 keyword,keyword\n"
-                                                         "read_data output 1 file\n"
-                                                         "units lattice 1 style:units\n"));
+        syntax.loadCommandSpecsFromString(
+            QStringLiteral("fix particle 3 defid,group,style:fix\n"
+                           "pair_style particle 1 style:pair,substyle:pair*\n"
+                           "pair_coeff particle 2 keyword,keyword,substyle:pair*\n"
+                           "dump particle 5 defid,group,style:dump,int,file\n"
+                           "dump_modify modify 2 label,keyword\n"
+                           "read_data output 1 file\n"
+                           "units lattice 1 style:units\n"));
         loaded = true;
     }
     return syntax;
@@ -609,6 +620,75 @@ TEST(LammpsSyntaxTest, CompletionTargetPositions)
     EXPECT_EQ(target.kind, CompleterKind::None);
     target = syntax.completionTarget(0, QStringLiteral("# fix"), 4);
     EXPECT_EQ(target.kind, CompleterKind::None);
+}
+
+TEST(LammpsSyntaxTest, CompletionTargetSubStyles)
+{
+    const auto &syntax = completionSyntax();
+
+    // sub-style positions of hybrid styles complete from the category list
+    auto target = syntax.completionTarget(0, QStringLiteral("pair_style hybrid lj"), 20);
+    EXPECT_EQ(target.kind, CompleterKind::Style);
+    EXPECT_EQ(target.cat, StyleCat::Pair);
+    target = syntax.completionTarget(0, QStringLiteral("pair_coeff 1 2 lj"), 17);
+    EXPECT_EQ(target.kind, CompleterKind::Style);
+    EXPECT_EQ(target.cat, StyleCat::Pair);
+
+    // numeric arguments in the same positions offer nothing
+    target = syntax.completionTarget(0, QStringLiteral("pair_coeff 1 2 2."), 17);
+    EXPECT_EQ(target.kind, CompleterKind::None);
+    // variable references keep their reference completion
+    target = syntax.completionTarget(0, QStringLiteral("pair_coeff 1 2 v_x"), 18);
+    EXPECT_EQ(target.kind, CompleterKind::VarName);
+    // the "pair_coeff * * <potential file>" use keeps file completion
+    target = syntax.completionTarget(0, QStringLiteral("pair_coeff * * Si"), 17);
+    EXPECT_EQ(target.kind, CompleterKind::File);
+}
+
+TEST(LammpsSyntaxTest, CompletionTargetDumpImage)
+{
+    const auto &syntax = completionSyntax();
+
+    // keyword section of a dump image command
+    const QString kwline = QStringLiteral("dump 1 all image 100 f.png type type zo");
+    auto target          = syntax.completionTarget(0, kwline, kwline.size());
+    EXPECT_EQ(target.kind, CompleterKind::Style);
+    EXPECT_EQ(target.cat, StyleCat::ImageKw);
+
+    // color-value positions of dump image keywords
+    const QString bondline = QStringLiteral("dump 1 all image 100 f.png type type bond re");
+    target                 = syntax.completionTarget(0, bondline, bondline.size());
+    EXPECT_EQ(target.kind, CompleterKind::Style);
+    EXPECT_EQ(target.cat, StyleCat::Color);
+
+    // color-value positions of dump_modify keywords
+    const QString modline = QStringLiteral("dump_modify 1 backcolor wh");
+    target                = syntax.completionTarget(0, modline, modline.size());
+    EXPECT_EQ(target.kind, CompleterKind::Style);
+    EXPECT_EQ(target.cat, StyleCat::Color);
+    const QString acolorline = QStringLiteral("dump_modify 1 acolor 1 re");
+    target                   = syntax.completionTarget(0, acolorline, acolorline.size());
+    EXPECT_EQ(target.kind, CompleterKind::Style);
+    EXPECT_EQ(target.cat, StyleCat::Color);
+
+    // no image keyword completion for other dump styles
+    const QString atomline = QStringLiteral("dump 1 all atom 100 f.dump xx yy zo");
+    target                 = syntax.completionTarget(0, atomline, atomline.size());
+    EXPECT_EQ(target.kind, CompleterKind::None);
+}
+
+TEST(LammpsSyntaxTest, RegistryImageKeywordsAndColors)
+{
+    LammpsSyntax syntax;
+    // the dump image keywords are seeded by the constructor
+    EXPECT_TRUE(syntax.knownStyle(StyleCat::ImageKw, "zoom"));
+    EXPECT_TRUE(syntax.knownStyle(StyleCat::ImageKw, "ssao"));
+    EXPECT_FALSE(syntax.knownStyle(StyleCat::ImageKw, "banana"));
+    // color names are injected
+    EXPECT_FALSE(syntax.knownStyle(StyleCat::Color, "red"));
+    syntax.setStyles(StyleCat::Color, {"red", "white", "dodgerblue"});
+    EXPECT_TRUE(syntax.knownStyle(StyleCat::Color, "red"));
+    EXPECT_FALSE(syntax.knownStyle(StyleCat::Color, "vermilion"));
 }
 
 TEST(LammpsSyntaxTest, CompletionTargetOnContinuationLines)

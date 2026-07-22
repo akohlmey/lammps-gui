@@ -92,15 +92,22 @@ private:
         Comment,     ///< comments
         Variable,    ///< $-references and c_/f_/v_ style references
         Special,     ///< special keywords and the '&' continuation marker
+        SubStyle,    ///< sub-styles of hybrid styles
         Count        ///< number of format slots
     };
 
     /// format for a command word of the given category
     const QTextCharFormat &cmdFormat(CmdCat cat) const;
 
+    /// format rendering a color name in its own color (cached; low-contrast
+    /// colors get a gray chip background to stay readable on the theme)
+    const QTextCharFormat &colorFormat(const QString &name);
+
     QTextCharFormat formats[static_cast<int>(Fmt::Count)]; ///< format table
+    QHash<QString, QTextCharFormat> colorFormats;          ///< cache for color name formats
     QColor unknownColor;                                   ///< underline color for unknown names
     const LammpsSyntax *syntax;                            ///< syntax registry (not owned)
+    bool lightTheme  = true;                               ///< active theme at construction
     int cursorBlock  = -1;                                 ///< block number of the tracked cursor
     int cursorColumn = -1;                                 ///< column of the tracked cursor
 };

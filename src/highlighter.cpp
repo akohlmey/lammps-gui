@@ -58,6 +58,8 @@ Highlighter::Highlighter(const LammpsSyntax *_syntax, QTextDocument *parent) :
         {Qt::red, QColorConstants::Red, QFont::Normal, QFont::Bold},                  // Comment
         {Qt::darkGray, QColorConstants::Svg::lightgray, QFont::Bold, QFont::Bold},    // Variable
         {Qt::darkMagenta, QColorConstants::Magenta, QFont::Bold, QFont::Bold},        // Special
+        {QColorConstants::Svg::steelblue, QColorConstants::Svg::cornflowerblue, QFont::Bold,
+         QFont::Bold}, // SubStyle
     };
     static_assert(sizeof(palette) / sizeof(palette[0]) == static_cast<int>(Fmt::Count),
                   "palette table must match the Fmt enumeration");
@@ -69,6 +71,26 @@ Highlighter::Highlighter(const LammpsSyntax *_syntax, QTextDocument *parent) :
         formats[i].setFontWeight(light ? palette[i].lightWeight : palette[i].darkWeight);
     }
     unknownColor = light ? QColor(Qt::red) : QColor(QColorConstants::Svg::orangered);
+    lightTheme   = light;
+}
+
+const QTextCharFormat &Highlighter::colorFormat(const QString &name)
+{
+    const auto found = colorFormats.constFind(name);
+    if (found != colorFormats.constEnd()) return *found;
+
+    const QColor color(name);
+    if (!color.isValid()) return *colorFormats.insert(name, formats[static_cast<int>(Fmt::String)]);
+    QTextCharFormat fmt;
+    fmt.setForeground(color);
+    fmt.setFontWeight(QFont::Bold);
+    // keep low-contrast color names readable with a gray chip background
+    const int luminance = (299 * color.red() + 587 * color.green() + 114 * color.blue()) / 1000;
+    if (lightTheme && (luminance > 186))
+        fmt.setBackground(QColor(64, 64, 64));
+    else if (!lightTheme && (luminance < 70))
+        fmt.setBackground(QColor(200, 200, 200));
+    return *colorFormats.insert(name, fmt);
 }
 
 const QTextCharFormat &Highlighter::cmdFormat(CmdCat cat) const
@@ -136,6 +158,19 @@ void Highlighter::highlightBlock(const QString &text)
     const bool checkNames = syntax->isPopulated();
     const bool cursorHere = (currentBlock().blockNumber() == cursorBlock);
 
+    // dump image / dump_modify lines show color names in their actual color
+    // and mark the dump image keywords.  On continuation lines the dump style
+    // is not visible, so the keyword marking is not restricted there.
+    const QString cmdName = freshLine
+                                ? argText.value(0)
+                                : (syntax->spec(cmdIdx) ? syntax->spec(cmdIdx)->name : QString());
+    const bool dumpish    = (cmdName == QStringLiteral("dump")) ||
+                         (cmdName == QStringLiteral("dump_modify"));
+    const bool imageKeywords =
+        (cmdName == QStringLiteral("dump")) &&
+        (!argText.contains(3) || (argText.value(3) == QStringLiteral("image")) ||
+         (argText.value(3) == QStringLiteral("movie")));
+
     for (const auto &tok : lt.tokens) {
         QTextCharFormat fmt;
         bool unknown = false;
@@ -175,6 +210,15 @@ void Highlighter::highlightBlock(const QString &text)
                             unknown = checkNames && !tok.hasSubst && !tok.fragment &&
                                       !syntax->knownStyle(spec.cat, word);
                             break;
+                        case ArgRole::SubStyle:
+                            // a word in a sub-style position is a sub-style exactly
+                            // when it is a known style of the category (the same
+                            // membership test LAMMPS uses to parse hybrid style
+                            // arguments); other words are arguments of the
+                            // sub-styles and are never flagged as unknown
+                            if (checkNames && syntax->knownStyle(spec.cat, word))
+                                fmt = formats[static_cast<int>(Fmt::SubStyle)];
+                            break;
                         default:
                             break;
                     }
@@ -185,6 +229,14 @@ void Highlighter::highlightBlock(const QString &text)
                         fmt = formats[static_cast<int>(Fmt::Special)];
                     else if (isReferenceWord(word))
                         fmt = formats[static_cast<int>(Fmt::Variable)];
+                    // colors and keywords on dump image / dump_modify lines
+                    if (dumpish) {
+                        if (syntax->knownStyle(StyleCat::Color, word))
+                            fmt = colorFormat(word);
+                        else if (imageKeywords && (tok.argIndex >= 8) &&
+                                 syntax->knownStyle(StyleCat::ImageKw, word))
+                            fmt = formats[static_cast<int>(Fmt::String)];
+                    }
                 }
                 break;
             }

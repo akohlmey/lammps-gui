@@ -67,6 +67,16 @@ the ``&`` line continuation character are highlighted in the context of
 the command they continue, including style names or quoted strings that
 are split across lines.
 
+Sub-styles of hybrid styles are recognized the same way LAMMPS parses
+them -- by checking against the known styles of the loaded library --
+and are shown in their own color, both in the arguments of the
+``*_style`` command and in the sub-style position of the corresponding
+``*_coeff`` commands, where they also auto-complete.  On `dump image
+<https://docs.lammps.org/dump_image.html>`_ and ``dump_modify`` lines
+the dump image keywords are marked, and color names are displayed in
+their actual color; keywords and color names auto-complete in the
+positions where they are expected.
+
 Command and style names that are not known to the LAMMPS library that
 LAMMPS-GUI has loaded -- for example due to a typo or because the
 corresponding package was not included when the library was compiled --

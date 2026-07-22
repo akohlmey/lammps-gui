@@ -38,15 +38,22 @@ protected:
     // seed a small synthetic registry: commands, specs, and a few styles
     static void seed(LammpsSyntax &syntax)
     {
-        syntax.loadCommandSpecsFromString(QStringLiteral("fix particle 3 defid,group,style:fix\n"
-                                                         "pair_style particle 1 style:pair\n"
-                                                         "units lattice 1 style:units\n"
-                                                         "run run 1 int\n"
-                                                         "unfix special 1 label\n"
-                                                         "print output 1 any\n"));
-        syntax.setCommands({"fix", "pair_style", "units", "run", "unfix", "print", "clear"});
+        syntax.loadCommandSpecsFromString(
+            QStringLiteral("fix particle 3 defid,group,style:fix\n"
+                           "pair_style particle 1 style:pair,substyle:pair*\n"
+                           "pair_coeff particle 2 keyword,keyword,substyle:pair*\n"
+                           "dump particle 5 defid,group,style:dump,int,file\n"
+                           "dump_modify modify 2 label,keyword\n"
+                           "units lattice 1 style:units\n"
+                           "run run 1 int\n"
+                           "unfix special 1 label\n"
+                           "print output 1 any\n"));
+        syntax.setCommands({"fix", "pair_style", "pair_coeff", "dump", "dump_modify", "units",
+                            "run", "unfix", "print", "clear"});
         syntax.setStyles(StyleCat::Fix, {"nvt", "nve"});
-        syntax.setStyles(StyleCat::Pair, {"lj/cut", "zero"});
+        syntax.setStyles(StyleCat::Pair, {"lj/cut", "zero", "hybrid"});
+        syntax.setStyles(StyleCat::Dump, {"atom", "image", "movie"});
+        syntax.setStyles(StyleCat::Color, {"red", "white", "dodgerblue"});
     }
 
     // final character format at a column of a block
@@ -244,6 +251,59 @@ TEST_F(HighlighterTest, TripleQuoteBlockAndEditResync)
     // line 2 now opens a block ("end""" ends with an unclosed triple quote),
     // so line 3 has become string content
     EXPECT_EQ(formatAt(doc, 3, 0), insideFmt);
+}
+
+TEST_F(HighlighterTest, HybridSubStyles)
+{
+    LammpsSyntax syntax;
+    seed(syntax);
+    QTextDocument doc;
+    doc.setPlainText(QStringLiteral("pair_style hybrid lj/cut 2.5 zero 3.0\n"
+                                    "pair_coeff 1 2 lj/cut 1.0 1.0\n"
+                                    "pair_style hybrid nosuch 1.0\n"
+                                    "run 100"));
+    Highlighter hl(&syntax, &doc);
+    hl.rehighlight();
+
+    // the two sub-styles share one format that differs from the parent style
+    // format and from the number format
+    const auto subFmt = formatAt(doc, 0, 18);                          // lj/cut
+    EXPECT_EQ(formatAt(doc, 0, 29).foreground(), subFmt.foreground()); // zero
+    EXPECT_NE(formatAt(doc, 0, 11).foreground(), subFmt.foreground()); // hybrid (Style role)
+    EXPECT_NE(formatAt(doc, 0, 25).foreground(), subFmt.foreground()); // 2.5 (number)
+    // the sub-style of a pair_coeff command uses the same format
+    EXPECT_EQ(formatAt(doc, 1, 15).foreground(), subFmt.foreground());
+    // words that are not a known style are arguments: no sub-style color and,
+    // unlike style positions, no unknown marker either
+    EXPECT_NE(formatAt(doc, 2, 18).foreground(), subFmt.foreground());
+    EXPECT_FALSE(hasWave(formatAt(doc, 2, 18)));
+}
+
+TEST_F(HighlighterTest, DumpImageColorsAndKeywords)
+{
+    LammpsSyntax syntax;
+    seed(syntax);
+    QTextDocument doc;
+    doc.setPlainText(QStringLiteral("dump 2 all image 100 i.png type type zoom 1.6 box yes 0.02\n"
+                                    "dump_modify 2 backcolor white acolor 1 red\n"
+                                    "dump 3 all atom 100 f.dump"));
+    Highlighter hl(&syntax, &doc);
+    hl.rehighlight();
+
+    // dump image keywords are marked (same color as strings)
+    QTextDocument doc2;
+    doc2.setPlainText(QStringLiteral("print 'x'"));
+    Highlighter hl2(&syntax, &doc2);
+    hl2.rehighlight();
+    EXPECT_EQ(formatAt(doc, 0, 37).foreground(), formatAt(doc2, 0, 6).foreground()); // zoom
+    EXPECT_EQ(formatAt(doc, 0, 46).foreground(), formatAt(doc2, 0, 6).foreground()); // box
+
+    // color names render in their own color; low-contrast ones get a chip
+    const auto whiteFmt = formatAt(doc, 1, 24);
+    EXPECT_EQ(whiteFmt.foreground().color(), QColor(QStringLiteral("white")));
+    EXPECT_NE(whiteFmt.background(), QBrush()); // chip background set on a light theme
+    const auto redFmt = formatAt(doc, 1, 39);
+    EXPECT_EQ(redFmt.foreground().color(), QColor(QStringLiteral("red")));
 }
 
 TEST_F(HighlighterTest, VarRefOverlayInsideStrings)

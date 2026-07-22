@@ -24,6 +24,7 @@
 #include "plotdata.h"
 #include "plotdatadialog.h"
 #include "preferences.h"
+#include "qaddon.h"
 #include "setvariables.h"
 #include "slideshow.h"
 #include "stdcapture.h"
@@ -167,6 +168,8 @@ void LammpsGui::setupUi(QSettings &settings, QFont &allFont, QFont &monoFont)
     // category and argument role colors are correct from the first paint;
     // the introspected name lists are added later by populateSyntax()
     syntax.loadCommandSpecs(Cfg::SYNTAX_SPEC_TABLE);
+    // the dump image color names are independent of the LAMMPS instance
+    syntax.setStyles(StyleCat::Color, lammpsImageColors());
     highlighter = new Highlighter(&syntax, document);
     connect(document, &QTextDocument::modificationChanged, this, &LammpsGui::modified);
     // track the cursor so unknown-name marking spares the word being typed
@@ -763,6 +766,8 @@ LammpsGui::LammpsGui(QWidget *parent, const QString &filename, int width, int he
     textEdit->setVariableList(syntax.completionList(StyleCat::Variable, false));
     textEdit->setUnitsList(syntax.completionList(StyleCat::Units, false));
     textEdit->setExtraList(syntax.completionList(StyleCat::Extra, false));
+    textEdit->setColorList(syntax.completionList(StyleCat::Color, false));
+    textEdit->setImageKwList(syntax.completionList(StyleCat::ImageKw, false));
     textEdit->setFileList();
     textEdit->setFixList(syntax.completionList(StyleCat::Fix, false));
     textEdit->setComputeList(syntax.completionList(StyleCat::Compute, false));

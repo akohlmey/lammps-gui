@@ -395,6 +395,15 @@ LammpsSyntax::LammpsSyntax()
                QStringLiteral("extra/angle/per/atom"), QStringLiteral("extra/dihedral/per/atom"),
                QStringLiteral("extra/improper/per/atom"),
                QStringLiteral("extra/special/per/atom")});
+    setStyles(StyleCat::ImageKw,
+              {QStringLiteral("atom"),    QStringLiteral("adiam"),     QStringLiteral("autobond"),
+               QStringLiteral("bond"),    QStringLiteral("grid"),      QStringLiteral("line"),
+               QStringLiteral("tri"),     QStringLiteral("ellipsoid"), QStringLiteral("body"),
+               QStringLiteral("compute"), QStringLiteral("fix"),       QStringLiteral("size"),
+               QStringLiteral("view"),    QStringLiteral("center"),    QStringLiteral("up"),
+               QStringLiteral("zoom"),    QStringLiteral("box"),       QStringLiteral("axes"),
+               QStringLiteral("region"),  QStringLiteral("subbox"),    QStringLiteral("shiny"),
+               QStringLiteral("fsaa"),    QStringLiteral("ssao")});
     specialWords = {QStringLiteral("INF"),  QStringLiteral("EDGE"), QStringLiteral("NULL"),
                     QStringLiteral("SELF"), QStringLiteral("if"),   QStringLiteral("then"),
                     QStringLiteral("else"), QStringLiteral("elif")};
@@ -464,7 +473,9 @@ bool LammpsSyntax::loadCommandSpecsFromString(const QString &text)
         {QStringLiteral("minimize"), StyleCat::Minimize},
         {QStringLiteral("variable"), StyleCat::Variable},
         {QStringLiteral("units"), StyleCat::Units},
-        {QStringLiteral("extra"), StyleCat::Extra}};
+        {QStringLiteral("extra"), StyleCat::Extra},
+        {QStringLiteral("color"), StyleCat::Color},
+        {QStringLiteral("imagekw"), StyleCat::ImageKw}};
     static const QRegularExpression whitespace(QStringLiteral("\\s+"));
 
     bool ok          = true;
@@ -506,6 +517,14 @@ bool LammpsSyntax::loadCommandSpecsFromString(const QString &text)
                         break;
                     }
                     as.role = ArgRole::Style;
+                    as.cat  = stylemap.value(cat);
+                } else if (role.startsWith(QStringLiteral("substyle:"))) {
+                    const QString cat = role.mid(9);
+                    if (!stylemap.contains(cat)) {
+                        bad = true;
+                        break;
+                    }
+                    as.role = ArgRole::SubStyle;
                     as.cat  = stylemap.value(cat);
                 } else if (rolemap.contains(role)) {
                     as.role = rolemap.value(role);
@@ -664,6 +683,49 @@ CompletionTarget LammpsSyntax::completionTarget(int prevBlockState, const QStrin
         target.kind = CompleterKind::ComputeId;
     else if (word.startsWith(QStringLiteral("f_")) || word.startsWith(QStringLiteral("F_")))
         target.kind = CompleterKind::FixId;
+
+    // sub-styles of hybrid styles complete from the category's style list;
+    // only when a style-like word was started, since these positions can
+    // also hold numeric or other sub-style arguments
+    if ((target.kind == CompleterKind::None) && !word.isEmpty() && word.at(0).isLetter()) {
+        const ArgSpec as = argSpec(cmdIdx, wordArg);
+        if (as.role == ArgRole::SubStyle) {
+            target.kind = CompleterKind::Style;
+            target.cat  = as.cat;
+        }
+    }
+
+    // dump image and dump_modify: complete color names in the color-value
+    // positions of the keywords that take one, and the dump image keywords
+    // in the keyword section of a dump image command
+    if ((target.kind == CompleterKind::None) && !word.isEmpty() && word.at(0).isLetter()) {
+        const QString prev     = argText.value(wordArg - 1);
+        const QString prevprev = argText.value(wordArg - 2);
+        if ((cmd == QStringLiteral("dump")) && (wordArg >= 8) &&
+            (!argText.contains(3) || (argText.value(3) == QStringLiteral("image")) ||
+             (argText.value(3) == QStringLiteral("movie")))) {
+            // keyword = color ... (bond, line, ...) or keyword = ID color ...
+            static const QSet<QString> colorAfter = {
+                QStringLiteral("bond"), QStringLiteral("line"), QStringLiteral("tri"),
+                QStringLiteral("ellipsoid"), QStringLiteral("body")};
+            static const QSet<QString> colorSecond = {
+                QStringLiteral("compute"), QStringLiteral("fix"), QStringLiteral("region")};
+            target.kind = CompleterKind::Style;
+            target.cat  = (colorAfter.contains(prev) || colorSecond.contains(prevprev))
+                              ? StyleCat::Color
+                              : StyleCat::ImageKw;
+        } else if ((cmd == QStringLiteral("dump_modify")) && (wordArg >= 2)) {
+            static const QSet<QString> colorAfter  = {QStringLiteral("backcolor"),
+                                                      QStringLiteral("backcolor2"),
+                                                      QStringLiteral("boxcolor")};
+            static const QSet<QString> colorSecond = {QStringLiteral("acolor"),
+                                                      QStringLiteral("bcolor")};
+            if (colorAfter.contains(prev) || colorSecond.contains(prevprev)) {
+                target.kind = CompleterKind::Style;
+                target.cat  = StyleCat::Color;
+            }
+        }
+    }
     return target;
 }
 

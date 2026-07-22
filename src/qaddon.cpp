@@ -44,6 +44,11 @@ const QStringList imagecolors = {
 // clang-format on
 } // namespace
 
+const QStringList &lammpsImageColors()
+{
+    return imagecolors;
+}
+
 QHline::QHline(QWidget *parent) : QFrame(parent)
 {
     setGeometry(QRect(0, 0, 100, 3));

@@ -44,6 +44,8 @@ enum class StyleCat : quint8 {
     Variable,  ///< variable command styles (static set)
     Units,     ///< units command arguments (static set)
     Extra,     ///< read_data / create_box "extra/..." keywords (static set)
+    Color,     ///< color names accepted by the dump image command (injected)
+    ImageKw,   ///< keywords of the dump image command (static set)
     None       ///< no style category (used in ArgSpec for non-style roles)
 };
 
@@ -77,6 +79,9 @@ enum class ArgRole : quint8 {
     DefineId, ///< an ID defined by this command (fix/compute/dump/region/variable ID)
     GroupId,  ///< reference to an atom group ID
     Style,    ///< a style name; the category is in ArgSpec::cat
+    SubStyle, ///< may name a sub-style of a hybrid style; recognized when the
+              ///< word is a member of the category's style set, like LAMMPS
+              ///< itself separates hybrid sub-styles from their arguments
     File,     ///< a file name argument
     Int,      ///< an integer number is expected
     Number,   ///< a floating point number is expected

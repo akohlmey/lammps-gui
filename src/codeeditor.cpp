@@ -57,7 +57,8 @@ CodeEditor::CodeEditor(QWidget *parent) :
     variableComp(new QCompleter(this)), unitsComp(new QCompleter(this)),
     groupComp(new QCompleter(this)), varnameComp(new QCompleter(this)),
     fixidComp(new QCompleter(this)), compidComp(new QCompleter(this)),
-    fileComp(new QCompleter(this)), extraComp(new QCompleter(this)), highlight(NO_HIGHLIGHT),
+    fileComp(new QCompleter(this)), extraComp(new QCompleter(this)),
+    colorComp(new QCompleter(this)), imagekwComp(new QCompleter(this)), highlight(NO_HIGHLIGHT),
     highlighterror(false), reformatOnReturn(false), automaticCompletion(true), docver("")
 {
     helpAction = new QShortcut(QKeySequence::fromString("Ctrl+?"), parent);
@@ -78,7 +79,7 @@ CodeEditor::CodeEditor(QWidget *parent) :
          {commandComp,   fixComp,      computeComp,  dumpComp,     atomComp,   pairComp,
           bondComp,      angleComp,    dihedralComp, improperComp, kspaceComp, regionComp,
           integrateComp, minimizeComp, variableComp, unitsComp,    groupComp,  varnameComp,
-          fixidComp,     compidComp,   fileComp,     extraComp})
+          fixidComp,     compidComp,   fileComp,     extraComp,    colorComp,  imagekwComp})
         setupCompleter(c);
 
     // initialize help system
@@ -281,6 +282,8 @@ COMPLETER_INIT_FUNC(minimize, Minimize)
 COMPLETER_INIT_FUNC(variable, Variable)
 COMPLETER_INIT_FUNC(units, Units)
 COMPLETER_INIT_FUNC(extra, Extra)
+COMPLETER_INIT_FUNC(color, Color)
+COMPLETER_INIT_FUNC(imagekw, ImageKw)
 
 #undef COMPLETER_INIT_FUNC
 
@@ -862,6 +865,12 @@ void CodeEditor::runCompletion()
                     break;
                 case StyleCat::Extra:
                     comp = extraComp;
+                    break;
+                case StyleCat::Color:
+                    comp = colorComp;
+                    break;
+                case StyleCat::ImageKw:
+                    comp = imagekwComp;
                     break;
                 default:
                     break;

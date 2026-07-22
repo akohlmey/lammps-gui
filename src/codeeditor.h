@@ -226,6 +226,18 @@ public:
     void setExtraList(const QStringList &words);
 
     /**
+     * @brief Set list of color names for completion
+     * @param words List of color names
+     */
+    void setColorList(const QStringList &words);
+
+    /**
+     * @brief Set list of dump image keywords for completion
+     * @param words List of dump image keywords
+     */
+    void setImageKwList(const QStringList &words);
+
+    /**
      * @brief Update group ID list from the editor buffer
      */
     void setGroupList();
@@ -403,7 +415,7 @@ private:
     QCompleter *currentComp, *commandComp, *fixComp, *computeComp, *dumpComp, *atomComp, *pairComp,
         *bondComp, *angleComp, *dihedralComp, *improperComp, *kspaceComp, *regionComp,
         *integrateComp, *minimizeComp, *variableComp, *unitsComp, *groupComp, *varnameComp,
-        *fixidComp, *compidComp, *fileComp, *extraComp;
+        *fixidComp, *compidComp, *fileComp, *extraComp, *colorComp, *imagekwComp;
 
     int highlight;            ///< Current highlighted line number, NO_HIGHLIGHT if none
     bool highlighterror;      ///< Highlighted line marks an error (red) instead of progress
