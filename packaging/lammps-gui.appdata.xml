@@ -73,6 +73,7 @@
           <li>Remove temporary image frame files also when a render in the Image Viewer fails</li>
           <li>Find external helper programs like ffmpeg in common package manager locations on macOS</li>
           <li>Delete a downloaded LAMMPS shared library for any platform when resetting the preferences</li>
+          <li>Verify the checksum of a downloaded LAMMPS library before it replaces a working file, rename a locked library instead of failing on Windows, and clean up backups and partial downloads at launch</li>
         </ul>
       </description>
     </release>
