@@ -535,7 +535,8 @@ TEST(LammpsSyntaxTest, ShippedSpecTableLoads)
     // display categories are preserved from the historically grown scheme
     EXPECT_EQ(syntax.commandCategory("lattice"), CmdCat::Lattice);
     EXPECT_EQ(syntax.commandCategory("thermo_style"), CmdCat::Output);
-    EXPECT_EQ(syntax.commandCategory("include"), CmdCat::Read);
+    EXPECT_EQ(syntax.commandCategory("include"), CmdCat::Output);
+    EXPECT_EQ(syntax.commandCategory("fix_modify"), CmdCat::Modify);
     EXPECT_EQ(syntax.commandCategory("pair_style"), CmdCat::Particle);
     EXPECT_EQ(syntax.commandCategory("minimize"), CmdCat::Run);
     EXPECT_EQ(syntax.commandCategory("neighbor"), CmdCat::Setup);
@@ -556,7 +557,7 @@ LammpsSyntax &completionSyntax()
         syntax.loadCommandSpecsFromString(QStringLiteral("fix particle 3 defid,group,style:fix\n"
                                                          "pair_style particle 1 style:pair\n"
                                                          "pair_coeff particle 2 keyword,keyword\n"
-                                                         "read_data read 1 file\n"
+                                                         "read_data output 1 file\n"
                                                          "units lattice 1 style:units\n"));
         loaded = true;
     }

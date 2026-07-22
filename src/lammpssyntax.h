@@ -61,7 +61,7 @@ constexpr int NUM_STYLE_CATS = static_cast<int>(StyleCat::None);
 enum class CmdCat : quint8 {
     Lattice,  ///< system setup / lattice / geometry commands
     Output,   ///< output and write commands
-    Read,     ///< file input commands
+    Modify,   ///< *_modify commands
     Particle, ///< particle, force field, and definition commands
     Run,      ///< run-like commands
     Setup,    ///< settings and modify commands

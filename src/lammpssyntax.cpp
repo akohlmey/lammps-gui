@@ -436,7 +436,7 @@ bool LammpsSyntax::loadCommandSpecsFromString(const QString &text)
 {
     static const QHash<QString, CmdCat> catmap   = {{QStringLiteral("lattice"), CmdCat::Lattice},
                                                     {QStringLiteral("output"), CmdCat::Output},
-                                                    {QStringLiteral("read"), CmdCat::Read},
+                                                    {QStringLiteral("modify"), CmdCat::Modify},
                                                     {QStringLiteral("particle"), CmdCat::Particle},
                                                     {QStringLiteral("run"), CmdCat::Run},
                                                     {QStringLiteral("setup"), CmdCat::Setup},

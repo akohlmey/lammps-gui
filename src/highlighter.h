@@ -81,7 +81,7 @@ private:
     enum class Fmt : quint8 {
         CmdLattice,  ///< command word: system setup / lattice category
         CmdOutput,   ///< command word: output category
-        CmdRead,     ///< command word: file input category
+        CmdModify,   ///< command word: *_modify category
         CmdParticle, ///< command word: particle / force field category
         CmdRun,      ///< command word: run category
         CmdSetup,    ///< command word: settings category

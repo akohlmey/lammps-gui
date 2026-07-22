@@ -47,7 +47,7 @@ Highlighter::Highlighter(const LammpsSyntax *_syntax, QTextDocument *parent) :
     static const PaletteEntry palette[] = {
         {Qt::darkGreen, QColorConstants::Svg::lightgreen, QFont::Bold, QFont::Bold},  // CmdLattice
         {Qt::darkYellow, QColorConstants::Yellow, QFont::Bold, QFont::Bold},          // CmdOutput
-        {Qt::magenta, QColorConstants::Svg::lightcoral, QFont::Bold, QFont::Bold},    // CmdRead
+        {Qt::magenta, QColorConstants::Svg::lightcoral, QFont::Bold, QFont::Bold},    // CmdModify
         {Qt::darkRed, QColorConstants::Svg::indianred, QFont::Bold, QFont::Bold},     // CmdParticle
         {Qt::darkBlue, QColorConstants::Svg::lightskyblue, QFont::Bold, QFont::Bold}, // CmdRun
         {Qt::darkCyan, QColorConstants::Cyan, QFont::Bold, QFont::Bold},              // CmdSetup
@@ -78,8 +78,8 @@ const QTextCharFormat &Highlighter::cmdFormat(CmdCat cat) const
             return formats[static_cast<int>(Fmt::CmdLattice)];
         case CmdCat::Output:
             return formats[static_cast<int>(Fmt::CmdOutput)];
-        case CmdCat::Read:
-            return formats[static_cast<int>(Fmt::CmdRead)];
+        case CmdCat::Modify:
+            return formats[static_cast<int>(Fmt::CmdModify)];
         case CmdCat::Particle:
             return formats[static_cast<int>(Fmt::CmdParticle)];
         case CmdCat::Run:
