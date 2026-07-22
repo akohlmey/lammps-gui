@@ -114,6 +114,7 @@ void LammpsGui::setupUi(QSettings &settings, QFont &allFont, QFont &monoFont)
 
     // set up central widget
     textEdit = new CodeEditor(this);
+    textEdit->setSyntax(&syntax);
     textEdit->setEnabled(true);
     textEdit->setAcceptDrops(true);
     textEdit->setStyleSheet(bannerstyle);

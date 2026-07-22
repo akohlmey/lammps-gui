@@ -14,6 +14,7 @@
 #include "fileviewer.h"
 #include "helpers.h"
 #include "lammpsgui.h"
+#include "lammpssyntax.h"
 #include "lammpswrapper.h"
 #include "linenumberarea.h"
 
@@ -803,42 +804,32 @@ void CodeEditor::popupCompletion(const QString &prefix, QAbstractItemView *oldPo
 
 void CodeEditor::runCompletion()
 {
-    QAbstractItemView *popup = nullptr;
-    if (currentComp) popup = currentComp->popup();
+    QAbstractItemView *oldPopup = nullptr;
+    if (currentComp) oldPopup = currentComp->popup();
+    if (!syntax) return;
 
-    auto cursor = textCursor();
-    auto line   = cursor.block().text().trimmed();
+    const auto cursor = textCursor();
+    const auto block  = cursor.block();
+    const auto line   = block.text();
     // no completion possible on empty lines
-    if (line.isEmpty()) return;
-    auto words = splitLine(line);
+    if (line.trimmed().isEmpty()) return;
 
-    // QTextCursor::WordUnderCursor is unusable here since it recognizes '/' as word boundary.
-    // Work around it by manually searching for the beginning and end position of the word
-    // under the cursor and then using that substring.
-    line      = cursor.block().text();
-    int begin = qMin(cursor.positionInBlock(), line.length() - 1);
-    while (begin >= 0) {
-        if (line[begin].isSpace()) break;
-        --begin;
-    }
-    int end = ++begin;
-    while (end < line.length()) {
-        if (line[end].isSpace()) break;
-        ++end;
-    }
-    const auto selected = line.mid(begin, end - begin);
+    // classify the word under the cursor with the syntax engine; the block
+    // state of the previous line carries the active command across '&' line
+    // continuations.  Falls back to fresh-line classification when the block
+    // has not been highlighted yet (state -1).
+    const int prevState = block.previous().isValid() ? block.previous().userState() : 0;
+    const auto target   = syntax->completionTarget(prevState, line, cursor.positionInBlock());
+    if (target.kind == CompleterKind::None) return;
+    const auto word = line.mid(target.wordStart, target.wordLength);
 
-    // if on first word, try to complete command
-    if ((!words.isEmpty()) && (words[0] == selected)) {
-        // no completion on comment lines
-        if (words[0][0] == '#') return;
-
+    if (target.kind == CompleterKind::Command) {
         currentComp = commandComp;
-        currentComp->setCompletionPrefix(words[0]);
-        if (popup && (popup != currentComp->popup())) popup->hide();
-        popup = currentComp->popup();
+        currentComp->setCompletionPrefix(word);
+        if (oldPopup && (oldPopup != currentComp->popup())) oldPopup->hide();
+        auto *popup = currentComp->popup();
         // if the command is already a complete command, remove existing popup
-        if (words[0] == currentComp->currentCompletion()) {
+        if (word == currentComp->currentCompletion()) {
             if (popup->isVisible()) {
                 popup->hide();
                 currentComp = nullptr;
@@ -849,119 +840,94 @@ void CodeEditor::runCompletion()
         cr.setWidth(popup->sizeHintForColumn(0) + popup->verticalScrollBar()->sizeHint().width());
         popup->setAlternatingRowColors(true);
         currentComp->complete(cr);
-
-        // completions for second word
-    } else if ((words.size() > 1) && (words[1] == selected)) {
-        // no completion on comment lines
-        if (words[0][0] == '#') return;
-
-        currentComp = nullptr;
-        if (words[0] == "pair_style")
-            currentComp = pairComp;
-        else if (words[0] == "bond_style")
-            currentComp = bondComp;
-        else if (words[0] == "angle_style")
-            currentComp = angleComp;
-        else if (words[0] == "dihedral_style")
-            currentComp = dihedralComp;
-        else if (words[0] == "improper_style")
-            currentComp = improperComp;
-        else if (words[0] == "kspace_style")
-            currentComp = kspaceComp;
-        else if (words[0] == "atom_style")
-            currentComp = atomComp;
-        else if (words[0] == "run_style")
-            currentComp = integrateComp;
-        else if (words[0] == "minimize_style")
-            currentComp = minimizeComp;
-        else if (words[0] == "units")
-            currentComp = unitsComp;
-        else if ((words[0] == "change_box") || (words[0] == "displace_atoms") ||
-                 (words[0] == "velocity") || (words[0] == "write_dump"))
-            currentComp = groupComp;
-        else if ((words[0] == "fitpod") || (words[0] == "include") || (words[0] == "ndx2group") ||
-                 (words[0] == "read_data") || (words[0] == "read_dump") ||
-                 (words[0] == "read_restart") || (words[0] == "rerun")) {
-            if (selected.contains('/')) {
-                if (popup && popup->isVisible()) popup->hide();
-            } else
-                currentComp = fileComp;
-        } else if (selected.startsWith("v_"))
-            currentComp = varnameComp;
-        else if (selected.startsWith("c_") || selected.startsWith("C_"))
-            currentComp = compidComp;
-        else if (selected.startsWith("f_") || selected.startsWith("F_"))
-            currentComp = fixidComp;
-
-        if (currentComp) popupCompletion(words[1], popup);
-        // completions for third word
-    } else if ((words.size() > 2) && (words[2] == selected)) {
-        // no completion on comment lines
-        if (words[0][0] == '#') return;
-
-        currentComp = nullptr;
-        if (words[0] == "region")
-            currentComp = regionComp;
-        else if (words[0] == "variable")
-            currentComp = variableComp;
-        else if ((words[0] == "fix") || (words[0] == "compute") || (words[0] == "dump"))
-            currentComp = groupComp;
-        else if (selected.startsWith("v_"))
-            currentComp = varnameComp;
-        else if (selected.startsWith("c_") || selected.startsWith("C_"))
-            currentComp = compidComp;
-        else if (selected.startsWith("f_") || selected.startsWith("F_"))
-            currentComp = fixidComp;
-        else if ((words[0] == "read_data") && selected.startsWith("ex"))
-            currentComp = extraComp;
-        else if ((words[0] == "fitpod") || (words[0] == "molecule")) {
-            if (selected.contains('/')) {
-                if (popup && popup->isVisible()) popup->hide();
-            } else
-                currentComp = fileComp;
-        }
-        if (currentComp) popupCompletion(words[2], popup);
-        // completions for fourth word
-    } else if ((words.size() > 3) && (words[3] == selected)) {
-        // no completion on comment lines
-        if (words[0][0] == '#') return;
-
-        currentComp = nullptr;
-        if (words[0] == "fix")
-            currentComp = fixComp;
-        else if (words[0] == "compute")
-            currentComp = computeComp;
-        else if (words[0] == "dump")
-            currentComp = dumpComp;
-        else if ((words[0] == "pair_coeff") && (words[1] == "*") && (words[2] == "*")) {
-            if (selected.contains('/')) {
-                if (popup && popup->isVisible()) popup->hide();
-            } else
-                currentComp = fileComp;
-        } else if (selected.startsWith("v_"))
-            currentComp = varnameComp;
-        else if (selected.startsWith("c_") || selected.startsWith("C_"))
-            currentComp = compidComp;
-        else if (selected.startsWith("f_") || selected.startsWith("F_"))
-            currentComp = fixidComp;
-        else if ((words[0] == "read_data") && selected.startsWith("ex"))
-            currentComp = extraComp;
-
-        if (currentComp) popupCompletion(words[3], popup);
-        // reference located anywhere further right in the line
-    } else if (words.size() > 4) {
-        currentComp = nullptr;
-        if (selected.startsWith("v_"))
-            currentComp = varnameComp;
-        else if (selected.startsWith("c_") || selected.startsWith("C_"))
-            currentComp = compidComp;
-        else if (selected.startsWith("f_") || selected.startsWith("F_"))
-            currentComp = fixidComp;
-        else if ((words[0] == "read_data") && selected.startsWith("ex"))
-            currentComp = extraComp;
-
-        if (currentComp) popupCompletion(selected, popup);
+        return;
     }
+
+    QCompleter *comp = nullptr;
+    switch (target.kind) {
+        case CompleterKind::Style:
+            switch (target.cat) {
+                case StyleCat::Fix:
+                    comp = fixComp;
+                    break;
+                case StyleCat::Compute:
+                    comp = computeComp;
+                    break;
+                case StyleCat::Dump:
+                    comp = dumpComp;
+                    break;
+                case StyleCat::Atom:
+                    comp = atomComp;
+                    break;
+                case StyleCat::Pair:
+                    comp = pairComp;
+                    break;
+                case StyleCat::Bond:
+                    comp = bondComp;
+                    break;
+                case StyleCat::Angle:
+                    comp = angleComp;
+                    break;
+                case StyleCat::Dihedral:
+                    comp = dihedralComp;
+                    break;
+                case StyleCat::Improper:
+                    comp = improperComp;
+                    break;
+                case StyleCat::Kspace:
+                    comp = kspaceComp;
+                    break;
+                case StyleCat::Region:
+                    comp = regionComp;
+                    break;
+                case StyleCat::Integrate:
+                    comp = integrateComp;
+                    break;
+                case StyleCat::Minimize:
+                    comp = minimizeComp;
+                    break;
+                case StyleCat::Variable:
+                    comp = variableComp;
+                    break;
+                case StyleCat::Units:
+                    comp = unitsComp;
+                    break;
+                case StyleCat::Extra:
+                    comp = extraComp;
+                    break;
+                default:
+                    break;
+            }
+            break;
+        case CompleterKind::Group:
+            comp = groupComp;
+            break;
+        case CompleterKind::VarName:
+            comp = varnameComp;
+            break;
+        case CompleterKind::ComputeId:
+            comp = compidComp;
+            break;
+        case CompleterKind::FixId:
+            comp = fixidComp;
+            break;
+        case CompleterKind::Extra:
+            comp = extraComp;
+            break;
+        case CompleterKind::File:
+            // no file name completion when the word already contains a path
+            if (word.contains('/')) {
+                if (oldPopup && oldPopup->isVisible()) oldPopup->hide();
+                return;
+            }
+            comp = fileComp;
+            break;
+        default:
+            break;
+    }
+    if (!comp) return;
+    currentComp = comp;
+    popupCompletion(word, oldPopup);
 }
 
 void CodeEditor::insertCompletedCommand(const QString &completion)
@@ -1020,47 +986,85 @@ void CodeEditor::getHelp()
 
 void CodeEditor::findHelp(QString &page, QString &help)
 {
-    // process line of text where the cursor is
-    auto text = textCursor().block().text().replace('\t', ' ').trimmed();
-    auto style =
-        QRegularExpression(R"(^(pair|bond|angle|dihedral|improper)_style\s+(\S+))").match(text);
     help.clear();
     page.clear();
-    if (style.hasMatch()) {
-        if (style.captured(1) == "pair") {
-            page = pairMap.value(style.captured(2), QString());
-            help = QString("pair_style %1").arg(style.captured(2));
-        } else if (style.captured(1) == "bond") {
-            page = bondMap.value(style.captured(2), QString());
-            help = QString("bond_style %1").arg(style.captured(2));
-        } else if (style.captured(1) == "angle") {
-            page = angleMap.value(style.captured(2), QString());
-            help = QString("angle_style %1").arg(style.captured(2));
-        } else if (style.captured(1) == "dihedral") {
-            page = dihedralMap.value(style.captured(2), QString());
-            help = QString("dihedral_style %1").arg(style.captured(2));
-        } else if (style.captured(1) == "improper") {
-            page = improperMap.value(style.captured(2), QString());
-            help = QString("improper_style %1").arg(style.captured(2));
+
+    // tokenize the line under the cursor; the block state of the previous
+    // line resolves the command of '&' continuation lines
+    const auto block    = textCursor().block();
+    const QString text  = block.text();
+    const int prevState = block.previous().isValid() ? qMax(block.previous().userState(), 0) : 0;
+    const LineTokens lt = tokenizeLine(text, prevState);
+
+    QHash<int, QString> argText;
+    for (const auto &tok : lt.tokens) {
+        if ((tok.argIndex < 0) || (tok.type == TokType::Comment) ||
+            (tok.type == TokType::Continuation))
+            continue;
+        argText[tok.argIndex] += text.mid(tok.start, tok.length);
+    }
+
+    const bool freshLine =
+        !(SyntaxState::flags(prevState) & (SyntaxState::TRIPLE | SyntaxState::CONTINUE |
+                                           SyntaxState::SINGLEQ | SyntaxState::DOUBLEQ));
+    int cmdIdx = -1;
+    QString cmd;
+    if (freshLine) {
+        cmd = argText.value(0);
+        if (syntax) cmdIdx = syntax->commandIndex(cmd);
+    } else if (syntax) {
+        cmdIdx         = SyntaxState::cmdIndex(prevState);
+        const auto *cs = syntax->spec(cmdIdx);
+        if (cs) cmd = cs->name;
+    }
+    if (cmd.isEmpty()) return;
+
+    // when the command has a style-name argument with a dedicated doc page,
+    // prefer that page over the command page
+    const auto *cs = syntax ? syntax->spec(cmdIdx) : nullptr;
+    if (cs) {
+        for (int i = 0; i < cs->args.size(); ++i) {
+            if (cs->args[i].role != ArgRole::Style) continue;
+            const QString styleword = argText.value(i + 1);
+            if (styleword.isEmpty()) break;
+            const QMap<QString, QString> *map = nullptr;
+            switch (cs->args[i].cat) {
+                case StyleCat::Pair:
+                    map = &pairMap;
+                    break;
+                case StyleCat::Bond:
+                    map = &bondMap;
+                    break;
+                case StyleCat::Angle:
+                    map = &angleMap;
+                    break;
+                case StyleCat::Dihedral:
+                    map = &dihedralMap;
+                    break;
+                case StyleCat::Improper:
+                    map = &improperMap;
+                    break;
+                case StyleCat::Fix:
+                    map = &fixMap;
+                    break;
+                case StyleCat::Compute:
+                    map = &computeMap;
+                    break;
+                default:
+                    break;
+            }
+            if (map && map->contains(styleword)) {
+                page = map->value(styleword);
+                help = QString("%1 %2").arg(cmd, styleword);
+                return;
+            }
+            break; // only the first style position selects a page
         }
     }
 
-    style = QRegularExpression(R"(^(fix|compute)\s+\w+\s+\w+\s+(\S+))").match(text);
-    if (style.hasMatch()) {
-        help = QString("%1 %2").arg(style.captured(1), style.captured(2));
-        if (style.captured(1) == "fix") {
-            page = fixMap.value(style.captured(2), QString());
-        } else if (style.captured(1) == "compute") {
-            page = computeMap.value(style.captured(2), QString());
-        }
-    }
-
-    // could not find a matching "style", now try the plain command
-    if (page.isEmpty() && !text.isEmpty()) {
-        auto cmd = text.section(' ', 0, 0);
-        help     = cmd;
-        page     = cmdMap.value(cmd, QString());
-    }
+    // fall back to the command page
+    help = cmd;
+    page = cmdMap.value(cmd, QString());
 }
 
 void CodeEditor::openHelp()

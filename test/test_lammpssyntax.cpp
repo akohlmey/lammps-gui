@@ -545,6 +545,88 @@ TEST(LammpsSyntaxTest, ShippedSpecTableLoads)
 #endif
 
 // ---------------------------------------------------------------------------
+// completion targets
+
+namespace {
+LammpsSyntax &completionSyntax()
+{
+    static LammpsSyntax syntax;
+    static bool loaded = false;
+    if (!loaded) {
+        syntax.loadCommandSpecsFromString(QStringLiteral("fix particle 3 defid,group,style:fix\n"
+                                                         "pair_style particle 1 style:pair\n"
+                                                         "pair_coeff particle 2 keyword,keyword\n"
+                                                         "read_data read 1 file\n"
+                                                         "units lattice 1 style:units\n"));
+        loaded = true;
+    }
+    return syntax;
+}
+} // namespace
+
+TEST(LammpsSyntaxTest, CompletionTargetPositions)
+{
+    const auto &syntax = completionSyntax();
+
+    // word 0 of a fresh line: command completion with the word span
+    auto target = syntax.completionTarget(0, QStringLiteral("fi"), 2);
+    EXPECT_EQ(target.kind, CompleterKind::Command);
+    EXPECT_EQ(target.wordStart, 0);
+    EXPECT_EQ(target.wordLength, 2);
+
+    // style positions with their category
+    target = syntax.completionTarget(0, QStringLiteral("pair_style lj"), 13);
+    EXPECT_EQ(target.kind, CompleterKind::Style);
+    EXPECT_EQ(target.cat, StyleCat::Pair);
+    target = syntax.completionTarget(0, QStringLiteral("fix 1 all nv"), 12);
+    EXPECT_EQ(target.kind, CompleterKind::Style);
+    EXPECT_EQ(target.cat, StyleCat::Fix);
+    target = syntax.completionTarget(0, QStringLiteral("units me"), 8);
+    EXPECT_EQ(target.kind, CompleterKind::Style);
+    EXPECT_EQ(target.cat, StyleCat::Units);
+
+    // group-ID and file positions
+    target = syntax.completionTarget(0, QStringLiteral("fix 1 al"), 8);
+    EXPECT_EQ(target.kind, CompleterKind::Group);
+    target = syntax.completionTarget(0, QStringLiteral("read_data da"), 12);
+    EXPECT_EQ(target.kind, CompleterKind::File);
+
+    // reference prefixes at any later argument position
+    target = syntax.completionTarget(0, QStringLiteral("fix 1 all nvt xyz v_ab"), 22);
+    EXPECT_EQ(target.kind, CompleterKind::VarName);
+    target = syntax.completionTarget(0, QStringLiteral("fix 1 all nvt xyz c_ab"), 22);
+    EXPECT_EQ(target.kind, CompleterKind::ComputeId);
+
+    // special cases: pair_coeff * * potential file, read_data extra keywords
+    target = syntax.completionTarget(0, QStringLiteral("pair_coeff * * SiC.te"), 21);
+    EXPECT_EQ(target.kind, CompleterKind::File);
+    target = syntax.completionTarget(0, QStringLiteral("read_data data.lmp ext"), 22);
+    EXPECT_EQ(target.kind, CompleterKind::Extra);
+
+    // cursor on whitespace or a comment: nothing to complete
+    target = syntax.completionTarget(0, QStringLiteral("fix  1"), 4);
+    EXPECT_EQ(target.kind, CompleterKind::None);
+    target = syntax.completionTarget(0, QStringLiteral("# fix"), 4);
+    EXPECT_EQ(target.kind, CompleterKind::None);
+}
+
+TEST(LammpsSyntaxTest, CompletionTargetOnContinuationLines)
+{
+    const auto &syntax = completionSyntax();
+
+    // the style slot of a fix continues on the second physical line
+    const LineTokens first = tokenizeLine(QStringLiteral("fix 1 all &"));
+    const int state        = SyntaxState::withCommand(first.outState, syntax.commandIndex("fix"));
+    auto target            = syntax.completionTarget(state, QStringLiteral("nv"), 2);
+    EXPECT_EQ(target.kind, CompleterKind::Style);
+    EXPECT_EQ(target.cat, StyleCat::Fix);
+
+    // without the continuation state the same word is a command position
+    target = syntax.completionTarget(0, QStringLiteral("nv"), 2);
+    EXPECT_EQ(target.kind, CompleterKind::Command);
+}
+
+// ---------------------------------------------------------------------------
 // InputScanner
 
 TEST(LammpsSyntaxTest, ScannerBasics)

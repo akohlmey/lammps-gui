@@ -141,6 +141,31 @@ struct LineTokens {
 };
 
 /**
+ * @brief Which completion word list applies at a completion location
+ */
+enum class CompleterKind : quint8 {
+    None,      ///< no completion at this location
+    Command,   ///< command names (word 0 of a logical line)
+    Style,     ///< style names; the category is in CompletionTarget::cat
+    Group,     ///< group IDs
+    VarName,   ///< variable name references (v_...)
+    ComputeId, ///< compute ID references (c_...)
+    FixId,     ///< fix ID references (f_...)
+    File,      ///< file names
+    Extra      ///< read_data / create_box "extra/..." keywords
+};
+
+/**
+ * @brief Result of LammpsSyntax::completionTarget()
+ */
+struct CompletionTarget {
+    CompleterKind kind = CompleterKind::None; ///< which completer applies
+    StyleCat cat       = StyleCat::None;      ///< style category when kind == Style
+    int wordStart      = -1;                  ///< start column of the word under the cursor
+    int wordLength     = 0;                   ///< length of the word under the cursor
+};
+
+/**
  * @brief Packing helpers for the per-block syntax state integer
  *
  * The state is stored in QSyntaxHighlighter block states and threaded
@@ -322,6 +347,24 @@ public:
      * @param withNone prepend the "none" style (pair/bond/... styles)
      */
     QStringList completionList(StyleCat cat, bool withNone) const;
+
+    /**
+     * @brief Determine which completion applies at a cursor position
+     *
+     * Tokenizes the line with the given previous block state, locates the
+     * word under the cursor, and classifies it: the command completer on
+     * word 0 of a fresh logical line, and per-argument completers from the
+     * command spec table (style categories, group IDs, file names) plus the
+     * v_/c_/f_ reference prefixes and the read_data extra keywords.  Because
+     * the previous block state carries the active command across '&' line
+     * continuations, completion works on continuation lines as well.
+     *
+     * @param prevBlockState block state after the previous line (-1 or 0 for none)
+     * @param line physical line the cursor is on
+     * @param cursorCol column of the cursor within the line
+     * @return completer kind, style category, and the word under the cursor
+     */
+    CompletionTarget completionTarget(int prevBlockState, const QString &line, int cursorCol) const;
 
     /// accelerator suffixes filtered from completion lists
     static const QStringList &acceleratorSuffixes();

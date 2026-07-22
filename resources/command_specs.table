@@ -110,7 +110,7 @@ message         run       1  keyword
 hyper           run       0
 dynamical_matrix run      0
 third_order     run       0
-fitpod          run       1  file
+fitpod          run       1  file,file
 
 # ---- settings and modify commands -------------------------------------------
 min_modify      setup     2  keyword,any

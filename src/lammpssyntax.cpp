@@ -588,6 +588,85 @@ QStringList LammpsSyntax::completionList(StyleCat cat, bool withNone) const
     return list;
 }
 
+CompletionTarget LammpsSyntax::completionTarget(int prevBlockState, const QString &line,
+                                                int cursorCol) const
+{
+    CompletionTarget target;
+    const int state      = qMax(prevBlockState, 0);
+    const LineTokens lt  = tokenizeLine(line, state);
+    const int prevFlags  = SyntaxState::flags(state);
+    const bool freshLine = !(prevFlags & (SyntaxState::TRIPLE | SyntaxState::CONTINUE |
+                                          SyntaxState::SINGLEQ | SyntaxState::DOUBLEQ));
+
+    // full text and span of each argument, and the argument under the cursor
+    QHash<int, QString> argText;
+    QHash<int, int> argStart, argEnd;
+    int wordArg = -1;
+    for (const auto &tok : lt.tokens) {
+        if ((tok.argIndex < 0) || (tok.type == TokType::Comment) ||
+            (tok.type == TokType::Continuation))
+            continue;
+        argText[tok.argIndex] += line.mid(tok.start, tok.length);
+        if (!argStart.contains(tok.argIndex)) argStart[tok.argIndex] = tok.start;
+        argEnd[tok.argIndex] = tok.start + tok.length;
+        if ((cursorCol >= tok.start) && (cursorCol <= tok.start + tok.length))
+            wordArg = tok.argIndex;
+    }
+    if (wordArg < 0) return target; // cursor is not on a word
+
+    target.wordStart   = argStart.value(wordArg);
+    target.wordLength  = argEnd.value(wordArg) - target.wordStart;
+    const QString word = argText.value(wordArg);
+
+    if (freshLine && (wordArg == 0)) {
+        target.kind = CompleterKind::Command;
+        return target;
+    }
+    if (wordArg < 1) return target;
+
+    // the active command: word 0 on a fresh logical line, carried in the
+    // block state on continuation lines
+    const int cmdIdx  = freshLine ? commandIndex(argText.value(0)) : SyntaxState::cmdIndex(state);
+    const QString cmd = freshLine ? argText.value(0)
+                                  : (spec(cmdIdx) ? spec(cmdIdx)->name : QString());
+
+    switch (argSpec(cmdIdx, wordArg).role) {
+        case ArgRole::Style:
+            target.kind = CompleterKind::Style;
+            target.cat  = argSpec(cmdIdx, wordArg).cat;
+            return target;
+        case ArgRole::GroupId:
+            target.kind = CompleterKind::Group;
+            return target;
+        case ArgRole::File:
+            target.kind = CompleterKind::File;
+            return target;
+        default:
+            break;
+    }
+
+    // "pair_coeff * *" can read coefficients from a potential file
+    if ((cmd == QStringLiteral("pair_coeff")) && (wordArg == 3) &&
+        (argText.value(1) == QStringLiteral("*")) && (argText.value(2) == QStringLiteral("*"))) {
+        target.kind = CompleterKind::File;
+        return target;
+    }
+    // "extra/..." keywords of the read_data command
+    if ((cmd == QStringLiteral("read_data")) && (wordArg >= 2) &&
+        word.startsWith(QStringLiteral("ex"))) {
+        target.kind = CompleterKind::Extra;
+        return target;
+    }
+    // v_/c_/f_ references complete at any argument position
+    if (word.startsWith(QStringLiteral("v_")))
+        target.kind = CompleterKind::VarName;
+    else if (word.startsWith(QStringLiteral("c_")) || word.startsWith(QStringLiteral("C_")))
+        target.kind = CompleterKind::ComputeId;
+    else if (word.startsWith(QStringLiteral("f_")) || word.startsWith(QStringLiteral("F_")))
+        target.kind = CompleterKind::FixId;
+    return target;
+}
+
 const QStringList &LammpsSyntax::acceleratorSuffixes()
 {
     static const QStringList suffixes = {QStringLiteral("/gpu"),     QStringLiteral("/intel"),

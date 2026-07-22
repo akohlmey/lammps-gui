@@ -32,6 +32,8 @@ class QResizeEvent;
 class QShortcut;
 class QWidget;
 
+class LammpsSyntax;
+
 /**
  * @brief Custom text editor with LAMMPS syntax support and auto-completion
  *
@@ -64,6 +66,12 @@ public:
     CodeEditor(CodeEditor &&)                 = delete;
     CodeEditor &operator=(const CodeEditor &) = delete;
     CodeEditor &operator=(CodeEditor &&)      = delete;
+
+    /**
+     * @brief Set the syntax registry used for completion and help lookups
+     * @param newsyntax Syntax registry (not owned)
+     */
+    void setSyntax(const LammpsSyntax *newsyntax) { syntax = newsyntax; }
 
     /**
      * @brief Paint line numbers in the line number area
@@ -388,6 +396,8 @@ private:
 
     QWidget *lineNumberArea; ///< Widget for displaying line numbers
     QShortcut *helpAction;   ///< Keyboard shortcut for help
+
+    const LammpsSyntax *syntax = nullptr; ///< Syntax registry (not owned)
 
     /// @brief Auto-completion objects for different LAMMPS command contexts
     QCompleter *currentComp, *commandComp, *fixComp, *computeComp, *dumpComp, *atomComp, *pairComp,
