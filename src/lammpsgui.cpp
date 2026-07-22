@@ -135,8 +135,17 @@ void LammpsGui::setupUi(QSettings &settings, QFont &allFont, QFont &monoFont)
     auto *document = textEdit->document();
     document->setPlainText(citeme);
     document->setModified(false);
-    highlighter = new Highlighter(document);
+    // load the command spec table before the first highlight so command
+    // category and argument role colors are correct from the first paint;
+    // the introspected name lists are added later by populateSyntax()
+    syntax.loadCommandSpecs(Cfg::SYNTAX_SPEC_TABLE);
+    highlighter = new Highlighter(&syntax, document);
     connect(document, &QTextDocument::modificationChanged, this, &LammpsGui::modified);
+    // track the cursor so unknown-name marking spares the word being typed
+    connect(textEdit, &QPlainTextEdit::cursorPositionChanged, this, [this]() {
+        const auto cursor = textEdit->textCursor();
+        highlighter->setCursorPos(cursor.blockNumber(), cursor.positionInBlock());
+    });
 
     // apply font settings
     setFont(allFont);
@@ -236,7 +245,8 @@ void LammpsGui::createRunMenu()
     addMenuAction(menu, ":/icons/run-file.svg", "Run LAMMPS from &File", "Ctrl+Shift+Return",
                   &LammpsGui::runFile);
     addMenuAction(menu, ":/icons/process-stop.svg", "&Stop LAMMPS", "Ctrl+/", &LammpsGui::stopRun);
-    addMenuAction(menu, ":/icons/extend-run.svg", "&Extend Run...", "Ctrl+E", &LammpsGui::extendRun);
+    addMenuAction(menu, ":/icons/extend-run.svg", "&Extend Run...", "Ctrl+E",
+                  &LammpsGui::extendRun);
     menu->addSeparator();
 
     addMenuAction(menu, ":/icons/system-restart.svg", "Relaunch &LAMMPS Instance", "",
@@ -708,6 +718,7 @@ LammpsGui::LammpsGui(QWidget *parent, const QString &filename, int width, int he
 
     // start LAMMPS and initialize command completion
     startLammps();
+    populateSyntax();
     QStringList style_list;
     QFile internal_commands(":/lammps_internal_commands.txt");
     if (internal_commands.open(QIODevice::ReadOnly | QIODevice::Text)) {
@@ -2849,6 +2860,52 @@ void LammpsGui::startLammps()
 
     const QString errmsg = lammps.lastErrorMessage();
     if (!errmsg.isEmpty()) critical(this, "LAMMPS-GUI Error", "Error launching LAMMPS:", errmsg);
+}
+
+void LammpsGui::populateSyntax()
+{
+    // without a LAMMPS instance the registry stays unpopulated, which keeps
+    // the unknown-name marking of the highlighter disabled
+    if (!lammps.isOpen()) return;
+
+    // command names: input script commands from the bundled list plus the
+    // registered command styles of the running LAMMPS instance
+    QStringList names;
+    QFile internal_commands(QStringLiteral(":/lammps_internal_commands.txt"));
+    if (internal_commands.open(QIODevice::ReadOnly | QIODevice::Text)) {
+        while (!internal_commands.atEnd())
+            names << QString(internal_commands.readLine()).trimmed();
+        internal_commands.close();
+    }
+    const int ncmds = lammps.styleCount("command");
+    for (int i = 0; i < ncmds; ++i) {
+        const QString style = lammps.styleName("command", i);
+        if (!style.isEmpty()) names << style;
+    }
+    syntax.setCommands(names);
+
+    static const struct {
+        const char *name;
+        StyleCat cat;
+    } categories[] = {{"fix", StyleCat::Fix},           {"compute", StyleCat::Compute},
+                      {"dump", StyleCat::Dump},         {"atom", StyleCat::Atom},
+                      {"pair", StyleCat::Pair},         {"bond", StyleCat::Bond},
+                      {"angle", StyleCat::Angle},       {"dihedral", StyleCat::Dihedral},
+                      {"improper", StyleCat::Improper}, {"kspace", StyleCat::Kspace},
+                      {"region", StyleCat::Region},     {"integrate", StyleCat::Integrate},
+                      {"minimize", StyleCat::Minimize}};
+    for (const auto &category : categories) {
+        names.clear();
+        const int nstyles = lammps.styleCount(category.name);
+        for (int i = 0; i < nstyles; ++i) {
+            const QString style = lammps.styleName(category.name, i);
+            if (!style.isEmpty()) names << style;
+        }
+        syntax.setStyles(category.cat, names);
+    }
+
+    // re-highlight with the now complete syntax data
+    highlighter->rehighlight();
 }
 
 bool LammpsGui::eventFilter(QObject *watched, QEvent *event)

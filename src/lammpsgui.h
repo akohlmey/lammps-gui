@@ -21,6 +21,7 @@
 #include <string>
 #include <vector>
 
+#include "lammpssyntax.h"
 #include "lammpswrapper.h"
 
 // forward declarations
@@ -163,6 +164,14 @@ protected:
 
     /** @brief Initialize and start a new LAMMPS instance */
     void startLammps();
+
+    /** @brief Fill the syntax registry from LAMMPS library introspection
+     *
+     * Queries the command and style name lists from the running LAMMPS
+     * instance into @c syntax and re-highlights the editor.  Does nothing
+     * when no LAMMPS instance is available (the registry then stays
+     * unpopulated and unknown-name marking is disabled). */
+    void populateSyntax();
 
     /** @brief Handle completion of a LAMMPS run */
     void runDone();
@@ -460,6 +469,7 @@ private:
     QStatusBar *statusbar;          ///< status bar
     QList<QAction *> recentActions; ///< list of actions for recent files
 
+    LammpsSyntax syntax;      ///< Syntax registry for highlighting and input checking
     Highlighter *highlighter; ///< Syntax highlighter for LAMMPS input
     StdCapture *capturer;     ///< Captures stdout/stderr from LAMMPS
     QLabel *status;           ///< Status bar label for general status

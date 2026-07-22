@@ -110,6 +110,21 @@ target_link_libraries(test_lammpssyntax PRIVATE GTest::gtest_main Qt6::Core)
 
 gtest_discover_tests(test_lammpssyntax)
 
+# Test executable for the input script syntax highlighter (headless
+# QTextDocument-based, needs the offscreen platform via QApplication)
+add_executable(test_highlighter
+  test_highlighter.cpp
+  ${CMAKE_SOURCE_DIR}/src/highlighter.cpp
+  ${CMAKE_SOURCE_DIR}/src/lammpssyntax.cpp
+  ${CMAKE_SOURCE_DIR}/src/helpers.cpp
+  ${CMAKE_SOURCE_DIR}/src/stdcapture.cpp
+)
+
+target_include_directories(test_highlighter PRIVATE ${CMAKE_SOURCE_DIR}/src)
+target_link_libraries(test_highlighter PRIVATE GTest::gtest_main Qt6::Widgets)
+
+gtest_discover_tests(test_highlighter)
+
 # Test executable for FlagWarnings
 add_executable(test_flagwarnings
   test_flagwarnings.cpp

@@ -10,259 +10,220 @@
 ////////////////////////////////////////////////////////////////////////////////////////
 
 #include "highlighter.h"
+
 #include "helpers.h"
-#include <QColor>
 
-Highlighter::Highlighter(QTextDocument *parent) :
-    QSyntaxHighlighter(parent),
-    isLattice1(QStringLiteral("^\\s*(units|atom_style|change_box|dielectric|dimension)\\s+(\\S+)")),
-    isLattice2(QStringLiteral("^\\s*(lattice|region|create_box|create_atoms|delete_atoms|displace_"
-                              "atoms)\\s+(\\S+)\\s+(\\S+)")),
-    isLattice3(QStringLiteral("^\\s*(boundary|replicate)\\s+(\\S+)\\s+(\\S+)\\s+(\\S+)")),
-    isOutput1(QStringLiteral("^\\s*(echo|log|write_data|write_coeff|write_restart|restart|info|"
-                             "thermo|print|thermo_style|"
-                             "timer|pair_write|bond_write|angle_write|dihedral_write)\\s+(\\S+)")),
-    isOutput2(QStringLiteral("^\\s*(write_dump|shell|thermo_modify)\\s+(\\S+)\\s+(\\S+)")),
-    isRead(QStringLiteral(
-        "^\\s*(include|read_restart|read_data|read_dump|molecule|geturl)\\s+(\\S+)")),
-    isStyle(QStringLiteral("^\\s*(fix|compute|dump)\\s+(\\S+)\\s+(\\S+)\\s+(\\S+)")),
-    isForce(QStringLiteral(
-        "^\\s*(pair_style|bond_style|angle_style|dihedral_style|improper_style|kspace_style|pair_"
-        "coeff|angle_coeff|bond_coeff|dihedral_coeff|improper_coeff)\\s+(\\S+)")),
-    isDefine(QStringLiteral("^\\s*(group|variable|python|set|group2ndx|ndx2group|kim|kim_query|mdi)"
-                            "\\s+(\\S+)\\s+(\\S+)")),
-    isUndo(QStringLiteral("^\\s*(unfix|uncompute|undump|label|jump|next)\\s+(\\S+)")),
-    isParticle(QStringLiteral("^\\s*(pair_modify|mass|velocity|create_bonds|delete_"
-                              "bonds|kspace_modify|labelmap|atom_modify)\\s+(\\S+)")),
-    isRun(QStringLiteral("^\\s*(minimize|minimize/kk|run|rerun|tad|neb|neb/spin|prd|server|temper/"
-                         "npt|temper/grem|temper|message|hyper|dynamical_matrix|dynamical_matrix/"
-                         "kk|third_order|third_order/kk|fitpod)")),
-    isSetup(QStringLiteral("^\\s*(min_modify|neighbor|neigh_modify|special_bonds|balance|box|clear|"
-                           "quit|newton|partition|processors|reset_atoms|reset_ids)")),
-    isSetup1(
-        QStringLiteral("^\\s*(min_style|run_style|timestep|suffix|plugin|comm_modify|comm_style|"
-                       "package|reset_timestep|dump_modify|fix_modify|compute_modify)\\s+(\\S+)")),
-    isVariable(QStringLiteral("(\\$[a-z]|\\${[^} ]+}|\\$\\(\\S+\\))")),
-    isReference(
-        QStringLiteral("\\s+(c_\\S+|C_\\S+|f_\\S+|F_\\S+|i_\\S+|i2_\\S+|d_\\S+|d2_\\S+|v_\\S+)")),
-    isNumber1(QStringLiteral("(^|\\s+)[-+]?[0-9:*]+")), // integer and integer ranges
-    isNumber2(QStringLiteral("(^|\\s+)[-+]?[0-9]+\\.[0-9]*[edED]?[-+]?[0-9]*")), // floating point 1
-    isNumber3(QStringLiteral("(^|\\s+)[-+]?[0-9]*\\.[0-9]+[edED]?[-+]?[0-9]*")), // floating point 2
-    isNumber4(QStringLiteral(
-        "(^|\\s+)[-+]?[0-9]+([edED][-+]?[0-9]+)?")), // integer with optional exponent
-    isSpecial(QStringLiteral("(\\sINF|\\sEDGE|\\sNULL|\\sSELF|if\\s|then\\s|else\\s|elif\\s)")),
-    isContinue(QStringLiteral("&$")), isComment(QStringLiteral("#.*")),
-    isQuotedComment(QStringLiteral("(\".*#.*\"|'.*#.*')")),
-    isTriple(QStringLiteral("[^\"]*\"\"\"[^\"]*")),
-    isString(QStringLiteral("(\".+?\"|'.+?'|\"\"\".*\"\"\")")), in_triple(false)
+#include <QHash>
+#include <QTextBlock>
+#include <QTextDocument>
+
+namespace {
+
+// c_/f_/v_/i_/d_ style references to computes, fixes, variables, and properties
+bool isReferenceWord(const QString &word)
 {
-    if (isLightTheme()) {
-        // syntax colors for light themes
-        formatNumber.setForeground(Qt::blue);
-        formatString.setForeground(Qt::darkGreen);
-        formatString.setFontWeight(QFont::Normal);
-        formatComment.setForeground(Qt::red);
-        formatSpecial.setForeground(Qt::darkMagenta);
-        formatSpecial.setFontWeight(QFont::Bold);
-        formatParticle.setForeground(Qt::darkRed);
-        formatParticle.setFontWeight(QFont::Bold);
-        formatRun.setForeground(Qt::darkBlue);
-        formatRun.setFontWeight(QFont::Bold);
-        formatVariable.setForeground(Qt::darkGray);
-        formatVariable.setFontWeight(QFont::Bold);
-
-        formatOutput.setForeground(Qt::darkYellow);
-        formatOutput.setFontWeight(QFont::Bold);
-        formatRead.setForeground(Qt::magenta);
-        formatRead.setFontWeight(QFont::Bold);
-        formatLattice.setForeground(Qt::darkGreen);
-        formatLattice.setFontWeight(QFont::Bold);
-        formatSetup.setForeground(Qt::darkCyan);
-        formatSetup.setFontWeight(QFont::Bold);
-    } else {
-        // syntax colors for dark themes
-        formatNumber.setForeground(QColorConstants::Svg::dodgerblue);
-        formatString.setForeground(QColorConstants::Green);
-        formatString.setFontWeight(QFont::Normal);
-        formatComment.setForeground(QColorConstants::Red);
-        formatComment.setFontWeight(QFont::Bold);
-        formatSpecial.setForeground(QColorConstants::Magenta);
-        formatSpecial.setFontWeight(QFont::Bold);
-        formatParticle.setForeground(QColorConstants::Svg::indianred);
-        formatParticle.setFontWeight(QFont::Bold);
-        formatRun.setForeground(QColorConstants::Svg::lightskyblue);
-        formatRun.setFontWeight(QFont::Bold);
-        formatVariable.setForeground(QColorConstants::Svg::lightgray);
-        formatVariable.setFontWeight(QFont::Bold);
-
-        formatOutput.setForeground(QColorConstants::Yellow);
-        formatOutput.setFontWeight(QFont::Bold);
-        formatRead.setForeground(QColorConstants::Svg::lightcoral);
-        formatRead.setFontWeight(QFont::Bold);
-        formatLattice.setForeground(QColorConstants::Svg::lightgreen);
-        formatLattice.setFontWeight(QFont::Bold);
-        formatSetup.setForeground(QColorConstants::Cyan);
-        formatSetup.setFontWeight(QFont::Bold);
+    static const char *prefixes[] = {"i2_", "d2_", "c_", "C_", "f_", "F_", "i_", "d_", "v_"};
+    for (const auto *prefix : prefixes) {
+        const QLatin1String pre(prefix);
+        if ((word.size() > pre.size()) && word.startsWith(pre)) return true;
     }
+    return false;
+}
+
+} // namespace
+
+Highlighter::Highlighter(const LammpsSyntax *_syntax, QTextDocument *parent) :
+    QSyntaxHighlighter(parent), syntax(_syntax)
+{
+    // one palette table instead of duplicated per-theme assignments; the color
+    // values are carried over unchanged from the historically grown scheme
+    struct PaletteEntry {
+        QColor light;
+        QColor dark;
+        int lightWeight;
+        int darkWeight;
+    };
+    // must match the order of the Fmt enumeration
+    static const PaletteEntry palette[] = {
+        {Qt::darkGreen, QColorConstants::Svg::lightgreen, QFont::Bold, QFont::Bold},  // CmdLattice
+        {Qt::darkYellow, QColorConstants::Yellow, QFont::Bold, QFont::Bold},          // CmdOutput
+        {Qt::magenta, QColorConstants::Svg::lightcoral, QFont::Bold, QFont::Bold},    // CmdRead
+        {Qt::darkRed, QColorConstants::Svg::indianred, QFont::Bold, QFont::Bold},     // CmdParticle
+        {Qt::darkBlue, QColorConstants::Svg::lightskyblue, QFont::Bold, QFont::Bold}, // CmdRun
+        {Qt::darkCyan, QColorConstants::Cyan, QFont::Bold, QFont::Bold},              // CmdSetup
+        {Qt::darkMagenta, QColorConstants::Magenta, QFont::Bold, QFont::Bold},        // CmdSpecial
+        {QColor(), QColor(), QFont::Bold, QFont::Bold},                               // CmdOther
+        {Qt::blue, QColorConstants::Svg::dodgerblue, QFont::Normal, QFont::Normal},   // Number
+        {Qt::darkGreen, QColorConstants::Green, QFont::Normal, QFont::Normal},        // String
+        {Qt::red, QColorConstants::Red, QFont::Normal, QFont::Bold},                  // Comment
+        {Qt::darkGray, QColorConstants::Svg::lightgray, QFont::Bold, QFont::Bold},    // Variable
+        {Qt::darkMagenta, QColorConstants::Magenta, QFont::Bold, QFont::Bold},        // Special
+    };
+    static_assert(sizeof(palette) / sizeof(palette[0]) == static_cast<int>(Fmt::Count),
+                  "palette table must match the Fmt enumeration");
+
+    const bool light = isLightTheme();
+    for (int i = 0; i < static_cast<int>(Fmt::Count); ++i) {
+        const QColor color = light ? palette[i].light : palette[i].dark;
+        if (color.isValid()) formats[i].setForeground(color);
+        formats[i].setFontWeight(light ? palette[i].lightWeight : palette[i].darkWeight);
+    }
+    unknownColor = light ? QColor(Qt::red) : QColor(QColorConstants::Svg::orangered);
+}
+
+const QTextCharFormat &Highlighter::cmdFormat(CmdCat cat) const
+{
+    switch (cat) {
+        case CmdCat::Lattice:
+            return formats[static_cast<int>(Fmt::CmdLattice)];
+        case CmdCat::Output:
+            return formats[static_cast<int>(Fmt::CmdOutput)];
+        case CmdCat::Read:
+            return formats[static_cast<int>(Fmt::CmdRead)];
+        case CmdCat::Particle:
+            return formats[static_cast<int>(Fmt::CmdParticle)];
+        case CmdCat::Run:
+            return formats[static_cast<int>(Fmt::CmdRun)];
+        case CmdCat::Setup:
+            return formats[static_cast<int>(Fmt::CmdSetup)];
+        case CmdCat::Special:
+            return formats[static_cast<int>(Fmt::CmdSpecial)];
+        case CmdCat::Other:
+        default:
+            return formats[static_cast<int>(Fmt::CmdOther)];
+    }
+}
+
+void Highlighter::setCursorPos(int blockNumber, int column)
+{
+    if ((blockNumber == cursorBlock) && (column == cursorColumn)) return;
+    const int oldBlock = cursorBlock;
+    cursorBlock        = blockNumber;
+    cursorColumn       = column;
+    if (!document()) return;
+
+    // re-highlight the block the cursor left and the one it is in, so the
+    // unknown-name suppression follows the cursor
+    if ((oldBlock >= 0) && (oldBlock != blockNumber)) {
+        const auto block = document()->findBlockByNumber(oldBlock);
+        if (block.isValid()) rehighlightBlock(block);
+    }
+    const auto block = document()->findBlockByNumber(blockNumber);
+    if (block.isValid()) rehighlightBlock(block);
 }
 
 void Highlighter::highlightBlock(const QString &text)
 {
-    // nothing to do for empty lines
-    if (text.isEmpty()) return;
+    const int prev       = qMax(previousBlockState(), 0);
+    const LineTokens lt  = tokenizeLine(text, prev);
+    const int prevFlags  = SyntaxState::flags(prev);
+    const bool freshLine = !(prevFlags & (SyntaxState::TRIPLE | SyntaxState::CONTINUE |
+                                          SyntaxState::SINGLEQ | SyntaxState::DOUBLEQ));
 
-    auto match = isLattice1.match(text);
-    if (match.hasMatch()) {
-        setFormat(match.capturedStart(1), match.capturedLength(1), formatLattice);
-        setFormat(match.capturedStart(2), match.capturedLength(2), formatRun);
+    // full text of each argument (a word may consist of several tokens)
+    QHash<int, QString> argText;
+    for (const auto &tok : lt.tokens) {
+        if ((tok.argIndex >= 0) && (tok.type != TokType::Comment) &&
+            (tok.type != TokType::Continuation))
+            argText[tok.argIndex] += text.mid(tok.start, tok.length);
     }
 
-    match = isLattice2.match(text);
-    if (match.hasMatch()) {
-        setFormat(match.capturedStart(1), match.capturedLength(1), formatLattice);
-        setFormat(match.capturedStart(2), match.capturedLength(2), formatString);
-        setFormat(match.capturedStart(3), match.capturedLength(3), formatRun);
-    }
+    // the active command: word 0 on a fresh logical line, carried in the block
+    // state on continuation lines
+    const int cmdIdx = freshLine ? syntax->commandIndex(argText.value(0))
+                                 : SyntaxState::cmdIndex(prev);
 
-    match = isLattice3.match(text);
-    if (match.hasMatch()) {
-        setFormat(match.capturedStart(1), match.capturedLength(1), formatLattice);
-        setFormat(match.capturedStart(2), match.capturedLength(2), formatString);
-        setFormat(match.capturedStart(3), match.capturedLength(3), formatString);
-        setFormat(match.capturedStart(4), match.capturedLength(4), formatString);
-    }
+    const bool checkNames = syntax->isPopulated();
+    const bool cursorHere = (currentBlock().blockNumber() == cursorBlock);
 
-    match = isOutput1.match(text);
-    if (match.hasMatch()) {
-        setFormat(match.capturedStart(1), match.capturedLength(1), formatOutput);
-        setFormat(match.capturedStart(2), match.capturedLength(2), formatString);
-    }
+    for (const auto &tok : lt.tokens) {
+        QTextCharFormat fmt;
+        bool unknown = false;
 
-    match = isOutput2.match(text);
-    if (match.hasMatch()) {
-        setFormat(match.capturedStart(1), match.capturedLength(1), formatOutput);
-        setFormat(match.capturedStart(2), match.capturedLength(2), formatString);
-        setFormat(match.capturedStart(3), match.capturedLength(3), formatRun);
-    }
-
-    match = isRead.match(text);
-    if (match.hasMatch()) {
-        setFormat(match.capturedStart(1), match.capturedLength(1), formatRead);
-        setFormat(match.capturedStart(2), match.capturedLength(2), formatString);
-    }
-
-    match = isStyle.match(text);
-    if (match.hasMatch()) {
-        setFormat(match.capturedStart(1), match.capturedLength(1), formatParticle);
-        setFormat(match.capturedStart(2), match.capturedLength(2), formatNumber);
-        setFormat(match.capturedStart(3), match.capturedLength(3), formatString);
-        setFormat(match.capturedStart(4), match.capturedLength(4), formatRun);
-    }
-
-    match = isForce.match(text);
-    if (match.hasMatch()) {
-        setFormat(match.capturedStart(1), match.capturedLength(1), formatParticle);
-        setFormat(match.capturedStart(2), match.capturedLength(2), formatRun);
-    }
-
-    match = isUndo.match(text);
-    if (match.hasMatch()) {
-        setFormat(match.capturedStart(1), match.capturedLength(1), formatSpecial);
-        setFormat(match.capturedStart(2), match.capturedLength(2), formatString);
-    }
-
-    match = isDefine.match(text);
-    if (match.hasMatch()) {
-        setFormat(match.capturedStart(1), match.capturedLength(1), formatParticle);
-        setFormat(match.capturedStart(2), match.capturedLength(2), formatString);
-        setFormat(match.capturedStart(3), match.capturedLength(3), formatRun);
-    }
-
-    match = isParticle.match(text);
-    if (match.hasMatch()) {
-        setFormat(match.capturedStart(1), match.capturedLength(1), formatParticle);
-        setFormat(match.capturedStart(2), match.capturedLength(2), formatString);
-    }
-
-    match = isRun.match(text);
-    if (match.hasMatch()) {
-        setFormat(match.capturedStart(1), match.capturedLength(1), formatRun);
-    }
-
-    match = isSetup.match(text);
-    if (match.hasMatch()) {
-        setFormat(match.capturedStart(1), match.capturedLength(1), formatSetup);
-    }
-
-    match = isSetup1.match(text);
-    if (match.hasMatch()) {
-        setFormat(match.capturedStart(1), match.capturedLength(1), formatSetup);
-        setFormat(match.capturedStart(2), match.capturedLength(2), formatString);
-    }
-
-    // numbers
-    const QRegularExpression *numbers[] = {&isNumber1, &isNumber2, &isNumber3, &isNumber4};
-    for (const auto *number : numbers) {
-        auto num = number->globalMatch(text);
-        while (num.hasNext()) {
-            auto hit = num.next();
-            setFormat(hit.capturedStart(), hit.capturedLength(), formatNumber);
+        switch (tok.type) {
+            case TokType::Comment:
+                fmt = formats[static_cast<int>(Fmt::Comment)];
+                break;
+            case TokType::Continuation:
+                fmt = formats[static_cast<int>(Fmt::Special)];
+                break;
+            case TokType::String:
+            case TokType::TripleString:
+                fmt = formats[static_cast<int>(Fmt::String)];
+                break;
+            case TokType::Word: {
+                const QString word = argText.value(tok.argIndex);
+                if (tok.argIndex == 0) {
+                    fmt = cmdFormat(syntax->commandCategory(word));
+                    unknown =
+                        checkNames && !tok.hasSubst && !tok.fragment && !syntax->knownCommand(word);
+                } else if (tok.argIndex > 0) {
+                    const ArgSpec spec = syntax->argSpec(cmdIdx, tok.argIndex);
+                    switch (spec.role) {
+                        case ArgRole::DefineId:
+                            fmt = formats[static_cast<int>(Fmt::Number)];
+                            break;
+                        case ArgRole::GroupId:
+                        case ArgRole::File:
+                        case ArgRole::Keyword:
+                        case ArgRole::Label:
+                            fmt = formats[static_cast<int>(Fmt::String)];
+                            break;
+                        case ArgRole::Style:
+                            // style names use the same color as run-like commands
+                            fmt     = formats[static_cast<int>(Fmt::CmdRun)];
+                            unknown = checkNames && !tok.hasSubst && !tok.fragment &&
+                                      !syntax->knownStyle(spec.cat, word);
+                            break;
+                        default:
+                            break;
+                    }
+                    // lexical classes override the role color
+                    if (tok.isNumber)
+                        fmt = formats[static_cast<int>(Fmt::Number)];
+                    else if (syntax->isSpecialWord(word))
+                        fmt = formats[static_cast<int>(Fmt::Special)];
+                    else if (isReferenceWord(word))
+                        fmt = formats[static_cast<int>(Fmt::Variable)];
+                }
+                break;
+            }
+            default:
+                break;
         }
-    }
 
-    // variables
-    auto vars = isVariable.globalMatch(text);
-    while (vars.hasNext()) {
-        auto hit = vars.next();
-        setFormat(hit.capturedStart(), hit.capturedLength(), formatVariable);
-    }
-
-    // references
-    auto refs = isReference.globalMatch(text);
-    while (refs.hasNext()) {
-        auto hit = refs.next();
-        setFormat(hit.capturedStart(), hit.capturedLength(), formatVariable);
-    }
-
-    // continuation character
-    auto multiline = isContinue.match(text);
-    if (multiline.hasMatch())
-        setFormat(multiline.capturedStart(0), multiline.capturedLength(0), formatSpecial);
-
-    // special keywords
-    auto special = isSpecial.globalMatch(text);
-    while (special.hasNext()) {
-        auto hit = special.next();
-        setFormat(hit.capturedStart(), hit.capturedLength(), formatSpecial);
-    }
-
-    // comments, must come before strings but after other keywords.
-    auto comment = isComment.match(text);
-    if (comment.hasMatch() && !isQuotedComment.match(text).hasMatch() && !in_triple) {
-        setFormat(comment.capturedStart(0), comment.capturedLength(0), formatComment);
-        return;
-    }
-
-    // strings, must come last so they can overwrite other formatting
-    auto string = isString.globalMatch(text);
-    while (string.hasNext()) {
-        auto hit = string.next();
-        setFormat(hit.capturedStart(), hit.capturedLength(), formatString);
-    }
-
-    auto triple = isTriple.match(text);
-    if (triple.hasMatch()) {
-        if (in_triple) {
-            in_triple = false;
-            setFormat(0, triple.capturedStart(0) + triple.capturedLength(0), formatString);
-        } else {
-            in_triple = true;
-            setFormat(triple.capturedStart(0), -1, formatString);
+        // no unknown-name marker on the word the cursor is on (partially typed)
+        if (unknown && cursorHere && (cursorColumn >= tok.start) &&
+            (cursorColumn <= tok.start + tok.length))
+            unknown = false;
+        if (unknown) {
+            fmt.setUnderlineStyle(QTextCharFormat::WaveUnderline);
+            fmt.setUnderlineColor(unknownColor);
         }
-    } else {
-        if (in_triple) setFormat(0, text.size(), formatString);
+        setFormat(tok.start, tok.length, fmt);
     }
+
+    // overlay $-variable references; they are substituted everywhere except in
+    // comments (commands like print and if substitute their quoted arguments)
+    const auto refs = findVarRefs(text);
+    for (const auto &ref : refs) {
+        bool inComment = false;
+        for (const auto &tok : lt.tokens) {
+            if ((tok.type == TokType::Comment) && (ref.start >= tok.start) &&
+                (ref.start < tok.start + tok.length)) {
+                inComment = true;
+                break;
+            }
+        }
+        if (!inComment) setFormat(ref.start, ref.length, formats[static_cast<int>(Fmt::Variable)]);
+    }
+
+    // store the block state; carry the active command into a continuation
+    int out = lt.outState;
+    if (freshLine && (out != 0) && (cmdIdx >= 0)) out = SyntaxState::withCommand(out, cmdIdx);
+    setCurrentBlockState(out);
 }
+
 // Local Variables:
 // c-basic-offset: 4
 // End:
