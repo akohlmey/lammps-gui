@@ -167,17 +167,10 @@ void Highlighter::highlightBlock(const QString &text)
 {
     const int prev       = qMax(previousBlockState(), 0);
     const LineTokens lt  = tokenizeLine(text, prev);
-    const int prevFlags  = SyntaxState::flags(prev);
-    const bool freshLine = !(prevFlags & (SyntaxState::TRIPLE | SyntaxState::CONTINUE |
-                                          SyntaxState::SINGLEQ | SyntaxState::DOUBLEQ));
+    const bool freshLine = !SyntaxState::logicalContinues(prev);
 
     // full text of each argument (a word may consist of several tokens)
-    QHash<int, QString> argText;
-    for (const auto &tok : lt.tokens) {
-        if ((tok.argIndex >= 0) && (tok.type != TokType::Comment) &&
-            (tok.type != TokType::Continuation))
-            argText[tok.argIndex] += text.mid(tok.start, tok.length);
-    }
+    const QHash<int, QString> argText = argumentTexts(lt, text);
 
     // the active command: word 0 on a fresh logical line, carried in the block
     // state on continuation lines

@@ -425,9 +425,7 @@ QString SyntaxChecker::formatIssues(const QList<LintIssue> &issues, int maxShown
     int shown = 0;
     for (const auto &issue : issues) {
         if ((maxShown >= 0) && (shown >= maxShown)) break;
-        const char *severity = "info";
-        if (issue.severity == LintSeverity::Warning) severity = "warning";
-        if (issue.severity == LintSeverity::Error) severity = "ERROR";
+        const char *severity = (issue.severity == LintSeverity::Error) ? "ERROR" : "warning";
         text += QStringLiteral("line %1: [%2] %3\n")
                     .arg(issue.line)
                     .arg(QLatin1String(severity), issue.message);

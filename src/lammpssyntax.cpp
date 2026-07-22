@@ -16,16 +16,15 @@
 #include <QRegularExpression>
 
 // The tokenizer mirrors the parsing rules of the LAMMPS Input class, see
-// lammps/src/input.cpp: Input::file() lines 205-270 (trailing whitespace is
-// trimmed *before* the trailing '&' check; the '&' is overwritten by the next
+// lammps/src/input.cpp: Input::file() (trailing whitespace is trimmed
+// *before* the trailing '&' check; the '&' is overwritten by the next
 // physical line, so joins can happen mid-word and before comment stripping),
-// Input::parse() lines 453-476 ('#' outside of quotes starts a comment; text
-// in single, double, or triple quotes is scanned contextually), and
-// Input::substitute() lines 578-745 ('\$' escapes, '${name}', and balanced
-// '$(expr)' forms).  One documented deviation: a trailing '&' inside an open
-// triple-quoted block is treated as string content, following the
-// Commands_parse.rst rule that '&' does not function as a line continuation
-// there.
+// Input::parse() ('#' outside of quotes starts a comment; text in single,
+// double, or triple quotes is scanned contextually), and Input::substitute()
+// ('\$' escapes, '${name}', and balanced '$(expr)' forms).  One documented
+// deviation: a trailing '&' inside an open triple-quoted block is treated as
+// string content, following the Commands_parse.rst rule that '&' does not
+// function as a line continuation there.
 
 namespace {
 
@@ -53,6 +52,16 @@ constexpr QChar C_DQUOTE = QLatin1Char('"');
 constexpr QChar C_BSLASH = QLatin1Char('\\');
 constexpr QChar C_DOLLAR = QLatin1Char('$');
 
+// accelerator suffixes filtered from the completion lists
+const QStringList &acceleratorSuffixes()
+{
+    static const QStringList suffixes = {QStringLiteral("/gpu"),     QStringLiteral("/intel"),
+                                         QStringLiteral("/kk"),      QStringLiteral("/kk/device"),
+                                         QStringLiteral("/kk/host"), QStringLiteral("/omp"),
+                                         QStringLiteral("/opt")};
+    return suffixes;
+}
+
 } // namespace
 
 LineTokens tokenizeLine(const QString &text, int prevState)
@@ -72,7 +81,7 @@ LineTokens tokenizeLine(const QString &text, int prevState)
     bool inDouble        = inFlags & SyntaxState::DOUBLEQ;
 
     // true while this physical line continues the logical line of the previous one
-    const bool logicalContinues = contIn || inTriple || inSingle || inDouble;
+    const bool logicalContinues = SyntaxState::logicalContinues(state);
 
     // trailing whitespace is trimmed before checking for the '&' continuation
     int lastPrintable = len - 1;
@@ -278,11 +287,22 @@ LineTokens tokenizeLine(const QString &text, int prevState)
     return result;
 }
 
-QVector<Token> findVarRefs(const QString &text, int from, int to)
+QHash<int, QString> argumentTexts(const LineTokens &lt, const QString &line)
+{
+    QHash<int, QString> argText;
+    for (const auto &tok : lt.tokens) {
+        if ((tok.argIndex >= 0) && (tok.type != TokType::Comment) &&
+            (tok.type != TokType::Continuation))
+            argText[tok.argIndex] += line.mid(tok.start, tok.length);
+    }
+    return argText;
+}
+
+QVector<Token> findVarRefs(const QString &text)
 {
     QVector<Token> refs;
-    if ((to < 0) || (to > text.size())) to = text.size();
-    int i = qMax(0, from);
+    const int to = text.size();
+    int i        = 0;
     while (i < to) {
         if (text.at(i) != C_DOLLAR) {
             ++i;
@@ -541,6 +561,10 @@ bool LammpsSyntax::loadCommandSpecsFromString(const QString &text)
         }
         if (specIndex.contains(cs.name)) {
             specs[specIndex.value(cs.name)] = cs;
+        } else if (specs.size() >= SyntaxState::CMD_MASK) {
+            // spec indices are stored in the block states; more entries than
+            // the command bit field can hold would silently alias states
+            ok = false;
         } else {
             specIndex.insert(cs.name, specs.size());
             specs.append(cs);
@@ -613,9 +637,7 @@ CompletionTarget LammpsSyntax::completionTarget(int prevBlockState, const QStrin
     CompletionTarget target;
     const int state      = qMax(prevBlockState, 0);
     const LineTokens lt  = tokenizeLine(line, state);
-    const int prevFlags  = SyntaxState::flags(state);
-    const bool freshLine = !(prevFlags & (SyntaxState::TRIPLE | SyntaxState::CONTINUE |
-                                          SyntaxState::SINGLEQ | SyntaxState::DOUBLEQ));
+    const bool freshLine = !SyntaxState::logicalContinues(state);
 
     // full text and span of each argument, and the argument under the cursor
     QHash<int, QString> argText;
@@ -729,15 +751,6 @@ CompletionTarget LammpsSyntax::completionTarget(int prevBlockState, const QStrin
     return target;
 }
 
-const QStringList &LammpsSyntax::acceleratorSuffixes()
-{
-    static const QStringList suffixes = {QStringLiteral("/gpu"),     QStringLiteral("/intel"),
-                                         QStringLiteral("/kk"),      QStringLiteral("/kk/device"),
-                                         QStringLiteral("/kk/host"), QStringLiteral("/omp"),
-                                         QStringLiteral("/opt")};
-    return suffixes;
-}
-
 // ----------------------------------------------------------------------------
 
 void InputScanner::feedLine(int lineNo, const QString &text)
@@ -755,11 +768,7 @@ void InputScanner::feedLine(int lineNo, const QString &text)
         while (current.words.size() <= tok.argIndex)
             current.words.append(Word{});
         auto &word = current.words[tok.argIndex];
-        if (word.text.isEmpty()) {
-            word.line   = lineNo;
-            word.start  = tok.start;
-            word.length = tok.length;
-        }
+        if (word.text.isEmpty()) word.line = lineNo;
         word.text += text.mid(tok.start, tok.length);
         if (tok.type != TokType::Word) word.quoted = true;
         current.lastLine = lineNo;
@@ -767,9 +776,7 @@ void InputScanner::feedLine(int lineNo, const QString &text)
 
     state = lt.outState;
     // the logical line is complete when no multi-line construct stays open
-    if ((SyntaxState::flags(state) & (SyntaxState::TRIPLE | SyntaxState::CONTINUE |
-                                      SyntaxState::SINGLEQ | SyntaxState::DOUBLEQ)) == 0)
-        flush();
+    if (!SyntaxState::logicalContinues(state)) flush();
 }
 
 void InputScanner::finish(int lastLineNo)

@@ -23,8 +23,9 @@
  *
  * The first group mirrors the categories that can be enumerated through the
  * LAMMPS library interface (lammps_style_count() / lammps_style_name());
- * Variable, Units, and Extra are static keyword sets that LAMMPS does not
- * expose through introspection.
+ * Variable, Units, Extra, and ImageKw are static keyword sets that LAMMPS
+ * does not expose through introspection, and Color is injected from the
+ * shared color name list (see lammpsImageColors()).
  */
 enum class StyleCat : quint8 {
     Command,   ///< command names (input commands + registered command styles)
@@ -62,11 +63,11 @@ constexpr int NUM_STYLE_CATS = static_cast<int>(StyleCat::None);
  */
 enum class CmdCat : quint8 {
     Lattice,  ///< system setup / lattice / geometry commands
-    Output,   ///< output and write commands
+    Output,   ///< file I/O and output commands
     Modify,   ///< *_modify commands
     Particle, ///< particle, force field, and definition commands
     Run,      ///< run-like commands
-    Setup,    ///< settings and modify commands
+    Setup,    ///< settings commands
     Special,  ///< undo / flow control commands
     Other     ///< recognized command without an explicit category entry
 };
@@ -83,8 +84,9 @@ enum class ArgRole : quint8 {
               ///< word is a member of the category's style set, like LAMMPS
               ///< itself separates hybrid sub-styles from their arguments
     File,     ///< a file name argument
-    Int,      ///< an integer number is expected
-    Number,   ///< a floating point number is expected
+    Int,      ///< an integer number is expected (informational in the spec
+              ///< table for now; the checker uses its own vetted numeric list)
+    Number,   ///< a floating point number is expected (informational, see Int)
     Keyword,  ///< a keyword-like argument
     Label     ///< reference to an ID defined elsewhere (unfix/jump/label targets)
 };
@@ -226,6 +228,13 @@ inline int withCommand(int state, int cmdidx)
     return (state & ~(CMD_MASK << CMD_SHIFT)) | (((cmdidx + 1) & CMD_MASK) << CMD_SHIFT);
 }
 
+/// true when a line with this previous-line state continues the logical line
+/// (an open continuation, triple-quoted block, or quoted string)
+inline bool logicalContinues(int state)
+{
+    return (flags(state) & (TRIPLE | CONTINUE | SINGLEQ | DOUBLEQ)) != 0;
+}
+
 } // namespace SyntaxState
 
 /**
@@ -260,11 +269,22 @@ LineTokens tokenizeLine(const QString &text, int prevState = 0);
  * commands like print, if, and python substitute their quoted arguments.
  *
  * @param text text to scan
- * @param from index of the first character to scan
- * @param to index past the last character to scan (-1 = end of text)
  * @return VarRef tokens with spans in scan order
  */
-QVector<Token> findVarRefs(const QString &text, int from = 0, int to = -1);
+QVector<Token> findVarRefs(const QString &text);
+
+/**
+ * @brief Collect the full text of each argument of a tokenized line
+ *
+ * Joins the tokens belonging to the same argument (words may consist of
+ * several tokens when they contain quoted sections), skipping comment and
+ * continuation tokens.
+ *
+ * @param lt result of tokenizeLine() for the line
+ * @param line the tokenized line
+ * @return map from argument index to the argument's full text
+ */
+QHash<int, QString> argumentTexts(const LineTokens &lt, const QString &line);
 
 /**
  * @brief Check whether a word is a number the way the LAMMPS-GUI editor colors them
@@ -371,9 +391,6 @@ public:
      */
     CompletionTarget completionTarget(int prevBlockState, const QString &line, int cursorCol) const;
 
-    /// accelerator suffixes filtered from completion lists
-    static const QStringList &acceleratorSuffixes();
-
 private:
     QSet<QString> styles[NUM_STYLE_CATS];    ///< full name sets per category
     QStringList completions[NUM_STYLE_CATS]; ///< sorted, suffix-filtered lists
@@ -401,8 +418,6 @@ public:
     struct Word {
         QString text;          ///< word text; surrounding matching quotes stripped
         int line      = 0;     ///< line number of the word's first character
-        int start     = 0;     ///< column of the word's first character in that line
-        int length    = 0;     ///< length of the first segment in that line
         bool quoted   = false; ///< word contains (or is) a quoted section
         bool hasSubst = false; ///< word contains a '$' variable reference
     };
@@ -432,13 +447,8 @@ public:
     InputScanner &operator=(const InputScanner &) = default;
     InputScanner &operator=(InputScanner &&)      = default;
 
-    /// feed the next physical line; line numbers must be fed in increasing order
-    void feedLine(int lineNo, const QString &text);
-
-    /// finalize after the last line: flush a pending command, emit end-of-input diagnostics
-    void finish(int lastLineNo);
-
-    /// convenience: scan a whole buffer (split on newlines, 1-based line numbers)
+    /// scan a whole buffer (split on newlines, 1-based line numbers); results
+    /// accumulate, so use a fresh scanner for every buffer
     void scan(const QString &buffer);
 
     /// completed logical commands in buffer order
@@ -448,6 +458,13 @@ public:
     const QVector<Diagnostic> &diagnostics() const { return diags; }
 
 private:
+    /// feed the next physical line; line numbers must be fed in increasing order
+    void feedLine(int lineNo, const QString &text);
+
+    /// finalize after the last line: flush a pending command, emit end-of-input diagnostics
+    void finish(int lastLineNo);
+
+    /// append the assembled logical command (if any) to the results
     void flush();
 
     QVector<LogicalCommand> cmds; ///< completed logical commands

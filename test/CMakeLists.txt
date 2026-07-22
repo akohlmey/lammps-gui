@@ -131,7 +131,6 @@ add_executable(test_highlighter
   ${CMAKE_SOURCE_DIR}/src/highlighter.cpp
   ${CMAKE_SOURCE_DIR}/src/lammpssyntax.cpp
   ${CMAKE_SOURCE_DIR}/src/helpers.cpp
-  ${CMAKE_SOURCE_DIR}/src/stdcapture.cpp
 )
 
 target_include_directories(test_highlighter PRIVATE ${CMAKE_SOURCE_DIR}/src)

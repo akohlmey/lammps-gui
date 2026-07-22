@@ -973,18 +973,10 @@ void CodeEditor::findHelp(QString &page, QString &help)
     const int prevState = block.previous().isValid() ? qMax(block.previous().userState(), 0) : 0;
     const LineTokens lt = tokenizeLine(text, prevState);
 
-    QHash<int, QString> argText;
-    for (const auto &tok : lt.tokens) {
-        if ((tok.argIndex < 0) || (tok.type == TokType::Comment) ||
-            (tok.type == TokType::Continuation))
-            continue;
-        argText[tok.argIndex] += text.mid(tok.start, tok.length);
-    }
+    const QHash<int, QString> argText = argumentTexts(lt, text);
 
-    const bool freshLine =
-        !(SyntaxState::flags(prevState) & (SyntaxState::TRIPLE | SyntaxState::CONTINUE |
-                                           SyntaxState::SINGLEQ | SyntaxState::DOUBLEQ));
-    int cmdIdx = -1;
+    const bool freshLine = !SyntaxState::logicalContinues(prevState);
+    int cmdIdx           = -1;
     QString cmd;
     if (freshLine) {
         cmd = argText.value(0);

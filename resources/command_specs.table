@@ -10,9 +10,10 @@
 #   (too small only misses a check, too large causes false lint errors)
 # roles of argument positions 1, 2, ... (all further arguments have no
 #   specific role unless the last role is marked with a trailing '*'):
-#   any defid group style:<cat> file int number keyword label
+#   any defid group style:<cat> substyle:<cat> file int number keyword label
 #   with <cat> one of: command fix compute dump atom pair bond angle
-#   dihedral improper kspace region integrate minimize variable units extra
+#   dihedral improper kspace region integrate minimize variable units
+#   extra color imagekw
 #
 # Commands not listed here are highlighted in the neutral "other" style with
 # lexical-only argument coloring.  Entries in a table loaded later override
@@ -82,7 +83,6 @@ set             particle  2  keyword,keyword
 group2ndx       particle  1  file
 ndx2group       particle  1  file
 kim             particle  1  keyword
-kim_query       particle  2  defid,keyword
 mdi             particle  1  keyword
 mass            particle  2  keyword,number
 velocity        particle  2  group,keyword
@@ -108,7 +108,7 @@ dynamical_matrix run      0
 third_order     run       0
 fitpod          run       1  file,file
 
-# ---- settings and modify commands -------------------------------------------
+# ---- settings commands -------------------------------------------
 neighbor        setup     2  number,keyword
 special_bonds   setup     1  keyword
 balance         setup     2  number,keyword

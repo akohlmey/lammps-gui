@@ -20,7 +20,6 @@ class LammpsSyntax;
 
 /// severity of a single lint finding
 enum class LintSeverity : quint8 {
-    Info,    ///< informational note
     Warning, ///< suspicious, but may be intentional
     Error    ///< LAMMPS will reject this input
 };
