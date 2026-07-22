@@ -284,7 +284,10 @@ The *Check for LAMMPS update* entry -- available only in the plugin
 version of LAMMPS-GUI -- compares the downloaded LAMMPS shared library
 with the latest version available online and offers to download and
 install an update when a newer version is found; LAMMPS-GUI is then
-relaunched to activate it.
+relaunched to activate it.  The checksum of the downloaded file is
+verified before it replaces the current library, which is renamed to a
+backup name first; leftover backup files and partial downloads in the
+configuration folder are cleaned up on the next launch of LAMMPS-GUI.
 
 -------------
 

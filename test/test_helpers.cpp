@@ -21,6 +21,7 @@
 #include <QFileInfo>
 #include <QImage>
 #include <QString>
+#include <QTemporaryDir>
 
 #include <cstdio>
 #include <string>
@@ -242,6 +243,60 @@ TEST_F(HelpersTest, FindExeConsistentWithHasExe)
     const QString exe = "ls";
 #endif
     EXPECT_EQ(hasExe(exe), !findExe(exe).isEmpty());
+}
+
+// Tests for renameToBackup function
+
+TEST_F(HelpersTest, RenameToBackupCreatesBackup)
+{
+    QTemporaryDir tmp;
+    ASSERT_TRUE(tmp.isValid());
+    const QString file = tmp.filePath("sample.txt");
+    {
+        QFile f(file);
+        ASSERT_TRUE(f.open(QIODevice::WriteOnly));
+        f.write("payload");
+    }
+
+    const QString backup = renameToBackup(file);
+    EXPECT_EQ(backup, file + Cfg::BACKUP_SUFFIX);
+    EXPECT_FALSE(QFile::exists(file));
+
+    QFile bf(backup);
+    ASSERT_TRUE(bf.open(QIODevice::ReadOnly));
+    EXPECT_EQ(bf.readAll(), QByteArray("payload"));
+}
+
+TEST_F(HelpersTest, RenameToBackupReplacesStaleBackup)
+{
+    QTemporaryDir tmp;
+    ASSERT_TRUE(tmp.isValid());
+    const QString file = tmp.filePath("sample.txt");
+    {
+        QFile f(file);
+        ASSERT_TRUE(f.open(QIODevice::WriteOnly));
+        f.write("new");
+    }
+    {
+        QFile f(file + Cfg::BACKUP_SUFFIX);
+        ASSERT_TRUE(f.open(QIODevice::WriteOnly));
+        f.write("stale");
+    }
+
+    // the removable stale backup is replaced, not given a numbered name
+    const QString backup = renameToBackup(file);
+    EXPECT_EQ(backup, file + Cfg::BACKUP_SUFFIX);
+
+    QFile bf(backup);
+    ASSERT_TRUE(bf.open(QIODevice::ReadOnly));
+    EXPECT_EQ(bf.readAll(), QByteArray("new"));
+}
+
+TEST_F(HelpersTest, RenameToBackupMissingFile)
+{
+    QTemporaryDir tmp;
+    ASSERT_TRUE(tmp.isValid());
+    EXPECT_TRUE(renameToBackup(tmp.filePath("does_not_exist")).isEmpty());
 }
 
 // Tests for getLammpsLibName function

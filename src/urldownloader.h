@@ -12,6 +12,7 @@
 #ifndef URLDOWNLOADER_H
 #define URLDOWNLOADER_H
 
+#include <QByteArray>
 #include <QString>
 
 class QNetworkAccessManager;
@@ -52,13 +53,22 @@ public:
      * HTTPS proxy setting.  Optionally display a dialog with the downloaded
      * URL and the location of the downloaded file.
      *
+     * When a SHA256SUMS file is available in the same remote directory, the
+     * checksum of the downloaded data is verified *before* it replaces an
+     * existing file, so a corrupted download never clobbers a working file.
+     *
      * @param url   The HTTPS URL to download from
      * @param file  The local file path to write to
      * @param showDialog  Display a dialog with the downloaded URL and target file location while
      * downloading
+     * @param keepBackup  Rename an existing target file to a backup name instead of replacing
+     * it in place; required to update a shared library that is currently loaded on Windows,
+     * where a loaded library can be renamed but not deleted or overwritten.  The caller is
+     * responsible for removing the backup file eventually (LAMMPS-GUI does this at launch).
      * @return true if the download completed successfully, false otherwise
      */
-    bool download(const QString &url, const QString &file, bool showDialog = false);
+    bool download(const QString &url, const QString &file, bool showDialog = false,
+                  bool keepBackup = false);
 
     /**
      * @brief Return the last error message
@@ -87,7 +97,7 @@ public:
 
 private:
     void configureProxy();
-    bool verifyChecksum(const QString &url, const QString &file);
+    bool verifyChecksum(const QString &url, const QByteArray &data);
 
     /**
      * @brief Fetch raw content from a given HTTPS URL

@@ -97,6 +97,32 @@ void applyProxySetting(LammpsWrapper &lammps, QSettings &settings)
     if (!proxy.isEmpty()) lammps.command(QString("shell putenv https_proxy=") + proxy);
 }
 
+// Remove leftover files from replacing the downloaded LAMMPS shared library
+// in the configuration folder: backups of an updated or reset library (which
+// may have been locked and thus undeletable on Windows while it was loaded)
+// and partial downloads left behind by a crash.  The names for all platforms
+// are checked since the configuration folder may be shared between different
+// machines.  The configured plugin file itself is never removed.
+void purgeLibraryLeftovers()
+{
+    const auto configDir = QStandardPaths::writableLocation(QStandardPaths::AppConfigLocation);
+    if (configDir.isEmpty()) return;
+
+    const QDir dir(configDir);
+    const QString plugin =
+        QFileInfo(QSettings().value(Keys::PLUGIN_PATH, "").toString()).canonicalFilePath();
+    for (const auto &libname :
+         {Cfg::LAMMPS_LIB_MACOS, Cfg::LAMMPS_LIB_WINDOWS, Cfg::LAMMPS_LIB_LINUX}) {
+        // the "?*" glob requires at least one extra character, so the pattern
+        // matches only backups and partial downloads, never the library itself
+        for (const auto &f : dir.entryList({libname + "?*"}, QDir::Files)) {
+            const QString path = dir.absoluteFilePath(f);
+            if (!plugin.isEmpty() && (QFileInfo(path).canonicalFilePath() == plugin)) continue;
+            QFile::remove(path);
+        }
+    }
+}
+
 const QString citeme("# When using LAMMPS-GUI in your project, please cite: "
                      "https://doi.org/10.33011/livecoms.6.1.3037\n");
 const QString bannerstyle("CodeEditor {background-position: center center; "
@@ -543,7 +569,7 @@ void LammpsGui::setupPlugin(QSettings &settings)
                 auto dlUrl   = getLammpsDownloadUrl();
 
                 URLDownloader downloader(this);
-                if (downloader.download(dlUrl, libPath, true)) {
+                if (downloader.download(dlUrl, libPath, true, true)) {
                     // try loading the downloaded library
                     if (lammps.loadLib(libPath)) {
                         pluginPath = libPath;
@@ -685,6 +711,11 @@ LammpsGui::LammpsGui(QWidget *parent, const QString &filename, int width, int he
     dirstatus->setText(QString(" Directory: ") + currentDir);
 
     setAutoFillBackground(true);
+
+    // clean up backup files and partial downloads from updating the LAMMPS
+    // shared library before it is loaded below; a file that was still locked
+    // when it was replaced or reset is deletable again after a restart
+    purgeLibraryLeftovers();
 
     setupPlugin(settings);
     setupAccelerators(settings);
@@ -2421,7 +2452,7 @@ void LammpsGui::checkUpdate()
         button->setIcon(QIcon(":/icons/dialog-no.svg"));
 
         if (mb.exec() == QMessageBox::Yes) {
-            if (downloader.download(dlUrl, libPath, true)) {
+            if (downloader.download(dlUrl, libPath, true, true)) {
                 warning(this, "LAMMPS Shared Library Updated",
                         "The latest LAMMPS library has been downloaded successfully. "
                         "LAMMPS-GUI must be relaunched to activate it.");
@@ -2656,8 +2687,14 @@ void LammpsGui::defaults()
     if (!configDir.isEmpty()) {
         const QDir dir(configDir);
         for (const auto &lib :
-             {Cfg::LAMMPS_LIB_MACOS, Cfg::LAMMPS_LIB_WINDOWS, Cfg::LAMMPS_LIB_LINUX})
-            QFile::remove(dir.absoluteFilePath(lib));
+             {Cfg::LAMMPS_LIB_MACOS, Cfg::LAMMPS_LIB_WINDOWS, Cfg::LAMMPS_LIB_LINUX}) {
+            const auto path = dir.absoluteFilePath(lib);
+            // a loaded library is locked against deletion on Windows, but it
+            // can still be renamed; the backup is removed on the next launch
+            if (QFileInfo::exists(path) && !QFile::remove(path)) renameToBackup(path);
+        }
+        // remove backups and partial downloads right away where possible
+        purgeLibraryLeftovers();
     }
 }
 

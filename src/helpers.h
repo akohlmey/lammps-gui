@@ -130,6 +130,19 @@ extern void exportImage(QWidget *parent, QImage *image, const QString &title);
 [[nodiscard]] extern QString findExe(const QString &exe);
 
 /**
+ * @brief Rename a file to a backup name with the Cfg::BACKUP_SUFFIX suffix
+ * @param file Path of the file to rename
+ * @return Path of the backup file or an empty string on failure
+ *
+ * An existing backup file is replaced.  When it cannot be removed (on Windows
+ * a loaded shared library is locked against deletion), a numbered backup name
+ * is used instead.  Windows does permit renaming a locked file, so this is
+ * the way to move a loaded shared library out of the way before an update.
+ * The caller is responsible for removing the backup file eventually.
+ */
+extern QString renameToBackup(const QString &file);
+
+/**
  * @brief Check whether a file is (likely) an image
  * @param filename Path to the file
  * @return true if the extension is a known image type, or the file exists and

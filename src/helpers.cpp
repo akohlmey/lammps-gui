@@ -372,6 +372,20 @@ bool hasExe(const QString &exe)
     return !findExe(exe).isEmpty();
 }
 
+QString renameToBackup(const QString &file)
+{
+    const QString base = file + Cfg::BACKUP_SUFFIX;
+    QString backup     = base;
+    // a stale backup file may itself be locked and undeletable; then switch
+    // to a numbered backup name rather than failing the rename below
+    for (int i = 1; QFileInfo::exists(backup) && !QFile::remove(backup); ++i) {
+        if (i > 99) return {};
+        backup = base + QString::number(i);
+    }
+    if (QFile::rename(file, backup)) return backup;
+    return {};
+}
+
 QString findExe(const QString &exe)
 {
     QString path = QStandardPaths::findExecutable(exe);

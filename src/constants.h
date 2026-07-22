@@ -53,6 +53,8 @@ inline const QString LAMMPS_LIB_WINDOWS =
     QStringLiteral("liblammps.dll"); ///< Downloaded library name on Windows
 inline const QString LAMMPS_LIB_LINUX =
     QStringLiteral("liblammps.so.0"); ///< Downloaded library name on Linux
+inline const QString BACKUP_SUFFIX =
+    QStringLiteral(".bak"); ///< Suffix for the backup name of a replaced file
 
 // ---- LAMMPS version requirement ------------------------------------------
 constexpr int MIN_LAMMPS_VERSION =

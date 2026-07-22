@@ -482,7 +482,7 @@ void GeneralTab::downloadPlugin()
     auto dlUrl   = getLammpsDownloadUrl();
 
     URLDownloader downloader(this);
-    if (downloader.download(dlUrl, libPath, true)) {
+    if (downloader.download(dlUrl, libPath, true, true)) {
         auto canonical = QFileInfo(libPath).canonicalFilePath();
         settings->setValue(Keys::PLUGIN_PATH, canonical);
         auto *field = findChild<QLineEdit *>("pluginedit");
