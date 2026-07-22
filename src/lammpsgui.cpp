@@ -249,6 +249,8 @@ void LammpsGui::createRunMenu()
     addMenuAction(menu, ":/icons/extend-run.svg", "&Extend Run...", "Ctrl+E",
                   &LammpsGui::extendRun);
     addMenuAction(menu, ":/icons/dialog-ok.svg", "Chec&k Input", "Ctrl+K", &LammpsGui::checkInput);
+    addMenuAction(menu, ":/icons/system-run.svg", "Check Input via &Dry Run", "Ctrl+Shift+K",
+                  &LammpsGui::dryRunBuffer);
     menu->addSeparator();
 
     addMenuAction(menu, ":/icons/system-restart.svg", "Relaunch &LAMMPS Instance", "",
@@ -1522,8 +1524,9 @@ void LammpsGui::logUpdate()
     else
         step = static_cast<int>(lammps.lastThermoAs<int64_t>("step", 0));
 
-    // extract cached thermo data when LAMMPS is executing a minimize or run command
-    if (chartwindow && lammps.isRunning()) {
+    // extract cached thermo data when LAMMPS is executing a minimize or run command;
+    // never during a dry run, where a kept chart window belongs to a previous run
+    if (chartwindow && !dryRunActive && lammps.isRunning()) {
         // thermo data is not yet valid during setup
         if (lammps.lastThermoAs<int>("setup", 0)) return;
 
@@ -1750,7 +1753,7 @@ void LammpsGui::runDone()
 
     warnHighBufferUsage();
 
-    finalizeChartData();
+    if (!dryRunActive) finalizeChartData();
 
     bool success         = true;
     bool valid           = true;
@@ -1772,14 +1775,22 @@ void LammpsGui::runDone()
     }
 
     if (success) {
-        status->setText(Cfg::STATUS_READY);
+        status->setText(dryRunActive ? "Input check passed." : Cfg::STATUS_READY);
         cpuuse->setText(Cfg::STATUS_ZERO_CPU);
+        if (dryRunActive)
+            information(this, "LAMMPS-GUI - Dry Run",
+                        "<p>The input passed the dry run "
+                        "(setup executed, no timesteps).</p><p>Check the Output window "
+                        "for LAMMPS warnings.</p>");
     } else {
         status->setText("Failed.");
         textEdit->setHighlight(nline, true);
-        critical(this, "LAMMPS-GUI Error", "<p>Error running LAMMPS:</p>",
+        critical(this, "LAMMPS-GUI Error",
+                 dryRunActive ? "<p>Error during input dry run:</p>"
+                              : "<p>Error running LAMMPS:</p>",
                  QString("<p><pre>%1</pre></p>").arg(errmsg));
     }
+    dryRunActive = false;
     textEdit->setCursor(nline);
     textEdit->setFileList();
     progress->hide();
@@ -1939,11 +1950,31 @@ void LammpsGui::checkInput()
     textEdit->setCursor(issues.first().line - 1);
 }
 
-void LammpsGui::doRun(bool use_buffer)
+void LammpsGui::doRun(bool use_buffer, bool dryrun)
 {
     if (lammps.isRunning()) {
         warning(this, "LAMMPS-GUI Warning", "Must stop current run before starting a new run");
         return;
+    }
+
+    // a dry run executes the setup of every command: make the side effects clear
+    if (dryrun) {
+        QMessageBox mb(this);
+        mb.setWindowTitle("  LAMMPS-GUI - Dry Run  ");
+        mb.setWindowIcon(windowIcon());
+        mb.setText("<p>A dry run executes the setup phase of every command in the "
+                   "input without running any timesteps.</p>"
+                   "<p>Output files (dumps, logs, data files) may still be created or "
+                   "overwritten, and shell commands in the input will be executed.</p>"
+                   "<p>Continue?</p>");
+        mb.setIconPixmap(QIcon(":/icons/warning.svg").pixmap(QSize(64, 64), devicePixelRatioF()));
+        mb.setStandardButtons(QMessageBox::Yes | QMessageBox::No);
+        mb.setDefaultButton(QMessageBox::Yes);
+        mb.setEscapeButton(QMessageBox::No);
+        mb.button(QMessageBox::Yes)->setIcon(QIcon(":/icons/dialog-ok.svg"));
+        mb.button(QMessageBox::No)->setIcon(QIcon(":/icons/dialog-no.svg"));
+        mb.setFont(font());
+        if (mb.exec() != QMessageBox::Yes) return;
     }
 
     purgeInspectList();
@@ -1964,8 +1995,9 @@ void LammpsGui::doRun(bool use_buffer)
     }
 
     QSettings settings;
-    // pre-run input check: only error findings gate the run
-    if (settings.value(Keys::LINTCHECK, true).toBool() && !confirmLintIssues()) return;
+    // pre-run input check: only error findings gate the run; a dry run
+    // needs no gate since it is itself the check
+    if (!dryrun && settings.value(Keys::LINTCHECK, true).toBool() && !confirmLintIssues()) return;
 
     progress->setValue(0);
     dirstatus->hide();
@@ -1978,7 +2010,9 @@ void LammpsGui::doRun(bool use_buffer)
     if ((accel != AcceleratorTab::OpenMP) && (accel != AcceleratorTab::Intel) &&
         (accel != AcceleratorTab::Kokkos) && (accel != AcceleratorTab::Gpu))
         numthreads = 1;
-    if (numthreads > 1)
+    if (dryrun)
+        status->setText(QString("Checking input with a dry run ..."));
+    else if (numthreads > 1)
         status->setText(QString("Running LAMMPS with %1 thread(s)...").arg(numthreads));
     else
         status->setText(QString("Running LAMMPS ..."));
@@ -2005,7 +2039,17 @@ void LammpsGui::doRun(bool use_buffer)
     // apply https proxy setting: prefer environment variable or fall back to preferences value
     applyProxySetting(lammps, settings);
 
-    if (use_buffer) {
+    dryRunActive = dryrun;
+    if (dryrun) {
+        // the equivalent of the -skiprun command line flag (see lammps.cpp):
+        // run and minimize commands stop right after their setup phase.  The
+        // timer command must be issued after our own "clear" since clear
+        // recreates the Timer class (so the runner must not clear again);
+        // no input lines are prepended, so error line numbers stay correct
+        lammps.command("clear");
+        lammps.command("timer timeout 0 every 1");
+        launchRunner((textEdit->toPlainText() + "\n").toStdString(), {}, false);
+    } else if (use_buffer) {
         // always add final newline since the text edit widget does not do it
         launchRunner((textEdit->toPlainText() + "\n").toStdString(), {}, true);
     } else {
@@ -2013,6 +2057,12 @@ void LammpsGui::doRun(bool use_buffer)
     }
 
     createLogWindow(settings);
+    if (dryrun) {
+        if (logwindow) logwindow->setWindowTitle(logwindow->windowTitle() + " (Dry Run)");
+        // no chart window and no slide show reset: a dry run produces no
+        // trajectory, and a stale chart window must not receive updates
+        return;
+    }
 
     createChartWindow(settings);
 

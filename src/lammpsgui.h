@@ -138,8 +138,11 @@ protected:
     /**
      * @brief Execute a LAMMPS simulation
      * @param use_buffer If true, runs from editor buffer; if false, saves and runs from file
+     * @param dryrun If true, checks the input via a dry run: LAMMPS executes
+     *        the setup of every command but no timesteps (the equivalent of
+     *        the -skiprun command line flag)
      */
-    void doRun(bool use_buffer);
+    void doRun(bool use_buffer, bool dryrun = false);
 
     /**
      * @brief Check whether the LAMMPS instance holds a usable system state
@@ -312,6 +315,9 @@ private slots:
 
     /** @brief Run the static input check and show the findings in a dialog */
     void checkInput();
+
+    /** @brief Check the editor buffer via a dry run (setup only, no timesteps) */
+    void dryRunBuffer() { doRun(true, true); }
 
     /** @brief Restart LAMMPS with a new instance */
     void restartLammps();
@@ -486,15 +492,16 @@ private:
     QStatusBar *statusbar;          ///< status bar
     QList<QAction *> recentActions; ///< list of actions for recent files
 
-    LammpsSyntax syntax;      ///< Syntax registry for highlighting and input checking
-    Highlighter *highlighter; ///< Syntax highlighter for LAMMPS input
-    StdCapture *capturer;     ///< Captures stdout/stderr from LAMMPS
-    QLabel *status;           ///< Status bar label for general status
-    QLabel *cpuuse;           ///< Status bar label for CPU usage
-    int lastCpuBucket;        ///< Last applied cpuuse color bucket (-1 = none yet)
-    LogWindow *logwindow;     ///< Window displaying LAMMPS output log
-    ImageViewer *imagewindow; ///< Window for viewing single images
-    ChartWindow *chartwindow; ///< Window for displaying charts
+    LammpsSyntax syntax;       ///< Syntax registry for highlighting and input checking
+    bool dryRunActive = false; ///< current run is an input check dry run
+    Highlighter *highlighter;  ///< Syntax highlighter for LAMMPS input
+    StdCapture *capturer;      ///< Captures stdout/stderr from LAMMPS
+    QLabel *status;            ///< Status bar label for general status
+    QLabel *cpuuse;            ///< Status bar label for CPU usage
+    int lastCpuBucket;         ///< Last applied cpuuse color bucket (-1 = none yet)
+    LogWindow *logwindow;      ///< Window displaying LAMMPS output log
+    ImageViewer *imagewindow;  ///< Window for viewing single images
+    ChartWindow *chartwindow;  ///< Window for displaying charts
     /// Chart windows of previous runs kept open for comparison when the
     /// "replace on new run" preference is off. They delete themselves when
     /// closed (the QPointer entries reset to null) and any still-open
