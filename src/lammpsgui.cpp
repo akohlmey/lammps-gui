@@ -2720,7 +2720,10 @@ void LammpsGui::preferences()
 
             qputenv("OMP_NUM_THREADS", QByteArray::number(nthreads));
         }
-        if (imagewindow) imagewindow->createImage();
+        // the settings change above may have torn down the LAMMPS instance;
+        // re-rendering then would only produce a spurious error about the
+        // missing simulation box
+        if (imagewindow && hasSystemState()) imagewindow->createImage();
         settings.beginGroup(Keys::GROUP_REFORMAT);
         textEdit->setReformatOnReturn(settings.value(Keys::RETURN, false).toBool());
         textEdit->setAutoComplete(settings.value(Keys::AUTOMATIC, true).toBool());
