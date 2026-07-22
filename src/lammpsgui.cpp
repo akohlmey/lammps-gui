@@ -988,7 +988,7 @@ void LammpsGui::startExe()
                         lammps.command(datacmd);
                     }
                     auto *vmd = new QProcess(this);
-                    vmd->start(exe, args);
+                    vmd->start(findExe(exe), args);
                 } else {
                     warning(this, "LAMMPS-GUI Error",
                             "Cannot create temporary file for loading system in VMD",
@@ -1002,12 +1002,12 @@ void LammpsGui::startExe()
                     lammps.command(datacmd);
                 }
                 auto *ovito = new QProcess(this);
-                ovito->start(exe, args);
+                ovito->start(findExe(exe), args);
             }
         } else {
             // launch program without arguments when no system exists (yet)
             auto *proc = new QProcess(this);
-            proc->start(exe, args);
+            proc->start(findExe(exe), args);
         }
     }
 }

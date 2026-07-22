@@ -18,6 +18,7 @@
 #include <QCoreApplication>
 #include <QDir>
 #include <QFile>
+#include <QFileInfo>
 #include <QImage>
 #include <QString>
 
@@ -212,6 +213,35 @@ TEST_F(HelpersTest, HasExeNonExistent)
 {
     // Test with a command that definitely doesn't exist
     EXPECT_FALSE(hasExe("this_command_does_not_exist_12345"));
+}
+
+// Tests for findExe function
+
+TEST_F(HelpersTest, FindExeReturnsFullPath)
+{
+#if defined(_WIN32)
+    const QString path = findExe("cmd");
+#else
+    const QString path = findExe("ls");
+#endif
+    EXPECT_FALSE(path.isEmpty());
+    EXPECT_TRUE(QFileInfo(path).isAbsolute());
+    EXPECT_TRUE(QFileInfo(path).isExecutable());
+}
+
+TEST_F(HelpersTest, FindExeNonExistent)
+{
+    EXPECT_TRUE(findExe("this_command_does_not_exist_12345").isEmpty());
+}
+
+TEST_F(HelpersTest, FindExeConsistentWithHasExe)
+{
+#if defined(_WIN32)
+    const QString exe = "cmd";
+#else
+    const QString exe = "ls";
+#endif
+    EXPECT_EQ(hasExe(exe), !findExe(exe).isEmpty());
 }
 
 // Tests for isLightTheme function

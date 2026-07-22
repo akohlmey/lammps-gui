@@ -108,11 +108,26 @@ extern QString getLammpsDownloadUrl();
 extern void exportImage(QWidget *parent, QImage *image, const QString &title);
 
 /**
- * @brief Check if an executable is in the system PATH
+ * @brief Check if an executable is in the executable search path
  * @param exe The executable name to search for
- * @return true if executable is found in PATH, false otherwise
+ * @return true if executable is found, false otherwise
+ *
+ * Uses findExe(), so the macOS package manager fallback locations apply.
  */
 [[nodiscard]] extern bool hasExe(const QString &exe);
+
+/**
+ * @brief Find an executable in the executable search path
+ * @param exe The executable name to search for
+ * @return Full path to the executable or an empty string when not found
+ *
+ * On macOS, an application launched from the Finder inherits a minimal PATH
+ * without the common package manager locations, so the Homebrew (Arm and
+ * Intel macs) and MacPorts binary folders are searched as a fallback.  Launch
+ * external helper programs with the path returned by this function rather
+ * than the bare executable name, so they are also found in that case.
+ */
+[[nodiscard]] extern QString findExe(const QString &exe);
 
 /**
  * @brief Check whether a file is (likely) an image

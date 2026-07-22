@@ -717,7 +717,7 @@ void SlideShow::movie()
             args << fileName;
 
             QProcess ffmpeg;
-            ffmpeg.start("ffmpeg", args);
+            ffmpeg.start(findExe("ffmpeg"), args);
             ffmpeg.waitForFinished(-1);
             if (ffmpeg.exitCode()) {
                 auto err = ffmpeg.readAllStandardError();
@@ -731,8 +731,8 @@ void SlideShow::movie()
                     "Cannot create temporary file for generating movie:", concatfile.errorString());
         }
     } else {
-        QString cmd = "magick";
-        if (!hasExe("magick")) cmd = "convert";
+        QString cmd = findExe("magick");
+        if (cmd.isEmpty()) cmd = findExe("convert");
         QStringList args;
         args << "-delay" << QString::number(timerDelay / 10);
         QDir curdir(".");

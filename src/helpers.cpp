@@ -333,9 +333,9 @@ void exportImage(QWidget *parent, QImage *image, const QString &title)
                 return;
             }
 
-            QString cmd = "magick";
+            QString cmd = findExe("magick");
             QStringList args{tmpfile.fileName(), fileName};
-            if (!hasExe("magick")) cmd = "convert";
+            if (cmd.isEmpty()) cmd = findExe("convert");
             QProcess convert;
             convert.start(cmd, args);
             if (!convert.waitForFinished(-1)) {
@@ -369,7 +369,20 @@ void exportImage(QWidget *parent, QImage *image, const QString &title)
 
 bool hasExe(const QString &exe)
 {
-    return !QStandardPaths::findExecutable(exe).isEmpty();
+    return !findExe(exe).isEmpty();
+}
+
+QString findExe(const QString &exe)
+{
+    QString path = QStandardPaths::findExecutable(exe);
+#if defined(Q_OS_MACOS)
+    // an app bundle launched from the Finder inherits a minimal PATH without
+    // the package manager locations (Homebrew on Arm and Intel macs, MacPorts)
+    if (path.isEmpty())
+        path = QStandardPaths::findExecutable(
+            exe, {"/opt/homebrew/bin", "/usr/local/bin", "/opt/local/bin"});
+#endif
+    return path;
 }
 
 bool looksLikeBinaryFile(const QString &filename)
