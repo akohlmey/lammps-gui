@@ -64,6 +64,9 @@ SetVariables::SetVariables(QList<VariableEntry> &_vars, QWidget *parent) :
             markOverride(val);
         });
         markOverride(val);
+        // show pre-filled fields from the beginning, not scrolled to the end
+        name->setCursorPosition(0);
+        val->setCursorPosition(0);
         del->setObjectName(QString::number(i));
         connect(del, &QPushButton::released, this, &SetVariables::delRow);
         row->addWidget(name);
