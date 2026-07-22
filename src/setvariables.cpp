@@ -26,21 +26,44 @@
 
 namespace {
 constexpr int LAYOUT_SPACING = 6;
-}
 
-SetVariables::SetVariables(QList<QPair<QString, QString>> &_vars, QWidget *parent) :
+// mark a value that overrides a differing definition in the input script:
+// bold text plus a tooltip showing the value assigned in the script
+void markOverride(QLineEdit *val)
+{
+    const QString scriptValue = val->property("scriptValue").toString();
+    const bool overridden     = isOverridden({QString(), val->text(), scriptValue});
+    val->setStyleSheet(overridden ? "font-weight: bold" : "");
+    if (overridden)
+        val->setToolTip(QString("Overrides the input script value: %1").arg(scriptValue));
+    else if (!scriptValue.isEmpty())
+        val->setToolTip("Value from the input script");
+    else
+        val->setToolTip(QString());
+}
+} // namespace
+
+SetVariables::SetVariables(QList<VariableEntry> &_vars, QWidget *parent) :
     QDialog(parent), vars(_vars), layout(new QVBoxLayout)
 {
     auto *top = new QLabel("Set Variables:");
     layout->addWidget(top, 0, Qt::AlignHCenter);
+    auto *hint = new QLabel("Bold values override the definition in the input script");
+    hint->setStyleSheet("font-style: italic");
+    layout->addWidget(hint, 0, Qt::AlignHCenter);
     layout->setSpacing(LAYOUT_SPACING);
 
-    int i = 1;
+    int i = 2;
     for (const auto &v : vars) {
         auto *row  = new QHBoxLayout;
-        auto *name = new QLineEdit(v.first);
-        auto *val  = new QLineEdit(v.second);
+        auto *name = new QLineEdit(v.name);
+        auto *val  = new QLineEdit(v.value);
         auto *del  = new QPushButton(QIcon(":/icons/edit-delete.svg"), "");
+        val->setProperty("scriptValue", v.scriptValue);
+        connect(val, &QLineEdit::textChanged, this, [val]() {
+            markOverride(val);
+        });
+        markOverride(val);
         del->setObjectName(QString::number(i));
         connect(del, &QPushButton::released, this, &SetVariables::delRow);
         row->addWidget(name);
@@ -74,11 +97,12 @@ void SetVariables::accept()
     // store all data in variables class and then confirm accepting
     vars.clear();
     int nrows = layout->count() - 2;
-    for (int i = 1; i < nrows; ++i) {
+    for (int i = 2; i < nrows; ++i) {
         auto *row = layout->itemAt(i)->layout();
         auto *var = qobject_cast<QLineEdit *>(row->itemAt(0)->widget());
         auto *val = qobject_cast<QLineEdit *>(row->itemAt(1)->widget());
-        if (var && val) vars.append(qMakePair(var->text(), val->text()));
+        if (var && val)
+            vars.append({var->text(), val->text(), val->property("scriptValue").toString()});
     }
 
     QDialog::accept();

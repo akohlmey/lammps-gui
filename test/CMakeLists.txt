@@ -138,6 +138,17 @@ target_link_libraries(test_highlighter PRIVATE GTest::gtest_main Qt6::Widgets)
 
 gtest_discover_tests(test_highlighter)
 
+# Test executable for the index-variable parse and merge helpers (Qt Core only)
+add_executable(test_inputvariables
+  test_inputvariables.cpp
+  ${CMAKE_SOURCE_DIR}/src/inputvariables.cpp
+)
+
+target_include_directories(test_inputvariables PRIVATE ${CMAKE_SOURCE_DIR}/src)
+target_link_libraries(test_inputvariables PRIVATE GTest::gtest_main Qt6::Core)
+
+gtest_discover_tests(test_inputvariables)
+
 # Test executable for FlagWarnings
 add_executable(test_flagwarnings
   test_flagwarnings.cpp

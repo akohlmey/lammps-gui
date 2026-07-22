@@ -21,6 +21,7 @@
 #include <string>
 #include <vector>
 
+#include "inputvariables.h"
 #include "lammpssyntax.h"
 #include "lammpswrapper.h"
 
@@ -135,6 +136,18 @@ protected:
 
     /** @brief Rebuild the variables list from the editor buffer */
     void updateVariables();
+
+    /**
+     * @brief Fold input script edits into the variables list
+     *
+     * Re-parses the editor buffer and merges the result into the current
+     * variables list: a changed index variable definition in the input wins
+     * over a previous value, an unchanged one keeps the value set in the
+     * Set Variables dialog.  Also updates the override markers shown in the
+     * editor.  Called before the variables list is consumed (run setup,
+     * input check, Set Variables dialog).
+     */
+    void refreshVariables();
 
     /**
      * @brief Execute a LAMMPS simulation
@@ -536,10 +549,10 @@ private:
     };
     QList<InspectData *> inspectList; ///< List of open inspect dialogs
 
-    QString currentFile;                      ///< Path to currently opened file
-    QString currentDir;                       ///< Current working directory
-    QList<QString> recent;                    ///< List of recently opened files
-    QList<QPair<QString, QString>> variables; ///< Index-style variable definitions
+    QString currentFile;            ///< Path to currently opened file
+    QString currentDir;             ///< Current working directory
+    QList<QString> recent;          ///< List of recently opened files
+    QList<VariableEntry> variables; ///< Index-style variable definitions
 
     LammpsWrapper lammps;                ///< Interface to LAMMPS library
     LammpsRunner *runner;                ///< Thread for running LAMMPS simulations

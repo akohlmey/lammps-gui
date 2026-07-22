@@ -365,6 +365,24 @@ SetVariables Class
 
 -----
 
+Index Variable Helpers
+----------------------
+
+The parse, merge, and override-detection helpers behind the *Set
+Variables* dialog and the editor's override markers are free functions
+over plain value types (``src/inputvariables.h``).
+
+.. doxygenstruct:: VariableEntry
+   :members:
+
+.. doxygenstruct:: IndexVariableMatch
+   :members:
+
+.. doxygenfile:: inputvariables.h
+   :sections: func
+
+-----
+
 PlotDataDialog Class
 --------------------
 

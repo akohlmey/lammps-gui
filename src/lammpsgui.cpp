@@ -1053,58 +1053,13 @@ void LammpsGui::clearVariables()
 
 void LammpsGui::updateVariables()
 {
-    const auto doc = textEdit->toPlainText().replace('\t', ' ').split('\n');
-    QStringList known;
-    QRegularExpression indexvar(R"(^\s*variable\s+(\w+)\s+index\s+(.*))");
-    QRegularExpression anyvar(R"(^\s*variable\s+(\w+)\s+(\w+)\s+(.*))");
-    QRegularExpression usevar(R"((\$(\w)|\${(\w+)}))");
-    QRegularExpression refvar(R"(v_(\w+))");
+    // fresh parse: any dialog overrides for the previous buffer are dropped
+    variables = parseInputVariables(textEdit->toPlainText());
+}
 
-    // forget previously listed variables
-    variables.clear();
-
-    for (const auto &line : doc) {
-
-        if (line.isEmpty()) continue;
-
-        // first find variable definitions.
-        // index variables are special since they can be overridden from the command line
-        auto index = indexvar.match(line);
-        auto any   = anyvar.match(line);
-
-        if (index.hasMatch()) {
-            if (index.lastCapturedIndex() >= 2) {
-                auto name = index.captured(1);
-                if (!known.contains(name)) {
-                    variables.append(qMakePair(name, index.captured(2)));
-                    known.append(name);
-                }
-            }
-        } else if (any.hasMatch()) {
-            if (any.lastCapturedIndex() >= 3) {
-                auto name = any.captured(1);
-                if (!known.contains(name)) known.append(name);
-            }
-        }
-
-        // now split line into words and search for use of undefined variables
-        auto words = line.split(' ', Qt::SkipEmptyParts);
-        for (const auto &word : words) {
-            auto use = usevar.match(word);
-            auto ref = refvar.match(word);
-            if (use.hasMatch()) {
-                auto name = use.captured(use.lastCapturedIndex());
-                if (!known.contains(name)) {
-                    known.append(name);
-                    variables.append(qMakePair(name, QString()));
-                }
-            }
-            if (ref.hasMatch()) {
-                auto name = ref.captured(ref.lastCapturedIndex());
-                if (!known.contains(name)) known.append(name);
-            }
-        }
-    }
+void LammpsGui::refreshVariables()
+{
+    variables = mergeInputVariables(parseInputVariables(textEdit->toPlainText()), variables);
 }
 
 // open file and switch CWD to path of file
@@ -1962,7 +1917,7 @@ QStringList LammpsGui::presetVariableNames() const
     // the variable setup in doRun()); the Set Variables dialog also lists
     // used-but-undefined variables with an empty value
     for (const auto &var : variables)
-        if (!var.first.isEmpty() && !var.second.isEmpty()) presets << var.first;
+        if (!var.name.isEmpty() && !var.value.isEmpty()) presets << var.name;
     return presets;
 }
 
@@ -1996,6 +1951,7 @@ bool LammpsGui::confirmLintIssues()
 
 void LammpsGui::checkInput()
 {
+    refreshVariables();
     const SyntaxChecker checker(&syntax);
     const auto issues =
         checker.check(textEdit->toPlainText(), presetVariableNames(), QDir::currentPath());
@@ -2060,6 +2016,10 @@ void LammpsGui::doRun(bool use_buffer, bool dryrun)
         }
     }
 
+    // fold input script edits into the variables list before it is consumed
+    // by the pre-run input check and the variable setup below
+    refreshVariables();
+
     QSettings settings;
     // pre-run input check: only error findings gate the run; a dry run
     // needs no gate since it is itself the check
@@ -2098,8 +2058,8 @@ void LammpsGui::doRun(bool use_buffer, bool dryrun)
     // re-create index variables from the Set Variables dialog so they
     // override definitions in the input, like -var does on the command line
     for (const auto &var : std::as_const(variables)) {
-        if (!var.first.isEmpty() && !var.second.isEmpty())
-            lammps.command(QString("variable %1 index %2").arg(var.first, var.second));
+        if (!var.name.isEmpty() && !var.value.isEmpty())
+            lammps.command(QString("variable %1 index %2").arg(var.name, var.value));
     }
 
     // apply https proxy setting: prefer environment variable or fall back to preferences value
@@ -2825,7 +2785,10 @@ void LammpsGui::defaults()
 
 void LammpsGui::editVariables()
 {
-    QList<QPair<QString, QString>> newvars = variables;
+    // sync the dialog with the current state of the input script
+    refreshVariables();
+
+    QList<VariableEntry> newvars = variables;
     SetVariables vars(newvars);
     vars.setFont(font());
     if (vars.exec() == QDialog::Accepted) {
