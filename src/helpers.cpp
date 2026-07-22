@@ -24,6 +24,7 @@
 #include <QFileInfo>
 #include <QFont>
 #include <QFontInfo>
+#include <QGuiApplication>
 #include <QIcon>
 #include <QImage>
 #include <QImageReader>
@@ -37,6 +38,7 @@
 #include <QStandardPaths>
 #include <QStringList>
 #include <QStyle>
+#include <QStyleHints>
 #include <QTemporaryFile>
 #include <QWidget>
 
@@ -496,9 +498,23 @@ void purgeDirectory(const QString &dir)
     }
 }
 
-// compare black level of foreground and background color
+// prefer the platform color scheme when Qt is recent enough to report it;
+// otherwise (or when the platform does not know) compare the black level of
+// the default palette's foreground and background colors
 bool isLightTheme()
 {
+#if QT_VERSION >= QT_VERSION_CHECK(6, 5, 0)
+    if (QGuiApplication::instance()) {
+        switch (QGuiApplication::styleHints()->colorScheme()) {
+            case Qt::ColorScheme::Light:
+                return true;
+            case Qt::ColorScheme::Dark:
+                return false;
+            default: // Qt::ColorScheme::Unknown: fall through to the heuristic
+                break;
+        }
+    }
+#endif
     QPalette p;
     int fg = p.brush(QPalette::Active, QPalette::WindowText).color().black();
     int bg = p.brush(QPalette::Active, QPalette::Window).color().black();
