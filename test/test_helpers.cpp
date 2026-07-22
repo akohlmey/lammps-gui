@@ -18,8 +18,10 @@
 #include <QCoreApplication>
 #include <QDir>
 #include <QFile>
+#include <QFileInfo>
 #include <QImage>
 #include <QString>
+#include <QTemporaryDir>
 
 #include <cstdio>
 #include <string>
@@ -212,6 +214,103 @@ TEST_F(HelpersTest, HasExeNonExistent)
 {
     // Test with a command that definitely doesn't exist
     EXPECT_FALSE(hasExe("this_command_does_not_exist_12345"));
+}
+
+// Tests for findExe function
+
+TEST_F(HelpersTest, FindExeReturnsFullPath)
+{
+#if defined(_WIN32)
+    const QString path = findExe("cmd");
+#else
+    const QString path = findExe("ls");
+#endif
+    EXPECT_FALSE(path.isEmpty());
+    EXPECT_TRUE(QFileInfo(path).isAbsolute());
+    EXPECT_TRUE(QFileInfo(path).isExecutable());
+}
+
+TEST_F(HelpersTest, FindExeNonExistent)
+{
+    EXPECT_TRUE(findExe("this_command_does_not_exist_12345").isEmpty());
+}
+
+TEST_F(HelpersTest, FindExeConsistentWithHasExe)
+{
+#if defined(_WIN32)
+    const QString exe = "cmd";
+#else
+    const QString exe = "ls";
+#endif
+    EXPECT_EQ(hasExe(exe), !findExe(exe).isEmpty());
+}
+
+// Tests for renameToBackup function
+
+TEST_F(HelpersTest, RenameToBackupCreatesBackup)
+{
+    QTemporaryDir tmp;
+    ASSERT_TRUE(tmp.isValid());
+    const QString file = tmp.filePath("sample.txt");
+    {
+        QFile f(file);
+        ASSERT_TRUE(f.open(QIODevice::WriteOnly));
+        f.write("payload");
+    }
+
+    const QString backup = renameToBackup(file);
+    EXPECT_EQ(backup, file + Cfg::BACKUP_SUFFIX);
+    EXPECT_FALSE(QFile::exists(file));
+
+    QFile bf(backup);
+    ASSERT_TRUE(bf.open(QIODevice::ReadOnly));
+    EXPECT_EQ(bf.readAll(), QByteArray("payload"));
+}
+
+TEST_F(HelpersTest, RenameToBackupReplacesStaleBackup)
+{
+    QTemporaryDir tmp;
+    ASSERT_TRUE(tmp.isValid());
+    const QString file = tmp.filePath("sample.txt");
+    {
+        QFile f(file);
+        ASSERT_TRUE(f.open(QIODevice::WriteOnly));
+        f.write("new");
+    }
+    {
+        QFile f(file + Cfg::BACKUP_SUFFIX);
+        ASSERT_TRUE(f.open(QIODevice::WriteOnly));
+        f.write("stale");
+    }
+
+    // the removable stale backup is replaced, not given a numbered name
+    const QString backup = renameToBackup(file);
+    EXPECT_EQ(backup, file + Cfg::BACKUP_SUFFIX);
+
+    QFile bf(backup);
+    ASSERT_TRUE(bf.open(QIODevice::ReadOnly));
+    EXPECT_EQ(bf.readAll(), QByteArray("new"));
+}
+
+TEST_F(HelpersTest, RenameToBackupMissingFile)
+{
+    QTemporaryDir tmp;
+    ASSERT_TRUE(tmp.isValid());
+    EXPECT_TRUE(renameToBackup(tmp.filePath("does_not_exist")).isEmpty());
+}
+
+// Tests for getLammpsLibName function
+
+TEST_F(HelpersTest, LammpsLibNameIsKnownPlatformName)
+{
+    // empty in linked mode; otherwise it must be one of the fixed
+    // per-platform names that the preferences reset deletes
+    const QString name = getLammpsLibName();
+    if (!name.isEmpty()) {
+        const QStringList known = {Cfg::LAMMPS_LIB_MACOS, Cfg::LAMMPS_LIB_WINDOWS,
+                                   Cfg::LAMMPS_LIB_LINUX};
+        EXPECT_TRUE(known.contains(name));
+    }
 }
 
 // Tests for isLightTheme function
@@ -587,4 +686,72 @@ TEST(ViewerFitSize, NegativeBudgetClampsToZero)
 {
     // tiny screens can make the budget negative; never return a negative size
     EXPECT_EQ(viewerFitSize(QSize(400, 300), QSize(-10, -5), 2, 16), QSize(0, 0));
+}
+
+// Tests for defaultFileStem function
+
+TEST(DefaultFileStem, LeadingInPrefix)
+{
+    EXPECT_EQ(defaultFileStem("in.melt"), QString("melt"));
+}
+
+TEST(DefaultFileStem, TrailingInputExtensions)
+{
+    EXPECT_EQ(defaultFileStem("melt.lmp"), QString("melt"));
+    EXPECT_EQ(defaultFileStem("melt.txt"), QString("melt"));
+    EXPECT_EQ(defaultFileStem("melt.lmp.txt"), QString("melt"));
+    EXPECT_EQ(defaultFileStem("in.melt.lmp"), QString("melt"));
+}
+
+TEST(DefaultFileStem, EverythingElseRemains)
+{
+    EXPECT_EQ(defaultFileStem("melt"), QString("melt"));
+    EXPECT_EQ(defaultFileStem("melt-2d"), QString("melt-2d"));
+    EXPECT_EQ(defaultFileStem("melt.2d"), QString("melt.2d"));
+    EXPECT_EQ(defaultFileStem("melt.data"), QString("melt.data"));
+    EXPECT_EQ(defaultFileStem("in.melt (ACF)"), QString("melt (ACF)"));
+}
+
+TEST(DefaultFileStem, StripsDirectoryPart)
+{
+    EXPECT_EQ(defaultFileStem("/some/path/in.melt"), QString("melt"));
+    EXPECT_EQ(defaultFileStem("path/to/melt.lmp"), QString("melt"));
+}
+
+TEST(DefaultFileStem, KnownDerivedExtensions)
+{
+    // data, log, restart, image, and movie files fed to the viewers
+    EXPECT_EQ(defaultFileStem("thermo.csv"), QString("thermo"));
+    EXPECT_EQ(defaultFileStem("thermo.dat"), QString("thermo"));
+    EXPECT_EQ(defaultFileStem("thermo.yaml"), QString("thermo"));
+    EXPECT_EQ(defaultFileStem("melt.log"), QString("melt"));
+    EXPECT_EQ(defaultFileStem("melt.restart"), QString("melt"));
+    EXPECT_EQ(defaultFileStem("snap.png"), QString("snap"));
+    EXPECT_EQ(defaultFileStem("movie.mp4"), QString("movie"));
+    EXPECT_EQ(defaultFileStem("MELT.LMP"), QString("MELT"));
+}
+
+TEST(DefaultFileStem, EmptyFallsBackToLammps)
+{
+    EXPECT_EQ(defaultFileStem(""), QString("lammps"));
+    EXPECT_EQ(defaultFileStem("in."), QString("lammps"));
+}
+
+// Tests for ensureFileSuffix function
+
+TEST(EnsureFileSuffix, AppendsWhenMissing)
+{
+    EXPECT_EQ(ensureFileSuffix("melt", "log"), QString("melt.log"));
+    EXPECT_EQ(ensureFileSuffix("/some/path/melt", "png"), QString("/some/path/melt.png"));
+}
+
+TEST(EnsureFileSuffix, KeepsExistingSuffix)
+{
+    EXPECT_EQ(ensureFileSuffix("melt.out", "log"), QString("melt.out"));
+    EXPECT_EQ(ensureFileSuffix("in.melt", "lmp"), QString("in.melt"));
+}
+
+TEST(EnsureFileSuffix, EmptyStaysEmpty)
+{
+    EXPECT_EQ(ensureFileSuffix("", "log"), QString(""));
 }

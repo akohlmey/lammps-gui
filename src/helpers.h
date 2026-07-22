@@ -101,18 +101,69 @@ extern QString getLammpsDownloadUrl();
 
 /**
  * @brief Save image directly or convert with ImageMagick
- * @param parent  Pointer to parent widget
- * @param image   Pointer to image class
- * @param title   Warning dialog title if failed
+ * @param parent       Pointer to parent widget
+ * @param image        Pointer to image class
+ * @param title        Warning dialog title if failed
+ * @param defaultname  Default file name offered by the save dialog (resolved
+ *                     relative to the current working directory)
  */
-extern void exportImage(QWidget *parent, QImage *image, const QString &title);
+extern void exportImage(QWidget *parent, QImage *image, const QString &title,
+                        const QString &defaultname);
 
 /**
- * @brief Check if an executable is in the system PATH
+ * @brief Derive the default save-file name stem from an input or data file name
+ * @param filename Name of the file the stem is derived from (may include a path)
+ * @return the stem to build default save-file names from
+ *
+ * Strips any directory part, a leading "in." prefix, and any trailing known
+ * file extensions (input, plottable data, log, restart, image, and movie
+ * formats), so "in.melt", "melt.lmp", or "melt.lmp.txt" all yield "melt".
+ * Falls back to "lammps" when nothing remains.
+ */
+[[nodiscard]] extern QString defaultFileStem(const QString &filename);
+
+/**
+ * @brief Append a default suffix to a file name that has no suffix
+ * @param filename File name selected in a save dialog
+ * @param suffix   Default suffix (without the leading dot)
+ * @return the file name with the default suffix appended if it had none
+ */
+[[nodiscard]] extern QString ensureFileSuffix(const QString &filename, const QString &suffix);
+
+/**
+ * @brief Check if an executable is in the executable search path
  * @param exe The executable name to search for
- * @return true if executable is found in PATH, false otherwise
+ * @return true if executable is found, false otherwise
+ *
+ * Uses findExe(), so the macOS package manager fallback locations apply.
  */
 [[nodiscard]] extern bool hasExe(const QString &exe);
+
+/**
+ * @brief Find an executable in the executable search path
+ * @param exe The executable name to search for
+ * @return Full path to the executable or an empty string when not found
+ *
+ * On macOS, an application launched from the Finder inherits a minimal PATH
+ * without the common package manager locations, so the Homebrew (Arm and
+ * Intel macs) and MacPorts binary folders are searched as a fallback.  Launch
+ * external helper programs with the path returned by this function rather
+ * than the bare executable name, so they are also found in that case.
+ */
+[[nodiscard]] extern QString findExe(const QString &exe);
+
+/**
+ * @brief Rename a file to a backup name with the Cfg::BACKUP_SUFFIX suffix
+ * @param file Path of the file to rename
+ * @return Path of the backup file or an empty string on failure
+ *
+ * An existing backup file is replaced.  When it cannot be removed (on Windows
+ * a loaded shared library is locked against deletion), a numbered backup name
+ * is used instead.  Windows does permit renaming a locked file, so this is
+ * the way to move a loaded shared library out of the way before an update.
+ * The caller is responsible for removing the backup file eventually.
+ */
+extern QString renameToBackup(const QString &file);
 
 /**
  * @brief Check whether a file is (likely) an image

@@ -81,8 +81,9 @@ double jsonToDouble(const QJsonValue &val)
 int countPackets(const QString &filename)
 {
     QProcess proc;
-    proc.start("ffprobe", {"-v", "error", "-select_streams", "v:0", "-count_packets",
-                           "-show_entries", "stream=nb_read_packets", "-of", "csv=p=0", filename});
+    proc.start(findExe("ffprobe"),
+               {"-v", "error", "-select_streams", "v:0", "-count_packets", "-show_entries",
+                "stream=nb_read_packets", "-of", "csv=p=0", filename});
     if (!proc.waitForFinished(Cfg::MOVIE_PROBE_TIMEOUT)) {
         proc.kill();
         proc.waitForFinished(KILL_TIMEOUT);
@@ -115,7 +116,7 @@ FrameSample sampleFrame(const QString &filename, double seconds)
     tmp.close();
 
     QProcess proc;
-    proc.start("ffmpeg",
+    proc.start(findExe("ffmpeg"),
                {"-y", "-nostdin", "-loglevel", "error", "-ss", QString::number(seconds, 'f', 3),
                 "-i", filename, "-frames:v", "1", "-vsync", "0", pngname});
     if (!proc.waitForFinished(Cfg::MOVIE_PROBE_TIMEOUT)) {
@@ -232,9 +233,9 @@ MovieInfo probeMovie(const QString &filename)
     }
 
     QProcess proc;
-    proc.start("ffprobe", {"-v", "error", "-select_streams", "v:0", "-show_entries",
-                           "stream=width,height,nb_frames,r_frame_rate,duration", "-show_entries",
-                           "format=duration", "-of", "json", filename});
+    proc.start(findExe("ffprobe"), {"-v", "error", "-select_streams", "v:0", "-show_entries",
+                                    "stream=width,height,nb_frames,r_frame_rate,duration",
+                                    "-show_entries", "format=duration", "-of", "json", filename});
     if (!proc.waitForFinished(Cfg::MOVIE_PROBE_TIMEOUT)) {
         proc.kill();
         proc.waitForFinished(KILL_TIMEOUT);
@@ -361,7 +362,7 @@ QStringList extractMovieFrames(QWidget *parent, const QString &filename, const Q
     });
     ticker.start(PROGRESS_TICK);
 
-    proc.start("ffmpeg", args);
+    proc.start(findExe("ffmpeg"), args);
     if (!proc.waitForStarted()) {
         error = "The ffmpeg program could not be started.";
         return {};

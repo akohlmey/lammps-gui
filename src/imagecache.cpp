@@ -204,7 +204,8 @@ QImage ImageCache::readImage(const QString &filename)
     if (pngname.isEmpty())
         pngname = QString("%1/convert_%2.png").arg(base).arg(++converted, 5, 10, QLatin1Char('0'));
 
-    const QString cmd = hasExe("magick") ? "magick" : "convert";
+    QString cmd = findExe("magick");
+    if (cmd.isEmpty()) cmd = findExe("convert");
     QImage img;
     QProcess proc;
     ++runs;

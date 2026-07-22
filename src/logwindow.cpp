@@ -18,6 +18,7 @@
 
 #include <QAction>
 #include <QDesktopServices>
+#include <QDir>
 #include <QFile>
 #include <QFileDialog>
 #include <QFont>
@@ -141,11 +142,12 @@ void LogWindow::nextWarning()
 
 void LogWindow::saveAs()
 {
-    QString defaultname = filename + ".log";
-    if (filename.isEmpty()) defaultname = "lammps.log";
-    QString logFileName = QFileDialog::getSaveFileName(this, "Save Log to File", defaultname,
-                                                       "Log files (*.log *.out *.txt)");
+    const QString defaultname =
+        QDir::current().absoluteFilePath(defaultFileStem(filename) + ".log");
+    QString logFileName =
+        QFileDialog::getSaveFileName(this, "Save Log to File", defaultname, Cfg::FILTER_LOG);
     if (logFileName.isEmpty()) return;
+    logFileName = ensureFileSuffix(logFileName, "log");
 
     QFileInfo path(logFileName);
     QFile file(path.absoluteFilePath());
@@ -173,12 +175,13 @@ void LogWindow::extractYaml()
     // ignore if no YAML format lines in buffer
     if (!checkYaml()) return;
 
-    QString defaultname = filename + ".yaml";
-    if (filename.isEmpty()) defaultname = "lammps.yaml";
-    QString yamlFileName = QFileDialog::getSaveFileName(this, "Save YAML data to File", defaultname,
-                                                        "YAML files (*.yaml *.yml)");
+    const QString defaultname =
+        QDir::current().absoluteFilePath(defaultFileStem(filename) + ".yaml");
+    QString yamlFileName =
+        QFileDialog::getSaveFileName(this, "Save YAML data to File", defaultname, Cfg::FILTER_YAML);
     // cannot save without filename
     if (yamlFileName.isEmpty()) return;
+    yamlFileName = ensureFileSuffix(yamlFileName, "yaml");
 
     QFileInfo path(yamlFileName);
     QFile file(path.absoluteFilePath());

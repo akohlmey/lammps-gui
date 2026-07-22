@@ -108,7 +108,11 @@ The *Edit* menu offers the usual editor functions like *Undo*, *Redo*,
 *Cut*, *Copy*, *Paste*, and a *Find and Replace* dialog (keyboard
 shortcut `Ctrl-F`).  It can also open a *Preferences* dialog (keyboard
 shortcut `Ctrl-P`) and allows deleting all stored preferences and
-settings, so they are reset to their default values.
+settings, so they are reset to their default values.  Resetting the
+preferences also deletes a LAMMPS shared library that was previously
+downloaded into the configuration folder; the library files for all
+supported platforms are removed in case the configuration folder is
+shared between multiple computers.
 
 .. _run_menu:
 
@@ -313,7 +317,10 @@ The *Check for LAMMPS update* entry -- available only in the plugin
 version of LAMMPS-GUI -- compares the downloaded LAMMPS shared library
 with the latest version available online and offers to download and
 install an update when a newer version is found; LAMMPS-GUI is then
-relaunched to activate it.
+relaunched to activate it.  The checksum of the downloaded file is
+verified before it replaces the current library, which is renamed to a
+backup name first; leftover backup files and partial downloads in the
+configuration folder are cleaned up on the next launch of LAMMPS-GUI.
 
 -------------
 

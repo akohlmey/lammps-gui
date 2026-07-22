@@ -44,6 +44,18 @@ constexpr int NUM_RECENT_FILES = 5; ///< Number of entries in the recent files l
 // ---- Run control ---------------------------------------------------------
 constexpr int EXTEND_STEPS_DEFAULT = 1000; ///< Default number of steps in the Extend Run dialog
 
+// ---- Downloadable LAMMPS shared library ----------------------------------
+// all platform variants are listed so they can be cleaned up from a
+// configuration folder that is shared between different machines
+inline const QString LAMMPS_LIB_MACOS =
+    QStringLiteral("liblammps.0.dylib"); ///< Downloaded library name on macOS
+inline const QString LAMMPS_LIB_WINDOWS =
+    QStringLiteral("liblammps.dll"); ///< Downloaded library name on Windows
+inline const QString LAMMPS_LIB_LINUX =
+    QStringLiteral("liblammps.so.0"); ///< Downloaded library name on Linux
+inline const QString BACKUP_SUFFIX =
+    QStringLiteral(".bak"); ///< Suffix for the backup name of a replaced file
+
 // ---- LAMMPS version requirement ------------------------------------------
 constexpr int MIN_LAMMPS_VERSION =
     20260704; ///< Minimum LAMMPS version (4 July 2026) as YYYYMMDD format number
@@ -137,6 +149,34 @@ inline const QString CHART_TITLE_DEFAULT = QStringLiteral("Thermo: %f");
 inline const QString STATUS_READY = QStringLiteral("Ready.");
 /** CPU utilization status label text when no simulation is running */
 inline const QString STATUS_ZERO_CPU = QStringLiteral("   0%CPU");
+
+// ---- File dialog name filters ---------------------------------------------
+/** name filter for LAMMPS input files */
+inline const QString FILTER_INPUT = QStringLiteral("LAMMPS input files (in.* *.lmp *.txt)"
+                                                   ";;All files (*)");
+/** name filter for LAMMPS binary restart files */
+inline const QString FILTER_RESTART = QStringLiteral("LAMMPS restart files (*.restart *.rst)"
+                                                     ";;All files (*)");
+/** name filter for captured log output */
+inline const QString FILTER_LOG = QStringLiteral("Log files (*.log *.out *.txt);;All files (*)");
+/** name filter for YAML data */
+inline const QString FILTER_YAML = QStringLiteral("YAML files (*.yaml *.yml);;All files (*)");
+/** name filter for CSV data */
+inline const QString FILTER_CSV = QStringLiteral("CSV data (*.csv);;All files (*)");
+/** name filter for gnuplot data */
+inline const QString FILTER_GNUPLOT = QStringLiteral("Gnuplot data (*.dat);;All files (*)");
+/** name filter for JSON settings files */
+inline const QString FILTER_JSON = QStringLiteral("JSON files (*.json);;All files (*)");
+/** name filter for the plottable data file formats */
+inline const QString FILTER_DATA = QStringLiteral("Data files (*.dat *.csv *.yaml *.yml "
+                                                  "*.json *.txt);;All files (*)");
+/** name filter for the image formats supported when saving (Qt or ImageMagick writable) */
+inline const QString FILTER_IMAGE = QStringLiteral("Image files (*.png *.jpg *.jpeg *.gif *.bmp "
+                                                   "*.tga *.ppm *.tiff *.webp *.pgm *.xpm *.xbm)"
+                                                   ";;All files (*)");
+/** name filter for the movie formats supported when exporting with FFmpeg */
+inline const QString FILTER_MOVIE = QStringLiteral("Movie files (*.mp4 *.m4v *.mkv *.mov *.webm "
+                                                   "*.avi *.mpg *.mpeg *.gif);;All files (*)");
 
 } // namespace Cfg
 

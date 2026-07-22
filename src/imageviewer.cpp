@@ -225,8 +225,8 @@ QPixmap color_icon(const QColor &color)
 QJsonObject loadJsonColors(QWidget *parent)
 {
     QJsonObject obj;
-    QString fileName = QFileDialog::getOpenFileName(parent, "Load Colors from JSON", "",
-                                                    "JSON files (*.json);;All files (*)");
+    QString fileName = QFileDialog::getOpenFileName(parent, "Load Colors from JSON",
+                                                    QDir::currentPath(), Cfg::FILTER_JSON);
     if (fileName.isEmpty()) return obj;
 
     QFile file(fileName);
@@ -285,9 +285,11 @@ void saveJsonColors(QWidget *parent, const QJsonArray &colors, const QJsonObject
     root["colors"]      = colors;
     root["lights"]      = lights;
 
-    QString fileName = QFileDialog::getSaveFileName(parent, "Save Colors to JSON", "",
-                                                    "JSON files (*.json);;All files (*)");
+    QString fileName = QFileDialog::getSaveFileName(parent, "Save Colors to JSON",
+                                                    QDir::current().absoluteFilePath("colors.json"),
+                                                    Cfg::FILTER_JSON);
     if (fileName.isEmpty()) return;
+    fileName = ensureFileSuffix(fileName, "json");
 
     QFile file(fileName);
     if (!file.open(QIODevice::WriteOnly)) {
@@ -1692,11 +1694,15 @@ void ImageViewer::createImage()
         lammps->command("uncompute " + bondComputeId);
     }
 
-    // restore the pre-render state on every exit path: remove the temporary
-    // molecule atoms/group created above and reset the render-status icon,
-    // otherwise a failed render leaves the icon stuck on "active" and the
-    // leftover atoms corrupt every subsequent render
+    // restore the pre-render state on every exit path: remove the per-step
+    // frame file(s) this render produced (also on the error paths, so frames
+    // written before a failure do not accumulate in the temporary directory),
+    // remove the temporary molecule atoms/group created above, and reset the
+    // render-status icon, otherwise a failed render leaves the icon stuck on
+    // "active" and the leftover atoms corrupt every subsequent render
     auto restoreRenderState = [&]() {
+        for (const auto &f : dumpdir.entryList({filename + ".*.ppm"}, QDir::Files))
+            QFile::remove(dumpdir.absoluteFilePath(f));
         if (molecule != "none") {
             lammps->command("neigh_modify exclude none");
             lammps->command(QString("delete_atoms group %1 compress no").arg(group));
@@ -1720,9 +1726,6 @@ void ImageViewer::createImage()
     QImageReader reader(imagepath);
     reader.setAutoTransform(true);
     const QImage newImage = reader.read();
-    // remove the per-step frame file(s) this render produced
-    for (const auto &f : dumpdir.entryList({filename + ".*.ppm"}, QDir::Files))
-        QFile::remove(dumpdir.absoluteFilePath(f));
 
     // read of new image failed. nothing left to do.
     if (newImage.isNull()) {
@@ -1743,7 +1746,7 @@ void ImageViewer::createImage()
 
 void ImageViewer::saveAs()
 {
-    exportImage(this, &image, "ImageViewer");
+    exportImage(this, &image, "ImageViewer", defaultFileStem(filename) + ".png");
 }
 
 void ImageViewer::copy()

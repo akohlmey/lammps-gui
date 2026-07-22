@@ -1,3 +1,5 @@
+# codemeta.json is generated from this file: after changing it, run
+# ./update-codemeta.sh and commit the regenerated file as well.
 cff-version: 1.2.0
 message: "If you use this software, please cite it using these metadata."
 title: "LAMMPS-GUI"
