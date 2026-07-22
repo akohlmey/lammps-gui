@@ -5,14 +5,36 @@
    height="48"
    version="1.1"
    id="svg11"
-   sodipodi:docname="document-new.svg"
+   sodipodi:docname="document-check.svg"
    inkscape:version="1.4.4 (dcaf3e7d9e, 2026-05-05)"
    xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
    xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
    xmlns="http://www.w3.org/2000/svg"
    xmlns:svg="http://www.w3.org/2000/svg">
   <defs
-     id="defs11" />
+     id="defs11">
+    <linearGradient
+       id="ok"
+       x1="0"
+       y1="8"
+       x2="0"
+       y2="40"
+       gradientUnits="userSpaceOnUse"
+       gradientTransform="matrix(0.91406217,0,0,0.91406217,7.5585958,11.307149)">
+      <stop
+         offset="0"
+         stop-color="#EFFBD6"
+         id="stop2-3" />
+      <stop
+         offset="0.5"
+         stop-color="#84CB3E"
+         id="stop3-6" />
+      <stop
+         offset="1"
+         stop-color="#46901A"
+         id="stop4-7" />
+    </linearGradient>
+  </defs>
   <sodipodi:namedview
      id="namedview11"
      pagecolor="#ffffff"
@@ -27,8 +49,8 @@
      inkscape:cy="24"
      inkscape:window-width="1087"
      inkscape:window-height="1045"
-     inkscape:window-x="1545"
-     inkscape:window-y="299"
+     inkscape:window-x="760"
+     inkscape:window-y="294"
      inkscape:window-maximized="0"
      inkscape:current-layer="g10" />
   <g
@@ -38,10 +60,10 @@
        id="defs7">
       <filter
          id="sh"
-         x="-0.083585892"
+         x="-0.098666665"
          y="-0.077894736"
-         width="1.188756"
-         height="1.1892819">
+         width="1.214"
+         height="1.1847368">
         <feGaussianBlur
            in="SourceAlpha"
            stdDeviation="0.9"
@@ -121,14 +143,13 @@
          stroke-linejoin="round"
          id="path7" />
       <rect
-         x="14.187391"
-         y="11.046631"
+         x="14.014681"
+         y="11.046632"
          width="18"
          height="2.4000001"
          rx="1.2"
          fill="#aeb8c4"
-         id="rect8-6"
-         style="stroke-width:1" />
+         id="rect8-6" />
       <rect
          x="14"
          y="15"
@@ -160,21 +181,30 @@
          rx="1.2"
          fill="#AEB8C4"
          id="rect10" />
-      <circle
-         cx="32.438686"
-         cy="30.934368"
-         fill="url(#pl)"
-         stroke="#244f0d"
-         stroke-width="2.12871"
-         id="circle10"
-         style="fill:url(#pl)"
-         r="11.973988" />
-      <path
-         d="M 32.438687,24.947377 V 36.921364 M 26.451693,30.934371 H 38.425681"
-         stroke="#ffffff"
-         stroke-width="3.45915"
-         stroke-linecap="round"
-         id="path10" />
     </g>
   </g>
+  <path
+     d="m 18.527342,34.158704 8.226559,8.226559 15.539057,-20.109367"
+     fill="none"
+     stroke="#244f0d"
+     stroke-width="10.0547"
+     stroke-linecap="round"
+     stroke-linejoin="round"
+     id="path4" />
+  <path
+     d="m 18.527342,34.158704 8.226559,8.226559 15.539057,-20.109367"
+     fill="none"
+     stroke="url(#ok)"
+     stroke-width="6.85547"
+     stroke-linecap="round"
+     stroke-linejoin="round"
+     id="path5"
+     style="stroke:url(#ok)" />
+  <path
+     d="m 20.355466,33.244642 5.941404,5.941404"
+     stroke="#ffffff"
+     stroke-width="1.82812"
+     stroke-linecap="round"
+     opacity="0.5"
+     id="path6" />
 </svg>

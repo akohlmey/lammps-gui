@@ -54,6 +54,7 @@
     <file>icons/dialog-no.svg</file>
     <file>icons/dialog-ok.svg</file>
     <file>icons/document-new.svg</file>
+    <file>icons/document-check.svg</file>
     <file>icons/document-open-recent.svg</file>
     <file>icons/document-open.svg</file>
     <file>icons/document-save-as.svg</file>
@@ -115,6 +116,7 @@
     <file>icons/system-help.svg</file>
     <file>icons/system-restart.svg</file>
     <file>icons/system-run.svg</file>
+    <file>icons/system-dryrun.svg</file>
     <file>icons/trash.svg</file>
     <file>icons/txt-file-icon.svg</file>
     <file>icons/uncomment.svg</file>
