@@ -286,24 +286,31 @@ COMPLETER_INIT_FUNC(extra, Extra)
 
 // build completer for groups by parsing through edit buffer
 
+namespace {
+
+// collect the IDs defined by all logical commands with the given name; the
+// InputScanner joins '&' continuations and skips commented-out definitions
+QStringList scanDefinedIds(const QString &buffer, const QString &command)
+{
+    QStringList ids;
+    InputScanner scanner;
+    scanner.scan(buffer);
+    for (const auto &cmd : scanner.commands()) {
+        if ((cmd.words.size() > 1) && (cmd.words[0].text == command)) {
+            const QString &id = cmd.words[1].text;
+            if (!id.isEmpty() && !ids.contains(id)) ids << id;
+        }
+    }
+    return ids;
+}
+
+} // namespace
+
 void CodeEditor::setGroupList()
 {
-    QStringList groups;
-    QRegularExpression groupcmd(QStringLiteral(R"(^\s*group\s+(\S+)(\s+|$))"));
-
-    auto saved = textCursor();
-    // reposition cursor to beginning of text and search for group commands
-    auto cursor = textCursor();
-    cursor.movePosition(QTextCursor::Start);
-    setTextCursor(cursor);
-    while (find(groupcmd)) {
-        auto words = splitLine(textCursor().block().text().replace('\t', ' '));
-        if ((words.size() > 1) && !groups.contains(words[1])) groups << words[1];
-    }
+    auto groups = scanDefinedIds(document()->toPlainText(), QStringLiteral("group"));
     groups.sort();
     groups.prepend(QStringLiteral("all"));
-
-    setTextCursor(saved);
     groupComp->setModel(new QStringListModel(groups, groupComp));
 }
 
@@ -326,76 +333,37 @@ void CodeEditor::setVarNameList()
         }
     }
 
-    QRegularExpression varcmd(QStringLiteral(R"(^\s*variable\s+(\S+)(\s+|$))"));
-    auto saved = textCursor();
-    // reposition cursor to beginning of text and search for variable commands
-    auto cursor = textCursor();
-    cursor.movePosition(QTextCursor::Start);
-    setTextCursor(cursor);
-    while (find(varcmd)) {
-        auto words = splitLine(textCursor().block().text().replace('\t', ' '));
-        if ((words.size() > 1)) {
-            QString w = QString("$%1").arg(words[1]);
-            if ((words[1].size() == 1) && !vars.contains(w)) vars << w;
-            w = QString("${%1}").arg(words[1]);
-            if (!vars.contains(w)) vars << w;
-            w = QString("v_%1").arg(words[1]);
-            if (!vars.contains(w)) vars << w;
-        }
+    for (const auto &name : scanDefinedIds(document()->toPlainText(), QStringLiteral("variable"))) {
+        QString w = QString("$%1").arg(name);
+        if ((name.size() == 1) && !vars.contains(w)) vars << w;
+        w = QString("${%1}").arg(name);
+        if (!vars.contains(w)) vars << w;
+        w = QString("v_%1").arg(name);
+        if (!vars.contains(w)) vars << w;
     }
     vars.sort();
-
-    setTextCursor(saved);
     varnameComp->setModel(new QStringListModel(vars, varnameComp));
 }
 
 void CodeEditor::setComputeIDList()
 {
     QStringList compid;
-    QRegularExpression compcmd(QStringLiteral(R"(^\s*compute\s+(\S+)\s+)"));
-
-    auto saved = textCursor();
-    // reposition cursor to beginning of text and search for compute commands
-    auto cursor = textCursor();
-    cursor.movePosition(QTextCursor::Start);
-    setTextCursor(cursor);
-    while (find(compcmd)) {
-        auto words = splitLine(textCursor().block().text().replace('\t', ' '));
-        if ((words.size() > 1)) {
-            QString w = QString("c_%1").arg(words[1]);
-            if (!compid.contains(w)) compid << w;
-            w = QString("C_%1").arg(words[1]);
-            if (!compid.contains(w)) compid << w;
-        }
+    for (const auto &name : scanDefinedIds(document()->toPlainText(), QStringLiteral("compute"))) {
+        compid << QString("c_%1").arg(name);
+        compid << QString("C_%1").arg(name);
     }
     compid.sort();
-
-    setTextCursor(saved);
     compidComp->setModel(new QStringListModel(compid, compidComp));
 }
 
 void CodeEditor::setFixIDList()
 {
     QStringList fixid;
-    QRegularExpression fixcmd(QStringLiteral(R"(^\s*fix\s+(\S+)\s+)"));
-
-    auto saved = textCursor();
-    // reposition cursor to beginning of text and search for fix commands
-    auto cursor = textCursor();
-    cursor.movePosition(QTextCursor::Start);
-    setTextCursor(cursor);
-    while (find(fixcmd)) {
-        auto words = splitLine(textCursor().block().text().replace('\t', ' '));
-        if ((words.size() > 1)) {
-            QString w = QString("f_%1").arg(words[1]);
-            if (!fixid.contains(w)) fixid << w;
-            w = QString("F_%1").arg(words[1]);
-            if (!fixid.contains(w)) fixid << w;
-        }
+    for (const auto &name : scanDefinedIds(document()->toPlainText(), QStringLiteral("fix"))) {
+        fixid << QString("f_%1").arg(name);
+        fixid << QString("F_%1").arg(name);
     }
     fixid.sort();
-
-    setTextCursor(saved);
     fixidComp->setModel(new QStringListModel(fixid, fixidComp));
 }
 
