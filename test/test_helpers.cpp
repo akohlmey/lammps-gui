@@ -244,6 +244,20 @@ TEST_F(HelpersTest, FindExeConsistentWithHasExe)
     EXPECT_EQ(hasExe(exe), !findExe(exe).isEmpty());
 }
 
+// Tests for getLammpsLibName function
+
+TEST_F(HelpersTest, LammpsLibNameIsKnownPlatformName)
+{
+    // empty in linked mode; otherwise it must be one of the fixed
+    // per-platform names that the preferences reset deletes
+    const QString name = getLammpsLibName();
+    if (!name.isEmpty()) {
+        const QStringList known = {Cfg::LAMMPS_LIB_MACOS, Cfg::LAMMPS_LIB_WINDOWS,
+                                   Cfg::LAMMPS_LIB_LINUX};
+        EXPECT_TRUE(known.contains(name));
+    }
+}
+
 // Tests for isLightTheme function
 
 TEST_F(HelpersTest, IsLightThemeReturnsBoolean)

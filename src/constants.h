@@ -44,6 +44,16 @@ constexpr int NUM_RECENT_FILES = 5; ///< Number of entries in the recent files l
 // ---- Run control ---------------------------------------------------------
 constexpr int EXTEND_STEPS_DEFAULT = 1000; ///< Default number of steps in the Extend Run dialog
 
+// ---- Downloadable LAMMPS shared library ----------------------------------
+// all platform variants are listed so they can be cleaned up from a
+// configuration folder that is shared between different machines
+inline const QString LAMMPS_LIB_MACOS =
+    QStringLiteral("liblammps.0.dylib"); ///< Downloaded library name on macOS
+inline const QString LAMMPS_LIB_WINDOWS =
+    QStringLiteral("liblammps.dll"); ///< Downloaded library name on Windows
+inline const QString LAMMPS_LIB_LINUX =
+    QStringLiteral("liblammps.so.0"); ///< Downloaded library name on Linux
+
 // ---- LAMMPS version requirement ------------------------------------------
 constexpr int MIN_LAMMPS_VERSION =
     20260704; ///< Minimum LAMMPS version (4 July 2026) as YYYYMMDD format number

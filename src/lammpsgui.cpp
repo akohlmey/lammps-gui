@@ -2647,6 +2647,18 @@ void LammpsGui::defaults()
     QSettings settings;
     settings.clear();
     settings.sync();
+
+    // also delete a LAMMPS shared library that was downloaded into the
+    // configuration folder; try the names for all platforms, not just the
+    // current one, since the configuration folder may be shared between
+    // different machines
+    const auto configDir = QStandardPaths::writableLocation(QStandardPaths::AppConfigLocation);
+    if (!configDir.isEmpty()) {
+        const QDir dir(configDir);
+        for (const auto &lib :
+             {Cfg::LAMMPS_LIB_MACOS, Cfg::LAMMPS_LIB_WINDOWS, Cfg::LAMMPS_LIB_LINUX})
+            QFile::remove(dir.absoluteFilePath(lib));
+    }
 }
 
 void LammpsGui::editVariables()

@@ -285,11 +285,11 @@ QString getLammpsLibName()
 {
 #if defined(LAMMPS_GUI_USE_PLUGIN)
 #if defined(Q_OS_MACOS)
-    return QStringLiteral("liblammps.0.dylib");
+    return Cfg::LAMMPS_LIB_MACOS;
 #elif defined(Q_OS_WIN32)
-    return QStringLiteral("liblammps.dll");
+    return Cfg::LAMMPS_LIB_WINDOWS;
 #else
-    return QStringLiteral("liblammps.so.0");
+    return Cfg::LAMMPS_LIB_LINUX;
 #endif
 #else
     return QStringLiteral("");
