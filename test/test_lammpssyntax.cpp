@@ -397,7 +397,7 @@ TEST(LammpsSyntaxTest, SyntaxStateRoundTrip)
     // no command
     EXPECT_EQ(SyntaxState::cmdIndex(SyntaxState::pack(0, -1, 0)), -1);
     // argument counter saturates
-    EXPECT_EQ(SyntaxState::argsUsed(SyntaxState::pack(0, 0, 9999)), SyntaxState::ARG_MAX);
+    EXPECT_EQ(SyntaxState::argsUsed(SyntaxState::pack(0, 0, 9999)), SyntaxState::ARG_MAXX);
     // negative previous state (initial QSyntaxHighlighter value) is treated as empty
     EXPECT_EQ(SyntaxState::flags(qMax(-1, 0)), 0);
 }
