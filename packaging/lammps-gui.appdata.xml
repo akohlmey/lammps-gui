@@ -67,6 +67,9 @@
           <li>Support choosing between a static and a dynamic view center in the Image Viewer</li>
           <li>Add File menu entry to write a restart file with the current state of the system</li>
           <li>Add Run menu entry to extend the previous run by a given number of steps</li>
+          <li>Rewrite syntax highlighting on a shared syntax engine: aware of line continuations, argument roles are colored, unknown commands and styles are marked</li>
+          <li>Auto-completion and context help are aware of line continuations</li>
+          <li>Add automatic pre-run input check with a run-anyway dialog plus Run menu entries to check the input statically or via a dry run</li>
           <li>Tweak some icons for better readability at 24x24px size</li>
           <li>Show the sample frame behind the movie import size estimate as a thumbnail</li>
         </ul>

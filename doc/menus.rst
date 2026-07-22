@@ -168,6 +168,39 @@ frames for a smooth animation or enough data for a plot.
 
    The *Extend Run...* entry was added.
 
+The *Check Input* entry (keyboard shortcut `Ctrl-K`) runs a fast static
+check of the editor buffer and reports its findings in a dialog: unknown
+commands and style names (validated against the loaded LAMMPS library),
+unbalanced quotes, dangling line continuations, variables used before
+they are defined, references to undefined groups, missing input files,
+and missing required arguments.  The same check runs automatically
+before every run (this can be disabled in the *General Settings* of the
+*Preferences* dialog); in that case only error level findings trigger a
+dialog asking whether to run anyway, while warnings are only noted in
+the status bar.  The checker is designed to avoid false alarms: any
+word containing a ``$`` substitution is exempt from checking, and
+script features that make static analysis unreliable (include files,
+jump loops, if/then commands, python scripting, shell commands, restart
+files, runtime plugins) disable the affected groups of checks.
+
+The *Check Input via Dry Run* entry (keyboard shortcut `Ctrl-Shift-K`)
+validates the buffer by actually executing it: the equivalent of the
+`-skiprun <https://docs.lammps.org/Run_options.html>`_ command-line
+flag is applied, so LAMMPS parses every command and executes the setup
+phase of every `run <https://docs.lammps.org/run.html>`_ and `minimize
+<https://docs.lammps.org/minimize.html>`_ command without computing any
+timesteps.  This is a much deeper check than the static one, but it
+takes as long as the setup of a real run and has the same side
+effects: output files may be created or overwritten and `shell
+<https://docs.lammps.org/shell.html>`_ commands are executed, which is
+why the action first asks for confirmation.  The captured output is
+shown in an *Output* window; errors are reported with the usual error
+dialog and the offending line is highlighted in the editor.
+
+.. versionadded:: 3.0.6
+
+   The *Check Input* and *Check Input via Dry Run* entries were added.
+
 The *Relaunch LAMMPS Instance* will destroy the current LAMMPS thread
 and free its data and then create a new thread with a new LAMMPS
 instance.  This is usually not needed, since LAMMPS-GUI tries to detect

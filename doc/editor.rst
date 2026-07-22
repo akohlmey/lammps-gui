@@ -50,6 +50,36 @@ have been enabled when compiling LAMMPS. That list, however, excludes
 accelerated styles and commands; for improved clarity, only the
 non-suffix versions of styles are shown.
 
+Syntax Highlighting
+^^^^^^^^^^^^^^^^^^^
+
+.. index:: syntax highlighting
+.. index:: line continuation
+.. index:: unknown commands
+
+The editor highlights LAMMPS input scripts following the same parsing
+rules as LAMMPS itself: comments, single, double, and triple quoted
+strings, ``$`` variable substitutions, and numbers are recognized, and
+command names are colored by category.  Arguments are colored by their
+role in the command, for example the ID, group-ID, and style name of a
+`fix <https://docs.lammps.org/fix.html>`_ command.  Lines joined with
+the ``&`` line continuation character are highlighted in the context of
+the command they continue, including style names or quoted strings that
+are split across lines.
+
+Command and style names that are not known to the LAMMPS library that
+LAMMPS-GUI has loaded -- for example due to a typo or because the
+corresponding package was not included when the library was compiled --
+are marked with a wavy underline.  The marker is not shown for the word
+at the cursor position, so partially typed names are not flagged while
+typing, and it is suppressed for names constructed with ``$``
+substitutions.
+
+.. versionchanged:: 3.0.6
+
+   The highlighting is aware of ``&`` line continuations and marks
+   unknown command and style names.
+
 Line Reformatting
 ^^^^^^^^^^^^^^^^^
 

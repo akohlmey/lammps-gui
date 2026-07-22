@@ -104,6 +104,12 @@ available (On macOS use the Command key instead of Ctrl/Control).
      - Plot Data File
      - Ctrl+E
      - Extend Run
+   * - Ctrl+K
+     - Check Input
+     - Ctrl+Shift+K
+     - Check Input via Dry Run
+     -
+     -
 
 Further keybindings of the editor window `are documented with the Qt
 documentation

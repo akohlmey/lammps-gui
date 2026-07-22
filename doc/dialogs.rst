@@ -91,6 +91,11 @@ General Settings
    - **Include citation details:** when checked, full citation info will be
      included in the Output window.  This is equivalent to using ``-cite
      screen`` on the command-line.
+   - **Check input for problems before a run:** when checked, the static
+     input check (see the *Check Input* entry of the *Run* menu) runs
+     automatically before every run.  Only error level findings, which
+     would make LAMMPS reject the input, open a dialog asking whether to
+     run anyway; warnings are only noted in the status bar.
    - **Show Output window by default:** when checked, the screen output of
      a LAMMPS run will be collected in an Output window during the run.
    - **Show Charts window by default:** when checked, the thermodynamic
