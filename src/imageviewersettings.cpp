@@ -225,15 +225,20 @@ void ImageViewer::globalSettings()
     auto *ssao = new QCheckBox("SSAO: ", this);
     ssao->setChecked(usessao);
     layout->addWidget(ssao, idx, n++, 1, 1, Qt::AlignVCenter | Qt::AlignRight);
-    auto *aoval = new QLineEdit(QString::number(ssaoval));
-    aoval->setValidator(transvalidator);
+    auto *aoval = new QDoubleSpinBox;
+    aoval->setRange(0.0, 1.0);
+    aoval->setSingleStep(0.1);
+    aoval->setValue(ssaoval);
     aoval->setMaximumWidth(fwidth);
     layout->addWidget(aoval, idx, n++, 1, 1);
     layout->addWidget(new QLabel("Shiny: "), idx, n++, 1, 1, Qt::AlignVCenter | Qt::AlignRight);
-    auto *shiny = new QLineEdit(QString::number(shinyfactor));
-    shiny->setValidator(transvalidator);
+    auto *shiny = new QDoubleSpinBox;
+    shiny->setRange(0.0, 1.0);
+    shiny->setSingleStep(0.1);
+    shiny->setValue(shinyfactor);
     shiny->setMaximumWidth(fwidth);
     layout->addWidget(shiny, idx++, n++, 1, 1);
+    layout->addWidget(new QHline, idx++, 0, 1, MAXCOLS);
 
     n = 0;
 
@@ -245,18 +250,24 @@ void ImageViewer::globalSettings()
                        "Dynamic: center fractions are applied every step.");
     layout->addWidget(ccombo, idx, n++, 1, 1);
     layout->addWidget(new QLabel("X-Center: "), idx, n++, 1, 1, Qt::AlignVCenter | Qt::AlignRight);
-    auto *xval = new QLineEdit(QString::number(xcenter));
-    xval->setValidator(transvalidator);
+    auto *xval = new QDoubleSpinBox;
+    xval->setRange(0.0, 1.0);
+    xval->setSingleStep(0.05);
+    xval->setValue(xcenter);
     xval->setMaximumWidth(fwidth);
     layout->addWidget(xval, idx, n++, 1, 1);
     layout->addWidget(new QLabel("Y-Center: "), idx, n++, 1, 1, Qt::AlignVCenter | Qt::AlignRight);
-    auto *yval = new QLineEdit(QString::number(ycenter));
-    yval->setValidator(transvalidator);
+    auto *yval = new QDoubleSpinBox;
+    yval->setRange(0.0, 1.0);
+    yval->setSingleStep(0.05);
+    yval->setValue(ycenter);
     yval->setMaximumWidth(fwidth);
     layout->addWidget(yval, idx, n++, 1, 1);
     layout->addWidget(new QLabel("Z-Center: "), idx, n++, 1, 1, Qt::AlignVCenter | Qt::AlignRight);
-    auto *zval = new QLineEdit(QString::number(zcenter));
-    zval->setValidator(transvalidator);
+    auto *zval = new QDoubleSpinBox;
+    zval->setRange(0.0, 1.0);
+    zval->setSingleStep(0.05);
+    zval->setValue(zcenter);
     zval->setMaximumWidth(fwidth);
     layout->addWidget(zval, idx++, n++, 1, 1);
 
@@ -391,15 +402,15 @@ void ImageViewer::globalSettings()
     usessao = ssao->isChecked();
     button  = findChild<QPushButton *>("ssao");
     if (button) button->setChecked(usessao);
-    if (aoval->hasAcceptableInput()) ssaoval = aoval->text().toDouble();
-    if (shiny->hasAcceptableInput()) shinyfactor = shiny->text().toDouble();
-    button = findChild<QPushButton *>("shiny");
+    ssaoval     = aoval->value();
+    shinyfactor = shiny->value();
+    button      = findChild<QPushButton *>("shiny");
     if (button) button->setChecked(shinyfactor > SHINY_CUT);
 
     dynamiccenter = (ccombo->currentIndex() == 1);
-    if (xval->hasAcceptableInput()) xcenter = xval->text().toDouble();
-    if (yval->hasAcceptableInput()) ycenter = yval->text().toDouble();
-    if (zval->hasAcceptableInput()) zcenter = zval->text().toDouble();
+    xcenter       = xval->value();
+    ycenter       = yval->value();
+    zcenter       = zval->value();
 
     // LAMMPS rejects a zero-length up vector, so keep the previous one in that case
     if (xupval->hasAcceptableInput() && yupval->hasAcceptableInput() &&
