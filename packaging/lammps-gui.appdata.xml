@@ -72,6 +72,7 @@
           <li>Skip the Image Viewer re-render after closing the Preferences dialog when the LAMMPS instance had to be recreated</li>
           <li>Remove temporary image frame files also when a render in the Image Viewer fails</li>
           <li>Find external helper programs like ffmpeg in common package manager locations on macOS</li>
+          <li>Delete a downloaded LAMMPS shared library for any platform when resetting the preferences</li>
         </ul>
       </description>
     </release>
