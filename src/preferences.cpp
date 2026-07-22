@@ -188,6 +188,8 @@ void Preferences::accept()
     if (box) settings->setValue(Keys::ECHO, box->isChecked());
     box = tabWidget->findChild<QCheckBox *>("cite");
     if (box) settings->setValue(Keys::CITE, box->isChecked());
+    box = tabWidget->findChild<QCheckBox *>("lintcheck");
+    if (box) settings->setValue(Keys::LINTCHECK, box->isChecked());
     box = tabWidget->findChild<QCheckBox *>("logreplace");
     if (box) settings->setValue(Keys::LOGREPLACE, box->isChecked());
     box = tabWidget->findChild<QCheckBox *>("chartreplace");
@@ -285,6 +287,9 @@ GeneralTab::GeneralTab(QSettings *_settings, LammpsWrapper *_lammps, LammpsGui *
     auto *cite = new QCheckBox("Include citation details");
     cite->setObjectName("cite");
     cite->setChecked(settings->value(Keys::CITE, false).toBool());
+    auto *lint = new QCheckBox("Check input for problems before a run");
+    lint->setObjectName("lintcheck");
+    lint->setChecked(settings->value(Keys::LINTCHECK, true).toBool());
     auto *logv = new QCheckBox("Show Output window by default");
     logv->setObjectName("viewlog");
     logv->setChecked(settings->value(Keys::VIEWLOG, true).toBool());
@@ -338,6 +343,7 @@ GeneralTab::GeneralTab(QSettings *_settings, LammpsWrapper *_lammps, LammpsGui *
     layout->addWidget(new QHline, nrow++, 0, 1, 2);
     layout->addWidget(echo, nrow, 0);
     layout->addWidget(cite, nrow++, 1);
+    layout->addWidget(lint, nrow++, 0, 1, 2);
     layout->addWidget(new QHline, nrow++, 0, 1, 2);
     layout->addWidget(logv, nrow, 0);
     layout->addWidget(logr, nrow++, 1);

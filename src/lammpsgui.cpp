@@ -27,6 +27,7 @@
 #include "setvariables.h"
 #include "slideshow.h"
 #include "stdcapture.h"
+#include "syntaxcheck.h"
 #include "tutorialwizard.h"
 #include "urldownloader.h"
 
@@ -247,6 +248,7 @@ void LammpsGui::createRunMenu()
     addMenuAction(menu, ":/icons/process-stop.svg", "&Stop LAMMPS", "Ctrl+/", &LammpsGui::stopRun);
     addMenuAction(menu, ":/icons/extend-run.svg", "&Extend Run...", "Ctrl+E",
                   &LammpsGui::extendRun);
+    addMenuAction(menu, ":/icons/dialog-ok.svg", "Chec&k Input", "Ctrl+K", &LammpsGui::checkInput);
     menu->addSeparator();
 
     addMenuAction(menu, ":/icons/system-restart.svg", "Relaunch &LAMMPS Instance", "",
@@ -1847,6 +1849,96 @@ void LammpsGui::createChartWindow(QSettings &settings)
         chartwindow->hide();
 }
 
+namespace {
+
+// show the input check findings; with askRunAnyway the dialog offers
+// Yes ("run anyway") / No, otherwise just OK
+int showLintDialog(QWidget *parent, const QList<LintIssue> &issues, bool askRunAnyway)
+{
+    constexpr int MAX_SHOWN = 8;
+    const int nerrors       = SyntaxChecker::countErrors(issues);
+
+    QMessageBox mb(parent);
+    mb.setWindowTitle("  LAMMPS-GUI - Input Check  ");
+    mb.setWindowIcon(parent->windowIcon());
+    QString text = QString("<p>The input check found %1 possible problem(s) "
+                           "(%2 error(s), %3 warning(s)):</p><pre>%4</pre>")
+                       .arg(issues.size())
+                       .arg(nerrors)
+                       .arg(issues.size() - nerrors)
+                       .arg(SyntaxChecker::formatIssues(issues, MAX_SHOWN).toHtmlEscaped());
+    if (askRunAnyway) text += "<p>Do you want to run the input anyway?</p>";
+    mb.setText(text);
+    if (issues.size() > MAX_SHOWN) mb.setDetailedText(SyntaxChecker::formatIssues(issues));
+    mb.setIconPixmap(QIcon(":/icons/warning.svg").pixmap(QSize(64, 64), mb.devicePixelRatioF()));
+    if (askRunAnyway) {
+        mb.setStandardButtons(QMessageBox::Yes | QMessageBox::No);
+        mb.setDefaultButton(QMessageBox::No);
+        mb.setEscapeButton(QMessageBox::No);
+        mb.button(QMessageBox::Yes)->setIcon(QIcon(":/icons/dialog-ok.svg"));
+        mb.button(QMessageBox::No)->setIcon(QIcon(":/icons/dialog-no.svg"));
+    } else {
+        mb.setStandardButtons(QMessageBox::Ok);
+        mb.button(QMessageBox::Ok)->setIcon(QIcon(":/icons/dialog-ok.svg"));
+    }
+    mb.setFont(parent->font());
+    return mb.exec();
+}
+
+} // namespace
+
+QStringList LammpsGui::presetVariableNames() const
+{
+    QStringList presets = {QStringLiteral("gui_run")};
+    // only variables with a value are defined before the run (same filter as
+    // the variable setup in doRun()); the Set Variables dialog also lists
+    // used-but-undefined variables with an empty value
+    for (const auto &var : variables)
+        if (!var.first.isEmpty() && !var.second.isEmpty()) presets << var.first;
+    return presets;
+}
+
+bool LammpsGui::confirmLintIssues()
+{
+    const SyntaxChecker checker(&syntax);
+    const auto issues =
+        checker.check(textEdit->toPlainText(), presetVariableNames(), QDir::currentPath());
+    if (issues.isEmpty()) return true;
+
+    // warnings never block a run; note them in the status bar
+    if (SyntaxChecker::countErrors(issues) == 0) {
+        status->setText(QString("Ready. The input check found %1 warning(s) - "
+                                "see Run > Check Input")
+                            .arg(issues.size()));
+        return true;
+    }
+
+    if (showLintDialog(this, issues, true) == QMessageBox::Yes) return true;
+
+    // move the cursor to the first error
+    for (const auto &issue : issues) {
+        if (issue.severity == LintSeverity::Error) {
+            textEdit->setCursor(issue.line - 1);
+            textEdit->setHighlight(issue.line - 1, true);
+            break;
+        }
+    }
+    return false;
+}
+
+void LammpsGui::checkInput()
+{
+    const SyntaxChecker checker(&syntax);
+    const auto issues =
+        checker.check(textEdit->toPlainText(), presetVariableNames(), QDir::currentPath());
+    if (issues.isEmpty()) {
+        information(this, "LAMMPS-GUI - Input Check", "No problems found.");
+        return;
+    }
+    showLintDialog(this, issues, false);
+    textEdit->setCursor(issues.first().line - 1);
+}
+
 void LammpsGui::doRun(bool use_buffer)
 {
     if (lammps.isRunning()) {
@@ -1872,6 +1964,9 @@ void LammpsGui::doRun(bool use_buffer)
     }
 
     QSettings settings;
+    // pre-run input check: only error findings gate the run
+    if (settings.value(Keys::LINTCHECK, true).toBool() && !confirmLintIssues()) return;
+
     progress->setValue(0);
     dirstatus->hide();
     progress->show();

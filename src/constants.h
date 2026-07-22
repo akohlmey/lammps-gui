@@ -200,6 +200,7 @@ inline const QString HTTPS_PROXY  = QStringLiteral("https_proxy");
 inline const QString ID           = QStringLiteral("id");
 inline const QString IMAGEREPLACE = QStringLiteral("imagereplace");
 inline const QString INTELPREC    = QStringLiteral("intelprec");
+inline const QString LINTCHECK    = QStringLiteral("lintcheck");
 inline const QString LOGREPLACE   = QStringLiteral("logreplace");
 inline const QString LOGX         = QStringLiteral("logx");
 inline const QString LOGY         = QStringLiteral("logy");

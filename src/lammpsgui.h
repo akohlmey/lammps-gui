@@ -173,6 +173,20 @@ protected:
      * unpopulated and unknown-name marking is disabled). */
     void populateSyntax();
 
+    /** @brief Variable names that are defined before the input runs
+     *
+     * The names from the Set Variables dialog plus the always-present
+     * @c gui_run variable; passed to the input checker as preset names. */
+    QStringList presetVariableNames() const;
+
+    /** @brief Run the pre-run input lint and ask about found errors
+     *
+     * Called from doRun() when the pre-run check preference is enabled.
+     * Warning-level findings never block; they are noted in the status bar.
+     * Error-level findings pop up a "run anyway?" dialog.
+     * @return true when the run should proceed */
+    bool confirmLintIssues();
+
     /** @brief Handle completion of a LAMMPS run */
     void runDone();
 
@@ -295,6 +309,9 @@ private slots:
 
     /** @brief Extend the previous run by a number of steps queried in a dialog */
     void extendRun();
+
+    /** @brief Run the static input check and show the findings in a dialog */
+    void checkInput();
 
     /** @brief Restart LAMMPS with a new instance */
     void restartLammps();
