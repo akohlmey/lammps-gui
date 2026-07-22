@@ -281,8 +281,9 @@ void LammpsGui::createRunMenu()
                   &LammpsGui::restartLammps);
     menu->addSeparator();
 
-    addMenuAction(menu, ":/icons/dialog-ok.svg", "Chec&k Input", "Ctrl+K", &LammpsGui::checkInput);
-    addMenuAction(menu, ":/icons/system-run.svg", "Check Input via &Dry Run", "Ctrl+Shift+K",
+    addMenuAction(menu, ":/icons/document-check.svg", "Chec&k Input", "Ctrl+K",
+                  &LammpsGui::checkInput);
+    addMenuAction(menu, ":/icons/system-dryrun.svg", "Check Input via &Dry Run", "Ctrl+Shift+K",
                   &LammpsGui::dryRunBuffer);
     menu->addSeparator();
 
