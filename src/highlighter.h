@@ -99,15 +99,16 @@ private:
     /// format for a command word of the given category
     const QTextCharFormat &cmdFormat(CmdCat cat) const;
 
-    /// format rendering a color name in its own color (cached; low-contrast
-    /// colors get a gray chip background to stay readable on the theme)
+    /// format rendering a color name in its own color (cached; colors with
+    /// too little WCAG contrast against the editor background get a dark or
+    /// light chip background, whichever contrasts better with the color)
     const QTextCharFormat &colorFormat(const QString &name);
 
     QTextCharFormat formats[static_cast<int>(Fmt::Count)]; ///< format table
     QHash<QString, QTextCharFormat> colorFormats;          ///< cache for color name formats
     QColor unknownColor;                                   ///< underline color for unknown names
+    QColor editorBackground;                               ///< editor background at construction
     const LammpsSyntax *syntax;                            ///< syntax registry (not owned)
-    bool lightTheme  = true;                               ///< active theme at construction
     int cursorBlock  = -1;                                 ///< block number of the tracked cursor
     int cursorColumn = -1;                                 ///< column of the tracked cursor
 };

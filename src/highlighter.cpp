@@ -14,8 +14,12 @@
 #include "helpers.h"
 
 #include <QHash>
+#include <QPalette>
 #include <QTextBlock>
 #include <QTextDocument>
+
+#include <algorithm>
+#include <cmath>
 
 namespace {
 
@@ -29,6 +33,27 @@ bool isReferenceWord(const QString &word)
     }
     return false;
 }
+
+// relative luminance of a color as defined by WCAG 2
+double wcagLuminance(const QColor &color)
+{
+    const auto linear = [](double channel) {
+        return (channel <= 0.04045) ? channel / 12.92 : std::pow((channel + 0.055) / 1.055, 2.4);
+    };
+    return 0.2126 * linear(color.redF()) + 0.7152 * linear(color.greenF()) +
+           0.0722 * linear(color.blueF());
+}
+
+// WCAG 2 contrast ratio between two colors (1 .. 21)
+double contrastRatio(const QColor &one, const QColor &two)
+{
+    const double lum1 = wcagLuminance(one);
+    const double lum2 = wcagLuminance(two);
+    return (std::max(lum1, lum2) + 0.05) / (std::min(lum1, lum2) + 0.05);
+}
+
+// colors with less contrast than this against the editor background get a chip
+constexpr double MIN_COLOR_CONTRAST = 3.0;
 
 } // namespace
 
@@ -70,8 +95,8 @@ Highlighter::Highlighter(const LammpsSyntax *_syntax, QTextDocument *parent) :
         if (color.isValid()) formats[i].setForeground(color);
         formats[i].setFontWeight(light ? palette[i].lightWeight : palette[i].darkWeight);
     }
-    unknownColor = light ? QColor(Qt::red) : QColor(QColorConstants::Svg::orangered);
-    lightTheme   = light;
+    unknownColor     = light ? QColor(Qt::red) : QColor(QColorConstants::Svg::orangered);
+    editorBackground = QPalette().color(QPalette::Active, QPalette::Base);
 }
 
 const QTextCharFormat &Highlighter::colorFormat(const QString &name)
@@ -84,12 +109,16 @@ const QTextCharFormat &Highlighter::colorFormat(const QString &name)
     QTextCharFormat fmt;
     fmt.setForeground(color);
     fmt.setFontWeight(QFont::Bold);
-    // keep low-contrast color names readable with a gray chip background
-    const int luminance = (299 * color.red() + 587 * color.green() + 114 * color.blue()) / 1000;
-    if (lightTheme && (luminance > 186))
-        fmt.setBackground(QColor(64, 64, 64));
-    else if (!lightTheme && (luminance < 70))
-        fmt.setBackground(QColor(200, 200, 200));
+    // when the color does not have enough contrast against the editor
+    // background, put it on the dark or light chip, whichever contrasts
+    // better with the color itself
+    if (contrastRatio(color, editorBackground) < MIN_COLOR_CONTRAST) {
+        const QColor darkChip(32, 32, 32);
+        const QColor lightChip(232, 232, 232);
+        fmt.setBackground(contrastRatio(color, darkChip) >= contrastRatio(color, lightChip)
+                              ? darkChip
+                              : lightChip);
+    }
     return *colorFormats.insert(name, fmt);
 }
 
