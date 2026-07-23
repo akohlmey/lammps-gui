@@ -218,12 +218,14 @@ void Highlighter::highlightBlock(const QString &text)
                     const ArgSpec spec = syntax->argSpec(cmdIdx, tok.argIndex);
                     switch (spec.role) {
                         case ArgRole::DefineId:
+                        case ArgRole::Label:
+                            // IDs get the same color whether defined here or
+                            // referenced (unfix, *_modify, jump targets)
                             fmt = formats[static_cast<int>(Fmt::Number)];
                             break;
                         case ArgRole::GroupId:
                         case ArgRole::File:
                         case ArgRole::Keyword:
-                        case ArgRole::Label:
                             fmt = formats[static_cast<int>(Fmt::String)];
                             break;
                         case ArgRole::Style:

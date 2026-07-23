@@ -87,7 +87,7 @@ private:
         CmdSetup,    ///< command word: settings category
         CmdSpecial,  ///< command word: undo / flow control category
         CmdOther,    ///< command word: recognized but uncategorized
-        Number,      ///< numbers and defined IDs
+        Number,      ///< numbers and IDs (defined or referenced)
         String,      ///< quoted strings and string-like arguments
         Comment,     ///< comments
         Variable,    ///< $-references and c_/f_/v_ style references

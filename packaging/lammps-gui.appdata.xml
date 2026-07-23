@@ -69,6 +69,7 @@
           <li>Add Run menu entry to extend the previous run by a given number of steps</li>
           <li>Rewrite syntax highlighting on a shared syntax engine: aware of line continuations, argument roles are colored, unknown commands and styles are marked</li>
           <li>Regroup the command colors: the *_modify commands get their own color group, the file input commands join the output group</li>
+          <li>Use the same color for IDs whether they are being defined (fix, compute, dump) or referenced (fix_modify, unfix, and so on)</li>
           <li>Recognize and complete sub-styles of hybrid styles in style and coeff commands</li>
           <li>Mark dump image keywords, show color names in their actual color, and complete both</li>
           <li>Detect the light/dark theme from the platform color scheme when available</li>
