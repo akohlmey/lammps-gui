@@ -329,10 +329,10 @@ in this dialog correspond to options of the LAMMPS `dump image and
 dump_modify commands <https://docs.lammps.org/dump_image.html>`_.
 
 .. |global|  image:: JPG/lammps-gui-image-settings.png
-                     :width: 62%
+                     :width: 57%
 
 .. |boxaxes| image:: JPG/lammps-gui-image-box-axes.png
-                     :width: 35%
+                     :width: 41%
 
 |boxaxes|  |global|
 
@@ -933,6 +933,9 @@ supported: `Ctrl-W`: close window, `Ctrl-Q`: quit application, `Ctrl-/`:
 stop running simulation.  Other keyboard shortcuts are connected to some
 of the controls and listed in their documentation below.
 
+The visualization is created by the
+`in.breakable GRAPHICS package example <https://github.com/lammps/lammps/blob/develop/examples/GRAPHICS/in.breakable>`_
+
 .. image:: JPG/lammps-gui-slideshow.png
    :align: center
 
@@ -942,6 +945,10 @@ Importing movie files
 ---------------------
 
 .. index:: movie import
+
+.. image:: JPG/lammps-gui-movie-import.png
+   :align: right
+   :scale: 66%
 
 Movie files (``.mp4``, ``.mkv``, ``.webm``, ``.avi``, ``.mov``, and so on,
 as well as animated GIF files) can be opened with *File* -> *View Image or
@@ -971,11 +978,6 @@ for confirmation before any frames are extracted:
   gigabyte, when it would use up most of the free space on the volume
   holding the temporary folder, or when more than 1000 images would be
   extracted.
-
-.. versionadded:: 3.0.6
-
-   The sample frame thumbnail and the refresh of the size estimate when
-   the selected range moves were added.
 
 Because the frames are stored as individual images and not as a
 compressed video stream, they usually take up substantially more space

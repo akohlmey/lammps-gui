@@ -154,6 +154,10 @@ timestep.  The *Stop LAMMPS* entry will do this by calling the
 library function, which is equivalent to a `timer timeout 0
 <https://docs.lammps.org/timer.html>`_ command.
 
+.. versionadded:: 3.0.6
+
+   The *Extend Run...* entry was added.
+
 The *Extend Run...* entry (keyboard shortcut `Ctrl-E`) opens a dialog
 asking for a number of steps and then continues the previous run for
 that many more steps without clearing the system.  This requires a
@@ -168,15 +172,19 @@ use cases are continuing a run that was stopped (e.g. after writing a
 restart file first), or extending a run that did not produce enough
 frames for a smooth animation or enough data for a plot.
 
-.. versionadded:: 3.0.6
-
-   The *Extend Run...* entry was added.
-
 The *Relaunch LAMMPS Instance* will destroy the current LAMMPS thread
 and free its data and then create a new thread with a new LAMMPS
 instance.  This is usually not needed, since LAMMPS-GUI tries to detect
 when this is needed and does it automatically.  This is available
 in case it missed something and LAMMPS behaves in unexpected ways.
+
+.. index:: Check Input
+
+.. image:: JPG/lammps-gui-lint-error.png
+   :align: center
+   :width: 50%
+
+.. versionadded:: 3.0.6
 
 The *Check Input via Heuristics* entry (keyboard shortcut `Ctrl-K`)
 runs a fast static check of the editor buffer and reports its findings
@@ -197,6 +205,8 @@ script features that make static analysis unreliable (include files,
 jump loops, if/then commands, python scripting, shell commands, restart
 files, runtime plugins) disable the affected groups of checks.
 
+.. versionadded:: 3.0.6
+
 The *Check Input via Dry Run* entry (keyboard shortcut `Ctrl-Shift-K`)
 validates the buffer by actually executing it: the equivalent of the
 `-skiprun <https://docs.lammps.org/Run_options.html>`_ command-line
@@ -213,10 +223,6 @@ dialog and the offending line is highlighted in the editor.  On
 success, a dialog confirms that the input passed and points to the
 *Output* window for any LAMMPS warnings.
 
-.. versionadded:: 3.0.6
-
-   The *Check Input via Heuristics* and *Check Input via Dry Run*
-   entries were added.
 
 .. _set_variables:
 
