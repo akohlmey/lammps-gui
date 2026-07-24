@@ -76,7 +76,7 @@ LineTokens tokenizeLine(const QString &text, int prevState)
     const bool contIn    = inFlags & SyntaxState::CONTINUE;
     const bool midIn     = inFlags & SyntaxState::MIDWORD;
     const bool commentIn = inFlags & SyntaxState::COMMENT;
-    bool inTriple        = inFlags & SyntaxState::TRIPLE;
+    const bool inTriple  = inFlags & SyntaxState::TRIPLE;
     bool inSingle        = inFlags & SyntaxState::SINGLEQ;
     bool inDouble        = inFlags & SyntaxState::DOUBLEQ;
 
@@ -130,7 +130,6 @@ LineTokens tokenizeLine(const QString &text, int prevState)
             return result;
         }
         addToken(0, close + 3, TokType::TripleString, argsUsed);
-        inTriple   = false;
         i          = close + 3;
         pendingArg = argsUsed;
     } else if (inSingle || inDouble) {
@@ -206,9 +205,8 @@ LineTokens tokenizeLine(const QString &text, int prevState)
                     // multi-line triple-quoted block opens here; the rest of the
                     // physical line (including any trailing '&') is string content
                     addToken(i, len - i, TokType::TripleString, wordArg);
-                    inTriple = true;
-                    exit     = Exit::TripleOpen;
-                    i        = len;
+                    exit = Exit::TripleOpen;
+                    i    = len;
                     break;
                 }
                 addToken(i, close + 3 - i, TokType::TripleString, wordArg);
