@@ -60,11 +60,6 @@ The ``-c``, ``-i``, and ``-t`` flags open a standalone viewer without
 the main editor window; they are mutually exclusive with each other and
 with the ``file`` positional argument.
 
-.. versionadded:: 2.1
-
-   The ``-c``/``--chart``, ``-i``/``--image``, and ``-t``/``--text``
-   options were added.
-
 Launching LAMMPS-GUI
 ^^^^^^^^^^^^^^^^^^^^
 

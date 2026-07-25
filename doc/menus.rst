@@ -67,21 +67,6 @@ In addition, up to 5 recent file names will be listed after the *Open Input File
 entry that allows re-opening recently opened files.  This list is stored
 when quitting and recovered when starting again.
 
-.. versionadded:: 2.1
-
-   The *View Image File(s)...* and *Plot Data File...* entries were added.  The
-   *View Text File* entry now warns when given an image or binary file instead of
-   trying to display it as text.
-
-.. versionchanged:: 3.0.2
-
-   The *View Image File(s)...* entry was renamed to *View Image or Movie
-   File(s)...* and now also accepts movie files.
-
-.. versionadded:: 3.0.6
-
-   The *Write Restart File...* entry was added.
-
 **Plotting external data files.** The *Plot Data File...* entry
 (`Ctrl-Shift-P`) opens a dialog to select a file with column-oriented
 numeric data and plots it in a standalone :ref:`Charts window <charts>`
@@ -154,10 +139,6 @@ timestep.  The *Stop LAMMPS* entry will do this by calling the
 library function, which is equivalent to a `timer timeout 0
 <https://docs.lammps.org/timer.html>`_ command.
 
-.. versionadded:: 3.0.6
-
-   The *Extend Run...* entry was added.
-
 The *Extend Run...* entry (keyboard shortcut `Ctrl-E`) opens a dialog
 asking for a number of steps and then continues the previous run for
 that many more steps without clearing the system.  This requires a
@@ -184,8 +165,6 @@ in case it missed something and LAMMPS behaves in unexpected ways.
    :align: center
    :width: 50%
 
-.. versionadded:: 3.0.6
-
 The *Check Input via Heuristics* entry (keyboard shortcut `Ctrl-K`)
 runs a fast static check of the editor buffer and reports its findings
 in a dialog: unknown commands and style names (validated against the
@@ -204,8 +183,6 @@ word containing a ``$`` substitution is exempt from checking, and
 script features that make static analysis unreliable (include files,
 jump loops, if/then commands, python scripting, shell commands, restart
 files, runtime plugins) disable the affected groups of checks.
-
-.. versionadded:: 3.0.6
 
 The *Check Input via Dry Run* entry (keyboard shortcut `Ctrl-Shift-K`)
 validates the buffer by actually executing it: the equivalent of the
@@ -242,19 +219,17 @@ rows for additional variables can be added through the *Add Row*
 button and existing rows can be deleted by clicking on the *X* icons
 on the right.
 
-.. versionchanged:: 3.0.6
-
-   The dialog follows edits to the input script: when a ``variable ...
-   index`` command in the editor is changed, the dialog picks up the
-   new value the next time it is opened or a run is started, even if
-   the value had been changed in the dialog before.  A value edited in
-   the dialog so that it differs from the input script is shown in
-   bold with a tooltip listing the script value, and the overridden
-   value in the editor is surrounded by a thin frame as a reminder
-   that the input script line is not what LAMMPS will use.  Values
-   from the dialog are passed to LAMMPS before the input script runs,
-   so they take precedence over ``variable ... index`` commands in the
-   input, exactly like the ``-var`` command line flag to LAMMPS.
+The dialog follows edits to the input script: when a ``variable ...
+index`` command in the editor is changed, the dialog picks up the
+new value the next time it is opened or a run is started, even if
+the value had been changed in the dialog before.  A value edited in
+the dialog so that it differs from the input script is shown in
+bold with a tooltip listing the script value, and the overridden
+value in the editor is surrounded by a thin frame as a reminder
+that the input script line is not what LAMMPS will use.  Values
+from the dialog are passed to LAMMPS before the input script runs,
+so they take precedence over ``variable ... index`` commands in the
+input, exactly like the ``-var`` command line flag to LAMMPS.
 
 The *Create Image* entry will send a `dump image
 <https://docs.lammps.org/dump_image.html>`_ command to the LAMMPS

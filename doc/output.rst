@@ -164,12 +164,6 @@ to any of the four plot corners (*Top left*, *Top right*, *Bottom
 right*, or *Bottom left*).  The selected placement is remembered across
 sessions.
 
-.. versionadded:: 2.1
-
-   The *Chart Style* dialog and the independent styling of the raw and
-   processed series were added, including the per-series point size and the
-   optional in-plot legend.
-
 .. index:: reference lines
 
 Reference lines
@@ -190,10 +184,6 @@ size, the gap between the label and the line, and whether the labels are
 drawn in an opaque box apply to the whole window.  Reference lines are
 useful, for example, to mark a target temperature, a transition point,
 or a fitted value.
-
-.. versionadded:: 2.1
-
-   The *Reference Lines* dialog was added.
 
 .. index:: post-processing
 .. index:: curve fitting
@@ -270,12 +260,6 @@ and custom fit).
    An example post-processing result: a Birch-Murnaghan equation-of-state
    fit overlaid on energy-versus-volume data.
 
-.. versionadded:: 2.1
-
-   The *Postprocess* dialog with the autocorrelation, polynomial,
-   Birch-Murnaghan EOS, custom-function, and custom-fit analyses was
-   added.
-
 .. index:: plotting external data
 .. index:: plot data file
 
@@ -325,16 +309,6 @@ size.
    the "Raw" data in the *Charts* window during such simulations.  It is
    always possible to switch between the different display styles for
    charts during the simulation and after it has finished.
-
-   .. versionchanged:: 1.7
-
-      As of LAMMPS-GUI version 1.7 the chart data processing is
-      significantly optimized compared to older versions of LAMMPS-GUI.
-      The general problem of accumulating excessive amounts of data
-      and the overhead of too frequently polling LAMMPS for new data
-      cannot be optimized away, though.  If necessary, the command
-      line LAMMPS executable needs to be used and the output accumulated
-      on a very fast disk (e.g. a high-performance SSD).
 
 Variable Info
 ^^^^^^^^^^^^^

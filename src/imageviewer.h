@@ -85,7 +85,7 @@ private slots:
     void resetView();         ///< Reset view to defaults
     void resetWindowSize();   ///< Resize window to fit the configured image size
     void toggleSsao();        ///< Toggle screen-space ambient occlusion
-    void toggleAnti();        ///< Toggle antialiasing
+    void toggleAnti();        ///< Toggle anti-aliasing
     void toggleDepthcue();    ///< Toggle depth cueing
     void toggleShiny();       ///< Toggle shiny/specular rendering
     void toggleVdw();         ///< Toggle Van der Waals radii
@@ -280,7 +280,7 @@ private:
     bool showbox;                                ///< Show simulation box flag
     bool showsubbox;                             ///< Show subdomain boxes flag
     bool showaxes;                               ///< Show coordinate axes flag
-    bool antialias;                              ///< Antialiasing enabled flag
+    bool antialias;                              ///< Anti-aliasing enabled flag
     bool usessao;                                ///< SSAO enabled flag
     bool usedepthcue;                            ///< Depth cueing enabled flag
     bool useoutline;                             ///< Outline drawing enabled flag

@@ -23,7 +23,7 @@
 /** Dense vector of doubles used by the least-squares routines */
 using float_vect = std::vector<double>;
 
-/** Dense vector of ints used for LU pivot bookkeeping */
+/** Dense vector of integers used for LU pivot bookkeeping */
 using int_vect = std::vector<int>;
 
 /**

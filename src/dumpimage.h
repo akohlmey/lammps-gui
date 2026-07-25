@@ -92,7 +92,7 @@ struct DumpImageParams {
     int ysize;             ///< rendered image height in pixels
     double zoom;           ///< zoom level
     double shinyfactor;    ///< shininess / specular factor
-    bool antialias;        ///< enable full-scene antialiasing
+    bool antialias;        ///< enable full-scene anti-aliasing
     int dimension;         ///< system dimension (2 or 3)
     int hrot;              ///< horizontal rotation angle
     int vrot;              ///< vertical rotation angle

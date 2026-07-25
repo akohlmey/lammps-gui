@@ -109,11 +109,6 @@ or browse dialog on the first invocation.  When the flatpak version
 is updated, it may be required to reset the shared library location
 with ``-p ""`` and re-download the latest version.
 
-.. versionchanged:: 1.8.4
-
-   The minimum LAMMPS version required by LAMMPS-GUI is now 22 July 2025
-   update2
-
 .. versionchanged:: 3.0.1
 
    The minimum LAMMPS version required by LAMMPS-GUI is now 4 July 2026
@@ -378,10 +373,6 @@ example the ``qt6-svg-dev`` development package, which pulls in the
 requires it, and if the module -- or, at run time, its icon-engine plugin
 -- is missing, the icons render blank.  The pre-compiled packages and
 installers already bundle it.
-
-.. versionchanged:: 2.0.0
-
-   LAMMPS-GUI now *requires* Qt 6.2 or later. Support for Qt 5.x has been removed.
 
 LAMMPS-GUI plugin version
 -------------------------

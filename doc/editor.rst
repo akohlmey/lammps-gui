@@ -100,16 +100,6 @@ library (for example in plugin mode before a library has been
 selected), the known-name information is unavailable and no words are
 marked.
 
-.. versionchanged:: 3.0.6
-
-   The highlighting is aware of ``&`` line continuations, colors
-   arguments by their role, recognizes sub-styles of hybrid styles,
-   renders dump image keywords and color names, and marks unknown
-   command and style names.  Completion and context help are aware of
-   line continuations as well.  The ``*_modify`` commands form a new
-   command color group and the file input commands (``include``,
-   ``read_data``, etc.) now share the color of the output commands.
-
 Line Reformatting
 ^^^^^^^^^^^^^^^^^
 
