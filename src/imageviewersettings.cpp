@@ -217,6 +217,44 @@ void ImageViewer::globalSettings()
 
     n = 0;
 
+    auto *cuebutton = new QCheckBox("Depth Cueing ", this);
+    cuebutton->setChecked(usedepthcue);
+    cuebutton->setToolTip("Fade distant objects toward the fog color");
+    layout->addWidget(cuebutton, idx, n++, 1, 1);
+    layout->addWidget(new QLabel("Intensity: "), idx, n++, 1, 1, Qt::AlignVCenter | Qt::AlignRight);
+    auto *cueval = new QDoubleSpinBox;
+    cueval->setRange(0.0, 1.0);
+    cueval->setSingleStep(0.05);
+    cueval->setValue(depthcuefactor);
+    cueval->setMaximumWidth(fwidth);
+    cueval->setEnabled(usedepthcue);
+    cueval->setToolTip("Strength of the fading; at 1.0 the most distant objects\n"
+                       "blend completely into the fog color");
+    layout->addWidget(cueval, idx, n++, 1, 1);
+    layout->addWidget(new QLabel("Color: "), idx, n++, 1, 1, Qt::AlignVCenter | Qt::AlignRight);
+    auto *cuecolor = new QLineEdit(depthcuecolor);
+    cuecolor->setCompleter(colorcompleter);
+    cuecolor->setMaximumWidth(fwidth);
+    cuecolor->setEnabled(usedepthcue);
+    cuecolor->setToolTip("Fog color name, or \"auto\" to fade toward the background");
+    layout->addWidget(cuecolor, idx, n++, 1, 1);
+    layout->addWidget(new QLabel("Start: "), idx, n++, 1, 1, Qt::AlignVCenter | Qt::AlignRight);
+    auto *cuestartvalidator = new QRegularExpressionValidator(
+        QRegularExpression(QStringLiteral("^(auto|-?(\\d+\\.?\\d*|\\.\\d+))$")), this);
+    auto *cuestart = new QLineEdit(depthcuestart);
+    cuestart->setValidator(cuestartvalidator);
+    cuestart->setMaximumWidth(fwidth);
+    cuestart->setEnabled(usedepthcue);
+    cuestart->setToolTip("Box fraction along the view direction where the fading starts\n"
+                         "(0.0 = near side, 1.0 = far side), or \"auto\" to start at the\n"
+                         "nearest rendered object");
+    layout->addWidget(cuestart, idx++, n++, 1, 1);
+    connect(cuebutton, &QCheckBox::toggled, cueval, &QDoubleSpinBox::setEnabled);
+    connect(cuebutton, &QCheckBox::toggled, cuecolor, &QLineEdit::setEnabled);
+    connect(cuebutton, &QCheckBox::toggled, cuestart, &QLineEdit::setEnabled);
+
+    n = 0;
+
     layout->addWidget(new QLabel("Quality:"), idx, n++, 1, 1);
     n++;
     auto *fsaa = new QCheckBox("FSAA  ", this);
@@ -231,13 +269,55 @@ void ImageViewer::globalSettings()
     aoval->setValue(ssaoval);
     aoval->setMaximumWidth(fwidth);
     layout->addWidget(aoval, idx, n++, 1, 1);
+    layout->addWidget(new QLabel("Samples: "), idx, n++, 1, 1, Qt::AlignVCenter | Qt::AlignRight);
+    auto *aosamples = new QSpinBox;
+    aosamples->setRange(0, 64);
+    aosamples->setSingleStep(4);
+    aosamples->setSpecialValueText("auto");
+    aosamples->setValue(ssaosamples);
+    aosamples->setMaximumWidth(fwidth * 3 / 2);
+    aosamples->setToolTip("Number of SSAO sampling directions (4 - 64). With \"auto\" exported\n"
+                          "dump image commands derive the count from the SSAO strength and\n"
+                          "interactive renders use a reduced fixed count; an explicit number\n"
+                          "applies to both.");
+    layout->addWidget(aosamples, idx++, n++, 1, 1);
+
+    n = 0;
+
+    auto *outlinebutton = new QCheckBox("Outline ", this);
+    outlinebutton->setChecked(useoutline);
+    outlinebutton->setToolTip("Draw outlines along the visible edges of rendered objects");
+    layout->addWidget(outlinebutton, idx, n++, 1, 1);
+    auto *olwidth = new QSpinBox;
+    olwidth->setRange(1, 16);
+    olwidth->setValue(outlinewidth);
+    olwidth->setMaximumWidth(fwidth);
+    olwidth->setEnabled(useoutline);
+    olwidth->setToolTip("Width of the outlines in pixels");
+    layout->addWidget(olwidth, idx, n++, 1, 1);
+    auto *olcolor = new QLineEdit(outlinecolor);
+    olcolor->setCompleter(colorcompleter);
+    olcolor->setValidator(colorvalidator);
+    olcolor->setMaximumWidth(fwidth);
+    olcolor->setEnabled(useoutline);
+    olcolor->setToolTip("Color of the outlines");
+    layout->addWidget(olcolor, idx, n++, 1, 1);
+    connect(outlinebutton, &QCheckBox::toggled, olwidth, &QSpinBox::setEnabled);
+    connect(outlinebutton, &QCheckBox::toggled, olcolor, &QLineEdit::setEnabled);
     layout->addWidget(new QLabel("Shiny: "), idx, n++, 1, 1, Qt::AlignVCenter | Qt::AlignRight);
     auto *shiny = new QDoubleSpinBox;
     shiny->setRange(0.0, 1.0);
     shiny->setSingleStep(0.1);
     shiny->setValue(shinyfactor);
     shiny->setMaximumWidth(fwidth);
-    layout->addWidget(shiny, idx++, n++, 1, 1);
+    layout->addWidget(shiny, idx, n++, 1, 1);
+    layout->addWidget(new QLabel("Specular: "), idx, n++, 1, 1, Qt::AlignVCenter | Qt::AlignRight);
+    auto *specbox = new QComboBox;
+    specbox->addItems({"auto", "none", "wide", "narrow", "tight"});
+    selectComboItem(specbox, specular);
+    specbox->setToolTip("Width of the specular highlights; \"auto\" derives it from the\n"
+                        "shiny factor and \"none\" turns the highlights off");
+    layout->addWidget(specbox, idx++, n++, 1, 1);
     layout->addWidget(new QHline, idx++, 0, 1, MAXCOLS);
 
     n = 0;
@@ -402,10 +482,30 @@ void ImageViewer::globalSettings()
     usessao = ssao->isChecked();
     button  = findChild<QPushButton *>("ssao");
     if (button) button->setChecked(usessao);
-    ssaoval     = aoval->value();
+    ssaoval = aoval->value();
+    // values below the LAMMPS minimum of 4 (typed directly) mean "auto"
+    ssaosamples = (aosamples->value() < 4) ? 0 : aosamples->value();
     shinyfactor = shiny->value();
     button      = findChild<QPushButton *>("shiny");
     if (button) button->setChecked(shinyfactor > SHINY_CUT);
+    specular = specbox->currentText();
+
+    usedepthcue    = cuebutton->isChecked();
+    depthcuefactor = cueval->value();
+    // the fog color also accepts "auto", which the color validator does not
+    // know, so it is checked here; invalid input keeps the previous color
+    QString fogcolor = cuecolor->text().trimmed();
+    int fogpos       = 0;
+    if ((fogcolor == QStringLiteral("auto")) ||
+        (colorvalidator->validate(fogcolor, fogpos) == QValidator::Acceptable))
+        depthcuecolor = fogcolor;
+    if (cuestart->hasAcceptableInput()) depthcuestart = cuestart->text();
+    button = findChild<QPushButton *>("depthcue");
+    if (button) button->setChecked(usedepthcue);
+
+    useoutline   = outlinebutton->isChecked();
+    outlinewidth = olwidth->value();
+    if (olcolor->hasAcceptableInput()) outlinecolor = olcolor->text();
 
     dynamiccenter = (ccombo->currentIndex() == 1);
     xcenter       = xval->value();

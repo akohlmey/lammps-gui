@@ -145,6 +145,10 @@ constexpr double INSPECT_GB_PER_BYTE = 134217728.0;
 constexpr int CREATE_ATOMS_SEED = 312944;
 /** seed for the dump image ssao keyword */
 constexpr int SSAO_SEED = 453983;
+/** fixed SSAO sample count for interactive Image Viewer renders when the
+ *  SSAO samples setting is "auto" (speed over quality); an explicitly
+ *  configured count is used as-is */
+constexpr int SSAO_VIEW_SAMPLES = 8;
 
 // ---- Documentation ---------------------------------------------------------
 /** base URL of the LAMMPS online documentation */

@@ -255,6 +255,12 @@ DumpImageCommand buildDumpImageCommand(const DumpImageParams &p)
         d += QString(" view %1 %2").arg(hhrot).arg(p.vrot);
     }
     if (p.usessao) d += QString(" ssao yes %1 %2").arg(Cfg::SSAO_SEED).arg(p.ssaoval);
+    // depth cueing and outlines default to "no" in LAMMPS, so emit them only when on
+    if (p.usedepthcue)
+        d += QString(" depthcue yes %1 %2 %3")
+                 .arg(p.depthcuefactor)
+                 .arg(p.depthcuecolor, p.depthcuestart);
+    if (p.useoutline) d += QString(" outline yes %1 %2").arg(p.outlinewidth).arg(p.outlinecolor);
     if (p.showbox)
         d += QString(" box yes %1").arg(p.boxdiam);
     else
@@ -349,6 +355,12 @@ DumpImageCommand buildDumpImageCommand(const DumpImageParams &p)
                  .arg(p.keylight)
                  .arg(p.filllight)
                  .arg(p.backlight);
+
+    // the specular highlight width and the SSAO sample count default to being
+    // derived from the shiny factor and the SSAO strength; emit only overrides
+    if (p.specular != QStringLiteral("auto")) m += " specular " + p.specular;
+    if (p.usessao && (p.ssaosamples > 0))
+        m += QString(" ssaosamples %1").arg(qBound(4, p.ssaosamples, 64));
 
     if (p.useelements) m += blank + p.elements + blank + p.adiams + blank;
     if (p.usesigma) m += blank + p.adiams + blank;

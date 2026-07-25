@@ -78,6 +78,16 @@ DumpImageParams makeParams()
     p.vrot        = 20;
     p.usessao     = false;
     p.ssaoval     = 0.6;
+    p.ssaosamples = 0;
+
+    p.usedepthcue    = false;
+    p.depthcuefactor = 0.5;
+    p.depthcuecolor  = "auto";
+    p.depthcuestart  = "auto";
+    p.useoutline     = false;
+    p.outlinewidth   = 2;
+    p.outlinecolor   = "black";
+    p.specular       = "auto";
 
     p.showbox    = true;
     p.boxdiam    = 0.05;
@@ -363,6 +373,58 @@ TEST(DumpImageCommand, RegionPoints)
 
     const QString cmd = buildCmd(p);
     EXPECT_TRUE(cmd.contains(" region myreg red points 100 0.2")) << cmd.toStdString();
+}
+
+TEST(DumpImageCommand, DepthCueOutlineSpecular)
+{
+    // all the new rendering options default to off/auto and emit nothing
+    auto p      = makeParams();
+    QString cmd = buildCmd(p);
+    EXPECT_FALSE(cmd.contains(" depthcue ")) << cmd.toStdString();
+    EXPECT_FALSE(cmd.contains(" outline "));
+    EXPECT_FALSE(cmd.contains(" specular "));
+    EXPECT_FALSE(cmd.contains(" ssaosamples "));
+
+    p.usedepthcue    = true;
+    p.depthcuefactor = 0.7;
+    cmd              = buildCmd(p);
+    EXPECT_TRUE(cmd.contains(" depthcue yes 0.7 auto auto")) << cmd.toStdString();
+
+    p.depthcuecolor = "white";
+    p.depthcuestart = "0.25";
+    cmd             = buildCmd(p);
+    EXPECT_TRUE(cmd.contains(" depthcue yes 0.7 white 0.25")) << cmd.toStdString();
+
+    p.useoutline   = true;
+    p.outlinewidth = 3;
+    p.outlinecolor = "gray";
+    cmd            = buildCmd(p);
+    EXPECT_TRUE(cmd.contains(" outline yes 3 gray")) << cmd.toStdString();
+
+    p.specular = "tight";
+    cmd        = buildCmd(p);
+    EXPECT_TRUE(cmd.contains(" specular tight")) << cmd.toStdString();
+}
+
+TEST(DumpImageCommand, SsaoSamplesOnlyWithSsao)
+{
+    auto p        = makeParams();
+    p.ssaosamples = 16;
+
+    // without ssao enabled the sample count has no effect and is pruned
+    QString cmd = buildCmd(p);
+    EXPECT_FALSE(cmd.contains(" ssaosamples ")) << cmd.toStdString();
+
+    p.usessao = true;
+    cmd       = buildCmd(p);
+    EXPECT_TRUE(cmd.contains(" ssao yes ")) << cmd.toStdString();
+    EXPECT_TRUE(cmd.contains(" ssaosamples 16"));
+
+    // values outside the LAMMPS 4-64 range are clamped
+    p.ssaosamples = 100;
+    EXPECT_TRUE(buildCmd(p).contains(" ssaosamples 64"));
+    p.ssaosamples = 2;
+    EXPECT_TRUE(buildCmd(p).contains(" ssaosamples 4"));
 }
 
 TEST(DumpImageCommand, ColorMapOmittedForTypeColoring)

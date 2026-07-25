@@ -86,6 +86,7 @@ private slots:
     void resetWindowSize();   ///< Resize window to fit the configured image size
     void toggleSsao();        ///< Toggle screen-space ambient occlusion
     void toggleAnti();        ///< Toggle antialiasing
+    void toggleDepthcue();    ///< Toggle depth cueing
     void toggleShiny();       ///< Toggle shiny/specular rendering
     void toggleVdw();         ///< Toggle Van der Waals radii
     void toggleBond();        ///< Toggle bond display
@@ -238,6 +239,13 @@ private:
     double axesdiam;                             ///< Axes diameter
     double axestrans;                            ///< Axes transparency
     double ssaoval;                              ///< SSAO strength
+    int ssaosamples;                             ///< SSAO sampling directions (0 = auto)
+    double depthcuefactor;                       ///< Depth cueing strength
+    QString depthcuecolor;                       ///< Depth cueing fog color or "auto"
+    QString depthcuestart;                       ///< Depth cueing start fraction or "auto"
+    int outlinewidth;                            ///< Outline width in pixels
+    QString outlinecolor;                        ///< Outline color
+    QString specular;                            ///< Specular preset or "auto"
     double atomtrans;                            ///< Atom transparency
     double bondtrans;                            ///< Bond transparency
     double ambientlight;                         ///< ambient light setting
@@ -274,6 +282,8 @@ private:
     bool showaxes;                               ///< Show coordinate axes flag
     bool antialias;                              ///< Antialiasing enabled flag
     bool usessao;                                ///< SSAO enabled flag
+    bool usedepthcue;                            ///< Depth cueing enabled flag
+    bool useoutline;                             ///< Outline drawing enabled flag
     bool showatoms;                              ///< Show atoms
     bool showbonds;                              ///< Show bonds if atom style supports it
     bool autobond;                               ///< Dynamic bonds from cutoff flag

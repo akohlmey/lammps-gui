@@ -421,7 +421,8 @@ LammpsSyntax::LammpsSyntax()
                QStringLiteral("view"),    QStringLiteral("center"),    QStringLiteral("up"),
                QStringLiteral("zoom"),    QStringLiteral("box"),       QStringLiteral("axes"),
                QStringLiteral("region"),  QStringLiteral("subbox"),    QStringLiteral("shiny"),
-               QStringLiteral("fsaa"),    QStringLiteral("ssao")});
+               QStringLiteral("fsaa"),    QStringLiteral("ssao"),      QStringLiteral("depthcue"),
+               QStringLiteral("outline")});
     specialWords = {QStringLiteral("INF"),  QStringLiteral("EDGE"), QStringLiteral("NULL"),
                     QStringLiteral("SELF"), QStringLiteral("if"),   QStringLiteral("then"),
                     QStringLiteral("else"), QStringLiteral("elif")};
@@ -724,16 +725,21 @@ CompletionTarget LammpsSyntax::completionTarget(int prevBlockState, const QStrin
         if ((cmd == QStringLiteral("dump")) && (wordArg >= 8) &&
             (!argText.contains(3) || (argText.value(3) == QStringLiteral("image")) ||
              (argText.value(3) == QStringLiteral("movie")))) {
-            // keyword = color ... (bond, line, ...) or keyword = ID color ...
+            // keyword = color ... (bond, line, ...), keyword = ID color ...
+            // (compute, fix, region), or keyword = flag value color ...
+            // (depthcue, outline)
             static const QSet<QString> colorAfter = {
                 QStringLiteral("bond"), QStringLiteral("line"), QStringLiteral("tri"),
                 QStringLiteral("ellipsoid"), QStringLiteral("body")};
             static const QSet<QString> colorSecond = {
                 QStringLiteral("compute"), QStringLiteral("fix"), QStringLiteral("region")};
-            target.kind = CompleterKind::Style;
-            target.cat  = (colorAfter.contains(prev) || colorSecond.contains(prevprev))
-                              ? StyleCat::Color
-                              : StyleCat::ImageKw;
+            static const QSet<QString> colorFourth = {QStringLiteral("depthcue"),
+                                                      QStringLiteral("outline")};
+            target.kind                            = CompleterKind::Style;
+            target.cat = (colorAfter.contains(prev) || colorSecond.contains(prevprev) ||
+                          colorFourth.contains(argText.value(wordArg - 3)))
+                             ? StyleCat::Color
+                             : StyleCat::ImageKw;
         } else if ((cmd == QStringLiteral("dump_modify")) && (wordArg >= 2)) {
             static const QSet<QString> colorAfter  = {QStringLiteral("backcolor"),
                                                       QStringLiteral("backcolor2"),

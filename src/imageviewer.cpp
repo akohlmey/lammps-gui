@@ -440,6 +440,10 @@ ImageViewer::ImageViewer(const QString &fileName, LammpsWrapper *_lammps, Lammps
     doanti->setCheckable(true);
     doanti->setToolTip("Toggle anti-aliasing");
     doanti->setObjectName("antialias");
+    auto *dodepth = new QPushButton(QIcon(":/icons/depth-cue.svg"), "");
+    dodepth->setCheckable(true);
+    dodepth->setToolTip("Toggle depth cueing");
+    dodepth->setObjectName("depthcue");
     auto *doshiny = new QPushButton(QIcon(":/icons/image-shiny.svg"), "");
     doshiny->setCheckable(true);
     doshiny->setToolTip("Toggle shininess");
@@ -498,8 +502,8 @@ ImageViewer::ImageViewer(const QString &fileName, LammpsWrapper *_lammps, Lammps
 
     // square toolbar buttons with a snug, uniform icon (shared policy)
     styleToolButtons(buttonhint,
-                     {dossao, doanti, doshiny, dovdw, dobond, dobox, doaxes, zoomin, zoomout,
-                      rotleft, rotright, rotup, rotdown, recenter, reset, fitwin});
+                     {dossao, doanti, dodepth, doshiny, dovdw, dobond, dobox, doaxes, zoomin,
+                      zoomout, rotleft, rotright, rotup, rotdown, recenter, reset, fitwin});
 
     // match the first-row controls (menu bar and size fields) to the toolbar
     // button height so both rows line up and the layout looks balanced
@@ -575,6 +579,7 @@ ImageViewer::ImageViewer(const QString &fileName, LammpsWrapper *_lammps, Lammps
     buttonLayout->addWidget(dummy2);
     buttonLayout->addWidget(dossao);
     buttonLayout->addWidget(doanti);
+    buttonLayout->addWidget(dodepth);
     buttonLayout->addWidget(doshiny);
     buttonLayout->addWidget(dovdw);
     buttonLayout->addWidget(dobond);
@@ -615,6 +620,7 @@ ImageViewer::ImageViewer(const QString &fileName, LammpsWrapper *_lammps, Lammps
 
     connect(dossao, &QPushButton::released, this, &ImageViewer::toggleSsao);
     connect(doanti, &QPushButton::released, this, &ImageViewer::toggleAnti);
+    connect(dodepth, &QPushButton::released, this, &ImageViewer::toggleDepthcue);
     connect(doshiny, &QPushButton::released, this, &ImageViewer::toggleShiny);
     connect(dovdw, &QPushButton::released, this, &ImageViewer::toggleVdw);
     connect(dobond, &QPushButton::released, this, &ImageViewer::toggleBond);
@@ -663,6 +669,7 @@ ImageViewer::ImageViewer(const QString &fileName, LammpsWrapper *_lammps, Lammps
     doaxes->setChecked(showaxes);
     dossao->setChecked(usessao);
     doanti->setChecked(antialias);
+    dodepth->setChecked(usedepthcue);
 
     scrollArea->setVisible(true);
     updateActions();
@@ -731,6 +738,15 @@ void ImageViewer::readImageSettings()
     backcolor2     = settings.value(Keys::BACKCOLOR2, "white").toString();
     usegradient    = settings.value(Keys::USEGRADIENT, true).toBool();
     ssaoval        = 0.6;
+    ssaosamples    = 0;
+    usedepthcue    = false;
+    depthcuefactor = 0.5;
+    depthcuecolor  = "auto";
+    depthcuestart  = "auto";
+    useoutline     = false;
+    outlinewidth   = 2;
+    outlinecolor   = "black";
+    specular       = "auto";
     atomcustom     = false;
     atomtrans      = 1.0;
     bondtrans      = 1.0;
@@ -799,6 +815,8 @@ void ImageViewer::resetView()
     if (button) button->setChecked(usessao);
     button = findChild<QPushButton *>("antialias");
     if (button) button->setChecked(antialias);
+    button = findChild<QPushButton *>("depthcue");
+    if (button) button->setChecked(usedepthcue);
     button = findChild<QPushButton *>("shiny");
     if (button) button->setChecked(shinyfactor > SHINY_CUT);
     button = findChild<QPushButton *>("vdw");
@@ -867,6 +885,15 @@ void ImageViewer::toggleAnti()
     if (!button) return;
     antialias = !antialias;
     button->setChecked(antialias);
+    createImage();
+}
+
+void ImageViewer::toggleDepthcue()
+{
+    auto *button = qobject_cast<QPushButton *>(sender());
+    if (!button) return;
+    usedepthcue = !usedepthcue;
+    button->setChecked(usedepthcue);
     createImage();
 }
 
@@ -1460,6 +1487,17 @@ DumpImageParams ImageViewer::gatherDumpImageParams(const QString &dumpfilename)
     p.vrot        = vrot;
     p.usessao     = usessao;
     p.ssaoval     = ssaoval;
+    p.ssaosamples = ssaosamples;
+
+    // depth cueing / outlines / specular preset
+    p.usedepthcue    = usedepthcue;
+    p.depthcuefactor = depthcuefactor;
+    p.depthcuecolor  = depthcuecolor;
+    p.depthcuestart  = depthcuestart;
+    p.useoutline     = useoutline;
+    p.outlinewidth   = outlinewidth;
+    p.outlinecolor   = outlinecolor;
+    p.specular       = specular;
 
     // box / axes
     p.showbox    = showbox;
@@ -1628,11 +1666,19 @@ void ImageViewer::createImage()
 
     // gather parameters (also refreshes use* members), sync the atom-size widgets,
     // and assemble the dump and dump_modify argument strings
-    const DumpImageParams params = gatherDumpImageParams(dumpfile.fileName());
+    DumpImageParams params = gatherDumpImageParams(dumpfile.fileName());
     syncAtomSizeWidgets();
+    const DumpImageCommand exportcmds = buildDumpImageCommand(params);
+    last_dumpargs                     = exportcmds.dumpargs;
+    last_modifyargs                   = exportcmds.modifyargs;
+
+    // with the SSAO Samples setting on "auto" interactive renders use a fixed,
+    // low sample count so the viewer stays responsive, while the exported
+    // command (cmdToClipboard) keeps deriving the count from the SSAO strength;
+    // an explicitly requested count is honored also here, so high-quality
+    // images can be saved straight from the viewer
+    if (params.ssaosamples == 0) params.ssaosamples = Cfg::SSAO_VIEW_SAMPLES;
     const DumpImageCommand cmds = buildDumpImageCommand(params);
-    last_dumpargs               = cmds.dumpargs;
-    last_modifyargs             = cmds.modifyargs;
 
     // Render with an explicit dump + run 0 rather than write_dump: the run does a
     // real modify->init(), which initializes any compute the image references
