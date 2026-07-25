@@ -28,6 +28,7 @@ class QPixmap;
 class QFont;
 class QAbstractButton;
 class QDialogButtonBox;
+class QMessageBox;
 class QScrollArea;
 
 // OS specific default fonts (managed via unique_ptr for automatic cleanup)
@@ -55,6 +56,18 @@ extern int dateCompare(const QString &one, const QString &two);
  * @return List of words extracted from the string
  */
 extern QStringList splitLine(const QString &text);
+
+/**
+ * @brief Apply the bundled SVG icons to a QMessageBox
+ *
+ * Replaces the standard large icon of the message box with the given bundled
+ * SVG icon and sets the window icon and a styled standard "Ok" button
+ * consistently.  Custom buttons can be added after this call.
+ *
+ * @param mb       Message box to style
+ * @param iconPath Resource path of the SVG icon used as the large dialog icon
+ */
+extern void setDialogIcons(QMessageBox &mb, const QString &iconPath);
 
 /**
  * @brief Provide standardized information dialog

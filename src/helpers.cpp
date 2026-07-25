@@ -229,8 +229,6 @@ QStringList splitLine(const QString &text)
     return list;
 }
 
-namespace {
-
 // Use one of our own SVG icons as the large QMessageBox icon instead
 // of the standard icon. Also set button and window icon consistently.
 
@@ -243,7 +241,6 @@ void setDialogIcons(QMessageBox &mb, const QString &iconPath)
     auto *button = mb.button(QMessageBox::Ok);
     button->setIcon(QIcon(":/icons/dialog-ok.svg"));
 }
-} // namespace
 
 // customized information dialog
 

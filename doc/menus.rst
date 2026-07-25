@@ -316,6 +316,13 @@ browser.  The dialog will then start downloading the files requested
 (download progress is reported in the status line) and load the first
 input file for the selected session into LAMMPS-GUI.
 
+Should individual tutorial files fail to download, the remaining files
+are still fetched, and a dialog afterwards lists the files that are
+missing.  That dialog offers a *Report Issue* button that opens the
+issue tracker of the tutorial's file repository in a web browser, so
+the missing files can be reported; alternatively they can be reported
+by email to akohlmey@gmail.com.
+
 .. image:: JPG/lammps-gui-tutorials.png
    :align: center
    :scale: 50%

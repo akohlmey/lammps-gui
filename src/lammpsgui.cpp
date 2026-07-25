@@ -3078,14 +3078,40 @@ void tutorialDownloadFailed(QWidget *parent, const QString &detail)
              detail);
 }
 
+// list the tutorial files that could not be downloaded and suggest reporting
+// them; a button opens the issue tracker of the collection's file repository
+// in the web browser, so the long URL does not need to be shown
+void tutorialFilesMissing(QWidget *parent, const QString &issuesUrl, const QStringList &missing)
+{
+    const QString plural = (missing.size() > 1) ? "s" : "";
+    QString files;
+    for (const auto &file : missing)
+        files += QString("<br><code>%1</code>").arg(file);
+
+    QMessageBox mb(parent);
+    mb.setWindowTitle("LAMMPS-GUI Warning");
+    mb.setText(QString("<p>The following tutorial file%1 could not be downloaded:%2</p>")
+                   .arg(plural, files));
+    mb.setInformativeText(
+        QString("<p>Please report the missing file%1 by opening an issue in the tutorial's "
+                "file repository on GitHub or by sending an email to akohlmey@gmail.com.</p>")
+            .arg(plural));
+    setDialogIcons(mb, ":/icons/warning.svg");
+    auto *report = mb.addButton("&Report Issue...", QMessageBox::ActionRole);
+    report->setIcon(QIcon(":/icons/help-browser.svg"));
+    mb.exec();
+    if (mb.clickedButton() == report) QDesktopServices::openUrl(QUrl(issuesUrl));
+}
+
 } // namespace
 
 bool LammpsGui::downloadTutorialFiles(const QString &dir, const QList<DownloadItem> &downloads,
                                       URLDownloader &downloader, const QString &baseUrl,
-                                      DownloadProgress &dlg)
+                                      DownloadProgress &dlg, const QString &issuesUrl)
 {
     int i         = 0;
     const int num = downloads.size();
+    QStringList missing;
 
     for (const auto &item : downloads) {
         ++i;
@@ -3093,12 +3119,18 @@ bool LammpsGui::downloadTutorialFiles(const QString &dir, const QList<DownloadIt
 
         QString localPath = dir + QDir::separator() + item.fname;
         if (!downloader.download(baseUrl.arg(item.ntutorial).arg(item.fname), localPath)) {
-            // accept(), not close(): closing implies reject() and would trigger
-            // the caller's cancel connection, masking the failure as a cancellation
-            dlg.accept();
-            // no error dialog when the user canceled the download
-            if (!downloader.wasAborted()) tutorialDownloadFailed(this, downloader.errorString());
-            return false;
+            // only a download canceled by the user aborts the batch.  accept(),
+            // not close(): closing implies reject() and would re-trigger the
+            // caller's cancel connection
+            if (downloader.wasAborted()) {
+                dlg.accept();
+                return false;
+            }
+            // otherwise record the file and continue with the remaining ones:
+            // a single file missing from the server (e.g. from a stale manifest
+            // entry) should not discard the rest of the tutorial
+            missing.append(item.fname);
+            continue;
         }
 
         // check if download is a placeholder for a symbolic link and make a copy instead.
@@ -3122,6 +3154,11 @@ bool LammpsGui::downloadTutorialFiles(const QString &dir, const QList<DownloadIt
     progress->hide();
     dirstatus->show();
     status->repaint();
+
+    if (!missing.isEmpty()) {
+        dlg.accept();
+        tutorialFilesMissing(this, issuesUrl, missing);
+    }
     return true;
 }
 
@@ -3199,10 +3236,14 @@ void LammpsGui::setupTutorial(int collection, int tutno, const QString &dir, boo
         manifest.remove();
     }
 
-    if (!downloadTutorialFiles(dir, downloads, downloader, baseUrl, dlg)) return;
+    if (!downloadTutorialFiles(dir, downloads, downloader, baseUrl, dlg,
+                               coll.filesRepoUrl + "/issues"))
+        return;
     dlg.accept();
 
-    if (!first.isEmpty()) openFile(dir + QDir::separator() + first);
+    // the initial template may itself be among the files that failed to download
+    const QString firstFile = dir + QDir::separator() + first;
+    if (!first.isEmpty() && QFileInfo::exists(firstFile)) openFile(firstFile);
 }
 
 // Local Variables:

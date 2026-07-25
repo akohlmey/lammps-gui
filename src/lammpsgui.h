@@ -426,13 +426,17 @@ private:
     /**
      * @brief Download the listed tutorial files from @p baseUrl; false on error
      *
-     * Per-file progress is shown in @p dlg; on failure the dialog is closed
-     * and replaced by an error dialog.  On success the dialog stays open (the
-     * caller closes it when the whole setup is complete).
+     * Per-file progress is shown in @p dlg.  A file that fails to download is
+     * recorded and skipped so one missing file (e.g. from a stale manifest
+     * entry) does not discard the rest of the tutorial; after the batch a
+     * dialog lists the missing files and offers to report them at
+     * @p issuesUrl.  Only a download canceled by the user aborts the batch
+     * (the dialog is closed and false is returned).  On success the dialog
+     * stays open (the caller closes it when the whole setup is complete).
      */
     bool downloadTutorialFiles(const QString &dir, const QList<DownloadItem> &downloads,
                                URLDownloader &downloader, const QString &baseUrl,
-                               DownloadProgress &dlg);
+                               DownloadProgress &dlg, const QString &issuesUrl);
 
     /** @brief Create and show/hide the output log window for a run */
     void createLogWindow(QSettings &settings);
