@@ -249,6 +249,7 @@ void ImageViewer::globalSettings()
                          "(0.0 = near side, 1.0 = far side), or \"auto\" to start at the\n"
                          "nearest rendered object");
     layout->addWidget(cuestart, idx++, n++, 1, 1);
+    layout->addWidget(new QHline, idx++, 0, 1, MAXCOLS);
     connect(cuebutton, &QCheckBox::toggled, cueval, &QDoubleSpinBox::setEnabled);
     connect(cuebutton, &QCheckBox::toggled, cuecolor, &QLineEdit::setEnabled);
     connect(cuebutton, &QCheckBox::toggled, cuestart, &QLineEdit::setEnabled);
