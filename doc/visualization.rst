@@ -330,11 +330,11 @@ settings panel or by using the `Alt-L` keyboard shortcut.  The settings
 in this dialog correspond to options of the LAMMPS `dump image and
 dump_modify commands <https://docs.lammps.org/dump_image.html>`_.
 
-.. |global|  image:: JPG/lammps-gui-image-settings.png
-                     :width: 61%
-
 .. |boxaxes| image:: JPG/lammps-gui-image-box-axes.png
-                     :width: 38%
+                     :width: 42%
+
+.. |global|  image:: JPG/lammps-gui-image-settings.png
+                     :width: 57%
 
 |boxaxes|  |global|
 
@@ -464,9 +464,9 @@ The dialog is organized into the following sections:
      systems, where the Z-direction entry is disabled.
 
 **Lighting**
-   Adjusts the settings for the four light sources used in the
-   rendering.  Each value is a floating point number (range: 0.0 -- 1.0)
-   representing the intensity of the respective light source.
+   Adjusts the settings for the four light sources used in the rendering
+   and the tonal balance of the result.  The intensity of each light
+   source is a floating point number in the range 0.0 -- 1.0.
 
    - **Ambient**: The intensity of the uniform, non-directional base
      lighting that illuminates all parts of the scene equally.
@@ -477,6 +477,13 @@ The dialog is organized into the following sections:
    - **Back**: The intensity of the tertiary directional light source
      that illuminates the back of the objects, helping to separate
      them from the background.
+   - **Gamma**: The gamma adjustment applied to the summed up light
+     contributions of the rendered objects (range: 0.1 -- 10.0, default
+     1.0 = unchanged).  Values above 1.0 lighten the image, most
+     strongly in the darker regions, and thus can bring out shading
+     detail on the dimly lit side of objects; values below 1.0 darken
+     the image and increase its contrast.  The background colors are
+     not affected.
 
 Press **Apply** to apply the current settings and re-render the image,
 or **Cancel** to discard changes.  The **Help** button opens the LAMMPS

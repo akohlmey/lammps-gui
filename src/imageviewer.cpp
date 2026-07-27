@@ -747,6 +747,7 @@ void ImageViewer::readImageSettings()
     outlinewidth   = 2;
     outlinecolor   = "black";
     specular       = "auto";
+    gammaval       = 1.0;
     atomcustom     = false;
     atomtrans      = 1.0;
     bondtrans      = 1.0;
@@ -1534,6 +1535,7 @@ DumpImageParams ImageViewer::gatherDumpImageParams(const QString &dumpfilename)
     p.keylight     = keylight;
     p.filllight    = filllight;
     p.backlight    = backlight;
+    p.gammaval     = gammaval;
 
     // colormap
     p.colormap        = colormap;

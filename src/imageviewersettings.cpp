@@ -382,35 +382,45 @@ void ImageViewer::globalSettings()
     layout->addWidget(new QHline, idx++, 0, 1, MAXCOLS);
     auto *lightlayout = new QHBoxLayout;
     lightlayout->setSpacing(LAYOUT_SPACING);
-    lightlayout->addWidget(new QLabel("Lights: "), 1, Qt::AlignLeft);
-    lightlayout->addWidget(new QLabel("Ambient: "), 2, Qt::AlignRight);
+    lightlayout->addWidget(new QLabel("Lights: "), 2, Qt::AlignLeft);
+    lightlayout->addWidget(new QLabel("Ambient: "), 4, Qt::AlignRight);
     auto *ambient = new QDoubleSpinBox;
     ambient->setRange(0.0, 1.0);
     ambient->setSingleStep(0.05);
     ambient->setValue(ambientlight);
     ambient->setMaximumWidth(fwidth);
     lightlayout->addWidget(ambient, 2);
-    lightlayout->addWidget(new QLabel("Key: "), 2, Qt::AlignRight);
+    lightlayout->addWidget(new QLabel("Key: "), 3, Qt::AlignRight);
     auto *key = new QDoubleSpinBox;
     key->setRange(0.0, 1.0);
     key->setSingleStep(0.05);
     key->setValue(keylight);
     key->setMaximumWidth(fwidth);
     lightlayout->addWidget(key, 2);
-    lightlayout->addWidget(new QLabel("Fill: "), 2, Qt::AlignRight);
+    lightlayout->addWidget(new QLabel("Fill: "), 3, Qt::AlignRight);
     auto *fill = new QDoubleSpinBox;
     fill->setRange(0.0, 1.0);
     fill->setSingleStep(0.05);
     fill->setValue(filllight);
     fill->setMaximumWidth(fwidth);
     lightlayout->addWidget(fill, 2);
-    lightlayout->addWidget(new QLabel("Back: "), 2, Qt::AlignRight);
+    lightlayout->addWidget(new QLabel("Back: "), 3, Qt::AlignRight);
     auto *back = new QDoubleSpinBox;
     back->setRange(0.0, 1.0);
     back->setSingleStep(0.05);
     back->setValue(backlight);
     back->setMaximumWidth(fwidth);
     lightlayout->addWidget(back, 2);
+    lightlayout->addWidget(new QLabel("Gamma: "), 4, Qt::AlignRight);
+    auto *gamma = new QDoubleSpinBox;
+    gamma->setRange(0.1, 10.0);
+    gamma->setSingleStep(0.1);
+    gamma->setValue(gammaval);
+    gamma->setMaximumWidth(fwidth);
+    gamma->setToolTip("Gamma adjustment of the rendered objects; values above 1.0\n"
+                      "lighten the image and bring out shading detail in dimly lit\n"
+                      "regions, values below 1.0 darken it and increase the contrast");
+    lightlayout->addWidget(gamma, 2);
     layout->addLayout(lightlayout, idx++, 0, 1, MAXCOLS, Qt::AlignHCenter);
     layout->addWidget(new QHline, idx++, 0, 1, MAXCOLS);
 
@@ -530,6 +540,7 @@ void ImageViewer::globalSettings()
     keylight     = key->value();
     filllight    = fill->value();
     backlight    = back->value();
+    gammaval     = gamma->value();
 
     // update image with new settings
     createImage();

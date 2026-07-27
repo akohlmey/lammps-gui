@@ -252,6 +252,7 @@ private:
     double keylight;                             ///< key light setting
     double filllight;                            ///< fill light setting
     double backlight;                            ///< back light setting
+    double gammaval;                             ///< gamma adjustment (1.0 = unchanged)
     QString axesloc;                             ///< Axes location
     QString boxcolor;                            ///< Color for box and subbox
     QString backcolor;                           ///< (lower) background color

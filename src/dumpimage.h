@@ -145,6 +145,8 @@ struct DumpImageParams {
     double keylight;                          ///< key light setting
     double filllight;                         ///< fill light setting
     double backlight;                         ///< back light setting
+    double gammaval;                          ///< gamma adjustment of rendered objects
+                                              ///< (0.1 - 10.0), 1.0 = unchanged
     int version;                              ///< LAMMPS version (date) id
 
     // ---- color maps (atoms / bonds) ----

@@ -121,6 +121,7 @@ DumpImageParams makeParams()
     p.keylight     = 0.7;
     p.filllight    = 0.3;
     p.backlight    = 0.2;
+    p.gammaval     = 1.0;
     p.version      = 20260704;
 
     p.colormap        = "BWR";
@@ -384,6 +385,7 @@ TEST(DumpImageCommand, DepthCueOutlineSpecular)
     EXPECT_FALSE(cmd.contains(" outline "));
     EXPECT_FALSE(cmd.contains(" specular "));
     EXPECT_FALSE(cmd.contains(" ssaosamples "));
+    EXPECT_FALSE(cmd.contains(" gamma "));
 
     p.usedepthcue    = true;
     p.depthcuefactor = 0.7;
@@ -404,6 +406,27 @@ TEST(DumpImageCommand, DepthCueOutlineSpecular)
     p.specular = "tight";
     cmd        = buildCmd(p);
     EXPECT_TRUE(cmd.contains(" specular tight")) << cmd.toStdString();
+}
+
+TEST(DumpImageCommand, GammaAdjustment)
+{
+    // the default gamma of 1.0 changes nothing and is pruned
+    auto p      = makeParams();
+    QString cmd = buildCmd(p);
+    EXPECT_FALSE(cmd.contains(" gamma ")) << cmd.toStdString();
+
+    p.gammaval = 1.4;
+    cmd        = buildCmd(p);
+    EXPECT_TRUE(cmd.contains(" gamma 1.4")) << cmd.toStdString();
+
+    // out-of-range values (LAMMPS accepts 0.1 - 10.0 only) are clamped
+    p.gammaval = 20.0;
+    cmd        = buildCmd(p);
+    EXPECT_TRUE(cmd.contains(" gamma 10")) << cmd.toStdString();
+
+    p.gammaval = 0.01;
+    cmd        = buildCmd(p);
+    EXPECT_TRUE(cmd.contains(" gamma 0.1")) << cmd.toStdString();
 }
 
 TEST(DumpImageCommand, SsaoSamplesOnlyWithSsao)
@@ -451,6 +474,7 @@ TEST(DumpImageCommand, AllDefaultsPruned)
     p.keylight     = 0.9;
     p.filllight    = 0.45;
     p.backlight    = 0.9;
+    p.gammaval     = 1.0;
     p.version      = 20260704;
 
     const QString cmd = buildCmd(p);
@@ -464,6 +488,7 @@ TEST(DumpImageCommand, AllDefaultsPruned)
     EXPECT_FALSE(cmd.contains(" atrans"));
     EXPECT_FALSE(cmd.contains(" btrans"));
     EXPECT_FALSE(cmd.contains(" lights"));
+    EXPECT_FALSE(cmd.contains(" gamma"));
     EXPECT_FALSE(cmd.contains(" subbox "));
     EXPECT_FALSE(cmd.contains(" axes "));
     EXPECT_FALSE(cmd.contains(" center "));

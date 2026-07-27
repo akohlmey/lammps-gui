@@ -29,6 +29,7 @@ constexpr double DEF_AMBIENT   = 0.0;
 constexpr double DEF_KEYLIGHT  = 0.9;
 constexpr double DEF_FILLLIGHT = 0.45;
 constexpr double DEF_BACKLIGHT = 0.9;
+constexpr double DEF_GAMMA     = 1.0; // no gamma adjustment
 const QString DEF_BOXCOLOR     = QStringLiteral("gold");
 const QString DEF_BACKCOLOR    = QStringLiteral("black");
 
@@ -361,6 +362,9 @@ DumpImageCommand buildDumpImageCommand(const DumpImageParams &p)
     if (p.specular != QStringLiteral("auto")) m += " specular " + p.specular;
     if (p.usessao && (p.ssaosamples > 0))
         m += QString(" ssaosamples %1").arg(qBound(4, p.ssaosamples, 64));
+
+    // a gamma value of 1.0 renders the summed up light contributions unchanged
+    if (p.gammaval != DEF_GAMMA) m += QString(" gamma %1").arg(qBound(0.1, p.gammaval, 10.0));
 
     if (p.useelements) m += blank + p.elements + blank + p.adiams + blank;
     if (p.usesigma) m += blank + p.adiams + blank;
