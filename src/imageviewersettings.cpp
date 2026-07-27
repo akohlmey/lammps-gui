@@ -382,7 +382,7 @@ void ImageViewer::globalSettings()
     layout->addWidget(new QHline, idx++, 0, 1, MAXCOLS);
     auto *lightlayout = new QHBoxLayout;
     lightlayout->setSpacing(LAYOUT_SPACING);
-    lightlayout->addWidget(new QLabel("Lights: "), 3, Qt::AlignLeft);
+    lightlayout->addWidget(new QLabel("Lights: "), 1, Qt::AlignLeft);
     lightlayout->addWidget(new QLabel("Ambient: "), 2, Qt::AlignRight);
     auto *ambient = new QDoubleSpinBox;
     ambient->setRange(0.0, 1.0);
