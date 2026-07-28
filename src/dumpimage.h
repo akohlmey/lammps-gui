@@ -103,6 +103,9 @@ struct DumpImageParams {
     double depthcuefactor; ///< depth cueing strength (0.0 - 1.0)
     QString depthcuecolor; ///< fog color name, or "auto" = fade toward the background
     QString depthcuestart; ///< fading start as a box fraction along the view direction, or "auto"
+    bool usedefocus;       ///< enable defocusing of distant objects
+    double defocusfactor;  ///< defocus blur strength (0.0 - 1.0)
+    QString defocusstart;  ///< blurring start as a box fraction along the view direction, or "auto"
     bool useoutline;       ///< draw outlines at depth jumps
     int outlinewidth;      ///< outline width in pixels (1 - 16)
     QString outlinecolor;  ///< outline color name

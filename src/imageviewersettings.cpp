@@ -249,10 +249,40 @@ void ImageViewer::globalSettings()
                          "(0.0 = near side, 1.0 = far side), or \"auto\" to start at the\n"
                          "nearest rendered object");
     layout->addWidget(cuestart, idx++, n++, 1, 1);
-    layout->addWidget(new QHline, idx++, 0, 1, MAXCOLS);
     connect(cuebutton, &QCheckBox::toggled, cueval, &QDoubleSpinBox::setEnabled);
     connect(cuebutton, &QCheckBox::toggled, cuecolor, &QLineEdit::setEnabled);
     connect(cuebutton, &QCheckBox::toggled, cuestart, &QLineEdit::setEnabled);
+
+    n = 0;
+
+    auto *focusbutton = new QCheckBox("Defocus ", this);
+    focusbutton->setChecked(usedefocus);
+    focusbutton->setToolTip("Blur distant objects as if the camera were focused on the front");
+    layout->addWidget(focusbutton, idx, n++, 1, 1);
+    layout->addWidget(new QLabel("Intensity: "), idx, n++, 1, 1, Qt::AlignVCenter | Qt::AlignRight);
+    auto *focusval = new QDoubleSpinBox;
+    focusval->setRange(0.0, 1.0);
+    focusval->setSingleStep(0.05);
+    focusval->setValue(defocusfactor);
+    focusval->setMaximumWidth(fwidth);
+    focusval->setEnabled(usedefocus);
+    focusval->setToolTip("Strength of the blur; at 1.0 the most distant objects are\n"
+                         "blurred over a radius of 1 percent of the image height");
+    layout->addWidget(focusval, idx, n++, 1, 1);
+    // the defocus keyword has no color argument, so this column stays empty
+    n += 2;
+    layout->addWidget(new QLabel("Start: "), idx, n++, 1, 1, Qt::AlignVCenter | Qt::AlignRight);
+    auto *focusstart = new QLineEdit(defocusstart);
+    focusstart->setValidator(cuestartvalidator);
+    focusstart->setMaximumWidth(fwidth);
+    focusstart->setEnabled(usedefocus);
+    focusstart->setToolTip("Box fraction along the view direction where the blurring starts\n"
+                           "(0.0 = near side, 1.0 = far side), or \"auto\" to start at the\n"
+                           "nearest rendered object");
+    layout->addWidget(focusstart, idx++, n++, 1, 1);
+    layout->addWidget(new QHline, idx++, 0, 1, MAXCOLS);
+    connect(focusbutton, &QCheckBox::toggled, focusval, &QDoubleSpinBox::setEnabled);
+    connect(focusbutton, &QCheckBox::toggled, focusstart, &QLineEdit::setEnabled);
 
     n = 0;
 
@@ -513,6 +543,12 @@ void ImageViewer::globalSettings()
     if (cuestart->hasAcceptableInput()) depthcuestart = cuestart->text();
     button = findChild<QPushButton *>("depthcue");
     if (button) button->setChecked(usedepthcue);
+
+    usedefocus    = focusbutton->isChecked();
+    defocusfactor = focusval->value();
+    if (focusstart->hasAcceptableInput()) defocusstart = focusstart->text();
+    button = findChild<QPushButton *>("defocus");
+    if (button) button->setChecked(usedefocus);
 
     useoutline   = outlinebutton->isChecked();
     outlinewidth = olwidth->value();

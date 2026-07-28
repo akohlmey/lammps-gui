@@ -84,6 +84,9 @@ DumpImageParams makeParams()
     p.depthcuefactor = 0.5;
     p.depthcuecolor  = "auto";
     p.depthcuestart  = "auto";
+    p.usedefocus     = false;
+    p.defocusfactor  = 0.5;
+    p.defocusstart   = "auto";
     p.useoutline     = false;
     p.outlinewidth   = 2;
     p.outlinecolor   = "black";
@@ -382,6 +385,7 @@ TEST(DumpImageCommand, DepthCueOutlineSpecular)
     auto p      = makeParams();
     QString cmd = buildCmd(p);
     EXPECT_FALSE(cmd.contains(" depthcue ")) << cmd.toStdString();
+    EXPECT_FALSE(cmd.contains(" defocus "));
     EXPECT_FALSE(cmd.contains(" outline "));
     EXPECT_FALSE(cmd.contains(" specular "));
     EXPECT_FALSE(cmd.contains(" ssaosamples "));
@@ -396,6 +400,16 @@ TEST(DumpImageCommand, DepthCueOutlineSpecular)
     p.depthcuestart = "0.25";
     cmd             = buildCmd(p);
     EXPECT_TRUE(cmd.contains(" depthcue yes 0.7 white 0.25")) << cmd.toStdString();
+
+    // defocus takes no color argument, only the strength and the start position
+    p.usedefocus    = true;
+    p.defocusfactor = 0.4;
+    cmd             = buildCmd(p);
+    EXPECT_TRUE(cmd.contains(" defocus yes 0.4 auto")) << cmd.toStdString();
+
+    p.defocusstart = "0.5";
+    cmd            = buildCmd(p);
+    EXPECT_TRUE(cmd.contains(" defocus yes 0.4 0.5")) << cmd.toStdString();
 
     p.useoutline   = true;
     p.outlinewidth = 3;
@@ -489,6 +503,7 @@ TEST(DumpImageCommand, AllDefaultsPruned)
     EXPECT_FALSE(cmd.contains(" btrans"));
     EXPECT_FALSE(cmd.contains(" lights"));
     EXPECT_FALSE(cmd.contains(" gamma"));
+    EXPECT_FALSE(cmd.contains(" defocus"));
     EXPECT_FALSE(cmd.contains(" subbox "));
     EXPECT_FALSE(cmd.contains(" axes "));
     EXPECT_FALSE(cmd.contains(" center "));

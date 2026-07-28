@@ -289,7 +289,7 @@ TEST_F(HighlighterTest, DumpImageColorsAndKeywords)
                        "dump_modify 2 backcolor white acolor 1 red\n"
                        "dump 3 all atom 100 f.dump\n"
                        "dump 4 all image 100 j.png type type depthcue yes 0.5 auto auto "
-                       "outline yes 2 dodgerblue"));
+                       "outline yes 2 dodgerblue defocus yes 0.4 auto"));
     Highlighter hl(&syntax, &doc);
     hl.rehighlight();
 
@@ -302,6 +302,7 @@ TEST_F(HighlighterTest, DumpImageColorsAndKeywords)
     EXPECT_EQ(formatAt(doc, 0, 46).foreground(), formatAt(doc2, 0, 6).foreground()); // box
     EXPECT_EQ(formatAt(doc, 3, 38).foreground(), formatAt(doc2, 0, 6).foreground()); // depthcue
     EXPECT_EQ(formatAt(doc, 3, 65).foreground(), formatAt(doc2, 0, 6).foreground()); // outline
+    EXPECT_EQ(formatAt(doc, 3, 90).foreground(), formatAt(doc2, 0, 6).foreground()); // defocus
     // the outline color value renders in its own color
     EXPECT_EQ(formatAt(doc, 3, 78).foreground().color(), QColor(QStringLiteral("dodgerblue")));
 

@@ -444,6 +444,10 @@ ImageViewer::ImageViewer(const QString &fileName, LammpsWrapper *_lammps, Lammps
     dodepth->setCheckable(true);
     dodepth->setToolTip("Toggle depth cueing");
     dodepth->setObjectName("depthcue");
+    auto *dodefocus = new QPushButton(QIcon(":/icons/defocus.svg"), "");
+    dodefocus->setCheckable(true);
+    dodefocus->setToolTip("Toggle defocusing of distant objects");
+    dodefocus->setObjectName("defocus");
     auto *doshiny = new QPushButton(QIcon(":/icons/image-shiny.svg"), "");
     doshiny->setCheckable(true);
     doshiny->setToolTip("Toggle shininess");
@@ -502,8 +506,8 @@ ImageViewer::ImageViewer(const QString &fileName, LammpsWrapper *_lammps, Lammps
 
     // square toolbar buttons with a snug, uniform icon (shared policy)
     styleToolButtons(buttonhint,
-                     {dossao, doanti, dodepth, doshiny, dovdw, dobond, dobox, doaxes, zoomin,
-                      zoomout, rotleft, rotright, rotup, rotdown, recenter, reset, fitwin});
+                     {dossao, doanti, dodepth, dodefocus, doshiny, dovdw, dobond, dobox, doaxes,
+                      zoomin, zoomout, rotleft, rotright, rotup, rotdown, recenter, reset, fitwin});
 
     // match the first-row controls (menu bar and size fields) to the toolbar
     // button height so both rows line up and the layout looks balanced
@@ -580,6 +584,7 @@ ImageViewer::ImageViewer(const QString &fileName, LammpsWrapper *_lammps, Lammps
     buttonLayout->addWidget(dossao);
     buttonLayout->addWidget(doanti);
     buttonLayout->addWidget(dodepth);
+    buttonLayout->addWidget(dodefocus);
     buttonLayout->addWidget(doshiny);
     buttonLayout->addWidget(dovdw);
     buttonLayout->addWidget(dobond);
@@ -621,6 +626,7 @@ ImageViewer::ImageViewer(const QString &fileName, LammpsWrapper *_lammps, Lammps
     connect(dossao, &QPushButton::released, this, &ImageViewer::toggleSsao);
     connect(doanti, &QPushButton::released, this, &ImageViewer::toggleAnti);
     connect(dodepth, &QPushButton::released, this, &ImageViewer::toggleDepthcue);
+    connect(dodefocus, &QPushButton::released, this, &ImageViewer::toggleDefocus);
     connect(doshiny, &QPushButton::released, this, &ImageViewer::toggleShiny);
     connect(dovdw, &QPushButton::released, this, &ImageViewer::toggleVdw);
     connect(dobond, &QPushButton::released, this, &ImageViewer::toggleBond);
@@ -670,6 +676,7 @@ ImageViewer::ImageViewer(const QString &fileName, LammpsWrapper *_lammps, Lammps
     dossao->setChecked(usessao);
     doanti->setChecked(antialias);
     dodepth->setChecked(usedepthcue);
+    dodefocus->setChecked(usedefocus);
 
     scrollArea->setVisible(true);
     updateActions();
@@ -743,6 +750,9 @@ void ImageViewer::readImageSettings()
     depthcuefactor = 0.5;
     depthcuecolor  = "auto";
     depthcuestart  = "auto";
+    usedefocus     = false;
+    defocusfactor  = 0.5;
+    defocusstart   = "auto";
     useoutline     = false;
     outlinewidth   = 2;
     outlinecolor   = "black";
@@ -818,6 +828,8 @@ void ImageViewer::resetView()
     if (button) button->setChecked(antialias);
     button = findChild<QPushButton *>("depthcue");
     if (button) button->setChecked(usedepthcue);
+    button = findChild<QPushButton *>("defocus");
+    if (button) button->setChecked(usedefocus);
     button = findChild<QPushButton *>("shiny");
     if (button) button->setChecked(shinyfactor > SHINY_CUT);
     button = findChild<QPushButton *>("vdw");
@@ -895,6 +907,15 @@ void ImageViewer::toggleDepthcue()
     if (!button) return;
     usedepthcue = !usedepthcue;
     button->setChecked(usedepthcue);
+    createImage();
+}
+
+void ImageViewer::toggleDefocus()
+{
+    auto *button = qobject_cast<QPushButton *>(sender());
+    if (!button) return;
+    usedefocus = !usedefocus;
+    button->setChecked(usedefocus);
     createImage();
 }
 
@@ -1495,6 +1516,9 @@ DumpImageParams ImageViewer::gatherDumpImageParams(const QString &dumpfilename)
     p.depthcuefactor = depthcuefactor;
     p.depthcuecolor  = depthcuecolor;
     p.depthcuestart  = depthcuestart;
+    p.usedefocus     = usedefocus;
+    p.defocusfactor  = defocusfactor;
+    p.defocusstart   = defocusstart;
     p.useoutline     = useoutline;
     p.outlinewidth   = outlinewidth;
     p.outlinecolor   = outlinecolor;

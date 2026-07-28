@@ -256,11 +256,13 @@ DumpImageCommand buildDumpImageCommand(const DumpImageParams &p)
         d += QString(" view %1 %2").arg(hhrot).arg(p.vrot);
     }
     if (p.usessao) d += QString(" ssao yes %1 %2").arg(Cfg::SSAO_SEED).arg(p.ssaoval);
-    // depth cueing and outlines default to "no" in LAMMPS, so emit them only when on
+    // depth cueing, defocus, and outlines default to "no" in LAMMPS, so emit
+    // them only when on
     if (p.usedepthcue)
         d += QString(" depthcue yes %1 %2 %3")
                  .arg(p.depthcuefactor)
                  .arg(p.depthcuecolor, p.depthcuestart);
+    if (p.usedefocus) d += QString(" defocus yes %1 %2").arg(p.defocusfactor).arg(p.defocusstart);
     if (p.useoutline) d += QString(" outline yes %1 %2").arg(p.outlinewidth).arg(p.outlinecolor);
     if (p.showbox)
         d += QString(" box yes %1").arg(p.boxdiam);

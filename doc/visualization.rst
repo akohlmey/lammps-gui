@@ -236,6 +236,11 @@ there are:
   fades distant objects toward a fog color for a stronger sense of
   depth.  The intensity, fog color, and start position are configured
   in the :ref:`Global image settings dialog <global_settings>`.
+- **Defocus** (toggle): Enable or disable defocusing, which blurs
+  distant objects as if the camera were focused on the front of the
+  scene, while leaving their colors untouched.  This can be combined
+  with depth cueing.  The intensity and start position are configured
+  in the :ref:`Global image settings dialog <global_settings>`.
 - **Shininess** (toggle): Switch between shiny and matte surface
   rendering of graphics objects like atoms and bonds.
 - **VDW style** (toggle): Switch between space-filling (Van der Waals)
@@ -331,10 +336,10 @@ in this dialog correspond to options of the LAMMPS `dump image and
 dump_modify commands <https://docs.lammps.org/dump_image.html>`_.
 
 .. |boxaxes| image:: JPG/lammps-gui-image-box-axes.png
-                     :width: 42%
+                     :width: 40%
 
 .. |global|  image:: JPG/lammps-gui-image-settings.png
-                     :width: 57%
+                     :width: 59%
 
 |boxaxes|  |global|
 
@@ -412,6 +417,26 @@ The dialog is organized into the following sections:
      simulation box along the view direction (0.0 = side nearest to
      the camera, 1.0 = far side), or "auto" (the default) to start at
      the nearest rendered object.
+
+**Defocus**
+   Controls defocusing, which blurs distant objects as if the camera
+   were focused on the front of the scene.  Like depth cueing this
+   draws the attention to the objects in front, but it leaves their
+   colors untouched, and the two effects may be combined.  There is no
+   color setting for this effect, so that field is left empty.
+
+   - **Defocus** (checkbox): Enable or disable defocusing.  This is
+     the same setting that the defocus toolbar button toggles.
+   - **Intensity**: The strength of the blur (range: 0.0 -- 1.0).  At
+     1.0 the most distant objects are blurred over a radius of 1
+     percent of the image height.  Blurring over much more than the
+     size of the rendered particles turns them into a uniform haze,
+     so moderate values usually give the best result.
+   - **Start**: Where the blurring starts, as a fraction of the
+     simulation box along the view direction (0.0 = side nearest to
+     the camera, 1.0 = far side), or "auto" (the default) to start at
+     the nearest rendered object, which keeps the front of the scene
+     sharp.
 
 **Quality**
    Controls rendering quality options.

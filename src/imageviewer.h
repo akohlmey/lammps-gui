@@ -87,6 +87,7 @@ private slots:
     void toggleSsao();        ///< Toggle screen-space ambient occlusion
     void toggleAnti();        ///< Toggle anti-aliasing
     void toggleDepthcue();    ///< Toggle depth cueing
+    void toggleDefocus();     ///< Toggle defocusing of distant objects
     void toggleShiny();       ///< Toggle shiny/specular rendering
     void toggleVdw();         ///< Toggle Van der Waals radii
     void toggleBond();        ///< Toggle bond display
@@ -243,6 +244,8 @@ private:
     double depthcuefactor;                       ///< Depth cueing strength
     QString depthcuecolor;                       ///< Depth cueing fog color or "auto"
     QString depthcuestart;                       ///< Depth cueing start fraction or "auto"
+    double defocusfactor;                        ///< Defocus blur strength
+    QString defocusstart;                        ///< Defocus start fraction or "auto"
     int outlinewidth;                            ///< Outline width in pixels
     QString outlinecolor;                        ///< Outline color
     QString specular;                            ///< Specular preset or "auto"
@@ -284,6 +287,7 @@ private:
     bool antialias;                              ///< Anti-aliasing enabled flag
     bool usessao;                                ///< SSAO enabled flag
     bool usedepthcue;                            ///< Depth cueing enabled flag
+    bool usedefocus;                             ///< Defocus enabled flag
     bool useoutline;                             ///< Outline drawing enabled flag
     bool showatoms;                              ///< Show atoms
     bool showbonds;                              ///< Show bonds if atom style supports it

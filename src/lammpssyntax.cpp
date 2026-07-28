@@ -422,7 +422,7 @@ LammpsSyntax::LammpsSyntax()
                QStringLiteral("zoom"),    QStringLiteral("box"),       QStringLiteral("axes"),
                QStringLiteral("region"),  QStringLiteral("subbox"),    QStringLiteral("shiny"),
                QStringLiteral("fsaa"),    QStringLiteral("ssao"),      QStringLiteral("depthcue"),
-               QStringLiteral("outline")});
+               QStringLiteral("defocus"), QStringLiteral("outline")});
     specialWords = {QStringLiteral("INF"),  QStringLiteral("EDGE"), QStringLiteral("NULL"),
                     QStringLiteral("SELF"), QStringLiteral("if"),   QStringLiteral("then"),
                     QStringLiteral("else"), QStringLiteral("elif")};
