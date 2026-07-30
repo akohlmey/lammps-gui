@@ -14,10 +14,21 @@
 
 #include <QCompleter>
 #include <QFrame>
+#include <QStringList>
 #include <QValidator>
 #include <QWidget>
 
 class QPaintEvent;
+
+/**
+ * @brief List of color names accepted by the LAMMPS dump image command
+ *
+ * Shared between the color completers/validators of the Image Viewer
+ * dialogs and the editor's syntax registry.
+ *
+ * @return sorted list of the valid color names
+ */
+const QStringList &lammpsImageColors();
 
 /**
  * @brief Horizontal line widget for visual separation

@@ -232,6 +232,15 @@ there are:
   <https://en.wikipedia.org/wiki/Spatial_anti-aliasing#Super_sampling_/_full-scene_anti-aliasing>`_
   produces higher quality images at the expense of more CPU time.  It is
   particularly recommended in combination with any transparent objects.
+- **Depth cueing** (toggle): Enable or disable depth cueing, which
+  fades distant objects toward a fog color for a stronger sense of
+  depth.  The intensity, fog color, and start position are configured
+  in the :ref:`Global image settings dialog <global_settings>`.
+- **Defocus** (toggle): Enable or disable defocusing, which blurs
+  distant objects as if the camera were focused on the front of the
+  scene, while leaving their colors untouched.  This can be combined
+  with depth cueing.  The intensity and start position are configured
+  in the :ref:`Global image settings dialog <global_settings>`.
 - **Shininess** (toggle): Switch between shiny and matte surface
   rendering of graphics objects like atoms and bonds.
 - **VDW style** (toggle): Switch between space-filling (Van der Waals)
@@ -261,8 +270,6 @@ there are:
   size, without scroll bars or unused space.  This undoes a manual
   resize of the window; the window is never grown beyond a fraction of
   the screen, so scroll bars remain for very large images.
-
-  .. versionadded:: 3.0.2
 
 The default image size, some default image quality settings, the view
 style and some colors can be changed in the :doc:`Preferences <dialogs>`
@@ -328,11 +335,11 @@ settings panel or by using the `Alt-L` keyboard shortcut.  The settings
 in this dialog correspond to options of the LAMMPS `dump image and
 dump_modify commands <https://docs.lammps.org/dump_image.html>`_.
 
-.. |global|  image:: JPG/lammps-gui-image-settings.png
-                     :width: 62%
-
 .. |boxaxes| image:: JPG/lammps-gui-image-box-axes.png
-                     :width: 35%
+                     :width: 40%
+
+.. |global|  image:: JPG/lammps-gui-image-settings.png
+                     :width: 59%
 
 |boxaxes|  |global|
 
@@ -391,6 +398,46 @@ The dialog is organized into the following sections:
      the zoom in/out buttons of the settings panel change in steps of
      10 percent.
 
+**Depth Cueing**
+   Controls depth cueing, which fades distant objects toward a fog
+   color, similar to looking through fog.  This is perceived as depth
+   and helps to visually untangle dense systems.
+
+   - **Depth Cueing** (checkbox): Enable or disable depth cueing.
+     This is the same setting that the depth cueing toolbar button
+     toggles.
+   - **Intensity**: The strength of the fading (range: 0.0 -- 1.0).
+     At 1.0 the most distant objects blend completely into the fog
+     color.
+   - **Color**: The fog color.  Accepts `named colors
+     <https://docs.lammps.org/dump_image.html>`_ or "auto" (the
+     default), which fades toward the background color, following the
+     background gradient when one is set.
+   - **Start**: Where the fading starts, as a fraction of the
+     simulation box along the view direction (0.0 = side nearest to
+     the camera, 1.0 = far side), or "auto" (the default) to start at
+     the nearest rendered object.
+
+**Defocus**
+   Controls defocusing, which blurs distant objects as if the camera
+   were focused on the front of the scene.  Like depth cueing this
+   draws the attention to the objects in front, but it leaves their
+   colors untouched, and the two effects may be combined.  There is no
+   color setting for this effect, so that field is left empty.
+
+   - **Defocus** (checkbox): Enable or disable defocusing.  This is
+     the same setting that the defocus toolbar button toggles.
+   - **Intensity**: The strength of the blur (range: 0.0 -- 1.0).  At
+     1.0 the most distant objects are blurred over a radius of 1
+     percent of the image height.  Blurring over much more than the
+     size of the rendered particles turns them into a uniform haze,
+     so moderate values usually give the best result.
+   - **Start**: Where the blurring starts, as a fraction of the
+     simulation box along the view direction (0.0 = side nearest to
+     the camera, 1.0 = far side), or "auto" (the default) to start at
+     the nearest rendered object, which keeps the front of the scene
+     sharp.
+
 **Quality**
    Controls rendering quality options.
 
@@ -399,15 +446,38 @@ The dialog is organized into the following sections:
      Occlusion for depth-shaded rendering.
    - **SSAO strength**: The strength of the SSAO effect (range: 0.0 --
      1.0).
+   - **Samples**: The number of SSAO sampling directions (range: 4 --
+     64).  More samples produce smoother shading; fewer samples render
+     proportionally faster.  With "auto" (the default) the number is
+     derived from the SSAO strength in the copied ``dump image``
+     command, while interactive renders in the Image Viewer use a
+     reduced, fixed sample count to stay responsive.  An explicitly
+     set number applies to both, so a high-quality image can be saved
+     directly from the viewer without going through a simulation run.
+   - **Outline** (checkbox): Enable or disable drawing outlines along
+     the visible edges of rendered objects for a flat,
+     illustration-like appearance.  The two fields to the right of the
+     checkbox set the width of the outlines in pixels (range: 1 -- 16)
+     and their color.
    - **Shiny**: The shininess factor for surface rendering (range: 0.0
      -- 1.0, where 0.0 is matte and 1.0 is fully shiny).
+   - **Specular**: The width of the specular highlights: *auto* (the
+     default, derived from the shiny factor), *none* (highlights off
+     for a matte appearance), *wide*, *narrow*, or *tight* (small
+     sharp highlights with a plastic-like appearance).
 
 **Center**
-   Adjusts the center point of the rendered view.
+   Adjusts the center point of the rendered view.  The drop-down list
+   selects between **Center (static)**, where the center fractions refer
+   to the simulation box, and **Center (dynamic)**, where they refer to
+   the bounding box of the currently displayed atoms in each frame.
+   The dynamic setting is mainly useful for the copied ``dump image``
+   command when creating a movie of a system that drifts or expands.
 
    - **X-direction**, **Y-direction**, **Z-direction**: Fractional
      coordinates (range: 0.0 -- 1.0) specifying the center of the
-     view relative to the simulation box.
+     view relative to the simulation box (static) or the bounding
+     box of the displayed atoms (dynamic).
 
 **Camera up**
    Sets the direction that points up in the rendered image.
@@ -419,9 +489,9 @@ The dialog is organized into the following sections:
      systems, where the Z-direction entry is disabled.
 
 **Lighting**
-   Adjusts the settings for the four light sources used in the
-   rendering.  Each value is a floating point number (range: 0.0 -- 1.0)
-   representing the intensity of the respective light source.
+   Adjusts the settings for the four light sources used in the rendering
+   and the tonal balance of the result.  The intensity of each light
+   source is a floating point number in the range 0.0 -- 1.0.
 
    - **Ambient**: The intensity of the uniform, non-directional base
      lighting that illuminates all parts of the scene equally.
@@ -432,6 +502,13 @@ The dialog is organized into the following sections:
    - **Back**: The intensity of the tertiary directional light source
      that illuminates the back of the objects, helping to separate
      them from the background.
+   - **Gamma**: The gamma adjustment applied to the summed up light
+     contributions of the rendered objects (range: 0.1 -- 10.0, default
+     1.0 = unchanged).  Values above 1.0 lighten the image, most
+     strongly in the darker regions, and thus can bring out shading
+     detail on the dimly lit side of objects; values below 1.0 darken
+     the image and increase its contrast.  The background colors are
+     not affected.
 
 Press **Apply** to apply the current settings and re-render the image,
 or **Cancel** to discard changes.  The **Help** button opens the LAMMPS
@@ -482,9 +559,15 @@ The dialog contains the following sections:
      described below.
    - **Size**: Select the property used for atom sizing.  Options
      include *auto* (when element, diameter, or sigma data is
-     available), *type*, *element*, and a few pre-defined choices for
-     custom atom diameters.  The text field can be edited and a
-     different custom diameter entered.
+     available), *type*, *element*, atom-style variables (`v_<name>`)
+     defined in the current simulation state, and a few pre-defined
+     choices for custom atom diameters.  The text field can be edited
+     and a different custom diameter entered.  Selecting an atom-style
+     variable uses its per-atom value directly as the atom diameter;
+     this allows, for example, to apply a scaling factor to a per-atom
+     property.  Per-atom data from computes and fixes are not offered
+     directly, but they can be referenced from an atom-style variable,
+     which then also allows to scale them to suitable diameters.
    - **Opacity**: The transparency of atoms (range: 0.0 -- 1.0, where 1.0
      is fully opaque and 0.0 is fully transparent).  Bonds have their own
      Opacity setting in the **Bonds** section below.
@@ -897,25 +980,24 @@ slide show is opened this way, the controls that act on a running
 simulation (such as stopping the run or sending images to the trash) are
 hidden.
 
-.. versionadded:: 2.1
+To load many imagefiles from the command line, you can use on Linux and
+macOS a command line like the following:
 
-   Existing image files can be loaded into the slide show with *Open
-   Image File(s)*, and image files opened with *File* -> *View* are shown
-   here instead of as text.
+.. code-block:: bash
+
+   lammps-gui $(for f in image-*.png; do echo -n " -i $f"; done)
 
 Movie files can be selected in the same dialog; their frames are then
 extracted into individual images as described in :ref:`Importing movie
 files <movie_import>` below.
 
-.. versionadded:: 3.0.2
-
-   Movie files can be imported into the slide show viewer, and converted
-   images are cached instead of being converted again for every display.
-
 From the slide show window the following global keyboard shortcuts are
 supported: `Ctrl-W`: close window, `Ctrl-Q`: quit application, `Ctrl-/`:
 stop running simulation.  Other keyboard shortcuts are connected to some
 of the controls and listed in their documentation below.
+
+The visualization shown below is created by the
+`in.breakable GRAPHICS package example <https://github.com/lammps/lammps/blob/develop/examples/GRAPHICS/in.breakable>`_
 
 .. image:: JPG/lammps-gui-slideshow.png
    :align: center
@@ -926,6 +1008,10 @@ Importing movie files
 ---------------------
 
 .. index:: movie import
+
+.. image:: JPG/lammps-gui-movie-import.png
+   :align: right
+   :scale: 66%
 
 Movie files (``.mp4``, ``.mkv``, ``.webm``, ``.avi``, ``.mov``, and so on,
 as well as animated GIF files) can be opened with *File* -> *View Image or
@@ -944,12 +1030,17 @@ for confirmation before any frames are extracted:
   frame, 2 every other frame, and so on.  This is useful to skim a long
   movie without decompressing all of it.
 - **Estimated size** is how much temporary disk space the extracted
-  images are expected to need.  It is obtained by decoding a single frame
-  in the middle of the movie and multiplying its size by the number of
-  selected frames, so it is an approximation.  A highlighted warning
-  appears when the estimate exceeds one gigabyte, when it would use up
-  most of the free space on the volume holding the temporary folder, or
-  when more than 1000 images would be extracted.
+  images are expected to need.  It is obtained by decoding a single
+  sample frame near the middle of the selected range and multiplying its
+  size by the number of selected frames, so it is an approximation.  The
+  sample frame is shown as a thumbnail next to the movie properties.
+  When the middle of the selected range moves away from the sampled
+  frame by more than a tenth of the movie, a new sample frame is decoded
+  after a moment, and the thumbnail and the estimate are refreshed from
+  it.  A highlighted warning appears when the estimate exceeds one
+  gigabyte, when it would use up most of the free space on the volume
+  holding the temporary folder, or when more than 1000 images would be
+  extracted.
 
 Because the frames are stored as individual images and not as a
 compressed video stream, they usually take up substantially more space
@@ -1011,9 +1102,6 @@ following controls, organized from left to right:
   running FFmpeg over the movie again, and the button is therefore
   disabled when the cache holds nothing but frames.  The entire cache is
   removed when the Slide Show window is closed.
-
-  .. versionadded:: 3.0.2
-
 - **Zoom in**: Increase the displayed image size by scaling it up. Every
   click on the button increases the zoom factor by 10 percent.
 - **Zoom out**: Decrease the displayed image size by scaling it
@@ -1032,9 +1120,6 @@ following controls, organized from left to right:
   its full size, without scroll bars or unused space.  This undoes a
   manual resize of the window; the window is never grown beyond a
   fraction of the screen, so scroll bars remain for very large images.
-
-  .. versionadded:: 3.0.2
-
 - **Stop Simulation** (`Ctrl-/`): Stop a running simulation.
 
 These image transformations are useful when the simulation images need
@@ -1066,9 +1151,3 @@ image, restrict the active range, and control the slideshow settings:
   blue, while the skipped images outside it are drawn in red.
 - **Next**: Step forward to the next image.
 - **Last**: Jump to the last image of the active range.
-
-.. versionadded:: 2.1
-
-   The **Start** and **Stop** controls restrict animation, single
-   stepping, movie export, and deletion to a selected range of images,
-   and the navigation slider highlights that range in color.

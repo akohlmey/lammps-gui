@@ -102,6 +102,12 @@ available (On macOS use the Command key instead of Ctrl/Control).
      - View Image or Movie File(s)
      - Ctrl+Shift+P
      - Plot Data File
+     - Ctrl+E
+     - Extend Run
+   * - Ctrl+K
+     - Check Input via Heuristics
+     - Ctrl+Shift+K
+     - Check Input via Dry Run
      -
      -
 

@@ -215,6 +215,8 @@ void Preferences::accept()
 
     field = tabWidget->findChild<QLineEdit *>("proxyval");
     if (field) settings->setValue(Keys::HTTPS_PROXY, field->text());
+    spin = tabWidget->findChild<QSpinBox *>("downloadtimeout");
+    if (spin) settings->setValue(Keys::DOWNLOAD_TIMEOUT, spin->value());
 
     // reformatting settings
 
@@ -234,6 +236,10 @@ void Preferences::accept()
     box = tabWidget->findChild<QCheckBox *>("savval");
     if (box) settings->setValue(Keys::AUTOSAVE, box->isChecked());
     settings->endGroup();
+
+    // stored outside the reformat group; also read by doRun()
+    box = tabWidget->findChild<QCheckBox *>("lintcheck");
+    if (box) settings->setValue(Keys::LINTCHECK, box->isChecked());
 
     // chart window settings
 
@@ -371,6 +377,21 @@ GeneralTab::GeneralTab(QSettings *_settings, LammpsWrapper *_lammps, LammpsGui *
         layout->addWidget(new QLabel(https_proxy), nrow++, 1);
     }
 
+    auto *timeoutlabel = new QLabel("Download timeout (seconds):");
+    auto *timeoutval   = new QSpinBox;
+    timeoutval->setRange(Cfg::DOWNLOAD_TIMEOUT_MIN, Cfg::DOWNLOAD_TIMEOUT_MAX);
+    timeoutval->setValue(
+        qBound(Cfg::DOWNLOAD_TIMEOUT_MIN,
+               settings->value(Keys::DOWNLOAD_TIMEOUT, Cfg::DOWNLOAD_TIMEOUT_DEFAULT).toInt(),
+               Cfg::DOWNLOAD_TIMEOUT_MAX));
+    timeoutval->setObjectName("downloadtimeout");
+    timeoutval->setToolTip(
+        "Abort a download when no data has arrived for this many seconds.\n"
+        "Increase this value on a slow internet connection, so that large\n"
+        "downloads like the LAMMPS shared library are not canceled prematurely.");
+    layout->addWidget(timeoutlabel, nrow, 0);
+    layout->addWidget(timeoutval, nrow++, 1);
+
 #if defined(LAMMPS_GUI_USE_PLUGIN)
     layout->addWidget(new QHline, nrow++, 0, 1, 2);
     auto *pluginlabel = new QLabel("Path to LAMMPS Shared Library File:");
@@ -380,6 +401,13 @@ GeneralTab::GeneralTab(QSettings *_settings, LammpsWrapper *_lammps, LammpsGui *
     auto *pluginbrowse   = new QPushButton("&Browse...");
     plugindownload->setIcon(QIcon(":/icons/download-file.svg"));
     pluginbrowse->setIcon(QIcon(":/icons/document-open.svg"));
+
+    // no compatible pre-compiled LAMMPS library exists for MSVC compiled executables
+    if (getLammpsDownloadUrl().isEmpty()) {
+        plugindownload->setEnabled(false);
+        plugindownload->setToolTip("The pre-compiled LAMMPS shared libraries are not "
+                                   "compatible with this LAMMPS-GUI executable");
+    }
 
     auto *pluginlayout = new QHBoxLayout;
     pluginedit->setObjectName("pluginedit");
@@ -475,7 +503,7 @@ void GeneralTab::downloadPlugin()
     auto dlUrl   = getLammpsDownloadUrl();
 
     URLDownloader downloader(this);
-    if (downloader.download(dlUrl, libPath, true)) {
+    if (downloader.download(dlUrl, libPath, true, true)) {
         auto canonical = QFileInfo(libPath).canonicalFilePath();
         settings->setValue(Keys::PLUGIN_PATH, canonical);
         auto *field = findChild<QLineEdit *>("pluginedit");
@@ -916,6 +944,7 @@ EditorTab::EditorTab(QSettings *_settings, QWidget *parent) : QWidget(parent), s
     auto *retlbl   = new QLabel("Reformat with 'Enter':");
     auto *autolbl  = new QLabel("Automatic completion:");
     auto *savlbl   = new QLabel("Auto-save on 'Run' and 'Quit':");
+    auto *lintlbl  = new QLabel("Check input before 'Run':");
     auto *cmdval   = new QSpinBox;
     auto *typeval  = new QSpinBox;
     auto *idval    = new QSpinBox;
@@ -943,6 +972,11 @@ EditorTab::EditorTab(QSettings *_settings, QWidget *parent) : QWidget(parent), s
     savval->setChecked(settings->value(Keys::AUTOSAVE, false).toBool());
     settings->endGroup();
 
+    // the pre-run check setting is stored outside the reformat group
+    auto *lintval = new QCheckBox;
+    lintval->setObjectName("lintcheck");
+    lintval->setChecked(settings->value(Keys::LINTCHECK, true).toBool());
+
     int i = 0;
     grid->addWidget(reformat, i++, 0, 1, 2, Qt::AlignTop | Qt::AlignHCenter);
     grid->addWidget(cmdlbl, i, 0, Qt::AlignTop);
@@ -960,6 +994,8 @@ EditorTab::EditorTab(QSettings *_settings, QWidget *parent) : QWidget(parent), s
     grid->addWidget(new QLabel(" "), i++, 0);
     grid->addWidget(savlbl, i, 0, Qt::AlignTop);
     grid->addWidget(savval, i++, 1, Qt::AlignVCenter);
+    grid->addWidget(lintlbl, i, 0, Qt::AlignTop);
+    grid->addWidget(lintval, i++, 1, Qt::AlignVCenter);
 
     grid->addItem(new QSpacerItem(100, 100, QSizePolicy::Minimum, QSizePolicy::Expanding), i, 0);
     grid->addItem(new QSpacerItem(100, 100, QSizePolicy::Minimum, QSizePolicy::Expanding), i, 1);

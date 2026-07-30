@@ -68,6 +68,8 @@ and testing simulation setups.
 
    - Text editor with line numbers and syntax highlighting customized for LAMMPS
    - Text editor features command completion and indentation for known commands and styles
+   - Input validation with a static pre-run check of the input script and
+     a dry-run mode that executes only the setup phase of each command
    - Text editor will switch its working directory to the folder of the file in the buffer
    - Indicator for currently executed command
    - Indicator for line that caused an error

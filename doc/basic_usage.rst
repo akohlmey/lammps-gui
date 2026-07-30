@@ -60,11 +60,6 @@ The ``-c``, ``-i``, and ``-t`` flags open a standalone viewer without
 the main editor window; they are mutually exclusive with each other and
 with the ``file`` positional argument.
 
-.. versionadded:: 2.1
-
-   The ``-c``/``--chart``, ``-i``/``--image``, and ``-t``/``--text``
-   options were added.
-
 Launching LAMMPS-GUI
 ^^^^^^^^^^^^^^^^^^^^
 
@@ -200,7 +195,11 @@ If an error occurs (in the example below the command `label
 <https://docs.lammps.org/label.html>`_ was incorrectly capitalized as
 "Label"), an error message dialog is shown and the line of the input
 which triggered the error is highlighted in red.  The state of LAMMPS in
-the status bar is set to "Failed." instead of "Ready."
+the status bar is set to "Failed." instead of "Ready."  Note that since
+version 3.0.6 the input is checked for problems before a run by default
+(see the :ref:`Run menu <run_menu>`); a typo like this is normally
+caught by that check first, and the dialog shown here appears when
+choosing to run anyway or when the pre-run check is disabled.
 
 .. image:: JPG/lammps-gui-run-error.png
    :align: center

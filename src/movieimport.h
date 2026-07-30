@@ -18,6 +18,7 @@
 
 class QLabel;
 class QSpinBox;
+class QTimer;
 
 /**
  * @brief Properties of the first video stream of a movie file
@@ -65,6 +66,29 @@ struct MovieInfo {
 [[nodiscard]] extern int selectedFrameCount(int first, int last, int interval);
 
 /**
+ * @brief Time offset of a movie frame
+ * @param frame Frame number, counted from 1
+ * @param info  Movie properties; frames and duration must be set
+ * @return Offset of the frame in seconds, 0.0 when it cannot be computed
+ */
+[[nodiscard]] extern double frameToSeconds(int frame, const MovieInfo &info);
+
+/**
+ * @brief Check whether the sampled frame is far from the selected range
+ * @param first       First frame of the selected range
+ * @param last        Last frame of the selected range (inclusive)
+ * @param samplepos   Frame number of the current sample frame
+ * @param totalframes Number of frames of the whole movie
+ * @return True when a frame near the middle of the selected range should be
+ *         decoded to recalibrate the size estimate
+ *
+ * The size of a compressed frame can vary over the course of a movie, so the
+ * estimate is refreshed when the middle of the selected range has moved away
+ * from the sampled frame by more than a tenth of the movie.
+ */
+[[nodiscard]] extern bool sampleOutdated(int first, int last, int samplepos, int totalframes);
+
+/**
  * @brief Determine the properties of a movie file by running ffprobe
  * @param filename Path to the movie file
  * @return Movie properties, with MovieInfo::valid indicating success
@@ -99,6 +123,11 @@ struct MovieInfo {
  * times the number of selected frames.  When it exceeds Cfg::MOVIE_WARN_BYTES,
  * Cfg::MOVIE_WARN_FRAMES frames, or most of the free space on the volume
  * holding the temporary directory, a highlighted warning is displayed.
+ *
+ * The sample frame is shown as a thumbnail next to the movie properties.  When
+ * the middle of the selected range moves away from the sampled frame (see
+ * sampleOutdated()), a frame near the new middle is decoded after a short
+ * delay, and the thumbnail and the size estimate are refreshed from it.
  */
 class MovieImportDialog : public QDialog {
     Q_OBJECT
@@ -141,20 +170,36 @@ public:
 private slots:
     /**
      * @brief Recompute the frame count, the size estimate, and the warning
+     *
+     * Also schedules updateSample() when the selected range has moved away
+     * from the frame the current estimate was calibrated with.
      */
     void updateEstimate();
 
+    /**
+     * @brief Decode a frame near the middle of the selected range
+     *
+     * Refreshes the thumbnail and the per-frame size for the estimate.  The
+     * previous sample is kept when decoding fails.
+     */
+    void updateSample();
+
 private:
-    MovieInfo movieinfo; ///< Properties of the movie to import
-    qint64 samplebytes;  ///< Size of a single extracted frame, 0 if unknown
-    qint64 diskfree;     ///< Free space on the temporary volume, 0 if unknown
-    QSpinBox *firstBox;  ///< First frame of the extracted range
-    QSpinBox *lastBox;   ///< Last frame of the extracted range
-    QSpinBox *stepBox;   ///< Interval between extracted frames
-    QLabel *countLabel;  ///< Number of frames that will be extracted
-    QLabel *sizeLabel;   ///< Estimated size of the extracted frames
-    QLabel *noteIcon;    ///< Icon of the size estimate note, swapped when warning
-    QLabel *noteLabel;   ///< Size estimate note, highlighted when warning
+    MovieInfo movieinfo;  ///< Properties of the movie to import
+    QString moviefile;    ///< Path of the movie file, needed to decode samples
+    qint64 samplebytes;   ///< Size of a single extracted frame, 0 if unknown
+    qint64 diskfree;      ///< Free space on the temporary volume, 0 if unknown
+    int samplepos;        ///< Frame number the sample was taken near, counted from 1
+    QSpinBox *firstBox;   ///< First frame of the extracted range
+    QSpinBox *lastBox;    ///< Last frame of the extracted range
+    QSpinBox *stepBox;    ///< Interval between extracted frames
+    QLabel *countLabel;   ///< Number of frames that will be extracted
+    QLabel *sizeLabel;    ///< Estimated size of the extracted frames
+    QLabel *noteIcon;     ///< Icon of the size estimate note, swapped when warning
+    QLabel *noteLabel;    ///< Size estimate note, highlighted when warning
+    QLabel *previewImage; ///< Thumbnail of the sample frame
+    QLabel *previewText;  ///< Caption stating which frame the thumbnail shows
+    QTimer *sampleTimer;  ///< Delays re-sampling while the range is being edited
 };
 #endif
 

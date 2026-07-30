@@ -103,6 +103,64 @@ TEST(SelectedFrameCount, Invalid)
     EXPECT_EQ(selectedFrameCount(1, 10, -1), 0);
 }
 
+TEST(FrameToSeconds, Valid)
+{
+    MovieInfo info;
+    info.frames   = 100;
+    info.duration = 4.0;
+    // the first frame is at the start of the movie
+    EXPECT_DOUBLE_EQ(frameToSeconds(1, info), 0.0);
+    // the middle frame of the movie is near half of the duration
+    EXPECT_DOUBLE_EQ(frameToSeconds(51, info), 2.0);
+    // the last frame is one frame time before the end
+    EXPECT_DOUBLE_EQ(frameToSeconds(100, info), 4.0 * 99 / 100);
+}
+
+TEST(FrameToSeconds, Invalid)
+{
+    MovieInfo info;
+    info.frames   = 100;
+    info.duration = 4.0;
+    EXPECT_DOUBLE_EQ(frameToSeconds(0, info), 0.0);
+    EXPECT_DOUBLE_EQ(frameToSeconds(-5, info), 0.0);
+    info.frames = 0;
+    EXPECT_DOUBLE_EQ(frameToSeconds(10, info), 0.0);
+    info.frames   = 100;
+    info.duration = 0.0;
+    EXPECT_DOUBLE_EQ(frameToSeconds(10, info), 0.0);
+}
+
+TEST(SampleOutdated, StaysCurrent)
+{
+    // the initial sample sits in the middle of the full range
+    EXPECT_FALSE(sampleOutdated(1, 1000, 500, 1000));
+    // trimming either end a little keeps the middle close to the sample
+    EXPECT_FALSE(sampleOutdated(100, 1000, 500, 1000));
+    EXPECT_FALSE(sampleOutdated(1, 900, 500, 1000));
+    // the threshold is a tenth of the movie: a shift of exactly that much
+    // is still accepted
+    EXPECT_FALSE(sampleOutdated(1, 1200, 500, 1000));
+}
+
+TEST(SampleOutdated, NeedsRefresh)
+{
+    // a narrow range at the start is far from a mid-movie sample
+    EXPECT_TRUE(sampleOutdated(1, 10, 500, 1000));
+    // ... and a narrow range at the end, too
+    EXPECT_TRUE(sampleOutdated(990, 1000, 500, 1000));
+    // shifting the middle by more than a tenth of the movie
+    EXPECT_TRUE(sampleOutdated(1, 1210, 500, 1000));
+    // short movies use a minimum threshold of one frame
+    EXPECT_TRUE(sampleOutdated(1, 1, 3, 5));
+}
+
+TEST(SampleOutdated, Invalid)
+{
+    // inconsistent input never triggers a re-sample
+    EXPECT_FALSE(sampleOutdated(10, 1, 5, 1000));
+    EXPECT_FALSE(sampleOutdated(1, 10, 5, 0));
+}
+
 TEST(ParseProbeOutput, FrameCountFromContainer)
 {
     const MovieInfo info = parseProbeOutput(mp4_probe);

@@ -26,15 +26,3 @@ LAMMPS-GUI TODO list:
   a few typical use scenarios (could perhaps use some LLM based KI to
   look up suggestions for answers?).
 
-## Snapshot viewer (SlideShow) enhancements
-  Both follow-ups to the "view arbitrary image files in the snapshot viewer"
-  feature are done: the conversion cache is `ImageCache`
-  (`src/imagecache.{cpp,h}`), and movie frame extraction is `MovieImportDialog`
-  plus the probe/extract free functions in `src/movieimport.{cpp,h}`, routed
-  through `isMovieFile()` and `SlideShow::addMovie()`.
-  Possible further work:
-  - Reuse the extracted frames of a movie between sessions, e.g. by caching
-    them next to the movie file instead of in a temporary folder.
-  - Show a thumbnail of the sample frame in the movie import dialog, and
-    refresh the size estimate when the selected range moves far from it.
-

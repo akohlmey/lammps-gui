@@ -20,6 +20,7 @@
 #include <QDir>
 #include <QEventLoop>
 #include <QFile>
+#include <QFileInfo>
 #include <QLabel>
 #include <QNetworkAccessManager>
 #include <QNetworkProxy>
@@ -34,6 +35,14 @@
 URLDownloader::URLDownloader(QWidget *parent) :
     manager(new QNetworkAccessManager), parentWidget(parent)
 {
+    // a stalled connection must eventually fail the transfer: download() blocks
+    // in an event loop until the reply finishes, so without this timeout it
+    // would wait forever without any feedback to the user
+    stallTimeout =
+        qBound(Cfg::DOWNLOAD_TIMEOUT_MIN,
+               QSettings().value(Keys::DOWNLOAD_TIMEOUT, Cfg::DOWNLOAD_TIMEOUT_DEFAULT).toInt(),
+               Cfg::DOWNLOAD_TIMEOUT_MAX);
+    manager->setTransferTimeout(stallTimeout * 1000);
     configureProxy();
 }
 
@@ -60,9 +69,22 @@ void URLDownloader::configureProxy()
     }
 }
 
-bool URLDownloader::download(const QString &url, const QString &file, bool showDialog)
+void URLDownloader::abort()
+{
+    aborted = true;
+    if (currentReply) currentReply->abort();
+}
+
+bool URLDownloader::download(const QString &url, const QString &file, bool showDialog,
+                             bool keepBackup)
 {
     lastError.clear();
+
+    // one cancellation stops the whole batch: refuse further downloads, too
+    if (aborted) {
+        lastError = "Download canceled";
+        return false;
+    }
 
     QDialog *dlg = nullptr;
     if (showDialog) {
@@ -90,17 +112,29 @@ bool URLDownloader::download(const QString &url, const QString &file, bool showD
                          QNetworkRequest::NoLessSafeRedirectPolicy);
 
     QNetworkReply *reply = manager->get(request);
+    currentReply         = reply;
 
     // block until the download finishes
     QEventLoop loop;
     QObject::connect(reply, &QNetworkReply::finished, &loop, &QEventLoop::quit);
     loop.exec();
+    currentReply = nullptr;
 
     // close the dialog now that the download is complete
     delete dlg;
 
     if (reply->error() != QNetworkReply::NoError) {
-        lastError = reply->errorString();
+        // a canceled reply is either the user aborting or the transfer timeout;
+        // report the latter with the stall duration (Qt versions differ in
+        // which of the two error codes a transfer timeout produces)
+        if (aborted)
+            lastError = "Download canceled";
+        else if ((reply->error() == QNetworkReply::TimeoutError) ||
+                 (reply->error() == QNetworkReply::OperationCanceledError))
+            lastError =
+                QString("Connection timed out: no data received for %1 seconds").arg(stallTimeout);
+        else
+            lastError = reply->errorString();
         reply->deleteLater();
         return false;
     }
@@ -139,6 +173,11 @@ bool URLDownloader::download(const QString &url, const QString &file, bool showD
         return false;
     }
 
+    // verify the SHA-256 checksum of the received data against the SHA256SUMS
+    // file on the server, if available, *before* anything is written to disk,
+    // so a corrupted download can never replace a working file
+    if (!verifyChecksum(url, data)) return false;
+
     // write to a temporary file that is atomically renamed into place only after
     // a complete, successful write, so an interrupted or failed write can never
     // leave a truncated file at the destination path.
@@ -152,14 +191,19 @@ bool URLDownloader::download(const QString &url, const QString &file, bool showD
         outFile.cancelWriting();
         return false;
     }
+
+    // A shared library that is currently loaded is locked on Windows: it can
+    // be neither deleted nor overwritten, but it can be renamed.  Moving the
+    // current file out of the way turns the commit below into a plain rename,
+    // so it also succeeds on Windows while the old library is still in use.
+    // The backup file is removed on the next launch of LAMMPS-GUI.
+    QString backup;
+    if (keepBackup && QFileInfo::exists(file)) backup = renameToBackup(file);
+
     if (!outFile.commit()) {
         lastError = QString("Failed to finalize file: %1").arg(file);
-        return false;
-    }
-
-    // verify SHA-256 checksum if a SHA256SUMS file is available
-    if (!verifyChecksum(url, file)) {
-        QFile::remove(file);
+        // put the previous file back when the update failed
+        if (!backup.isEmpty()) QFile::rename(backup, file);
         return false;
     }
 
@@ -168,15 +212,19 @@ bool URLDownloader::download(const QString &url, const QString &file, bool showD
 
 QByteArray URLDownloader::fetchRawContent(const QString &url)
 {
+    if (aborted) return {};
+
     QNetworkRequest request{QUrl(url)};
     request.setAttribute(QNetworkRequest::RedirectPolicyAttribute,
                          QNetworkRequest::NoLessSafeRedirectPolicy);
 
     QNetworkReply *reply = manager->get(request);
+    currentReply         = reply;
 
     QEventLoop loop;
     QObject::connect(reply, &QNetworkReply::finished, &loop, &QEventLoop::quit);
     loop.exec();
+    currentReply = nullptr;
 
     QByteArray data;
     if (reply->error() == QNetworkReply::NoError) {
@@ -232,13 +280,13 @@ QString URLDownloader::getLocalChecksum(const QString &file)
     return hasher.result().toHex().toLower();
 }
 
-bool URLDownloader::verifyChecksum(const QString &url, const QString &file)
+bool URLDownloader::verifyChecksum(const QString &url, const QByteArray &data)
 {
     QString expectedHash = getRemoteChecksum(url);
     if (expectedHash.isEmpty()) return true; // no SHA256SUMS entry — nothing to check
 
-    QString actualHash = getLocalChecksum(file);
-    if (actualHash.isEmpty()) return true;
+    const QString actualHash = QString::fromLatin1(
+        QCryptographicHash::hash(data, QCryptographicHash::Sha256).toHex().toLower());
 
     if (actualHash != expectedHash) {
         int lastSlash    = url.lastIndexOf('/');

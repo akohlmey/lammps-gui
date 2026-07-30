@@ -58,6 +58,89 @@
   <content_rating type="oars-1.1" />
 
   <releases>
+    <release version="3.0.7" timestamp="1785424779">
+      <description>
+        <p>Maintenance release with small feature additions and bug fixes.
+        The bulk of the changes are actually implemented in LAMMPS:</p>
+        <ul>
+          <li>add GUI support for dump image enhancements in LAMMPS:</li>
+          <ul>
+            <li>depth cueing</li>
+            <li>depth of focus</li>
+            <li>specular settings (change appearance of material)</li>
+            <li>outline drawing style</li>
+            <li>set SSAO samples to adjust rendering speed</li>
+            <li>adjust image gamma value</li>
+          </ul>
+          <li>fix warnings indicated by coverity scan</li>
+        </ul>
+      </description>
+    </release>
+    <release version="3.0.6" timestamp="1784576289">
+      <description>
+        <p>Maintenance release with small feature additions and bug fixes.</p>
+        <ul>
+          <li>Add more detailed resource data and a manifest</li>
+          <li>Try to extract diameter information from more kinds of pair styles</li>
+          <li>Support choosing between a static and a dynamic view center in the Image Viewer</li>
+          <li>Add File menu entry to write a restart file with the current state of the system</li>
+          <li>Add Run menu entry to extend the previous run by a given number of steps</li>
+          <li>Rewrite syntax highlighting on a shared syntax engine: aware of line continuations, argument roles are colored, unknown commands and styles are marked</li>
+          <li>Regroup the command colors: the *_modify commands get their own color group, the file input commands join the output group</li>
+          <li>Use the same color for IDs whether they are being defined (fix, compute, dump) or referenced (fix_modify, unfix, and so on)</li>
+          <li>Recognize and complete sub-styles of hybrid styles in style and coeff commands</li>
+          <li>Mark dump image keywords, show color names in their actual color, and complete both</li>
+          <li>Detect the light/dark theme from the platform color scheme when available</li>
+          <li>Auto-completion and context help are aware of line continuations</li>
+          <li>Add automatic pre-run input check with a run-anyway dialog plus Run menu entries to check the input statically or via a dry run</li>
+          <li>Tweak some icons for better readability at 24x24px size</li>
+          <li>Show the sample frame behind the movie import size estimate as a thumbnail</li>
+          <li>Skip the Image Viewer re-render after closing the Preferences dialog when the LAMMPS instance had to be recreated</li>
+          <li>Remove temporary image frame files also when a render in the Image Viewer fails</li>
+          <li>Find external helper programs like ffmpeg in common package manager locations on macOS</li>
+          <li>Delete a downloaded LAMMPS shared library for any platform when resetting the preferences</li>
+          <li>Verify the checksum of a downloaded LAMMPS library before it replaces a working file, rename a locked library instead of failing on Windows, and clean up backups and partial downloads at launch</li>
+          <li>Consistent file dialogs: always start in the input file directory, offer default file names derived from the input file name, and filter for the expected file types</li>
+          <li>Abort a download when no data arrives for a configurable time (General Settings, default 10 seconds) instead of waiting forever without feedback on a stalled connection</li>
+          <li>Report a failed tutorial download with a clear error dialog pointing to the LAMMPS forum instead of failing silently</li>
+          <li>Show tutorial downloads in a progress dialog with a Cancel button, visible from the first network request on</li>
+          <li>Keep the Set Variables dialog in sync with index variable edits in the input script: a changed definition in the input wins over an earlier dialog override</li>
+          <li>Mark values in the Set Variables dialog that override the input script in bold and draw a thin frame around the overridden value in the editor</li>
+          <li>Offer the Set Variables dialog in the editor context menu when the current line defines an index style variable</li>
+          <li>Use spin boxes for the SSAO strength, Shiny, and view center fields of the Global image settings dialog</li>
+        </ul>
+      </description>
+    </release>
+    <release version="3.0.5" timestamp="1784426451">
+      <description>
+        <p>Windows-only maintenance release with Windows specific updates.</p>
+        <ul>
+          <li>Add tooling to implement cryptographic signing of executables and the installer</li>
+          <li>Create a GUI executable with a workaround to still use the console capture</li>
+          <li>Update citation info file</li>
+          <li>Replace ugly Windows FFMpeg concat file hack with a portable solution</li>
+        </ul>
+      </description>
+    </release>
+    <release version="3.0.4" timestamp="1783600400">
+      <description>
+        <p>Maintenance release with small feature additions and bug fixes.</p>
+        <ul>
+          <li>Update the list of materials science tutorials to 18 to correspond the latest status of the collection</li>
+          <li>Import additional tutorial logos and blurbs for all 18 tutorials</li>
+          <li>Reenable setting index style variables from Set Variables dialog which broke when making variable behavior more consistent for image creation</li>
+          <li>Support setting the atom size from atom style variables</li>
+          <li>Update citation section with newly available information</li>
+          <li>Add a missing dependency to always render PDF files correctly</li>
+          <li>Prevent MSVC builds of LAMMPS-GUI from downloading a GCC compiled LAMMPS shared library</li>
+          <li>Document that MSVC support is for development but not packaging</li>
+          <li>Make the column selection when plotting external data more intuitive</li>
+          <li>Add a little buffer space between the largest and smallest data value and the y-axis limits of a chart</li>
+          <li>Add a custom 404 error page</li>
+          <li>Catch and display FFMpeg and ImageMagick errors and tune encoding settings for H.264 and WebM</li>
+        </ul>
+      </description>
+    </release>
     <release version="3.0.2" timestamp="1783598400">
       <description>
         <p>Maintenance release with small feature additions and bug fixes.</p>
@@ -83,6 +166,10 @@
           <li>Add support to enable collecting code coverage information during compilation</li>
           <li>Add targets to report code coverage data</li>
           <li>Add support to enable known code sanitizers for GNU and Clang compilers during compilation</li>
+          <li>Fix the Set Variables dialog, whose values no longer took precedence over index variable definitions in the input script: the variables are now re-created before each run instead of being passed only when the LAMMPS instance is first created, where they were immediately discarded by the cleanup of variables left over from the previous run</li>
+          <li>Make the column selection when plotting external data files explicit: each column now has an exclusive radio button that marks it as the x-axis and a check box that plots it on the y-axis, and columns with neither selected are ignored. When the x-axis choice moves to a different column, the previous x-axis column is plotted again. Previously the first column without a check mark silently became the x-axis. Derived columns can now also be selected as the x-axis</li>
+          <li>Add a little buffer space between the largest and smallest data value and the y-axis limits of a chart, so extrema like the minimum of an energy-volume curve are no longer drawn on the plot frame itself; a tighter framing remains available through the range sliders</li>
+          <li>The atom Size setting of the snapshot image viewer can now select atom-style variables defined in the current simulation state, whose per-atom values are then used directly as atom diameters -- for example to apply a scaling factor to a per-atom property or to per-atom data from computes and fixes referenced by the variable</li>
         </ul>
       </description>
     </release>

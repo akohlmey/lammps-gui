@@ -1,2 +1,7 @@
-/paper.html
-/paper.pdf
+/*.fls
+/*.aux
+/*.xdv
+/*.log
+/*.pdf
+/*.fdb_latexmk
+/*.html

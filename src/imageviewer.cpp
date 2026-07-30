@@ -225,8 +225,8 @@ QPixmap color_icon(const QColor &color)
 QJsonObject loadJsonColors(QWidget *parent)
 {
     QJsonObject obj;
-    QString fileName = QFileDialog::getOpenFileName(parent, "Load Colors from JSON", "",
-                                                    "JSON files (*.json);;All files (*)");
+    QString fileName = QFileDialog::getOpenFileName(parent, "Load Colors from JSON",
+                                                    QDir::currentPath(), Cfg::FILTER_JSON);
     if (fileName.isEmpty()) return obj;
 
     QFile file(fileName);
@@ -285,9 +285,11 @@ void saveJsonColors(QWidget *parent, const QJsonArray &colors, const QJsonObject
     root["colors"]      = colors;
     root["lights"]      = lights;
 
-    QString fileName = QFileDialog::getSaveFileName(parent, "Save Colors to JSON", "",
-                                                    "JSON files (*.json);;All files (*)");
+    QString fileName = QFileDialog::getSaveFileName(parent, "Save Colors to JSON",
+                                                    QDir::current().absoluteFilePath("colors.json"),
+                                                    Cfg::FILTER_JSON);
     if (fileName.isEmpty()) return;
+    fileName = ensureFileSuffix(fileName, "json");
 
     QFile file(fileName);
     if (!file.open(QIODevice::WriteOnly)) {
@@ -438,6 +440,14 @@ ImageViewer::ImageViewer(const QString &fileName, LammpsWrapper *_lammps, Lammps
     doanti->setCheckable(true);
     doanti->setToolTip("Toggle anti-aliasing");
     doanti->setObjectName("antialias");
+    auto *dodepth = new QPushButton(QIcon(":/icons/depth-cue.svg"), "");
+    dodepth->setCheckable(true);
+    dodepth->setToolTip("Toggle depth cueing");
+    dodepth->setObjectName("depthcue");
+    auto *dodefocus = new QPushButton(QIcon(":/icons/defocus.svg"), "");
+    dodefocus->setCheckable(true);
+    dodefocus->setToolTip("Toggle defocusing of distant objects");
+    dodefocus->setObjectName("defocus");
     auto *doshiny = new QPushButton(QIcon(":/icons/image-shiny.svg"), "");
     doshiny->setCheckable(true);
     doshiny->setToolTip("Toggle shininess");
@@ -496,8 +506,8 @@ ImageViewer::ImageViewer(const QString &fileName, LammpsWrapper *_lammps, Lammps
 
     // square toolbar buttons with a snug, uniform icon (shared policy)
     styleToolButtons(buttonhint,
-                     {dossao, doanti, doshiny, dovdw, dobond, dobox, doaxes, zoomin, zoomout,
-                      rotleft, rotright, rotup, rotdown, recenter, reset, fitwin});
+                     {dossao, doanti, dodepth, dodefocus, doshiny, dovdw, dobond, dobox, doaxes,
+                      zoomin, zoomout, rotleft, rotright, rotup, rotdown, recenter, reset, fitwin});
 
     // match the first-row controls (menu bar and size fields) to the toolbar
     // button height so both rows line up and the layout looks balanced
@@ -573,6 +583,8 @@ ImageViewer::ImageViewer(const QString &fileName, LammpsWrapper *_lammps, Lammps
     buttonLayout->addWidget(dummy2);
     buttonLayout->addWidget(dossao);
     buttonLayout->addWidget(doanti);
+    buttonLayout->addWidget(dodepth);
+    buttonLayout->addWidget(dodefocus);
     buttonLayout->addWidget(doshiny);
     buttonLayout->addWidget(dovdw);
     buttonLayout->addWidget(dobond);
@@ -613,6 +625,8 @@ ImageViewer::ImageViewer(const QString &fileName, LammpsWrapper *_lammps, Lammps
 
     connect(dossao, &QPushButton::released, this, &ImageViewer::toggleSsao);
     connect(doanti, &QPushButton::released, this, &ImageViewer::toggleAnti);
+    connect(dodepth, &QPushButton::released, this, &ImageViewer::toggleDepthcue);
+    connect(dodefocus, &QPushButton::released, this, &ImageViewer::toggleDefocus);
     connect(doshiny, &QPushButton::released, this, &ImageViewer::toggleShiny);
     connect(dovdw, &QPushButton::released, this, &ImageViewer::toggleVdw);
     connect(dobond, &QPushButton::released, this, &ImageViewer::toggleBond);
@@ -661,6 +675,8 @@ ImageViewer::ImageViewer(const QString &fileName, LammpsWrapper *_lammps, Lammps
     doaxes->setChecked(showaxes);
     dossao->setChecked(usessao);
     doanti->setChecked(antialias);
+    dodepth->setChecked(usedepthcue);
+    dodefocus->setChecked(usedefocus);
 
     scrollArea->setVisible(true);
     updateActions();
@@ -729,6 +745,19 @@ void ImageViewer::readImageSettings()
     backcolor2     = settings.value(Keys::BACKCOLOR2, "white").toString();
     usegradient    = settings.value(Keys::USEGRADIENT, true).toBool();
     ssaoval        = 0.6;
+    ssaosamples    = 0;
+    usedepthcue    = false;
+    depthcuefactor = 0.5;
+    depthcuecolor  = "auto";
+    depthcuestart  = "auto";
+    usedefocus     = false;
+    defocusfactor  = 0.5;
+    defocusstart   = "auto";
+    useoutline     = false;
+    outlinewidth   = 2;
+    outlinecolor   = "black";
+    specular       = "auto";
+    gammaval       = 1.0;
     atomcustom     = false;
     atomtrans      = 1.0;
     bondtrans      = 1.0;
@@ -766,6 +795,7 @@ void ImageViewer::readImageSettings()
     tridiam        = 0.2;
     triflag        = CYLINDERS;
     xcenter = ycenter = zcenter = 0.5;
+    dynamiccenter               = false;
     // the camera up direction defaults to the z-axis in 3d and the y-axis in 2d
     xup = yup = zup = 0.0;
     if (lammps->extractSetting("dimension") == 2) {
@@ -796,6 +826,10 @@ void ImageViewer::resetView()
     if (button) button->setChecked(usessao);
     button = findChild<QPushButton *>("antialias");
     if (button) button->setChecked(antialias);
+    button = findChild<QPushButton *>("depthcue");
+    if (button) button->setChecked(usedepthcue);
+    button = findChild<QPushButton *>("defocus");
+    if (button) button->setChecked(usedefocus);
     button = findChild<QPushButton *>("shiny");
     if (button) button->setChecked(shinyfactor > SHINY_CUT);
     button = findChild<QPushButton *>("vdw");
@@ -864,6 +898,24 @@ void ImageViewer::toggleAnti()
     if (!button) return;
     antialias = !antialias;
     button->setChecked(antialias);
+    createImage();
+}
+
+void ImageViewer::toggleDepthcue()
+{
+    auto *button = qobject_cast<QPushButton *>(sender());
+    if (!button) return;
+    usedepthcue = !usedepthcue;
+    button->setChecked(usedepthcue);
+    createImage();
+}
+
+void ImageViewer::toggleDefocus()
+{
+    auto *button = qobject_cast<QPushButton *>(sender());
+    if (!button) return;
+    usedefocus = !usedefocus;
+    button->setChecked(usedefocus);
     createImage();
 }
 
@@ -1336,14 +1388,38 @@ DumpImageParams ImageViewer::gatherDumpImageParams(const QString &dumpfilename)
 
     usediameter = lammps->extractSetting("radius_flag") != 0;
     usesigma    = false;
-    // if we cannot use element info or diameter data, try to use Lennard-Jones sigma for radius
-    if (!useelements && !usediameter && pair_style && (strncmp(pair_style, "lj/", 3) == 0)) {
-        auto **sigma = static_cast<double **>(lammps->extractPair("sigma"));
-        if (sigma) {
-            usesigma = true;
-            for (int i = 1; i <= ntypes; ++i) {
-                if (sigma[i][i] > 0.0)
-                    adiams += QString("adiam %1 %2 ").arg(i).arg(vdwfactor * sigma[i][i]);
+    // if we cannot use element info or diameter data,
+    // try to extract a number from the pair style, e.g. the Lennard-Jones sigma for radius
+    if (!useelements && !usediameter && pair_style) {
+        if ((strncmp(pair_style, "lj/", 3) == 0) || (strncmp(pair_style, "born/", 5) == 0) ||
+            (strncmp(pair_style, "mie/", 4) == 0)) {
+            auto **sigma = static_cast<double **>(lammps->extractPair("sigma"));
+            if (sigma) {
+                usesigma = true;
+                for (int i = 1; i <= ntypes; ++i) {
+                    if (sigma[i][i] > 0.0)
+                        adiams += QString("adiam %1 %2 ").arg(i).arg(vdwfactor * sigma[i][i]);
+                }
+            }
+        } else if ((strncmp(pair_style, "morse", 5) == 0) || (strncmp(pair_style, "nm/", 3) == 0)) {
+            auto **r0 = static_cast<double **>(lammps->extractPair("r0"));
+            if (r0) {
+                usesigma = true;
+                for (int i = 1; i <= ntypes; ++i) {
+                    if (r0[i][i] > 0.0)
+                        adiams += QString("adiam %1 %2 ").arg(i).arg(vdwfactor * r0[i][i]);
+                }
+            }
+        } else if (strncmp(pair_style, "colloid", 7) == 0) {
+            auto **diameter = static_cast<double **>(lammps->extractPair("d1"));
+            auto **sigma    = static_cast<double **>(lammps->extractPair("sigma"));
+            if (diameter && sigma) {
+                usesigma = true;
+                for (int i = 1; i <= ntypes; ++i) {
+                    double diamval = sigma[i][i] + 0.5 * diameter[i][i];
+                    if (diamval > 0.0)
+                        adiams += QString("adiam %1 %2 ").arg(i).arg(vdwfactor * diamval);
+                }
             }
         }
     }
@@ -1351,8 +1427,12 @@ DumpImageParams ImageViewer::gatherDumpImageParams(const QString &dumpfilename)
     // resolve the final adiams string depending on the atom-size handling; this
     // mirrors the show/hide decisions made in syncAtomSizeWidgets()
     if (showatoms) {
-        if (atomcustom && (atomdiam != "element") && (atomdiam != "diameter") &&
-            (atomdiam != "sigma")) {
+        if (atomcustom && atomdiam.startsWith("v_")) {
+            // an atom-style variable provides the per-atom diameters directly,
+            // so the per-type dump_modify adiam settings are not used
+            adiams.clear();
+        } else if (atomcustom && (atomdiam != "element") && (atomdiam != "diameter") &&
+                   (atomdiam != "sigma")) {
             adiams.clear();
             for (int i = 1; i <= ntypes; ++i)
                 adiams += QString("adiam %1 %2 ").arg(i).arg(vdwfactor * atomSize);
@@ -1429,6 +1509,20 @@ DumpImageParams ImageViewer::gatherDumpImageParams(const QString &dumpfilename)
     p.vrot        = vrot;
     p.usessao     = usessao;
     p.ssaoval     = ssaoval;
+    p.ssaosamples = ssaosamples;
+
+    // depth cueing / outlines / specular preset
+    p.usedepthcue    = usedepthcue;
+    p.depthcuefactor = depthcuefactor;
+    p.depthcuecolor  = depthcuecolor;
+    p.depthcuestart  = depthcuestart;
+    p.usedefocus     = usedefocus;
+    p.defocusfactor  = defocusfactor;
+    p.defocusstart   = defocusstart;
+    p.useoutline     = useoutline;
+    p.outlinewidth   = outlinewidth;
+    p.outlinecolor   = outlinecolor;
+    p.specular       = specular;
 
     // box / axes
     p.showbox    = showbox;
@@ -1441,9 +1535,10 @@ DumpImageParams ImageViewer::gatherDumpImageParams(const QString &dumpfilename)
     p.axesdiam   = axesdiam;
 
     // view center
-    p.xcenter = xcenter;
-    p.ycenter = ycenter;
-    p.zcenter = zcenter;
+    p.dynamiccenter = dynamiccenter;
+    p.xcenter       = xcenter;
+    p.ycenter       = ycenter;
+    p.zcenter       = zcenter;
 
     // camera up direction
     p.xup = xup;
@@ -1464,6 +1559,7 @@ DumpImageParams ImageViewer::gatherDumpImageParams(const QString &dumpfilename)
     p.keylight     = keylight;
     p.filllight    = filllight;
     p.backlight    = backlight;
+    p.gammaval     = gammaval;
 
     // colormap
     p.colormap        = colormap;
@@ -1500,7 +1596,8 @@ void ImageViewer::syncAtomSizeWidgets()
     if (!showatoms) {
         showsize = false;
     } else if (atomcustom) {
-        showsize = (atomdiam != "element") && (atomdiam != "diameter") && (atomdiam != "sigma");
+        showsize = (atomdiam != "element") && (atomdiam != "diameter") && (atomdiam != "sigma") &&
+                   !atomdiam.startsWith("v_");
     } else {
         showsize = !(useelements || usediameter || usesigma);
     }
@@ -1595,11 +1692,19 @@ void ImageViewer::createImage()
 
     // gather parameters (also refreshes use* members), sync the atom-size widgets,
     // and assemble the dump and dump_modify argument strings
-    const DumpImageParams params = gatherDumpImageParams(dumpfile.fileName());
+    DumpImageParams params = gatherDumpImageParams(dumpfile.fileName());
     syncAtomSizeWidgets();
+    const DumpImageCommand exportcmds = buildDumpImageCommand(params);
+    last_dumpargs                     = exportcmds.dumpargs;
+    last_modifyargs                   = exportcmds.modifyargs;
+
+    // with the SSAO Samples setting on "auto" interactive renders use a fixed,
+    // low sample count so the viewer stays responsive, while the exported
+    // command (cmdToClipboard) keeps deriving the count from the SSAO strength;
+    // an explicitly requested count is honored also here, so high-quality
+    // images can be saved straight from the viewer
+    if (params.ssaosamples == 0) params.ssaosamples = Cfg::SSAO_VIEW_SAMPLES;
     const DumpImageCommand cmds = buildDumpImageCommand(params);
-    last_dumpargs               = cmds.dumpargs;
-    last_modifyargs             = cmds.modifyargs;
 
     // Render with an explicit dump + run 0 rather than write_dump: the run does a
     // real modify->init(), which initializes any compute the image references
@@ -1617,6 +1722,8 @@ void ImageViewer::createImage()
     // happens on the first affected render.
     static const QRegularExpression colorscaleErr(
         QStringLiteral(R"(Dump ID (\S+) for colorscale not found)"));
+    static const QRegularExpression neighMultiErr(
+        QStringLiteral("Cannot use comm mode multi without multi-style neighbor lists"));
     QString dumpid = renderdumpid;
     QString errmsg;
     for (int attempt = 0; attempt < 2; ++attempt) {
@@ -1633,7 +1740,15 @@ void ImageViewer::createImage()
         // retry once under the missing colorscale dump id (unless we already use it)
         if (colmatch.hasMatch() && (colmatch.captured(1) != dumpid)) {
             dumpid = colmatch.captured(1);
+            StdoutSilencer guard;
             lammps->command("if $(is_defined(dump," + dumpid + ")) then 'undump " + dumpid + "'");
+            continue;
+        }
+        const auto neighmatch = neighMultiErr.match(errmsg);
+        // retry once more after turning off comm_modify multi
+        if (neighmatch.hasMatch()) {
+            StdoutSilencer guard;
+            lammps->command("comm_modify mode single");
             continue;
         }
         break;
@@ -1651,11 +1766,15 @@ void ImageViewer::createImage()
         lammps->command("uncompute " + bondComputeId);
     }
 
-    // restore the pre-render state on every exit path: remove the temporary
-    // molecule atoms/group created above and reset the render-status icon,
-    // otherwise a failed render leaves the icon stuck on "active" and the
-    // leftover atoms corrupt every subsequent render
+    // restore the pre-render state on every exit path: remove the per-step
+    // frame file(s) this render produced (also on the error paths, so frames
+    // written before a failure do not accumulate in the temporary directory),
+    // remove the temporary molecule atoms/group created above, and reset the
+    // render-status icon, otherwise a failed render leaves the icon stuck on
+    // "active" and the leftover atoms corrupt every subsequent render
     auto restoreRenderState = [&]() {
+        for (const auto &f : dumpdir.entryList({filename + ".*.ppm"}, QDir::Files))
+            QFile::remove(dumpdir.absoluteFilePath(f));
         if (molecule != "none") {
             lammps->command("neigh_modify exclude none");
             lammps->command(QString("delete_atoms group %1 compress no").arg(group));
@@ -1679,9 +1798,6 @@ void ImageViewer::createImage()
     QImageReader reader(imagepath);
     reader.setAutoTransform(true);
     const QImage newImage = reader.read();
-    // remove the per-step frame file(s) this render produced
-    for (const auto &f : dumpdir.entryList({filename + ".*.ppm"}, QDir::Files))
-        QFile::remove(dumpdir.absoluteFilePath(f));
 
     // read of new image failed. nothing left to do.
     if (newImage.isNull()) {
@@ -1702,7 +1818,7 @@ void ImageViewer::createImage()
 
 void ImageViewer::saveAs()
 {
-    exportImage(this, &image, "ImageViewer");
+    exportImage(this, &image, "ImageViewer", defaultFileStem(filename) + ".png");
 }
 
 void ImageViewer::copy()

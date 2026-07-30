@@ -55,8 +55,8 @@ constexpr int EXTRA_HEIGHT   = 130;
 } // namespace
 
 SlideShow::SlideShow(const QString &fileName, LammpsGui *_lammpsgui, QWidget *parent) :
-    QDialog(parent), lammpsgui(_lammpsgui), playtimer(nullptr), imageLabel(new QLabel),
-    scrollArea(new QScrollArea), scrollBar(new RangeBandSlider),
+    QDialog(parent), lammpsgui(_lammpsgui), filename(fileName), playtimer(nullptr),
+    imageLabel(new QLabel), scrollArea(new QScrollArea), scrollBar(new RangeBandSlider),
     imageCounter(new QLabel("Image   0 /   0 :")), imageName(new QLabel("(none)")),
     startBox(new QSpinBox), stopBox(new QSpinBox), cacheButton(new QPushButton), current(0),
     maxwidth(0), maxheight(0), timerDelay(100), doLoop(true), imageRotation(0), imageFlipH(false),
@@ -640,15 +640,16 @@ void SlideShow::stopRun()
 
 void SlideShow::saveCurrentImage()
 {
-    exportImage(this, &image, "SlideShow");
+    exportImage(this, &image, "SlideShow", defaultFileStem(filename) + ".png");
 }
 
 void SlideShow::movie()
 {
-    QString fileName =
-        QFileDialog::getSaveFileName(this, "Export to Movie File", ".",
-                                     "Movie Files (*.mp4 *.mkv *.avi *.mpg *.mpeg *.gif *.webm)");
+    QString fileName = QFileDialog::getSaveFileName(
+        this, "Export to Movie File",
+        QDir::current().absoluteFilePath(defaultFileStem(filename) + ".mp4"), Cfg::FILTER_MOVIE);
     if (fileName.isEmpty()) return;
+    fileName = ensureFileSuffix(fileName, "mp4");
 
     // restrict the exported frames to the active [Start, Stop] range
     const int lo = startIdx();
@@ -661,21 +662,26 @@ void SlideShow::movie()
         QTemporaryFile concatfile;
         if (concatfile.open()) {
             for (const auto &img : frames) {
-                concatfile.write("file '");
-                concatfile.write(curdir.absoluteFilePath(img).toLocal8Bit());
+                // the concat demuxer resolves any entry without a protocol prefix relative
+                // to the list file's directory; a Windows drive letter is not a protocol,
+                // so absolute C:/... paths would be mangled into <tempdir>/C:/...
+                // An explicit file: URL is always taken verbatim.  FFmpeg expects UTF-8
+                // and single quotes in the path must be escaped shell-style.
+                QString entry = curdir.absoluteFilePath(img);
+                entry.replace('\'', "'\\''");
+                concatfile.write("file 'file:");
+                concatfile.write(entry.toUtf8());
                 concatfile.write("'\n");
             }
             concatfile.close();
 
             const auto fps = QString::number(1.0 / (static_cast<double>(timerDelay) / 1000.0));
+            // construct command line
             QStringList args;
-            args << "-y";
-            args << "-safe"
-                 << "0";
-            args << "-r" << fps;
-            args << "-f"
-                 << "concat";
+            args << "-y" << "-safe" << "0" << "-r" << fps << "-f" << "concat";
             args << "-i" << concatfile.fileName();
+
+            // apply scaling and rotating/flipping
             QString filters;
             if (scaleFactor != 1.0) filters += QString("scale=iw*%1:-1,").arg(scaleFactor);
             if (imageRotation == 90.0) {
@@ -692,21 +698,42 @@ void SlideShow::movie()
                 filters.resize(filters.size() - 1);
                 args << "-vf" << filters;
             }
-            args << "-b:v"
-                 << "2000k";
+
+            // set encoder explicitly and tune settings based on file name extension
+            if (fileName.endsWith(".mp4") || fileName.endsWith(".mkv"))
+                args << "-c:v" << "libx264" << "-preset" << "slow" << "-crf" << "22"
+                     << "-tune" << "animation" << "-pix_fmt" << "yuv420p";
+            // VP9 must set bitrate to 0 to enable constant quality setting
+            if (fileName.endsWith(".webm"))
+                args << "-c:v" << "libvpx-vp9" << "-crf" << "24" << "-row-mt" << "1"
+                     << "-pix_fmt" << "yuv420p" << "-b:v" << "0";
+            else
+                args << "-b:v" << "2M";
+
+            // set bitrate and pixel format for decent quality and maximum compatibility
             args << "-r" << fps;
+            // set metadata
+            args << "-metadata" << "encoding_tool=LAMMPS-GUI v" LAMMPS_GUI_VERSION;
+
             args << fileName;
 
             QProcess ffmpeg;
-            ffmpeg.start("ffmpeg", args);
+            ffmpeg.start(findExe("ffmpeg"), args);
             ffmpeg.waitForFinished(-1);
+            if (ffmpeg.exitCode()) {
+                auto err = ffmpeg.readAllStandardError();
+                // trim off the verbose FFMpeg configuration dump and skip to the error message
+                int eol = err.indexOf("Error");
+                if (eol > 0) err.replace(0, eol, "");
+                critical(this, "Movie Creation Error", "FFMpeg returned:", err);
+            }
         } else {
             warning(this, "SlideShow Error",
                     "Cannot create temporary file for generating movie:", concatfile.errorString());
         }
     } else {
-        QString cmd = "magick";
-        if (!hasExe("magick")) cmd = "convert";
+        QString cmd = findExe("magick");
+        if (cmd.isEmpty()) cmd = findExe("convert");
         QStringList args;
         args << "-delay" << QString::number(timerDelay / 10);
         QDir curdir(".");
@@ -722,6 +749,12 @@ void SlideShow::movie()
         QProcess convert;
         convert.start(cmd, args);
         convert.waitForFinished(-1);
+        if (convert.exitCode()) {
+            auto err = convert.readAllStandardError();
+            int eol  = err.indexOf("Error");
+            if (eol > 0) err.replace(0, eol, "");
+            critical(this, "Movie Creation Error", "ImageMagick returned:", err);
+        }
     }
 }
 

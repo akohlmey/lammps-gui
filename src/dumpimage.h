@@ -47,7 +47,8 @@ struct DumpImageParams {
     bool usesigma;     ///< Lennard-Jones sigma usable as atom radius
     bool showatoms;    ///< draw atoms
     QString atomcolor; ///< custom atom color property
-    QString atomdiam;  ///< custom atom diameter property
+    QString atomdiam;  ///< custom atom diameter property (attribute name, a "v_" atom-style
+                       ///< variable reference, or a numeric diameter)
     double vdwfactor;  ///< van der Waals radius scaling factor
     double atomSize;   ///< explicit atom size (radius)
     QString elements;  ///< pre-built `element <X> <Y> ...` argument string
@@ -87,16 +88,29 @@ struct DumpImageParams {
     double bondcutoff; ///< autobond distance cutoff
 
     // ---- view / image ----
-    int xsize;          ///< rendered image width in pixels
-    int ysize;          ///< rendered image height in pixels
-    double zoom;        ///< zoom level
-    double shinyfactor; ///< shininess / specular factor
-    bool antialias;     ///< enable full-scene antialiasing
-    int dimension;      ///< system dimension (2 or 3)
-    int hrot;           ///< horizontal rotation angle
-    int vrot;           ///< vertical rotation angle
-    bool usessao;       ///< enable screen-space ambient occlusion
-    double ssaoval;     ///< SSAO strength
+    int xsize;             ///< rendered image width in pixels
+    int ysize;             ///< rendered image height in pixels
+    double zoom;           ///< zoom level
+    double shinyfactor;    ///< shininess / specular factor
+    bool antialias;        ///< enable full-scene anti-aliasing
+    int dimension;         ///< system dimension (2 or 3)
+    int hrot;              ///< horizontal rotation angle
+    int vrot;              ///< vertical rotation angle
+    bool usessao;          ///< enable screen-space ambient occlusion
+    double ssaoval;        ///< SSAO strength
+    int ssaosamples;       ///< SSAO sampling directions, 0 = derived from the SSAO strength
+    bool usedepthcue;      ///< enable depth cueing
+    double depthcuefactor; ///< depth cueing strength (0.0 - 1.0)
+    QString depthcuecolor; ///< fog color name, or "auto" = fade toward the background
+    QString depthcuestart; ///< fading start as a box fraction along the view direction, or "auto"
+    bool usedefocus;       ///< enable defocusing of distant objects
+    double defocusfactor;  ///< defocus blur strength (0.0 - 1.0)
+    QString defocusstart;  ///< blurring start as a box fraction along the view direction, or "auto"
+    bool useoutline;       ///< draw outlines at depth jumps
+    int outlinewidth;      ///< outline width in pixels (1 - 16)
+    QString outlinecolor;  ///< outline color name
+    QString specular;      ///< specular preset "none"/"wide"/"narrow"/"tight", or "auto" =
+                           ///< highlight width derived from the shiny factor
 
     // ---- box / axes ----
     bool showbox;      ///< draw simulation box
@@ -109,9 +123,10 @@ struct DumpImageParams {
     double axesdiam;   ///< axes diameter
 
     // ---- view center ----
-    double xcenter; ///< view center x coordinate
-    double ycenter; ///< view center y coordinate
-    double zcenter; ///< view center z coordinate
+    bool dynamiccenter; ///< use the dynamic ("d") instead of the static ("s") center flavor
+    double xcenter;     ///< view center x coordinate
+    double ycenter;     ///< view center y coordinate
+    double zcenter;     ///< view center z coordinate
 
     // ---- camera up direction ----
     double xup; ///< camera up vector x component
@@ -133,6 +148,8 @@ struct DumpImageParams {
     double keylight;                          ///< key light setting
     double filllight;                         ///< fill light setting
     double backlight;                         ///< back light setting
+    double gammaval;                          ///< gamma adjustment of rendered objects
+                                              ///< (0.1 - 10.0), 1.0 = unchanged
     int version;                              ///< LAMMPS version (date) id
 
     // ---- color maps (atoms / bonds) ----

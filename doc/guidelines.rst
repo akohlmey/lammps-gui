@@ -165,6 +165,13 @@ target (e.g. ``../Al_zhou.eam.alloy``); ``downloadTutorialFiles()`` detects a
 ``../<same-name>`` payload and copies the already-downloaded parent file in
 place of the placeholder.
 
+A manifest entry that is missing on the server (e.g. after a file was renamed
+without updating the ``.manifest``) does not abort the download: the remaining
+files are still fetched and a dialog then lists the missing files, with a
+button that opens the repository's issue tracker (``filesRepoUrl`` +
+``/issues``) so users can report them.  Only a failure to download the
+``.manifest`` itself or a cancellation by the user stops the setup.
+
 Incremental rollout
 -------------------
 

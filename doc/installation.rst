@@ -30,7 +30,7 @@ Prerequisites and portability
 .. index:: CMake
 
 LAMMPS-GUI is programmed in C++ based on the C++17 standard and using
-the `Qt GUI framework <https://www.qt.io/development/framework>`_.  As
+the `Qt GUI framework <https://www.qt.io/development/qt-framework>`_.  As
 of LAMMPS-GUI version 2.0.0 Qt version 6.2 or later is required.
 LAMMPS-GUI can switch between a "light" and a "dark" theme according to
 the settings of the desktop environment.  Building LAMMPS-GUI from
@@ -109,11 +109,6 @@ or browse dialog on the first invocation.  When the flatpak version
 is updated, it may be required to reset the shared library location
 with ``-p ""`` and re-download the latest version.
 
-.. versionchanged:: 1.8.4
-
-   The minimum LAMMPS version required by LAMMPS-GUI is now 22 July 2025
-   update2
-
 .. versionchanged:: 3.0.1
 
    The minimum LAMMPS version required by LAMMPS-GUI is now 4 July 2026
@@ -157,20 +152,63 @@ Windows 10 and later
    :align: right
    :width: 25%
 
-After downloading either the ``LAMMPS-Win10-64bit-GUI-<LAMMPS version>.exe``
-or the ``LAMMPS-GUI-Win10-x86_64-<LAMMPS-GUI version>.exe`` installer
-package, you need to execute it, and start the installation process.
-Depending on your security settings of your web browser, you may have to
-explicitly tell it to download the file and then confirm **twice** to
-*keep the downloaded file* despite the claims that it may be dangerous
-and insecure.  Since the installer packages are currently not
-cryptographically signed, you may also have to enable "Developer Mode"
-in the Windows System Settings to be able to run the installer.
-
 .. image:: JPG/windows-download-keep1.png
-   :align: center
-   :width: 33%
+   :align: right
+   :width: 25%
 
+After downloading either the ``LAMMPS-Win10-64bit-GUI-<LAMMPS
+version>.exe`` or the ``LAMMPS-GUI-Win10-x86_64-<LAMMPS-GUI
+version>.exe`` installer package, you need to execute it, and start the
+installation process.  Depending on your security settings of your web
+browser, you may have to explicitly tell it to download the file and
+then confirm **twice** to *keep the downloaded file* despite the claims
+that it may be dangerous and insecure.  The main reason for that is that
+one needs to pay for being a registered developer and obtain a
+corresponding cryptographic signature to sign the binaries with.
+
+.. admonition:: Managing Microsoft Defender SmartScreen protection
+   :class: hint
+
+   Since LAMMPS-GUI version 3.0.5 the Windows installer packages and the
+   included executables are cryptographically signed with a
+   *self-signed* certificate.  You now have two options:
+
+   **Option A: just ignore the warnings**
+
+   When the message "Windows protected your PC" appears, click *More info*,
+   and then *Run anyway*.  You may also have to enable "Developer Mode"
+   in the Windows System Settings to be able to run the installer.
+   Using a cryptographic signature still guarantees the file has not
+   been modified since we built it, so you have that extra protection.
+   This may be needed since these installer packages sometimes cause
+   false positives with anti-virus software and are reported as containing
+   a trojan
+
+   **Option B: install and trust our self-signed certificate**
+
+   You can download our self-signed public certificate from
+   https://download.lammps.org/lammps-gui/LAMMPS-GUI.cer (The SHA-256
+   hash of this file is
+   ``2a90ba8d0d3406fba6d67e6edb3f4904b1684756abf777bd2c58464ab1dff2cd``) and
+   then open a "Command Prompt" with **Administrator** permissions.  At
+   the prompt you run the following two commands to import and trust the
+   certificate.
+
+   ``certutil -addstore Root LAMMPS-GUI.cer``
+
+   ``certutil -addstore TrustedPublisher LAMMPS-GUI.cer``
+
+   **Security note:** Adding a certificate to the Root store means your
+   computer will trust *anything* signed with the matching private key.
+   Only install certificates from publishers you trust, obtained over
+   HTTPS from their official site.
+
+   If you ever wish to *remove* this certificate, you can do it with
+   with the following commands.
+
+   ``certutil -delstore Root "The LAMMPS Developers"``
+
+   ``certutil -delstore TrustedPublisher "The LAMMPS Developers"``
 
 MacOS 12 and later
 """"""""""""""""""
@@ -336,10 +374,6 @@ requires it, and if the module -- or, at run time, its icon-engine plugin
 -- is missing, the icons render blank.  The pre-compiled packages and
 installers already bundle it.
 
-.. versionchanged:: 2.0.0
-
-   LAMMPS-GUI now *requires* Qt 6.2 or later. Support for Qt 5.x has been removed.
-
 LAMMPS-GUI plugin version
 -------------------------
 
@@ -387,14 +421,14 @@ drag-n-drop installer, ``LAMMPS-GUI-macOS-multiarch-<version>.dmg``,
 when using the 'dmg' target (i.e. ``cmake --build <build dir> --target
 dmg`` or ``make dmg``).
 
-To build multi-arch executables that will run on both, arm64 and x86_64
-architectures natively, it is necessary to set the CMake variable ``-D
-CMAKE_OSX_ARCHITECTURES=arm64;x86_64``.  To achieve wide compatibility
-with different macOS versions, you can also set ``-D
+To build multi-arch executables on macOS that will run on both, arm64
+and x86_64 architectures natively, it is necessary to set the CMake
+variable ``-D CMAKE_OSX_ARCHITECTURES=arm64;x86_64``.  To achieve wide
+compatibility with different macOS versions, you can also set ``-D
 CMAKE_OSX_DEPLOYMENT_TARGET=12.0`` which will set compatibility to macOS
-12 (Monterey) and later, even if you are compiling on a more recent macOS
-version.  These are the settings used when building the pre-compiled
-LAMMPS-GUI packages.
+12 (Monterey) and later, even if you are compiling on a more recent
+macOS version.  These are the settings currently used when building the
+pre-compiled LAMMPS-GUI packages.
 
 Windows
 """""""
@@ -402,25 +436,41 @@ Windows
 On Windows either native compilation from within Visual Studio 2022 or
 Visual Studio 2026 with Visual C++ is supported and tested, or
 compilation with the MinGW / GCC cross-compiler environment on Fedora
-Linux.
+Linux.  All pre-compiled LAMMPS-GUI packages for Windows are created
+with the MinGW64 cross-compiler; the native Visual C++ compilation is a
+development configuration without deployment or packaging support.
+
+Since LAMMPS-GUI version 3.0.5, the build process includes generating
+cryptographically signed executables and installer packages.  This is
+enabled by default but can be turned off with ``-D CODE_SIGNING=no``
+during CMake configuration and setting the environment variable
+``SIGN_DISABLE`` to 1.
 
 *Visual Studio*
 
 Using CMake and Ninja as the build system is required.  Qt needs to be
 installed; a binary Qt package downloaded from https://www.qt.io was
-tested, which installs into the ``C:\\Qt`` folder by default.
-There is a custom `x64-GUI-MSVC` build configuration provided in the
-``CMakeSettings.json`` file that Visual Studio uses to store different
-compilation settings for the project.  Choosing this configuration will
-activate building the `lammps-gui.exe` executable in addition to LAMMPS
-through importing package selection from the ``windows.cmake`` preset
-file and enabling building LAMMPS-GUI and disabling building with MPI.
-When requesting an installation from the `Build` menu in Visual Studio,
-it will create a compressed ``LAMMPS-GUI-Win10-amd64.zip`` zip file with
-the executables and required dependent .dll files.  This zip file can be
-uncompressed and ``lammps-gui.exe`` run directly from there.  The
-uncompressed folder can be added to the ``PATH`` environment and LAMMPS
-and LAMMPS-GUI can be launched from anywhere from the command-line.
+tested, which installs into the ``C:\\Qt`` folder by default.  The
+compilation is verified by a GitHub action for every proposed change,
+and the compiled ``lammps-gui.exe`` executable is run directly from the
+build folder.  Please note that the pre-compiled LAMMPS shared libraries
+downloaded by LAMMPS-GUI are built with the MinGW64 cross-compiler and
+use a different C runtime than Visual C++, so they are not compatible
+with a Visual C++ compiled executable; the download options are
+therefore disabled in this configuration.  Instead, a LAMMPS shared
+library must also be compiled with Visual C++ and then either be
+selected manually in the ``Preferences`` dialog (plugin mode) or be
+linked directly (with ``-D LAMMPS_GUI_USE_PLUGIN=no``).
+
+In addition, LAMMPS-GUI and the LAMMPS shared library must be compiled
+with the *same* build configuration, i.e. both as ``Release`` or both as
+``Debug`` builds.  Debug and Release builds link different, mutually
+isolated Visual C++ runtime DLLs (``ucrtbased.dll`` versus
+``ucrtbase.dll``), and capturing the LAMMPS screen output only works
+when the executable and the library share the same C runtime instance.
+With mismatched build configurations, simulations run normally, but the
+captured output remains empty because the LAMMPS library writes to the
+console of a different C runtime.
 
 *MinGW64 Cross-compiler*
 

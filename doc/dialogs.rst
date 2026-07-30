@@ -140,6 +140,12 @@ General Settings
      tutorial files from the *Tutorials* menu.  If the ``https_proxy``
      environment variable was set externally, its value is displayed but
      cannot be changed.
+   - **Download timeout:** Sets the time, in seconds, after which a
+     download (of tutorial files or the LAMMPS shared library) is aborted
+     with an error message when no data has arrived.  The default is 10
+     seconds.  Users with a slow internet connection may want to increase
+     this value so that the download of larger files, for example the
+     LAMMPS shared library, is not canceled prematurely.
    - **Path to LAMMPS Shared Library File:** this option is only visible
      when LAMMPS-GUI was compiled to load the LAMMPS library at runtime
      instead of being linked to it directly.  Using the *Browse...* button
@@ -234,6 +240,13 @@ reformatting when hitting the 'Enter' key, the automatic display of
 the completion pop-up window, and whether auto-save mode is enabled.
 In auto-save mode, the editor buffer is saved before a run or before
 exiting LAMMPS-GUI.
+
+The last setting enables or disables (default: enabled) the static
+input check (see the *Check Input via Heuristics* entry of the
+:ref:`Run menu <run_menu>`) that runs automatically before every run.
+Only error-level findings, which would make LAMMPS reject the input,
+open a dialog asking whether to run anyway; warnings are only noted in
+the status bar.
 
 Charts Settings
 ^^^^^^^^^^^^^^^

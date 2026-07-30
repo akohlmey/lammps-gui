@@ -78,6 +78,19 @@ DumpImageParams makeParams()
     p.vrot        = 20;
     p.usessao     = false;
     p.ssaoval     = 0.6;
+    p.ssaosamples = 0;
+
+    p.usedepthcue    = false;
+    p.depthcuefactor = 0.5;
+    p.depthcuecolor  = "auto";
+    p.depthcuestart  = "auto";
+    p.usedefocus     = false;
+    p.defocusfactor  = 0.5;
+    p.defocusstart   = "auto";
+    p.useoutline     = false;
+    p.outlinewidth   = 2;
+    p.outlinecolor   = "black";
+    p.specular       = "auto";
 
     p.showbox    = true;
     p.boxdiam    = 0.05;
@@ -88,9 +101,10 @@ DumpImageParams makeParams()
     p.axeslen    = 0.2;
     p.axesdiam   = 0.1;
 
-    p.xcenter = 0.5;
-    p.ycenter = 0.5;
-    p.zcenter = 0.5;
+    p.dynamiccenter = false;
+    p.xcenter       = 0.5;
+    p.ycenter       = 0.5;
+    p.zcenter       = 0.5;
 
     p.xup = 0.0;
     p.yup = 0.0;
@@ -110,6 +124,7 @@ DumpImageParams makeParams()
     p.keylight     = 0.7;
     p.filllight    = 0.3;
     p.backlight    = 0.2;
+    p.gammaval     = 1.0;
     p.version      = 20260704;
 
     p.colormap        = "BWR";
@@ -261,6 +276,26 @@ TEST(DumpImageCommand, ElementColoring)
     EXPECT_TRUE(cmd.contains("adiam 1 1.7"));
 }
 
+TEST(DumpImageCommand, AtomSizeByVariable)
+{
+    auto p       = makeParams();
+    p.atomcustom = true;
+    p.atomdiam   = "v_scale";
+
+    // the variable reference becomes the diameter attribute of the dump image
+    // command instead of "type"
+    QString cmd = buildCmd(p);
+    EXPECT_TRUE(cmd.contains(" type v_scale ")) << cmd.toStdString();
+    EXPECT_FALSE(cmd.contains(" adiam "));
+
+    // the variable also takes precedence over per-atom diameter data with
+    // active VDW mode, where "diameter" would otherwise be selected
+    p.usediameter = true;
+    p.vdwfactor   = 2.0; // do_vdw true
+    cmd           = buildCmd(p);
+    EXPECT_TRUE(cmd.contains(" type v_scale ")) << cmd.toStdString();
+}
+
 TEST(DumpImageCommand, NoAtoms)
 {
     auto p            = makeParams();
@@ -344,6 +379,91 @@ TEST(DumpImageCommand, RegionPoints)
     EXPECT_TRUE(cmd.contains(" region myreg red points 100 0.2")) << cmd.toStdString();
 }
 
+TEST(DumpImageCommand, DepthCueOutlineSpecular)
+{
+    // all the new rendering options default to off/auto and emit nothing
+    auto p      = makeParams();
+    QString cmd = buildCmd(p);
+    EXPECT_FALSE(cmd.contains(" depthcue ")) << cmd.toStdString();
+    EXPECT_FALSE(cmd.contains(" defocus "));
+    EXPECT_FALSE(cmd.contains(" outline "));
+    EXPECT_FALSE(cmd.contains(" specular "));
+    EXPECT_FALSE(cmd.contains(" ssaosamples "));
+    EXPECT_FALSE(cmd.contains(" gamma "));
+
+    p.usedepthcue    = true;
+    p.depthcuefactor = 0.7;
+    cmd              = buildCmd(p);
+    EXPECT_TRUE(cmd.contains(" depthcue yes 0.7 auto auto")) << cmd.toStdString();
+
+    p.depthcuecolor = "white";
+    p.depthcuestart = "0.25";
+    cmd             = buildCmd(p);
+    EXPECT_TRUE(cmd.contains(" depthcue yes 0.7 white 0.25")) << cmd.toStdString();
+
+    // defocus takes no color argument, only the strength and the start position
+    p.usedefocus    = true;
+    p.defocusfactor = 0.4;
+    cmd             = buildCmd(p);
+    EXPECT_TRUE(cmd.contains(" defocus yes 0.4 auto")) << cmd.toStdString();
+
+    p.defocusstart = "0.5";
+    cmd            = buildCmd(p);
+    EXPECT_TRUE(cmd.contains(" defocus yes 0.4 0.5")) << cmd.toStdString();
+
+    p.useoutline   = true;
+    p.outlinewidth = 3;
+    p.outlinecolor = "gray";
+    cmd            = buildCmd(p);
+    EXPECT_TRUE(cmd.contains(" outline yes 3 gray")) << cmd.toStdString();
+
+    p.specular = "tight";
+    cmd        = buildCmd(p);
+    EXPECT_TRUE(cmd.contains(" specular tight")) << cmd.toStdString();
+}
+
+TEST(DumpImageCommand, GammaAdjustment)
+{
+    // the default gamma of 1.0 changes nothing and is pruned
+    auto p      = makeParams();
+    QString cmd = buildCmd(p);
+    EXPECT_FALSE(cmd.contains(" gamma ")) << cmd.toStdString();
+
+    p.gammaval = 1.4;
+    cmd        = buildCmd(p);
+    EXPECT_TRUE(cmd.contains(" gamma 1.4")) << cmd.toStdString();
+
+    // out-of-range values (LAMMPS accepts 0.1 - 10.0 only) are clamped
+    p.gammaval = 20.0;
+    cmd        = buildCmd(p);
+    EXPECT_TRUE(cmd.contains(" gamma 10")) << cmd.toStdString();
+
+    p.gammaval = 0.01;
+    cmd        = buildCmd(p);
+    EXPECT_TRUE(cmd.contains(" gamma 0.1")) << cmd.toStdString();
+}
+
+TEST(DumpImageCommand, SsaoSamplesOnlyWithSsao)
+{
+    auto p        = makeParams();
+    p.ssaosamples = 16;
+
+    // without ssao enabled the sample count has no effect and is pruned
+    QString cmd = buildCmd(p);
+    EXPECT_FALSE(cmd.contains(" ssaosamples ")) << cmd.toStdString();
+
+    p.usessao = true;
+    cmd       = buildCmd(p);
+    EXPECT_TRUE(cmd.contains(" ssao yes ")) << cmd.toStdString();
+    EXPECT_TRUE(cmd.contains(" ssaosamples 16"));
+
+    // values outside the LAMMPS 4-64 range are clamped
+    p.ssaosamples = 100;
+    EXPECT_TRUE(buildCmd(p).contains(" ssaosamples 64"));
+    p.ssaosamples = 2;
+    EXPECT_TRUE(buildCmd(p).contains(" ssaosamples 4"));
+}
+
 TEST(DumpImageCommand, ColorMapOmittedForTypeColoring)
 {
     auto p = makeParams(); // atomcolor == "type"
@@ -368,6 +488,7 @@ TEST(DumpImageCommand, AllDefaultsPruned)
     p.keylight     = 0.9;
     p.filllight    = 0.45;
     p.backlight    = 0.9;
+    p.gammaval     = 1.0;
     p.version      = 20260704;
 
     const QString cmd = buildCmd(p);
@@ -381,6 +502,8 @@ TEST(DumpImageCommand, AllDefaultsPruned)
     EXPECT_FALSE(cmd.contains(" atrans"));
     EXPECT_FALSE(cmd.contains(" btrans"));
     EXPECT_FALSE(cmd.contains(" lights"));
+    EXPECT_FALSE(cmd.contains(" gamma"));
+    EXPECT_FALSE(cmd.contains(" defocus"));
     EXPECT_FALSE(cmd.contains(" subbox "));
     EXPECT_FALSE(cmd.contains(" axes "));
     EXPECT_FALSE(cmd.contains(" center "));
@@ -429,6 +552,19 @@ TEST(DumpImageCommand, SubboxAxesCenterEmittedWhenSet)
     EXPECT_TRUE(cmd.contains(" subbox yes 0.01")) << cmd.toStdString();
     EXPECT_TRUE(cmd.contains(" axes "));
     EXPECT_TRUE(cmd.contains(" center s 0.3 0.5 0.5"));
+}
+
+TEST(DumpImageCommand, DynamicCenterAlwaysEmitted)
+{
+    auto p          = makeParams();
+    p.dynamiccenter = true;
+
+    // a dynamic center differs from the LAMMPS default "s 0.5 0.5 0.5"
+    // even at the default fractions, so it must never be pruned
+    EXPECT_TRUE(buildCmd(p).contains(" center d 0.5 0.5 0.5")) << buildCmd(p).toStdString();
+
+    p.xcenter = 0.3;
+    EXPECT_TRUE(buildCmd(p).contains(" center d 0.3 0.5 0.5"));
 }
 
 TEST(DumpImageCommand, UpDirectionEmittedWhenNotDefault)

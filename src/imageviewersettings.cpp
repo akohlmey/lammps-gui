@@ -29,6 +29,7 @@
 #include <QCheckBox>
 #include <QColor>
 #include <QColorDialog>
+#include <QComboBox>
 #include <QDoubleValidator>
 #include <QFontMetrics>
 #include <QGuiApplication>
@@ -110,6 +111,7 @@ void ImageViewer::globalSettings()
     layout->addWidget(cbutton, idx++, n++, 1, 1);
 
     n = 1;
+
     layout->addWidget(new QLabel("Length: "), idx, n++, 1, 1, Qt::AlignVCenter | Qt::AlignRight);
     auto *alval = new QLineEdit(QString::number(axeslen));
     alval->setValidator(fractionvalidator);
@@ -214,6 +216,76 @@ void ImageViewer::globalSettings()
     layout->addWidget(zoomval, idx++, n++, 1, 1);
 
     n = 0;
+
+    auto *cuebutton = new QCheckBox("Depth Cueing ", this);
+    cuebutton->setChecked(usedepthcue);
+    cuebutton->setToolTip("Fade distant objects toward the fog color");
+    layout->addWidget(cuebutton, idx, n++, 1, 1);
+    layout->addWidget(new QLabel("Intensity: "), idx, n++, 1, 1, Qt::AlignVCenter | Qt::AlignRight);
+    auto *cueval = new QDoubleSpinBox;
+    cueval->setRange(0.0, 1.0);
+    cueval->setSingleStep(0.05);
+    cueval->setValue(depthcuefactor);
+    cueval->setMaximumWidth(fwidth);
+    cueval->setEnabled(usedepthcue);
+    cueval->setToolTip("Strength of the fading; at 1.0 the most distant objects\n"
+                       "blend completely into the fog color");
+    layout->addWidget(cueval, idx, n++, 1, 1);
+    layout->addWidget(new QLabel("Color: "), idx, n++, 1, 1, Qt::AlignVCenter | Qt::AlignRight);
+    auto *cuecolor = new QLineEdit(depthcuecolor);
+    cuecolor->setCompleter(colorcompleter);
+    cuecolor->setMaximumWidth(fwidth);
+    cuecolor->setEnabled(usedepthcue);
+    cuecolor->setToolTip("Fog color name, or \"auto\" to fade toward the background");
+    layout->addWidget(cuecolor, idx, n++, 1, 1);
+    layout->addWidget(new QLabel("Start: "), idx, n++, 1, 1, Qt::AlignVCenter | Qt::AlignRight);
+    auto *cuestartvalidator = new QRegularExpressionValidator(
+        QRegularExpression(QStringLiteral("^(auto|-?(\\d+\\.?\\d*|\\.\\d+))$")), this);
+    auto *cuestart = new QLineEdit(depthcuestart);
+    cuestart->setValidator(cuestartvalidator);
+    cuestart->setMaximumWidth(fwidth);
+    cuestart->setEnabled(usedepthcue);
+    cuestart->setToolTip("Box fraction along the view direction where the fading starts\n"
+                         "(0.0 = near side, 1.0 = far side), or \"auto\" to start at the\n"
+                         "nearest rendered object");
+    layout->addWidget(cuestart, idx++, n++, 1, 1);
+    connect(cuebutton, &QCheckBox::toggled, cueval, &QDoubleSpinBox::setEnabled);
+    connect(cuebutton, &QCheckBox::toggled, cuecolor, &QLineEdit::setEnabled);
+    connect(cuebutton, &QCheckBox::toggled, cuestart, &QLineEdit::setEnabled);
+
+    n = 0;
+
+    auto *focusbutton = new QCheckBox("Defocus ", this);
+    focusbutton->setChecked(usedefocus);
+    focusbutton->setToolTip("Blur distant objects as if the camera were focused on the front");
+    layout->addWidget(focusbutton, idx, n++, 1, 1);
+    layout->addWidget(new QLabel("Intensity: "), idx, n++, 1, 1, Qt::AlignVCenter | Qt::AlignRight);
+    auto *focusval = new QDoubleSpinBox;
+    focusval->setRange(0.0, 1.0);
+    focusval->setSingleStep(0.05);
+    focusval->setValue(defocusfactor);
+    focusval->setMaximumWidth(fwidth);
+    focusval->setEnabled(usedefocus);
+    focusval->setToolTip("Strength of the blur; at 1.0 the most distant objects are\n"
+                         "blurred over a radius of 1 percent of the image height");
+    layout->addWidget(focusval, idx, n++, 1, 1);
+    // the defocus keyword has no color argument, so this column stays empty
+    n += 2;
+    layout->addWidget(new QLabel("Start: "), idx, n++, 1, 1, Qt::AlignVCenter | Qt::AlignRight);
+    auto *focusstart = new QLineEdit(defocusstart);
+    focusstart->setValidator(cuestartvalidator);
+    focusstart->setMaximumWidth(fwidth);
+    focusstart->setEnabled(usedefocus);
+    focusstart->setToolTip("Box fraction along the view direction where the blurring starts\n"
+                           "(0.0 = near side, 1.0 = far side), or \"auto\" to start at the\n"
+                           "nearest rendered object");
+    layout->addWidget(focusstart, idx++, n++, 1, 1);
+    layout->addWidget(new QHline, idx++, 0, 1, MAXCOLS);
+    connect(focusbutton, &QCheckBox::toggled, focusval, &QDoubleSpinBox::setEnabled);
+    connect(focusbutton, &QCheckBox::toggled, focusstart, &QLineEdit::setEnabled);
+
+    n = 0;
+
     layout->addWidget(new QLabel("Quality:"), idx, n++, 1, 1);
     n++;
     auto *fsaa = new QCheckBox("FSAA  ", this);
@@ -222,54 +294,112 @@ void ImageViewer::globalSettings()
     auto *ssao = new QCheckBox("SSAO: ", this);
     ssao->setChecked(usessao);
     layout->addWidget(ssao, idx, n++, 1, 1, Qt::AlignVCenter | Qt::AlignRight);
-    auto *aoval = new QLineEdit(QString::number(ssaoval));
-    aoval->setValidator(transvalidator);
+    auto *aoval = new QDoubleSpinBox;
+    aoval->setRange(0.0, 1.0);
+    aoval->setSingleStep(0.1);
+    aoval->setValue(ssaoval);
     aoval->setMaximumWidth(fwidth);
     layout->addWidget(aoval, idx, n++, 1, 1);
-    layout->addWidget(new QLabel("Shiny: "), idx, n++, 1, 1, Qt::AlignVCenter | Qt::AlignRight);
-    auto *shiny = new QLineEdit(QString::number(shinyfactor));
-    shiny->setValidator(transvalidator);
-    shiny->setMaximumWidth(fwidth);
-    layout->addWidget(shiny, idx++, n++, 1, 1);
+    layout->addWidget(new QLabel("Samples: "), idx, n++, 1, 1, Qt::AlignVCenter | Qt::AlignRight);
+    auto *aosamples = new QSpinBox;
+    aosamples->setRange(0, 64);
+    aosamples->setSingleStep(4);
+    aosamples->setSpecialValueText("auto");
+    aosamples->setValue(ssaosamples);
+    aosamples->setMaximumWidth(fwidth * 3 / 2);
+    aosamples->setToolTip("Number of SSAO sampling directions (4 - 64). With \"auto\" exported\n"
+                          "dump image commands derive the count from the SSAO strength and\n"
+                          "interactive renders use a reduced fixed count; an explicit number\n"
+                          "applies to both.");
+    layout->addWidget(aosamples, idx++, n++, 1, 1);
 
     n = 0;
-    layout->addWidget(new QLabel("Center:"), idx, n++, 1, 1);
-    layout->addWidget(new QLabel("X-direction: "), idx, n++, 1, 1,
-                      Qt::AlignVCenter | Qt::AlignRight);
-    auto *xval = new QLineEdit(QString::number(xcenter));
-    xval->setValidator(transvalidator);
+
+    auto *outlinebutton = new QCheckBox("Outline ", this);
+    outlinebutton->setChecked(useoutline);
+    outlinebutton->setToolTip("Draw outlines along the visible edges of rendered objects");
+    layout->addWidget(outlinebutton, idx, n++, 1, 1);
+    auto *olwidth = new QSpinBox;
+    olwidth->setRange(1, 16);
+    olwidth->setValue(outlinewidth);
+    olwidth->setMaximumWidth(fwidth);
+    olwidth->setEnabled(useoutline);
+    olwidth->setToolTip("Width of the outlines in pixels");
+    layout->addWidget(olwidth, idx, n++, 1, 1);
+    auto *olcolor = new QLineEdit(outlinecolor);
+    olcolor->setCompleter(colorcompleter);
+    olcolor->setValidator(colorvalidator);
+    olcolor->setMaximumWidth(fwidth);
+    olcolor->setEnabled(useoutline);
+    olcolor->setToolTip("Color of the outlines");
+    layout->addWidget(olcolor, idx, n++, 1, 1);
+    connect(outlinebutton, &QCheckBox::toggled, olwidth, &QSpinBox::setEnabled);
+    connect(outlinebutton, &QCheckBox::toggled, olcolor, &QLineEdit::setEnabled);
+    layout->addWidget(new QLabel("Shiny: "), idx, n++, 1, 1, Qt::AlignVCenter | Qt::AlignRight);
+    auto *shiny = new QDoubleSpinBox;
+    shiny->setRange(0.0, 1.0);
+    shiny->setSingleStep(0.1);
+    shiny->setValue(shinyfactor);
+    shiny->setMaximumWidth(fwidth);
+    layout->addWidget(shiny, idx, n++, 1, 1);
+    layout->addWidget(new QLabel("Specular: "), idx, n++, 1, 1, Qt::AlignVCenter | Qt::AlignRight);
+    auto *specbox = new QComboBox;
+    specbox->addItems({"auto", "none", "wide", "narrow", "tight"});
+    selectComboItem(specbox, specular);
+    specbox->setToolTip("Width of the specular highlights; \"auto\" derives it from the\n"
+                        "shiny factor and \"none\" turns the highlights off");
+    layout->addWidget(specbox, idx++, n++, 1, 1);
+    layout->addWidget(new QHline, idx++, 0, 1, MAXCOLS);
+
+    n = 0;
+
+    auto *ccombo = new QComboBox;
+    ccombo->addItem("Static:");
+    ccombo->addItem("Dynamic:");
+    ccombo->setCurrentIndex(dynamiccenter ? 1 : 0);
+    ccombo->setToolTip("Static: center fractions are applied only once.\n"
+                       "Dynamic: center fractions are applied every step.");
+    layout->addWidget(ccombo, idx, n++, 1, 1);
+    layout->addWidget(new QLabel("X-Center: "), idx, n++, 1, 1, Qt::AlignVCenter | Qt::AlignRight);
+    auto *xval = new QDoubleSpinBox;
+    xval->setRange(0.0, 1.0);
+    xval->setSingleStep(0.05);
+    xval->setValue(xcenter);
     xval->setMaximumWidth(fwidth);
     layout->addWidget(xval, idx, n++, 1, 1);
-    layout->addWidget(new QLabel("Y-direction: "), idx, n++, 1, 1,
-                      Qt::AlignVCenter | Qt::AlignRight);
-    auto *yval = new QLineEdit(QString::number(ycenter));
-    yval->setValidator(transvalidator);
+    layout->addWidget(new QLabel("Y-Center: "), idx, n++, 1, 1, Qt::AlignVCenter | Qt::AlignRight);
+    auto *yval = new QDoubleSpinBox;
+    yval->setRange(0.0, 1.0);
+    yval->setSingleStep(0.05);
+    yval->setValue(ycenter);
     yval->setMaximumWidth(fwidth);
     layout->addWidget(yval, idx, n++, 1, 1);
-    layout->addWidget(new QLabel("Z-direction: "), idx, n++, 1, 1,
-                      Qt::AlignVCenter | Qt::AlignRight);
-    auto *zval = new QLineEdit(QString::number(zcenter));
-    zval->setValidator(transvalidator);
+    layout->addWidget(new QLabel("Z-Center: "), idx, n++, 1, 1, Qt::AlignVCenter | Qt::AlignRight);
+    auto *zval = new QDoubleSpinBox;
+    zval->setRange(0.0, 1.0);
+    zval->setSingleStep(0.05);
+    zval->setValue(zcenter);
     zval->setMaximumWidth(fwidth);
     layout->addWidget(zval, idx++, n++, 1, 1);
 
-    n             = 0;
+    n = 0;
+
     auto *uplabel = new QLabel("Camera up:");
     uplabel->setToolTip("Direction pointing up in the image; must not be the zero vector");
     layout->addWidget(uplabel, idx, n++, 1, 1);
-    layout->addWidget(new QLabel("X-direction: "), idx, n++, 1, 1,
+    layout->addWidget(new QLabel("X-Direction: "), idx, n++, 1, 1,
                       Qt::AlignVCenter | Qt::AlignRight);
     auto *xupval = new QLineEdit(QString::number(xup));
     xupval->setValidator(upvalidator);
     xupval->setMaximumWidth(fwidth);
     layout->addWidget(xupval, idx, n++, 1, 1);
-    layout->addWidget(new QLabel("Y-direction: "), idx, n++, 1, 1,
+    layout->addWidget(new QLabel("Y-Direction: "), idx, n++, 1, 1,
                       Qt::AlignVCenter | Qt::AlignRight);
     auto *yupval = new QLineEdit(QString::number(yup));
     yupval->setValidator(upvalidator);
     yupval->setMaximumWidth(fwidth);
     layout->addWidget(yupval, idx, n++, 1, 1);
-    layout->addWidget(new QLabel("Z-direction: "), idx, n++, 1, 1,
+    layout->addWidget(new QLabel("Z-Direction: "), idx, n++, 1, 1,
                       Qt::AlignVCenter | Qt::AlignRight);
     auto *zupval = new QLineEdit(QString::number(zup));
     zupval->setValidator(upvalidator);
@@ -278,38 +408,49 @@ void ImageViewer::globalSettings()
     layout->addWidget(zupval, idx++, n++, 1, 1);
 
     n = 0;
+
     layout->addWidget(new QHline, idx++, 0, 1, MAXCOLS);
     auto *lightlayout = new QHBoxLayout;
     lightlayout->setSpacing(LAYOUT_SPACING);
-    lightlayout->addWidget(new QLabel("Lights: "), 3, Qt::AlignLeft);
-    lightlayout->addWidget(new QLabel("Ambient: "), 2, Qt::AlignRight);
+    lightlayout->addWidget(new QLabel("Lights: "), 2, Qt::AlignLeft);
+    lightlayout->addWidget(new QLabel("Ambient: "), 4, Qt::AlignRight);
     auto *ambient = new QDoubleSpinBox;
     ambient->setRange(0.0, 1.0);
     ambient->setSingleStep(0.05);
     ambient->setValue(ambientlight);
     ambient->setMaximumWidth(fwidth);
     lightlayout->addWidget(ambient, 2);
-    lightlayout->addWidget(new QLabel("Key: "), 2, Qt::AlignRight);
+    lightlayout->addWidget(new QLabel("Key: "), 3, Qt::AlignRight);
     auto *key = new QDoubleSpinBox;
     key->setRange(0.0, 1.0);
     key->setSingleStep(0.05);
     key->setValue(keylight);
     key->setMaximumWidth(fwidth);
     lightlayout->addWidget(key, 2);
-    lightlayout->addWidget(new QLabel("Fill: "), 2, Qt::AlignRight);
+    lightlayout->addWidget(new QLabel("Fill: "), 3, Qt::AlignRight);
     auto *fill = new QDoubleSpinBox;
     fill->setRange(0.0, 1.0);
     fill->setSingleStep(0.05);
     fill->setValue(filllight);
     fill->setMaximumWidth(fwidth);
     lightlayout->addWidget(fill, 2);
-    lightlayout->addWidget(new QLabel("Back: "), 2, Qt::AlignRight);
+    lightlayout->addWidget(new QLabel("Back: "), 3, Qt::AlignRight);
     auto *back = new QDoubleSpinBox;
     back->setRange(0.0, 1.0);
     back->setSingleStep(0.05);
     back->setValue(backlight);
     back->setMaximumWidth(fwidth);
     lightlayout->addWidget(back, 2);
+    lightlayout->addWidget(new QLabel("Gamma: "), 4, Qt::AlignRight);
+    auto *gamma = new QDoubleSpinBox;
+    gamma->setRange(0.1, 10.0);
+    gamma->setSingleStep(0.1);
+    gamma->setValue(gammaval);
+    gamma->setMaximumWidth(fwidth);
+    gamma->setToolTip("Gamma adjustment of the rendered objects; values above 1.0\n"
+                      "lighten the image and bring out shading detail in dimly lit\n"
+                      "regions, values below 1.0 darken it and increase the contrast");
+    lightlayout->addWidget(gamma, 2);
     layout->addLayout(lightlayout, idx++, 0, 1, MAXCOLS, Qt::AlignHCenter);
     layout->addWidget(new QHline, idx++, 0, 1, MAXCOLS);
 
@@ -382,14 +523,41 @@ void ImageViewer::globalSettings()
     usessao = ssao->isChecked();
     button  = findChild<QPushButton *>("ssao");
     if (button) button->setChecked(usessao);
-    if (aoval->hasAcceptableInput()) ssaoval = aoval->text().toDouble();
-    if (shiny->hasAcceptableInput()) shinyfactor = shiny->text().toDouble();
-    button = findChild<QPushButton *>("shiny");
+    ssaoval = aoval->value();
+    // values below the LAMMPS minimum of 4 (typed directly) mean "auto"
+    ssaosamples = (aosamples->value() < 4) ? 0 : aosamples->value();
+    shinyfactor = shiny->value();
+    button      = findChild<QPushButton *>("shiny");
     if (button) button->setChecked(shinyfactor > SHINY_CUT);
+    specular = specbox->currentText();
 
-    if (xval->hasAcceptableInput()) xcenter = xval->text().toDouble();
-    if (yval->hasAcceptableInput()) ycenter = yval->text().toDouble();
-    if (zval->hasAcceptableInput()) zcenter = zval->text().toDouble();
+    usedepthcue    = cuebutton->isChecked();
+    depthcuefactor = cueval->value();
+    // the fog color also accepts "auto", which the color validator does not
+    // know, so it is checked here; invalid input keeps the previous color
+    QString fogcolor = cuecolor->text().trimmed();
+    int fogpos       = 0;
+    if ((fogcolor == QStringLiteral("auto")) ||
+        (colorvalidator->validate(fogcolor, fogpos) == QValidator::Acceptable))
+        depthcuecolor = fogcolor;
+    if (cuestart->hasAcceptableInput()) depthcuestart = cuestart->text();
+    button = findChild<QPushButton *>("depthcue");
+    if (button) button->setChecked(usedepthcue);
+
+    usedefocus    = focusbutton->isChecked();
+    defocusfactor = focusval->value();
+    if (focusstart->hasAcceptableInput()) defocusstart = focusstart->text();
+    button = findChild<QPushButton *>("defocus");
+    if (button) button->setChecked(usedefocus);
+
+    useoutline   = outlinebutton->isChecked();
+    outlinewidth = olwidth->value();
+    if (olcolor->hasAcceptableInput()) outlinecolor = olcolor->text();
+
+    dynamiccenter = (ccombo->currentIndex() == 1);
+    xcenter       = xval->value();
+    ycenter       = yval->value();
+    zcenter       = zval->value();
 
     // LAMMPS rejects a zero-length up vector, so keep the previous one in that case
     if (xupval->hasAcceptableInput() && yupval->hasAcceptableInput() &&
@@ -408,6 +576,7 @@ void ImageViewer::globalSettings()
     keylight     = key->value();
     filllight    = fill->value();
     backlight    = back->value();
+    gammaval     = gamma->value();
 
     // update image with new settings
     createImage();
@@ -553,18 +722,28 @@ void ImageViewer::atomSettings()
     layout->addWidget(acolor, idx, n++, 1, 1);
     layout->addWidget(new QLabel("Size: "), idx, n++, 1, 1, Qt::AlignVCenter | Qt::AlignRight);
 
-    QRegularExpression validatom(R"((element|diameter|sigma|type|none|^\d+\.?\d*|^\d*\.?\d+))");
+    QRegularExpression validatom(
+        R"((element|diameter|sigma|type|none|v_\w+|^\d+\.?\d*|^\d*\.?\d+))");
     QStringList aditems;
     if (useelements) aditems << "element";
     if (usediameter) aditems << "diameter";
     if (usesigma) aditems << "sigma";
-    aditems << "type" << "3.50" << "5.00" << "3.00" << "2.00";
+    aditems << "type";
+    // atom-style variables provide per-atom diameters, e.g. to apply a scaling
+    // factor; updatePeratom() has just collected the defined ones for the Color
+    // combo box list
+    for (const auto &prop : atom_properties)
+        if (prop.startsWith("v_")) aditems << prop;
+    aditems << "3.50" << "5.00" << "3.00" << "2.00";
     if ((atomSize > 0.1) && (atomSize < 5.0)) {
         aditems << QString::number(2.0 * atomSize, 'f', 2);
     } else {
         aditems << QString::number(2.0 * atomSize, 'g', 3);
     }
-    if (atomdiam != "none") aditems << atomdiam;
+    // re-offer the previous selection, except for a variable reference: the
+    // still-defined variables are already in the list and a stale reference
+    // would make LAMMPS fail to render
+    if ((atomdiam != "none") && !atomdiam.startsWith("v_")) aditems << atomdiam;
     aditems.removeDuplicates();
 
     auto *adiam = new QComboBox;
@@ -930,7 +1109,7 @@ void ImageViewer::atomSettings()
         auto *edit  = findChild<QLineEdit *>("atomSize");
         auto *label = findChild<QLabel *>("AtomLabel");
         if ((atomdiam != "element") && (atomdiam != "type") && (atomdiam != "diameter") &&
-            (atomdiam != "sigma") && (atomdiam != "none")) {
+            (atomdiam != "sigma") && (atomdiam != "none") && !atomdiam.startsWith("v_")) {
             if (edit) {
                 edit->setEnabled(true);
                 edit->show();

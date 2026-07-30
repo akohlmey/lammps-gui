@@ -14,6 +14,7 @@
 #include "aboutdialog.h"
 #include "chartviewer.h"
 #include "codeeditor.h"
+#include "downloadprogress.h"
 #include "fileviewer.h"
 #include "findandreplace.h"
 #include "helpers.h"
@@ -24,9 +25,11 @@
 #include "plotdata.h"
 #include "plotdatadialog.h"
 #include "preferences.h"
+#include "qaddon.h"
 #include "setvariables.h"
 #include "slideshow.h"
 #include "stdcapture.h"
+#include "syntaxcheck.h"
 #include "tutorialwizard.h"
 #include "urldownloader.h"
 
@@ -44,6 +47,7 @@
 #include <QFontInfo>
 #include <QGridLayout>
 #include <QGuiApplication>
+#include <QInputDialog>
 #include <QLabel>
 #include <QLineEdit>
 #include <QMenu>
@@ -66,7 +70,9 @@
 #include <cmath>
 #include <cstdint>
 #include <cstdlib>
+#include <limits>
 #include <string>
+#include <utility>
 
 #include "constants.h"
 #include "tutorials.h"
@@ -94,6 +100,32 @@ void applyProxySetting(LammpsWrapper &lammps, QSettings &settings)
     if (!proxy.isEmpty()) lammps.command(QString("shell putenv https_proxy=") + proxy);
 }
 
+// Remove leftover files from replacing the downloaded LAMMPS shared library
+// in the configuration folder: backups of an updated or reset library (which
+// may have been locked and thus undeletable on Windows while it was loaded)
+// and partial downloads left behind by a crash.  The names for all platforms
+// are checked since the configuration folder may be shared between different
+// machines.  The configured plugin file itself is never removed.
+void purgeLibraryLeftovers()
+{
+    const auto configDir = QStandardPaths::writableLocation(QStandardPaths::AppConfigLocation);
+    if (configDir.isEmpty()) return;
+
+    const QDir dir(configDir);
+    const QString plugin =
+        QFileInfo(QSettings().value(Keys::PLUGIN_PATH, "").toString()).canonicalFilePath();
+    for (const auto &libname :
+         {Cfg::LAMMPS_LIB_MACOS, Cfg::LAMMPS_LIB_WINDOWS, Cfg::LAMMPS_LIB_LINUX}) {
+        // the "?*" glob requires at least one extra character, so the pattern
+        // matches only backups and partial downloads, never the library itself
+        for (const auto &f : dir.entryList({libname + "?*"}, QDir::Files)) {
+            const QString path = dir.absoluteFilePath(f);
+            if (!plugin.isEmpty() && (QFileInfo(path).canonicalFilePath() == plugin)) continue;
+            QFile::remove(path);
+        }
+    }
+}
+
 const QString citeme("# When using LAMMPS-GUI in your project, please cite: "
                      "https://doi.org/10.33011/livecoms.6.1.3037\n");
 const QString bannerstyle("CodeEditor {background-position: center center; "
@@ -110,6 +142,7 @@ void LammpsGui::setupUi(QSettings &settings, QFont &allFont, QFont &monoFont)
 
     // set up central widget
     textEdit = new CodeEditor(this);
+    textEdit->setSyntax(&syntax);
     textEdit->setEnabled(true);
     textEdit->setAcceptDrops(true);
     textEdit->setStyleSheet(bannerstyle);
@@ -132,8 +165,19 @@ void LammpsGui::setupUi(QSettings &settings, QFont &allFont, QFont &monoFont)
     auto *document = textEdit->document();
     document->setPlainText(citeme);
     document->setModified(false);
-    highlighter = new Highlighter(document);
+    // load the command spec table before the first highlight so command
+    // category and argument role colors are correct from the first paint;
+    // the introspected name lists are added later by populateSyntax()
+    syntax.loadCommandSpecs(Cfg::SYNTAX_SPEC_TABLE);
+    // the dump image color names are independent of the LAMMPS instance
+    syntax.setStyles(StyleCat::Color, lammpsImageColors());
+    highlighter = new Highlighter(&syntax, document);
     connect(document, &QTextDocument::modificationChanged, this, &LammpsGui::modified);
+    // track the cursor so unknown-name marking spares the word being typed
+    connect(textEdit, &QPlainTextEdit::cursorPositionChanged, this, [this]() {
+        const auto cursor = textEdit->textCursor();
+        highlighter->setCursorPos(cursor.blockNumber(), cursor.positionInBlock());
+    });
 
     // apply font settings
     setFont(allFont);
@@ -182,8 +226,12 @@ void LammpsGui::createFileMenu()
                   "Ctrl+Shift+J", &LammpsGui::openImages);
     addMenuAction(menu, ":/icons/x-office-drawing.svg", "&Plot Data File...", "Ctrl+Shift+P",
                   &LammpsGui::plotDataFile);
+    menu->addSeparator();
+
     addMenuAction(menu, ":/icons/binary-file-icon.svg", "Inspect &Restart File", "Ctrl+Shift+R",
                   &LammpsGui::inspect);
+    addMenuAction(menu, ":/icons/document-save-as.svg", "&Write Restart File...", "",
+                  &LammpsGui::writeRestart);
     menu->addSeparator();
 
     recentActions.resize(Cfg::NUM_RECENT_FILES);
@@ -229,10 +277,18 @@ void LammpsGui::createRunMenu()
     addMenuAction(menu, ":/icons/run-file.svg", "Run LAMMPS from &File", "Ctrl+Shift+Return",
                   &LammpsGui::runFile);
     addMenuAction(menu, ":/icons/process-stop.svg", "&Stop LAMMPS", "Ctrl+/", &LammpsGui::stopRun);
+    addMenuAction(menu, ":/icons/extend-run.svg", "&Extend Run...", "Ctrl+E",
+                  &LammpsGui::extendRun);
     menu->addSeparator();
 
     addMenuAction(menu, ":/icons/system-restart.svg", "Relaunch &LAMMPS Instance", "",
                   &LammpsGui::restartLammps);
+    menu->addSeparator();
+
+    addMenuAction(menu, ":/icons/document-check.svg", "Chec&k Input via Heuristics", "Ctrl+K",
+                  &LammpsGui::checkInput);
+    addMenuAction(menu, ":/icons/system-dryrun.svg", "Check Input via &Dry Run", "Ctrl+Shift+K",
+                  &LammpsGui::dryRunBuffer);
     menu->addSeparator();
 
     addMenuAction(menu, ":/icons/preferences-desktop.svg", "Set &Variables...", "Ctrl+Shift+V",
@@ -459,8 +515,10 @@ void LammpsGui::setupPlugin(QSettings &settings)
 
         // No suitable plugin was found automatically.  Show a dialog with three choices:
         // 1) Download a pre-compiled shared library from the LAMMPS webserver
+        //    (not offered when no compatible pre-compiled library exists, i.e. with MSVC)
         // 2) Browse the filesystem for a suitable shared library file
         // 3) Exit LAMMPS-GUI
+        const bool candownload = !getLammpsDownloadUrl().isEmpty();
         while (pluginPath.isEmpty()) {
             // remove key for path to the plugin so we won't get stuck in a loop reading a bad file
             settings.remove(Keys::PLUGIN_PATH);
@@ -470,21 +528,29 @@ void LammpsGui::setupPlugin(QSettings &settings)
             mb.setWindowIcon(QIcon(Cfg::MAIN_ICON));
             mb.setIconPixmap(QPixmap(":/icons/lammps-plugin.png").scaled(96, 96));
             mb.setText("No suitable LAMMPS shared library found.");
-            mb.setInformativeText(
+            QString infotext =
                 "<p align=\"justify\">Either the shared library path has been reset, the "
                 "configured or default library file was not found, or the selected library failed "
-                "to load.</p><p align=\"justify\">You may now either download a pre-compiled LAMMPS"
-                " shared library file for your platform from the LAMMPS webserver, browse the "
-                "filesystem for a suitable LAMMPS library file, or exit LAMMPS-GUI.</p>");
+                "to load.</p><p align=\"justify\">You may now either ";
+            if (candownload)
+                infotext += "download a pre-compiled LAMMPS shared library file for your platform "
+                            "from the LAMMPS webserver, browse the ";
+            else
+                infotext += "browse the ";
+            infotext += "filesystem for a suitable LAMMPS library file, or exit LAMMPS-GUI.</p>";
+            mb.setInformativeText(infotext);
 
-            auto *downloadBtn = mb.addButton("Download Library...", QMessageBox::ApplyRole);
-            downloadBtn->setIcon(QIcon(":/icons/download-file.svg"));
+            QPushButton *downloadBtn = nullptr;
+            if (candownload) {
+                downloadBtn = mb.addButton("Download Library...", QMessageBox::ApplyRole);
+                downloadBtn->setIcon(QIcon(":/icons/download-file.svg"));
+            }
             auto *browseBtn = mb.addButton("Browse Filesystem...", QMessageBox::AcceptRole);
             browseBtn->setIcon(QIcon(":/icons/document-open.svg"));
             auto *exitBtn = mb.addButton("Exit", QMessageBox::NoRole);
             exitBtn->setIcon(QIcon(":/icons/application-exit.svg"));
 
-            mb.setDefaultButton(downloadBtn);
+            mb.setDefaultButton(candownload ? downloadBtn : browseBtn);
             mb.setEscapeButton(exitBtn);
             mb.exec();
 
@@ -521,10 +587,10 @@ void LammpsGui::setupPlugin(QSettings &settings)
                     continue;
                 }
                 auto libPath = configDir + QDir::separator() + libName;
-                auto dlUrl   = QString("https://download.lammps.org/lammps-gui/%1").arg(libName);
+                auto dlUrl   = getLammpsDownloadUrl();
 
                 URLDownloader downloader(this);
-                if (downloader.download(dlUrl, libPath, true)) {
+                if (downloader.download(dlUrl, libPath, true, true)) {
                     // try loading the downloaded library
                     if (lammps.loadLib(libPath)) {
                         pluginPath = libPath;
@@ -621,7 +687,7 @@ LammpsGui::LammpsGui(QWidget *parent, const QString &filename, int width, int he
     logwindow(nullptr), imagewindow(nullptr), chartwindow(nullptr), slideshow(nullptr),
     logupdater(nullptr), dirstatus(nullptr), progress(nullptr), prefdialog(nullptr),
     lammpsstatus(nullptr), varwindow(nullptr), wizard(nullptr), runner(nullptr), runCounter(0),
-    nthreads(1), mainx(width), mainy(height)
+    extendSteps(Cfg::EXTEND_STEPS_DEFAULT), nthreads(1), mainx(width), mainy(height)
 {
 #if QT_CONFIG(clipboard)
     hasClipboard = true;
@@ -667,6 +733,11 @@ LammpsGui::LammpsGui(QWidget *parent, const QString &filename, int width, int he
 
     setAutoFillBackground(true);
 
+    // clean up backup files and partial downloads from updating the LAMMPS
+    // shared library before it is loaded below; a file that was still locked
+    // when it was replaced or reset is deletable again after a restart
+    purgeLibraryLeftovers();
+
     setupPlugin(settings);
     setupAccelerators(settings);
 
@@ -688,87 +759,30 @@ LammpsGui::LammpsGui(QWidget *parent, const QString &filename, int width, int he
         setWindowTitle("LAMMPS-GUI - Editor - *unknown*");
     }
 
-    // start LAMMPS and initialize command completion
+    // start LAMMPS, fill the syntax registry from introspection, and feed the
+    // completers from the registry (single source of the valid name lists)
     startLammps();
-    QStringList style_list;
-    QFile internal_commands(":/lammps_internal_commands.txt");
-    if (internal_commands.open(QIODevice::ReadOnly | QIODevice::Text)) {
-        while (!internal_commands.atEnd()) {
-            style_list << QString(internal_commands.readLine()).trimmed();
-        }
-    }
-    internal_commands.close();
-    int ncmds = lammps.styleCount("command");
-    for (int i = 0; i < ncmds; ++i) {
-        const QString style = lammps.styleName("command", i);
-        if (style.isEmpty()) continue;
-        // skip suffixed names
-        if (style.endsWith("/kk/host") || style.endsWith("/kk/device") || style.endsWith("/kk"))
-            continue;
-        style_list << style;
-    }
-    style_list.sort();
-    textEdit->setCommandList(style_list);
-
-    style_list.clear();
-    const char *varstyles[] = {"delete",   "atomfile", "file",   "format", "getenv", "index",
-                               "internal", "loop",     "python", "string", "timer",  "uloop",
-                               "universe", "world",    "equal",  "vector", "atom"};
-    for (const auto *const var : varstyles)
-        style_list << var;
-    style_list.sort();
-    textEdit->setVariableList(style_list);
-
-    style_list.clear();
-    const char *unitstyles[] = {"lj", "real", "metal", "si", "cgs", "electron", "micro", "nano"};
-    for (const auto *const unit : unitstyles)
-        style_list << unit;
-    style_list.sort();
-    textEdit->setUnitsList(style_list);
-
-    style_list.clear();
-    const char *extraargs[] = {"extra/atom/types",        "extra/bond/types",
-                               "extra/angle/types",       "extra/dihedral/types",
-                               "extra/improper/types",    "extra/bond/per/atom",
-                               "extra/angle/per/atom",    "extra/dihedral/per/atom",
-                               "extra/improper/per/atom", "extra/special/per/atom"};
-    for (const auto *const extra : extraargs)
-        style_list << extra;
-    textEdit->setExtraList(style_list);
-
+    populateSyntax();
+    textEdit->setCommandList(syntax.completionList(StyleCat::Command, false));
+    textEdit->setVariableList(syntax.completionList(StyleCat::Variable, false));
+    textEdit->setUnitsList(syntax.completionList(StyleCat::Units, false));
+    textEdit->setExtraList(syntax.completionList(StyleCat::Extra, false));
+    textEdit->setColorList(syntax.completionList(StyleCat::Color, false));
+    textEdit->setImageKwList(syntax.completionList(StyleCat::ImageKw, false));
     textEdit->setFileList();
-
-    // build a sorted, accelerator-suffix-filtered style list for one category
-    auto styleList = [&](const char *keyword, bool withNone) {
-        QStringList list;
-        if (withNone) list << QStringLiteral("none");
-        const int nstyles = lammps.styleCount(keyword);
-        for (int i = 0; i < nstyles; ++i) {
-            const QString style = lammps.styleName(keyword, i);
-            if (style.isEmpty()) continue;
-            if (style.endsWith("/gpu") || style.endsWith("/intel") || style.endsWith("/kk") ||
-                style.endsWith("/kk/device") || style.endsWith("/kk/host") ||
-                style.endsWith("/omp") || style.endsWith("/opt"))
-                continue;
-            list << style;
-        }
-        list.sort();
-        return list;
-    };
-
-    textEdit->setFixList(styleList("fix", false));
-    textEdit->setComputeList(styleList("compute", false));
-    textEdit->setDumpList(styleList("dump", false));
-    textEdit->setAtomList(styleList("atom", false));
-    textEdit->setPairList(styleList("pair", true));
-    textEdit->setBondList(styleList("bond", true));
-    textEdit->setAngleList(styleList("angle", true));
-    textEdit->setDihedralList(styleList("dihedral", true));
-    textEdit->setImproperList(styleList("improper", true));
-    textEdit->setKspaceList(styleList("kspace", true));
-    textEdit->setRegionList(styleList("region", false));
-    textEdit->setIntegrateList(styleList("integrate", false));
-    textEdit->setMinimizeList(styleList("minimize", false));
+    textEdit->setFixList(syntax.completionList(StyleCat::Fix, false));
+    textEdit->setComputeList(syntax.completionList(StyleCat::Compute, false));
+    textEdit->setDumpList(syntax.completionList(StyleCat::Dump, false));
+    textEdit->setAtomList(syntax.completionList(StyleCat::Atom, false));
+    textEdit->setPairList(syntax.completionList(StyleCat::Pair, true));
+    textEdit->setBondList(syntax.completionList(StyleCat::Bond, true));
+    textEdit->setAngleList(syntax.completionList(StyleCat::Angle, true));
+    textEdit->setDihedralList(syntax.completionList(StyleCat::Dihedral, true));
+    textEdit->setImproperList(syntax.completionList(StyleCat::Improper, true));
+    textEdit->setKspaceList(syntax.completionList(StyleCat::Kspace, true));
+    textEdit->setRegionList(syntax.completionList(StyleCat::Region, false));
+    textEdit->setIntegrateList(syntax.completionList(StyleCat::Integrate, false));
+    textEdit->setMinimizeList(syntax.completionList(StyleCat::Minimize, false));
 
     settings.beginGroup(Keys::GROUP_REFORMAT);
     textEdit->setReformatOnReturn(settings.value(Keys::RETURN, false).toBool());
@@ -802,6 +816,21 @@ LammpsGui::~LammpsGui()
 
 void LammpsGui::newDocument()
 {
+    if (textEdit->document()->isModified()) {
+        int rv = showUnsavedChangesDialog(
+            this, currentFile, "Do you want to save the current file before starting a new input?");
+        switch (rv) {
+            case QMessageBox::Yes:
+                save();
+                break;
+            case QMessageBox::Cancel:
+                return;
+            case QMessageBox::No: // fallthrough
+            default:
+                // do nothing
+                break;
+        }
+    }
     currentFile.clear();
     textEdit->document()->setPlainText(citeme);
     textEdit->document()->setModified(false);
@@ -836,20 +865,63 @@ void LammpsGui::newDocument()
 
 void LammpsGui::open()
 {
-    QString fileName = QFileDialog::getOpenFileName(this, "Open the file");
+    QString fileName =
+        QFileDialog::getOpenFileName(this, "Open the file", QDir::currentPath(), Cfg::FILTER_INPUT);
     openFile(fileName);
 }
 
 void LammpsGui::view()
 {
-    QString fileName = QFileDialog::getOpenFileName(this, "Open the file");
+    QString fileName = QFileDialog::getOpenFileName(this, "Open the file", QDir::currentPath());
     viewFile(fileName);
 }
 
 void LammpsGui::inspect()
 {
-    QString fileName = QFileDialog::getOpenFileName(this, "Open the restart file");
+    QString fileName = QFileDialog::getOpenFileName(this, "Open the restart file",
+                                                    QDir::currentPath(), Cfg::FILTER_RESTART);
     inspectFile(fileName);
+}
+
+bool LammpsGui::hasSystemState()
+{
+    return lammps.isOpen() && !lammps.isRunning() && (lammps.extractSetting("box_exist") != 0);
+}
+
+void LammpsGui::writeRestart()
+{
+    // LAMMPS is not re-entrant, so we can only issue commands when it is not running
+    if (lammps.isRunning()) {
+        warning(this, "LAMMPS-GUI Warning",
+                "Must stop the current run before writing a restart file");
+        return;
+    }
+    if (!hasSystemState()) {
+        warning(this, "LAMMPS-GUI Warning",
+                "Cannot write a restart file without a system state.\n"
+                "Must run the input at least to the point where the system is defined.");
+        return;
+    }
+
+    QString fileName = QFileDialog::getSaveFileName(
+        this, "Write Restart File",
+        QDir::current().absoluteFilePath(defaultFileStem(currentFile) + ".restart"),
+        Cfg::FILTER_RESTART);
+    if (fileName.isEmpty()) return;
+    fileName = ensureFileSuffix(fileName, "restart");
+
+    {
+        StdoutSilencer guard;
+        lammps.command(QString("write_restart '%1'").arg(fileName));
+    }
+
+    const QString errmsg = lammps.lastErrorMessage();
+    if (!errmsg.isEmpty()) {
+        critical(this, "LAMMPS-GUI Error", "<p>Error writing restart file:</p>",
+                 QString("<p><pre>%1</pre></p>").arg(errmsg));
+    } else {
+        status->setText(QString("Wrote restart file %1").arg(fileName));
+    }
 }
 
 void LammpsGui::openRecent()
@@ -915,7 +987,7 @@ void LammpsGui::startExe()
                         lammps.command(datacmd);
                     }
                     auto *vmd = new QProcess(this);
-                    vmd->start(exe, args);
+                    vmd->start(findExe(exe), args);
                 } else {
                     warning(this, "LAMMPS-GUI Error",
                             "Cannot create temporary file for loading system in VMD",
@@ -929,12 +1001,12 @@ void LammpsGui::startExe()
                     lammps.command(datacmd);
                 }
                 auto *ovito = new QProcess(this);
-                ovito->start(exe, args);
+                ovito->start(findExe(exe), args);
             }
         } else {
             // launch program without arguments when no system exists (yet)
             auto *proc = new QProcess(this);
-            proc->start(exe, args);
+            proc->start(findExe(exe), args);
         }
     }
 }
@@ -981,58 +1053,15 @@ void LammpsGui::clearVariables()
 
 void LammpsGui::updateVariables()
 {
-    const auto doc = textEdit->toPlainText().replace('\t', ' ').split('\n');
-    QStringList known;
-    QRegularExpression indexvar(R"(^\s*variable\s+(\w+)\s+index\s+(.*))");
-    QRegularExpression anyvar(R"(^\s*variable\s+(\w+)\s+(\w+)\s+(.*))");
-    QRegularExpression usevar(R"((\$(\w)|\${(\w+)}))");
-    QRegularExpression refvar(R"(v_(\w+))");
+    // fresh parse: any dialog overrides for the previous buffer are dropped
+    variables = parseInputVariables(textEdit->toPlainText());
+    textEdit->setVariableOverrides(variables);
+}
 
-    // forget previously listed variables
-    variables.clear();
-
-    for (const auto &line : doc) {
-
-        if (line.isEmpty()) continue;
-
-        // first find variable definitions.
-        // index variables are special since they can be overridden from the command line
-        auto index = indexvar.match(line);
-        auto any   = anyvar.match(line);
-
-        if (index.hasMatch()) {
-            if (index.lastCapturedIndex() >= 2) {
-                auto name = index.captured(1);
-                if (!known.contains(name)) {
-                    variables.append(qMakePair(name, index.captured(2)));
-                    known.append(name);
-                }
-            }
-        } else if (any.hasMatch()) {
-            if (any.lastCapturedIndex() >= 3) {
-                auto name = any.captured(1);
-                if (!known.contains(name)) known.append(name);
-            }
-        }
-
-        // now split line into words and search for use of undefined variables
-        auto words = line.split(' ', Qt::SkipEmptyParts);
-        for (const auto &word : words) {
-            auto use = usevar.match(word);
-            auto ref = refvar.match(word);
-            if (use.hasMatch()) {
-                auto name = use.captured(use.lastCapturedIndex());
-                if (!known.contains(name)) {
-                    known.append(name);
-                    variables.append(qMakePair(name, QString()));
-                }
-            }
-            if (ref.hasMatch()) {
-                auto name = ref.captured(ref.lastCapturedIndex());
-                if (!known.contains(name)) known.append(name);
-            }
-        }
-    }
+void LammpsGui::refreshVariables()
+{
+    variables = mergeInputVariables(parseInputVariables(textEdit->toPlainText()), variables);
+    textEdit->setVariableOverrides(variables);
 }
 
 // open file and switch CWD to path of file
@@ -1123,6 +1152,9 @@ void LammpsGui::openFile(const QString &fileName)
 // open file in read-only mode for viewing in separate window
 void LammpsGui::viewFile(const QString &fileName)
 {
+    // empty name means the file dialog was canceled. nothing to do here
+    if (fileName.isEmpty()) return;
+
     // a movie file is also an image file when it is an animated GIF
     if (isMovieFile(fileName)) {
         warning(this, "Cannot View Movie as Text",
@@ -1218,6 +1250,9 @@ void LammpsGui::purgeInspectList()
 // read restart file into LAMMPS instance and launch image viewer
 void LammpsGui::inspectFile(const QString &fileName)
 {
+    // empty name means the file dialog was canceled. nothing to do here
+    if (fileName.isEmpty()) return;
+
     QFile file(fileName);
     auto shortName = QFileInfo(fileName).fileName();
 
@@ -1373,14 +1408,22 @@ void LammpsGui::save()
     purgeInspectList();
     QString fileName = currentFile;
     // If we don't have a filename from before, get one.
-    if (fileName.isEmpty()) fileName = QFileDialog::getSaveFileName(this, "Save");
+    if (fileName.isEmpty()) {
+        fileName = QFileDialog::getSaveFileName(
+            this, "Save", QDir::current().absoluteFilePath(defaultFileStem(currentFile) + ".lmp"),
+            Cfg::FILTER_INPUT);
+        fileName = ensureFileSuffix(fileName, "lmp");
+    }
 
     writeFile(fileName);
 }
 
 void LammpsGui::saveAs()
 {
-    QString fileName = QFileDialog::getSaveFileName(this, "Save as");
+    QString fileName = QFileDialog::getSaveFileName(
+        this, "Save as", QDir::current().absoluteFilePath(defaultFileStem(currentFile) + ".lmp"),
+        Cfg::FILTER_INPUT);
+    fileName = ensureFileSuffix(fileName, "lmp");
     writeFile(fileName);
 }
 
@@ -1491,8 +1534,9 @@ void LammpsGui::logUpdate()
     else
         step = static_cast<int>(lammps.lastThermoAs<int64_t>("step", 0));
 
-    // extract cached thermo data when LAMMPS is executing a minimize or run command
-    if (chartwindow && lammps.isRunning()) {
+    // extract cached thermo data when LAMMPS is executing a minimize or run command;
+    // never during a dry run, where a kept chart window belongs to a previous run
+    if (chartwindow && !dryRunActive && lammps.isRunning()) {
         // thermo data is not yet valid during setup
         if (lammps.lastThermoAs<int>("setup", 0)) return;
 
@@ -1560,6 +1604,9 @@ int LammpsGui::updateRunStatus()
         }
     }
 
+    // lastThermo("line") is 0-based like the editor block numbers (the LAMMPS
+    // thermo line counter starts at -1 and is pre-incremented), so the value
+    // is passed to setHighlight() without an offset
     void *ptr = lammps.lastThermo("line", 0);
     if (ptr) textEdit->setHighlight(*static_cast<int *>(ptr), false);
 
@@ -1719,7 +1766,7 @@ void LammpsGui::runDone()
 
     warnHighBufferUsage();
 
-    finalizeChartData();
+    if (!dryRunActive) finalizeChartData();
 
     bool success         = true;
     bool valid           = true;
@@ -1736,19 +1783,28 @@ void LammpsGui::runDone()
 
     int nline = CodeEditor::NO_HIGHLIGHT;
     if (valid) {
+        // lastThermo("line") is 0-based like the editor block numbers, no offset needed
         void *ptr = lammps.lastThermo("line", 0);
         if (ptr) nline = *static_cast<int *>(ptr);
     }
 
     if (success) {
-        status->setText(Cfg::STATUS_READY);
+        status->setText(dryRunActive ? "Input check passed." : Cfg::STATUS_READY);
         cpuuse->setText(Cfg::STATUS_ZERO_CPU);
+        if (dryRunActive)
+            information(this, "LAMMPS-GUI - Dry Run",
+                        "<p>The input passed the dry run "
+                        "(setup executed, no timesteps).</p><p>Check the Output window "
+                        "for LAMMPS warnings.</p>");
     } else {
         status->setText("Failed.");
         textEdit->setHighlight(nline, true);
-        critical(this, "LAMMPS-GUI Error", "<p>Error running LAMMPS:</p>",
+        critical(this, "LAMMPS-GUI Error",
+                 dryRunActive ? "<p>Error during input dry run:</p>"
+                              : "<p>Error running LAMMPS:</p>",
                  QString("<p><pre>%1</pre></p>").arg(errmsg));
     }
+    dryRunActive = false;
     textEdit->setCursor(nline);
     textEdit->setFileList();
     progress->hide();
@@ -1818,11 +1874,131 @@ void LammpsGui::createChartWindow(QSettings &settings)
         chartwindow->hide();
 }
 
-void LammpsGui::doRun(bool use_buffer)
+namespace {
+
+// show the input check findings; with askRunAnyway the dialog offers
+// Yes ("run anyway") / No, otherwise just OK
+int showLintDialog(QWidget *parent, const QList<LintIssue> &issues, bool askRunAnyway)
+{
+    constexpr int MAX_SHOWN = 8;
+    const int nerrors       = SyntaxChecker::countErrors(issues);
+
+    QMessageBox mb(parent);
+    mb.setWindowTitle("  LAMMPS-GUI - Input Check  ");
+    mb.setWindowIcon(parent->windowIcon());
+    QString text = QString("<p>The input check found %1 possible problem(s) "
+                           "(%2 error(s), %3 warning(s)):</p><pre>%4</pre>")
+                       .arg(issues.size())
+                       .arg(nerrors)
+                       .arg(issues.size() - nerrors)
+                       .arg(SyntaxChecker::formatIssues(issues, MAX_SHOWN).toHtmlEscaped());
+    if (askRunAnyway) text += "<p>Do you want to run the input anyway?</p>";
+    mb.setText(text);
+    if (issues.size() > MAX_SHOWN) mb.setDetailedText(SyntaxChecker::formatIssues(issues));
+    mb.setIconPixmap(QIcon(":/icons/warning.svg").pixmap(QSize(64, 64), mb.devicePixelRatioF()));
+    if (askRunAnyway) {
+        mb.setStandardButtons(QMessageBox::Yes | QMessageBox::No);
+        mb.setDefaultButton(QMessageBox::No);
+        mb.setEscapeButton(QMessageBox::No);
+        mb.button(QMessageBox::Yes)->setIcon(QIcon(":/icons/dialog-ok.svg"));
+        mb.button(QMessageBox::No)->setIcon(QIcon(":/icons/dialog-no.svg"));
+    } else {
+        mb.setStandardButtons(QMessageBox::Ok);
+        mb.button(QMessageBox::Ok)->setIcon(QIcon(":/icons/dialog-ok.svg"));
+    }
+    mb.setFont(parent->font());
+    return mb.exec();
+}
+
+} // namespace
+
+QStringList LammpsGui::presetVariableNames() const
+{
+    QStringList presets = {QStringLiteral("gui_run")};
+    // only variables with a value are defined before the run (same filter as
+    // the variable setup in doRun()); the Set Variables dialog also lists
+    // used-but-undefined variables with an empty value
+    for (const auto &var : variables)
+        if (!var.name.isEmpty() && !var.value.isEmpty()) presets << var.name;
+    return presets;
+}
+
+bool LammpsGui::confirmLintIssues()
+{
+    const SyntaxChecker checker(&syntax);
+    const auto issues =
+        checker.check(textEdit->toPlainText(), presetVariableNames(), QDir::currentPath());
+    if (issues.isEmpty()) return true;
+
+    // warnings never block a run; note them in the status bar
+    if (SyntaxChecker::countErrors(issues) == 0) {
+        status->setText(QString("Ready. The input check found %1 warning(s) - "
+                                "see Run > Check Input")
+                            .arg(issues.size()));
+        return true;
+    }
+
+    if (showLintDialog(this, issues, true) == QMessageBox::Yes) return true;
+
+    // move the cursor to the first error
+    for (const auto &issue : issues) {
+        if (issue.severity == LintSeverity::Error) {
+            textEdit->setCursor(issue.line - 1);
+            textEdit->setHighlight(issue.line - 1, true);
+            break;
+        }
+    }
+    return false;
+}
+
+void LammpsGui::checkInput()
+{
+    refreshVariables();
+    const SyntaxChecker checker(&syntax);
+    const auto issues =
+        checker.check(textEdit->toPlainText(), presetVariableNames(), QDir::currentPath());
+    if (issues.isEmpty()) {
+        textEdit->setHighlight(CodeEditor::NO_HIGHLIGHT, false);
+        information(this, "LAMMPS-GUI - Input Check", "No problems found.");
+        return;
+    }
+    showLintDialog(this, issues, false);
+    // highlight the first error-level finding like a run error; with only
+    // warnings just move the cursor to the first finding
+    for (const auto &issue : issues) {
+        if (issue.severity == LintSeverity::Error) {
+            textEdit->setHighlight(issue.line - 1, true);
+            return;
+        }
+    }
+    textEdit->setCursor(issues.first().line - 1);
+}
+
+void LammpsGui::doRun(bool use_buffer, bool dryrun)
 {
     if (lammps.isRunning()) {
         warning(this, "LAMMPS-GUI Warning", "Must stop current run before starting a new run");
         return;
+    }
+
+    // a dry run executes the setup of every command: make the side effects clear
+    if (dryrun) {
+        QMessageBox mb(this);
+        mb.setWindowTitle("  LAMMPS-GUI - Dry Run  ");
+        mb.setWindowIcon(windowIcon());
+        mb.setText("<p>A dry run executes the setup phase of every command in the "
+                   "input without running any timesteps.</p>"
+                   "<p>Output files (dumps, logs, data files) may still be created or "
+                   "overwritten, and shell commands in the input will be executed.</p>"
+                   "<p>Continue?</p>");
+        mb.setIconPixmap(QIcon(":/icons/warning.svg").pixmap(QSize(64, 64), devicePixelRatioF()));
+        mb.setStandardButtons(QMessageBox::Yes | QMessageBox::No);
+        mb.setDefaultButton(QMessageBox::Yes);
+        mb.setEscapeButton(QMessageBox::No);
+        mb.button(QMessageBox::Yes)->setIcon(QIcon(":/icons/dialog-ok.svg"));
+        mb.button(QMessageBox::No)->setIcon(QIcon(":/icons/dialog-no.svg"));
+        mb.setFont(font());
+        if (mb.exec() != QMessageBox::Yes) return;
     }
 
     purgeInspectList();
@@ -1842,7 +2018,15 @@ void LammpsGui::doRun(bool use_buffer)
         }
     }
 
+    // fold input script edits into the variables list before it is consumed
+    // by the pre-run input check and the variable setup below
+    refreshVariables();
+
     QSettings settings;
+    // pre-run input check: only error findings gate the run; a dry run
+    // needs no gate since it is itself the check
+    if (!dryrun && settings.value(Keys::LINTCHECK, true).toBool() && !confirmLintIssues()) return;
+
     progress->setValue(0);
     dirstatus->hide();
     progress->show();
@@ -1854,7 +2038,9 @@ void LammpsGui::doRun(bool use_buffer)
     if ((accel != AcceleratorTab::OpenMP) && (accel != AcceleratorTab::Intel) &&
         (accel != AcceleratorTab::Kokkos) && (accel != AcceleratorTab::Gpu))
         numthreads = 1;
-    if (numthreads > 1)
+    if (dryrun)
+        status->setText(QString("Checking input with a dry run ..."));
+    else if (numthreads > 1)
         status->setText(QString("Running LAMMPS with %1 thread(s)...").arg(numthreads));
     else
         status->setText(QString("Running LAMMPS ..."));
@@ -1863,7 +2049,6 @@ void LammpsGui::doRun(bool use_buffer)
     if (!lammps.isOpen()) return;
     capturer->beginCapture();
 
-    runner = new LammpsRunner(this);
     ++runCounter;
 
     // must delete all variables since clear does not delete them
@@ -1871,21 +2056,41 @@ void LammpsGui::doRun(bool use_buffer)
 
     // define "gui_run" variable set to runCounter value
     lammps.command(QString("variable gui_run index %1").arg(runCounter));
-    if (use_buffer) {
-        // always add final newline since the text edit widget does not do it
-        runner->setupRun(&lammps, (textEdit->toPlainText() + "\n").toStdString());
-    } else {
-        runner->setupRun(&lammps, {}, currentFile.toStdString());
+
+    // re-create index variables from the Set Variables dialog so they
+    // override definitions in the input, like -var does on the command line
+    for (const auto &var : std::as_const(variables)) {
+        if (!var.name.isEmpty() && !var.value.isEmpty())
+            lammps.command(QString("variable %1 index %2").arg(var.name, var.value));
     }
 
     // apply https proxy setting: prefer environment variable or fall back to preferences value
     applyProxySetting(lammps, settings);
 
-    connect(runner, &LammpsRunner::resultReady, this, &LammpsGui::runDone);
-    connect(runner, &LammpsRunner::finished, runner, &QObject::deleteLater);
-    runner->start();
+    dryRunActive = dryrun;
+    if (dryrun) {
+        // the equivalent of the -skiprun command line flag (see lammps.cpp):
+        // run and minimize commands stop right after their setup phase.  The
+        // timer command must be issued after our own "clear" since clear
+        // recreates the Timer class (so the runner must not clear again);
+        // no input lines are prepended, so error line numbers stay correct
+        lammps.command("clear");
+        lammps.command("timer timeout 0 every 1");
+        launchRunner((textEdit->toPlainText() + "\n").toStdString(), {}, false);
+    } else if (use_buffer) {
+        // always add final newline since the text edit widget does not do it
+        launchRunner((textEdit->toPlainText() + "\n").toStdString(), {}, true);
+    } else {
+        launchRunner({}, currentFile.toStdString(), true);
+    }
 
     createLogWindow(settings);
+    if (dryrun) {
+        if (logwindow) logwindow->setWindowTitle(logwindow->windowTitle() + " (Dry Run)");
+        // no chart window and no slide show reset: a dry run produces no
+        // trajectory, and a stale chart window must not receive updates
+        return;
+    }
 
     createChartWindow(settings);
 
@@ -1894,17 +2099,77 @@ void LammpsGui::doRun(bool use_buffer)
         slideshow->clear();
         slideshow->hide();
     }
+}
 
+void LammpsGui::launchRunner(std::string input, std::string file, bool clearfirst)
+{
+    runner = new LammpsRunner(this);
+    runner->setupRun(&lammps, std::move(input), std::move(file), clearfirst);
+
+    connect(runner, &LammpsRunner::resultReady, this, &LammpsGui::runDone);
+    connect(runner, &LammpsRunner::finished, runner, &QObject::deleteLater);
+    runner->start();
+
+    QSettings settings;
     logupdater = new QTimer(this);
     connect(logupdater, &QTimer::timeout, this, &LammpsGui::logUpdate);
     logupdater->start(settings.value(Keys::UPDFREQ, Cfg::DATA_UPDATE_INTERVAL_DEFAULT).toInt());
 }
 
+void LammpsGui::extendRun()
+{
+    if (lammps.isRunning()) {
+        warning(this, "LAMMPS-GUI Warning", "Must stop the current run before extending it");
+        return;
+    }
+    if (!hasSystemState()) {
+        warning(this, "LAMMPS-GUI Warning",
+                "Cannot extend a run without a system state.\n"
+                "Must run the input at least to the point where the system is defined.");
+        return;
+    }
+
+    bool ok = false;
+    const int nsteps =
+        QInputDialog::getInt(this, "Extend Run", "Number of steps to add:", extendSteps, 1,
+                             std::numeric_limits<int>::max(), 1, &ok);
+    if (!ok) return;
+    extendSteps = nsteps;
+
+    QSettings settings;
+    progress->setValue(0);
+    dirstatus->hide();
+    progress->show();
+    cpuuse->show();
+    lastCpuBucket = -1; // force the cpuuse stylesheet to be applied on the first poll
+    status->setText(QString("Extending run by %1 steps ...").arg(nsteps));
+    status->repaint();
+
+    capturer->beginCapture();
+
+    // append to the windows of the extended run; create them only when missing
+    // (e.g. when extending the state of an inspected restart file)
+    if (!logwindow) createLogWindow(settings);
+    if (!chartwindow) createChartWindow(settings);
+
+    logwindow->moveCursor(QTextCursor::End);
+    logwindow->insertPlainText(
+        QString("\n========== Extending run by %1 steps ==========\n\n").arg(nsteps));
+    logwindow->moveCursor(QTextCursor::End);
+
+    // "timer timeout off" resets the expired walltime timer that the Stop button
+    // leaves behind.  The setup phase must not be skipped with "pre no": each run
+    // executes on a new runner thread with its own OpenMP thread pool, and only
+    // the setup re-initializes the per-thread data of threaded accelerator
+    // packages for that pool (e.g. FixOMP::init()), so "pre no" crashes such runs.
+    launchRunner(QString("timer timeout off\nrun %1 start 0\n").arg(nsteps).toStdString(), {},
+                 false);
+}
+
 void LammpsGui::plotDataFile()
 {
-    QString fileName = QFileDialog::getOpenFileName(
-        this, "Open Data File to Plot", QString(),
-        "Data files (*.dat *.csv *.yaml *.yml *.json *.txt);;All files (*)");
+    QString fileName = QFileDialog::getOpenFileName(this, "Open Data File to Plot",
+                                                    QDir::currentPath(), Cfg::FILTER_DATA);
     if (fileName.isEmpty()) return;
 
     QString error;
@@ -2228,6 +2493,15 @@ void LammpsGui::checkUpdate()
     auto libPath         = configDir + QDir::separator() + libName;
     auto dlUrl           = getLammpsDownloadUrl();
 
+    if (dlUrl.isEmpty()) {
+        information(this, "Check for LAMMPS Update",
+                    "The pre-compiled LAMMPS shared libraries from the LAMMPS webserver "
+                    "are not compatible with this LAMMPS-GUI executable. Please compile "
+                    "a matching LAMMPS shared library yourself and select it in the "
+                    "preferences dialog.");
+        return;
+    }
+
     if (!QFile::exists(libPath)) {
         information(this, "Check for LAMMPS Update",
                     "No pre-compiled LAMMPS library found in the configuration folder. "
@@ -2265,7 +2539,7 @@ void LammpsGui::checkUpdate()
         button->setIcon(QIcon(":/icons/dialog-no.svg"));
 
         if (mb.exec() == QMessageBox::Yes) {
-            if (downloader.download(dlUrl, libPath, true)) {
+            if (downloader.download(dlUrl, libPath, true, true)) {
                 warning(this, "LAMMPS Shared Library Updated",
                         "The latest LAMMPS library has been downloaded successfully. "
                         "LAMMPS-GUI must be relaunched to activate it.");
@@ -2491,15 +2765,37 @@ void LammpsGui::defaults()
     QSettings settings;
     settings.clear();
     settings.sync();
+
+    // also delete a LAMMPS shared library that was downloaded into the
+    // configuration folder; try the names for all platforms, not just the
+    // current one, since the configuration folder may be shared between
+    // different machines
+    const auto configDir = QStandardPaths::writableLocation(QStandardPaths::AppConfigLocation);
+    if (!configDir.isEmpty()) {
+        const QDir dir(configDir);
+        for (const auto &lib :
+             {Cfg::LAMMPS_LIB_MACOS, Cfg::LAMMPS_LIB_WINDOWS, Cfg::LAMMPS_LIB_LINUX}) {
+            const auto path = dir.absoluteFilePath(lib);
+            // a loaded library is locked against deletion on Windows, but it
+            // can still be renamed; the backup is removed on the next launch
+            if (QFileInfo::exists(path) && !QFile::remove(path)) renameToBackup(path);
+        }
+        // remove backups and partial downloads right away where possible
+        purgeLibraryLeftovers();
+    }
 }
 
 void LammpsGui::editVariables()
 {
-    QList<QPair<QString, QString>> newvars = variables;
+    // sync the dialog with the current state of the input script
+    refreshVariables();
+
+    QList<VariableEntry> newvars = variables;
     SetVariables vars(newvars);
     vars.setFont(font());
     if (vars.exec() == QDialog::Accepted) {
         variables = newvars;
+        textEdit->setVariableOverrides(variables);
         if (lammps.isRunning()) {
             stopRun();
             runner->wait();
@@ -2568,7 +2864,10 @@ void LammpsGui::preferences()
 
             qputenv("OMP_NUM_THREADS", QByteArray::number(nthreads));
         }
-        if (imagewindow) imagewindow->createImage();
+        // the settings change above may have torn down the LAMMPS instance;
+        // re-rendering then would only produce a spurious error about the
+        // missing simulation box
+        if (imagewindow && hasSystemState()) imagewindow->createImage();
         settings.beginGroup(Keys::GROUP_REFORMAT);
         textEdit->setReformatOnReturn(settings.value(Keys::RETURN, false).toBool());
         textEdit->setAutoComplete(settings.value(Keys::AUTOMATIC, true).toBool());
@@ -2674,18 +2973,6 @@ void LammpsGui::startLammps()
         lammpsArgs.push_back("screen");
     }
 
-    // add variables, if defined
-    for (auto &var : variables) {
-        QString name  = var.first;
-        QString value = var.second;
-        if (!name.isEmpty() && !value.isEmpty()) {
-            lammpsArgs.push_back("-var");
-            lammpsArgs.push_back(name.toStdString());
-            for (const auto &v : value.split(' ', Qt::SkipEmptyParts))
-                lammpsArgs.push_back(v.toStdString());
-        }
-    }
-
     // Build temporary char* array for the LAMMPS C API which takes char**
     // but does not modify the argument strings. The const_cast is safe here
     // because lammps.open() only reads the strings to copy them internally.
@@ -2712,6 +2999,52 @@ void LammpsGui::startLammps()
     if (!errmsg.isEmpty()) critical(this, "LAMMPS-GUI Error", "Error launching LAMMPS:", errmsg);
 }
 
+void LammpsGui::populateSyntax()
+{
+    // without a LAMMPS instance the registry stays unpopulated, which keeps
+    // the unknown-name marking of the highlighter disabled
+    if (!lammps.isOpen()) return;
+
+    // command names: input script commands from the bundled list plus the
+    // registered command styles of the running LAMMPS instance
+    QStringList names;
+    QFile internal_commands(QStringLiteral(":/lammps_internal_commands.txt"));
+    if (internal_commands.open(QIODevice::ReadOnly | QIODevice::Text)) {
+        while (!internal_commands.atEnd())
+            names << QString(internal_commands.readLine()).trimmed();
+        internal_commands.close();
+    }
+    const int ncmds = lammps.styleCount("command");
+    for (int i = 0; i < ncmds; ++i) {
+        const QString style = lammps.styleName("command", i);
+        if (!style.isEmpty()) names << style;
+    }
+    syntax.setCommands(names);
+
+    static const struct {
+        const char *name;
+        StyleCat cat;
+    } categories[] = {{"fix", StyleCat::Fix},           {"compute", StyleCat::Compute},
+                      {"dump", StyleCat::Dump},         {"atom", StyleCat::Atom},
+                      {"pair", StyleCat::Pair},         {"bond", StyleCat::Bond},
+                      {"angle", StyleCat::Angle},       {"dihedral", StyleCat::Dihedral},
+                      {"improper", StyleCat::Improper}, {"kspace", StyleCat::Kspace},
+                      {"region", StyleCat::Region},     {"integrate", StyleCat::Integrate},
+                      {"minimize", StyleCat::Minimize}};
+    for (const auto &category : categories) {
+        names.clear();
+        const int nstyles = lammps.styleCount(category.name);
+        for (int i = 0; i < nstyles; ++i) {
+            const QString style = lammps.styleName(category.name, i);
+            if (!style.isEmpty()) names << style;
+        }
+        syntax.setStyles(category.cat, names);
+    }
+
+    // re-highlight with the now complete syntax data
+    highlighter->rehighlight();
+}
+
 bool LammpsGui::eventFilter(QObject *watched, QEvent *event)
 {
     if (event->type() == QEvent::Close) {
@@ -2730,34 +3063,74 @@ void LammpsGui::openTutorialWebpage(int collection, int tutno)
     if (!weburl.isEmpty()) QDesktopServices::openUrl(QUrl(weburl));
 }
 
-bool LammpsGui::downloadTutorialFiles(const QString &dir, const QList<DownloadItem> &downloads,
-                                      URLDownloader &downloader, const QString &baseUrl)
-{
-    int i   = 0;
-    int num = downloads.size();
-    if (!num) num = 1;
+namespace {
 
-    progress->setValue(0);
-    progress->show();
-    dirstatus->hide();
+// deliberately does not speculate about the cause of the failure: users tend to
+// take such hints literally and then chase a problem they do not have
+void tutorialDownloadFailed(QWidget *parent, const QString &detail)
+{
+    critical(parent, "LAMMPS-GUI Error",
+             "<p>Download of the tutorial files over the network is currently failing. "
+             "Please try again in a while.</p>"
+             "<p>If the problem persists, please report it in the LAMMPS forum at "
+             "<a href=\"https://matsci.org/lammps\">https://matsci.org/lammps</a> or by email "
+             "to developers@lammps.org.</p>",
+             detail);
+}
+
+// list the tutorial files that could not be downloaded and suggest reporting
+// them; a button opens the issue tracker of the collection's file repository
+// in the web browser, so the long URL does not need to be shown
+void tutorialFilesMissing(QWidget *parent, const QString &issuesUrl, const QStringList &missing)
+{
+    const QString plural = (missing.size() > 1) ? "s" : "";
+    QString files;
+    for (const auto &file : missing)
+        files += QString("<br><code>%1</code>").arg(file);
+
+    QMessageBox mb(parent);
+    mb.setWindowTitle("LAMMPS-GUI Warning");
+    mb.setText(QString("<p>The following tutorial file%1 could not be downloaded:%2</p>")
+                   .arg(plural, files));
+    mb.setInformativeText(
+        QString("<p>Please report the missing file%1 by opening an issue in the tutorial's "
+                "file repository on GitHub or by sending an email to akohlmey@gmail.com.</p>")
+            .arg(plural));
+    setDialogIcons(mb, ":/icons/warning.svg");
+    auto *report = mb.addButton("&Report Issue...", QMessageBox::ActionRole);
+    report->setIcon(QIcon(":/icons/help-browser.svg"));
+    mb.exec();
+    if (mb.clickedButton() == report) QDesktopServices::openUrl(QUrl(issuesUrl));
+}
+
+} // namespace
+
+bool LammpsGui::downloadTutorialFiles(const QString &dir, const QList<DownloadItem> &downloads,
+                                      URLDownloader &downloader, const QString &baseUrl,
+                                      DownloadProgress &dlg, const QString &issuesUrl)
+{
+    int i         = 0;
+    const int num = downloads.size();
+    QStringList missing;
 
     for (const auto &item : downloads) {
         ++i;
-        status->setText(QString("Downloading file %1 of %2").arg(i).arg(num));
-        progress->setValue(
-            static_cast<int>(static_cast<double>(i) / static_cast<double>(num) * 1000.0));
-        status->repaint();
+        dlg.setProgress(QString("File %1 of %2: %3").arg(i).arg(num).arg(item.fname), i, num);
 
         QString localPath = dir + QDir::separator() + item.fname;
         if (!downloader.download(baseUrl.arg(item.ntutorial).arg(item.fname), localPath)) {
-            // download failed. abort, restore status line, and launch error dialog
-            status->setText("Error.");
-            progress->hide();
-            dirstatus->show();
-            status->repaint();
-            critical(this, "LAMMPS-GUI Error",
-                     "Tutorial files download error:", downloader.errorString());
-            return false;
+            // only a download canceled by the user aborts the batch.  accept(),
+            // not close(): closing implies reject() and would re-trigger the
+            // caller's cancel connection
+            if (downloader.wasAborted()) {
+                dlg.accept();
+                return false;
+            }
+            // otherwise record the file and continue with the remaining ones:
+            // a single file missing from the server (e.g. from a stale manifest
+            // entry) should not discard the rest of the tutorial
+            missing.append(item.fname);
+            continue;
         }
 
         // check if download is a placeholder for a symbolic link and make a copy instead.
@@ -2781,6 +3154,11 @@ bool LammpsGui::downloadTutorialFiles(const QString &dir, const QList<DownloadIt
     progress->hide();
     dirstatus->show();
     status->repaint();
+
+    if (!missing.isEmpty()) {
+        dlg.accept();
+        tutorialFilesMissing(this, issuesUrl, missing);
+    }
     return true;
 }
 
@@ -2809,12 +3187,25 @@ void LammpsGui::setupTutorial(int collection, int tutno, const QString &dir, boo
 
     URLDownloader downloader(this);
 
+    // splash-style progress dialog, visible from the very first network round
+    // trip: that request may stall until the transfer timeout and previously
+    // had no feedback at all, making the download look like a silent no-op
+    DownloadProgress dlg(QString("Downloading %1 Tutorial %2").arg(coll.name).arg(tutno),
+                         QPixmap(coll.logoFor(tutno)), this);
+    connect(&dlg, &QDialog::rejected, &dlg, [&downloader]() {
+        downloader.abort();
+    });
+    dlg.setBusy("Retrieving the list of tutorial files ...");
+
     // download and process manifest for selected tutorial
     // must check for error after download, e.g. when there is no network.
     QString manifestPath = dir + QDir::separator() + ".manifest";
     if (!downloader.download(baseUrl.arg(tutno).arg(".manifest"), manifestPath)) {
-        critical(this, "LAMMPS-GUI Error",
-                 "Tutorial files download error:", downloader.errorString());
+        // accept(), not close(): closing implies reject() and would trigger
+        // the cancel connection above, masking the failure as a cancellation
+        dlg.accept();
+        // no error dialog when the user canceled the download
+        if (!downloader.wasAborted()) tutorialDownloadFailed(this, downloader.errorString());
         return;
     }
 
@@ -2845,9 +3236,14 @@ void LammpsGui::setupTutorial(int collection, int tutno, const QString &dir, boo
         manifest.remove();
     }
 
-    if (!downloadTutorialFiles(dir, downloads, downloader, baseUrl)) return;
+    if (!downloadTutorialFiles(dir, downloads, downloader, baseUrl, dlg,
+                               coll.filesRepoUrl + "/issues"))
+        return;
+    dlg.accept();
 
-    if (!first.isEmpty()) openFile(dir + QDir::separator() + first);
+    // the initial template may itself be among the files that failed to download
+    const QString firstFile = dir + QDir::separator() + first;
+    if (!first.isEmpty() && QFileInfo::exists(firstFile)) openFile(firstFile);
 }
 
 // Local Variables:

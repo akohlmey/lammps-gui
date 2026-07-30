@@ -12,10 +12,13 @@
 #ifndef CODEEDITOR_H
 #define CODEEDITOR_H
 
+#include <QHash>
 #include <QMap>
 #include <QPlainTextEdit>
 #include <QString>
 #include <QStringList>
+
+#include "inputvariables.h"
 
 class QAbstractItemView;
 class QCompleter;
@@ -31,6 +34,8 @@ class QRect;
 class QResizeEvent;
 class QShortcut;
 class QWidget;
+
+class LammpsSyntax;
 
 /**
  * @brief Custom text editor with LAMMPS syntax support and auto-completion
@@ -64,6 +69,12 @@ public:
     CodeEditor(CodeEditor &&)                 = delete;
     CodeEditor &operator=(const CodeEditor &) = delete;
     CodeEditor &operator=(CodeEditor &&)      = delete;
+
+    /**
+     * @brief Set the syntax registry used for completion and help lookups
+     * @param newsyntax Syntax registry (not owned)
+     */
+    void setSyntax(const LammpsSyntax *newsyntax) { syntax = newsyntax; }
 
     /**
      * @brief Paint line numbers in the line number area
@@ -218,6 +229,18 @@ public:
     void setExtraList(const QStringList &words);
 
     /**
+     * @brief Set list of color names for completion
+     * @param words List of color names
+     */
+    void setColorList(const QStringList &words);
+
+    /**
+     * @brief Set list of dump image keywords for completion
+     * @param words List of dump image keywords
+     */
+    void setImageKwList(const QStringList &words);
+
+    /**
      * @brief Update group ID list from the editor buffer
      */
     void setGroupList();
@@ -243,6 +266,17 @@ public:
     void setFileList();
 
     /**
+     * @brief Set the variables list used to mark overridden index variable values
+     *
+     * Entries whose value overrides the definition in the input script (see
+     * isOverridden()) get a thin frame drawn around the value text of their
+     * definition line and a tooltip showing the overriding value.
+     *
+     * @param vars Current variable entries (parse results plus dialog edits)
+     */
+    void setVariableOverrides(const QList<VariableEntry> &vars);
+
+    /**
      * @brief Constant for disabled highlighting
      */
     static constexpr int NO_HIGHLIGHT = 1 << 30;
@@ -253,6 +287,19 @@ protected:
      * @param event The resize event
      */
     void resizeEvent(QResizeEvent *event) override;
+
+    /**
+     * @brief Paint the editor and frame overridden index variable values
+     * @param event The paint event
+     */
+    void paintEvent(QPaintEvent *event) override;
+
+    /**
+     * @brief Handle tooltip events for overridden index variable values
+     * @param event The event to handle
+     * @return true if the event was handled
+     */
+    bool event(QEvent *event) override;
 
     /**
      * @brief Check if MIME data can be inserted (for drag-and-drop)
@@ -389,11 +436,16 @@ private:
     QWidget *lineNumberArea; ///< Widget for displaying line numbers
     QShortcut *helpAction;   ///< Keyboard shortcut for help
 
+    const LammpsSyntax *syntax = nullptr; ///< Syntax registry (not owned)
+
     /// @brief Auto-completion objects for different LAMMPS command contexts
     QCompleter *currentComp, *commandComp, *fixComp, *computeComp, *dumpComp, *atomComp, *pairComp,
         *bondComp, *angleComp, *dihedralComp, *improperComp, *kspaceComp, *regionComp,
         *integrateComp, *minimizeComp, *variableComp, *unitsComp, *groupComp, *varnameComp,
-        *fixidComp, *compidComp, *fileComp, *extraComp;
+        *fixidComp, *compidComp, *fileComp, *extraComp, *colorComp, *imagekwComp;
+
+    /// @brief Overridden index variables by name (only entries where isOverridden() is true)
+    QHash<QString, VariableEntry> variableOverrides;
 
     int highlight;            ///< Current highlighted line number, NO_HIGHLIGHT if none
     bool highlighterror;      ///< Highlighted line marks an error (red) instead of progress

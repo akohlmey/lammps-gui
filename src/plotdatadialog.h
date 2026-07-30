@@ -18,16 +18,20 @@
 #include <QList>
 #include <QStringList>
 
+class QButtonGroup;
 class QCheckBox;
+class QGridLayout;
 class QLineEdit;
-class QVBoxLayout;
 
 /**
  * @brief Dialog to choose which columns of a PlotData to plot
  *
  * Presents the parsed columns of an external data file and lets the user
- * select which columns to plot on the y-axis via checkboxes.  The first
- * unselected (unchecked) column is automatically used as the shared x-axis.
+ * assign a role to each column: exactly one column is the shared x-axis
+ * (exclusive radio buttons), any number of columns are plotted on the
+ * y-axis (checkboxes), and columns with neither selected are ignored.
+ * When the x-axis selection moves to a different column, the previous
+ * x-axis column becomes a y-axis column.
  * A small preview of the first rows is shown to help identify column content.
  *
  * A "Compute derived column" section at the bottom lets the user add derived columns
@@ -56,8 +60,8 @@ public:
     /**
      * @brief Index of the column used as the x-axis
      *
-     * Returns the index of the first unchecked (unselected) column.
-     * Falls back to 0 if all columns are checked.
+     * Returns the index of the column whose x-axis radio button is selected.
+     * Falls back to 0 if no column is selected as the x-axis.
      * Indices refer to @ref buildData() columns.
      * @return Column index
      */
@@ -67,7 +71,7 @@ public:
      * @brief Indices of the columns selected to plot on the y-axis
      *
      * Indices refer to @ref buildData() columns.
-     * @return List of column indices (all checked columns)
+     * @return List of column indices (all columns with a checked y checkbox)
      */
     QList<int> yColumns() const;
 
@@ -94,11 +98,12 @@ private slots:
     void computeColumn();
 
 private:
-    /** @brief Append one row (checkbox with @p name + optional @p checked state) */
+    /** @brief Append one row (x radio button + y checkbox with @p checked state + name editor) */
     void appendColumnRow(const QString &name, bool checked);
 
     PlotData workingData;       ///< Working copy of the data; derived cols appended here
-    QVBoxLayout *colsLayout;    ///< Layout of the per-column rows (for dynamic addition)
+    QGridLayout *colsLayout;    ///< Layout of the per-column rows (for dynamic addition)
+    QButtonGroup *xgroup;       ///< Exclusive group of x selection radio buttons (id = column)
     QList<QCheckBox *> ychecks; ///< per-column y selection checkboxes
     QList<QLineEdit *> ynames;  ///< per-column name editors
     QLineEdit *deriveNameEdit;  ///< Name field for the new derived column

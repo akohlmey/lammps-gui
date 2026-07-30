@@ -14,7 +14,7 @@
 #include "stdcapture.h"
 #include "helpers.h"
 
-#ifdef _WIN32
+#if defined(Q_OS_WIN32)
 #include <io.h>
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
@@ -32,7 +32,7 @@
 #include <fcntl.h>
 #include <thread>
 
-#ifdef _WIN32
+#if defined(Q_OS_WIN32)
 // Check if a pipe has data available for reading without blocking.
 // Uses PeekNamedPipe() instead of _eof() because _eof() relies on _lseek()
 // internally to check the file position.  Since pipes are not seekable,
@@ -60,7 +60,7 @@ StdCapture::StdCapture() : m_oldStdOut(0), m_capturing(false), maxread(0), buf(b
 
     m_pipe[READ]  = 0;
     m_pipe[WRITE] = 0;
-#ifdef _WIN32
+#if defined(Q_OS_WIN32)
     if (_pipe(m_pipe, 65536, O_BINARY) == -1) return;
 #else
     if (pipe(m_pipe) == -1) return;
@@ -103,7 +103,7 @@ bool StdCapture::endCapture()
         bytesRead  = 0;
         fd_blocked = false;
 
-#ifdef _WIN32
+#if defined(Q_OS_WIN32)
         if (pipe_has_data(m_pipe[READ])) {
             bytesRead = read(m_pipe[READ], buf.data(), bufSize - 1);
         }
@@ -131,7 +131,7 @@ std::string StdCapture::getChunk()
     int bytesRead = 0;
     buf[0]        = '\0';
 
-#ifdef _WIN32
+#if defined(Q_OS_WIN32)
     if (pipe_has_data(m_pipe[READ])) {
         bytesRead = read(m_pipe[READ], buf.data(), bufSize - 1);
     }

@@ -15,14 +15,17 @@
 #include "helpers.h"
 
 #include <QAbstractItemView>
+#include <QButtonGroup>
 #include <QCheckBox>
 #include <QDialogButtonBox>
+#include <QGridLayout>
 #include <QGroupBox>
 #include <QHBoxLayout>
 #include <QHeaderView>
 #include <QLabel>
 #include <QLineEdit>
 #include <QPushButton>
+#include <QRadioButton>
 #include <QScrollArea>
 #include <QStringList>
 #include <QTableWidget>
@@ -52,8 +55,8 @@ static std::string sanitizeVarName(const QString &name)
 }
 
 PlotDataDialog::PlotDataDialog(const PlotData &data, QWidget *parent) :
-    QDialog(parent), workingData(data), colsLayout(nullptr), deriveNameEdit(nullptr),
-    deriveExprEdit(nullptr)
+    QDialog(parent), workingData(data), colsLayout(nullptr), xgroup(nullptr),
+    deriveNameEdit(nullptr), deriveExprEdit(nullptr)
 {
     setWindowTitle("Select Columns to Plot");
     const int ncol = workingData.columnCount();
@@ -61,13 +64,27 @@ PlotDataDialog::PlotDataDialog(const PlotData &data, QWidget *parent) :
 
     auto *layout = new QVBoxLayout(this);
     layout->addWidget(new QLabel(QString("%1 rows, %2 columns").arg(nrow).arg(ncol)));
-    layout->addWidget(new QLabel("The first unselected column will be used as the x-axis."));
 
-    // y-column selection checkboxes + name editors (default: every column but the first)
-    auto *ybox = new QGroupBox("Columns to plot (uncheck the x-axis column)");
-    colsLayout = new QVBoxLayout(ybox);
+    // per-column role selection: exclusive x radio buttons, y checkboxes, name editors
+    // (default: the first column is the x-axis and all other columns are plotted)
+    auto *ybox = new QGroupBox("Columns to plot");
+    colsLayout = new QGridLayout(ybox);
+    colsLayout->addWidget(new QLabel("X"), 0, 0, Qt::AlignHCenter);
+    colsLayout->addWidget(new QLabel("Y"), 0, 1, Qt::AlignHCenter);
+    colsLayout->addWidget(new QLabel("Column name"), 0, 2);
+    colsLayout->setColumnStretch(2, 1);
+    xgroup = new QButtonGroup(this);
     for (int c = 0; c < ncol; ++c)
         appendColumnRow(workingData.columnName(c), c != 0);
+
+    // the x-axis column cannot be plotted on the y-axis at the same time;
+    // a column that stops being the x-axis becomes a y-axis column again
+    connect(xgroup, &QButtonGroup::idToggled, this, [this](int id, bool checked) {
+        if ((id < 0) || (id >= ychecks.size())) return;
+        ychecks[id]->setChecked(!checked);
+        ychecks[id]->setDisabled(checked);
+    });
+    if (auto *first = xgroup->button(0)) first->setChecked(true);
 
     auto *scroll = new QScrollArea;
     scroll->setWidgetResizable(true);
@@ -128,6 +145,8 @@ PlotDataDialog::PlotDataDialog(const PlotData &data, QWidget *parent) :
 
 void PlotDataDialog::appendColumnRow(const QString &name, bool checked)
 {
+    auto *xb = new QRadioButton;
+    xgroup->addButton(xb, ychecks.size());
     auto *cb = new QCheckBox;
     cb->setChecked(checked);
     ychecks.append(cb);
@@ -135,10 +154,10 @@ void PlotDataDialog::appendColumnRow(const QString &name, bool checked)
     nameEdit->setPlaceholderText("column name");
     nameEdit->setMinimumWidth(120);
     ynames.append(nameEdit);
-    auto *row = new QHBoxLayout;
-    row->addWidget(cb);
-    row->addWidget(nameEdit, 1);
-    colsLayout->addLayout(row);
+    const int row = colsLayout->rowCount();
+    colsLayout->addWidget(xb, row, 0, Qt::AlignHCenter);
+    colsLayout->addWidget(cb, row, 1, Qt::AlignHCenter);
+    colsLayout->addWidget(nameEdit, row, 2);
 }
 
 void PlotDataDialog::computeColumn()
@@ -194,9 +213,8 @@ void PlotDataDialog::computeColumn()
 
 int PlotDataDialog::xColumn() const
 {
-    for (int i = 0; i < ychecks.size(); ++i)
-        if (!ychecks[i]->isChecked()) return i;
-    return 0;
+    const int id = xgroup->checkedId();
+    return (id >= 0) ? id : 0;
 }
 
 QList<int> PlotDataDialog::yColumns() const

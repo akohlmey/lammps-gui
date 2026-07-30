@@ -55,23 +55,9 @@ if (LAMMPS_GUI_USE_PLUGIN AND NOT BUILD_DOC_ONLY)
       BYPRODUCTS LAMMPS-GUI-macOS-multiarch-${PROJECT_VERSION}.dmg
       WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
     )
-  # settings for building on Windows with Visual Studio
-  elseif(MSVC)
-    install(FILES $<TARGET_RUNTIME_DLLS:lammps-gui> TYPE BIN)
-    # find path to VC++ init batch file
-    get_filename_component(VC_COMPILER_DIR "${CMAKE_CXX_COMPILER}" DIRECTORY)
-    get_filename_component(VC_BASE_DIR "${VC_COMPILER_DIR}/../../../../../.." ABSOLUTE)
-    set(VC_INIT "${VC_BASE_DIR}/Auxiliary/Build/vcvarsall.bat")
-    get_filename_component(QT6_BIN_DIR "${Qt6Core_DIR}/../../../bin" ABSOLUTE)
-    get_filename_component(INSTNAME ${CMAKE_INSTALL_PREFIX} NAME)
-    # the deployment helper script is not part of this repository (yet), so
-    # skip the step with a warning instead of failing the whole install
-    if(EXISTS "${CMAKE_SOURCE_DIR}/packaging/build_windows_vs.cmake")
-      install(CODE "execute_process(COMMAND \"${CMAKE_COMMAND}\" -D INSTNAME=${INSTNAME} -D VC_INIT=\"${VC_INIT}\" -D QT6_BIN_DIR=\"${QT6_BIN_DIR}\" -P \"${CMAKE_SOURCE_DIR}/packaging/build_windows_vs.cmake\" WORKING_DIRECTORY \"${CMAKE_INSTALL_PREFIX}/..\" COMMAND_ECHO STDOUT)")
-    else()
-      message(WARNING "packaging/build_windows_vs.cmake not found; skipping the Windows deployment step")
-    endif()
-  # settings for packaging Windows NSIS installer on Linux with MinGW cross-compiler
+  # settings for packaging Windows NSIS installer on Linux with MinGW cross-compiler.
+  # native compilation with MSVC is supported for development only and has no
+  # deployment or packaging support; all Windows packages are cross-compiled.
   elseif((CMAKE_SYSTEM_NAME STREQUAL "Windows") AND CMAKE_CROSSCOMPILING)
     set(QT_NO_QTPATHS_DEPLOYMENT_WARNING ON CACHE BOOL "" FORCE)
     add_custom_target(nsis

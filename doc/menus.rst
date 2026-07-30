@@ -52,6 +52,13 @@ File
      `LAMMPS restart <https://docs.lammps.org/write_restart.html>`_ three
      windows with :ref:`information about the file are opened
      <inspect_restart>`.
+   - *Write Restart File...* opens a dialog to select a file name and then
+     writes a `LAMMPS restart file
+     <https://docs.lammps.org/write_restart.html>`_ with the current state
+     of the system.  This requires a system state, e.g. from running an
+     input.  A typical use case is to preserve the state of a run that was
+     interrupted with the *Stop LAMMPS* entry of the :ref:`Run menu
+     <run_menu>` before extending it.
    - *Quit* exits LAMMPS-GUI. If there are unsaved changes, a dialog will
      appear to either cancel the operation, or to save, or to not save the
      modified buffer.
@@ -59,17 +66,6 @@ File
 In addition, up to 5 recent file names will be listed after the *Open Input File*
 entry that allows re-opening recently opened files.  This list is stored
 when quitting and recovered when starting again.
-
-.. versionadded:: 2.1
-
-   The *View Image File(s)...* and *Plot Data File...* entries were added.  The
-   *View Text File* entry now warns when given an image or binary file instead of
-   trying to display it as text.
-
-.. versionchanged:: 3.0.2
-
-   The *View Image File(s)...* entry was renamed to *View Image or Movie
-   File(s)...* and now also accepts movie files.
 
 **Plotting external data files.** The *Plot Data File...* entry
 (`Ctrl-Shift-P`) opens a dialog to select a file with column-oriented
@@ -97,7 +93,11 @@ The *Edit* menu offers the usual editor functions like *Undo*, *Redo*,
 *Cut*, *Copy*, *Paste*, and a *Find and Replace* dialog (keyboard
 shortcut `Ctrl-F`).  It can also open a *Preferences* dialog (keyboard
 shortcut `Ctrl-P`) and allows deleting all stored preferences and
-settings, so they are reset to their default values.
+settings, so they are reset to their default values.  Resetting the
+preferences also deletes a LAMMPS shared library that was previously
+downloaded into the configuration folder; the library files for all
+supported platforms are removed in case the configuration folder is
+shared between multiple computers.
 
 .. _run_menu:
 
@@ -139,11 +139,69 @@ timestep.  The *Stop LAMMPS* entry will do this by calling the
 library function, which is equivalent to a `timer timeout 0
 <https://docs.lammps.org/timer.html>`_ command.
 
+The *Extend Run...* entry (keyboard shortcut `Ctrl-E`) opens a dialog
+asking for a number of steps and then continues the previous run for
+that many more steps without clearing the system.  This requires a
+system state, e.g. from a previous run or an inspected restart file.
+The continuation executes a `timer timeout off
+<https://docs.lammps.org/timer.html>`_ command, which resets the
+expired timer in case the previous run was interrupted with *Stop
+LAMMPS*, followed by ``run <steps> pre yes post no``.  The captured
+output and thermodynamic data are appended to the existing *Output*
+and *Charts* windows after a message noting the extension.  Typical
+use cases are continuing a run that was stopped (e.g. after writing a
+restart file first), or extending a run that did not produce enough
+frames for a smooth animation or enough data for a plot.
+
 The *Relaunch LAMMPS Instance* will destroy the current LAMMPS thread
 and free its data and then create a new thread with a new LAMMPS
 instance.  This is usually not needed, since LAMMPS-GUI tries to detect
 when this is needed and does it automatically.  This is available
 in case it missed something and LAMMPS behaves in unexpected ways.
+
+.. index:: Check Input
+
+.. image:: JPG/lammps-gui-lint-error.png
+   :align: center
+   :width: 50%
+
+The *Check Input via Heuristics* entry (keyboard shortcut `Ctrl-K`)
+runs a fast static check of the editor buffer and reports its findings
+in a dialog: unknown commands and style names (validated against the
+loaded LAMMPS library), unbalanced quotes, dangling line continuations,
+variables used before they are defined, references to undefined groups,
+references to computes, fixes, or variables that are defined nowhere in
+the buffer, missing input files, missing required arguments, and
+non-numeric arguments where strictly numeric values are required.  When
+no problems are found, a corresponding message is shown; otherwise the
+cursor moves to the first finding.  The same check runs automatically
+before every run (this can be disabled in the *Editor Settings* of the
+*Preferences* dialog); in that case only error-level findings trigger a
+dialog asking whether to run anyway, while warnings are only noted in
+the status bar.  The checker is designed to avoid false alarms: any
+word containing a ``$`` substitution is exempt from checking, and
+script features that make static analysis unreliable (include files,
+jump loops, if/then commands, python scripting, shell commands, restart
+files, runtime plugins) disable the affected groups of checks.
+
+The *Check Input via Dry Run* entry (keyboard shortcut `Ctrl-Shift-K`)
+validates the buffer by actually executing it: the equivalent of the
+`-skiprun <https://docs.lammps.org/Run_options.html>`_ command-line
+flag is applied, so LAMMPS parses every command and executes the setup
+phase of every `run <https://docs.lammps.org/run.html>`_ and `minimize
+<https://docs.lammps.org/minimize.html>`_ command without computing any
+timesteps.  This is a much deeper check than the static one, but it
+takes as long as the setup of a real run and has the same side
+effects: output files may be created or overwritten and `shell
+<https://docs.lammps.org/shell.html>`_ commands are executed, which is
+why the action first asks for confirmation.  The captured output is
+shown in an *Output* window; errors are reported with the usual error
+dialog and the offending line is highlighted in the editor.  On
+success, a dialog confirms that the input passed and points to the
+*Output* window for any LAMMPS warnings.
+
+
+.. _set_variables:
 
 The *Set Variables...* entry opens a dialog box where `index style
 variables <https://docs.lammps.org/variable.html>`_ can be set. Those
@@ -160,6 +218,18 @@ used but not defined, if the built-in parser can detect them.  New
 rows for additional variables can be added through the *Add Row*
 button and existing rows can be deleted by clicking on the *X* icons
 on the right.
+
+The dialog follows edits to the input script: when a ``variable ...
+index`` command in the editor is changed, the dialog picks up the
+new value the next time it is opened or a run is started, even if
+the value had been changed in the dialog before.  A value edited in
+the dialog so that it differs from the input script is shown in
+bold with a tooltip listing the script value, and the overridden
+value in the editor is surrounded by a thin frame as a reminder
+that the input script line is not what LAMMPS will use.  Values
+from the dialog are passed to LAMMPS before the input script runs,
+so they take precedence over ``variable ... index`` commands in the
+input, exactly like the ``-var`` command line flag to LAMMPS.
 
 The *Create Image* entry will send a `dump image
 <https://docs.lammps.org/dump_image.html>`_ command to the LAMMPS
@@ -221,6 +291,13 @@ browser.  The dialog will then start downloading the files requested
 (download progress is reported in the status line) and load the first
 input file for the selected session into LAMMPS-GUI.
 
+Should individual tutorial files fail to download, the remaining files
+are still fetched, and a dialog afterwards lists the files that are
+missing.  That dialog offers a *Report Issue* button that opens the
+issue tracker of the tutorial's file repository in a web browser, so
+the missing files can be reported; alternatively they can be reported
+by email to akohlmey@gmail.com.
+
 .. image:: JPG/lammps-gui-tutorials.png
    :align: center
    :scale: 50%
@@ -251,7 +328,10 @@ The *Check for LAMMPS update* entry -- available only in the plugin
 version of LAMMPS-GUI -- compares the downloaded LAMMPS shared library
 with the latest version available online and offers to download and
 install an update when a newer version is found; LAMMPS-GUI is then
-relaunched to activate it.
+relaunched to activate it.  The checksum of the downloaded file is
+verified before it replaces the current library, which is renamed to a
+backup name first; leftover backup files and partial downloads in the
+configuration folder are cleaned up on the next launch of LAMMPS-GUI.
 
 -------------
 

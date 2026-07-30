@@ -85,7 +85,9 @@ private slots:
     void resetView();         ///< Reset view to defaults
     void resetWindowSize();   ///< Resize window to fit the configured image size
     void toggleSsao();        ///< Toggle screen-space ambient occlusion
-    void toggleAnti();        ///< Toggle antialiasing
+    void toggleAnti();        ///< Toggle anti-aliasing
+    void toggleDepthcue();    ///< Toggle depth cueing
+    void toggleDefocus();     ///< Toggle defocusing of distant objects
     void toggleShiny();       ///< Toggle shiny/specular rendering
     void toggleVdw();         ///< Toggle Van der Waals radii
     void toggleBond();        ///< Toggle bond display
@@ -238,12 +240,22 @@ private:
     double axesdiam;                             ///< Axes diameter
     double axestrans;                            ///< Axes transparency
     double ssaoval;                              ///< SSAO strength
+    int ssaosamples;                             ///< SSAO sampling directions (0 = auto)
+    double depthcuefactor;                       ///< Depth cueing strength
+    QString depthcuecolor;                       ///< Depth cueing fog color or "auto"
+    QString depthcuestart;                       ///< Depth cueing start fraction or "auto"
+    double defocusfactor;                        ///< Defocus blur strength
+    QString defocusstart;                        ///< Defocus start fraction or "auto"
+    int outlinewidth;                            ///< Outline width in pixels
+    QString outlinecolor;                        ///< Outline color
+    QString specular;                            ///< Specular preset or "auto"
     double atomtrans;                            ///< Atom transparency
     double bondtrans;                            ///< Bond transparency
     double ambientlight;                         ///< ambient light setting
     double keylight;                             ///< key light setting
     double filllight;                            ///< fill light setting
     double backlight;                            ///< back light setting
+    double gammaval;                             ///< gamma adjustment (1.0 = unchanged)
     QString axesloc;                             ///< Axes location
     QString boxcolor;                            ///< Color for box and subbox
     QString backcolor;                           ///< (lower) background color
@@ -265,14 +277,18 @@ private:
     QString linecolor;                           ///< Custom line color property
     QString tricolor;                            ///< Custom triangle color property
     double xcenter, ycenter, zcenter;            ///< View center coordinates
+    bool dynamiccenter;                          ///< Use dynamic instead of static view center
     double xup, yup, zup;                        ///< Camera up direction vector
     bool atomcustom;                             ///< Use custom atom color settings
     bool usegradient;                            ///< Vertical background gradient
     bool showbox;                                ///< Show simulation box flag
     bool showsubbox;                             ///< Show subdomain boxes flag
     bool showaxes;                               ///< Show coordinate axes flag
-    bool antialias;                              ///< Antialiasing enabled flag
+    bool antialias;                              ///< Anti-aliasing enabled flag
     bool usessao;                                ///< SSAO enabled flag
+    bool usedepthcue;                            ///< Depth cueing enabled flag
+    bool usedefocus;                             ///< Defocus enabled flag
+    bool useoutline;                             ///< Outline drawing enabled flag
     bool showatoms;                              ///< Show atoms
     bool showbonds;                              ///< Show bonds if atom style supports it
     bool autobond;                               ///< Dynamic bonds from cutoff flag

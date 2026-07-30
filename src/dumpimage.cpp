@@ -29,6 +29,7 @@ constexpr double DEF_AMBIENT   = 0.0;
 constexpr double DEF_KEYLIGHT  = 0.9;
 constexpr double DEF_FILLLIGHT = 0.45;
 constexpr double DEF_BACKLIGHT = 0.9;
+constexpr double DEF_GAMMA     = 1.0; // no gamma adjustment
 const QString DEF_BOXCOLOR     = QStringLiteral("gold");
 const QString DEF_BACKCOLOR    = QStringLiteral("black");
 
@@ -221,6 +222,8 @@ DumpImageCommand buildDumpImageCommand(const DumpImageParams &p)
     } else {
         if ((p.atomdiam == "diameter") && p.usediameter && do_vdw)
             d += blank + "diameter";
+        else if (p.atomdiam.startsWith("v_"))
+            d += blank + p.atomdiam;
         else
             d += " type";
     }
@@ -253,6 +256,14 @@ DumpImageCommand buildDumpImageCommand(const DumpImageParams &p)
         d += QString(" view %1 %2").arg(hhrot).arg(p.vrot);
     }
     if (p.usessao) d += QString(" ssao yes %1 %2").arg(Cfg::SSAO_SEED).arg(p.ssaoval);
+    // depth cueing, defocus, and outlines default to "no" in LAMMPS, so emit
+    // them only when on
+    if (p.usedepthcue)
+        d += QString(" depthcue yes %1 %2 %3")
+                 .arg(p.depthcuefactor)
+                 .arg(p.depthcuecolor, p.depthcuestart);
+    if (p.usedefocus) d += QString(" defocus yes %1 %2").arg(p.defocusfactor).arg(p.defocusstart);
+    if (p.useoutline) d += QString(" outline yes %1 %2").arg(p.outlinewidth).arg(p.outlinecolor);
     if (p.showbox)
         d += QString(" box yes %1").arg(p.boxdiam);
     else
@@ -277,8 +288,12 @@ DumpImageCommand buildDumpImageCommand(const DumpImageParams &p)
 
     const bool dofixes = appendFixComputeStyles(d, p);
 
-    // center defaults to the box center "s 0.5 0.5 0.5"; emit only when moved
-    if ((p.xcenter != 0.5) || (p.ycenter != 0.5) || (p.zcenter != 0.5))
+    // center defaults to the static box center "s 0.5 0.5 0.5"; a dynamic center
+    // differs from that default even at unmoved fractions, so it is always
+    // emitted, while a static center is emitted only when moved
+    if (p.dynamiccenter)
+        d += QString(" center d %1 %2 %3").arg(p.xcenter).arg(p.ycenter).arg(p.zcenter);
+    else if ((p.xcenter != 0.5) || (p.ycenter != 0.5) || (p.zcenter != 0.5))
         d += QString(" center s %1 %2 %3").arg(p.xcenter).arg(p.ycenter).arg(p.zcenter);
 
     // the camera up direction defaults to "0 0 1" in 3d and "0 1 0" in 2d
@@ -343,6 +358,15 @@ DumpImageCommand buildDumpImageCommand(const DumpImageParams &p)
                  .arg(p.keylight)
                  .arg(p.filllight)
                  .arg(p.backlight);
+
+    // the specular highlight width and the SSAO sample count default to being
+    // derived from the shiny factor and the SSAO strength; emit only overrides
+    if (p.specular != QStringLiteral("auto")) m += " specular " + p.specular;
+    if (p.usessao && (p.ssaosamples > 0))
+        m += QString(" ssaosamples %1").arg(qBound(4, p.ssaosamples, 64));
+
+    // a gamma value of 1.0 renders the summed up light contributions unchanged
+    if (p.gammaval != DEF_GAMMA) m += QString(" gamma %1").arg(qBound(0.1, p.gammaval, 10.0));
 
     if (p.useelements) m += blank + p.elements + blank + p.adiams + blank;
     if (p.usesigma) m += blank + p.adiams + blank;

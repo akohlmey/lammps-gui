@@ -97,6 +97,58 @@ target_link_libraries(test_stdcapture PRIVATE GTest::gtest_main Qt6::Widgets)
 
 gtest_discover_tests(test_stdcapture)
 
+# Test executable for the LAMMPS input syntax engine (Qt Core only)
+add_executable(test_lammpssyntax
+  test_lammpssyntax.cpp
+  ${CMAKE_SOURCE_DIR}/src/lammpssyntax.cpp
+)
+
+target_include_directories(test_lammpssyntax PRIVATE ${CMAKE_SOURCE_DIR}/src)
+target_compile_definitions(test_lammpssyntax PRIVATE
+  COMMAND_SPECS_TABLE="${CMAKE_SOURCE_DIR}/resources/command_specs.table")
+target_link_libraries(test_lammpssyntax PRIVATE GTest::gtest_main Qt6::Core)
+
+gtest_discover_tests(test_lammpssyntax)
+
+# Test executable for the pre-run input syntax checker (Qt Core only)
+add_executable(test_syntaxcheck
+  test_syntaxcheck.cpp
+  ${CMAKE_SOURCE_DIR}/src/syntaxcheck.cpp
+  ${CMAKE_SOURCE_DIR}/src/lammpssyntax.cpp
+)
+
+target_include_directories(test_syntaxcheck PRIVATE ${CMAKE_SOURCE_DIR}/src)
+target_compile_definitions(test_syntaxcheck PRIVATE
+  COMMAND_SPECS_TABLE="${CMAKE_SOURCE_DIR}/resources/command_specs.table")
+target_link_libraries(test_syntaxcheck PRIVATE GTest::gtest_main Qt6::Core)
+
+gtest_discover_tests(test_syntaxcheck)
+
+# Test executable for the input script syntax highlighter (headless
+# QTextDocument-based, needs the offscreen platform via QApplication)
+add_executable(test_highlighter
+  test_highlighter.cpp
+  ${CMAKE_SOURCE_DIR}/src/highlighter.cpp
+  ${CMAKE_SOURCE_DIR}/src/lammpssyntax.cpp
+  ${CMAKE_SOURCE_DIR}/src/helpers.cpp
+)
+
+target_include_directories(test_highlighter PRIVATE ${CMAKE_SOURCE_DIR}/src)
+target_link_libraries(test_highlighter PRIVATE GTest::gtest_main Qt6::Widgets)
+
+gtest_discover_tests(test_highlighter)
+
+# Test executable for the index-variable parse and merge helpers (Qt Core only)
+add_executable(test_inputvariables
+  test_inputvariables.cpp
+  ${CMAKE_SOURCE_DIR}/src/inputvariables.cpp
+)
+
+target_include_directories(test_inputvariables PRIVATE ${CMAKE_SOURCE_DIR}/src)
+target_link_libraries(test_inputvariables PRIVATE GTest::gtest_main Qt6::Core)
+
+gtest_discover_tests(test_inputvariables)
+
 # Test executable for FlagWarnings
 add_executable(test_flagwarnings
   test_flagwarnings.cpp

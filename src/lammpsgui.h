@@ -21,6 +21,8 @@
 #include <string>
 #include <vector>
 
+#include "inputvariables.h"
+#include "lammpssyntax.h"
 #include "lammpswrapper.h"
 
 // forward declarations
@@ -40,6 +42,7 @@ class QWizardPage;
 
 class ChartWindow;
 class CodeEditor;
+class DownloadProgress;
 class GeneralTab;
 class Highlighter;
 class ImageViewer;
@@ -135,13 +138,71 @@ protected:
     void updateVariables();
 
     /**
+     * @brief Fold input script edits into the variables list
+     *
+     * Re-parses the editor buffer and merges the result into the current
+     * variables list: a changed index variable definition in the input wins
+     * over a previous value, an unchanged one keeps the value set in the
+     * Set Variables dialog.  Also updates the override markers shown in the
+     * editor.  Called before the variables list is consumed (run setup,
+     * input check, Set Variables dialog).
+     */
+    void refreshVariables();
+
+    /**
      * @brief Execute a LAMMPS simulation
      * @param use_buffer If true, runs from editor buffer; if false, saves and runs from file
+     * @param dryrun If true, checks the input via a dry run: LAMMPS executes
+     *        the setup of every command but no timesteps (the equivalent of
+     *        the -skiprun command line flag)
      */
-    void doRun(bool use_buffer);
+    void doRun(bool use_buffer, bool dryrun = false);
+
+    /**
+     * @brief Check whether the LAMMPS instance holds a usable system state
+     * @return true if LAMMPS is open, idle, and a simulation box is defined
+     *
+     * Guard for operations that act on the current system state outside of a
+     * run, like writing a restart file or extending the previous run.
+     */
+    bool hasSystemState();
+
+    /**
+     * @brief Create and start a LammpsRunner thread and the log update timer
+     * @param input      String of LAMMPS commands to execute (can be empty)
+     * @param file       Input file path to execute (can be empty)
+     * @param clearfirst If true, wipe the current LAMMPS system state first
+     *
+     * Shared tail of doRun() and extendRun(): dispatches the given input to a
+     * new runner thread, connects its completion to runDone(), and starts the
+     * periodic polling of captured output and thermo data.
+     */
+    void launchRunner(std::string input, std::string file, bool clearfirst);
 
     /** @brief Initialize and start a new LAMMPS instance */
     void startLammps();
+
+    /** @brief Fill the syntax registry from LAMMPS library introspection
+     *
+     * Queries the command and style name lists from the running LAMMPS
+     * instance into @c syntax and re-highlights the editor.  Does nothing
+     * when no LAMMPS instance is available (the registry then stays
+     * unpopulated and unknown-name marking is disabled). */
+    void populateSyntax();
+
+    /** @brief Variable names that are defined before the input runs
+     *
+     * The names from the Set Variables dialog plus the always-present
+     * @c gui_run variable; passed to the input checker as preset names. */
+    QStringList presetVariableNames() const;
+
+    /** @brief Run the pre-run input lint and ask about found errors
+     *
+     * Called from doRun() when the pre-run check preference is enabled.
+     * Warning-level findings never block; they are noted in the status bar.
+     * Error-level findings pop up a "run anyway?" dialog.
+     * @return true when the run should proceed */
+    bool confirmLintIssues();
 
     /** @brief Handle completion of a LAMMPS run */
     void runDone();
@@ -224,6 +285,9 @@ private slots:
     /** @brief Select and inspect a restart file */
     void inspect();
 
+    /** @brief Write a restart file with the current state of the system */
+    void writeRestart();
+
     /** @brief Open a file from the recent files list */
     void openRecent();
 
@@ -259,6 +323,15 @@ private slots:
 
     /** @brief Run LAMMPS from saved file */
     void runFile() { doRun(false); }
+
+    /** @brief Extend the previous run by a number of steps queried in a dialog */
+    void extendRun();
+
+    /** @brief Run the static input check and show the findings in a dialog */
+    void checkInput();
+
+    /** @brief Check the editor buffer via a dry run (setup only, no timesteps) */
+    void dryRunBuffer() { doRun(true, true); }
 
     /** @brief Restart LAMMPS with a new instance */
     void restartLammps();
@@ -350,9 +423,20 @@ private:
         QString fname;
     };
 
-    /** @brief Download the listed tutorial files from @p baseUrl with progress; false on error */
+    /**
+     * @brief Download the listed tutorial files from @p baseUrl; false on error
+     *
+     * Per-file progress is shown in @p dlg.  A file that fails to download is
+     * recorded and skipped so one missing file (e.g. from a stale manifest
+     * entry) does not discard the rest of the tutorial; after the batch a
+     * dialog lists the missing files and offers to report them at
+     * @p issuesUrl.  Only a download canceled by the user aborts the batch
+     * (the dialog is closed and false is returned).  On success the dialog
+     * stays open (the caller closes it when the whole setup is complete).
+     */
     bool downloadTutorialFiles(const QString &dir, const QList<DownloadItem> &downloads,
-                               URLDownloader &downloader, const QString &baseUrl);
+                               URLDownloader &downloader, const QString &baseUrl,
+                               DownloadProgress &dlg, const QString &issuesUrl);
 
     /** @brief Create and show/hide the output log window for a run */
     void createLogWindow(QSettings &settings);
@@ -433,14 +517,16 @@ private:
     QStatusBar *statusbar;          ///< status bar
     QList<QAction *> recentActions; ///< list of actions for recent files
 
-    Highlighter *highlighter; ///< Syntax highlighter for LAMMPS input
-    StdCapture *capturer;     ///< Captures stdout/stderr from LAMMPS
-    QLabel *status;           ///< Status bar label for general status
-    QLabel *cpuuse;           ///< Status bar label for CPU usage
-    int lastCpuBucket;        ///< Last applied cpuuse color bucket (-1 = none yet)
-    LogWindow *logwindow;     ///< Window displaying LAMMPS output log
-    ImageViewer *imagewindow; ///< Window for viewing single images
-    ChartWindow *chartwindow; ///< Window for displaying charts
+    LammpsSyntax syntax;       ///< Syntax registry for highlighting and input checking
+    bool dryRunActive = false; ///< current run is an input check dry run
+    Highlighter *highlighter;  ///< Syntax highlighter for LAMMPS input
+    StdCapture *capturer;      ///< Captures stdout/stderr from LAMMPS
+    QLabel *status;            ///< Status bar label for general status
+    QLabel *cpuuse;            ///< Status bar label for CPU usage
+    int lastCpuBucket;         ///< Last applied cpuuse color bucket (-1 = none yet)
+    LogWindow *logwindow;      ///< Window displaying LAMMPS output log
+    ImageViewer *imagewindow;  ///< Window for viewing single images
+    ChartWindow *chartwindow;  ///< Window for displaying charts
     /// Chart windows of previous runs kept open for comparison when the
     /// "replace on new run" preference is off. They delete themselves when
     /// closed (the QPointer entries reset to null) and any still-open
@@ -467,16 +553,17 @@ private:
     };
     QList<InspectData *> inspectList; ///< List of open inspect dialogs
 
-    QString currentFile;                      ///< Path to currently opened file
-    QString currentDir;                       ///< Current working directory
-    QList<QString> recent;                    ///< List of recently opened files
-    QList<QPair<QString, QString>> variables; ///< Index-style variable definitions
+    QString currentFile;            ///< Path to currently opened file
+    QString currentDir;             ///< Current working directory
+    QList<QString> recent;          ///< List of recently opened files
+    QList<VariableEntry> variables; ///< Index-style variable definitions
 
     LammpsWrapper lammps;                ///< Interface to LAMMPS library
     LammpsRunner *runner;                ///< Thread for running LAMMPS simulations
     QString docver;                      ///< LAMMPS documentation version string
     QString pluginPath;                  ///< Path to LAMMPS shared library (plugin mode)
     int runCounter;                      ///< Counter for simulation runs
+    int extendSteps;                     ///< Last used step count of the Extend Run dialog
     std::vector<std::string> lammpsArgs; ///< Command-line arguments for LAMMPS
 
 protected:

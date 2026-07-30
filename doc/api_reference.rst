@@ -80,6 +80,75 @@ Highlighter Class
 
 -----
 
+LammpsSyntax Class
+------------------
+
+.. doxygenclass:: LammpsSyntax
+   :members:
+
+-----
+
+InputScanner Class
+------------------
+
+.. doxygenclass:: InputScanner
+   :members:
+
+-----
+
+SyntaxChecker Class
+-------------------
+
+.. doxygenclass:: SyntaxChecker
+   :members:
+
+.. doxygenstruct:: LintIssue
+   :members:
+
+.. doxygenenum:: LintSeverity
+
+-----
+
+Syntax Engine Functions
+-----------------------
+
+.. doxygenfile:: lammpssyntax.h
+   :sections: func
+
+-----
+
+Syntax Engine Types
+-------------------
+
+.. doxygenenum:: StyleCat
+
+.. doxygenenum:: CmdCat
+
+.. doxygenenum:: ArgRole
+
+.. doxygenenum:: TokType
+
+.. doxygenenum:: CompleterKind
+
+.. doxygenstruct:: ArgSpec
+   :members:
+
+.. doxygenstruct:: CommandSpec
+   :members:
+
+.. doxygenstruct:: Token
+   :members:
+
+.. doxygenstruct:: LineTokens
+   :members:
+
+.. doxygenstruct:: CompletionTarget
+   :members:
+
+.. doxygennamespace:: SyntaxState
+
+-----
+
 LAMMPS Interface
 ================
 
@@ -296,6 +365,24 @@ SetVariables Class
 
 -----
 
+Index Variable Helpers
+----------------------
+
+The parse, merge, and override-detection helpers behind the *Set
+Variables* dialog and the editor's override markers are free functions
+over plain value types (``src/inputvariables.h``).
+
+.. doxygenstruct:: VariableEntry
+   :members:
+
+.. doxygenstruct:: IndexVariableMatch
+   :members:
+
+.. doxygenfile:: inputvariables.h
+   :sections: func
+
+-----
+
 PlotDataDialog Class
 --------------------
 
@@ -375,6 +462,15 @@ URLDownloader Class
 -------------------
 
 .. doxygenclass:: URLDownloader
+   :members:
+   :protected-members:
+
+-----
+
+DownloadProgress Class
+----------------------
+
+.. doxygenclass:: DownloadProgress
    :members:
    :protected-members:
 

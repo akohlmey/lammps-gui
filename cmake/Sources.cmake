@@ -30,6 +30,8 @@ set(PROJECT_SOURCES
   ${CMAKE_SOURCE_DIR}/src/tutorials.h
   ${CMAKE_SOURCE_DIR}/src/customfunc.cpp
   ${CMAKE_SOURCE_DIR}/src/customfunc.h
+  ${CMAKE_SOURCE_DIR}/src/downloadprogress.cpp
+  ${CMAKE_SOURCE_DIR}/src/downloadprogress.h
   ${CMAKE_SOURCE_DIR}/src/dumpimage.cpp
   ${CMAKE_SOURCE_DIR}/src/dumpimage.h
   ${CMAKE_SOURCE_DIR}/src/fileviewer.cpp
@@ -50,8 +52,14 @@ set(PROJECT_SOURCES
   ${CMAKE_SOURCE_DIR}/src/imageviewer.h
   ${CMAKE_SOURCE_DIR}/src/imageviewer_internal.h
   ${CMAKE_SOURCE_DIR}/src/imageviewersettings.cpp
+  ${CMAKE_SOURCE_DIR}/src/inputvariables.cpp
+  ${CMAKE_SOURCE_DIR}/src/inputvariables.h
   ${CMAKE_SOURCE_DIR}/src/lammpsrunner.cpp
   ${CMAKE_SOURCE_DIR}/src/lammpsrunner.h
+  ${CMAKE_SOURCE_DIR}/src/lammpssyntax.cpp
+  ${CMAKE_SOURCE_DIR}/src/lammpssyntax.h
+  ${CMAKE_SOURCE_DIR}/src/syntaxcheck.cpp
+  ${CMAKE_SOURCE_DIR}/src/syntaxcheck.h
   ${CMAKE_SOURCE_DIR}/src/lammpswrapper.cpp
   ${CMAKE_SOURCE_DIR}/src/lammpswrapper.h
   ${CMAKE_SOURCE_DIR}/src/leastsquares.cpp

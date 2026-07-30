@@ -50,6 +50,56 @@ have been enabled when compiling LAMMPS. That list, however, excludes
 accelerated styles and commands; for improved clarity, only the
 non-suffix versions of styles are shown.
 
+Like the syntax highlighting, the completion and the context-specific
+help are aware of ``&`` line continuations: on a continuation line,
+completions and help are offered for the command that is being
+continued.
+
+Syntax Highlighting
+^^^^^^^^^^^^^^^^^^^
+
+.. index:: syntax highlighting
+.. index:: line continuation
+.. index:: unknown commands
+
+The editor highlights LAMMPS input scripts following the same parsing
+rules as LAMMPS itself: comments, single, double, and triple quoted
+strings, ``$`` variable substitutions, and numbers are recognized, and
+command names are colored by category.  Arguments are colored by their
+role in the command, for example the ID, group-ID, and style name of a
+`fix <https://docs.lammps.org/fix.html>`_ command.  IDs use the same
+color whether they are being defined (``fix``, ``compute``, ``dump``)
+or referenced (``fix_modify``, ``unfix``, and so on).  Lines joined with
+the ``&`` line continuation character are highlighted in the context of
+the command they continue, including style names or quoted strings that
+are split across lines.
+
+Sub-styles of hybrid styles are recognized the same way LAMMPS parses
+them -- by checking against the known styles of the loaded library --
+and are shown in their own color, both in the arguments of the
+``*_style`` command and in the sub-style position of the corresponding
+``*_coeff`` commands, where they also auto-complete.  Words in those
+positions that are not a known style are treated as arguments of the
+sub-styles and are never marked as unknown.  On `dump image
+<https://docs.lammps.org/dump_image.html>`_ lines the dump image
+keywords are marked, and on both ``dump image`` and ``dump_modify``
+lines color names are displayed in their actual color; keywords and
+color names auto-complete in the positions where they are expected.
+Color names with too little contrast against the editor background
+(for example ``yellow`` on a light theme) are placed on a small dark
+or light chip so they remain readable.
+
+Command and style names that are not known to the LAMMPS library that
+LAMMPS-GUI has loaded -- for example due to a typo or because the
+corresponding package was not included when the library was compiled --
+are marked with a wavy underline.  The marker is not shown for the word
+at the cursor position, so partially typed names are not flagged while
+typing, and it is suppressed for names constructed with ``$``
+substitutions.  When LAMMPS-GUI is running without a usable LAMMPS
+library (for example in plugin mode before a library has been
+selected), the known-name information is unavailable and no words are
+marked.
+
 Line Reformatting
 ^^^^^^^^^^^^^^^^^
 
@@ -94,6 +144,10 @@ shortcut.  When using the mouse, there are additional entries in the
 context menu that open the corresponding documentation page in the
 online LAMMPS documentation in a web browser window.  When using the
 keyboard, the first of those entries is chosen.
+
+If the current line defines an index style variable, the context menu
+also has a *Set Variables...* entry that opens the corresponding
+:ref:`dialog <set_variables>` from the *Edit* menu.
 
 If the word under the cursor is a file, then additionally the context
 menu has an entry to open the file in a read-only text viewer window.
