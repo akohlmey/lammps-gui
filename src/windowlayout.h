@@ -196,6 +196,10 @@ protected:
     bool eventFilter(QObject *watched, QEvent *event) override;
 
 private:
+    /// Disable the shortcuts of a widget that just became a dock panel and
+    /// whose sequences the main window menus already bind.
+    void deferShortcutsToMainWindow(QWidget *view);
+
     /// Give a panel that is alone in its area its title bar back, and take it
     /// away again once a tab names it (Qt draws no tab bar for a single dock).
     void updateDockChrome();

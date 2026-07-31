@@ -9,6 +9,7 @@
 // This software is distributed under the GNU General Public License version 2 or later.
 ////////////////////////////////////////////////////////////////////////////////////////
 
+#include "constants.h"
 #include "helpers.h"
 
 #include <gtest/gtest.h>
@@ -16,6 +17,7 @@
 #include <QAction>
 #include <QApplication>
 #include <QKeySequence>
+#include <QSettings>
 #include <QShortcut>
 #include <QWidget>
 
@@ -103,4 +105,26 @@ TEST_F(ShortcutsTest, ScopedShortcutsOnSiblingWidgetsDoNotCollide)
     EXPECT_EQ(ls->context(), Qt::WidgetWithChildrenShortcut);
     EXPECT_EQ(rs->context(), Qt::WidgetWithChildrenShortcut);
     EXPECT_NE(qobject_cast<QWidget *>(ls->parent()), qobject_cast<QWidget *>(rs->parent()));
+}
+
+TEST_F(ShortcutsTest, StandaloneWindowKeepsShortcutsTheMainWindowAlsoBinds)
+{
+    // A view only has to give up a sequence once it is embedded in the main
+    // window.  Deciding that from the layout preference alone disabled the
+    // shortcut in windows that stand on their own -- the file viewers, the find
+    // dialog, the standalone viewer modes -- where nothing is ambiguous.
+    QSettings().setValue(Keys::DOCKED, true);
+    setMainWindowShortcuts({QKeySequence(Qt::CTRL | Qt::Key_Q)});
+
+    QWidget standalone;
+    auto *sc = addShortcut(&standalone, QKeySequence(Qt::CTRL | Qt::Key_Q), &standalone, []() {
+    });
+    EXPECT_TRUE(sc->isEnabled());
+
+    QAction action("quit", &standalone);
+    scopeShortcut(&standalone, &action, QKeySequence(Qt::CTRL | Qt::Key_Q));
+    EXPECT_EQ(action.shortcut(), QKeySequence(Qt::CTRL | Qt::Key_Q));
+
+    QSettings().remove(Keys::DOCKED);
+    setMainWindowShortcuts({});
 }

@@ -521,11 +521,11 @@ extern bool dockedLayout();
  * @brief Record the key sequences the main window's menus already use
  * @param keys Every shortcut reachable from the main window's menu bar
  *
- * Called once by the main window after its menus are built.  Docked, the views
- * live inside that same window, so a view binding one of these sequences would
- * match at the same time as the menu does and Qt would report an ambiguous
- * overload and fire neither.  addShortcut() and scopeShortcut() consult this to
- * leave such sequences to the menu.
+ * Called once by the main window after its menus are built.  A view that ends
+ * up as a dock panel lives inside that same window, so a sequence it binds
+ * would match at the same time as the menu does and Qt would fire neither.
+ * WindowLayout consults this when a widget actually becomes a panel; a view
+ * that stays a window of its own keeps all of its shortcuts.
  */
 extern void setMainWindowShortcuts(const QList<QKeySequence> &keys);
 
@@ -535,16 +535,6 @@ extern void setMainWindowShortcuts(const QList<QKeySequence> &keys);
  * @return true if the main window already binds it
  */
 extern bool isMainWindowShortcut(const QKeySequence &keys);
-
-/**
- * @brief Whether a view should leave a sequence to the main window
- * @param keys Sequence the view would bind
- * @return true when docked and the main window already binds it
- */
-inline bool shortcutBelongsToMainWindow(const QKeySequence &keys)
-{
-    return dockedLayout() && isMainWindowShortcut(keys);
-}
 
 /**
  * @brief Give a menu action a keyboard shortcut that is scoped to one widget
@@ -580,8 +570,6 @@ QShortcut *addShortcut(QWidget *widget, const QKeySequence &keys, Recv *receiver
 {
     auto *shortcut = new QShortcut(keys, widget);
     shortcut->setContext(Qt::WidgetWithChildrenShortcut);
-    // docked, the main window's own binding for this sequence is in scope too
-    if (shortcutBelongsToMainWindow(keys)) shortcut->setEnabled(false);
     QObject::connect(shortcut, &QShortcut::activated, receiver, slot);
     return shortcut;
 }

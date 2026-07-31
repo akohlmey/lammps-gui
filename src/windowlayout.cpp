@@ -12,7 +12,9 @@
 #include "windowlayout.h"
 
 #include "constants.h"
+#include "helpers.h"
 
+#include <QAction>
 #include <QDockWidget>
 #include <QEvent>
 #include <QHBoxLayout>
@@ -21,6 +23,7 @@
 #include <QMainWindow>
 #include <QResizeEvent>
 #include <QSettings>
+#include <QShortcut>
 #include <QString>
 #include <QTabWidget>
 #include <QTimer>
@@ -315,6 +318,22 @@ void WindowLayout::saveState() const
     if (vsplit > 0.0) settings.setValue(Keys::DOCKSPLITV, vsplit);
 }
 
+// A dock panel lives inside the main window, so a sequence it binds is in scope
+// at the same time as the main window's own binding for it and Qt fires neither.
+// Leave those to the menu: the panel's menu entry still works, only its
+// accelerator goes.  This is decided here, when a widget actually becomes a
+// panel, rather than when it is built -- a view that stays a window of its own
+// (the file viewers, the find dialog, the standalone viewer modes) has no
+// ambiguity and keeps everything.
+void WindowLayout::deferShortcutsToMainWindow(QWidget *view)
+{
+    if (!view) return;
+    for (auto *shortcut : view->findChildren<QShortcut *>())
+        if (isMainWindowShortcut(shortcut->key())) shortcut->setEnabled(false);
+    for (auto *action : view->findChildren<QAction *>())
+        if (isMainWindowShortcut(action->shortcut())) action->setShortcut(QKeySequence());
+}
+
 void WindowLayout::place(ViewSlot slot, QWidget *view)
 {
     const int idx = static_cast<int>(slot);
@@ -339,6 +358,8 @@ void WindowLayout::place(ViewSlot slot, QWidget *view)
         // so a view that is rebuilt does not move
         d->setWidget(view);
         if (!view) d->hide();
+        // the panels are never undocked in this layout, so this is one-way
+        deferShortcutsToMainWindow(view);
         updateDockChrome();
         // a newly built view brings its own size hint into the dock area, which
         // would otherwise take the split with it

@@ -766,9 +766,7 @@ bool isMainWindowShortcut(const QKeySequence &keys)
 void scopeShortcut(QWidget *widget, QAction *action, const QKeySequence &keys)
 {
     if (!widget || !action) return;
-    // the menu entry keeps working; only the accelerator is left to the main
-    // window, which binds the same sequence and is in scope for a docked view
-    action->setShortcut(shortcutBelongsToMainWindow(keys) ? QKeySequence() : keys);
+    action->setShortcut(keys);
     action->setShortcutContext(Qt::WidgetWithChildrenShortcut);
     widget->addAction(action);
 }
