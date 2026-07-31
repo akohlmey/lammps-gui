@@ -68,6 +68,8 @@ QString dockTitle(ViewSlot slot)
             return QStringLiteral("Slide Show");
         case ViewSlot::Variables:
             return QStringLiteral("Variables");
+        case ViewSlot::Command:
+            return QStringLiteral("Commands");
         default:
             return {};
     }
@@ -167,10 +169,12 @@ void WindowLayout::createDocks()
     mainwindow->tabifyDockWidget(chartDock, imageDock);
     mainwindow->tabifyDockWidget(imageDock, slideDock);
 
-    // log and variables share the group across the bottom
+    // log, variables and the command prompt share the group across the bottom
     auto *logDock = make(ViewSlot::Log, Qt::BottomDockWidgetArea);
     auto *varDock = make(ViewSlot::Variables, Qt::BottomDockWidgetArea);
+    auto *cmdDock = make(ViewSlot::Command, Qt::BottomDockWidgetArea);
     mainwindow->tabifyDockWidget(logDock, varDock);
+    mainwindow->tabifyDockWidget(varDock, cmdDock);
 
     mainwindow->installEventFilter(this);
     // watch the docks, so the cached fractions follow a splitter the user drags
@@ -241,7 +245,7 @@ void WindowLayout::applySplit()
     // filter from recording them as a new target
     applying         = true;
     auto *rightDock  = sizingDock({ViewSlot::Chart, ViewSlot::Image, ViewSlot::SlideShow});
-    auto *bottomDock = sizingDock({ViewSlot::Log, ViewSlot::Variables});
+    auto *bottomDock = sizingDock({ViewSlot::Log, ViewSlot::Variables, ViewSlot::Command});
     if (rightDock)
         mainwindow->resizeDocks({rightDock}, {int(mainwindow->width() * hsplit)}, Qt::Horizontal);
     if (bottomDock)
@@ -300,7 +304,7 @@ bool WindowLayout::eventFilter(QObject *watched, QEvent *event)
             const auto *d = docks[i];
             if (d != watched || !d || d->isHidden()) continue;
             const auto slot = static_cast<ViewSlot>(i);
-            if (slot == ViewSlot::Log || slot == ViewSlot::Variables) {
+            if (slot == ViewSlot::Log || slot == ViewSlot::Variables || slot == ViewSlot::Command) {
                 if (d->height() > 0 && mainwindow->height() > 0)
                     vsplit = double(d->height()) / mainwindow->height();
             } else {
@@ -319,7 +323,7 @@ bool WindowLayout::eventFilter(QObject *watched, QEvent *event)
 
         applying         = true;
         auto *rightDock  = sizingDock({ViewSlot::Chart, ViewSlot::Image, ViewSlot::SlideShow});
-        auto *bottomDock = sizingDock({ViewSlot::Log, ViewSlot::Variables});
+        auto *bottomDock = sizingDock({ViewSlot::Log, ViewSlot::Variables, ViewSlot::Command});
         if (oldsize.width() > 0 && newsize.width() != oldsize.width() && rightDock)
             mainwindow->resizeDocks({rightDock}, {int(newsize.width() * hsplit)}, Qt::Horizontal);
         if (oldsize.height() > 0 && newsize.height() != oldsize.height() && bottomDock)
@@ -491,8 +495,12 @@ void WindowLayout::raise(ViewSlot slot)
     else
         w->raise();
 
-    // an explicit request to see this view: the combined layout's menu bar
-    // should follow it even when the click never moved the keyboard focus
+    // An explicit request to see this view, so put the keyboard focus there as
+    // well: showing a panel as a run produces it deliberately does not, but
+    // asking for one from a menu should leave it ready to be typed into.  The
+    // focus belongs on the view, not on the dock holding it -- a QDockWidget
+    // takes none itself.
+    if (auto *v = view(slot)) v->setFocus(Qt::OtherFocusReason);
     if (layoutmode == LayoutMode::Docked) emit viewActivated(view(slot));
 }
 

@@ -130,7 +130,9 @@ constexpr double MOVIE_WARN_DISKFRAC = 0.9;
 // Version tag written into the saved dock arrangement.  Bump it whenever the
 // set of docks or their default arrangement changes, so QMainWindow discards a
 // saved state that no longer matches instead of restoring something stale.
-constexpr int DOCK_STATE_VERSION  = 1;
+// bumped when ViewSlot::Command was added: a saved arrangement from before
+// does not know that panel and must not be restored over the new default
+constexpr int DOCK_STATE_VERSION  = 2;
 constexpr int MAIN_DEFAULT_WIDTH  = 1024; ///< Default main window width, individual windows
 constexpr int MAIN_DEFAULT_HEIGHT = 512;  ///< Default main window height, individual windows
 /// Default size of the combined main window: twice the individual-window
@@ -146,6 +148,14 @@ constexpr double DOCK_SPLIT_VERTICAL = 0.25;
 /// Object name a view gives its own File menu, so the combined layout can put
 /// it at the front of the shared menu bar without knowing the view's class
 inline const QString VIEW_FILE_MENU = QStringLiteral("viewFileMenu");
+
+// ---- Command window ------------------------------------------------------
+constexpr int COMMAND_SCROLLBACK_LINES = 5000; ///< Lines of transcript kept
+constexpr int COMMAND_HISTORY_MAX      = 200;  ///< Command lines remembered between sessions
+constexpr int COMMAND_START_TIMEOUT    = 5000; ///< Milliseconds to wait for the shell to start
+constexpr int COMMAND_EXIT_TIMEOUT     = 2000; ///< Milliseconds to wait for it to end
+constexpr int COMMAND_DEFAULT_WIDTH    = 800;  ///< Default window width
+constexpr int COMMAND_DEFAULT_HEIGHT   = 400;  ///< Default window height
 
 // ---- Resource paths ------------------------------------------------------
 /** path to LAMMPS-GUI Window Icon resource */
@@ -260,6 +270,7 @@ inline const QString BOXDIAM          = QStringLiteral("boxdiam");
 inline const QString CHARTX           = QStringLiteral("chartx");
 inline const QString CHARTY           = QStringLiteral("charty");
 inline const QString CITE             = QStringLiteral("cite");
+inline const QString CMDHISTORY       = QStringLiteral("cmdhistory");
 inline const QString COLOR            = QStringLiteral("color");
 inline const QString COLORMAP         = QStringLiteral("colormap");
 inline const QString BONDCOLORMAP     = QStringLiteral("bondcolormap");
@@ -304,6 +315,7 @@ inline const QString SMOOTHBRUSH      = QStringLiteral("smoothbrush");
 inline const QString SMOOTHCHOICE     = QStringLiteral("smoothchoice");
 inline const QString SMOOTHORDER      = QStringLiteral("smoothorder");
 inline const QString SMOOTHWINDOW     = QStringLiteral("smoothwindow");
+inline const QString SHELL            = QStringLiteral("shell");
 inline const QString SOLUTION         = QStringLiteral("solution");
 inline const QString SSAO             = QStringLiteral("ssao");
 inline const QString TITLE            = QStringLiteral("title");

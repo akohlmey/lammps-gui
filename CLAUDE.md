@@ -260,6 +260,7 @@ decisions and caveats as binding unless we explicitly revise them here.
 | `src/aboutdialog.{cpp,h}` | Auto-scrolling About dialog showing LAMMPS version and style info |
 | `src/urldownloader.{cpp,h}` | HTTPS file downloader (respects `https_proxy` setting; stall timeout + abort) |
 | `src/downloadprogress.{cpp,h}` | Splash-style transient progress dialog with Cancel for batch downloads (tutorial wizard) |
+| `src/commandwindow.{cpp,h}` | `CommandWindow`: shell prompt with scrollback; forwards typed lines to one persistent `$SHELL`/`%COMSPEC%` process, tracks its cwd via a sentinel. Not a terminal emulator (no PTY, `TERM=dumb`) |
 | `src/windowlayout.{cpp,h}` | `WindowLayout` + `ViewSlot` + `LayoutMode`: presentation policy for the output views (show/hide/toggle); implements both the individual-windows and the `QDockWidget` docked layout, selected by the `Keys::DOCKED` preference |
 | `src/helpers.{cpp,h}` | Platform utilities, dialog/font/toolbar helpers, stdout and Qt-message silencing |
 | `src/qaddon.{cpp,h}` | Utility widgets: `QHline`, `QColorCompleter`, `QColorValidator`, `VerticalLabel` |

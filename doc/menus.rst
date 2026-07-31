@@ -236,6 +236,12 @@ The *Create Image* entry will send a `dump image
 instance, read the resulting file, and show it in an *Image Viewer*
 window.
 
+The *Open Command Window* entry opens the :ref:`Command window
+<commandwindow>`, a shell prompt for the ordinary work that surrounds a
+run: post-processing a dump file with a script, looking at what a run
+just wrote, calling a plotting tool.  It is *not* a terminal emulator
+and cannot run full-screen programs such as ``vim`` or ``top``.
+
 The *View in OVITO* entry will launch `OVITO <https://ovito.org>`_ with
 a `data file <https://docs.lammps.org/write_data.html>`_ containing the
 current state of the system.  This option is only available if

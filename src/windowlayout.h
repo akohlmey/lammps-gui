@@ -36,6 +36,7 @@ enum class ViewSlot {
     Image,     ///< Snapshot image viewer
     SlideShow, ///< Slide show viewer for dump image sequences
     Variables, ///< Variables window listing the active index variables
+    Command,   ///< Shell prompt with a scrollback
     Count      ///< Number of slots; not a view itself
 };
 

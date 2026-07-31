@@ -41,6 +41,7 @@ class QWizardPage;
 
 class ChartWindow;
 class CodeEditor;
+class CommandWindow;
 class DownloadProgress;
 class GeneralTab;
 class Highlighter;
@@ -387,6 +388,7 @@ private slots:
     void viewLog();
 
     /** @brief View current variable definitions */
+    void viewCommand(); ///< Show the shell prompt window
     void viewVariables();
 
     /** @brief Show about dialog */
@@ -563,15 +565,16 @@ private:
     LogWindow *logwindow;      ///< Window displaying LAMMPS output log
     ImageViewer *imagewindow;  ///< Window for viewing single images
     ChartWindow *chartwindow;  ///< Window for displaying charts
-    SlideShow *slideshow;      ///< Window for image slideshow
-    QTimer *logupdater;        ///< Timer for periodic log updates
-    QLabel *dirstatus;         ///< Status bar label showing current directory
-    QProgressBar *progress;    ///< Progress bar for long operations
-    Preferences *prefdialog;   ///< Preferences dialog
-    QLabel *lammpsstatus;      ///< Status bar label for LAMMPS state
-    QLabel *varwindow;         ///< Window showing variable definitions
-    TutorialWizard *wizard;    ///< Tutorial wizard dialog
-    WindowLayout *viewlayout;  ///< Presentation policy for the output windows above
+    SlideShow *slideshow;
+    CommandWindow *commandwindow; ///< Shell prompt window      ///< Window for image slideshow
+    QTimer *logupdater;           ///< Timer for periodic log updates
+    QLabel *dirstatus;            ///< Status bar label showing current directory
+    QProgressBar *progress;       ///< Progress bar for long operations
+    Preferences *prefdialog;      ///< Preferences dialog
+    QLabel *lammpsstatus;         ///< Status bar label for LAMMPS state
+    QLabel *varwindow;            ///< Window showing variable definitions
+    TutorialWizard *wizard;       ///< Tutorial wizard dialog
+    WindowLayout *viewlayout;     ///< Presentation policy for the output windows above
 
     /**
      * @brief Container for inspect dialog widgets

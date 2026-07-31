@@ -23,6 +23,8 @@ set(PROJECT_SOURCES
   ${CMAKE_SOURCE_DIR}/src/plotaxismath.h
   ${CMAKE_SOURCE_DIR}/src/codeeditor.cpp
   ${CMAKE_SOURCE_DIR}/src/codeeditor.h
+  ${CMAKE_SOURCE_DIR}/src/commandwindow.cpp
+  ${CMAKE_SOURCE_DIR}/src/commandwindow.h
   ${CMAKE_SOURCE_DIR}/src/colormaps.cpp
   ${CMAKE_SOURCE_DIR}/src/colormaps.h
   ${CMAKE_SOURCE_DIR}/src/constants.h

@@ -1,9 +1,11 @@
 # Command window (shell console) -- design notes
 
-**Status: parked, shape agreed.** Explored 2026-07-31 while the docked layout
-(PR #94) was in review. Not scheduled. Revisit if testers ask for it in the
-feedback on that PR. The QPlainTextEdit-based approach below is the accepted
-one.
+**Status: implemented** on the `docked-layout` branch as
+`src/commandwindow.{cpp,h}`, opened from *Run* > *Open Command Window*
+(`Ctrl-Shift-X`) and tabbed with the Output panel at the bottom.  This file
+remains the record of *why* it is shaped the way it is, and of the gaps that
+were accepted rather than solved -- see "Known gaps" below, none of which have
+changed.
 
 ## What it is
 

@@ -14,6 +14,7 @@
 #include "aboutdialog.h"
 #include "chartviewer.h"
 #include "codeeditor.h"
+#include "commandwindow.h"
 #include "downloadprogress.h"
 #include "fileviewer.h"
 #include "findandreplace.h"
@@ -387,6 +388,9 @@ void LammpsGui::createRunMenu()
 
     addMenuAction(menu, ":/icons/image-viewer.svg", "Create &Image", "Ctrl+I",
                   &LammpsGui::renderImage);
+    menu->addSeparator();
+    addMenuAction(menu, ":/icons/utilities-terminal.svg", "Open Comman&d Window", "Ctrl+Shift+X",
+                  &LammpsGui::viewCommand);
     menu->addSeparator();
 
     auto *ovito = addMenuAction(menu, ":/icons/ovito.png", "View in &OVITO", "Ctrl+Shift+O",
@@ -806,7 +810,7 @@ LammpsGui::LammpsGui(QWidget *parent, const QString &filename, int width, int he
     cpuuse(nullptr), lastCpuBucket(-1), logwindow(nullptr), imagewindow(nullptr),
     chartwindow(nullptr), slideshow(nullptr), logupdater(nullptr), dirstatus(nullptr),
     progress(nullptr), prefdialog(nullptr), lammpsstatus(nullptr), varwindow(nullptr),
-    wizard(nullptr), viewlayout(nullptr), runner(nullptr), runCounter(0),
+    commandwindow(nullptr), wizard(nullptr), viewlayout(nullptr), runner(nullptr), runCounter(0),
     extendSteps(Cfg::EXTEND_STEPS_DEFAULT), nthreads(1), mainx(width), mainy(height)
 {
 #if QT_CONFIG(clipboard)
@@ -935,6 +939,7 @@ LammpsGui::~LammpsGui()
     delete dirstatus;
     delete varwindow;
     delete slideshow;
+    delete commandwindow;
 }
 
 void LammpsGui::newDocument()
@@ -2450,6 +2455,19 @@ void LammpsGui::createVariableWindow()
     applyWindowFlags(varwindow);
     viewlayout->place(ViewSlot::Variables, varwindow);
     viewlayout->hide(ViewSlot::Variables);
+}
+
+void LammpsGui::viewCommand()
+{
+    if (!commandwindow) {
+        commandwindow = new CommandWindow(this);
+        commandwindow->setWindowTitle("LAMMPS-GUI - Commands");
+        commandwindow->setWindowIcon(QIcon(Cfg::MAIN_ICON));
+        // start where the input file is, which is where a run leaves its output
+        commandwindow->changeDirectory(currentDir);
+        viewlayout->place(ViewSlot::Command, commandwindow);
+    }
+    viewlayout->raise(ViewSlot::Command);
 }
 
 void LammpsGui::viewVariables()

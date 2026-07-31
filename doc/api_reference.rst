@@ -458,6 +458,15 @@ AboutDialog Class
 Utility Components
 ==================
 
+CommandWindow Class
+-------------------
+
+.. doxygenclass:: CommandWindow
+   :members:
+   :protected-members:
+
+-----
+
 WindowLayout Class
 ------------------
 

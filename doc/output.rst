@@ -344,3 +344,46 @@ command
 
 at the beginning of an input file. That would record logs to files
 ``logfile-1.txt``, ``logfile-2.txt``, and so on for successive runs.
+
+.. _commandwindow:
+
+Command window
+--------------
+
+.. index:: command window
+.. index:: shell
+
+The *Command window* is opened from the *Run* menu with *Open Command
+Window* or the `Ctrl-Shift-X` keyboard shortcut.  It shows a shell
+prompt with a scrollback, for the ordinary work that surrounds a
+simulation: post-processing a dump file with a Python script, looking at
+what a run just wrote, calling a plotting tool, all without leaving
+LAMMPS-GUI.
+
+Lines typed at the prompt are handed to a single shell process that is
+kept running between commands, so ``cd``, ``pushd``/``popd``,
+environment variables, and the rest of the shell state behave as they
+would in a terminal.  The directory shown in front of the prompt follows
+the shell, however it was changed.  The window starts in the directory
+of the current input file, which is where a run leaves its output.  The
+up and down arrow keys walk through previously entered commands, which
+are remembered between sessions, and the *Tab* key completes command
+names from the search path and, after the first word, file names.
+
+The shell is the one named by the ``SHELL`` environment variable on
+Unix-like systems (falling back to ``/bin/bash`` and then ``/bin/sh``)
+and by ``COMSPEC`` on Windows.  Commands run with ``TERM`` set to
+``dumb`` and with ``PYTHONUNBUFFERED`` set, so that the output of a
+Python script appears as it is produced rather than all at once when it
+exits.
+
+.. admonition:: This is not a terminal emulator
+
+   There is no pseudo terminal behind the prompt, only a pipe.  Programs
+   that need a real terminal -- editors, pagers, anything using curses,
+   anything asking for a password -- will either report that the
+   terminal is insufficient or misbehave, and there is no way to
+   interrupt a running command with `Ctrl-C`.  Use *File* > *Restart
+   Shell* to recover from a command that does not finish.  If a program
+   is reading from its standard input, the next line typed at the prompt
+   goes to that program instead of to the shell.
