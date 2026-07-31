@@ -128,6 +128,29 @@ protected:
     /** @brief Write current editor content to a file */
     void writeFile(const QString &filename);
 
+public:
+    /**
+     * @brief The menus that act on the application rather than on one view
+     * @return Run, View, Tutorials and About, in the order they should appear
+     *
+     * These are owned by the main window but shown by every window that has a
+     * menu bar: a QMenu can be added to more than one QMenuBar, which puts the
+     * *same* actions there rather than duplicates.  That is what lets a run be
+     * started or stopped from any window, and it is also why the accelerators
+     * stay unambiguous -- one action matches once, however many menus show it.
+     */
+    QList<QMenu *> sharedMenus() const;
+
+    /**
+     * @brief Put the focused view's own menu at the front of the menu bar
+     * @param focused Widget that just took the keyboard focus
+     *
+     * Combined layout only; does nothing with individual windows, where each
+     * window carries its own menu bar.
+     */
+    void updateMenuBarForFocus(QWidget *focused);
+
+protected:
     /** @brief Set the editor window title from the current file and run number
      *
      * In the docked layout the views are named by their dock tab and no longer
@@ -520,6 +543,13 @@ private:
     // Central GUI elements
     CodeEditor *textEdit;           ///< Custom code editor widget
     QMenuBar *menubar;              ///< Menu bar with menus and actions
+    QMenu *filemenu;                ///< Editor File menu, swapped out for a view's own when docked
+    QMenu *editmenu;                ///< Editor Edit menu, shown only for the editor
+    QMenu *currentviewmenu;         ///< View menu currently at the front of the bar
+    QMenu *runmenu;                 ///< Run menu, shared with the other windows
+    QMenu *viewmenu;                ///< View menu, shared with the other windows
+    QMenu *tutorialmenu;            ///< Tutorials menu, shared with the other windows
+    QMenu *aboutmenu;               ///< About menu, shared with the other windows
     QStatusBar *statusbar;          ///< status bar
     QList<QAction *> recentActions; ///< list of actions for recent files
 

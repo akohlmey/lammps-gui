@@ -360,6 +360,11 @@ void WindowLayout::place(ViewSlot slot, QWidget *view)
         if (!view) d->hide();
         // the panels are never undocked in this layout, so this is one-way
         deferShortcutsToMainWindow(view);
+        // Clicking a label or the plot area inside a panel would otherwise not
+        // move the keyboard focus at all, and the main window's menu bar follows
+        // the focus.  A click focus on the panel itself catches what its
+        // children do not take.
+        if (view) view->setFocusPolicy(Qt::ClickFocus);
         updateDockChrome();
         // a newly built view brings its own size hint into the dock area, which
         // would otherwise take the split with it
@@ -410,6 +415,10 @@ void WindowLayout::raise(ViewSlot slot)
         d->raise();
     else
         w->raise();
+
+    // an explicit request to see this view: the combined layout's menu bar
+    // should follow it even when the click never moved the keyboard focus
+    if (layoutmode == LayoutMode::Docked) emit viewActivated(view(slot));
 }
 
 void WindowLayout::hide(ViewSlot slot)
