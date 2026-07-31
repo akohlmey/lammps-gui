@@ -325,7 +325,6 @@ GeneralTab::GeneralTab(QSettings *_settings, LammpsWrapper *_lammps, LammpsGui *
     layoutrow->addWidget(new QLabel("Window Layout Style:"));
     layoutrow->addWidget(winlayout);
     layoutrow->addWidget(docklayout);
-    layoutrow->addStretch();
 
     settings->beginGroup(Keys::GROUP_TUTORIAL);
     auto *solution = new QCheckBox("Download tutorial solutions enabled");
