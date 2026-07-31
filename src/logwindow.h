@@ -19,6 +19,8 @@ class LammpsGui;
 class QAction;
 class QEvent;
 class QLabel;
+class QMenuBar;
+class QResizeEvent;
 
 /**
  * @brief Text viewer for LAMMPS log output with warning/error detection
@@ -97,6 +99,12 @@ protected:
     void changeEvent(QEvent *event) override;
 
     /**
+     * @brief Keep the menu bar across the top of the viewport
+     * @param event Resize event
+     */
+    void resizeEvent(QResizeEvent *event) override;
+
+    /**
      * @brief Check if log contains embedded YAML data
      * @return true if YAML data detected, false otherwise
      */
@@ -109,11 +117,16 @@ private:
     /// has exactly one binding and works whether or not the menu is open.
     void createActions();
 
-    QString filename;       ///< Input file name used to derive default save-file names
-    LammpsGui *lammpsgui;   ///< Main widget pointer for receiving signals
-    QString errorurl;       ///< URL of last detected error
-    FlagWarnings *warnings; ///< Warning highlighter
-    QLabel *summary;        ///< Summary label for warning count
+    /// Build the File menu from those actions, append the main window's shared
+    /// menus, and reserve the viewport margin the bar sits in.
+    void createMenuBar();
+
+    QString filename;            ///< Input file name used to derive default save-file names
+    LammpsGui *lammpsgui;        ///< Main widget pointer for receiving signals
+    QString errorurl;            ///< URL of last detected error
+    FlagWarnings *warnings;      ///< Warning highlighter
+    QLabel *summary;             ///< Summary label for warning count
+    QMenuBar *menubar = nullptr; ///< Own menu bar, in reserved viewport margin
 
     QAction *saveAsAct;   ///< Save the log to a file
     QAction *yamlAct;     ///< Export embedded YAML data to a file

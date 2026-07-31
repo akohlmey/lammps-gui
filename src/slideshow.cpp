@@ -30,6 +30,8 @@
 #include <QKeySequence>
 #include <QLabel>
 #include <QLocale>
+#include <QMenu>
+#include <QMenuBar>
 #include <QMessageBox>
 #include <QPalette>
 #include <QPixmap>
@@ -100,17 +102,13 @@ SlideShow::SlideShow(const QString &fileName, LammpsGui *_lammpsgui, QWidget *pa
     imageName->setMinimumHeight(buttonhint.height());
     imageName->setMaximumHeight(buttonhint.height());
 
-    // focus-scoped: Ctrl+S, Ctrl+C, Ctrl+Q and Ctrl+/ are main window
-    // accelerators too, so a window-scoped binding here would clash once this
-    // window is docked into the main window (see addShortcut() in helpers.h)
-    addShortcut(this, QKeySequence(Qt::CTRL | Qt::Key_W), this, &QWidget::close);
+    // the File menu below carries these, so they are bound once each; only
+    // "stop run" has no menu entry of its own
     addShortcut(this, QKeySequence(Qt::CTRL | Qt::Key_Slash), this, &SlideShow::stopRun);
-    addShortcut(this, QKeySequence(Qt::CTRL | Qt::Key_Q), this, &SlideShow::quit);
-    addShortcut(this, QKeySequence(Qt::CTRL | Qt::Key_C), this, &SlideShow::copy);
-    addShortcut(this, QKeySequence(Qt::CTRL | Qt::Key_E), this, &SlideShow::movie);
-    addShortcut(this, QKeySequence(Qt::CTRL | Qt::Key_S), this, &SlideShow::saveCurrentImage);
+    createMenuBar();
 
-    auto *mainLayout  = new QVBoxLayout;
+    auto *mainLayout = new QVBoxLayout;
+    mainLayout->setMenuBar(menubar);
     auto *toolsLayout = new QHBoxLayout;
     auto *botLayout   = new QHBoxLayout;
     auto *navLayout   = new QHBoxLayout;
@@ -629,6 +627,45 @@ void SlideShow::copy()
 #else
     fprintf(stderr, "Copy image to clipboard not supported on this platform\n");
 #endif
+}
+
+// Its own File menu plus the application-wide menus of the main window, so a
+// run can be started or stopped from here as well.  Docked, the main window
+// shows the File menu for us and this bar stays hidden.
+void SlideShow::createMenuBar()
+{
+    menubar    = new QMenuBar;
+    auto *file = new QMenu("&File", menubar);
+    file->setObjectName(Cfg::VIEW_FILE_MENU);
+
+    scopeShortcut(this,
+                  addMenuAction(file, "&Save Image As...", ":/icons/document-save-as.svg", this,
+                                &SlideShow::saveCurrentImage),
+                  QKeySequence(Qt::CTRL | Qt::Key_S));
+    scopeShortcut(
+        this, addMenuAction(file, "&Copy Image", ":/icons/edit-copy.svg", this, &SlideShow::copy),
+        QKeySequence(Qt::CTRL | Qt::Key_C));
+    scopeShortcut(this,
+                  addMenuAction(file, "&Export Movie...", ":/icons/emblem-videos.svg", this,
+                                &SlideShow::movie),
+                  QKeySequence(Qt::CTRL | Qt::Key_E));
+    file->addSeparator();
+    scopeShortcut(this,
+                  addMenuAction(file, "&Close", ":/icons/window-close.svg", this, &QWidget::close),
+                  QKeySequence(Qt::CTRL | Qt::Key_W));
+    auto *quitAct =
+        addMenuAction(file, "&Quit", ":/icons/application-exit.svg", this, &SlideShow::quit);
+    scopeShortcut(this, quitAct, QKeySequence(Qt::CTRL | Qt::Key_Q));
+    if (!lammpsgui) quitAct->setVisible(false); // quit == close in standalone mode
+
+    if (dockedLayout()) {
+        menubar->hide();
+    } else {
+        menubar->addMenu(file);
+        if (lammpsgui)
+            for (auto *shared : lammpsgui->sharedMenus())
+                menubar->addMenu(shared);
+    }
 }
 
 void SlideShow::quit()

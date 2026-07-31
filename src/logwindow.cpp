@@ -29,8 +29,10 @@
 #include <QKeySequence>
 #include <QLabel>
 #include <QMenu>
+#include <QMenuBar>
 #include <QPushButton>
 #include <QRegularExpression>
+#include <QResizeEvent>
 #include <QSettings>
 #include <QSpacerItem>
 #include <QString>
@@ -83,6 +85,7 @@ LogWindow::LogWindow(const QString &_filename, LammpsGui *_lammpsgui, QWidget *p
     warnings = new FlagWarnings(summary, document());
 
     createActions();
+    createMenuBar();
     applyWindowFlags(this);
 }
 
@@ -123,6 +126,43 @@ void LogWindow::createActions()
     // hidden actions because Qt disables the shortcut of an invisible action.
     addShortcut(this, QKeySequence(Qt::CTRL | Qt::Key_Slash), this, &LogWindow::stopRun);
     addShortcut(this, QKeySequence(Qt::CTRL | Qt::Key_Return), this, &LogWindow::runBuffer);
+}
+
+// The window is a QPlainTextEdit, so its menu bar is a child widget in reserved
+// viewport margin rather than a window menu bar -- the same arrangement
+// CodeEditor uses for its line number area.  The entries are the actions the
+// context menu shows, so there is one object per command either way.
+void LogWindow::createMenuBar()
+{
+    menubar    = new QMenuBar(this);
+    auto *file = new QMenu("&File", menubar);
+    file->setObjectName(Cfg::VIEW_FILE_MENU);
+    file->addAction(saveAsAct);
+    file->addAction(yamlAct);
+    file->addAction(nextWarnAct);
+    file->addSeparator();
+    file->addAction(closeAct);
+    file->addAction(quitAct);
+
+    if (dockedLayout()) {
+        // the main window shows this menu for us while the panel has the focus
+        menubar->hide();
+        return;
+    }
+    menubar->addMenu(file);
+    if (lammpsgui)
+        for (auto *shared : lammpsgui->sharedMenus())
+            menubar->addMenu(shared);
+    setViewportMargins(0, menubar->sizeHint().height(), 0, 0);
+}
+
+void LogWindow::resizeEvent(QResizeEvent *event)
+{
+    QPlainTextEdit::resizeEvent(event);
+    if (menubar && !menubar->isHidden()) {
+        const QRect cr = contentsRect();
+        menubar->setGeometry(cr.left(), cr.top(), cr.width(), menubar->sizeHint().height());
+    }
 }
 
 // warnings and summary are Qt-parented and cleaned up by their parents

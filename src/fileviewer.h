@@ -15,6 +15,8 @@
 #include <QPlainTextEdit>
 
 class LammpsGui;
+class QMenuBar;
+class QResizeEvent;
 
 /**
  * @brief Read-only text viewer for displaying file contents
@@ -63,9 +65,20 @@ protected:
      */
     bool eventFilter(QObject *watched, QEvent *event) override;
 
+    /**
+     * @brief Keep the menu bar across the top of the viewport
+     * @param event Resize event
+     */
+    void resizeEvent(QResizeEvent *event) override;
+
 private:
-    QString fileName;     ///< Path to the displayed file
-    LammpsGui *lammpsgui; ///< Main widget pointer for receiving signals
+    /// Build the File menu, append the main window's shared menus, and reserve
+    /// the viewport margin the bar sits in.
+    void createMenuBar();
+
+    QMenuBar *menubar = nullptr; ///< Own menu bar, in reserved viewport margin
+    QString fileName;            ///< Path to the displayed file
+    LammpsGui *lammpsgui;        ///< Main widget pointer for receiving signals
 };
 
 #endif
