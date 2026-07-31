@@ -30,6 +30,13 @@ FlagWarnings::FlagWarnings(QLabel *label, QTextDocument *parent) :
     formatURL.setFontWeight(QFont::Bold);
 }
 
+void FlagWarnings::reset()
+{
+    nwarnings = nlines = 0;
+    oldwarnings = oldlines = -1;
+    if (summary) summary->setText("0 Warnings / Errors - 0 Lines");
+}
+
 void FlagWarnings::highlightBlock(const QString &text)
 {
     // nothing to do for empty lines

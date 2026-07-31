@@ -226,24 +226,13 @@ ChartWindow::ChartWindow(const QString &_filename, LammpsGui *_lammpsgui, QWidge
     dummy->hide();
 
     // plot title and axis labels
-    settings.beginGroup(Keys::GROUP_CHARTS);
-    QString mytitle;
-    if (lammpsgui) {
-        // live simulation: use the configured title template
-        mytitle = settings.value(Keys::TITLE, Cfg::CHART_TITLE_DEFAULT)
-                      .toString()
-                      .replace("%f", filename);
-    } else {
-        // standalone/plot mode: just the base filename, no "Thermo:" prefix
-        mytitle = QFileInfo(filename).fileName();
-    }
-    chartTitle  = new QLineEdit(mytitle);
+    // the settings-derived contents of these widgets are filled in by the
+    // applyChartSettings() call further down (shared with reset())
+    chartTitle  = new QLineEdit;
     chartYlabel = new QLineEdit("");
     if (!lammpsgui) chartXlabel = new QLineEdit("");
 
     // plot smoothing
-    int smoothchoice = settings.value(Keys::SMOOTHCHOICE, 0).toInt();
-    smoothFlagsFromChoice(smoothchoice, doRaw, doSmooth);
     // list of choices must be kept in sync with list in preferences
     smooth = new QComboBox;
     smooth->addItem("Raw");
@@ -251,22 +240,16 @@ ChartWindow::ChartWindow(const QString &_filename, LammpsGui *_lammpsgui, QWidge
     // post-process fit/function replaces it and overrides the label with its name
     smooth->addItem("Smooth");
     smooth->addItem("Both");
-    smooth->setCurrentIndex(smoothchoice);
     window = new QSpinBox;
     window->setRange(Cfg::SMOOTH_WINDOW_MIN, Cfg::SMOOTH_WINDOW_MAX);
-    window->setValue(settings.value(Keys::SMOOTHWINDOW, Cfg::SMOOTH_WINDOW_DEFAULT).toInt());
-    window->setEnabled(doSmooth);
     window->setToolTip("Smoothing Window Size");
     // no keyboard tracking: valueChanged then fires once per committed edit
     // instead of re-smoothing on every typed digit
     window->setKeyboardTracking(false);
     order = new QSpinBox;
     order->setRange(Cfg::SMOOTH_ORDER_MIN, Cfg::SMOOTH_ORDER_MAX);
-    order->setValue(settings.value(Keys::SMOOTHORDER, Cfg::SMOOTH_ORDER_DEFAULT).toInt());
-    order->setEnabled(doSmooth);
     order->setToolTip("Smoothing Order");
     order->setKeyboardTracking(false);
-    settings.endGroup();
 
     columns = new QComboBox;
     row1->addWidget(menu);
@@ -330,14 +313,6 @@ ChartWindow::ChartWindow(const QString &_filename, LammpsGui *_lammpsgui, QWidge
     auto *ppBtn    = makeToolBtn(":/icons/chart-smooth.svg", "Postprocess...");
     // square toolbar buttons with a snug, uniform icon (shared policy)
     styleToolButtons(toolButtonSize(styleBtn), {styleBtn, refBtn, ppBtn});
-    settings.beginGroup(Keys::GROUP_CHARTS);
-    legendPos       = static_cast<LegendPos>(settings.value(Keys::LEGEND, 0).toInt());
-    double defRefPt = font().pointSizeF();
-    if (defRefPt <= 0.0) defRefPt = 9.0; // pixel-size app fonts report <= 0 pt
-    refLabelSize  = settings.value(Keys::REFLABELSIZE, defRefPt).toDouble();
-    refLabelDist  = settings.value(Keys::REFLABELDIST, 4.0).toDouble();
-    refLabelBoxed = settings.value(Keys::REFLABELBOX, false).toBool();
-    settings.endGroup();
     connect(styleBtn, &QPushButton::clicked, this, &ChartWindow::changeStyle);
     connect(refBtn, &QPushButton::clicked, this, &ChartWindow::referenceLines);
     connect(ppBtn, &QPushButton::clicked, this, &ChartWindow::postProcess);
@@ -394,8 +369,9 @@ ChartWindow::ChartWindow(const QString &_filename, LammpsGui *_lammpsgui, QWidge
     layout->setSpacing(LAYOUT_SPACING);
     // the single shared chart view; it renders whichever column is active
     viewer = new ChartViewer;
-    viewer->setLegendPos(legendPos);
-    viewer->setRefLabelStyle(refLabelSize, refLabelDist, refLabelBoxed);
+    // seed the settings-derived widget contents; must stay ahead of the
+    // connect() calls below so it does not trigger the change slots
+    applyChartSettings();
     layout->addWidget(viewer);
     setLayout(layout);
 
@@ -424,6 +400,58 @@ int ChartWindow::getStep() const
             return static_cast<int>(series->at(series->count() - 1).x());
     }
     return -1;
+}
+
+void ChartWindow::applyChartSettings()
+{
+    QSettings settings;
+    settings.beginGroup(Keys::GROUP_CHARTS);
+
+    if (lammpsgui) {
+        // live simulation: use the configured title template
+        chartTitle->setText(settings.value(Keys::TITLE, Cfg::CHART_TITLE_DEFAULT)
+                                .toString()
+                                .replace("%f", filename));
+    } else {
+        // standalone/plot mode: just the base filename, no "Thermo:" prefix
+        chartTitle->setText(QFileInfo(filename).fileName());
+    }
+
+    // plot smoothing; block the change slots, the derived state is applied here
+    const int smoothchoice = settings.value(Keys::SMOOTHCHOICE, 0).toInt();
+    smoothFlagsFromChoice(smoothchoice, doRaw, doSmooth);
+    {
+        const QSignalBlocker blockSmooth(smooth);
+        const QSignalBlocker blockWindow(window);
+        const QSignalBlocker blockOrder(order);
+        smooth->setCurrentIndex(smoothchoice);
+        window->setValue(settings.value(Keys::SMOOTHWINDOW, Cfg::SMOOTH_WINDOW_DEFAULT).toInt());
+        order->setValue(settings.value(Keys::SMOOTHORDER, Cfg::SMOOTH_ORDER_DEFAULT).toInt());
+    }
+    window->setEnabled(doSmooth);
+    order->setEnabled(doSmooth);
+
+    legendPos       = static_cast<LegendPos>(settings.value(Keys::LEGEND, 0).toInt());
+    double defRefPt = font().pointSizeF();
+    if (defRefPt <= 0.0) defRefPt = 9.0; // pixel-size app fonts report <= 0 pt
+    refLabelSize  = settings.value(Keys::REFLABELSIZE, defRefPt).toDouble();
+    refLabelDist  = settings.value(Keys::REFLABELDIST, 4.0).toDouble();
+    refLabelBoxed = settings.value(Keys::REFLABELBOX, false).toBool();
+    settings.endGroup();
+
+    viewer->setLegendPos(legendPos);
+    viewer->setRefLabelStyle(refLabelSize, refLabelDist, refLabelBoxed);
+}
+
+void ChartWindow::reset(const QString &_filename)
+{
+    filename = _filename;
+    resetCharts();
+    refLines.clear();
+    // chart preferences are read when a window is created, so a reused window
+    // has to pick up any edits made since the previous run here
+    applyChartSettings();
+    chartYlabel->clear();
 }
 
 void ChartWindow::resetCharts()

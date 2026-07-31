@@ -55,6 +55,16 @@ public:
      */
     int getNWarnings() const { return nwarnings; }
 
+    /**
+     * @brief Clear the warning and line counters
+     *
+     * The counters are accumulated across calls to highlightBlock() and are
+     * never decremented, so they must be cleared explicitly when the attached
+     * document is reused for new content.  Also resets the summary label to
+     * its empty-document text.
+     */
+    void reset();
+
 protected:
     /**
      * @brief Highlight a single block (line) of text

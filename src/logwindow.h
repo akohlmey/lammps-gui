@@ -43,6 +43,16 @@ public:
      */
     ~LogWindow() override;
 
+    /**
+     * @brief Clear the window for a new run
+     * @param filename Name of the input file the new run belongs to
+     *
+     * Discards the collected log text and the warning/error counters so the
+     * window can be reused instead of destroyed and recreated for every run.
+     * Keeps the position and size the window currently has on screen.
+     */
+    void reset(const QString &filename);
+
     LogWindow()                             = delete;
     LogWindow(const LogWindow &)            = delete;
     LogWindow(LogWindow &&)                 = delete;

@@ -1822,13 +1822,17 @@ void LammpsGui::restartLammps()
 
 void LammpsGui::createLogWindow(QSettings &settings)
 {
-    // delete the old log window before opening the new one
-    delete logwindow;
-    logwindow = new LogWindow(currentFile, this);
-    logwindow->setReadOnly(true);
-    logwindow->setCenterOnScroll(true);
+    // reuse an existing window: it keeps the position and size it was given
+    // on screen, and in a docked layout it stays where it was docked
+    if (logwindow) {
+        logwindow->reset(currentFile);
+    } else {
+        logwindow = new LogWindow(currentFile, this);
+        logwindow->setReadOnly(true);
+        logwindow->setCenterOnScroll(true);
+        logwindow->setLineWrapMode(LogWindow::NoWrap);
+    }
     logwindow->moveCursor(QTextCursor::End);
-    logwindow->setLineWrapMode(LogWindow::NoWrap);
     logwindow->setWindowTitle(
         QString("LAMMPS-GUI - Output - %1 - Run %2").arg(currentFile).arg(runCounter));
     logwindow->setWindowIcon(QIcon(Cfg::MAIN_ICON));
@@ -1842,9 +1846,12 @@ void LammpsGui::createLogWindow(QSettings &settings)
 
 void LammpsGui::createChartWindow(QSettings &settings)
 {
-    // delete the old chart window before opening the new one
-    delete chartwindow;
-    chartwindow = new ChartWindow(currentFile, this);
+    // reuse an existing window: it keeps the position and size it was given
+    // on screen, and in a docked layout it stays where it was docked
+    if (chartwindow)
+        chartwindow->reset(currentFile);
+    else
+        chartwindow = new ChartWindow(currentFile, this);
     chartwindow->setWindowTitle(
         QString("LAMMPS-GUI - Charts - %1 - Run %2").arg(currentFile).arg(runCounter));
     chartwindow->setWindowIcon(QIcon(Cfg::MAIN_ICON));

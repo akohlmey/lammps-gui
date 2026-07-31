@@ -100,6 +100,15 @@ LogWindow::LogWindow(const QString &_filename, LammpsGui *_lammpsgui, QWidget *p
 // warnings and summary are Qt-parented and cleaned up by their parents
 LogWindow::~LogWindow() = default;
 
+void LogWindow::reset(const QString &_filename)
+{
+    filename = _filename;
+    // clear() rehighlights the now empty document, so the counters must be
+    // cleared afterwards to not carry the previous run's totals into the new one
+    clear();
+    if (warnings) warnings->reset();
+}
+
 void LogWindow::closeEvent(QCloseEvent *event)
 {
     QSettings settings;
