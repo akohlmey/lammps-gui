@@ -818,9 +818,9 @@ LammpsGui::LammpsGui(QWidget *parent, const QString &filename, int width, int he
     currentviewmenu(nullptr), runmenu(nullptr), viewmenu(nullptr), tutorialmenu(nullptr),
     aboutmenu(nullptr), highlighter(nullptr), capturer(new StdCapture), status(nullptr),
     cpuuse(nullptr), lastCpuBucket(-1), logwindow(nullptr), imagewindow(nullptr),
-    chartwindow(nullptr), slideshow(nullptr), logupdater(nullptr), dirstatus(nullptr),
-    progress(nullptr), prefdialog(nullptr), lammpsstatus(nullptr), varwindow(nullptr),
-    commandwindow(nullptr), wizard(nullptr), viewlayout(nullptr), runner(nullptr), runCounter(0),
+    chartwindow(nullptr), slideshow(nullptr), commandwindow(nullptr), logupdater(nullptr),
+    dirstatus(nullptr), progress(nullptr), prefdialog(nullptr), lammpsstatus(nullptr),
+    varwindow(nullptr), wizard(nullptr), viewlayout(nullptr), runner(nullptr), runCounter(0),
     extendSteps(Cfg::EXTEND_STEPS_DEFAULT), nthreads(1), mainx(width), mainy(height)
 {
 #if QT_CONFIG(clipboard)

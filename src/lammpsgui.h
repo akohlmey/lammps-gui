@@ -555,18 +555,18 @@ private:
     QStatusBar *statusbar;          ///< status bar
     QList<QAction *> recentActions; ///< list of actions for recent files
 
-    LammpsSyntax syntax;       ///< Syntax registry for highlighting and input checking
-    bool dryRunActive = false; ///< current run is an input check dry run
-    Highlighter *highlighter;  ///< Syntax highlighter for LAMMPS input
-    StdCapture *capturer;      ///< Captures stdout/stderr from LAMMPS
-    QLabel *status;            ///< Status bar label for general status
-    QLabel *cpuuse;            ///< Status bar label for CPU usage
-    int lastCpuBucket;         ///< Last applied cpuuse color bucket (-1 = none yet)
-    LogWindow *logwindow;      ///< Window displaying LAMMPS output log
-    ImageViewer *imagewindow;  ///< Window for viewing single images
-    ChartWindow *chartwindow;  ///< Window for displaying charts
-    SlideShow *slideshow;
-    CommandWindow *commandwindow; ///< Shell prompt window      ///< Window for image slideshow
+    LammpsSyntax syntax;          ///< Syntax registry for highlighting and input checking
+    bool dryRunActive = false;    ///< current run is an input check dry run
+    Highlighter *highlighter;     ///< Syntax highlighter for LAMMPS input
+    StdCapture *capturer;         ///< Captures stdout/stderr from LAMMPS
+    QLabel *status;               ///< Status bar label for general status
+    QLabel *cpuuse;               ///< Status bar label for CPU usage
+    int lastCpuBucket;            ///< Last applied cpuuse color bucket (-1 = none yet)
+    LogWindow *logwindow;         ///< Window displaying LAMMPS output log
+    ImageViewer *imagewindow;     ///< Window for viewing single images
+    ChartWindow *chartwindow;     ///< Window for displaying charts
+    SlideShow *slideshow;         ///< Window for image slideshow
+    CommandWindow *commandwindow; ///< Window with a shell prompt
     QTimer *logupdater;           ///< Timer for periodic log updates
     QLabel *dirstatus;            ///< Status bar label showing current directory
     QProgressBar *progress;       ///< Progress bar for long operations
