@@ -744,6 +744,11 @@ QSize fitViewerWindow(QWidget *window, QScrollArea *area, const QSize &content, 
 
 // shared window-manager hint policy for output windows (see helpers.h)
 
+bool dockedLayout()
+{
+    return QSettings().value(Keys::DOCKED, false).toBool();
+}
+
 void scopeShortcut(QWidget *widget, QAction *action, const QKeySequence &keys)
 {
     if (!widget || !action) return;

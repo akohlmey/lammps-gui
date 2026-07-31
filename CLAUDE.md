@@ -260,7 +260,7 @@ decisions and caveats as binding unless we explicitly revise them here.
 | `src/aboutdialog.{cpp,h}` | Auto-scrolling About dialog showing LAMMPS version and style info |
 | `src/urldownloader.{cpp,h}` | HTTPS file downloader (respects `https_proxy` setting; stall timeout + abort) |
 | `src/downloadprogress.{cpp,h}` | Splash-style transient progress dialog with Cancel for batch downloads (tutorial wizard) |
-| `src/windowlayout.{cpp,h}` | `WindowLayout` + `ViewSlot`: presentation policy for the output views (show/hide/toggle), the single seam where an individual-windows vs. docked layout is decided |
+| `src/windowlayout.{cpp,h}` | `WindowLayout` + `ViewSlot` + `LayoutMode`: presentation policy for the output views (show/hide/toggle); implements both the individual-windows and the `QDockWidget` docked layout, selected by the `Keys::DOCKED` preference |
 | `src/helpers.{cpp,h}` | Platform utilities, dialog/font/toolbar helpers, stdout and Qt-message silencing |
 | `src/qaddon.{cpp,h}` | Utility widgets: `QHline`, `QColorCompleter`, `QColorValidator`, `VerticalLabel` |
 | `src/rangebandslider.{cpp,h}` | Horizontal `QSlider` that paints an active sub-range on its track (distinct from the third-party `rangeslider`) |

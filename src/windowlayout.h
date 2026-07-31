@@ -14,6 +14,8 @@
 
 #include <QObject>
 
+class QDockWidget;
+class QMainWindow;
 class QWidget;
 
 /**
@@ -34,21 +36,39 @@ enum class ViewSlot {
 };
 
 /**
+ * @brief How the output views are presented
+ */
+enum class LayoutMode {
+    Windows, ///< Each view is an individual, freely placed top-level window
+    Docked   ///< The views are docked into the main window around the editor
+};
+
+/**
  * @brief Presentation policy for the output views of the main window
  *
  * WindowLayout is the single place that decides *how* an output view is put
  * in front of the user.  LammpsGui creates and owns the view widgets and
- * keeps its typed pointers to them, but no longer calls show(), hide() or
+ * keeps its typed pointers to them, but does not call show(), hide() or
  * isVisible() on them directly: it hands each widget to the layout with
  * place() and then addresses it by its ViewSlot.
  *
- * At the moment there is a single policy -- every view is an individual
- * top-level window, which is what the application has always done.  Funneling
- * the calls through here is what makes a second policy (all views docked into
- * the main window) possible without spreading the distinction over every call
- * site.
+ * Two policies are available, chosen once at construction from the user
+ * preference:
  *
- * The layout does not take ownership of the widgets.  It watches them for
+ * - LayoutMode::Windows keeps every view an individual top-level window,
+ *   freely placed and stacked, which is what the application has always done.
+ * - LayoutMode::Docked puts the views into dock areas around the editor, which
+ *   stays the central widget: the charts, image and slide show views share a
+ *   tabbed group on the right, the log and the variables view share a group
+ *   across the full width at the bottom.
+ *
+ * In docked mode the layout owns one QDockWidget per slot, created up front so
+ * that a saved arrangement can be restored before the views themselves exist.
+ * place() only swaps the content of the dock, so a view that is destroyed and
+ * rebuilt (as the image viewer is on every render) keeps its position and its
+ * place in the tab order.
+ *
+ * The layout never owns the view widgets themselves.  It watches them for
  * destruction, so a slot whose widget is deleted elsewhere empties itself and
  * never hands out a dangling pointer.
  *
@@ -60,10 +80,14 @@ class WindowLayout : public QObject {
 public:
     /**
      * @brief Constructor
-     * @param parent Parent object; normally the main window, which then owns
-     *               the layout and deletes it along with itself
+     * @param mainwindow Main window the views belong to; also becomes the
+     *                   parent object, so the layout is deleted along with it
+     * @param mode       Presentation policy to apply
+     *
+     * In docked mode the dock widgets are created and a previously saved
+     * arrangement is restored here, before any view exists.
      */
-    explicit WindowLayout(QObject *parent = nullptr);
+    WindowLayout(QMainWindow *mainwindow, LayoutMode mode);
 
     /**
      * @brief Destructor
@@ -75,6 +99,12 @@ public:
     WindowLayout(WindowLayout &&)                 = delete;
     WindowLayout &operator=(const WindowLayout &) = delete;
     WindowLayout &operator=(WindowLayout &&)      = delete;
+
+    /**
+     * @brief The policy this layout applies
+     * @return The mode passed to the constructor
+     */
+    LayoutMode mode() const { return layoutmode; }
 
     /**
      * @brief Put a view widget into a slot
@@ -135,12 +165,34 @@ public:
      */
     bool isVisible(ViewSlot slot) const;
 
+    /**
+     * @brief Store the current dock arrangement in the settings
+     *
+     * Does nothing in windowed mode, where the views carry their own geometry.
+     * Call before the main window is destroyed.
+     */
+    void saveState() const;
+
 private:
     /// Drop the widget from whichever slot holds it (connected to its
     /// QObject::destroyed signal, so a slot never keeps a dangling pointer).
     void forget(QObject *view);
 
-    QWidget *views[static_cast<int>(ViewSlot::Count)]{}; ///< Widget in each slot, nullptr if empty
+    /// Build the dock widgets, arrange them, and restore a saved arrangement.
+    void createDocks();
+
+    /// The dock holding a slot, or nullptr in windowed mode.
+    QDockWidget *dock(ViewSlot slot) const { return docks[static_cast<int>(slot)]; }
+
+    /// The widget whose visibility represents a slot: the dock when docked,
+    /// the view itself otherwise.
+    QWidget *presenter(ViewSlot slot) const;
+
+    QMainWindow *mainwindow; ///< Main window the views are shown in or docked into
+    LayoutMode layoutmode;   ///< Presentation policy chosen at construction
+
+    QWidget *views[static_cast<int>(ViewSlot::Count)]{};     ///< Widget in each slot
+    QDockWidget *docks[static_cast<int>(ViewSlot::Count)]{}; ///< Dock per slot (docked mode only)
 };
 
 #endif

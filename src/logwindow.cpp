@@ -46,7 +46,10 @@ LogWindow::LogWindow(const QString &_filename, LammpsGui *_lammpsgui, QWidget *p
     QPlainTextEdit(parent), filename(_filename), lammpsgui(_lammpsgui), warnings(nullptr)
 {
     QSettings settings;
-    resize(settings.value(Keys::LOGX, 500).toInt(), settings.value(Keys::LOGY, 320).toInt());
+    // in a docked layout the dock area decides the size, and the remembered
+    // one belongs to a free-floating window, so it is neither read nor written
+    if (!dockedLayout())
+        resize(settings.value(Keys::LOGX, 500).toInt(), settings.value(Keys::LOGY, 320).toInt());
 
     document()->setDefaultFont(monoFontFromSettings());
 
@@ -136,8 +139,8 @@ void LogWindow::reset(const QString &_filename)
 
 void LogWindow::closeEvent(QCloseEvent *event)
 {
-    QSettings settings;
-    if (!isMaximized()) {
+    if (!isMaximized() && !dockedLayout()) {
+        QSettings settings;
         settings.setValue(Keys::LOGX, width());
         settings.setValue(Keys::LOGY, height());
     }

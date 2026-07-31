@@ -99,6 +99,18 @@ General Settings
    - **Show Slide Show window by default:** when checked, a Slide Show
      window will be shown with images from a dump image command, if
      present, in the LAMMPS input.
+   - **Dock output windows into the main window:** when checked, the
+     Output, Charts, Image, Slide Show, and Variables views are shown as
+     dock panels arranged around the editor instead of as individual
+     windows: the editor keeps the center, the Charts, Image, and Slide
+     Show views share a tabbed group on the right, and the Output and
+     Variables views share a group across the full width at the bottom.
+     The panels can be resized, rearranged, tabbed, and dragged out to
+     float, and the arrangement is restored in the next session.  This
+     setting takes effect after restarting LAMMPS-GUI.  While docked, the
+     views do not remember individual window sizes, and keyboard
+     shortcuts that a view shares with the main window (for example
+     ``Ctrl+S``) act on whichever of the two has the keyboard focus.
    - **Download tutorial solutions enabled:** this controls whether the
      "Download solutions" option is enabled by default when setting up
      a tutorial.

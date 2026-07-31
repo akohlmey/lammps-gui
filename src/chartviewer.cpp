@@ -387,8 +387,11 @@ ChartWindow::ChartWindow(const QString &_filename, LammpsGui *_lammpsgui, QWidge
     connect(yrange, &RangeSlider::sliderMoved, this, &ChartWindow::updateYRange);
 
     applyWindowFlags(this);
-    resize(settings.value(Keys::CHARTX, Cfg::CHART_DEFAULT_WIDTH).toInt(),
-           settings.value(Keys::CHARTY, Cfg::CHART_DEFAULT_HEIGHT).toInt());
+    // in a docked layout the dock area decides the size, and the remembered
+    // one belongs to a free-floating window, so it is neither read nor written
+    if (!dockedLayout())
+        resize(settings.value(Keys::CHARTX, Cfg::CHART_DEFAULT_WIDTH).toInt(),
+               settings.value(Keys::CHARTY, Cfg::CHART_DEFAULT_HEIGHT).toInt());
 }
 
 int ChartWindow::getStep() const
@@ -1497,8 +1500,8 @@ void ChartWindow::changeChart(int)
 
 void ChartWindow::closeEvent(QCloseEvent *event)
 {
-    QSettings settings;
-    if (!isMaximized()) {
+    if (!isMaximized() && !dockedLayout()) {
+        QSettings settings;
         settings.setValue(Keys::CHARTX, width());
         settings.setValue(Keys::CHARTY, height());
     }

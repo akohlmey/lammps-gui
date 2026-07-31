@@ -506,6 +506,16 @@ QAction *addMenuAction(QMenu *menu, const QString &text, const QString &icon, Re
 }
 
 /**
+ * @brief Whether the output views are docked into the main window
+ * @return true when the docked layout is selected in the preferences
+ *
+ * The layout is chosen once at startup (WindowLayout applies it), so this only
+ * reads the stored preference.  Widgets consult it for the things that make no
+ * sense in a dock, such as remembering their own window size.
+ */
+extern bool dockedLayout();
+
+/**
  * @brief Give a menu action a keyboard shortcut that is scoped to one widget
  * @param widget Widget the shortcut belongs to
  * @param action Action to bind the shortcut to

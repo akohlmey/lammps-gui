@@ -188,6 +188,8 @@ void Preferences::accept()
     if (box) settings->setValue(Keys::ECHO, box->isChecked());
     box = tabWidget->findChild<QCheckBox *>("cite");
     if (box) settings->setValue(Keys::CITE, box->isChecked());
+    box = tabWidget->findChild<QCheckBox *>("docked");
+    if (box) settings->setValue(Keys::DOCKED, box->isChecked());
     box = tabWidget->findChild<QCheckBox *>("viewlog");
     if (box) settings->setValue(Keys::VIEWLOG, box->isChecked());
     box = tabWidget->findChild<QCheckBox *>("viewchart");
@@ -294,6 +296,12 @@ GeneralTab::GeneralTab(QSettings *_settings, LammpsWrapper *_lammps, LammpsGui *
     auto *sldv = new QCheckBox("Show Slide Show window by default");
     sldv->setObjectName("viewslide");
     sldv->setChecked(settings->value(Keys::VIEWSLIDE, true).toBool());
+    auto *dock = new QCheckBox("Dock output windows into the main window");
+    dock->setObjectName("docked");
+    dock->setChecked(settings->value(Keys::DOCKED, false).toBool());
+    dock->setToolTip("Show the Output, Charts, Image, Slide Show and Variables views as dock\n"
+                     "panels around the editor instead of as individual windows.\n"
+                     "Takes effect after restarting LAMMPS-GUI.");
 
     settings->beginGroup(Keys::GROUP_TUTORIAL);
     auto *solution = new QCheckBox("Download tutorial solutions enabled");
@@ -332,7 +340,8 @@ GeneralTab::GeneralTab(QSettings *_settings, LammpsWrapper *_lammps, LammpsGui *
     layout->addWidget(new QHline, nrow++, 0, 1, 2);
     layout->addWidget(logv, nrow, 0);
     layout->addWidget(pltv, nrow++, 1);
-    layout->addWidget(sldv, nrow++, 0);
+    layout->addWidget(sldv, nrow, 0);
+    layout->addWidget(dock, nrow++, 1);
     layout->addWidget(new QHline, nrow++, 0, 1, 2);
     layout->addWidget(solution, nrow, 0);
     layout->addWidget(webpage, nrow++, 1);

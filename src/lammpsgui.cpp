@@ -194,6 +194,10 @@ void LammpsGui::setupUi(QSettings &settings, QFont &allFont, QFont &monoFont)
     if (mainy < Cfg::MINIMUM_HEIGHT) mainy = settings.value(Keys::MAINY, 512).toInt();
     resize(mainx, mainy);
 
+    // the docked layout sizes its dock areas relative to the main window, so
+    // this has to come after the resize() above and before the first view
+    viewlayout = new WindowLayout(this, dockedLayout() ? LayoutMode::Docked : LayoutMode::Windows);
+
     createVariableWindow();
 }
 
@@ -687,7 +691,7 @@ LammpsGui::LammpsGui(QWidget *parent, const QString &filename, int width, int he
     capturer(new StdCapture), status(nullptr), cpuuse(nullptr), lastCpuBucket(-1),
     logwindow(nullptr), imagewindow(nullptr), chartwindow(nullptr), slideshow(nullptr),
     logupdater(nullptr), dirstatus(nullptr), progress(nullptr), prefdialog(nullptr),
-    lammpsstatus(nullptr), varwindow(nullptr), wizard(nullptr), viewlayout(new WindowLayout(this)),
+    lammpsstatus(nullptr), varwindow(nullptr), wizard(nullptr), viewlayout(nullptr),
     runner(nullptr), runCounter(0), extendSteps(Cfg::EXTEND_STEPS_DEFAULT), nthreads(1),
     mainx(width), mainy(height)
 {
@@ -800,6 +804,9 @@ LammpsGui::LammpsGui(QWidget *parent, const QString &filename, int width, int he
 
 LammpsGui::~LammpsGui()
 {
+    // remember the dock arrangement while the docks are still around
+    viewlayout->saveState();
+
     delete highlighter;
     delete capturer;
     delete status;
