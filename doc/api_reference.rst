@@ -458,6 +458,17 @@ AboutDialog Class
 Utility Components
 ==================
 
+WindowLayout Class
+------------------
+
+.. doxygenenum:: ViewSlot
+
+.. doxygenclass:: WindowLayout
+   :members:
+   :protected-members:
+
+-----
+
 URLDownloader Class
 -------------------
 

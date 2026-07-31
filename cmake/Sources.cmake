@@ -93,6 +93,8 @@ set(PROJECT_SOURCES
   ${CMAKE_SOURCE_DIR}/src/tutorialwizard.h
   ${CMAKE_SOURCE_DIR}/src/urldownloader.cpp
   ${CMAKE_SOURCE_DIR}/src/urldownloader.h
+  ${CMAKE_SOURCE_DIR}/src/windowlayout.cpp
+  ${CMAKE_SOURCE_DIR}/src/windowlayout.h
   ${PLUGIN_LOADER_SRC}
   ${ICON_RC_FILE}
 )

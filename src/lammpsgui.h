@@ -52,6 +52,7 @@ class SlideShow;
 class StdCapture;
 class TutorialWizard;
 class URLDownloader;
+class WindowLayout;
 
 /**
  * @brief Main application window for LAMMPS-GUI
@@ -534,6 +535,7 @@ private:
     QLabel *lammpsstatus;      ///< Status bar label for LAMMPS state
     QLabel *varwindow;         ///< Window showing variable definitions
     TutorialWizard *wizard;    ///< Tutorial wizard dialog
+    WindowLayout *viewlayout;  ///< Presentation policy for the output windows above
 
     /**
      * @brief Container for inspect dialog widgets

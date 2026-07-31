@@ -32,6 +32,7 @@
 #include "syntaxcheck.h"
 #include "tutorialwizard.h"
 #include "urldownloader.h"
+#include "windowlayout.h"
 
 #include <QAction>
 #include <QApplication>
@@ -686,8 +687,9 @@ LammpsGui::LammpsGui(QWidget *parent, const QString &filename, int width, int he
     capturer(new StdCapture), status(nullptr), cpuuse(nullptr), lastCpuBucket(-1),
     logwindow(nullptr), imagewindow(nullptr), chartwindow(nullptr), slideshow(nullptr),
     logupdater(nullptr), dirstatus(nullptr), progress(nullptr), prefdialog(nullptr),
-    lammpsstatus(nullptr), varwindow(nullptr), wizard(nullptr), runner(nullptr), runCounter(0),
-    extendSteps(Cfg::EXTEND_STEPS_DEFAULT), nthreads(1), mainx(width), mainy(height)
+    lammpsstatus(nullptr), varwindow(nullptr), wizard(nullptr), viewlayout(new WindowLayout(this)),
+    runner(nullptr), runCounter(0), extendSteps(Cfg::EXTEND_STEPS_DEFAULT), nthreads(1),
+    mainx(width), mainy(height)
 {
 #if QT_CONFIG(clipboard)
     hasClipboard = true;
@@ -1663,16 +1665,15 @@ void LammpsGui::updateSlideShow()
     QString imagefile = lammps.lastThermoString("imagename", 0);
     if (imagefile.isEmpty()) return;
 
+    const bool showslides = QSettings().value(Keys::VIEWSLIDE, true).toBool();
     if (!slideshow) {
         slideshow = new SlideShow(currentFile, this);
-        if (QSettings().value(Keys::VIEWSLIDE, true).toBool())
-            slideshow->show();
-        else
-            slideshow->hide();
+        viewlayout->place(ViewSlot::SlideShow, slideshow);
+        viewlayout->setVisible(ViewSlot::SlideShow, showslides);
     } else {
         slideshow->setWindowTitle(
             QString("LAMMPS-GUI - Slide Show - %1 - Run %2").arg(currentFile).arg(runCounter));
-        if (QSettings().value(Keys::VIEWSLIDE, true).toBool()) slideshow->show();
+        if (showslides) viewlayout->show(ViewSlot::SlideShow);
     }
     slideshow->addImage(imagefile);
 }
@@ -1838,10 +1839,8 @@ void LammpsGui::createLogWindow(QSettings &settings)
     logwindow->setWindowIcon(QIcon(Cfg::MAIN_ICON));
     logwindow->setMinimumSize(Cfg::MINIMUM_WIDTH, Cfg::MINIMUM_HEIGHT);
 
-    if (settings.value(Keys::VIEWLOG, true).toBool())
-        logwindow->show();
-    else
-        logwindow->hide();
+    viewlayout->place(ViewSlot::Log, logwindow);
+    viewlayout->setVisible(ViewSlot::Log, settings.value(Keys::VIEWLOG, true).toBool());
 }
 
 void LammpsGui::createChartWindow(QSettings &settings)
@@ -1863,10 +1862,8 @@ void LammpsGui::createChartWindow(QSettings &settings)
     chartwindow->setNorm(normflag != 0);
     chartwindow->setRangeEnabled(false);
 
-    if (settings.value(Keys::VIEWCHART, true).toBool())
-        chartwindow->show();
-    else
-        chartwindow->hide();
+    viewlayout->place(ViewSlot::Chart, chartwindow);
+    viewlayout->setVisible(ViewSlot::Chart, settings.value(Keys::VIEWCHART, true).toBool());
 }
 
 namespace {
@@ -2092,7 +2089,7 @@ void LammpsGui::doRun(bool use_buffer, bool dryrun)
     if (slideshow) {
         slideshow->setWindowTitle(QString("LAMMPS-GUI - Slide Show - " + currentFile));
         slideshow->clear();
-        slideshow->hide();
+        viewlayout->hide(ViewSlot::SlideShow);
     }
 }
 
@@ -2259,12 +2256,13 @@ void LammpsGui::renderImage()
         delete imagewindow;
         imagewindow = new ImageViewer(currentFile, &lammps, this);
         imagewindow->setMinimumSize(Cfg::MINIMUM_WIDTH, Cfg::MINIMUM_HEIGHT);
+        viewlayout->place(ViewSlot::Image, imagewindow);
     } else {
         warning(this, "Image Viewer File Creation Error",
                 "Cannot create snapshot image while LAMMPS is running");
         return;
     }
-    imagewindow->show();
+    viewlayout->show(ViewSlot::Image);
 }
 
 void LammpsGui::viewSlides()
@@ -2272,50 +2270,24 @@ void LammpsGui::viewSlides()
     if (!slideshow) {
         slideshow = new SlideShow(currentFile, this);
         slideshow->setMinimumSize(Cfg::MINIMUM_WIDTH, Cfg::MINIMUM_HEIGHT);
+        viewlayout->place(ViewSlot::SlideShow, slideshow);
     }
-    if (slideshow->isVisible())
-        slideshow->hide();
-    else
-        slideshow->show();
+    viewlayout->toggle(ViewSlot::SlideShow);
 }
 
 void LammpsGui::viewChart()
 {
-    QSettings settings;
-    if (chartwindow) {
-        if (chartwindow->isVisible()) {
-            chartwindow->hide();
-            settings.setValue(Keys::VIEWCHART, false);
-        } else {
-            chartwindow->show();
-            settings.setValue(Keys::VIEWCHART, true);
-        }
-    }
+    viewlayout->toggle(ViewSlot::Chart);
 }
 
 void LammpsGui::viewLog()
 {
-    QSettings settings;
-    if (logwindow) {
-        if (logwindow->isVisible()) {
-            logwindow->hide();
-            settings.setValue(Keys::VIEWLOG, false);
-        } else {
-            logwindow->show();
-            settings.setValue(Keys::VIEWLOG, true);
-        }
-    }
+    viewlayout->toggle(ViewSlot::Log);
 }
 
 void LammpsGui::viewImage()
 {
-    if (imagewindow) {
-        if (imagewindow->isVisible()) {
-            imagewindow->hide();
-        } else {
-            imagewindow->show();
-        }
-    }
+    viewlayout->toggle(ViewSlot::Image);
 }
 
 void LammpsGui::createVariableWindow()
@@ -2336,7 +2308,8 @@ void LammpsGui::createVariableWindow()
 
     // apply before hide(): applyWindowFlags() calls setWindowFlags(), which re-shows the widget
     applyWindowFlags(varwindow);
-    varwindow->hide();
+    viewlayout->place(ViewSlot::Variables, varwindow);
+    viewlayout->hide(ViewSlot::Variables);
 }
 
 void LammpsGui::viewVariables()
@@ -2344,11 +2317,7 @@ void LammpsGui::viewVariables()
     // varwindow is destroyed when the editor is reset (newDocument()/openFile()),
     // so recreate it on demand here -- mirrors viewSlides()
     if (!varwindow) createVariableWindow();
-    if (varwindow->isVisible()) {
-        varwindow->hide();
-    } else {
-        varwindow->show();
-    }
+    viewlayout->toggle(ViewSlot::Variables);
 }
 
 void LammpsGui::setDocver()
