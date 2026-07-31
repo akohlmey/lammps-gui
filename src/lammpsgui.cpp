@@ -172,6 +172,16 @@ void LammpsGui::setupUi(QSettings &settings, QFont &allFont, QFont &monoFont)
         for (const auto *action : findChildren<QAction *>())
             if (!action->shortcut().isEmpty()) menukeys << action->shortcut();
         setMainWindowShortcuts(menukeys);
+
+        // The combined layout swaps File and Edit out of the menu bar while a
+        // panel has the focus, and an action in a menu that is attached nowhere
+        // has no shortcut context left -- Ctrl+Q, Ctrl+N, Ctrl+O and Ctrl+S
+        // would all stop working there.  Associating them with the window keeps
+        // their accelerators alive whichever menu is currently shown.
+        for (auto *menu : {filemenu, editmenu})
+            if (menu)
+                for (auto *action : menu->actions())
+                    addAction(action);
     }
 
     // Status bar
