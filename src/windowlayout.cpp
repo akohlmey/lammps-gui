@@ -156,10 +156,10 @@ void WindowLayout::createDocks()
     mainwindow->tabifyDockWidget(logDock, varDock);
 
     mainwindow->installEventFilter(this);
-    // watch the two docks that define the split, so the cached fractions follow
-    // a splitter the user drags and not just a resize of the window
-    if (auto *d = dock(ViewSlot::Chart)) d->installEventFilter(this);
-    if (auto *d = dock(ViewSlot::Log)) d->installEventFilter(this);
+    // watch the docks, so the cached fractions follow a splitter the user drags
+    // and not just a resize of the window
+    for (auto *d : docks)
+        if (d) d->installEventFilter(this);
 
     // a saved arrangement wins over the default one above; it is matched to
     // these docks by object name, which is why they all exist by now
@@ -177,22 +177,51 @@ void WindowLayout::createDocks()
     // replaced by the size hint of each view as soon as one is put in.  They are
     // re-applied from show() once a view is actually there -- resizeDocks() has
     // no effect before the docks are laid out and visible anyway.
-    hsplit       = settings.value(Keys::DOCKSPLITH, Cfg::DOCK_SPLIT_HORIZONTAL).toDouble();
-    vsplit       = settings.value(Keys::DOCKSPLITV, Cfg::DOCK_SPLIT_VERTICAL).toDouble();
-    splitpending = true;
+    hsplit = settings.value(Keys::DOCKSPLITH, Cfg::DOCK_SPLIT_HORIZONTAL).toDouble();
+    vsplit = settings.value(Keys::DOCKSPLITV, Cfg::DOCK_SPLIT_VERTICAL).toDouble();
+    scheduleSplit();
 }
 
-void WindowLayout::applyDefaultSplit()
+// The docks of one group share a size, so any visible one of them can be
+// resized to set it -- but only a visible one: resizeDocks() ignores a hidden
+// dock, and which member of a group is up varies with what the run produced.
+QDockWidget *WindowLayout::sizingDock(std::initializer_list<ViewSlot> group) const
 {
-    if (!splitpending || !mainwindow) return;
-    splitpending = false;
+    // note: "slots" is a Qt keyword macro and cannot be used as a name here
+    for (auto slot : group) {
+        auto *d = dock(slot);
+        if (d && d->isVisible()) return d;
+    }
+    return nullptr;
+}
 
-    auto *chartDock = dock(ViewSlot::Chart);
-    auto *logDock   = dock(ViewSlot::Log);
-    if (chartDock && chartDock->isVisible())
-        mainwindow->resizeDocks({chartDock}, {int(mainwindow->width() * hsplit)}, Qt::Horizontal);
-    if (logDock && logDock->isVisible())
-        mainwindow->resizeDocks({logDock}, {int(mainwindow->height() * vsplit)}, Qt::Vertical);
+// Coalesce into a single application at the end of the current event handling:
+// several views can be placed in one go, and resizeDocks() has no effect until
+// the docks holding them are laid out.
+void WindowLayout::scheduleSplit()
+{
+    if (layoutmode != LayoutMode::Docked || !mainwindow || splitpending) return;
+    splitpending = true;
+    QTimer::singleShot(0, mainwindow, [this]() {
+        applySplit();
+    });
+}
+
+void WindowLayout::applySplit()
+{
+    splitpending = false;
+    if (!mainwindow) return;
+
+    // the resizes below are not the user changing the split, so keep the event
+    // filter from recording them as a new target
+    applying         = true;
+    auto *rightDock  = sizingDock({ViewSlot::Chart, ViewSlot::Image, ViewSlot::SlideShow});
+    auto *bottomDock = sizingDock({ViewSlot::Log, ViewSlot::Variables});
+    if (rightDock)
+        mainwindow->resizeDocks({rightDock}, {int(mainwindow->width() * hsplit)}, Qt::Horizontal);
+    if (bottomDock)
+        mainwindow->resizeDocks({bottomDock}, {int(mainwindow->height() * vsplit)}, Qt::Vertical);
+    applying = false;
 }
 
 // Qt only draws a tab bar once two dock widgets share an area, so a panel that
@@ -236,17 +265,21 @@ bool WindowLayout::eventFilter(QObject *watched, QEvent *event)
     // still zero and the fraction computed from it would be zero too -- which
     // this would then enforce, collapsing the panel for good.
     if (event->type() == QEvent::Resize && layoutmode == LayoutMode::Docked && !splitpending &&
-        mainwindow && mainwindow->isVisible()) {
-        // a dock changed size: record what fraction of the window it now holds,
-        // whether that came from a splitter drag or from the code below
-        if (watched == dock(ViewSlot::Chart)) {
-            const auto *d = dock(ViewSlot::Chart);
-            if (!d->isHidden() && d->width() > 0 && mainwindow->width() > 0)
-                hsplit = double(d->width()) / mainwindow->width();
-        } else if (watched == dock(ViewSlot::Log)) {
-            const auto *d = dock(ViewSlot::Log);
-            if (!d->isHidden() && d->height() > 0 && mainwindow->height() > 0)
-                vsplit = double(d->height()) / mainwindow->height();
+        !applying && mainwindow && mainwindow->isVisible()) {
+        // a dock changed size under the user's hands: record what fraction of
+        // the window its group now holds
+        for (int i = 0; i < static_cast<int>(ViewSlot::Count); ++i) {
+            const auto *d = docks[i];
+            if (d != watched || !d || d->isHidden()) continue;
+            const auto slot = static_cast<ViewSlot>(i);
+            if (slot == ViewSlot::Log || slot == ViewSlot::Variables) {
+                if (d->height() > 0 && mainwindow->height() > 0)
+                    vsplit = double(d->height()) / mainwindow->height();
+            } else {
+                if (d->width() > 0 && mainwindow->width() > 0)
+                    hsplit = double(d->width()) / mainwindow->width();
+            }
+            break;
         }
     }
 
@@ -256,16 +289,14 @@ bool WindowLayout::eventFilter(QObject *watched, QEvent *event)
         const QSize oldsize = re->oldSize();
         const QSize newsize = re->size();
 
-        auto *chartDock = dock(ViewSlot::Chart);
-        auto *logDock   = dock(ViewSlot::Log);
-        if (oldsize.width() > 0 && newsize.width() != oldsize.width() && chartDock &&
-            chartDock->isVisible() && chartDock->width() > 0) {
-            mainwindow->resizeDocks({chartDock}, {int(newsize.width() * hsplit)}, Qt::Horizontal);
-        }
-        if (oldsize.height() > 0 && newsize.height() != oldsize.height() && logDock &&
-            logDock->isVisible() && logDock->height() > 0) {
-            mainwindow->resizeDocks({logDock}, {int(newsize.height() * vsplit)}, Qt::Vertical);
-        }
+        applying         = true;
+        auto *rightDock  = sizingDock({ViewSlot::Chart, ViewSlot::Image, ViewSlot::SlideShow});
+        auto *bottomDock = sizingDock({ViewSlot::Log, ViewSlot::Variables});
+        if (oldsize.width() > 0 && newsize.width() != oldsize.width() && rightDock)
+            mainwindow->resizeDocks({rightDock}, {int(newsize.width() * hsplit)}, Qt::Horizontal);
+        if (oldsize.height() > 0 && newsize.height() != oldsize.height() && bottomDock)
+            mainwindow->resizeDocks({bottomDock}, {int(newsize.height() * vsplit)}, Qt::Vertical);
+        applying = false;
     }
     return QObject::eventFilter(watched, event);
 }
@@ -309,6 +340,9 @@ void WindowLayout::place(ViewSlot slot, QWidget *view)
         d->setWidget(view);
         if (!view) d->hide();
         updateDockChrome();
+        // a newly built view brings its own size hint into the dock area, which
+        // would otherwise take the split with it
+        scheduleSplit();
     }
 }
 
@@ -342,10 +376,7 @@ void WindowLayout::show(ViewSlot slot)
     // deliberately no raise() here: this runs on every periodic update during a
     // run (each new dump image shows the slide show view), and raising would
     // pull the tab group away from whatever the user is looking at
-    if (splitpending)
-        QTimer::singleShot(0, mainwindow, [this]() {
-            applyDefaultSplit();
-        });
+    scheduleSplit();
 }
 
 void WindowLayout::raise(ViewSlot slot)

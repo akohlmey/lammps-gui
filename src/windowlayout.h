@@ -14,6 +14,8 @@
 
 #include <QObject>
 
+#include <initializer_list>
+
 class QDockWidget;
 class QEvent;
 class QMainWindow;
@@ -202,9 +204,17 @@ private:
     /// QObject::destroyed signal, so a slot never keeps a dangling pointer).
     void forget(QObject *view);
 
-    /// Apply the default dock proportions; deferred until the docks are laid
-    /// out, because resizeDocks() does nothing before that.
-    void applyDefaultSplit();
+    /// Ask for the stored proportions to be applied at the end of the current
+    /// event handling; coalesced, so placing several views costs one pass.
+    void scheduleSplit();
+
+    /// Apply the stored proportions.  Deferred through scheduleSplit(), because
+    /// resizeDocks() does nothing before the docks are laid out.
+    void applySplit();
+
+    /// A visible dock of a group, or nullptr if the whole group is hidden;
+    /// resizeDocks() needs one to set the size the group shares.
+    QDockWidget *sizingDock(std::initializer_list<ViewSlot> group) const;
 
     /// Build the dock widgets, arrange them, and restore a saved arrangement.
     void createDocks();
@@ -218,7 +228,8 @@ private:
 
     QMainWindow *mainwindow;   ///< Main window the views are shown in or docked into
     LayoutMode layoutmode;     ///< Presentation policy chosen at construction
-    bool splitpending = false; ///< Dock proportions still to be applied
+    bool splitpending = false; ///< An application of the proportions is scheduled
+    bool applying     = false; ///< Resizing the docks ourselves, so do not track it
     double hsplit     = 0.0;   ///< Fraction of the width held by the right hand group
     double vsplit     = 0.0;   ///< Fraction of the height held by the bottom group
 
