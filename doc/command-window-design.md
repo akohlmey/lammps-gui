@@ -58,6 +58,25 @@ exit status, and the shell's current directory. Put `$PWD` last and read to end
 of line so paths containing spaces survive. Send it once at startup too, so the
 first prompt shows the right directory.
 
+That line is POSIX, and shells do not agree on any of the three things it needs,
+so the sentinel -- along with the start-up line that silences the shell's own
+prompt, and the arguments it is started with -- is chosen by shell family
+(`ShellKind` in `commandwindow.cpp`, decided from the program name):
+
+| | exit status | directory | prompt off | echo off |
+|---|---|---|---|---|
+| POSIX (`sh`, `bash`, `zsh`, `dash`) | `$?` | `$PWD` | `PS1=''` | `bash --noediting` |
+| csh, tcsh | `$status` | `$cwd` | `set prompt = ""` | `unset edit` |
+| `cmd.exe` | `%errorlevel%` | `%CD%` | -- | `@echo off` |
+
+Two of these are not obvious. In csh, `echo` is a builtin that sets a status of
+its own, so the status being reported has to be saved into a variable before the
+first `echo` of the sentinel runs. And csh's line editor, not any argument, is
+what echoes the command back on a pipe; `unset edit` is the off switch that
+`--noediting` is for bash. Getting either wrong looks the same from the outside:
+every command's output appears one command late, with the line echoed in front
+of it.
+
 ### Working directory
 
 Tracked from the sentinel, never by parsing the typed line -- parsing would miss
@@ -128,6 +147,9 @@ memory.
 - `pushd`/`popd` are bash/zsh builtins, **not** POSIX. `dash`, which is
   `/bin/sh` on Debian and Ubuntu, does not have them -- so the default must be
   `$SHELL` with a bash fallback, not `/bin/sh`.
+- csh and tcsh differ in every part of the framing; see the table above. Both
+  also greet a pipe with "Inappropriate ioctl for device" and "no job control in
+  this shell", which the existing start-up noise filter already drops.
 - `cmd.exe` needs `@echo off` sent first or it echoes every line, uses
   `%errorlevel%` and `%CD%` for the sentinel, and emits CRLF. `pushd` onto a UNC
   path silently maps a drive letter.

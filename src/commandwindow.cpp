@@ -50,16 +50,78 @@ namespace {
 // typed line would miss all of those.
 constexpr auto SENTINEL = "__LGUI_DONE_";
 
-QString sentinelCommand()
+// Shells do not agree on how to name the exit status, the working directory or
+// the prompt, so the few things this window has to say to one are chosen by
+// family rather than assumed to be POSIX.
+enum class ShellKind { Posix, Csh, Cmd };
+
+ShellKind shellKind(const QString &program)
 {
+    const QString name = QFileInfo(program).fileName().toLower();
 #if defined(Q_OS_WIN32)
-    return QStringLiteral("echo %s%%errorlevel%%_%%CD%%").arg(SENTINEL);
-#else
-    // the leading newline puts the sentinel on a line of its own even when the
-    // command's output did not end with one; PWD last so a path with spaces in
-    // it survives being read to the end of the line
-    return QStringLiteral("printf '\\n%1%s_%s\\n' \"$?\" \"$PWD\"").arg(SENTINEL);
+    if (name.startsWith("cmd")) return ShellKind::Cmd;
 #endif
+    // csh and tcsh; no other common shell name ends in "csh"
+    if (name.endsWith("csh")) return ShellKind::Csh;
+    return ShellKind::Posix;
+}
+
+QStringList shellArgs(const QString &program)
+{
+    switch (shellKind(program)) {
+        case ShellKind::Cmd:
+            return {};
+        case ShellKind::Csh:
+            // its editor is turned off through the start-up line below instead
+            return {"-i"};
+        default: {
+            QStringList args;
+            // keep bash from running its line editor over input that is a pipe,
+            // which would echo every line back wrapped in terminal escapes
+            if (QFileInfo(program).fileName().contains("bash")) args << "--noediting";
+            args << "-i";
+            return args;
+        }
+    }
+}
+
+// Silence the shell's own prompt -- this window supplies one -- and whatever
+// else an interactive shell does that suits a terminal and not a pipe.
+QString shellInit(const QString &program)
+{
+    switch (shellKind(program)) {
+        case ShellKind::Cmd:
+            // cmd.exe otherwise echoes every line it is fed
+            return QStringLiteral("@echo off");
+        case ShellKind::Csh:
+            // "unset edit" is what stops csh echoing the line back
+            return QStringLiteral("set prompt = \"\" ; set prompt2 = \"\" ; unset edit");
+        default:
+            // PROMPT_COMMAND is where a distribution hides the escape sequence
+            // that sets a terminal's title; history expansion would turn a "!"
+            // in an ordinary command line into an error
+            return QStringLiteral("PS1='' ; PS2='' ; unset PROMPT_COMMAND 2>/dev/null ;"
+                                  " set +H 2>/dev/null");
+    }
+}
+
+QString sentinelCommand(const QString &program)
+{
+    switch (shellKind(program)) {
+        case ShellKind::Cmd:
+            return QStringLiteral("echo %1%%errorlevel%%_%%CD%%").arg(SENTINEL);
+        case ShellKind::Csh:
+            // echo is a builtin and sets a status of its own, so the one being
+            // reported has to be put aside before the first of them runs
+            return QStringLiteral("set _lgstatus = $status ; echo \"\" ;"
+                                  " echo \"%1${_lgstatus}_${cwd}\"")
+                .arg(SENTINEL);
+        default:
+            // the leading newline puts the sentinel on a line of its own even
+            // when the command's output did not end with one; PWD last so a
+            // path with spaces in it survives being read to the end of the line
+            return QStringLiteral("printf '\\n%1%s_%s\\n' \"$?\" \"$PWD\"").arg(SENTINEL);
+    }
 }
 
 // An interactive shell without a terminal complains whenever it would otherwise
@@ -229,25 +291,19 @@ void CommandWindow::startShell()
     connect(shell, QOverload<int, QProcess::ExitStatus>::of(&QProcess::finished), this,
             &CommandWindow::shellFinished);
 
-    const QString program = preferredShell();
-    QStringList args;
-#if !defined(Q_OS_WIN32)
     // An interactive shell is what reads the user's rc file, and that is where
     // aliases and shell functions live -- a non-interactive one skips it, and
     // the guard most rc files open with would bail out even if it did not.
-    // --noediting keeps bash from running its line editor over input that is a
-    // pipe, which would otherwise echo every line back at us and wrap it in the
-    // escape sequences meant for a terminal.
-    if (QFileInfo(program).fileName().contains("bash")) args << "--noediting";
-    args << "-i";
-
+    shellprogram          = preferredShell();
+    const QString program = shellprogram;
+#if !defined(Q_OS_WIN32)
     // put the shell in a session of its own, so a signal can be sent to it and
     // to whatever it is running rather than to this application
     shell->setChildProcessModifier([]() {
         setsid();
     });
 #endif
-    shell->start(program, args);
+    shell->start(program, shellArgs(program));
     if (!shell->waitForStarted(Cfg::COMMAND_START_TIMEOUT)) {
         appendOutput(QString("Cannot run \"%1\": %2\n").arg(program, shell->errorString()));
         return;
@@ -259,30 +315,16 @@ void CommandWindow::startShell()
     // noise -- the prompt it prints because it is interactive, and its complaint
     // about having no terminal to put a job in the foreground of.
     priming = true;
-#if defined(Q_OS_WIN32)
-    // cmd.exe otherwise echoes every line it is fed
-    shell->write("@echo off\r\n");
-#else
-    // this window supplies the prompt, so the shell must not print one; and
-    // history expansion is on in an interactive shell, which would turn a "!"
-    // in an ordinary command line into an error
-    // this window supplies the prompt, so the shell must not print one -- and
-    // PROMPT_COMMAND is where a distribution's rc file hides the escape
-    // sequence that sets a terminal's title.  History expansion is on in an
-    // interactive shell, which would turn a "!" in an ordinary command into an
-    // error.
-    shell->write("PS1='' ; PS2='' ; unset PROMPT_COMMAND 2>/dev/null ;"
-                 " set +H 2>/dev/null\n");
-#endif
+    shell->write(qPrintable(shellInit(program) + "\n"));
     // ask where we are, so the prompt is right before anything is typed
-    shell->write(qPrintable(sentinelCommand() + "\n"));
+    shell->write(qPrintable(sentinelCommand(program) + "\n"));
 }
 
 void CommandWindow::changeDirectory(const QString &dir)
 {
     if (!shell || shell->state() != QProcess::Running) return;
     shell->write(qPrintable(QString("cd \"%1\"\n").arg(dir)));
-    shell->write(qPrintable(sentinelCommand() + "\n"));
+    shell->write(qPrintable(sentinelCommand(shellprogram) + "\n"));
 }
 
 void CommandWindow::submit()
@@ -313,7 +355,7 @@ void CommandWindow::submit()
     running = true;
     updatePrompt();
     shell->write(qPrintable(line + "\n"));
-    shell->write(qPrintable(sentinelCommand() + "\n"));
+    shell->write(qPrintable(sentinelCommand(shellprogram) + "\n"));
 }
 
 void CommandWindow::readOutput()

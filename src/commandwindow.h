@@ -148,6 +148,7 @@ private:
     QCompleter *completer;       ///< Completes commands and file names
     QStringListModel *commands;  ///< Model behind the command completion
 
+    QString shellprogram;   ///< The interpreter that was started
     QString pending;        ///< Output received so far that is not a complete line
     QString workingdir;     ///< Where the shell last reported itself to be
     QStringList history;    ///< Lines typed so far, oldest first
