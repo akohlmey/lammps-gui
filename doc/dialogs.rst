@@ -88,6 +88,20 @@ General Settings
      <logfile>`. This is equivalent to using ``-echo screen`` on the
      command-line.  There is no log *file* produced by default, since
      LAMMPS-GUI uses ``-log none``.
+   - **Individual Windows** / **Combined Main Window:** selects how the
+     Output, Charts, Image, Slide Show, and Variables views are presented.
+     With *Individual Windows* each of them is a window of its own, placed
+     and stacked freely.  With *Combined Main Window* they become panels
+     docked around the editor: the editor keeps the center, the Charts,
+     Image, and Slide Show views share a tabbed group on the right, and
+     the Output and Variables views share a group across the full width at
+     the bottom.  The panels are named by their tab, and can be resized,
+     rearranged, re-tabbed, and dragged out to float; the arrangement is
+     restored in the next session.  Changing this setting relaunches
+     LAMMPS-GUI.  In the combined window the views do not remember
+     individual window sizes, and keyboard shortcuts that a view shares
+     with the main window (for example ``Ctrl+S``) act on whichever of the
+     two has the keyboard focus.
    - **Include citation details:** when checked, full citation info will be
      included in the Output window.  This is equivalent to using ``-cite
      screen`` on the command-line.
@@ -99,18 +113,6 @@ General Settings
    - **Show Slide Show window by default:** when checked, a Slide Show
      window will be shown with images from a dump image command, if
      present, in the LAMMPS input.
-   - **Dock output windows into the main window:** when checked, the
-     Output, Charts, Image, Slide Show, and Variables views are shown as
-     dock panels arranged around the editor instead of as individual
-     windows: the editor keeps the center, the Charts, Image, and Slide
-     Show views share a tabbed group on the right, and the Output and
-     Variables views share a group across the full width at the bottom.
-     The panels can be resized, rearranged, tabbed, and dragged out to
-     float, and the arrangement is restored in the next session.  This
-     setting takes effect after restarting LAMMPS-GUI.  While docked, the
-     views do not remember individual window sizes, and keyboard
-     shortcuts that a view shares with the main window (for example
-     ``Ctrl+S``) act on whichever of the two has the keyboard focus.
    - **Download tutorial solutions enabled:** this controls whether the
      "Download solutions" option is enabled by default when setting up
      a tutorial.

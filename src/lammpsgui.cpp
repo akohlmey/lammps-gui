@@ -762,7 +762,7 @@ LammpsGui::LammpsGui(QWidget *parent, const QString &filename, int width, int he
     if ((filename.size() > 0) && !filename.endsWith("lammps-gui.exe")) {
         openFile(filename);
     } else {
-        setWindowTitle("LAMMPS-GUI - Editor - *unknown*");
+        updateEditorTitle(QString());
     }
 
     // start LAMMPS, fill the syntax registry from introspection, and feed the
@@ -864,7 +864,7 @@ void LammpsGui::newDocument()
         lammps.close();
     }
     lammpsstatus->hide();
-    setWindowTitle("LAMMPS-GUI - Editor - *unknown*");
+    updateEditorTitle(QString());
     runCounter = 0;
 }
 
@@ -1139,7 +1139,7 @@ void LammpsGui::openFile(const QString &fileName)
         textEdit->moveCursor(QTextCursor::Start, QTextCursor::MoveAnchor);
         file.close();
     }
-    setWindowTitle(QString("LAMMPS-GUI - Editor - " + currentFile));
+    updateEditorTitle(currentFile);
     runCounter = 0;
     textEdit->document()->setModified(false);
     textEdit->setGroupList();
@@ -1392,7 +1392,7 @@ void LammpsGui::writeFile(const QString &fileName)
     // update the session state only after the file was opened successfully
     currentFile = path.fileName();
     currentDir  = path.absolutePath();
-    setWindowTitle(QString("LAMMPS-GUI - Editor - " + currentFile));
+    updateEditorTitle(currentFile);
     QDir::setCurrent(currentDir);
 
     updateRecents(path.absoluteFilePath());
@@ -1844,7 +1844,10 @@ void LammpsGui::createLogWindow(QSettings &settings)
     logwindow->setWindowTitle(
         QString("LAMMPS-GUI - Output - %1 - Run %2").arg(currentFile).arg(runCounter));
     logwindow->setWindowIcon(QIcon(Cfg::MAIN_ICON));
-    logwindow->setMinimumSize(Cfg::MINIMUM_WIDTH, Cfg::MINIMUM_HEIGHT);
+    // a dock area decides the size of its panel, and an explicit minimum only
+    // fights it: it becomes a hard floor that keeps the default split from
+    // settling where it was asked to
+    if (!dockedLayout()) logwindow->setMinimumSize(Cfg::MINIMUM_WIDTH, Cfg::MINIMUM_HEIGHT);
 
     viewlayout->place(ViewSlot::Log, logwindow);
     viewlayout->setVisible(ViewSlot::Log, settings.value(Keys::VIEWLOG, true).toBool());
@@ -1861,7 +1864,10 @@ void LammpsGui::createChartWindow(QSettings &settings)
     chartwindow->setWindowTitle(
         QString("LAMMPS-GUI - Charts - %1 - Run %2").arg(currentFile).arg(runCounter));
     chartwindow->setWindowIcon(QIcon(Cfg::MAIN_ICON));
-    chartwindow->setMinimumSize(Cfg::MINIMUM_WIDTH, Cfg::MINIMUM_HEIGHT);
+    // a dock area decides the size of its panel, and an explicit minimum only
+    // fights it: it becomes a hard floor that keeps the default split from
+    // settling where it was asked to
+    if (!dockedLayout()) chartwindow->setMinimumSize(Cfg::MINIMUM_WIDTH, Cfg::MINIMUM_HEIGHT);
 
     const auto *unitptr = static_cast<const char *>(lammps.extractGlobal("units"));
     if (unitptr) chartwindow->setUnits(QString::fromUtf8(unitptr));
@@ -2049,6 +2055,7 @@ void LammpsGui::doRun(bool use_buffer, bool dryrun)
     capturer->beginCapture();
 
     ++runCounter;
+    updateEditorTitle(currentFile);
 
     // must delete all variables since clear does not delete them
     clearVariables();
@@ -2262,21 +2269,22 @@ void LammpsGui::renderImage()
         // delete the old image window before opening the new one
         delete imagewindow;
         imagewindow = new ImageViewer(currentFile, &lammps, this);
-        imagewindow->setMinimumSize(Cfg::MINIMUM_WIDTH, Cfg::MINIMUM_HEIGHT);
+        if (!dockedLayout()) imagewindow->setMinimumSize(Cfg::MINIMUM_WIDTH, Cfg::MINIMUM_HEIGHT);
         viewlayout->place(ViewSlot::Image, imagewindow);
     } else {
         warning(this, "Image Viewer File Creation Error",
                 "Cannot create snapshot image while LAMMPS is running");
         return;
     }
-    viewlayout->show(ViewSlot::Image);
+    // an explicit request to look at the new image
+    viewlayout->raise(ViewSlot::Image);
 }
 
 void LammpsGui::viewSlides()
 {
     if (!slideshow) {
         slideshow = new SlideShow(currentFile, this);
-        slideshow->setMinimumSize(Cfg::MINIMUM_WIDTH, Cfg::MINIMUM_HEIGHT);
+        if (!dockedLayout()) slideshow->setMinimumSize(Cfg::MINIMUM_WIDTH, Cfg::MINIMUM_HEIGHT);
         viewlayout->place(ViewSlot::SlideShow, slideshow);
     }
     viewlayout->toggle(ViewSlot::SlideShow);
@@ -2325,6 +2333,16 @@ void LammpsGui::viewVariables()
     // so recreate it on demand here -- mirrors viewSlides()
     if (!varwindow) createVariableWindow();
     viewlayout->toggle(ViewSlot::Variables);
+}
+
+// Docked, the views are named by their tab and no longer carry the run number
+// in a window title of their own, so the editor title takes it over.
+void LammpsGui::updateEditorTitle(const QString &file)
+{
+    QString title = "LAMMPS-GUI - Editor - " + (file.isEmpty() ? QString("*unknown*") : file);
+    if (viewlayout && viewlayout->mode() == LayoutMode::Docked && runCounter > 0)
+        title += QString(" - Run %1").arg(runCounter);
+    setWindowTitle(title);
 }
 
 void LammpsGui::setDocver()

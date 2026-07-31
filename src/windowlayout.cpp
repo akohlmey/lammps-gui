@@ -17,6 +17,8 @@
 #include <QMainWindow>
 #include <QSettings>
 #include <QString>
+#include <QTabWidget>
+#include <QTimer>
 #include <QWidget>
 
 namespace {
@@ -80,11 +82,17 @@ void WindowLayout::createDocks()
     // the editor *and* the right hand group rather than beside them
     mainwindow->setCorner(Qt::BottomLeftCorner, Qt::BottomDockWidgetArea);
     mainwindow->setCorner(Qt::BottomRightCorner, Qt::BottomDockWidgetArea);
+    // the tab already names the view, so the docks carry no title bar of their
+    // own; put the tabs on top, where a tab bar is normally looked for
+    mainwindow->setTabPosition(Qt::AllDockWidgetAreas, QTabWidget::North);
 
     auto make = [this](ViewSlot slot, Qt::DockWidgetArea area) {
         auto *d = new QDockWidget(dockTitle(slot), mainwindow);
         d->setObjectName(dockObjectName(slot));
         d->setAllowedAreas(Qt::AllDockWidgetAreas);
+        // an empty widget collapses the title bar; the name lives on the tab and
+        // the dock is still dragged, floated and re-docked by its tab
+        d->setTitleBarWidget(new QWidget(d));
         mainwindow->addDockWidget(area, d);
         // an empty dock would be a blank panel; the views show themselves as
         // they are created, through place() and the usual show()/hide() calls
@@ -108,25 +116,39 @@ void WindowLayout::createDocks()
     // a saved arrangement wins over the default one above; it is matched to
     // these docks by object name, which is why they all exist by now
     const QByteArray state = QSettings().value(Keys::DOCKSTATE).toByteArray();
-    if (!state.isEmpty()) {
-        mainwindow->restoreState(state);
+    if (!state.isEmpty() && mainwindow->restoreState(state, Cfg::DOCK_STATE_VERSION)) {
         // restoreState() also restores visibility, but a dock that has no view
         // in it yet must not show as an empty panel
         for (auto *d : docks)
             if (d && !d->widget()) d->hide();
     } else {
-        // split the width evenly between editor and the right hand group and
-        // give the log a third of the height as a starting point; the chart
-        // controls need most of that width to lay out without being clipped
-        mainwindow->resizeDocks({chartDock}, {mainwindow->width() / 2}, Qt::Horizontal);
-        mainwindow->resizeDocks({logDock}, {mainwindow->height() / 3}, Qt::Vertical);
+        // resizeDocks() only has an effect once the docks are laid out and
+        // visible, which they are not during construction, so the default split
+        // is applied from show() the first time a view appears
+        splitpending = true;
     }
+}
+
+void WindowLayout::applyDefaultSplit()
+{
+    if (!splitpending || !mainwindow) return;
+    splitpending = false;
+
+    // half the width for the right hand group -- the chart controls need most
+    // of that to lay out without being clipped -- and a third of the height for
+    // the log across the bottom
+    auto *chartDock = dock(ViewSlot::Chart);
+    auto *logDock   = dock(ViewSlot::Log);
+    if (chartDock && chartDock->isVisible())
+        mainwindow->resizeDocks({chartDock}, {mainwindow->width() / 2}, Qt::Horizontal);
+    if (logDock && logDock->isVisible())
+        mainwindow->resizeDocks({logDock}, {mainwindow->height() / 3}, Qt::Vertical);
 }
 
 void WindowLayout::saveState() const
 {
     if (layoutmode != LayoutMode::Docked || !mainwindow) return;
-    QSettings().setValue(Keys::DOCKSTATE, mainwindow->saveState());
+    QSettings().setValue(Keys::DOCKSTATE, mainwindow->saveState(Cfg::DOCK_STATE_VERSION));
 }
 
 void WindowLayout::place(ViewSlot slot, QWidget *view)
@@ -171,11 +193,29 @@ void WindowLayout::forget(QObject *view)
 
 void WindowLayout::show(ViewSlot slot)
 {
-    if (auto *w = presenter(slot)) {
-        w->show();
-        // in a tab group the dock is shown but stays behind its siblings
-        if (auto *d = dock(slot)) d->raise();
-    }
+    auto *w = presenter(slot);
+    if (!w) return;
+    w->show();
+
+    // deliberately no raise() here: this runs on every periodic update during a
+    // run (each new dump image shows the slide show view), and raising would
+    // pull the tab group away from whatever the user is looking at
+    if (splitpending)
+        QTimer::singleShot(0, mainwindow, [this]() {
+            applyDefaultSplit();
+        });
+}
+
+void WindowLayout::raise(ViewSlot slot)
+{
+    auto *w = presenter(slot);
+    if (!w) return;
+    show(slot);
+    // in a tab group showing a dock leaves it behind its siblings
+    if (auto *d = dock(slot))
+        d->raise();
+    else
+        w->raise();
 }
 
 void WindowLayout::hide(ViewSlot slot)
@@ -202,7 +242,12 @@ bool WindowLayout::toggle(ViewSlot slot)
     if (!presenter(slot)) return false;
 
     const bool visible = !isVisible(slot);
-    setVisible(slot, visible);
+    // an explicit request from the View menu: bring it to the front of its tab
+    // group, otherwise turning it "on" would appear to do nothing
+    if (visible)
+        raise(slot);
+    else
+        hide(slot);
 
     const QString key = visibilityKey(slot);
     if (!key.isEmpty()) QSettings().setValue(key, visible);

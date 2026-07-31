@@ -128,6 +128,12 @@ protected:
     /** @brief Write current editor content to a file */
     void writeFile(const QString &filename);
 
+    /** @brief Set the editor window title from the current file and run number
+     *
+     * In the docked layout the views are named by their dock tab and no longer
+     * carry a window title with the run number, so the editor title shows it. */
+    void updateEditorTitle(const QString &file);
+
     /** @brief Update the recent files list */
     void updateRecents(const QString &filename = "");
 

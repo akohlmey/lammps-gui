@@ -17,6 +17,7 @@
 class FlagWarnings;
 class LammpsGui;
 class QAction;
+class QEvent;
 class QLabel;
 
 /**
@@ -88,6 +89,12 @@ protected:
      * @param event Context menu event
      */
     void contextMenuEvent(QContextMenuEvent *event) override;
+
+    /**
+     * @brief Keep the fixed-width document font when the inherited font changes
+     * @param event Change event
+     */
+    void changeEvent(QEvent *event) override;
 
     /**
      * @brief Check if log contains embedded YAML data

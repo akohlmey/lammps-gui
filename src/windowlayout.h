@@ -141,6 +141,16 @@ public:
     void hide(ViewSlot slot);
 
     /**
+     * @brief Show the view in a slot and bring it to the front
+     * @param slot Slot to raise
+     *
+     * Use for an explicit request from the user.  Unlike show(), this pulls the
+     * view to the front of its tab group, which is not wanted for the periodic
+     * updates during a run.
+     */
+    void raise(ViewSlot slot);
+
+    /**
      * @brief Show or hide the view in a slot
      * @param slot Slot to update
      * @param visible true to show the view, false to hide it
@@ -178,6 +188,10 @@ private:
     /// QObject::destroyed signal, so a slot never keeps a dangling pointer).
     void forget(QObject *view);
 
+    /// Apply the default dock proportions; deferred until the docks are laid
+    /// out, because resizeDocks() does nothing before that.
+    void applyDefaultSplit();
+
     /// Build the dock widgets, arrange them, and restore a saved arrangement.
     void createDocks();
 
@@ -188,8 +202,9 @@ private:
     /// the view itself otherwise.
     QWidget *presenter(ViewSlot slot) const;
 
-    QMainWindow *mainwindow; ///< Main window the views are shown in or docked into
-    LayoutMode layoutmode;   ///< Presentation policy chosen at construction
+    QMainWindow *mainwindow;   ///< Main window the views are shown in or docked into
+    LayoutMode layoutmode;     ///< Presentation policy chosen at construction
+    bool splitpending = false; ///< Default dock proportions still to be applied
 
     QWidget *views[static_cast<int>(ViewSlot::Count)]{};     ///< Widget in each slot
     QDockWidget *docks[static_cast<int>(ViewSlot::Count)]{}; ///< Dock per slot (docked mode only)

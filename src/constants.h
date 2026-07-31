@@ -126,6 +126,12 @@ constexpr qint64 MOVIE_WARN_BYTES = 1024LL * 1024LL * 1024LL;
 /** Warn when the estimated size exceeds this fraction of the free space on the temporary volume */
 constexpr double MOVIE_WARN_DISKFRAC = 0.9;
 
+// ---- Docked window layout ------------------------------------------------
+// Version tag written into the saved dock arrangement.  Bump it whenever the
+// set of docks or their default arrangement changes, so QMainWindow discards a
+// saved state that no longer matches instead of restoring something stale.
+constexpr int DOCK_STATE_VERSION = 1;
+
 // ---- Resource paths ------------------------------------------------------
 /** path to LAMMPS-GUI Window Icon resource */
 inline const QString MAIN_ICON = QStringLiteral(":/icons/lammps-gui-icon-128x128.png");

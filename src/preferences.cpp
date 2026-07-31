@@ -22,6 +22,7 @@
 #include "urldownloader.h"
 
 #include <QApplication>
+#include <QButtonGroup>
 #include <QCheckBox>
 #include <QComboBox>
 #include <QDialogButtonBox>
@@ -188,8 +189,14 @@ void Preferences::accept()
     if (box) settings->setValue(Keys::ECHO, box->isChecked());
     box = tabWidget->findChild<QCheckBox *>("cite");
     if (box) settings->setValue(Keys::CITE, box->isChecked());
-    box = tabWidget->findChild<QCheckBox *>("docked");
-    if (box) settings->setValue(Keys::DOCKED, box->isChecked());
+    auto *radio = tabWidget->findChild<QRadioButton *>("layoutdocked");
+    if (radio) {
+        // the layout is applied when the main window is built, so a change
+        // only takes effect in a fresh process
+        if (radio->isChecked() != settings->value(Keys::DOCKED, false).toBool())
+            setRelaunch(QString("The window layout was changed."));
+        settings->setValue(Keys::DOCKED, radio->isChecked());
+    }
     box = tabWidget->findChild<QCheckBox *>("viewlog");
     if (box) settings->setValue(Keys::VIEWLOG, box->isChecked());
     box = tabWidget->findChild<QCheckBox *>("viewchart");
@@ -266,7 +273,9 @@ void Preferences::accept()
     // the process image, so nothing after it runs and pending changes must be
     // flushed to disk first
     if (needRelaunch) {
-        warning(this, "Relaunching LAMMPS-GUI", "LAMMPS library plugin path was changed.",
+        if (relaunchReasons.isEmpty())
+            relaunchReasons << QString("LAMMPS library plugin path was changed.");
+        warning(this, "Relaunching LAMMPS-GUI", relaunchReasons.join(' '),
                 "LAMMPS-GUI must be relaunched to activate it.");
         settings->sync();
         relaunchApplication();
@@ -296,12 +305,27 @@ GeneralTab::GeneralTab(QSettings *_settings, LammpsWrapper *_lammps, LammpsGui *
     auto *sldv = new QCheckBox("Show Slide Show window by default");
     sldv->setObjectName("viewslide");
     sldv->setChecked(settings->value(Keys::VIEWSLIDE, true).toBool());
-    auto *dock = new QCheckBox("Dock output windows into the main window");
-    dock->setObjectName("docked");
-    dock->setChecked(settings->value(Keys::DOCKED, false).toBool());
-    dock->setToolTip("Show the Output, Charts, Image, Slide Show and Variables views as dock\n"
-                     "panels around the editor instead of as individual windows.\n"
-                     "Takes effect after restarting LAMMPS-GUI.");
+    // window layout: the first choice on the tab, on a line of its own
+    const bool isdocked = settings->value(Keys::DOCKED, false).toBool();
+    auto *winlayout     = new QRadioButton("Individual Windows");
+    winlayout->setObjectName("layoutwindows");
+    winlayout->setChecked(!isdocked);
+    winlayout->setToolTip("Show the Output, Charts, Image, Slide Show and Variables views as\n"
+                          "individual windows that are placed and stacked freely.");
+    auto *docklayout = new QRadioButton("Combined Main Window");
+    docklayout->setObjectName("layoutdocked");
+    docklayout->setChecked(isdocked);
+    docklayout->setToolTip("Show those views as panels docked around the editor inside the\n"
+                           "main window: charts, image and slide show in a tabbed group on\n"
+                           "the right, output and variables across the bottom.");
+    auto *layoutgroup = new QButtonGroup(this);
+    layoutgroup->addButton(winlayout);
+    layoutgroup->addButton(docklayout);
+    auto *layoutrow = new QHBoxLayout;
+    layoutrow->addWidget(new QLabel("Window Layout Style:"));
+    layoutrow->addWidget(winlayout);
+    layoutrow->addWidget(docklayout);
+    layoutrow->addStretch();
 
     settings->beginGroup(Keys::GROUP_TUTORIAL);
     auto *solution = new QCheckBox("Download tutorial solutions enabled");
@@ -334,14 +358,14 @@ GeneralTab::GeneralTab(QSettings *_settings, LammpsWrapper *_lammps, LammpsGui *
     chartval->setObjectName("updchart");
 
     int nrow = 0;
+    layout->addLayout(layoutrow, nrow++, 0, 1, 2);
     layout->addWidget(new QHline, nrow++, 0, 1, 2);
     layout->addWidget(echo, nrow, 0);
     layout->addWidget(cite, nrow++, 1);
     layout->addWidget(new QHline, nrow++, 0, 1, 2);
     layout->addWidget(logv, nrow, 0);
     layout->addWidget(pltv, nrow++, 1);
-    layout->addWidget(sldv, nrow, 0);
-    layout->addWidget(dock, nrow++, 1);
+    layout->addWidget(sldv, nrow++, 0);
     layout->addWidget(new QHline, nrow++, 0, 1, 2);
     layout->addWidget(solution, nrow, 0);
     layout->addWidget(webpage, nrow++, 1);
