@@ -16,7 +16,6 @@
 
 #include <QList>
 #include <QPair>
-#include <QPointer>
 #include <QString>
 #include <string>
 #include <vector>
@@ -527,19 +526,14 @@ private:
     LogWindow *logwindow;      ///< Window displaying LAMMPS output log
     ImageViewer *imagewindow;  ///< Window for viewing single images
     ChartWindow *chartwindow;  ///< Window for displaying charts
-    /// Chart windows of previous runs kept open for comparison when the
-    /// "replace on new run" preference is off. They delete themselves when
-    /// closed (the QPointer entries reset to null) and any still-open
-    /// windows are deleted when the main window is destroyed.
-    QList<QPointer<ChartWindow>> oldChartWindows;
-    SlideShow *slideshow;    ///< Window for image slideshow
-    QTimer *logupdater;      ///< Timer for periodic log updates
-    QLabel *dirstatus;       ///< Status bar label showing current directory
-    QProgressBar *progress;  ///< Progress bar for long operations
-    Preferences *prefdialog; ///< Preferences dialog
-    QLabel *lammpsstatus;    ///< Status bar label for LAMMPS state
-    QLabel *varwindow;       ///< Window showing variable definitions
-    TutorialWizard *wizard;  ///< Tutorial wizard dialog
+    SlideShow *slideshow;      ///< Window for image slideshow
+    QTimer *logupdater;        ///< Timer for periodic log updates
+    QLabel *dirstatus;         ///< Status bar label showing current directory
+    QProgressBar *progress;    ///< Progress bar for long operations
+    Preferences *prefdialog;   ///< Preferences dialog
+    QLabel *lammpsstatus;      ///< Status bar label for LAMMPS state
+    QLabel *varwindow;         ///< Window showing variable definitions
+    TutorialWizard *wizard;    ///< Tutorial wizard dialog
 
     /**
      * @brief Container for inspect dialog widgets

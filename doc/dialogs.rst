@@ -99,12 +99,6 @@ General Settings
    - **Show Slide Show window by default:** when checked, a Slide Show
      window will be shown with images from a dump image command, if
      present, in the LAMMPS input.
-   - **Replace Output window on new run:** when checked, an existing
-     Output window will be replaced on a new LAMMPS run; otherwise each
-     run will create a new Output window.
-   - **Replace Charts window on new run:** when checked, an existing
-     Charts window will be replaced on a new LAMMPS run; otherwise each
-     run will create a new Charts window.
    - **Replace Image window on new render:** when checked, an existing
      Image window will be replaced when a new snapshot image is requested;
      otherwise each command will create a new Image window.

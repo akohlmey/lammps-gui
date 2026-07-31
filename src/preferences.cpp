@@ -188,10 +188,6 @@ void Preferences::accept()
     if (box) settings->setValue(Keys::ECHO, box->isChecked());
     box = tabWidget->findChild<QCheckBox *>("cite");
     if (box) settings->setValue(Keys::CITE, box->isChecked());
-    box = tabWidget->findChild<QCheckBox *>("logreplace");
-    if (box) settings->setValue(Keys::LOGREPLACE, box->isChecked());
-    box = tabWidget->findChild<QCheckBox *>("chartreplace");
-    if (box) settings->setValue(Keys::CHARTREPLACE, box->isChecked());
     box = tabWidget->findChild<QCheckBox *>("imagereplace");
     if (box) settings->setValue(Keys::IMAGEREPLACE, box->isChecked());
     box = tabWidget->findChild<QCheckBox *>("viewlog");
@@ -300,15 +296,9 @@ GeneralTab::GeneralTab(QSettings *_settings, LammpsWrapper *_lammps, LammpsGui *
     auto *sldv = new QCheckBox("Show Slide Show window by default");
     sldv->setObjectName("viewslide");
     sldv->setChecked(settings->value(Keys::VIEWSLIDE, true).toBool());
-    auto *logr = new QCheckBox("Replace Output window on new run");
-    logr->setObjectName("logreplace");
-    logr->setChecked(settings->value(Keys::LOGREPLACE, true).toBool());
     auto *imgr = new QCheckBox("Replace Image window on new render");
     imgr->setObjectName("imagereplace");
     imgr->setChecked(settings->value(Keys::IMAGEREPLACE, true).toBool());
-    auto *pltr = new QCheckBox("Replace Charts window on new run");
-    pltr->setObjectName("chartreplace");
-    pltr->setChecked(settings->value(Keys::CHARTREPLACE, true).toBool());
 
     settings->beginGroup(Keys::GROUP_TUTORIAL);
     auto *solution = new QCheckBox("Download tutorial solutions enabled");
@@ -346,9 +336,7 @@ GeneralTab::GeneralTab(QSettings *_settings, LammpsWrapper *_lammps, LammpsGui *
     layout->addWidget(cite, nrow++, 1);
     layout->addWidget(new QHline, nrow++, 0, 1, 2);
     layout->addWidget(logv, nrow, 0);
-    layout->addWidget(logr, nrow++, 1);
-    layout->addWidget(pltv, nrow, 0);
-    layout->addWidget(pltr, nrow++, 1);
+    layout->addWidget(pltv, nrow++, 1);
     layout->addWidget(sldv, nrow, 0);
     layout->addWidget(imgr, nrow++, 1);
     layout->addWidget(new QHline, nrow++, 0, 1, 2);
