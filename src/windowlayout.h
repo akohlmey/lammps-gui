@@ -224,6 +224,8 @@ private:
     QDockWidget *docks[static_cast<int>(ViewSlot::Count)]{}; ///< Dock per slot (docked mode only)
     /// Zero-height placeholder that collapses a dock's title bar while a tab names it
     QWidget *emptytitles[static_cast<int>(ViewSlot::Count)]{};
+    /// Stand-in tab shown as the title bar of a panel that is alone in its area
+    QWidget *tabtitles[static_cast<int>(ViewSlot::Count)]{};
 };
 
 #endif

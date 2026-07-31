@@ -197,6 +197,8 @@ void Preferences::accept()
             setRelaunch(QString("The window layout was changed."));
         settings->setValue(Keys::DOCKED, radio->isChecked());
     }
+    box = tabWidget->findChild<QCheckBox *>("maximized");
+    if (box) settings->setValue(Keys::MAXIMIZED, box->isChecked());
     box = tabWidget->findChild<QCheckBox *>("viewlog");
     if (box) settings->setValue(Keys::VIEWLOG, box->isChecked());
     box = tabWidget->findChild<QCheckBox *>("viewchart");
@@ -305,6 +307,11 @@ GeneralTab::GeneralTab(QSettings *_settings, LammpsWrapper *_lammps, LammpsGui *
     auto *sldv = new QCheckBox("Show Slide Show window by default");
     sldv->setObjectName("viewslide");
     sldv->setChecked(settings->value(Keys::VIEWSLIDE, true).toBool());
+    auto *maxi = new QCheckBox("Open main window maximized");
+    maxi->setObjectName("maximized");
+    maxi->setChecked(settings->value(Keys::MAXIMIZED, false).toBool());
+    maxi->setToolTip("Start with the main window filling the screen instead of\n"
+                     "restoring the size it had when it was last closed.");
     // window layout: the first choice on the tab, on a line of its own
     const bool isdocked = settings->value(Keys::DOCKED, false).toBool();
     auto *winlayout     = new QRadioButton("Individual Windows");
@@ -364,7 +371,8 @@ GeneralTab::GeneralTab(QSettings *_settings, LammpsWrapper *_lammps, LammpsGui *
     layout->addWidget(new QHline, nrow++, 0, 1, 2);
     layout->addWidget(logv, nrow, 0);
     layout->addWidget(pltv, nrow++, 1);
-    layout->addWidget(sldv, nrow++, 0);
+    layout->addWidget(sldv, nrow, 0);
+    layout->addWidget(maxi, nrow++, 1);
     layout->addWidget(new QHline, nrow++, 0, 1, 2);
     layout->addWidget(solution, nrow, 0);
     layout->addWidget(webpage, nrow++, 1);

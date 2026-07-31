@@ -117,6 +117,9 @@ General Settings
    - **Show Slide Show window by default:** when checked, a Slide Show
      window will be shown with images from a dump image command, if
      present, in the LAMMPS input.
+   - **Open main window maximized:** when checked, LAMMPS-GUI starts with
+     its main window filling the screen instead of restoring the size it
+     had when it was last closed.
    - **Download tutorial solutions enabled:** this controls whether the
      "Download solutions" option is enabled by default when setting up
      a tutorial.

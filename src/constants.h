@@ -130,11 +130,14 @@ constexpr double MOVIE_WARN_DISKFRAC = 0.9;
 // Version tag written into the saved dock arrangement.  Bump it whenever the
 // set of docks or their default arrangement changes, so QMainWindow discards a
 // saved state that no longer matches instead of restoring something stale.
-constexpr int DOCK_STATE_VERSION       = 1;
-constexpr int MAIN_DEFAULT_WIDTH       = 1024; ///< Default main window width, individual windows
-constexpr int MAIN_DEFAULT_HEIGHT      = 512;  ///< Default main window height, individual windows
-constexpr int DOCK_MAIN_DEFAULT_WIDTH  = 1400; ///< Default main window width, combined window
-constexpr int DOCK_MAIN_DEFAULT_HEIGHT = 900;  ///< Default main window height, combined window
+constexpr int DOCK_STATE_VERSION  = 1;
+constexpr int MAIN_DEFAULT_WIDTH  = 1024; ///< Default main window width, individual windows
+constexpr int MAIN_DEFAULT_HEIGHT = 512;  ///< Default main window height, individual windows
+/// Default size of the combined main window: twice the individual-window
+/// default, since it holds the editor plus two dock groups.  Clamped to the
+/// available screen area where it is applied.
+constexpr int DOCK_MAIN_DEFAULT_WIDTH  = 2 * MAIN_DEFAULT_WIDTH;
+constexpr int DOCK_MAIN_DEFAULT_HEIGHT = 2 * MAIN_DEFAULT_HEIGHT;
 /** Fraction of the combined window width given to the right hand dock group */
 constexpr double DOCK_SPLIT_HORIZONTAL = 0.5;
 /** Fraction of the combined window height given to the bottom dock group */
@@ -272,6 +275,7 @@ inline const QString HTTPS_PROXY      = QStringLiteral("https_proxy");
 inline const QString ID               = QStringLiteral("id");
 inline const QString INTELPREC        = QStringLiteral("intelprec");
 inline const QString LINTCHECK        = QStringLiteral("lintcheck");
+inline const QString MAXIMIZED        = QStringLiteral("maximized");
 inline const QString LOGX             = QStringLiteral("logx");
 inline const QString LOGY             = QStringLiteral("logy");
 inline const QString MAINX            = QStringLiteral("mainx");

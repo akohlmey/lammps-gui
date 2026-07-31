@@ -15,6 +15,9 @@
 
 #include <QDockWidget>
 #include <QEvent>
+#include <QHBoxLayout>
+#include <QLabel>
+#include <QLayout>
 #include <QMainWindow>
 #include <QResizeEvent>
 #include <QSettings>
@@ -24,6 +27,8 @@
 #include <QWidget>
 
 namespace {
+
+constexpr int TAB_TITLE_MARGIN = 2;
 
 // Settings key recording the visibility of a slot, empty for the slots that
 // have no "show by default" preference.  Only the keys listed here are written
@@ -68,6 +73,32 @@ QString dockObjectName(ViewSlot slot)
     return QStringLiteral("dock_") + dockTitle(slot).remove(' ').toLower();
 }
 
+// Qt draws a tab bar only once two docks share an area.  A panel that is alone
+// therefore gets this instead of the plain title bar: a label drawn like the
+// single tab it stands in for, with the frame open at the bottom towards the
+// panel it labels.
+QWidget *makeTabTitle(QWidget *parent, const QString &title)
+{
+    auto *bar    = new QWidget(parent);
+    auto *layout = new QHBoxLayout(bar);
+    layout->setContentsMargins(TAB_TITLE_MARGIN, TAB_TITLE_MARGIN, TAB_TITLE_MARGIN, 0);
+    layout->setSpacing(0);
+
+    auto *label = new QLabel(title, bar);
+    label->setObjectName("dockTabTitle");
+    label->setStyleSheet("QLabel#dockTabTitle {"
+                         "  border: 1px solid palette(mid);"
+                         "  border-bottom: none;"
+                         "  border-top-left-radius: 4px;"
+                         "  border-top-right-radius: 4px;"
+                         "  padding: 3px 12px;"
+                         "  background: palette(button);"
+                         "}");
+    layout->addWidget(label);
+    layout->addStretch();
+    return bar;
+}
+
 } // namespace
 
 WindowLayout::WindowLayout(QMainWindow *_mainwindow, LayoutMode mode) :
@@ -97,8 +128,10 @@ void WindowLayout::createDocks()
         d->setFeatures(QDockWidget::NoDockWidgetFeatures);
         // updateDockChrome() decides per dock whether its name is carried by a
         // tab or by a title bar, and needs this widget to collapse the latter
-        emptytitles[static_cast<int>(slot)] = new QWidget(d);
-        d->setTitleBarWidget(emptytitles[static_cast<int>(slot)]);
+        const int idx    = static_cast<int>(slot);
+        emptytitles[idx] = new QWidget(d);
+        tabtitles[idx]   = makeTabTitle(d, dockTitle(slot));
+        d->setTitleBarWidget(emptytitles[idx]);
         connect(d, &QDockWidget::visibilityChanged, this, [this]() {
             updateDockChrome();
         });
@@ -175,10 +208,13 @@ void WindowLayout::updateDockChrome()
         }
         // the placeholder stays owned by the dock either way, so it can be
         // handed back and forth without leaking
-        if (tabbed) {
-            if (d->titleBarWidget() != emptytitles[i]) d->setTitleBarWidget(emptytitles[i]);
-        } else {
-            if (d->titleBarWidget()) d->setTitleBarWidget(nullptr);
+        QWidget *wanted = tabbed ? emptytitles[i] : tabtitles[i];
+        if (d->titleBarWidget() != wanted) {
+            // the one being replaced stays owned by the dock, so it can be
+            // handed back and forth without leaking
+            if (auto *previous = d->titleBarWidget()) previous->hide();
+            d->setTitleBarWidget(wanted);
+            if (wanted) wanted->show();
         }
     }
 }
@@ -232,6 +268,14 @@ void WindowLayout::place(ViewSlot slot, QWidget *view)
     if (view) connect(view, &QObject::destroyed, this, &WindowLayout::forget);
 
     if (auto *d = dock(slot)) {
+        // A dock area sizes its panel, so the view must be able to follow it
+        // down.  Its layout would otherwise impose the combined minimum of all
+        // the controls -- for the charts view that is wide enough to push the
+        // editor to its own minimum and make the requested split unreachable.
+        if (view) {
+            view->setMinimumSize(0, 0);
+            if (auto *l = view->layout()) l->setSizeConstraint(QLayout::SetNoConstraint);
+        }
         // only the content changes; the dock keeps its area and tab position,
         // so a view that is rebuilt does not move
         d->setWidget(view);

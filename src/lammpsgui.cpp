@@ -57,6 +57,7 @@
 #include <QProcess>
 #include <QProgressBar>
 #include <QPushButton>
+#include <QScreen>
 #include <QSettings>
 #include <QStandardPaths>
 #include <QStatusBar>
@@ -205,16 +206,18 @@ void LammpsGui::setupUi(QSettings &settings, QFont &allFont, QFont &monoFont)
     // has to fit the editor, a dock group beside it and one below -- so each
     // remembers its own
     const bool docked = dockedLayout();
+    int defaultx      = docked ? Cfg::DOCK_MAIN_DEFAULT_WIDTH : Cfg::MAIN_DEFAULT_WIDTH;
+    int defaulty      = docked ? Cfg::DOCK_MAIN_DEFAULT_HEIGHT : Cfg::MAIN_DEFAULT_HEIGHT;
+    // the combined default is deliberately large; do not open off-screen with it
+    if (const auto *screen = QGuiApplication::primaryScreen()) {
+        const QRect avail = screen->availableGeometry();
+        defaultx          = qMin(defaultx, avail.width());
+        defaulty          = qMin(defaulty, avail.height());
+    }
     if (mainx < Cfg::MINIMUM_WIDTH)
-        mainx = settings
-                    .value(docked ? Keys::DOCKMAINX : Keys::MAINX,
-                           docked ? Cfg::DOCK_MAIN_DEFAULT_WIDTH : Cfg::MAIN_DEFAULT_WIDTH)
-                    .toInt();
+        mainx = settings.value(docked ? Keys::DOCKMAINX : Keys::MAINX, defaultx).toInt();
     if (mainy < Cfg::MINIMUM_HEIGHT)
-        mainy = settings
-                    .value(docked ? Keys::DOCKMAINY : Keys::MAINY,
-                           docked ? Cfg::DOCK_MAIN_DEFAULT_HEIGHT : Cfg::MAIN_DEFAULT_HEIGHT)
-                    .toInt();
+        mainy = settings.value(docked ? Keys::DOCKMAINY : Keys::MAINY, defaulty).toInt();
     resize(mainx, mainy);
 
     // the docked layout sizes its dock areas relative to the main window, so
@@ -822,7 +825,10 @@ LammpsGui::LammpsGui(QWidget *parent, const QString &filename, int width, int he
     applyProxySetting(lammps, settings);
 
     // finally show the window
-    showNormal();
+    if (settings.value(Keys::MAXIMIZED, false).toBool())
+        showMaximized();
+    else
+        showNormal();
 }
 
 LammpsGui::~LammpsGui()
