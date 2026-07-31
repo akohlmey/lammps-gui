@@ -224,6 +224,15 @@ void LammpsGui::setupUi(QSettings &settings, QFont &allFont, QFont &monoFont)
     // this has to come after the resize() above and before the first view
     viewlayout = new WindowLayout(this, docked ? LayoutMode::Docked : LayoutMode::Windows);
 
+    // combined layout: the leading menus follow the focused panel, and also the
+    // panel the user just asked to see (a click on a tab moves neither focus)
+    if (docked) {
+        connect(qApp, &QApplication::focusChanged, this, [this](QWidget *, QWidget *now) {
+            updateMenuBarForFocus(now);
+        });
+        connect(viewlayout, &WindowLayout::viewActivated, this, &LammpsGui::updateMenuBarForFocus);
+    }
+
     createVariableWindow();
 }
 
@@ -240,7 +249,9 @@ QAction *LammpsGui::addMenuAction(QMenu *menu, const QString &iconpath, const QS
 
 void LammpsGui::createFileMenu()
 {
-    auto *menu = menubar->addMenu("&File");
+    auto *menu = new QMenu("&File", this);
+    menubar->addMenu(menu);
+    filemenu = menu;
     addMenuAction(menu, ":/icons/document-new.svg", "&New Input File", "Ctrl+N",
                   &LammpsGui::newDocument);
     addMenuAction(menu, ":/icons/document-open.svg", "&Open Input File", "Ctrl+O",
@@ -272,12 +283,18 @@ void LammpsGui::createFileMenu()
     }
     menu->addSeparator();
 
-    addMenuAction(menu, ":/icons/application-exit.svg", "&Quit", "Ctrl+Q", &LammpsGui::quit);
+    // Name the roles rather than leaving macOS to guess them from the label:
+    // it moves these into the application menu by matching the text, which is
+    // fragile and does nothing on the other platforms either way.
+    addMenuAction(menu, ":/icons/application-exit.svg", "&Quit", "Ctrl+Q", &LammpsGui::quit)
+        ->setMenuRole(QAction::QuitRole);
 }
 
 void LammpsGui::createEditMenu()
 {
-    auto *menu = menubar->addMenu("&Edit");
+    auto *menu = new QMenu("&Edit", this);
+    menubar->addMenu(menu);
+    editmenu = menu;
     addMenuAction(menu, ":/icons/edit-undo.svg", "&Undo", "Ctrl+Z", &LammpsGui::undo);
     addMenuAction(menu, ":/icons/edit-redo.svg", "&Redo", "Ctrl+Shift+Z", &LammpsGui::redo);
     menu->addSeparator();
@@ -295,14 +312,60 @@ void LammpsGui::createEditMenu()
     menu->addSeparator();
 
     addMenuAction(menu, ":/icons/preferences-desktop.svg", "P&references...", "Ctrl+P",
-                  &LammpsGui::preferences);
+                  &LammpsGui::preferences)
+        ->setMenuRole(QAction::PreferencesRole);
     addMenuAction(menu, ":/icons/preferences-reset.svg", "Reset Preferences to &Defaults", "",
                   &LammpsGui::defaults);
 }
 
+// Combined layout: one menu bar for the whole window, whose leading menus
+// belong to whichever view has the focus.  The application-wide half never
+// changes, so only the front of the bar is rebuilt.  A view publishes its own
+// menu by object name rather than through a common base class, which is how the
+// dialogs in this code base are wired as well.
+void LammpsGui::updateMenuBarForFocus(QWidget *focused)
+{
+    if (!menubar || !viewlayout || viewlayout->mode() != LayoutMode::Docked) return;
+
+    // Walk up from the focused widget to the view that owns it.  The search has
+    // to stop below this window: searching it would find every view's menu at
+    // once, since the panels are its descendants.  The search within a view is
+    // recursive, because a view may hang its menu off its own menu bar rather
+    // than off itself.
+    QMenu *viewfile = nullptr;
+    for (auto *w = focused; w && w != this; w = w->parentWidget()) {
+        if (auto *found = w->findChild<QMenu *>(Cfg::VIEW_FILE_MENU)) {
+            viewfile = found;
+            break;
+        }
+    }
+    if (viewfile == currentviewmenu) return; // nothing moved between views
+
+    currentviewmenu = viewfile;
+    menubar->clear(); // removes the actions, the menus are owned elsewhere
+    if (viewfile) {
+        menubar->addMenu(viewfile);
+    } else {
+        menubar->addMenu(filemenu);
+        menubar->addMenu(editmenu);
+    }
+    for (auto *shared : sharedMenus())
+        menubar->addMenu(shared);
+}
+
+QList<QMenu *> LammpsGui::sharedMenus() const
+{
+    QList<QMenu *> shared;
+    for (auto *menu : {runmenu, viewmenu, tutorialmenu, aboutmenu})
+        if (menu) shared << menu;
+    return shared;
+}
+
 void LammpsGui::createRunMenu()
 {
-    auto *menu = menubar->addMenu("&Run");
+    auto *menu = new QMenu("&Run", this);
+    menubar->addMenu(menu);
+    runmenu = menu;
     addMenuAction(menu, ":/icons/system-run.svg", "&Run LAMMPS from Editor Buffer", "Ctrl+Return",
                   &LammpsGui::runBuffer);
     addMenuAction(menu, ":/icons/run-file.svg", "Run LAMMPS from &File", "Ctrl+Shift+Return",
@@ -343,7 +406,9 @@ void LammpsGui::createRunMenu()
 
 void LammpsGui::createViewMenu()
 {
-    auto *menu = menubar->addMenu("&View");
+    auto *menu = new QMenu("&View", this);
+    menubar->addMenu(menu);
+    viewmenu = menu;
     addMenuAction(menu, ":/icons/utilities-terminal.svg", "&Output Window", "Ctrl+Shift+L",
                   &LammpsGui::viewLog);
     addMenuAction(menu, ":/icons/x-office-drawing.svg", "&Charts Window", "Ctrl+Shift+C",
@@ -358,7 +423,9 @@ void LammpsGui::createViewMenu()
 
 void LammpsGui::createTutorialMenu()
 {
-    auto *menu              = menubar->addMenu("&Tutorials");
+    auto *menu = new QMenu("&Tutorials", this);
+    menubar->addMenu(menu);
+    tutorialmenu            = menu;
     const auto &collections = tutorialCollections();
     for (int c = 0; c < collections.size(); ++c) {
         const auto &coll = collections[c];
@@ -401,9 +468,12 @@ void LammpsGui::createTutorialMenu()
 
 void LammpsGui::createAboutMenu()
 {
-    auto *menu = menubar->addMenu("&About");
+    auto *menu = new QMenu("&About", this);
+    menubar->addMenu(menu);
+    aboutmenu = menu;
     addMenuAction(menu, ":/icons/lammps-gui-icon-128x128.png", "&About LAMMPS-GUI", "Ctrl+Shift+A",
-                  &LammpsGui::about);
+                  &LammpsGui::about)
+        ->setMenuRole(QAction::AboutRole);
     addMenuAction(menu, ":/icons/help-faq.svg", "Quick &Help", "Ctrl+Shift+H", &LammpsGui::help);
     addMenuAction(menu, ":/icons/system-help.svg", "LAMMPS-&GUI Documentation", "Ctrl+Shift+G",
                   &LammpsGui::howto);
@@ -713,13 +783,14 @@ void LammpsGui::setupAccelerators(QSettings &settings)
 /* -------------------------------------------------------------------- */
 
 LammpsGui::LammpsGui(QWidget *parent, const QString &filename, int width, int height) :
-    QMainWindow(parent), textEdit(nullptr), menubar(nullptr), highlighter(nullptr),
-    capturer(new StdCapture), status(nullptr), cpuuse(nullptr), lastCpuBucket(-1),
-    logwindow(nullptr), imagewindow(nullptr), chartwindow(nullptr), slideshow(nullptr),
-    logupdater(nullptr), dirstatus(nullptr), progress(nullptr), prefdialog(nullptr),
-    lammpsstatus(nullptr), varwindow(nullptr), wizard(nullptr), viewlayout(nullptr),
-    runner(nullptr), runCounter(0), extendSteps(Cfg::EXTEND_STEPS_DEFAULT), nthreads(1),
-    mainx(width), mainy(height)
+    QMainWindow(parent), textEdit(nullptr), menubar(nullptr), filemenu(nullptr), editmenu(nullptr),
+    currentviewmenu(nullptr), runmenu(nullptr), viewmenu(nullptr), tutorialmenu(nullptr),
+    aboutmenu(nullptr), highlighter(nullptr), capturer(new StdCapture), status(nullptr),
+    cpuuse(nullptr), lastCpuBucket(-1), logwindow(nullptr), imagewindow(nullptr),
+    chartwindow(nullptr), slideshow(nullptr), logupdater(nullptr), dirstatus(nullptr),
+    progress(nullptr), prefdialog(nullptr), lammpsstatus(nullptr), varwindow(nullptr),
+    wizard(nullptr), viewlayout(nullptr), runner(nullptr), runCounter(0),
+    extendSteps(Cfg::EXTEND_STEPS_DEFAULT), nthreads(1), mainx(width), mainy(height)
 {
 #if QT_CONFIG(clipboard)
     hasClipboard = true;

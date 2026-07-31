@@ -178,6 +178,17 @@ public:
      */
     bool isVisible(ViewSlot slot) const;
 
+signals:
+    /**
+     * @brief A view was brought to the front of its group
+     * @param view The view now in front, or nullptr if the slot was empty
+     *
+     * The combined layout shows one menu bar for the whole window, so whoever
+     * owns it needs to know which panel the user just asked to see.
+     */
+    void viewActivated(QWidget *view);
+
+public:
     /**
      * @brief Store the current dock arrangement in the settings
      *

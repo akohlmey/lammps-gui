@@ -143,6 +143,10 @@ constexpr double DOCK_SPLIT_HORIZONTAL = 0.5;
 /** Fraction of the combined window height given to the bottom dock group */
 constexpr double DOCK_SPLIT_VERTICAL = 0.25;
 
+/// Object name a view gives its own File menu, so the combined layout can put
+/// it at the front of the shared menu bar without knowing the view's class
+inline const QString VIEW_FILE_MENU = QStringLiteral("viewFileMenu");
+
 // ---- Resource paths ------------------------------------------------------
 /** path to LAMMPS-GUI Window Icon resource */
 inline const QString MAIN_ICON = QStringLiteral(":/icons/lammps-gui-icon-128x128.png");
