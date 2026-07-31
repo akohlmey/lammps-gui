@@ -32,7 +32,6 @@
 #include <QPushButton>
 #include <QRegularExpression>
 #include <QSettings>
-#include <QShortcut>
 #include <QSpacerItem>
 #include <QString>
 #include <QTextStream>
@@ -80,21 +79,47 @@ LogWindow::LogWindow(const QString &_filename, LammpsGui *_lammpsgui, QWidget *p
 
     warnings = new FlagWarnings(summary, document());
 
-    auto *action = new QShortcut(QKeySequence("Ctrl+S"), this);
-    connect(action, &QShortcut::activated, this, &LogWindow::saveAs);
-    action = new QShortcut(QKeySequence("Ctrl+Y"), this);
-    connect(action, &QShortcut::activated, this, &LogWindow::extractYaml);
-    action = new QShortcut(QKeySequence("Ctrl+Q"), this);
-    connect(action, &QShortcut::activated, this, &LogWindow::quit);
-    action = new QShortcut(QKeySequence("Ctrl+N"), this);
-    connect(action, &QShortcut::activated, this, &LogWindow::nextWarning);
-    action = new QShortcut(QKeySequence("Ctrl+/"), this);
-    connect(action, &QShortcut::activated, this, &LogWindow::stopRun);
-    action = new QShortcut(QKeySequence("Ctrl+Return"), this);
-    connect(action, &QShortcut::activated, this, &LogWindow::runBuffer);
-
-    installEventFilter(this);
+    createActions();
     applyWindowFlags(this);
+}
+
+// Every shortcut of this window is bound exactly once, on an action owned by
+// the widget and scoped to it with Qt::WidgetWithChildrenShortcut. That keeps
+// the binding alive whether or not the context menu is open (it used to live
+// on the menu, which exists only while the menu is up, so Ctrl+W had to be
+// caught by an event filter instead), and it keeps the shortcut from reaching
+// past this widget: several of these sequences -- Ctrl+S, Ctrl+N, Ctrl+/,
+// Ctrl+Return -- are also main window accelerators, and once this window is
+// docked into the main window rather than being a window of its own, a
+// window-scoped binding here would be an ambiguous overload of that one.
+void LogWindow::createActions()
+{
+    auto add = [this](QAction *&act, const QString &text, const QString &icon,
+                      const QKeySequence &keys, void (LogWindow::*slot)()) {
+        act = new QAction(QIcon(icon), text, this);
+        scopeShortcut(this, act, keys);
+        connect(act, &QAction::triggered, this, slot);
+    };
+
+    add(saveAsAct, "Save Log to File ...", ":/icons/document-save-as.svg",
+        QKeySequence(Qt::CTRL | Qt::Key_S), &LogWindow::saveAs);
+    add(yamlAct, "&Export YAML Data to File ...", ":/icons/yaml-file-icon.svg",
+        QKeySequence(Qt::CTRL | Qt::Key_Y), &LogWindow::extractYaml);
+    add(nextWarnAct, "&Jump to next warning or error", ":/icons/warning.svg",
+        QKeySequence(Qt::CTRL | Qt::Key_N), &LogWindow::nextWarning);
+    add(closeAct, "&Close Window", ":/icons/window-close.svg", QKeySequence(Qt::CTRL | Qt::Key_W),
+        &LogWindow::closeWindow);
+    add(quitAct, "&Quit LAMMPS-GUI", ":/icons/application-exit.svg",
+        QKeySequence(Qt::CTRL | Qt::Key_Q), &LogWindow::quit);
+
+    // only shown when the cursor sits on a line with an error URL
+    add(urlAct, "Open &URL in Web Browser", ":/icons/help-browser.svg", QKeySequence(),
+        &LogWindow::openErrorUrl);
+
+    // These two have no menu entry.  They stay plain shortcuts rather than
+    // hidden actions because Qt disables the shortcut of an invisible action.
+    addShortcut(this, QKeySequence(Qt::CTRL | Qt::Key_Slash), this, &LogWindow::stopRun);
+    addShortcut(this, QKeySequence(Qt::CTRL | Qt::Key_Return), this, &LogWindow::runBuffer);
 }
 
 // warnings and summary are Qt-parented and cleaned up by their parents
@@ -117,6 +142,11 @@ void LogWindow::closeEvent(QCloseEvent *event)
         settings.setValue(Keys::LOGY, height());
     }
     QPlainTextEdit::closeEvent(event);
+}
+
+void LogWindow::closeWindow()
+{
+    close();
 }
 
 void LogWindow::quit()
@@ -255,57 +285,27 @@ void LogWindow::contextMenuEvent(QContextMenuEvent *event)
     // reposition the cursor here, but only if there is no active selection
     if (!textCursor().hasSelection()) setTextCursor(cursorForPosition(event->pos()));
 
-    // show augmented context menu
+    // show augmented context menu; the entries are the window's own actions, so
+    // their shortcuts keep working after the menu is gone
     auto *menu = createStandardContextMenu();
     menu->addSeparator();
-    addMenuAction(menu, QString("Save Log to File ..."), ":/icons/document-save-as.svg", this,
-                  &LogWindow::saveAs)
-        ->setShortcut(QKeySequence(Qt::CTRL | Qt::Key_S));
+    menu->addAction(saveAsAct);
     // only show export-to-yaml entry if there is YAML format content.
-    if (checkYaml()) {
-        addMenuAction(menu, QString("&Export YAML Data to File ..."), ":/icons/yaml-file-icon.svg",
-                      this, &LogWindow::extractYaml)
-            ->setShortcut(QKeySequence(Qt::CTRL | Qt::Key_Y));
-    }
+    if (checkYaml()) menu->addAction(yamlAct);
 
     // process line of text where the cursor is
     auto text = textCursor().block().text().replace('\t', ' ').trimmed();
     auto url  = QRegularExpression(URL_REGEX).match(text);
     if (url.hasMatch()) {
         errorurl = url.captured(1);
-        addMenuAction(menu, "Open &URL in Web Browser", ":/icons/help-browser.svg", this,
-                      &LogWindow::openErrorUrl);
+        menu->addAction(urlAct);
     }
-    addMenuAction(menu, "&Jump to next warning or error", ":/icons/warning.svg", this,
-                  &LogWindow::nextWarning)
-        ->setShortcut(QKeySequence(Qt::CTRL | Qt::Key_N));
+    menu->addAction(nextWarnAct);
     menu->addSeparator();
-    addMenuAction(menu, "&Close Window", ":/icons/window-close.svg", this, &QWidget::close)
-        ->setShortcut(QKeySequence(Qt::CTRL | Qt::Key_W));
-    addMenuAction(menu, "&Quit LAMMPS-GUI", ":/icons/application-exit.svg", this, &LogWindow::quit)
-        ->setShortcut(QKeySequence(Qt::CTRL | Qt::Key_Q));
+    menu->addAction(closeAct);
+    menu->addAction(quitAct);
     menu->exec(event->globalPos());
     delete menu;
-}
-
-// event filter to handle "Ambiguous shortcut override" issues
-bool LogWindow::eventFilter(QObject *watched, QEvent *event)
-{
-    if (event->type() == QEvent::ShortcutOverride) {
-        auto *keyEvent = dynamic_cast<QKeyEvent *>(event);
-        if (!keyEvent) return QAbstractScrollArea::eventFilter(watched, event);
-        if (keyEvent->modifiers().testFlag(Qt::ControlModifier) && keyEvent->key() == '/') {
-            stopRun();
-            event->accept();
-            return true;
-        }
-        if (keyEvent->modifiers().testFlag(Qt::ControlModifier) && keyEvent->key() == 'W') {
-            close();
-            event->accept();
-            return true;
-        }
-    }
-    return QWidget::eventFilter(watched, event);
 }
 
 // Local Variables:

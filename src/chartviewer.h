@@ -201,14 +201,6 @@ protected:
      */
     void closeEvent(QCloseEvent *event) override;
 
-    /**
-     * @brief Event filter for keyboard shortcuts
-     * @param watched Object being watched
-     * @param event Event to filter
-     * @return true if event handled, false otherwise
-     */
-    bool eventFilter(QObject *watched, QEvent *event) override;
-
 private:
     /// Collect the displayed charts into a PlotData (column 0 "Step", then one
     /// column per chart) for the data exporters.

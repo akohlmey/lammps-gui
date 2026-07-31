@@ -16,6 +16,7 @@
 
 class FlagWarnings;
 class LammpsGui;
+class QAction;
 class QLabel;
 
 /**
@@ -67,6 +68,7 @@ private slots:
     void runBuffer();    ///< Start running simulation
     void nextWarning();  ///< Navigate to next warning
     void openErrorUrl(); ///< Open error documentation URL in browser
+    void closeWindow();  ///< Close this window (void-returning wrapper for QWidget::close)
 
 protected:
     /**
@@ -88,25 +90,30 @@ protected:
     void contextMenuEvent(QContextMenuEvent *event) override;
 
     /**
-     * @brief Event filter for keyboard shortcuts
-     * @param watched Object being watched
-     * @param event Event to filter
-     * @return true if event handled, false otherwise
-     */
-    bool eventFilter(QObject *watched, QEvent *event) override;
-
-    /**
      * @brief Check if log contains embedded YAML data
      * @return true if YAML data detected, false otherwise
      */
     bool checkYaml();
 
 private:
+    /// Create the window's actions, give them focus-scoped shortcuts and add
+    /// them to the widget.  Called once from the constructor; contextMenuEvent()
+    /// puts the same action objects into the menu it pops up, so every shortcut
+    /// has exactly one binding and works whether or not the menu is open.
+    void createActions();
+
     QString filename;       ///< Input file name used to derive default save-file names
     LammpsGui *lammpsgui;   ///< Main widget pointer for receiving signals
     QString errorurl;       ///< URL of last detected error
     FlagWarnings *warnings; ///< Warning highlighter
     QLabel *summary;        ///< Summary label for warning count
+
+    QAction *saveAsAct;   ///< Save the log to a file
+    QAction *yamlAct;     ///< Export embedded YAML data to a file
+    QAction *urlAct;      ///< Open the error URL under the cursor in a browser
+    QAction *nextWarnAct; ///< Jump to the next warning or error
+    QAction *closeAct;    ///< Close the Output window
+    QAction *quitAct;     ///< Quit the application
 };
 
 #endif

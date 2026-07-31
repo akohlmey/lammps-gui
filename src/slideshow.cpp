@@ -100,18 +100,15 @@ SlideShow::SlideShow(const QString &fileName, LammpsGui *_lammpsgui, QWidget *pa
     imageName->setMinimumHeight(buttonhint.height());
     imageName->setMaximumHeight(buttonhint.height());
 
-    auto *shortcut = new QShortcut(QKeySequence(Qt::CTRL | Qt::Key_W), this);
-    connect(shortcut, &QShortcut::activated, this, &QWidget::close);
-    shortcut = new QShortcut(QKeySequence(Qt::CTRL | Qt::Key_Slash), this);
-    connect(shortcut, &QShortcut::activated, this, &SlideShow::stopRun);
-    shortcut = new QShortcut(QKeySequence(Qt::CTRL | Qt::Key_Q), this);
-    connect(shortcut, &QShortcut::activated, this, &SlideShow::quit);
-    shortcut = new QShortcut(QKeySequence(Qt::CTRL | Qt::Key_C), this);
-    connect(shortcut, &QShortcut::activated, this, &SlideShow::copy);
-    shortcut = new QShortcut(QKeySequence(Qt::CTRL | Qt::Key_E), this);
-    connect(shortcut, &QShortcut::activated, this, &SlideShow::movie);
-    shortcut = new QShortcut(QKeySequence(Qt::CTRL | Qt::Key_S), this);
-    connect(shortcut, &QShortcut::activated, this, &SlideShow::saveCurrentImage);
+    // focus-scoped: Ctrl+S, Ctrl+C, Ctrl+Q and Ctrl+/ are main window
+    // accelerators too, so a window-scoped binding here would clash once this
+    // window is docked into the main window (see addShortcut() in helpers.h)
+    addShortcut(this, QKeySequence(Qt::CTRL | Qt::Key_W), this, &QWidget::close);
+    addShortcut(this, QKeySequence(Qt::CTRL | Qt::Key_Slash), this, &SlideShow::stopRun);
+    addShortcut(this, QKeySequence(Qt::CTRL | Qt::Key_Q), this, &SlideShow::quit);
+    addShortcut(this, QKeySequence(Qt::CTRL | Qt::Key_C), this, &SlideShow::copy);
+    addShortcut(this, QKeySequence(Qt::CTRL | Qt::Key_E), this, &SlideShow::movie);
+    addShortcut(this, QKeySequence(Qt::CTRL | Qt::Key_S), this, &SlideShow::saveCurrentImage);
 
     auto *mainLayout  = new QVBoxLayout;
     auto *toolsLayout = new QHBoxLayout;

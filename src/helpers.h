@@ -15,6 +15,7 @@
 #include <QAction>
 #include <QIcon>
 #include <QMenu>
+#include <QShortcut>
 #include <QSize>
 #include <QString>
 #include <QStringList>
@@ -502,6 +503,44 @@ QAction *addMenuAction(QMenu *menu, const QString &text, const QString &icon, Re
     if (!icon.isEmpty()) action->setIcon(QIcon(icon));
     QObject::connect(action, &QAction::triggered, receiver, slot);
     return action;
+}
+
+/**
+ * @brief Give a menu action a keyboard shortcut that is scoped to one widget
+ * @param widget Widget the shortcut belongs to
+ * @param action Action to bind the shortcut to
+ * @param keys   Key sequence to bind
+ *
+ * A menu action is only associated with the menu it was added to, and a menu
+ * is a popup that never holds the keyboard focus.  Associating the action with
+ * @p widget as well is therefore what makes Qt::WidgetWithChildrenShortcut
+ * usable here at all: without it the shortcut would never match.  See
+ * addShortcut() for why the output windows want focus scope in the first place.
+ */
+extern void scopeShortcut(QWidget *widget, QAction *action, const QKeySequence &keys);
+
+/**
+ * @brief Add a keyboard shortcut that is scoped to one widget
+ * @param widget   Widget the shortcut belongs to and that owns the QShortcut
+ * @param keys     Key sequence to bind
+ * @param receiver Object that owns the slot/callable
+ * @param slot     Member function pointer or callable invoked on activation
+ * @return The created shortcut, for any further configuration by the caller
+ *
+ * The shortcut uses Qt::WidgetWithChildrenShortcut, so it fires only while the
+ * keyboard focus is inside @p widget rather than anywhere in its window.  That
+ * is what keeps the per-window shortcuts of the output windows (several of
+ * which repeat main window accelerators such as Ctrl+S, Ctrl+Q or Ctrl+/) from
+ * becoming ambiguous overloads once those windows are docked into the main
+ * window instead of being windows in their own right.
+ */
+template <typename Recv, typename Func>
+QShortcut *addShortcut(QWidget *widget, const QKeySequence &keys, Recv *receiver, Func slot)
+{
+    auto *shortcut = new QShortcut(keys, widget);
+    shortcut->setContext(Qt::WidgetWithChildrenShortcut);
+    QObject::connect(shortcut, &QShortcut::activated, receiver, slot);
+    return shortcut;
 }
 
 #endif

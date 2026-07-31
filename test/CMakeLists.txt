@@ -76,6 +76,18 @@ add_executable(test_helpers
   ${CMAKE_SOURCE_DIR}/src/stdcapture.cpp
 )
 
+# Test executable for the widget-scoped shortcut helpers
+add_executable(test_shortcuts
+  test_shortcuts.cpp
+  ${CMAKE_SOURCE_DIR}/src/helpers.cpp
+  ${CMAKE_SOURCE_DIR}/src/stdcapture.cpp
+)
+
+target_include_directories(test_shortcuts PRIVATE ${CMAKE_SOURCE_DIR}/src)
+target_link_libraries(test_shortcuts PRIVATE GTest::gtest_main Qt6::Widgets)
+
+gtest_discover_tests(test_shortcuts)
+
 target_include_directories(test_helpers PRIVATE
   ${CMAKE_SOURCE_DIR}/src
 )

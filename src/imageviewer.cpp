@@ -1878,15 +1878,15 @@ void ImageViewer::createActions()
     saveAsAct = addMenuAction(fileMenu, "&Save As...", ":/icons/document-save-as.svg", this,
                               &ImageViewer::saveAs);
     saveAsAct->setEnabled(false);
-    saveAsAct->setShortcut(QKeySequence(Qt::CTRL | Qt::Key_S));
+    scopeShortcut(this, saveAsAct, QKeySequence(Qt::CTRL | Qt::Key_S));
     fileMenu->addSeparator();
     copyAct =
         addMenuAction(fileMenu, "Copy &Image", ":/icons/edit-copy.svg", this, &ImageViewer::copy);
-    copyAct->setShortcut(QKeySequence::Copy);
+    scopeShortcut(this, copyAct, QKeySequence(QKeySequence::Copy));
     copyAct->setEnabled(false);
     cmdAct = addMenuAction(fileMenu, "Copy &dump image command", ":/icons/file-clipboard.svg", this,
                            &ImageViewer::cmdToClipboard);
-    cmdAct->setShortcut(QKeySequence(Qt::CTRL | Qt::Key_D));
+    scopeShortcut(this, cmdAct, QKeySequence(Qt::CTRL | Qt::Key_D));
     fileMenu->addSeparator();
     addMenuAction(fileMenu, "&Load Colors from JSON...", ":/icons/document-open.svg", this,
                   &ImageViewer::loadColors);
@@ -1897,10 +1897,13 @@ void ImageViewer::createActions()
         createImage();
     });
     fileMenu->addSeparator();
-    addMenuAction(fileMenu, "&Close", ":/icons/window-close.svg", this, &QWidget::close)
-        ->setShortcut(QKeySequence(Qt::CTRL | Qt::Key_W));
-    addMenuAction(fileMenu, "&Quit", ":/icons/application-exit.svg", this, &ImageViewer::quit)
-        ->setShortcut(QKeySequence(Qt::CTRL | Qt::Key_Q));
+    scopeShortcut(
+        this, addMenuAction(fileMenu, "&Close", ":/icons/window-close.svg", this, &QWidget::close),
+        QKeySequence(Qt::CTRL | Qt::Key_W));
+    scopeShortcut(
+        this,
+        addMenuAction(fileMenu, "&Quit", ":/icons/application-exit.svg", this, &ImageViewer::quit),
+        QKeySequence(Qt::CTRL | Qt::Key_Q));
 }
 
 void ImageViewer::updateActions()

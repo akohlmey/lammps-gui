@@ -34,10 +34,10 @@ FileViewer::FileViewer(const QString &_filename, LammpsGui *_lammpsgui, const QS
                        QWidget *parent) :
     QPlainTextEdit(parent), fileName(_filename), lammpsgui(_lammpsgui)
 {
-    auto *action = new QShortcut(QKeySequence(Qt::CTRL | Qt::Key_Q), this);
-    connect(action, &QShortcut::activated, this, &FileViewer::quit);
-    action = new QShortcut(QKeySequence(Qt::CTRL | Qt::Key_Slash), this);
-    connect(action, &QShortcut::activated, this, &FileViewer::stopRun);
+    // focus-scoped so these keep working when the viewer is a tab in the main
+    // window rather than a window of its own (see addShortcut() in helpers.h)
+    addShortcut(this, QKeySequence(Qt::CTRL | Qt::Key_Q), this, &FileViewer::quit);
+    addShortcut(this, QKeySequence(Qt::CTRL | Qt::Key_Slash), this, &FileViewer::stopRun);
 
     installEventFilter(this);
 

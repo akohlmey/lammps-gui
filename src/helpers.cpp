@@ -744,6 +744,14 @@ QSize fitViewerWindow(QWidget *window, QScrollArea *area, const QSize &content, 
 
 // shared window-manager hint policy for output windows (see helpers.h)
 
+void scopeShortcut(QWidget *widget, QAction *action, const QKeySequence &keys)
+{
+    if (!widget || !action) return;
+    action->setShortcut(keys);
+    action->setShortcutContext(Qt::WidgetWithChildrenShortcut);
+    widget->addAction(action);
+}
+
 void applyWindowFlags(QWidget *window)
 {
     if (!window) return;

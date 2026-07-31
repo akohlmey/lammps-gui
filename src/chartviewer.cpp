@@ -332,7 +332,7 @@ ChartWindow::ChartWindow(const QString &_filename, LammpsGui *_lammpsgui, QWidge
                   &ChartWindow::saveAs);
     auto *copyAct = addMenuAction(file, "Copy &Graph to Clipboard", ":/icons/edit-copy.svg", this,
                                   &ChartWindow::copy);
-    copyAct->setShortcut(QKeySequence(QKeySequence::Copy));
+    scopeShortcut(this, copyAct, QKeySequence(QKeySequence::Copy));
     addMenuAction(file, "&Export data to CSV...", ":/icons/csv-file-icon.svg", this,
                   &ChartWindow::exportCsv);
     addMenuAction(file, "Export data to &Gnuplot...", ":/icons/txt-file-icon.svg", this,
@@ -354,15 +354,15 @@ ChartWindow::ChartWindow(const QString &_filename, LammpsGui *_lammpsgui, QWidge
     file->addSeparator();
     auto *stopAct =
         addMenuAction(file, "Stop &Run", ":/icons/process-stop.svg", this, &ChartWindow::stopRun);
-    stopAct->setShortcut(QKeySequence(Qt::CTRL | Qt::Key_Slash));
+    scopeShortcut(this, stopAct, QKeySequence(Qt::CTRL | Qt::Key_Slash));
     // without a live simulation there is nothing to stop
     if (!lammpsgui) stopAct->setVisible(false);
     auto *closeAct =
         addMenuAction(file, "&Close", ":/icons/window-close.svg", this, &QWidget::close);
-    closeAct->setShortcut(QKeySequence(Qt::CTRL | Qt::Key_W));
+    scopeShortcut(this, closeAct, QKeySequence(Qt::CTRL | Qt::Key_W));
     auto *quitAct =
         addMenuAction(file, "&Quit", ":/icons/application-exit.svg", this, &ChartWindow::quit);
-    quitAct->setShortcut(QKeySequence(Qt::CTRL | Qt::Key_Q));
+    scopeShortcut(this, quitAct, QKeySequence(Qt::CTRL | Qt::Key_Q));
     if (!lammpsgui) quitAct->setVisible(false); // quit == close in standalone mode
     auto *layout = new QVBoxLayout;
     layout->addLayout(top);
@@ -387,7 +387,6 @@ ChartWindow::ChartWindow(const QString &_filename, LammpsGui *_lammpsgui, QWidge
     connect(yrange, &RangeSlider::sliderMoved, this, &ChartWindow::updateYRange);
 
     applyWindowFlags(this);
-    installEventFilter(this);
     resize(settings.value(Keys::CHARTX, Cfg::CHART_DEFAULT_WIDTH).toInt(),
            settings.value(Keys::CHARTY, Cfg::CHART_DEFAULT_HEIGHT).toInt());
 }
@@ -1504,26 +1503,6 @@ void ChartWindow::closeEvent(QCloseEvent *event)
         settings.setValue(Keys::CHARTY, height());
     }
     QWidget::closeEvent(event);
-}
-
-// event filter to handle "Ambiguous shortcut override" issues
-bool ChartWindow::eventFilter(QObject *watched, QEvent *event)
-{
-    if (event->type() == QEvent::ShortcutOverride) {
-        auto *keyEvent = dynamic_cast<QKeyEvent *>(event);
-        if (!keyEvent) return QWidget::eventFilter(watched, event);
-        if (keyEvent->modifiers().testFlag(Qt::ControlModifier) && keyEvent->key() == '/') {
-            stopRun();
-            event->accept();
-            return true;
-        }
-        if (keyEvent->modifiers().testFlag(Qt::ControlModifier) && keyEvent->key() == 'W') {
-            close();
-            event->accept();
-            return true;
-        }
-    }
-    return QWidget::eventFilter(watched, event);
 }
 
 /* -------------------------------------------------------------------- */

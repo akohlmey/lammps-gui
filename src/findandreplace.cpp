@@ -13,6 +13,7 @@
 
 #include "codeeditor.h"
 #include "constants.h"
+#include "helpers.h"
 #include "lammpsgui.h"
 
 #include <QCheckBox>
@@ -69,8 +70,7 @@ FindAndReplace::FindAndReplace(CodeEditor *_editor, QWidget *parent) :
     connect(replall, &QPushButton::released, this, &FindAndReplace::replaceAll);
     connect(done, &QPushButton::released, this, &QDialog::accept);
 
-    auto *action = new QShortcut(QKeySequence(Qt::CTRL | Qt::Key_Q), this);
-    connect(action, &QShortcut::activated, this, &FindAndReplace::quit);
+    addShortcut(this, QKeySequence(Qt::CTRL | Qt::Key_Q), this, &FindAndReplace::quit);
 
     setLayout(layout);
     setWindowIcon(QIcon(Cfg::MAIN_ICON));
