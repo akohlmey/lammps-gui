@@ -1926,6 +1926,11 @@ void ImageViewer::updateActions()
 
 void ImageViewer::adjustWindowSize()
 {
+    // A docked panel is sized by its dock area.  Fitting the window around the
+    // image resizes this widget, and that request travels up through the dock to
+    // the main window -- which then jumps about as images are loaded.
+    if (dockedLayout()) return;
+
     // the render size is set in the settings panel, so the size to fit is
     // known even before the first image has been rendered
     if ((xsize < 1) || (ysize < 1)) return;

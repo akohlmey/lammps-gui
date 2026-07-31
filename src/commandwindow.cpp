@@ -33,6 +33,11 @@
 #include <QStringListModel>
 #include <QVBoxLayout>
 
+#if !defined(Q_OS_WIN32)
+#include <csignal>
+#include <unistd.h>
+#endif
+
 namespace {
 
 // A pipe is a stream with no record of where one command's output ends, so each
@@ -82,7 +87,10 @@ CommandWindow::CommandWindow(LammpsGui *_lammpsgui, QWidget *parent) :
     scrollback->setReadOnly(true);
     scrollback->setLineWrapMode(QPlainTextEdit::NoWrap);
     scrollback->setMaximumBlockCount(Cfg::COMMAND_SCROLLBACK_LINES);
-    scrollback->document()->setDefaultFont(monoFontFromSettings());
+    // set on the widget, not only on the document: docked, this becomes a child
+    // of the main window and would otherwise inherit its proportional font,
+    // which QPlainTextEdit then adopts for the document as well
+    scrollback->setFont(monoFontFromSettings());
 
     prompt->setFont(monoFontFromSettings());
     prompt->setPlaceholderText("enter a command");
@@ -142,6 +150,8 @@ void CommandWindow::createMenuBar()
     auto *file = new QMenu("&File", menubar);
     file->setObjectName(Cfg::VIEW_FILE_MENU);
 
+    addMenuAction(file, "&Interrupt Command", ":/icons/process-stop.svg", this,
+                  &CommandWindow::interrupt);
     addMenuAction(file, "&Restart Shell", ":/icons/system-restart.svg", this,
                   &CommandWindow::restartShell);
     addMenuAction(file, "C&lear Output", ":/icons/edit-delete.svg", this,
@@ -169,7 +179,11 @@ void CommandWindow::createMenuBar()
 
 void CommandWindow::startShell()
 {
-    delete shell;
+    if (shell) {
+        // stop it reporting its own death: we are the ones ending it
+        shell->disconnect(this);
+        delete shell;
+    }
     shell = new QProcess(this);
     // one stream, so what the command wrote to stderr appears where it happened
     shell->setProcessChannelMode(QProcess::MergedChannels);
@@ -190,16 +204,49 @@ void CommandWindow::startShell()
             &CommandWindow::shellFinished);
 
     const QString program = preferredShell();
-    shell->start(program, {});
+    QStringList args;
+#if !defined(Q_OS_WIN32)
+    // An interactive shell is what reads the user's rc file, and that is where
+    // aliases and shell functions live -- a non-interactive one skips it, and
+    // the guard most rc files open with would bail out even if it did not.
+    // --noediting keeps bash from running its line editor over input that is a
+    // pipe, which would otherwise echo every line back at us and wrap it in the
+    // escape sequences meant for a terminal.
+    if (QFileInfo(program).fileName().contains("bash")) args << "--noediting";
+    args << "-i";
+
+    // put the shell in a session of its own, so a signal can be sent to it and
+    // to whatever it is running rather than to this application
+    shell->setChildProcessModifier([]() {
+        setsid();
+    });
+#endif
+    shell->start(program, args);
     if (!shell->waitForStarted(Cfg::COMMAND_START_TIMEOUT)) {
         appendOutput(QString("Cannot run \"%1\": %2\n").arg(program, shell->errorString()));
         return;
     }
 
     appendOutput(QString("%1\n").arg(program));
+
+    // Everything the shell says before the first sentinel is its own start-up
+    // noise -- the prompt it prints because it is interactive, and its complaint
+    // about having no terminal to put a job in the foreground of.
+    priming = true;
 #if defined(Q_OS_WIN32)
     // cmd.exe otherwise echoes every line it is fed
     shell->write("@echo off\r\n");
+#else
+    // this window supplies the prompt, so the shell must not print one; and
+    // history expansion is on in an interactive shell, which would turn a "!"
+    // in an ordinary command line into an error
+    // this window supplies the prompt, so the shell must not print one -- and
+    // PROMPT_COMMAND is where a distribution's rc file hides the escape
+    // sequence that sets a terminal's title.  History expansion is on in an
+    // interactive shell, which would turn a "!" in an ordinary command into an
+    // error.
+    shell->write("PS1='' ; PS2='' ; unset PROMPT_COMMAND 2>/dev/null ;"
+                 " set +H 2>/dev/null\n");
 #endif
     // ask where we are, so the prompt is right before anything is typed
     shell->write(qPrintable(sentinelCommand() + "\n"));
@@ -261,7 +308,8 @@ void CommandWindow::consume(const QString &chunk)
                 updatePrompt();
             }
             running = false;
-        } else {
+            priming = false;
+        } else if (!priming) {
             appendOutput(line + "\n");
         }
         nl = pending.indexOf('\n');
@@ -297,9 +345,40 @@ void CommandWindow::shellFinished()
     appendOutput("\n[the shell exited; use File > Restart Shell to start a new one]\n");
 }
 
+void CommandWindow::interrupt()
+{
+#if defined(Q_OS_WIN32)
+    appendOutput("\n[interrupting is not supported on this platform;"
+                 " use File > Restart Shell]\n");
+#else
+    if (!shell || shell->state() != QProcess::Running) return;
+
+    // The shell was put in a session of its own so that its children share a
+    // process group with it and nothing else does.  Ask for that group rather
+    // than assuming the shell leads it, and refuse to signal our own group,
+    // which would take this application down with the command.
+    const pid_t group = ::getpgid(shell->processId());
+    if ((group <= 0) || (group == ::getpgid(0))) {
+        appendOutput("\n[cannot interrupt this command; use File > Restart Shell]\n");
+        return;
+    }
+    // Best effort: bash has no job control here -- there is no terminal to hand
+    // a foreground process group to -- and it starts children with SIGINT
+    // ignored, so a program that does not install its own handler will sit
+    // through this.  File > Restart Shell is the way out of those.
+    ::kill(-group, SIGINT);
+    appendOutput("\n[interrupt sent; use File > Restart Shell if it had no effect]\n");
+#endif
+}
+
 void CommandWindow::restartShell()
 {
+    // Only the shell is ended.  Whatever it started keeps running, which is what
+    // is wanted for a program launched with "&", and equally for the graphical
+    // one that is holding the prompt: the point is to get a usable prompt back,
+    // not to take the user's windows away.
     appendOutput("\n[restarting the shell]\n");
+    running = false;
     startShell();
 }
 

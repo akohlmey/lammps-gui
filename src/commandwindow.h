@@ -91,6 +91,7 @@ private slots:
     void submit();          ///< Send the typed line to the shell
     void readOutput();      ///< Drain the shell's output into the scrollback
     void shellFinished();   ///< Report that the shell has gone away
+    void interrupt();       ///< Send SIGINT to the shell and what it is running
     void restartShell();    ///< Discard the shell and start a fresh one
     void clearScrollback(); ///< Empty the scrollback, keeping the shell
     void quit();            ///< Quit the application (via LammpsGui::quit)
@@ -144,6 +145,7 @@ private:
     QStringList history;    ///< Lines typed so far, oldest first
     int historypos = 0;     ///< Position while walking the history, == size when idle
     bool running   = false; ///< A command was sent and its sentinel is outstanding
+    bool priming   = false; ///< Still swallowing the shell's start-up chatter
 };
 
 #endif

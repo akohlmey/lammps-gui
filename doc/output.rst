@@ -363,7 +363,9 @@ LAMMPS-GUI.
 Lines typed at the prompt are handed to a single shell process that is
 kept running between commands, so ``cd``, ``pushd``/``popd``,
 environment variables, and the rest of the shell state behave as they
-would in a terminal.  The directory shown in front of the prompt follows
+would in a terminal.  The shell is started as an interactive one, so it
+reads the usual start-up file and the aliases and shell functions
+defined there are available.  The directory shown in front of the prompt follows
 the shell, however it was changed.  The window starts in the directory
 of the current input file, which is where a run leaves its output.  The
 up and down arrow keys walk through previously entered commands, which
@@ -377,13 +379,24 @@ and by ``COMSPEC`` on Windows.  Commands run with ``TERM`` set to
 Python script appears as it is produced rather than all at once when it
 exits.
 
+A command runs in the foreground and holds the prompt until it finishes,
+exactly as it would in a terminal.  Append ``&`` to start a program --
+a graphical one in particular -- without waiting for it.
+
+*File* > *Interrupt Command* sends an interrupt to the running command.
+This is a best effort: there is no terminal here for the shell to manage
+foreground process groups with, so it starts its children with the
+interrupt signal ignored, and a program that does not install a handler
+of its own will sit through it.  *File* > *Restart Shell* always works:
+it ends the shell and starts a fresh one, leaving anything the shell
+started still running, so a program launched with ``&`` -- or the one
+that was holding the prompt -- keeps its windows.
+
 .. admonition:: This is not a terminal emulator
 
    There is no pseudo terminal behind the prompt, only a pipe.  Programs
    that need a real terminal -- editors, pagers, anything using curses,
-   anything asking for a password -- will either report that the
-   terminal is insufficient or misbehave, and there is no way to
-   interrupt a running command with `Ctrl-C`.  Use *File* > *Restart
-   Shell* to recover from a command that does not finish.  If a program
-   is reading from its standard input, the next line typed at the prompt
-   goes to that program instead of to the shell.
+   anything asking for a password -- will either report that the terminal
+   is insufficient or misbehave.  If a program is reading from its
+   standard input, the next line typed at the prompt goes to that program
+   instead of to the shell.

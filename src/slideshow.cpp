@@ -902,6 +902,11 @@ void SlideShow::scaleImage(double factor)
 
 void SlideShow::adjustWindowSize()
 {
+    // A docked panel is sized by its dock area.  Fitting the window around the
+    // image resizes this widget, and that request travels up through the dock to
+    // the main window -- which then jumps about as images are loaded.
+    if (dockedLayout()) return;
+
     if (maxwidth == 0 || maxheight == 0) return;
 
     // size of the largest image as displayed, i.e. with the current rotation
