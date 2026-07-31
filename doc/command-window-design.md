@@ -95,16 +95,27 @@ memory.
 
 ## Known gaps -- decide before building
 
-- **No interrupt.** Without a PTY there is no `Ctrl+C`: no terminal to deliver
-  `SIGINT` to the foreground process group. `terminate()` kills the *shell* and
-  loses the session state. A "restart shell" action is the cheap honest answer;
-  a real interrupt is where PTY pressure comes back.
-- **Ambiguous stdin.** If a child is reading stdin, the next typed line feeds
-  the child rather than the shell, with nothing on screen to say so. Fine for
-  `python script.py`, confusing for anything that prompts.
+- **No interrupt, and no job control.** Without a PTY there is no `Ctrl+C` and
+  no `Ctrl+Z`/`bg`: the shell says "no job control in this shell" at start-up and
+  keeps no job table. *Interrupt Command* signals the shell's process group --
+  the shell is given a session of its own with `setsid()` so this cannot reach
+  the application -- but it is best effort, because without job control bash
+  starts children with `SIGINT` ignored. Measured: the group is right, the
+  signal is delivered, and a plain `sleep` sits through it. *Restart Shell* is
+  the reliable recovery and is the practical equivalent of `Ctrl+Z` then `bg`:
+  the prompt comes back in the same directory and the program keeps running,
+  orphaned rather than backgrounded. Real job control is where PTY pressure
+  comes back.
+- **Ambiguous stdin -- resolved by refusing input.** A line typed while a
+  command runs would go down the same pipe and be read by that command rather
+  than by the shell. The prompt is therefore read-only while a command is
+  running and says so. The cost is that a program cannot be fed from here at
+  all; the benefit is that a line meant for the shell is never swallowed.
 - **Buffering.** The shell is fine, but its children block-buffer when not on a
-  tty, so output appears only at exit. Set `PYTHONUNBUFFERED=1` in the shell's
-  environment to cover the common case; other tools need their own flag.
+  tty, so output appears only at exit -- this is the child's C runtime, not the
+  panel, which streams whatever it is given (verified: a slow producer shows its
+  lines as they come). `PYTHONUNBUFFERED=1` is set in the shell's environment to
+  cover the common case; anything else needs `stdbuf -oL` or its own flag.
 - **macOS PATH.** An app launched from the Finder inherits a minimal PATH. The
   shell's environment needs the same fallback logic `findExe()` already applies.
 

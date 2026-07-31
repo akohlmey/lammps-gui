@@ -379,24 +379,44 @@ and by ``COMSPEC`` on Windows.  Commands run with ``TERM`` set to
 Python script appears as it is produced rather than all at once when it
 exits.
 
-A command runs in the foreground and holds the prompt until it finishes,
+A command runs in the foreground and holds the shell until it finishes,
 exactly as it would in a terminal.  Append ``&`` to start a program --
 a graphical one in particular -- without waiting for it.
 
+While a command is running the prompt says ``running >`` and refuses
+input.  A line entered then could not be a command waiting its turn: it
+would go down the same pipe and be read by the running program, if it
+reads at all, and by the shell only once that program had finished.
+
+There is no ``Ctrl-Z`` followed by ``bg`` to fall back on.  Job control
+needs a controlling terminal, and there is none here, so the shell has
+no list of jobs for ``bg`` to act on and reports as much when it starts.
+The way to recover from a program started without ``&`` is *File* >
+*Restart Shell*: it ends the shell and starts a fresh one in the same
+directory, while whatever the shell had started keeps running.  A
+graphical application therefore stays open and the prompt comes back,
+which is the outcome ``Ctrl-Z`` and ``bg`` would have produced.
+
 *File* > *Interrupt Command* sends an interrupt to the running command.
-This is a best effort: there is no terminal here for the shell to manage
-foreground process groups with, so it starts its children with the
-interrupt signal ignored, and a program that does not install a handler
-of its own will sit through it.  *File* > *Restart Shell* always works:
-it ends the shell and starts a fresh one, leaving anything the shell
-started still running, so a program launched with ``&`` -- or the one
-that was holding the prompt -- keeps its windows.
+It is a best effort: without job control the shell starts its children
+with the interrupt signal ignored, so a program that does not install a
+handler of its own will sit through it.
+
+.. admonition:: Output may only appear when a program exits
+
+   A program that writes to a terminal usually flushes each line, but
+   when its output is a pipe -- as it is here -- the C runtime collects
+   it into blocks instead and writes them out when the buffer fills or
+   the program exits.  Nothing is lost, but a long-running program can
+   appear silent until it is done.  Python is handled already, through
+   ``PYTHONUNBUFFERED``; for other programs, ``stdbuf -oL`` in front of
+   the command asks for line buffering where that tool is available.
 
 .. admonition:: This is not a terminal emulator
 
    There is no pseudo terminal behind the prompt, only a pipe.  Programs
    that need a real terminal -- editors, pagers, anything using curses,
    anything asking for a password -- will either report that the terminal
-   is insufficient or misbehave.  If a program is reading from its
-   standard input, the next line typed at the prompt goes to that program
-   instead of to the shell.
+   is insufficient or misbehave.  A program cannot be fed from the prompt
+   either: input is refused while a command is running, precisely so that
+   a line meant for the shell is not swallowed by whatever it started.

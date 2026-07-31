@@ -94,6 +94,11 @@ CommandWindow::CommandWindow(LammpsGui *_lammpsgui, QWidget *parent) :
 
     prompt->setFont(monoFontFromSettings());
     prompt->setPlaceholderText("enter a command");
+    prompt->setToolTip("Commands run in the foreground and hold the prompt until they\n"
+                       "finish, as they would in a terminal.  Start a graphical or\n"
+                       "long-running program with a trailing \"&\" to keep the prompt\n"
+                       "free -- there is no job control here to background it after\n"
+                       "the fact with Ctrl-Z.");
     // whoever hands the focus to this window -- the dock raising its tab, the
     // View menu, a click on a part of it that takes no focus itself -- means the
     // input line, not the container
@@ -261,7 +266,17 @@ void CommandWindow::changeDirectory(const QString &dir)
 
 void CommandWindow::submit()
 {
+    // Return still arrives while the line is read-only, so the guard belongs
+    // here and not only on the typing: sending anything now would queue it
+    // behind the running command and leave the state waiting for a second
+    // sentinel that answers nothing.
+    if (running) return;
+
     const QString line = prompt->text();
+    if (line.trimmed().isEmpty()) {
+        prompt->clear();
+        return;
+    }
     if (!shell || shell->state() != QProcess::Running) {
         appendOutput("No shell is running. Use File > Restart Shell.\n");
         return;
@@ -275,6 +290,7 @@ void CommandWindow::submit()
     historypos = history.size();
 
     running = true;
+    updatePrompt();
     shell->write(qPrintable(line + "\n"));
     shell->write(qPrintable(sentinelCommand() + "\n"));
 }
@@ -299,16 +315,19 @@ void CommandWindow::consume(const QString &chunk)
         if (mark >= 0) {
             // "<status>_<directory>"; the status has no underscore in it, so the
             // first one separates them and the rest is the path, spaces and all
-            const QString tail = line.mid(mark + int(qstrlen(SENTINEL)));
-            const int sep      = tail.indexOf('_');
+            const QString tail  = line.mid(mark + int(qstrlen(SENTINEL)));
+            const int sep       = tail.indexOf('_');
+            const bool wasabout = running;
+            // clear the state before the prompt is redrawn from it
+            running = false;
+            priming = false;
             if (sep > 0) {
                 const int status = tail.left(sep).toInt();
                 workingdir       = tail.mid(sep + 1);
-                if (running && status != 0) appendOutput(QString("[exit status %1]\n").arg(status));
-                updatePrompt();
+                if (wasabout && status != 0)
+                    appendOutput(QString("[exit status %1]\n").arg(status));
             }
-            running = false;
-            priming = false;
+            updatePrompt();
         } else if (!priming) {
             appendOutput(line + "\n");
         }
@@ -337,11 +356,24 @@ void CommandWindow::appendOutput(const QString &text)
 
 void CommandWindow::updatePrompt()
 {
-    cwdlabel->setText(workingdir + "$");
+    // While a command holds the shell there is nothing useful to do with a typed
+    // line: it would go down the same pipe and be read by the running program,
+    // if it reads at all, and by the shell only once that had finished.  Refuse
+    // it instead, and say why.
+    prompt->setReadOnly(running);
+    if (running) {
+        cwdlabel->setText("running >");
+        prompt->setPlaceholderText("command running -- append \"&\" to background the next one");
+    } else {
+        cwdlabel->setText(workingdir + "$");
+        prompt->setPlaceholderText("enter a command");
+    }
 }
 
 void CommandWindow::shellFinished()
 {
+    running = false;
+    updatePrompt();
     appendOutput("\n[the shell exited; use File > Restart Shell to start a new one]\n");
 }
 
@@ -379,6 +411,7 @@ void CommandWindow::restartShell()
     // not to take the user's windows away.
     appendOutput("\n[restarting the shell]\n");
     running = false;
+    updatePrompt();
     startShell();
 }
 
