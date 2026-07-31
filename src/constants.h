@@ -154,6 +154,8 @@ constexpr int COMMAND_SCROLLBACK_LINES = 5000; ///< Lines of transcript kept
 constexpr int COMMAND_HISTORY_MAX      = 200;  ///< Command lines remembered between sessions
 constexpr int COMMAND_START_TIMEOUT    = 5000; ///< Milliseconds to wait for the shell to start
 constexpr int COMMAND_EXIT_TIMEOUT     = 2000; ///< Milliseconds to wait for it to end
+constexpr int COMMAND_KILL_GRACE       = 500;  ///< Milliseconds between SIGTERM and SIGKILL
+constexpr int COMMAND_PGREP_TIMEOUT    = 1000; ///< Milliseconds to wait for pgrep
 constexpr int COMMAND_DEFAULT_WIDTH    = 800;  ///< Default window width
 constexpr int COMMAND_DEFAULT_HEIGHT   = 400;  ///< Default window height
 

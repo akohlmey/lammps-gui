@@ -19,6 +19,7 @@
 #include <QAction>
 #include <QCompleter>
 #include <QDir>
+#include <QFile>
 #include <QFileInfo>
 #include <QFileSystemModel>
 #include <QHBoxLayout>
@@ -29,8 +30,10 @@
 #include <QMenuBar>
 #include <QPlainTextEdit>
 #include <QProcessEnvironment>
+#include <QPushButton>
 #include <QSettings>
 #include <QStringListModel>
+#include <QTimer>
 #include <QVBoxLayout>
 
 #if !defined(Q_OS_WIN32)
@@ -57,6 +60,16 @@ QString sentinelCommand()
     // it survives being read to the end of the line
     return QStringLiteral("printf '\\n%1%s_%s\\n' \"$?\" \"$PWD\"").arg(SENTINEL);
 #endif
+}
+
+// An interactive shell without a terminal complains whenever it would otherwise
+// hand one to a job -- when a command ends, and loudly when one is killed.  The
+// message says nothing about the command and there is no terminal to be had, so
+// it is dropped rather than shown after every job.
+bool isShellJobControlNoise(const QString &line)
+{
+    return line.contains("Inappropriate ioctl for device") ||
+           line.contains("no job control in this shell");
 }
 
 } // namespace
@@ -115,9 +128,16 @@ CommandWindow::CommandWindow(LammpsGui *_lammpsgui, QWidget *parent) :
     cwdlabel->setFont(monoFontFromSettings());
     cwdlabel->setTextInteractionFlags(Qt::TextSelectableByMouse);
 
+    killbutton = new QPushButton(QIcon(":/icons/skull.svg"), "");
+    killbutton->setToolTip("Kill the running command");
+    killbutton->setEnabled(false);
+    styleToolButtons(toolButtonSize(killbutton), {killbutton});
+    connect(killbutton, &QPushButton::released, this, &CommandWindow::killCommand);
+
     auto *promptrow = new QHBoxLayout;
     promptrow->addWidget(cwdlabel);
     promptrow->addWidget(prompt, 10);
+    promptrow->addWidget(killbutton);
 
     auto *top = new QVBoxLayout;
     top->addWidget(scrollback, 10);
@@ -157,6 +177,7 @@ void CommandWindow::createMenuBar()
 
     addMenuAction(file, "&Interrupt Command", ":/icons/process-stop.svg", this,
                   &CommandWindow::interrupt);
+    addMenuAction(file, "&Kill Command", ":/icons/skull.svg", this, &CommandWindow::killCommand);
     addMenuAction(file, "&Restart Shell", ":/icons/system-restart.svg", this,
                   &CommandWindow::restartShell);
     addMenuAction(file, "C&lear Output", ":/icons/edit-delete.svg", this,
@@ -328,7 +349,7 @@ void CommandWindow::consume(const QString &chunk)
                     appendOutput(QString("[exit status %1]\n").arg(status));
             }
             updatePrompt();
-        } else if (!priming) {
+        } else if (!priming && !isShellJobControlNoise(line)) {
             appendOutput(line + "\n");
         }
         nl = pending.indexOf('\n');
@@ -361,6 +382,7 @@ void CommandWindow::updatePrompt()
     // if it reads at all, and by the shell only once that had finished.  Refuse
     // it instead, and say why.
     prompt->setReadOnly(running);
+    killbutton->setEnabled(running);
     if (running) {
         cwdlabel->setText("running >");
         prompt->setPlaceholderText("command running -- append \"&\" to background the next one");
@@ -375,6 +397,69 @@ void CommandWindow::shellFinished()
     running = false;
     updatePrompt();
     appendOutput("\n[the shell exited; use File > Restart Shell to start a new one]\n");
+}
+
+// The processes the shell started directly.  Without job control the shell has
+// no job table to ask, so this goes to the operating system instead; a command
+// that started children of its own leaves those behind, which is the price of
+// not having a session to signal.
+QList<qint64> CommandWindow::shellChildren() const
+{
+    QList<qint64> kids;
+    if (!shell || shell->processId() <= 0) return kids;
+    const qint64 pid = shell->processId();
+
+#if defined(Q_OS_LINUX)
+    QFile children(QString("/proc/%1/task/%1/children").arg(pid));
+    if (children.open(QIODevice::ReadOnly | QIODevice::Text)) {
+        const auto parts = QString::fromLatin1(children.readAll()).split(' ', Qt::SkipEmptyParts);
+        for (const auto &part : parts) {
+            bool ok        = false;
+            const qint64 c = part.trimmed().toLongLong(&ok);
+            if (ok && (c > 0)) kids << c;
+        }
+    }
+#elif !defined(Q_OS_WIN32)
+    QProcess pgrep;
+    pgrep.start("pgrep", {"-P", QString::number(pid)});
+    if (pgrep.waitForFinished(Cfg::COMMAND_PGREP_TIMEOUT)) {
+        const auto lines =
+            QString::fromLatin1(pgrep.readAllStandardOutput()).split('\n', Qt::SkipEmptyParts);
+        for (const auto &line : lines) {
+            bool ok        = false;
+            const qint64 c = line.trimmed().toLongLong(&ok);
+            if (ok && (c > 0)) kids << c;
+        }
+    }
+#endif
+    return kids;
+}
+
+void CommandWindow::killCommand()
+{
+#if defined(Q_OS_WIN32)
+    appendOutput("\n[killing is not supported on this platform;"
+                 " use File > Restart Shell]\n");
+#else
+    if (!shell || (shell->state() != QProcess::Running) || !running) return;
+
+    const auto kids = shellChildren();
+    if (kids.isEmpty()) {
+        // nothing identifiable to end; freeing the prompt is the next best thing
+        appendOutput("\n[cannot identify the running command; restarting the shell]\n");
+        restartShell();
+        return;
+    }
+
+    // ask first, insist shortly afterwards
+    appendOutput("\n[killing the running command]\n");
+    for (const auto pid : kids)
+        ::kill(static_cast<pid_t>(pid), SIGTERM);
+    QTimer::singleShot(Cfg::COMMAND_KILL_GRACE, this, [kids]() {
+        for (const auto pid : kids)
+            if (::kill(static_cast<pid_t>(pid), 0) == 0) ::kill(static_cast<pid_t>(pid), SIGKILL);
+    });
+#endif
 }
 
 void CommandWindow::interrupt()

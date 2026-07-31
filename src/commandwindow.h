@@ -12,6 +12,7 @@
 #ifndef COMMANDWINDOW_H
 #define COMMANDWINDOW_H
 
+#include <QList>
 #include <QProcess>
 #include <QString>
 #include <QStringList>
@@ -23,6 +24,7 @@ class QLabel;
 class QLineEdit;
 class QMenuBar;
 class QPlainTextEdit;
+class QPushButton;
 class QStringListModel;
 
 /**
@@ -92,6 +94,7 @@ private slots:
     void readOutput();      ///< Drain the shell's output into the scrollback
     void shellFinished();   ///< Report that the shell has gone away
     void interrupt();       ///< Send SIGINT to the shell and what it is running
+    void killCommand();     ///< End the processes the shell is running
     void restartShell();    ///< Discard the shell and start a fresh one
     void clearScrollback(); ///< Empty the scrollback, keeping the shell
     void quit();            ///< Quit the application (via LammpsGui::quit)
@@ -124,6 +127,10 @@ private:
     /// Show the working directory in front of the input line.
     void updatePrompt();
 
+    /// The processes the shell started directly, asked of the operating system
+    /// because without job control the shell keeps no job table.
+    QList<qint64> shellChildren() const;
+
     /// Executable names found in PATH, collected once and cached.
     QStringList pathCommands();
 
@@ -137,6 +144,7 @@ private:
     QLineEdit *prompt;           ///< The input line
     QLabel *cwdlabel;            ///< Working directory shown in front of it
     QMenuBar *menubar = nullptr; ///< Own menu bar; hidden in the combined layout
+    QPushButton *killbutton;     ///< Ends the running command
     QCompleter *completer;       ///< Completes commands and file names
     QStringListModel *commands;  ///< Model behind the command completion
 

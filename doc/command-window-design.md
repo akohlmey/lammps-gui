@@ -104,8 +104,12 @@ memory.
   signal is delivered, and a plain `sleep` sits through it. *Restart Shell* is
   the reliable recovery and is the practical equivalent of `Ctrl+Z` then `bg`:
   the prompt comes back in the same directory and the program keeps running,
-  orphaned rather than backgrounded. Real job control is where PTY pressure
-  comes back.
+  orphaned rather than backgrounded. *Kill Command* is the other half: the
+  shell's direct children are asked of the operating system -- `/proc/<pid>/
+  task/<pid>/children` on Linux, `pgrep -P` elsewhere, since without job control
+  the shell keeps no job table -- and sent `SIGTERM` then `SIGKILL`. A command
+  that started children of its own leaves those behind. Real job control is
+  where PTY pressure comes back.
 - **Ambiguous stdin -- resolved by refusing input.** A line typed while a
   command runs would go down the same pipe and be read by that command rather
   than by the shell. The prompt is therefore read-only while a command is

@@ -391,16 +391,25 @@ reads at all, and by the shell only once that program had finished.
 There is no ``Ctrl-Z`` followed by ``bg`` to fall back on.  Job control
 needs a controlling terminal, and there is none here, so the shell has
 no list of jobs for ``bg`` to act on and reports as much when it starts.
-The way to recover from a program started without ``&`` is *File* >
-*Restart Shell*: it ends the shell and starts a fresh one in the same
-directory, while whatever the shell had started keeps running.  A
-graphical application therefore stays open and the prompt comes back,
-which is the outcome ``Ctrl-Z`` and ``bg`` would have produced.
+To recover from a program started without ``&`` there are two choices.
+*File* > *Restart Shell* ends the shell and starts a fresh one in the
+same directory while whatever the shell had started keeps running, so a
+graphical application stays open and the prompt comes back -- the
+outcome ``Ctrl-Z`` and ``bg`` would have produced.  The kill button
+below ends the program itself.
 
-*File* > *Interrupt Command* sends an interrupt to the running command.
-It is a best effort: without job control the shell starts its children
-with the interrupt signal ignored, so a program that does not install a
-handler of its own will sit through it.
+The button with the skull at the right of the prompt, and *File* > *Kill
+Command*, end the running command outright.  They ask it to quit and
+insist a moment later if it has not, so the shell becomes free again and
+the prompt returns; the button is only active while something is
+running.  A command that started programs of its own leaves those
+behind, since without job control there is no group of processes to end
+in one go.
+
+*File* > *Interrupt Command* is the gentler option and sends an
+interrupt instead.  It is a best effort: without job control the shell
+starts its children with the interrupt signal ignored, so a program that
+does not install a handler of its own will sit through it.
 
 .. admonition:: Output may only appear when a program exits
 

@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 48 48">
+  <title>Kill the running command</title>
+  <!-- crossed bones behind the skull; drawn long enough to stay visible at
+       toolbar size, where the skull would otherwise cover all of them -->
+  <g stroke="#5a5a5a" stroke-width="4.5" stroke-linecap="round" fill="none">
+    <line x1="8" y1="8" x2="40" y2="40"/>
+    <line x1="40" y1="8" x2="8" y2="40"/>
+  </g>
+  <g fill="#ededed" stroke="#5a5a5a" stroke-width="1.2">
+    <circle cx="6.5" cy="6.5" r="3.6"/>
+    <circle cx="9.5" cy="9.5" r="3.6"/>
+    <circle cx="41.5" cy="6.5" r="3.6"/>
+    <circle cx="38.5" cy="9.5" r="3.6"/>
+    <circle cx="6.5" cy="41.5" r="3.6"/>
+    <circle cx="9.5" cy="38.5" r="3.6"/>
+    <circle cx="41.5" cy="41.5" r="3.6"/>
+    <circle cx="38.5" cy="38.5" r="3.6"/>
+  </g>
+  <!-- cranium and jaw, kept clear of the corners -->
+  <path d="M24 11 C31.5 11 37 16.5 37 23.5 C37 27 35.5 29.8 33 31.6 L33 34.5
+           C33 35.9 31.9 37 30.5 37 L17.5 37 C16.1 37 15 35.9 15 34.5 L15 31.6
+           C12.5 29.8 11 27 11 23.5 C11 16.5 16.5 11 24 11 Z"
+        fill="#f7f7f7" stroke="#2b2b2b" stroke-width="2" stroke-linejoin="round"/>
+  <!-- eye sockets -->
+  <ellipse cx="19" cy="23" rx="3.9" ry="4.4" fill="#2b2b2b"/>
+  <ellipse cx="29" cy="23" rx="3.9" ry="4.4" fill="#2b2b2b"/>
+  <!-- nasal cavity -->
+  <path d="M24 27.2 L21.9 31.2 L26.1 31.2 Z" fill="#2b2b2b"/>
+  <!-- teeth -->
+  <g stroke="#2b2b2b" stroke-width="1.5" stroke-linecap="round">
+    <line x1="17.5" y1="33.4" x2="30.5" y2="33.4"/>
+    <line x1="21" y1="33.4" x2="21" y2="37"/>
+    <line x1="24" y1="33.4" x2="24" y2="37"/>
+    <line x1="27" y1="33.4" x2="27" y2="37"/>
+  </g>
+</svg>
