@@ -311,7 +311,9 @@ GeneralTab::GeneralTab(QSettings *_settings, LammpsWrapper *_lammps, LammpsGui *
     maxi->setObjectName("maximized");
     maxi->setChecked(settings->value(Keys::MAXIMIZED, false).toBool());
     maxi->setToolTip("Start with the main window filling the screen instead of\n"
-                     "restoring the size it had when it was last closed.");
+                     "restoring the size it had when it was last closed.\n"
+                     "Only applies to the combined main window: with individual\n"
+                     "windows the output windows would end up behind it.");
     // window layout: the first choice on the tab, on a line of its own
     const bool isdocked = settings->value(Keys::DOCKED, false).toBool();
     auto *winlayout     = new QRadioButton("Individual Windows");
@@ -328,6 +330,16 @@ GeneralTab::GeneralTab(QSettings *_settings, LammpsWrapper *_lammps, LammpsGui *
     auto *layoutgroup = new QButtonGroup(this);
     layoutgroup->addButton(winlayout);
     layoutgroup->addButton(docklayout);
+
+    // opening maximized only makes sense for the combined window; with
+    // individual windows a maximized main window covers the very views it is
+    // supposed to sit beside, so the option is forced off there
+    auto applyLayoutStyle = [maxi](bool docked) {
+        maxi->setEnabled(docked);
+        if (!docked) maxi->setChecked(false);
+    };
+    connect(docklayout, &QRadioButton::toggled, maxi, applyLayoutStyle);
+    applyLayoutStyle(isdocked);
     auto *layoutrow = new QHBoxLayout;
     layoutrow->addWidget(new QLabel("Window Layout Style:"));
     layoutrow->addWidget(winlayout);

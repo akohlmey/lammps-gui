@@ -825,7 +825,8 @@ LammpsGui::LammpsGui(QWidget *parent, const QString &filename, int width, int he
     applyProxySetting(lammps, settings);
 
     // finally show the window
-    if (settings.value(Keys::MAXIMIZED, false).toBool())
+    // only the combined window opens maximized; see the preferences dialog
+    if (dockedLayout() && settings.value(Keys::MAXIMIZED, false).toBool())
         showMaximized();
     else
         showNormal();

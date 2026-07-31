@@ -119,7 +119,9 @@ General Settings
      present, in the LAMMPS input.
    - **Open main window maximized:** when checked, LAMMPS-GUI starts with
      its main window filling the screen instead of restoring the size it
-     had when it was last closed.
+     had when it was last closed.  This applies to the combined main window
+     only and is disabled for individual windows, where a maximized main
+     window would cover the very windows it is meant to sit beside.
    - **Download tutorial solutions enabled:** this controls whether the
      "Download solutions" option is enabled by default when setting up
      a tutorial.
