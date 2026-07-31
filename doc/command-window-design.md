@@ -1,13 +1,14 @@
 # Command window (shell console) -- design notes
 
-**Status: parked.** Explored 2026-07-31 while the docked layout (PR #94) was in
-review. Not scheduled. Revisit if testers ask for it in the feedback on that PR.
+**Status: parked, shape agreed.** Explored 2026-07-31 while the docked layout
+(PR #94) was in review. Not scheduled. Revisit if testers ask for it in the
+feedback on that PR. The QPlainTextEdit-based approach below is the accepted
+one.
 
 ## What it is
 
 A dock panel in the output area with a shell prompt: a scrollback buffer, a
-command line with readline-style editing, history, and command/filename
-completion. Typed lines are forwarded to a **persistent** shell process
+command line with history and command/filename completion. Typed lines are forwarded to a **persistent** shell process
 (`$SHELL` on Unix, `cmd.exe` on Windows) whose output is streamed back into the
 scrollback.
 
@@ -84,9 +85,11 @@ Mostly assembly out of existing pieces:
 - command completion: a cached scan of `PATH`, refreshed on demand
 - `CodeEditor` already runs several `QCompleter` instances -- copy that pattern
 
-The one genuinely custom piece is readline-style editing. `QLineEdit` covers
-basic editing but not `Ctrl+A/E/K/U/W/Y`, and on Linux `Ctrl+A` is *select all*,
-so those need an explicit key handler for the muscle memory to work.
+**No Emacs-style line editing.** `QLineEdit` covers basic editing but not
+`Ctrl+A/E/K/U/W/Y`, and on Linux `Ctrl+A` is *select all*. Adding those was
+considered and dropped: keeping whatever Qt already provides is consistent with
+the rest of the application, which is worth more here than readline muscle
+memory.
 
 ## Known gaps -- decide before building
 
@@ -111,8 +114,20 @@ so those need an explicit key handler for the muscle memory to work.
 - `cmd.exe` needs `@echo off` sent first or it echoes every line, uses
   `%errorlevel%` and `%CD%` for the sentinel, and emits CRLF. `pushd` onto a UNC
   path silently maps a drive letter.
-- Put the shell command in a preference so it can be pointed at `bash`, `zsh` or
-  `pwsh`.
+- Put the shell command in a preference, defaulting to the user's preferred
+  shell rather than a fixed name: `$SHELL` on Unix-like systems, falling back to
+  `/bin/bash` and then `/bin/sh`. Windows has `%COMSPEC%`, which points at
+  `cmd.exe`; the preference lets it be pointed at `pwsh` instead.
+
+## Environment handed to the shell
+
+- **`TERM` set to something minimal**, `dumb` being the conventional value. This
+  is deliberate: a program that needs more than a stream of bytes should find out
+  from `TERM` and say so -- `less` prints "terminal is not fully functional",
+  editors refuse to start -- rather than emitting escape sequences into a
+  scrollback that cannot interpret them. Failing clearly beats failing strangely.
+- **`PYTHONUNBUFFERED=1`**, so a Python script's output appears as it is produced
+  rather than all at once when it exits (see the buffering note above).
 
 ## Rejected alternatives
 
@@ -129,7 +144,7 @@ so those need an explicit key handler for the muscle memory to work.
 ## Effort
 
 Roughly 3-4 days, split about evenly between the front end (prompt, history,
-completion, editing keys) and the shell plumbing (persistent process, sentinel
+completion) and the shell plumbing (persistent process, sentinel
 framing, directory tracking, Windows differences), plus the usual docs and
 tests.
 
