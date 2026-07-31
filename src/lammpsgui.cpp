@@ -159,6 +159,17 @@ void LammpsGui::setupUi(QSettings &settings, QFont &allFont, QFont &monoFont)
     createAboutMenu();
     setMenuBar(menubar);
 
+    // publish the menu accelerators so the output views can leave those
+    // sequences to this window when they are docked inside it
+    {
+        // addMenuAction() parents the actions to this window rather than to the
+        // menu they are shown in, so this is where they are found
+        QList<QKeySequence> menukeys;
+        for (const auto *action : findChildren<QAction *>())
+            if (!action->shortcut().isEmpty()) menukeys << action->shortcut();
+        setMainWindowShortcuts(menukeys);
+    }
+
     // Status bar
     createStatusBar();
 
@@ -190,13 +201,25 @@ void LammpsGui::setupUi(QSettings &settings, QFont &allFont, QFont &monoFont)
     // use default so the background logo is fully shown
     // use last values unless overridden from command-line
     // do not accept a geometry smaller than minimum, revert to default instead
-    if (mainx < Cfg::MINIMUM_WIDTH) mainx = settings.value(Keys::MAINX, 1024).toInt();
-    if (mainy < Cfg::MINIMUM_HEIGHT) mainy = settings.value(Keys::MAINY, 512).toInt();
+    // the two layouts want very different window sizes -- the combined window
+    // has to fit the editor, a dock group beside it and one below -- so each
+    // remembers its own
+    const bool docked = dockedLayout();
+    if (mainx < Cfg::MINIMUM_WIDTH)
+        mainx = settings
+                    .value(docked ? Keys::DOCKMAINX : Keys::MAINX,
+                           docked ? Cfg::DOCK_MAIN_DEFAULT_WIDTH : Cfg::MAIN_DEFAULT_WIDTH)
+                    .toInt();
+    if (mainy < Cfg::MINIMUM_HEIGHT)
+        mainy = settings
+                    .value(docked ? Keys::DOCKMAINY : Keys::MAINY,
+                           docked ? Cfg::DOCK_MAIN_DEFAULT_HEIGHT : Cfg::MAIN_DEFAULT_HEIGHT)
+                    .toInt();
     resize(mainx, mainy);
 
     // the docked layout sizes its dock areas relative to the main window, so
     // this has to come after the resize() above and before the first view
-    viewlayout = new WindowLayout(this, dockedLayout() ? LayoutMode::Docked : LayoutMode::Windows);
+    viewlayout = new WindowLayout(this, docked ? LayoutMode::Docked : LayoutMode::Windows);
 
     createVariableWindow();
 }
@@ -1461,8 +1484,9 @@ void LammpsGui::quit()
     // store some global settings
     QSettings settings;
     if (!isMaximized()) {
-        settings.setValue(Keys::MAINX, width());
-        settings.setValue(Keys::MAINY, height());
+        const bool docked = dockedLayout();
+        settings.setValue(docked ? Keys::DOCKMAINX : Keys::MAINX, width());
+        settings.setValue(docked ? Keys::DOCKMAINY : Keys::MAINY, height());
     }
     settings.sync();
 

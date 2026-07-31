@@ -15,6 +15,7 @@
 #include <QObject>
 
 class QDockWidget;
+class QEvent;
 class QMainWindow;
 class QWidget;
 
@@ -183,7 +184,20 @@ public:
      */
     void saveState() const;
 
+protected:
+    /**
+     * @brief Keep the dock proportions when the main window is resized
+     * @param watched Object being watched (the main window)
+     * @param event Event to inspect
+     * @return true if the event was consumed
+     */
+    bool eventFilter(QObject *watched, QEvent *event) override;
+
 private:
+    /// Give a panel that is alone in its area its title bar back, and take it
+    /// away again once a tab names it (Qt draws no tab bar for a single dock).
+    void updateDockChrome();
+
     /// Drop the widget from whichever slot holds it (connected to its
     /// QObject::destroyed signal, so a slot never keeps a dangling pointer).
     void forget(QObject *view);
@@ -208,6 +222,8 @@ private:
 
     QWidget *views[static_cast<int>(ViewSlot::Count)]{};     ///< Widget in each slot
     QDockWidget *docks[static_cast<int>(ViewSlot::Count)]{}; ///< Dock per slot (docked mode only)
+    /// Zero-height placeholder that collapses a dock's title bar while a tab names it
+    QWidget *emptytitles[static_cast<int>(ViewSlot::Count)]{};
 };
 
 #endif

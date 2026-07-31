@@ -268,6 +268,12 @@ SlideShow::SlideShow(const QString &fileName, LammpsGui *_lammpsgui, QWidget *pa
     connect(imgflipv, &QPushButton::released, this, &SlideShow::doImageFlipV);
     connect(normal, &QPushButton::released, this, &SlideShow::normalSize);
     connect(fitwin, &QPushButton::released, this, &SlideShow::resetWindowSize);
+    // a docked panel is sized by its dock area, not by the image, and the main
+    // window toolbar right above already carries a stop button
+    if (dockedLayout()) {
+        fitwin->hide();
+        stoprun->hide();
+    }
 
     toolsLayout->addWidget(tomovie, 1);
     toolsLayout->addWidget(toimage, 1);

@@ -130,7 +130,15 @@ constexpr double MOVIE_WARN_DISKFRAC = 0.9;
 // Version tag written into the saved dock arrangement.  Bump it whenever the
 // set of docks or their default arrangement changes, so QMainWindow discards a
 // saved state that no longer matches instead of restoring something stale.
-constexpr int DOCK_STATE_VERSION = 1;
+constexpr int DOCK_STATE_VERSION       = 1;
+constexpr int MAIN_DEFAULT_WIDTH       = 1024; ///< Default main window width, individual windows
+constexpr int MAIN_DEFAULT_HEIGHT      = 512;  ///< Default main window height, individual windows
+constexpr int DOCK_MAIN_DEFAULT_WIDTH  = 1400; ///< Default main window width, combined window
+constexpr int DOCK_MAIN_DEFAULT_HEIGHT = 900;  ///< Default main window height, combined window
+/** Fraction of the combined window width given to the right hand dock group */
+constexpr double DOCK_SPLIT_HORIZONTAL = 0.5;
+/** Fraction of the combined window height given to the bottom dock group */
+constexpr double DOCK_SPLIT_VERTICAL = 0.25;
 
 // ---- Resource paths ------------------------------------------------------
 /** path to LAMMPS-GUI Window Icon resource */
@@ -253,6 +261,8 @@ inline const QString DIAMETER         = QStringLiteral("diameter");
 inline const QString DOWNLOAD_TIMEOUT = QStringLiteral("download_timeout");
 inline const QString DOCKED           = QStringLiteral("docked");
 inline const QString DOCKSTATE        = QStringLiteral("dockstate");
+inline const QString DOCKMAINX        = QStringLiteral("dockmainx");
+inline const QString DOCKMAINY        = QStringLiteral("dockmainy");
 inline const QString ECHO             = QStringLiteral("echo");
 inline const QString GPUNEIGH         = QStringLiteral("gpuneigh");
 inline const QString GPUPAIRONLY      = QStringLiteral("gpupaironly");

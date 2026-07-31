@@ -642,6 +642,8 @@ ImageViewer::ImageViewer(const QString &fileName, LammpsWrapper *_lammps, Lammps
     connect(recenter, &QPushButton::released, this, &ImageViewer::doRecenter);
     connect(reset, &QPushButton::released, this, &ImageViewer::resetView);
     connect(fitwin, &QPushButton::released, this, &ImageViewer::resetWindowSize);
+    // a docked panel is sized by its dock area, not by the image
+    if (dockedLayout()) fitwin->hide();
     connect(setviz, &QPushButton::released, this, &ImageViewer::globalSettings);
     connect(atomviz, &QPushButton::released, this, &ImageViewer::atomSettings);
     connect(fixviz, &QPushButton::released, this, &ImageViewer::fixSettings);

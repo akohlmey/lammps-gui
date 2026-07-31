@@ -14,7 +14,9 @@
 #include "constants.h"
 
 #include <QDockWidget>
+#include <QEvent>
 #include <QMainWindow>
+#include <QResizeEvent>
 #include <QSettings>
 #include <QString>
 #include <QTabWidget>
@@ -90,9 +92,16 @@ void WindowLayout::createDocks()
         auto *d = new QDockWidget(dockTitle(slot), mainwindow);
         d->setObjectName(dockObjectName(slot));
         d->setAllowedAreas(Qt::AllDockWidgetAreas);
-        // an empty widget collapses the title bar; the name lives on the tab and
-        // the dock is still dragged, floated and re-docked by its tab
-        d->setTitleBarWidget(new QWidget(d));
+        // the panels have fixed places, so they are neither dragged nor floated;
+        // the View menu shows and hides them
+        d->setFeatures(QDockWidget::NoDockWidgetFeatures);
+        // updateDockChrome() decides per dock whether its name is carried by a
+        // tab or by a title bar, and needs this widget to collapse the latter
+        emptytitles[static_cast<int>(slot)] = new QWidget(d);
+        d->setTitleBarWidget(emptytitles[static_cast<int>(slot)]);
+        connect(d, &QDockWidget::visibilityChanged, this, [this]() {
+            updateDockChrome();
+        });
         mainwindow->addDockWidget(area, d);
         // an empty dock would be a blank panel; the views show themselves as
         // they are created, through place() and the usual show()/hide() calls
@@ -112,6 +121,8 @@ void WindowLayout::createDocks()
     auto *logDock = make(ViewSlot::Log, Qt::BottomDockWidgetArea);
     auto *varDock = make(ViewSlot::Variables, Qt::BottomDockWidgetArea);
     mainwindow->tabifyDockWidget(logDock, varDock);
+
+    mainwindow->installEventFilter(this);
 
     // a saved arrangement wins over the default one above; it is matched to
     // these docks by object name, which is why they all exist by now
@@ -134,15 +145,73 @@ void WindowLayout::applyDefaultSplit()
     if (!splitpending || !mainwindow) return;
     splitpending = false;
 
-    // half the width for the right hand group -- the chart controls need most
-    // of that to lay out without being clipped -- and a third of the height for
-    // the log across the bottom
     auto *chartDock = dock(ViewSlot::Chart);
     auto *logDock   = dock(ViewSlot::Log);
     if (chartDock && chartDock->isVisible())
-        mainwindow->resizeDocks({chartDock}, {mainwindow->width() / 2}, Qt::Horizontal);
+        mainwindow->resizeDocks(
+            {chartDock}, {int(mainwindow->width() * Cfg::DOCK_SPLIT_HORIZONTAL)}, Qt::Horizontal);
     if (logDock && logDock->isVisible())
-        mainwindow->resizeDocks({logDock}, {mainwindow->height() / 3}, Qt::Vertical);
+        mainwindow->resizeDocks({logDock}, {int(mainwindow->height() * Cfg::DOCK_SPLIT_VERTICAL)},
+                                Qt::Vertical);
+}
+
+// Qt only draws a tab bar once two dock widgets share an area, so a panel that
+// is alone would end up with no visible name at all.  Give such a panel its
+// title bar back and take it away again as soon as a tab names it.
+void WindowLayout::updateDockChrome()
+{
+    if (layoutmode != LayoutMode::Docked || !mainwindow) return;
+
+    for (int i = 0; i < static_cast<int>(ViewSlot::Count); ++i) {
+        auto *d = docks[i];
+        if (!d) continue;
+
+        bool tabbed = false;
+        for (const auto *sibling : mainwindow->tabifiedDockWidgets(d)) {
+            if (sibling && sibling->isVisible()) {
+                tabbed = true;
+                break;
+            }
+        }
+        // the placeholder stays owned by the dock either way, so it can be
+        // handed back and forth without leaking
+        if (tabbed) {
+            if (d->titleBarWidget() != emptytitles[i]) d->setTitleBarWidget(emptytitles[i]);
+        } else {
+            if (d->titleBarWidget()) d->setTitleBarWidget(nullptr);
+        }
+    }
+}
+
+// keep the dock proportions across a resize of the main window: the sizes
+// before the resize are relative to the old size, so re-applying the same
+// fractions preserves whatever split the user last set.
+bool WindowLayout::eventFilter(QObject *watched, QEvent *event)
+{
+    // Only once the window is on screen and the default proportions have been
+    // applied: during start-up the docks are not laid out yet, so their size is
+    // still zero and the fraction computed from it would be zero too -- which
+    // this would then enforce, collapsing the panel for good.
+    if (watched == mainwindow && event->type() == QEvent::Resize &&
+        layoutmode == LayoutMode::Docked && !splitpending && mainwindow->isVisible()) {
+        auto *re            = static_cast<QResizeEvent *>(event);
+        const QSize oldsize = re->oldSize();
+        const QSize newsize = re->size();
+
+        auto *chartDock = dock(ViewSlot::Chart);
+        auto *logDock   = dock(ViewSlot::Log);
+        if (oldsize.width() > 0 && newsize.width() != oldsize.width() && chartDock &&
+            chartDock->isVisible() && chartDock->width() > 0) {
+            const double frac = double(chartDock->width()) / oldsize.width();
+            mainwindow->resizeDocks({chartDock}, {int(newsize.width() * frac)}, Qt::Horizontal);
+        }
+        if (oldsize.height() > 0 && newsize.height() != oldsize.height() && logDock &&
+            logDock->isVisible() && logDock->height() > 0) {
+            const double frac = double(logDock->height()) / oldsize.height();
+            mainwindow->resizeDocks({logDock}, {int(newsize.height() * frac)}, Qt::Vertical);
+        }
+    }
+    return QObject::eventFilter(watched, event);
 }
 
 void WindowLayout::saveState() const
@@ -167,6 +236,7 @@ void WindowLayout::place(ViewSlot slot, QWidget *view)
         // so a view that is rebuilt does not move
         d->setWidget(view);
         if (!view) d->hide();
+        updateDockChrome();
     }
 }
 

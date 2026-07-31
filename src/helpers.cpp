@@ -749,10 +749,26 @@ bool dockedLayout()
     return QSettings().value(Keys::DOCKED, false).toBool();
 }
 
+namespace {
+QList<QKeySequence> mainwindow_shortcuts;
+} // namespace
+
+void setMainWindowShortcuts(const QList<QKeySequence> &keys)
+{
+    mainwindow_shortcuts = keys;
+}
+
+bool isMainWindowShortcut(const QKeySequence &keys)
+{
+    return !keys.isEmpty() && mainwindow_shortcuts.contains(keys);
+}
+
 void scopeShortcut(QWidget *widget, QAction *action, const QKeySequence &keys)
 {
     if (!widget || !action) return;
-    action->setShortcut(keys);
+    // the menu entry keeps working; only the accelerator is left to the main
+    // window, which binds the same sequence and is in scope for a docked view
+    action->setShortcut(shortcutBelongsToMainWindow(keys) ? QKeySequence() : keys);
     action->setShortcutContext(Qt::WidgetWithChildrenShortcut);
     widget->addAction(action);
 }
