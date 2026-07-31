@@ -252,7 +252,6 @@ inline const QString GRID             = QStringLiteral("grid");
 inline const QString HROT             = QStringLiteral("hrot");
 inline const QString HTTPS_PROXY      = QStringLiteral("https_proxy");
 inline const QString ID               = QStringLiteral("id");
-inline const QString IMAGEREPLACE     = QStringLiteral("imagereplace");
 inline const QString INTELPREC        = QStringLiteral("intelprec");
 inline const QString LINTCHECK        = QStringLiteral("lintcheck");
 inline const QString LOGX             = QStringLiteral("logx");

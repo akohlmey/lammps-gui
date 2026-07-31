@@ -99,9 +99,6 @@ General Settings
    - **Show Slide Show window by default:** when checked, a Slide Show
      window will be shown with images from a dump image command, if
      present, in the LAMMPS input.
-   - **Replace Image window on new render:** when checked, an existing
-     Image window will be replaced when a new snapshot image is requested;
-     otherwise each command will create a new Image window.
    - **Download tutorial solutions enabled:** this controls whether the
      "Download solutions" option is enabled by default when setting up
      a tutorial.

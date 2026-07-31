@@ -2248,8 +2248,8 @@ void LammpsGui::renderImage()
                 lammps.command("undump " + id);
         }
 
-        // if configured, delete old image window before opening new one
-        if (QSettings().value(Keys::IMAGEREPLACE, true).toBool()) delete imagewindow;
+        // delete the old image window before opening the new one
+        delete imagewindow;
         imagewindow = new ImageViewer(currentFile, &lammps, this);
         imagewindow->setMinimumSize(Cfg::MINIMUM_WIDTH, Cfg::MINIMUM_HEIGHT);
     } else {
