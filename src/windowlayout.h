@@ -233,6 +233,11 @@ private:
         ShowGuard &operator=(const ShowGuard &) = delete;
     };
 
+    /// Let a widget that just became a dock panel follow its dock area: drop the
+    /// minimum size it and its layout ask for, hand its conflicting shortcuts to
+    /// the main window, and make it take a click focus.
+    void prepareDockedView(QWidget *view);
+
     /// Disable the shortcuts of a widget that just became a dock panel and
     /// whose sequences the main window menus already bind.
     void deferShortcutsToMainWindow(QWidget *view);

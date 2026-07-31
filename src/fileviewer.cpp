@@ -100,7 +100,8 @@ FileViewer::FileViewer(const QString &_filename, LammpsGui *_lammpsgui, const QS
     moveCursor(QTextCursor::Start, QTextCursor::MoveAnchor);
     setReadOnly(true);
     setLineWrapMode(NoWrap);
-    setMinimumSize(800, 500);
+    // a docked panel is sized by its dock area; this would be a floor under it
+    if (!dockedLayout()) setMinimumSize(800, 500);
     setWindowIcon(QIcon(Cfg::MAIN_ICON));
     if (title.isEmpty())
         setWindowTitle("LAMMPS-GUI - Viewer - " + fileName);

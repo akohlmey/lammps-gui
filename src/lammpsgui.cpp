@@ -148,7 +148,9 @@ void LammpsGui::setupUi(QSettings &settings, QFont &allFont, QFont &monoFont)
     textEdit->setEnabled(true);
     textEdit->setAcceptDrops(true);
     textEdit->setStyleSheet(bannerstyle);
-    textEdit->setMinimumSize(Cfg::MINIMUM_WIDTH, Cfg::MINIMUM_HEIGHT);
+    // combined layout: the editor shares the window with the dock areas, so a
+    // minimum of its own is a floor under all of them
+    if (!dockedLayout()) textEdit->setMinimumSize(Cfg::MINIMUM_WIDTH, Cfg::MINIMUM_HEIGHT);
 
     // set up menu bar and menus with their actions and shortcuts
     menubar = new QMenuBar(this);
@@ -533,17 +535,29 @@ void LammpsGui::createStatusBar()
     cpuuse->hide();
 
     status = new QLabel(Cfg::STATUS_READY);
+    // The status bar sets the floor under the whole window: two 400-wide
+    // minimums plus labels that report their full text width leave it unable to
+    // shrink past ~1100.  With individual windows that is a fair price for a
+    // readable directory line, but the combined window has to be free to be made
+    // small, so there the labels are allowed to be clipped instead.
+    const bool docked = dockedLayout();
     status->setFixedWidth(300);
     statusbar->addWidget(status);
 
     dirstatus = new QLabel(QString(" Directory: (unknown)"));
-    dirstatus->setMinimumWidth(Cfg::MINIMUM_WIDTH);
+    if (docked)
+        dirstatus->setSizePolicy(QSizePolicy::Ignored, QSizePolicy::Preferred);
+    else
+        dirstatus->setMinimumWidth(Cfg::MINIMUM_WIDTH);
     dirstatus->show();
     statusbar->addWidget(dirstatus);
 
     progress = new QProgressBar();
     progress->setRange(0, Cfg::PROGRESS_MAXIMUM);
-    progress->setMinimumWidth(Cfg::MINIMUM_WIDTH);
+    if (docked)
+        progress->setSizePolicy(QSizePolicy::Ignored, QSizePolicy::Preferred);
+    else
+        progress->setMinimumWidth(Cfg::MINIMUM_WIDTH);
     progress->hide();
     statusbar->addWidget(progress);
 }
@@ -1475,8 +1489,10 @@ void LammpsGui::inspectFile(const QString &fileName)
             QFile(infodata).remove();
             auto *inspect_image = new ImageViewer(fileName, &lammps, this);
             inspect_image->setFont(font());
-            inspect_image->setMinimumSize(Cfg::MINIMUM_WIDTH, Cfg::MINIMUM_HEIGHT);
-            inspect_image->show();
+            if (!dockedLayout())
+                inspect_image->setMinimumSize(Cfg::MINIMUM_WIDTH, Cfg::MINIMUM_HEIGHT);
+            viewlayout->addAuxiliaryView(inspect_image, ViewSlot::Chart,
+                                         QString("Image: %1").arg(shortName));
             ilist->image = inspect_image;
         }
     }

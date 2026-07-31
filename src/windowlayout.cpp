@@ -353,8 +353,7 @@ void WindowLayout::addAuxiliaryView(QWidget *view, ViewSlot group, const QString
     if (auto *sibling = dock(group)) mainwindow->tabifyDockWidget(sibling, d);
 
     d->setWidget(view);
-    deferShortcutsToMainWindow(view);
-    view->setFocusPolicy(Qt::ClickFocus);
+    prepareDockedView(view);
     auxdocks << d;
 
     connect(d, &QDockWidget::visibilityChanged, this, [this, d](bool visible) {
@@ -398,6 +397,21 @@ void WindowLayout::saveState() const
 // panel, rather than when it is built -- a view that stays a window of its own
 // (the file viewers, the find dialog, the standalone viewer modes) has no
 // ambiguity and keeps everything.
+// A dock area sizes its panel, so the view has to be able to follow it down.
+// Its own minimum, and the one its layout derives from all of its controls,
+// would otherwise be a floor on the whole dock area -- for the charts view wide
+// enough to push the editor to its minimum and make the split unreachable.
+void WindowLayout::prepareDockedView(QWidget *view)
+{
+    if (!view) return;
+    view->setMinimumSize(0, 0);
+    if (auto *l = view->layout()) l->setSizeConstraint(QLayout::SetNoConstraint);
+    deferShortcutsToMainWindow(view);
+    // clicking a label or a plot would otherwise not move the keyboard focus,
+    // and the main window's menu bar follows the focus
+    view->setFocusPolicy(Qt::ClickFocus);
+}
+
 void WindowLayout::deferShortcutsToMainWindow(QWidget *view)
 {
     if (!view) return;
@@ -420,25 +434,11 @@ void WindowLayout::place(ViewSlot slot, QWidget *view)
 
     const ShowGuard guard(showing);
     if (auto *d = dock(slot)) {
-        // A dock area sizes its panel, so the view must be able to follow it
-        // down.  Its layout would otherwise impose the combined minimum of all
-        // the controls -- for the charts view that is wide enough to push the
-        // editor to its own minimum and make the requested split unreachable.
-        if (view) {
-            view->setMinimumSize(0, 0);
-            if (auto *l = view->layout()) l->setSizeConstraint(QLayout::SetNoConstraint);
-        }
+        prepareDockedView(view);
         // only the content changes; the dock keeps its area and tab position,
         // so a view that is rebuilt does not move
         d->setWidget(view);
         if (!view) d->hide();
-        // the panels are never undocked in this layout, so this is one-way
-        deferShortcutsToMainWindow(view);
-        // Clicking a label or the plot area inside a panel would otherwise not
-        // move the keyboard focus at all, and the main window's menu bar follows
-        // the focus.  A click focus on the panel itself catches what its
-        // children do not take.
-        if (view) view->setFocusPolicy(Qt::ClickFocus);
         updateDockChrome();
         // a newly built view brings its own size hint into the dock area, which
         // would otherwise take the split with it
