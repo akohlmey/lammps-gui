@@ -218,7 +218,9 @@ private:
 
     QMainWindow *mainwindow;   ///< Main window the views are shown in or docked into
     LayoutMode layoutmode;     ///< Presentation policy chosen at construction
-    bool splitpending = false; ///< Default dock proportions still to be applied
+    bool splitpending = false; ///< Dock proportions still to be applied
+    double hsplit     = 0.0;   ///< Fraction of the width held by the right hand group
+    double vsplit     = 0.0;   ///< Fraction of the height held by the bottom group
 
     QWidget *views[static_cast<int>(ViewSlot::Count)]{};     ///< Widget in each slot
     QDockWidget *docks[static_cast<int>(ViewSlot::Count)]{}; ///< Dock per slot (docked mode only)

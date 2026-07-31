@@ -87,7 +87,7 @@ QWidget *makeTabTitle(QWidget *parent, const QString &title)
     auto *label = new QLabel(title, bar);
     label->setObjectName("dockTabTitle");
     label->setStyleSheet("QLabel#dockTabTitle {"
-                         "  border: 1px solid palette(mid);"
+                         "  border: 1px solid palette(dark);"
                          "  border-bottom: none;"
                          "  border-top-left-radius: 4px;"
                          "  border-top-right-radius: 4px;"
@@ -156,21 +156,30 @@ void WindowLayout::createDocks()
     mainwindow->tabifyDockWidget(logDock, varDock);
 
     mainwindow->installEventFilter(this);
+    // watch the two docks that define the split, so the cached fractions follow
+    // a splitter the user drags and not just a resize of the window
+    if (auto *d = dock(ViewSlot::Chart)) d->installEventFilter(this);
+    if (auto *d = dock(ViewSlot::Log)) d->installEventFilter(this);
 
     // a saved arrangement wins over the default one above; it is matched to
     // these docks by object name, which is why they all exist by now
-    const QByteArray state = QSettings().value(Keys::DOCKSTATE).toByteArray();
+    QSettings settings;
+    const QByteArray state = settings.value(Keys::DOCKSTATE).toByteArray();
     if (!state.isEmpty() && mainwindow->restoreState(state, Cfg::DOCK_STATE_VERSION)) {
         // restoreState() also restores visibility, but a dock that has no view
         // in it yet must not show as an empty panel
         for (auto *d : docks)
             if (d && !d->widget()) d->hide();
-    } else {
-        // resizeDocks() only has an effect once the docks are laid out and
-        // visible, which they are not during construction, so the default split
-        // is applied from show() the first time a view appears
-        splitpending = true;
     }
+
+    // The proportions are kept separately rather than left to restoreState():
+    // that runs while the docks are still empty, so the sizes it restores are
+    // replaced by the size hint of each view as soon as one is put in.  They are
+    // re-applied from show() once a view is actually there -- resizeDocks() has
+    // no effect before the docks are laid out and visible anyway.
+    hsplit       = settings.value(Keys::DOCKSPLITH, Cfg::DOCK_SPLIT_HORIZONTAL).toDouble();
+    vsplit       = settings.value(Keys::DOCKSPLITV, Cfg::DOCK_SPLIT_VERTICAL).toDouble();
+    splitpending = true;
 }
 
 void WindowLayout::applyDefaultSplit()
@@ -181,11 +190,9 @@ void WindowLayout::applyDefaultSplit()
     auto *chartDock = dock(ViewSlot::Chart);
     auto *logDock   = dock(ViewSlot::Log);
     if (chartDock && chartDock->isVisible())
-        mainwindow->resizeDocks(
-            {chartDock}, {int(mainwindow->width() * Cfg::DOCK_SPLIT_HORIZONTAL)}, Qt::Horizontal);
+        mainwindow->resizeDocks({chartDock}, {int(mainwindow->width() * hsplit)}, Qt::Horizontal);
     if (logDock && logDock->isVisible())
-        mainwindow->resizeDocks({logDock}, {int(mainwindow->height() * Cfg::DOCK_SPLIT_VERTICAL)},
-                                Qt::Vertical);
+        mainwindow->resizeDocks({logDock}, {int(mainwindow->height() * vsplit)}, Qt::Vertical);
 }
 
 // Qt only draws a tab bar once two dock widgets share an area, so a panel that
@@ -228,6 +235,21 @@ bool WindowLayout::eventFilter(QObject *watched, QEvent *event)
     // applied: during start-up the docks are not laid out yet, so their size is
     // still zero and the fraction computed from it would be zero too -- which
     // this would then enforce, collapsing the panel for good.
+    if (event->type() == QEvent::Resize && layoutmode == LayoutMode::Docked && !splitpending &&
+        mainwindow && mainwindow->isVisible()) {
+        // a dock changed size: record what fraction of the window it now holds,
+        // whether that came from a splitter drag or from the code below
+        if (watched == dock(ViewSlot::Chart)) {
+            const auto *d = dock(ViewSlot::Chart);
+            if (!d->isHidden() && d->width() > 0 && mainwindow->width() > 0)
+                hsplit = double(d->width()) / mainwindow->width();
+        } else if (watched == dock(ViewSlot::Log)) {
+            const auto *d = dock(ViewSlot::Log);
+            if (!d->isHidden() && d->height() > 0 && mainwindow->height() > 0)
+                vsplit = double(d->height()) / mainwindow->height();
+        }
+    }
+
     if (watched == mainwindow && event->type() == QEvent::Resize &&
         layoutmode == LayoutMode::Docked && !splitpending && mainwindow->isVisible()) {
         auto *re            = static_cast<QResizeEvent *>(event);
@@ -238,13 +260,11 @@ bool WindowLayout::eventFilter(QObject *watched, QEvent *event)
         auto *logDock   = dock(ViewSlot::Log);
         if (oldsize.width() > 0 && newsize.width() != oldsize.width() && chartDock &&
             chartDock->isVisible() && chartDock->width() > 0) {
-            const double frac = double(chartDock->width()) / oldsize.width();
-            mainwindow->resizeDocks({chartDock}, {int(newsize.width() * frac)}, Qt::Horizontal);
+            mainwindow->resizeDocks({chartDock}, {int(newsize.width() * hsplit)}, Qt::Horizontal);
         }
         if (oldsize.height() > 0 && newsize.height() != oldsize.height() && logDock &&
             logDock->isVisible() && logDock->height() > 0) {
-            const double frac = double(logDock->height()) / oldsize.height();
-            mainwindow->resizeDocks({logDock}, {int(newsize.height() * frac)}, Qt::Vertical);
+            mainwindow->resizeDocks({logDock}, {int(newsize.height() * vsplit)}, Qt::Vertical);
         }
     }
     return QObject::eventFilter(watched, event);
@@ -253,7 +273,15 @@ bool WindowLayout::eventFilter(QObject *watched, QEvent *event)
 void WindowLayout::saveState() const
 {
     if (layoutmode != LayoutMode::Docked || !mainwindow) return;
-    QSettings().setValue(Keys::DOCKSTATE, mainwindow->saveState(Cfg::DOCK_STATE_VERSION));
+    QSettings settings;
+    settings.setValue(Keys::DOCKSTATE, mainwindow->saveState(Cfg::DOCK_STATE_VERSION));
+
+    // Store the proportions alongside it; see createDocks() for why.  The cached
+    // values are used rather than the current geometry: this runs while the main
+    // window is on its way out, where the widget sizes no longer reflect the
+    // layout the user was looking at.
+    if (hsplit > 0.0) settings.setValue(Keys::DOCKSPLITH, hsplit);
+    if (vsplit > 0.0) settings.setValue(Keys::DOCKSPLITV, vsplit);
 }
 
 void WindowLayout::place(ViewSlot slot, QWidget *view)
