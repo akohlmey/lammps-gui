@@ -23,6 +23,7 @@
 #include <QFile>
 #include <QFileInfo>
 #include <QFileSystemModel>
+#include <QFontMetrics>
 #include <QFontMetricsF>
 #include <QHBoxLayout>
 #include <QKeyEvent>
@@ -248,6 +249,10 @@ CommandWindow::CommandWindow(LammpsGui *_lammpsgui, QWidget *parent) :
 
     cwdlabel->setFont(monoFontFromSettings());
     cwdlabel->setTextInteractionFlags(Qt::TextSelectableByMouse);
+    // the directory gives way to the input line rather than the other way round;
+    // what bounds it is the elision in updatePrompt(), so its size hint stays
+    // honest and it does not collapse to nothing
+    prompt->setMinimumWidth(Cfg::COMMAND_MIN_PROMPT_WIDTH);
 
     killbutton = new QPushButton(QIcon(":/icons/skull.svg"), "");
     killbutton->setToolTip("Kill the running command");
@@ -482,7 +487,11 @@ void CommandWindow::submit()
     appendOutput(QString("%1$ %2\n").arg(workingdir, line));
     prompt->clear();
 
-    if (!line.trimmed().isEmpty() && (history.isEmpty() || history.last() != line)) history << line;
+    if (!line.trimmed().isEmpty() && (history.isEmpty() || history.last() != line)) {
+        history << line;
+        // the line just typed is a completion for the next one
+        refreshCompletions();
+    }
     historypos = history.size();
 
     running = true;
@@ -568,7 +577,13 @@ void CommandWindow::updatePrompt()
         cwdlabel->setText("running >");
         prompt->setPlaceholderText("command running -- append \"&\" to background the next one");
     } else {
-        cwdlabel->setText(workingdir + "$");
+        // a deep directory would otherwise take the whole row and leave the
+        // input line a few pixels wide; the front of a path is the part that
+        // can be spared, and the whole of it stays available as a tool tip
+        const QFontMetrics metrics(cwdlabel->font());
+        const int budget = qMax(Cfg::COMMAND_MIN_CWD_WIDTH, width() / 2);
+        cwdlabel->setText(metrics.elidedText(workingdir + "$", Qt::ElideLeft, budget));
+        cwdlabel->setToolTip(workingdir);
         prompt->setPlaceholderText("enter a command");
     }
 }
@@ -714,9 +729,28 @@ QStringList CommandWindow::pathCommands()
     return cached;
 }
 
+void CommandWindow::refreshCompletions()
+{
+    // Whole lines already typed come first, so that a few characters bring back
+    // the command they began rather than the shortest program that starts the
+    // same way.  Sorted and without repeats, because the history is kept in the
+    // order it was typed and the same line is usually typed more than once --
+    // that order is what the arrow keys are for, and it is the wrong one here.
+    QStringList sorted = history;
+    sorted.removeDuplicates();
+    sorted.sort();
+
+    // a name that is both a command and a line of its own is offered once
+    for (const auto &command : pathCommands())
+        if (!sorted.contains(command)) sorted << command;
+
+    commands->setStringList(sorted);
+}
+
 void CommandWindow::updateCompleter(const QString &text)
 {
-    // the first word is a command, everything after it is most likely a path
+    // the first word is a command or a line typed before, everything after it is
+    // most likely a path
     if (text.contains(' ')) {
         if (!qobject_cast<QFileSystemModel *>(completer->model())) {
             auto *files = new QFileSystemModel(completer);
@@ -726,8 +760,7 @@ void CommandWindow::updateCompleter(const QString &text)
     } else if (completer->model() != commands) {
         completer->setModel(commands);
     }
-    if (completer->model() == commands && commands->stringList().isEmpty())
-        commands->setStringList(pathCommands());
+    if ((completer->model() == commands) && commands->stringList().isEmpty()) refreshCompletions();
 }
 
 bool CommandWindow::eventFilter(QObject *watched, QEvent *event)
@@ -735,8 +768,11 @@ bool CommandWindow::eventFilter(QObject *watched, QEvent *event)
     // the panel is as wide as the scrollback can show, in characters of the font
     // it shows them in, so either changing means the shell must be told again
     if (((watched == scrollback->viewport()) && (event->type() == QEvent::Resize)) ||
-        ((watched == scrollback) && (event->type() == QEvent::FontChange)))
+        ((watched == scrollback) && (event->type() == QEvent::FontChange))) {
         sendTerminalSize();
+        // the directory in front of the prompt is elided to the width there is
+        updatePrompt();
+    }
 
     if ((watched == prompt) && (event->type() == QEvent::KeyPress)) {
         auto *key = static_cast<QKeyEvent *>(event);

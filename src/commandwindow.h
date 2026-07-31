@@ -140,6 +140,10 @@ private:
     /// Executable names found in PATH, collected once and cached.
     QStringList pathCommands();
 
+    /// Rebuild the completion list: the lines already typed, sorted and
+    /// without repeats, followed by the commands found in PATH.
+    void refreshCompletions();
+
     /// Point the completer at commands for the first word and at file names
     /// after it.
     void updateCompleter(const QString &text);

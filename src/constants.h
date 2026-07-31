@@ -159,8 +159,11 @@ constexpr int COMMAND_PGREP_TIMEOUT    = 1000; ///< Milliseconds to wait for pgr
 constexpr int COMMAND_DEFAULT_WIDTH    = 800;  ///< Default window width
 constexpr int COMMAND_DEFAULT_HEIGHT   = 400;  ///< Default window height
 constexpr int COMMAND_MIN_COLUMNS      = 20;   ///< Narrowest width worth reporting as COLUMNS
-constexpr int ALIASES_DEFAULT_WIDTH    = 520;  ///< Default width of the alias dialog
-constexpr int ALIASES_DEFAULT_HEIGHT   = 420;  ///< Default height of the alias dialog
+constexpr int COMMAND_MIN_CWD_WIDTH    = 120; ///< Pixels the directory in front of the prompt keeps
+constexpr int COMMAND_MIN_PROMPT_WIDTH =
+    240;                                    ///< Pixels the input line keeps whatever the directory
+constexpr int ALIASES_DEFAULT_WIDTH  = 520; ///< Default width of the alias dialog
+constexpr int ALIASES_DEFAULT_HEIGHT = 420; ///< Default height of the alias dialog
 
 // ---- Resource paths ------------------------------------------------------
 /** path to LAMMPS-GUI Window Icon resource */

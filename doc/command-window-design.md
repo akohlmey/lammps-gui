@@ -111,8 +111,15 @@ Mostly assembly out of existing pieces:
 
 - scrollback: read-only `QPlainTextEdit` with `setMaximumBlockCount()`; needs
   carriage-return handling or `\r` progress bars fill it with junk
-- history: `QStringList` with up/down, persisted through `QSettings`; `Ctrl+R`
-  reverse search is a nice-to-have
+- history: `QStringList` with up/down, persisted through `QSettings`. A `Ctrl+R`
+  reverse search was wanted and is **not** what was built: the lines already
+  typed, sorted and deduplicated, are put at the front of the same completion
+  model the command names are in, so typing the first characters of a long line
+  offers it back. That reuses the completer already there, needs no key of its
+  own, and needs no incremental-search mode with its own editing rules. The
+  arrow keys keep the order the lines were typed in, which is the order they are
+  wanted in there; the completion list is sorted, which is the order they are
+  wanted in here
 - filename completion: `QCompleter` over a `QFileSystemModel`, rooted at the
   tracked working directory
 - command completion: a cached scan of `PATH`, refreshed on demand

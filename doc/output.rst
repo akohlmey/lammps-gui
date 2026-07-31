@@ -370,8 +370,11 @@ directory shown in front of the prompt follows
 the shell, however it was changed.  The window starts in the directory
 of the current input file, which is where a run leaves its output.  The
 up and down arrow keys walk through previously entered commands, which
-are remembered between sessions, and the *Tab* key completes command
-names from the search path and, after the first word, file names.
+are remembered between sessions, and the *Tab* key completes file names
+after the first word.  On the first word it offers whole lines entered
+before, sorted and without repeats, and then command names from the
+search path -- so a few characters of a long command line bring the
+whole of it back, which is what a reverse history search is for.
 
 The shell is the one named by the ``SHELL`` environment variable on
 Unix-like systems (falling back to ``/bin/bash`` and then ``/bin/sh``)
