@@ -12,6 +12,7 @@
 #ifndef WINDOWLAYOUT_H
 #define WINDOWLAYOUT_H
 
+#include <QList>
 #include <QObject>
 
 #include <initializer_list>
@@ -190,6 +191,19 @@ signals:
 
 public:
     /**
+     * @brief Show a transient view as a tab beside an existing panel
+     * @param view  Widget to show; it keeps its own lifetime
+     * @param group Slot whose dock the new tab joins
+     * @param title Short label for the tab -- the window title of a viewer is
+     *              far too long to sit in one
+     *
+     * With individual windows this just shows the widget.  Docked, it gets a
+     * dock of its own tabbed into that group, which is removed again when the
+     * widget is destroyed.
+     */
+    void addAuxiliaryView(QWidget *view, ViewSlot group, const QString &title);
+
+    /**
      * @brief Store the current dock arrangement in the settings
      *
      * Does nothing in windowed mode, where the views carry their own geometry.
@@ -207,6 +221,18 @@ protected:
     bool eventFilter(QObject *watched, QEvent *event) override;
 
 private:
+    /// Marks the stretch of code in which we are the ones changing a dock's
+    /// visibility, so the handler can tell that apart from the user clicking a
+    /// tab.  Deliberately not a QSignalBlocker: the chrome update still has to
+    /// run, only the focus move must not.
+    struct ShowGuard {
+        bool &flag;
+        explicit ShowGuard(bool &f) : flag(f) { flag = true; }
+        ~ShowGuard() { flag = false; }
+        ShowGuard(const ShowGuard &)            = delete;
+        ShowGuard &operator=(const ShowGuard &) = delete;
+    };
+
     /// Disable the shortcuts of a widget that just became a dock panel and
     /// whose sequences the main window menus already bind.
     void deferShortcutsToMainWindow(QWidget *view);
@@ -227,6 +253,10 @@ private:
     /// resizeDocks() does nothing before the docks are laid out.
     void applySplit();
 
+    /// Build the two title-bar stand-ins a dock switches between, as named
+    /// children of it, and start out with the collapsed one.
+    void makeDockChrome(QDockWidget *d, const QString &title);
+
     /// A visible dock of a group, or nullptr if the whole group is hidden;
     /// resizeDocks() needs one to set the size the group shares.
     QDockWidget *sizingDock(std::initializer_list<ViewSlot> group) const;
@@ -245,15 +275,14 @@ private:
     LayoutMode layoutmode;     ///< Presentation policy chosen at construction
     bool splitpending = false; ///< An application of the proportions is scheduled
     bool applying     = false; ///< Resizing the docks ourselves, so do not track it
+    bool showing      = false; ///< Changing a dock's visibility ourselves
     double hsplit     = 0.0;   ///< Fraction of the width held by the right hand group
     double vsplit     = 0.0;   ///< Fraction of the height held by the bottom group
 
     QWidget *views[static_cast<int>(ViewSlot::Count)]{};     ///< Widget in each slot
     QDockWidget *docks[static_cast<int>(ViewSlot::Count)]{}; ///< Dock per slot (docked mode only)
-    /// Zero-height placeholder that collapses a dock's title bar while a tab names it
-    QWidget *emptytitles[static_cast<int>(ViewSlot::Count)]{};
-    /// Stand-in tab shown as the title bar of a panel that is alone in its area
-    QWidget *tabtitles[static_cast<int>(ViewSlot::Count)]{};
+    QList<QDockWidget *> auxdocks; ///< Docks of the transient views, in creation order
+    int auxcounter = 0;            ///< Serial number for their object names
 };
 
 #endif

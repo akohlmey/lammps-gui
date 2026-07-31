@@ -310,12 +310,6 @@ void LammpsGui::createEditMenu()
     addMenuAction(menu, ":/icons/search.svg", "&Find and Replace...", "Ctrl+F",
                   &LammpsGui::findAndReplace);
     menu->addSeparator();
-
-    addMenuAction(menu, ":/icons/preferences-desktop.svg", "P&references...", "Ctrl+P",
-                  &LammpsGui::preferences)
-        ->setMenuRole(QAction::PreferencesRole);
-    addMenuAction(menu, ":/icons/preferences-reset.svg", "Reset Preferences to &Defaults", "",
-                  &LammpsGui::defaults);
 }
 
 // Combined layout: one menu bar for the whole window, whose leading menus
@@ -419,6 +413,15 @@ void LammpsGui::createViewMenu()
                   &LammpsGui::viewSlides);
     addMenuAction(menu, ":/icons/utilities-terminal.svg", "&Variables Window", "Ctrl+Shift+W",
                   &LammpsGui::viewVariables);
+    menu->addSeparator();
+    // this menu decides how the windows are arranged, and the layout style is
+    // itself a preference, so the settings live here rather than in Edit, which
+    // belongs to the editor alone and is not shown while a panel has the focus
+    addMenuAction(menu, ":/icons/preferences-desktop.svg", "P&references...", "Ctrl+P",
+                  &LammpsGui::preferences)
+        ->setMenuRole(QAction::PreferencesRole);
+    addMenuAction(menu, ":/icons/preferences-reset.svg", "Reset Preferences to &Defaults", "",
+                  &LammpsGui::defaults);
 }
 
 void LammpsGui::createTutorialMenu()
@@ -1292,7 +1295,8 @@ void LammpsGui::viewFile(const QString &fileName)
     } else {
         file.close();
         auto *viewer = new FileViewer(fileName, this);
-        viewer->show();
+        // combined layout: a text viewer joins the tab group on the right
+        viewlayout->addAuxiliaryView(viewer, ViewSlot::Chart, QFileInfo(fileName).fileName());
     }
 }
 
@@ -1434,7 +1438,9 @@ void LammpsGui::inspectFile(const QString &fileName)
             dumpinfo.close();
             auto *infoviewer = new FileViewer(
                 infolog, this, QString("LAMMPS-GUI: restart info for %1").arg(shortName));
-            infoviewer->show();
+            // this is output from the info command, so it belongs with the log
+            viewlayout->addAuxiliaryView(infoviewer, ViewSlot::Log,
+                                         QString("Info: %1").arg(shortName));
             ilist->info = infoviewer;
             dumpinfo.remove();
             // read_restart restores the pair style but not the kspace style, so a
@@ -1463,7 +1469,8 @@ void LammpsGui::inspectFile(const QString &fileName)
             }
             auto *dataviewer = new FileViewer(
                 infodata, this, QString("LAMMPS-GUI: data file for %1").arg(shortName));
-            dataviewer->show();
+            viewlayout->addAuxiliaryView(dataviewer, ViewSlot::Chart,
+                                         QString("Data: %1").arg(shortName));
             ilist->data = dataviewer;
             QFile(infodata).remove();
             auto *inspect_image = new ImageViewer(fileName, &lammps, this);

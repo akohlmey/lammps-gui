@@ -128,6 +128,11 @@ void FileViewer::createMenuBar()
     // without a main window there is nothing to quit; closing is all there is
     if (!lammpsgui) quitAct->setVisible(false);
 
+    if (dockedLayout()) {
+        // the main window shows this menu for us while the panel has the focus
+        menubar->hide();
+        return;
+    }
     menubar->addMenu(file);
     if (lammpsgui)
         for (auto *shared : lammpsgui->sharedMenus())
@@ -138,6 +143,7 @@ void FileViewer::createMenuBar()
 void FileViewer::resizeEvent(QResizeEvent *event)
 {
     QPlainTextEdit::resizeEvent(event);
+    if (!menubar || menubar->isHidden()) return;
     const QRect cr = contentsRect();
     menubar->setGeometry(cr.left(), cr.top(), cr.width(), menubar->sizeHint().height());
 }

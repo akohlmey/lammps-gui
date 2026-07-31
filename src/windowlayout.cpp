@@ -32,6 +32,10 @@
 namespace {
 
 constexpr int TAB_TITLE_MARGIN = 2;
+// the chrome widgets are found on the dock by name, so a transient dock needs
+// no bookkeeping of its own
+const QString EMPTY_TITLE_NAME = QStringLiteral("dockEmptyTitle");
+const QString TAB_TITLE_NAME   = QStringLiteral("dockTabTitle");
 
 // Settings key recording the visibility of a slot, empty for the slots that
 // have no "show by default" preference.  Only the keys listed here are written
@@ -87,9 +91,10 @@ QWidget *makeTabTitle(QWidget *parent, const QString &title)
     layout->setContentsMargins(TAB_TITLE_MARGIN, TAB_TITLE_MARGIN, TAB_TITLE_MARGIN, 0);
     layout->setSpacing(0);
 
+    bar->setObjectName(TAB_TITLE_NAME);
     auto *label = new QLabel(title, bar);
-    label->setObjectName("dockTabTitle");
-    label->setStyleSheet("QLabel#dockTabTitle {"
+    label->setObjectName("dockTabTitleLabel");
+    label->setStyleSheet("QLabel#dockTabTitleLabel {"
                          "  border: 1px solid palette(dark);"
                          "  border-bottom: none;"
                          "  border-top-left-radius: 4px;"
@@ -114,6 +119,8 @@ WindowLayout::~WindowLayout() = default;
 
 void WindowLayout::createDocks()
 {
+    const ShowGuard guard(showing);
+
     // the bottom area spans the full window width, so the log sits underneath
     // the editor *and* the right hand group rather than beside them
     mainwindow->setCorner(Qt::BottomLeftCorner, Qt::BottomDockWidgetArea);
@@ -131,12 +138,19 @@ void WindowLayout::createDocks()
         d->setFeatures(QDockWidget::NoDockWidgetFeatures);
         // updateDockChrome() decides per dock whether its name is carried by a
         // tab or by a title bar, and needs this widget to collapse the latter
-        const int idx    = static_cast<int>(slot);
-        emptytitles[idx] = new QWidget(d);
-        tabtitles[idx]   = makeTabTitle(d, dockTitle(slot));
-        d->setTitleBarWidget(emptytitles[idx]);
-        connect(d, &QDockWidget::visibilityChanged, this, [this]() {
+        makeDockChrome(d, dockTitle(slot));
+        connect(d, &QDockWidget::visibilityChanged, this, [this, d](bool visible) {
             updateDockChrome();
+            // Clicking a tab raises its dock without moving the keyboard focus,
+            // so nothing would tell the menu bar that a different panel is now
+            // in front.  Move the focus there, which also puts the panel's own
+            // shortcuts in scope -- but only when the change came from the user
+            // and not from us showing a view as a run produces it.
+            if (!visible || showing) return;
+            if (auto *w = d->widget()) {
+                w->setFocus(Qt::OtherFocusReason);
+                emit viewActivated(w);
+            }
         });
         mainwindow->addDockWidget(area, d);
         // an empty dock would be a blank panel; the views show themselves as
@@ -188,6 +202,14 @@ void WindowLayout::createDocks()
 // The docks of one group share a size, so any visible one of them can be
 // resized to set it -- but only a visible one: resizeDocks() ignores a hidden
 // dock, and which member of a group is up varies with what the run produced.
+void WindowLayout::makeDockChrome(QDockWidget *d, const QString &title)
+{
+    auto *empty = new QWidget(d);
+    empty->setObjectName(EMPTY_TITLE_NAME);
+    makeTabTitle(d, title);
+    d->setTitleBarWidget(empty);
+}
+
 QDockWidget *WindowLayout::sizingDock(std::initializer_list<ViewSlot> group) const
 {
     // note: "slots" is a Qt keyword macro and cannot be used as a name here
@@ -234,10 +256,12 @@ void WindowLayout::updateDockChrome()
 {
     if (layoutmode != LayoutMode::Docked || !mainwindow) return;
 
-    for (int i = 0; i < static_cast<int>(ViewSlot::Count); ++i) {
-        auto *d = docks[i];
-        if (!d) continue;
+    QList<QDockWidget *> all;
+    for (auto *d : docks)
+        if (d) all << d;
+    all += auxdocks;
 
+    for (auto *d : all) {
         bool tabbed = false;
         for (const auto *sibling : mainwindow->tabifiedDockWidgets(d)) {
             if (sibling && sibling->isVisible()) {
@@ -247,8 +271,9 @@ void WindowLayout::updateDockChrome()
         }
         // the placeholder stays owned by the dock either way, so it can be
         // handed back and forth without leaking
-        QWidget *wanted = tabbed ? emptytitles[i] : tabtitles[i];
-        if (d->titleBarWidget() != wanted) {
+        QWidget *wanted = d->findChild<QWidget *>(tabbed ? EMPTY_TITLE_NAME : TAB_TITLE_NAME,
+                                                  Qt::FindDirectChildrenOnly);
+        if (wanted && d->titleBarWidget() != wanted) {
             // the one being replaced stays owned by the dock, so it can be
             // handed back and forth without leaking
             if (auto *previous = d->titleBarWidget()) previous->hide();
@@ -304,6 +329,54 @@ bool WindowLayout::eventFilter(QObject *watched, QEvent *event)
     return QObject::eventFilter(watched, event);
 }
 
+// A transient view -- a file viewer -- gets a dock of its own, tabbed into the
+// group of an existing panel.  It is not one of the fixed slots: several can be
+// open at once and each lives only as long as its widget, so the dock follows
+// the widget out.
+void WindowLayout::addAuxiliaryView(QWidget *view, ViewSlot group, const QString &title)
+{
+    if (!view) return;
+    if (layoutmode != LayoutMode::Docked || !mainwindow) {
+        view->show();
+        return;
+    }
+
+    const ShowGuard guard(showing);
+    auto *d = new QDockWidget(title, mainwindow);
+    // named so QMainWindow does not complain when the arrangement is saved; a
+    // stale entry for a viewer that is gone is simply ignored on restore
+    d->setObjectName(QStringLiteral("dock_aux_%1").arg(++auxcounter));
+    d->setAllowedAreas(Qt::AllDockWidgetAreas);
+    d->setFeatures(QDockWidget::DockWidgetClosable);
+    makeDockChrome(d, title);
+    mainwindow->addDockWidget(Qt::RightDockWidgetArea, d);
+    if (auto *sibling = dock(group)) mainwindow->tabifyDockWidget(sibling, d);
+
+    d->setWidget(view);
+    deferShortcutsToMainWindow(view);
+    view->setFocusPolicy(Qt::ClickFocus);
+    auxdocks << d;
+
+    connect(d, &QDockWidget::visibilityChanged, this, [this, d](bool visible) {
+        updateDockChrome();
+        if (!visible || showing) return;
+        if (auto *w = d->widget()) {
+            w->setFocus(Qt::OtherFocusReason);
+            emit viewActivated(w);
+        }
+    });
+    // the viewers delete themselves when closed, so the dock goes with them
+    connect(view, &QObject::destroyed, this, [this, d]() {
+        auxdocks.removeAll(d);
+        d->deleteLater();
+    });
+
+    d->show();
+    d->raise();
+    updateDockChrome();
+    emit viewActivated(view);
+}
+
 void WindowLayout::saveState() const
 {
     if (layoutmode != LayoutMode::Docked || !mainwindow) return;
@@ -345,6 +418,7 @@ void WindowLayout::place(ViewSlot slot, QWidget *view)
     // one of them is deleted rather than at some point of our choosing
     if (view) connect(view, &QObject::destroyed, this, &WindowLayout::forget);
 
+    const ShowGuard guard(showing);
     if (auto *d = dock(slot)) {
         // A dock area sizes its panel, so the view must be able to follow it
         // down.  Its layout would otherwise impose the combined minimum of all
@@ -397,6 +471,7 @@ void WindowLayout::show(ViewSlot slot)
 {
     auto *w = presenter(slot);
     if (!w) return;
+    const ShowGuard guard(showing);
     w->show();
 
     // deliberately no raise() here: this runs on every periodic update during a
@@ -423,6 +498,7 @@ void WindowLayout::raise(ViewSlot slot)
 
 void WindowLayout::hide(ViewSlot slot)
 {
+    const ShowGuard guard(showing);
     if (auto *w = presenter(slot)) w->hide();
 }
 

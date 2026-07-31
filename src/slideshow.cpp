@@ -646,7 +646,7 @@ void SlideShow::createMenuBar()
         this, addMenuAction(file, "&Copy Image", ":/icons/edit-copy.svg", this, &SlideShow::copy),
         QKeySequence(Qt::CTRL | Qt::Key_C));
     scopeShortcut(this,
-                  addMenuAction(file, "&Export Movie...", ":/icons/emblem-videos.svg", this,
+                  addMenuAction(file, "&Export Movie...", ":/icons/export-movie.svg", this,
                                 &SlideShow::movie),
                   QKeySequence(Qt::CTRL | Qt::Key_E));
     file->addSeparator();
