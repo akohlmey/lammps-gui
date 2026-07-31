@@ -365,6 +365,15 @@ SetVariables Class
 
 -----
 
+ShellAliases Class
+------------------
+
+.. doxygenclass:: ShellAliases
+   :members:
+   :protected-members:
+
+-----
+
 Index Variable Helpers
 ----------------------
 

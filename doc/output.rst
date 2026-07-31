@@ -378,7 +378,36 @@ Unix-like systems (falling back to ``/bin/bash`` and then ``/bin/sh``)
 and by ``COMSPEC`` on Windows.  Commands run with ``TERM`` set to
 ``dumb`` and with ``PYTHONUNBUFFERED`` set, so that the output of a
 Python script appears as it is produced rather than all at once when it
-exits.
+exits.  ``COLUMNS`` and ``LINES`` are set to the size of the panel and
+follow it as it is resized, so a program that formats its output to a
+width uses the width that is actually there rather than the 80 columns
+it would otherwise assume.
+
+*File* > *Command Aliases...* lists aliases that are defined in every
+shell this window starts.  Two things make them worth having.  A section
+of the start-up file guarded by a test for a terminal never runs here,
+as described below, and on several distributions that is where ``ls``
+and ``ll`` are defined.  Programs also drop formatting they keep only
+for a terminal: ``ls`` lists one entry per line rather than in columns,
+because that is what it is required to do when its output is not a
+terminal.  The list therefore starts out with
+
+.. list-table::
+   :header-rows: 1
+   :widths: 20 80
+
+   * - Alias
+     - Expands to
+   * - ``ls``
+     - ``ls -aCF``
+   * - ``ll``
+     - ``ls -laCF``
+
+which restores the multi-column, classified listing a terminal would
+have produced.  Rows can be added, changed or removed, *Restore
+Defaults* puts the two back, and a change applies to the shell that is
+already running as well as to later ones.  Aliases are not available
+with ``cmd.exe``, which has no equivalent.
 
 A command runs in the foreground and holds the shell until it finishes,
 exactly as it would in a terminal.  Append ``&`` to start a program --
@@ -431,8 +460,8 @@ does not install a handler of its own will sit through it.
    missing, which is confusing precisely because everything around them
    is there.  On Fedora and related distributions this is where ``ls``,
    ``ll`` and ``l.`` are defined, so those three are absent while the
-   rest of the aliases are present.  Defining them somewhere that is not
-   behind such a test makes them available here as well.
+   rest of the aliases are present.  *File* > *Command Aliases...* is
+   where to put them back, and it starts out holding exactly those.
 
 .. admonition:: This is not a terminal emulator
 

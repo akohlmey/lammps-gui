@@ -63,19 +63,31 @@ so the sentinel -- along with the start-up line that silences the shell's own
 prompt, and the arguments it is started with -- is chosen by shell family
 (`ShellKind` in `commandwindow.cpp`, decided from the program name):
 
-| | exit status | directory | prompt off | echo off |
-|---|---|---|---|---|
-| POSIX (`sh`, `bash`, `zsh`, `dash`) | `$?` | `$PWD` | `PS1=''` | `bash --noediting` |
-| csh, tcsh | `$status` | `$cwd` | `set prompt = ""` | `unset edit` |
-| `cmd.exe` | `%errorlevel%` | `%CD%` | -- | `@echo off` |
+| | exit status | directory | prompt off | echo off | alias |
+|---|---|---|---|---|---|
+| POSIX (`sh`, `bash`, `dash`) | `$?` | `$PWD` | `PS1=''` | `bash --noediting` | `alias n='v'` |
+| zsh | `$?` | `$PWD` | `PS1=''` + below | not needed | `alias n='v'` |
+| csh, tcsh | `$status` | `$cwd` | `set prompt = ""` | `unset edit` | `alias n 'v'` |
+| `cmd.exe` | `%errorlevel%` | `%CD%` | -- | `@echo off` | none |
 
-Two of these are not obvious. In csh, `echo` is a builtin that sets a status of
-its own, so the status being reported has to be saved into a variable before the
-first `echo` of the sentinel runs. And csh's line editor, not any argument, is
-what echoes the command back on a pipe; `unset edit` is the off switch that
-`--noediting` is for bash. Getting either wrong looks the same from the outside:
-every command's output appears one command late, with the line echoed in front
-of it.
+Three of these are not obvious.
+
+In csh, `echo` is a builtin that sets a status of its own, so the status being
+reported has to be saved into a variable before the first `echo` of the sentinel
+runs. And csh's line editor, not any argument, is what echoes the command back
+on a pipe; `unset edit` is the off switch that `--noediting` is for bash.
+Getting either wrong looks the same from the outside: every command's output
+appears one command late, with the line echoed in front of it.
+
+zsh looks POSIX and mostly is, but `set +H` does **not** turn history expansion
+off there -- `unsetopt banghist` does -- so with the POSIX line a command
+containing a `!` fails with "event not found". It also prints from places bash
+does not: `RPROMPT` on the right, `PROMPT_EOL_MARK` where output did not end in
+a newline, and the `precmd`/`preexec` hooks a theme uses in place of
+`PROMPT_COMMAND`. The last three are cosmetic here only because the scrollback's
+carriage-return handling happens to swallow them; the history expansion is a
+real failure. Neither zsh nor csh needs an argument to keep its line editor off,
+because neither runs it when what it reads is not a terminal.
 
 ### Working directory
 
@@ -141,8 +153,26 @@ memory.
   scrollback and the line discipline's echo goes to the pty master, which is
   never read. That is a real option if this turns out to matter -- it is not
   terminal emulation, only a terminal-shaped stdin -- and it was left undone
-  deliberately, to keep a PTY out of the panel. Documented in `output.rst`
-  instead, where the workaround is to define such aliases outside the guard.
+  deliberately, to keep a PTY out of the panel.
+
+  What was done instead is `ShellAliases` (`src/shellaliases.{cpp,h}`), a table
+  of aliases fed to every shell the panel starts, reachable from *File* >
+  *Command Aliases...*. It covers the same ground from the other side and it
+  covers more than the guard does: `ls` also drops its multi-column output when
+  stdout is not a terminal, which no rc file would have fixed. The defaults are
+  `ls` -> `ls -aCF` and `ll` -> `ls -laCF`. Editing the table applies to the
+  running shell too -- the definitions are re-sent and a row that was removed is
+  `unalias`ed, so the table means the same thing whenever it is edited.
+- **Programs drop what they format only for a terminal.** Not the same gap as
+  the one above, and one flavour of it is worth separating out: the *format*
+  `ls` chooses is decided by `isatty(stdout)` and nothing else, but the *width*
+  it formats to comes from `COLUMNS`, which needs no terminal at all. The panel
+  therefore exports `COLUMNS` and `LINES`, computed from the scrollback's size
+  in its fixed-width font and refreshed whenever the panel is resized or the
+  font changes. Measured: 143 columns at 1400 pixels wide, 104 at 900. Anything
+  written while a command is running would be read by that command rather than
+  by the shell, so an update that falls in that window is held back until the
+  sentinel says the shell is at a prompt again.
 - **Ambiguous stdin -- resolved by refusing input.** A line typed while a
   command runs would go down the same pipe and be read by that command rather
   than by the shell. The prompt is therefore read-only while a command is

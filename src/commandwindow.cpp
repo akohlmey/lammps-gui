@@ -14,6 +14,7 @@
 #include "constants.h"
 #include "helpers.h"
 #include "lammpsgui.h"
+#include "shellaliases.h"
 
 #include <QAbstractItemView>
 #include <QAction>
@@ -22,6 +23,7 @@
 #include <QFile>
 #include <QFileInfo>
 #include <QFileSystemModel>
+#include <QFontMetricsF>
 #include <QHBoxLayout>
 #include <QKeyEvent>
 #include <QLabel>
@@ -35,6 +37,8 @@
 #include <QStringListModel>
 #include <QTimer>
 #include <QVBoxLayout>
+
+#include <algorithm>
 
 #if !defined(Q_OS_WIN32)
 #include <csignal>
@@ -53,7 +57,7 @@ constexpr auto SENTINEL = "__LGUI_DONE_";
 // Shells do not agree on how to name the exit status, the working directory or
 // the prompt, so the few things this window has to say to one are chosen by
 // family rather than assumed to be POSIX.
-enum class ShellKind { Posix, Csh, Cmd };
+enum class ShellKind { Posix, Zsh, Csh, Cmd };
 
 ShellKind shellKind(const QString &program)
 {
@@ -63,6 +67,7 @@ ShellKind shellKind(const QString &program)
 #endif
     // csh and tcsh; no other common shell name ends in "csh"
     if (name.endsWith("csh")) return ShellKind::Csh;
+    if (name.endsWith("zsh")) return ShellKind::Zsh;
     return ShellKind::Posix;
 }
 
@@ -72,7 +77,9 @@ QStringList shellArgs(const QString &program)
         case ShellKind::Cmd:
             return {};
         case ShellKind::Csh:
-            // its editor is turned off through the start-up line below instead
+        case ShellKind::Zsh:
+            // neither runs its line editor when what it reads is not a terminal,
+            // so unlike bash they need no argument to keep it out of the way
             return {"-i"};
         default: {
             QStringList args;
@@ -96,12 +103,62 @@ QString shellInit(const QString &program)
         case ShellKind::Csh:
             // "unset edit" is what stops csh echoing the line back
             return QStringLiteral("set prompt = \"\" ; set prompt2 = \"\" ; unset edit");
+        case ShellKind::Zsh:
+            // zsh does not take "set +H" for history expansion, and it has its
+            // own places to print from: a prompt on the right, a mark where
+            // output did not end in a newline, and the precmd/preexec hooks a
+            // theme uses instead of PROMPT_COMMAND
+            return QStringLiteral("PS1='' ; PS2='' ; RPROMPT='' ; PROMPT_EOL_MARK='' ;"
+                                  " precmd() { : } ; preexec() { : } ;"
+                                  " unsetopt banghist 2>/dev/null");
         default:
             // PROMPT_COMMAND is where a distribution hides the escape sequence
             // that sets a terminal's title; history expansion would turn a "!"
             // in an ordinary command line into an error
             return QStringLiteral("PS1='' ; PS2='' ; unset PROMPT_COMMAND 2>/dev/null ;"
                                   " set +H 2>/dev/null");
+    }
+}
+
+// COLUMNS and LINES are where a program looks for the size of its output when it
+// cannot ask a terminal for one.  Nothing about them needs a terminal, but they
+// are normally set by one, so without this everything that formats to a width
+// falls back to its built-in 80 columns however wide the panel is.
+QString sizeCommand(const QString &program, int cols, int rows)
+{
+    switch (shellKind(program)) {
+        case ShellKind::Cmd:
+            // cmd.exe takes the size from the console it is attached to
+            return {};
+        case ShellKind::Csh:
+            return QStringLiteral("setenv COLUMNS %1 ; setenv LINES %2").arg(cols).arg(rows);
+        default:
+            return QStringLiteral("export COLUMNS=%1 LINES=%2").arg(cols).arg(rows);
+    }
+}
+
+// Quote a definition for the shell that will read it: everything inside single
+// quotes is literal, and the only thing that cannot appear there is a single
+// quote, which is closed, escaped and reopened in the usual way.
+QString singleQuoted(const QString &text)
+{
+    QString quoted = text;
+    quoted.replace(QLatin1String("'"), QLatin1String("'\\''"));
+    return QLatin1Char('\'') + quoted + QLatin1Char('\'');
+}
+
+// csh takes the name and the body as two words, everything else writes an
+// assignment; cmd.exe has no aliases at all, only doskey macros, which behave
+// differently enough not to pretend otherwise.
+QString aliasCommand(const QString &program, const ShellAlias &alias)
+{
+    switch (shellKind(program)) {
+        case ShellKind::Cmd:
+            return {};
+        case ShellKind::Csh:
+            return QStringLiteral("alias %1 %2").arg(alias.first, singleQuoted(alias.second));
+        default:
+            return QStringLiteral("alias %1=%2").arg(alias.first, singleQuoted(alias.second));
     }
 }
 
@@ -179,6 +236,8 @@ CommandWindow::CommandWindow(LammpsGui *_lammpsgui, QWidget *parent) :
     // input line, not the container
     setFocusProxy(prompt);
     prompt->installEventFilter(this);
+    scrollback->installEventFilter(this);
+    scrollback->viewport()->installEventFilter(this);
     connect(prompt, &QLineEdit::returnPressed, this, &CommandWindow::submit);
     connect(prompt, &QLineEdit::textEdited, this, &CommandWindow::updateCompleter);
 
@@ -244,6 +303,9 @@ void CommandWindow::createMenuBar()
                   &CommandWindow::restartShell);
     addMenuAction(file, "C&lear Output", ":/icons/edit-delete.svg", this,
                   &CommandWindow::clearScrollback);
+    file->addSeparator();
+    addMenuAction(file, "Command &Aliases...", ":/icons/preferences-desktop.svg", this,
+                  &CommandWindow::editAliases);
     file->addSeparator();
     scopeShortcut(this,
                   addMenuAction(file, "&Close", ":/icons/window-close.svg", this,
@@ -316,8 +378,79 @@ void CommandWindow::startShell()
     // about having no terminal to put a job in the foreground of.
     priming = true;
     shell->write(qPrintable(shellInit(program) + "\n"));
+    // define what the start-up file could not, because it is guarded by a test
+    // for a terminal, and what a program only formats that way for one
+    for (const auto &alias : ShellAliases::aliases()) {
+        const QString command = aliasCommand(program, alias);
+        if (!command.isEmpty()) shell->write(qPrintable(command + "\n"));
+    }
     // ask where we are, so the prompt is right before anything is typed
     shell->write(qPrintable(sentinelCommand(program) + "\n"));
+}
+
+void CommandWindow::editAliases()
+{
+    const auto before = ShellAliases::aliases();
+    ShellAliases dialog(this);
+    if (dialog.exec() != QDialog::Accepted) return;
+
+    const auto after = ShellAliases::aliases();
+    if (!shell || (shell->state() != QProcess::Running)) return;
+
+    // Apply the change to the shell that is already running, so the table means
+    // the same thing whether it was edited before the window was opened or
+    // after.  Only what the table itself gave the shell is withdrawn again; an
+    // alias that came from the start-up file is left alone.
+    QStringList commands;
+    for (const auto &alias : before) {
+        const auto same = [&alias](const ShellAlias &other) {
+            return other.first == alias.first;
+        };
+        if (std::none_of(after.begin(), after.end(), same))
+            commands << QStringLiteral("unalias %1 2>/dev/null").arg(alias.first);
+    }
+    for (const auto &alias : after) {
+        const QString command = aliasCommand(shellprogram, alias);
+        if (!command.isEmpty()) commands << command;
+    }
+    if (commands.isEmpty()) return;
+
+    // a line written now would be read by whatever is running, not by the shell
+    if (running || priming) {
+        pendingsetup += commands;
+        return;
+    }
+    for (const auto &command : commands)
+        shell->write(qPrintable(command + "\n"));
+}
+
+void CommandWindow::sendTerminalSize()
+{
+    if (!shell || (shell->state() != QProcess::Running)) return;
+
+    const QFontMetricsF metrics(scrollback->font());
+    const qreal charwidth  = metrics.horizontalAdvance(QLatin1Char('0'));
+    const qreal lineheight = metrics.lineSpacing();
+    if ((charwidth <= 0.0) || (lineheight <= 0.0)) return;
+
+    const int cols = int(scrollback->viewport()->width() / charwidth);
+    const int rows = int(scrollback->viewport()->height() / lineheight);
+    if ((cols < Cfg::COMMAND_MIN_COLUMNS) || (rows < 1)) return;
+    if ((cols == termcols) && (rows == termrows)) return;
+
+    // a line written now would be read by whatever is running rather than by the
+    // shell, so wait for the sentinel that says it is done
+    if (running || priming) {
+        sizepending = true;
+        return;
+    }
+
+    const QString command = sizeCommand(shellprogram, cols, rows);
+    if (command.isEmpty()) return;
+    termcols    = cols;
+    termrows    = rows;
+    sizepending = false;
+    shell->write(qPrintable(command + "\n"));
 }
 
 void CommandWindow::changeDirectory(const QString &dir)
@@ -391,6 +524,12 @@ void CommandWindow::consume(const QString &chunk)
                     appendOutput(QString("[exit status %1]\n").arg(status));
             }
             updatePrompt();
+            // the shell is at a prompt again, so anything that had to wait for
+            // it -- a resize, an edited alias -- can be passed on now
+            for (const auto &command : pendingsetup)
+                shell->write(qPrintable(command + "\n"));
+            pendingsetup.clear();
+            if (sizepending) sendTerminalSize();
         } else if (!priming && !isShellJobControlNoise(line)) {
             appendOutput(line + "\n");
         }
@@ -593,6 +732,12 @@ void CommandWindow::updateCompleter(const QString &text)
 
 bool CommandWindow::eventFilter(QObject *watched, QEvent *event)
 {
+    // the panel is as wide as the scrollback can show, in characters of the font
+    // it shows them in, so either changing means the shell must be told again
+    if (((watched == scrollback->viewport()) && (event->type() == QEvent::Resize)) ||
+        ((watched == scrollback) && (event->type() == QEvent::FontChange)))
+        sendTerminalSize();
+
     if ((watched == prompt) && (event->type() == QEvent::KeyPress)) {
         auto *key = static_cast<QKeyEvent *>(event);
         // walk the history; the completer popup uses the arrows itself, so this

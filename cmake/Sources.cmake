@@ -87,6 +87,8 @@ set(PROJECT_SOURCES
   ${CMAKE_SOURCE_DIR}/thirdparty/rangeslider/rangeslider.h
   ${CMAKE_SOURCE_DIR}/src/setvariables.cpp
   ${CMAKE_SOURCE_DIR}/src/setvariables.h
+  ${CMAKE_SOURCE_DIR}/src/shellaliases.cpp
+  ${CMAKE_SOURCE_DIR}/src/shellaliases.h
   ${CMAKE_SOURCE_DIR}/src/slideshow.cpp
   ${CMAKE_SOURCE_DIR}/src/slideshow.h
   ${CMAKE_SOURCE_DIR}/src/stdcapture.cpp

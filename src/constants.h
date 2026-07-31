@@ -158,6 +158,9 @@ constexpr int COMMAND_KILL_GRACE       = 500;  ///< Milliseconds between SIGTERM
 constexpr int COMMAND_PGREP_TIMEOUT    = 1000; ///< Milliseconds to wait for pgrep
 constexpr int COMMAND_DEFAULT_WIDTH    = 800;  ///< Default window width
 constexpr int COMMAND_DEFAULT_HEIGHT   = 400;  ///< Default window height
+constexpr int COMMAND_MIN_COLUMNS      = 20;   ///< Narrowest width worth reporting as COLUMNS
+constexpr int ALIASES_DEFAULT_WIDTH    = 520;  ///< Default width of the alias dialog
+constexpr int ALIASES_DEFAULT_HEIGHT   = 420;  ///< Default height of the alias dialog
 
 // ---- Resource paths ------------------------------------------------------
 /** path to LAMMPS-GUI Window Icon resource */
@@ -306,6 +309,7 @@ inline const QString REFLABELDIST     = QStringLiteral("reflabeldist");
 inline const QString REFLABELSIZE     = QStringLiteral("reflabelsize");
 inline const QString MONOFAMILY       = QStringLiteral("monofamily");
 inline const QString MONOSIZE         = QStringLiteral("monosize");
+inline const QString ALIASES          = QStringLiteral("aliases");
 inline const QString NAME             = QStringLiteral("name");
 inline const QString NTHREADS         = QStringLiteral("nthreads");
 inline const QString PLUGIN_PATH      = QStringLiteral("plugin_path");
@@ -324,6 +328,7 @@ inline const QString TITLE            = QStringLiteral("title");
 inline const QString TYPE             = QStringLiteral("type");
 inline const QString UPDCHART         = QStringLiteral("updchart");
 inline const QString UPDFREQ          = QStringLiteral("updfreq");
+inline const QString VALUE            = QStringLiteral("value");
 inline const QString VDWSTYLE         = QStringLiteral("vdwstyle");
 inline const QString VIEWCHART        = QStringLiteral("viewchart");
 inline const QString VIEWLOG          = QStringLiteral("viewlog");

@@ -97,6 +97,7 @@ private slots:
     void killCommand();     ///< End the processes the shell is running
     void restartShell();    ///< Discard the shell and start a fresh one
     void clearScrollback(); ///< Empty the scrollback, keeping the shell
+    void editAliases();     ///< Edit the aliases defined in every shell
     void quit();            ///< Quit the application (via LammpsGui::quit)
     void closeWindow();     ///< Close this window
 
@@ -127,6 +128,11 @@ private:
     /// Show the working directory in front of the input line.
     void updatePrompt();
 
+    /// Tell the shell how large the panel is, through COLUMNS and LINES, so
+    /// that a program formatting its output to a width uses that rather than
+    /// the 80 columns it falls back to when there is no terminal to ask.
+    void sendTerminalSize();
+
     /// The processes the shell started directly, asked of the operating system
     /// because without job control the shell keeps no job table.
     QList<qint64> shellChildren() const;
@@ -148,13 +154,17 @@ private:
     QCompleter *completer;       ///< Completes commands and file names
     QStringListModel *commands;  ///< Model behind the command completion
 
-    QString shellprogram;   ///< The interpreter that was started
-    QString pending;        ///< Output received so far that is not a complete line
-    QString workingdir;     ///< Where the shell last reported itself to be
-    QStringList history;    ///< Lines typed so far, oldest first
-    int historypos = 0;     ///< Position while walking the history, == size when idle
-    bool running   = false; ///< A command was sent and its sentinel is outstanding
-    bool priming   = false; ///< Still swallowing the shell's start-up chatter
+    QString shellprogram;     ///< The interpreter that was started
+    QString pending;          ///< Output received so far that is not a complete line
+    QString workingdir;       ///< Where the shell last reported itself to be
+    QStringList history;      ///< Lines typed so far, oldest first
+    int historypos   = 0;     ///< Position while walking the history, == size when idle
+    bool running     = false; ///< A command was sent and its sentinel is outstanding
+    bool priming     = false; ///< Still swallowing the shell's start-up chatter
+    int termcols     = 0;     ///< Panel width in characters, as last told to the shell
+    int termrows     = 0;     ///< Panel height in lines, as last told to the shell
+    bool sizepending = true;  ///< The shell still has to be told the panel size
+    QStringList pendingsetup; ///< Lines to send once the shell is at a prompt again
 };
 
 #endif

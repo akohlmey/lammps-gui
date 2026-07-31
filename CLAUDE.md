@@ -254,6 +254,7 @@ decisions and caveats as binding unless we explicitly revise them here.
 | `src/movieimport.{cpp,h}` | `MovieInfo` + ffprobe/ffmpeg probe and frame-extraction free functions, plus the `MovieImportDialog` confirmation dialog |
 | `src/preferences.{cpp,h}` | Tabbed settings dialog (general, accelerators, snapshot image, editor, charts) |
 | `src/setvariables.{cpp,h}` | Dialog for editing index-style LAMMPS variable name/value pairs |
+| `src/shellaliases.{cpp,h}` | `ShellAliases`: table of aliases defined in every shell the `CommandWindow` starts (works around rc sections gated on a terminal, and `ls` dropping its column format off one) |
 | `src/tutorialwizard.{cpp,h}` | Step-by-step wizard for setting up and launching LAMMPS tutorials |
 | `src/tutorials.{cpp,h}` | `TutorialCollection` metadata/registry for the available tutorial collections |
 | `src/fileviewer.{cpp,h}` | Read-only text viewer for files referenced in input scripts |
