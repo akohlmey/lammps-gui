@@ -365,7 +365,8 @@ kept running between commands, so ``cd``, ``pushd``/``popd``,
 environment variables, and the rest of the shell state behave as they
 would in a terminal.  The shell is started as an interactive one, so it
 reads the usual start-up file and the aliases and shell functions
-defined there are available.  The directory shown in front of the prompt follows
+defined there are available -- with one exception, noted below.  The
+directory shown in front of the prompt follows
 the shell, however it was changed.  The window starts in the directory
 of the current input file, which is where a run leaves its output.  The
 up and down arrow keys walk through previously entered commands, which
@@ -420,6 +421,18 @@ does not install a handler of its own will sit through it.
    appear silent until it is done.  Python is handled already, through
    ``PYTHONUNBUFFERED``; for other programs, ``stdbuf -oL`` in front of
    the command asks for line buffering where that tool is available.
+
+.. admonition:: Start-up file sections that require a terminal are skipped
+
+   The shell reads the start-up file, but a section of it guarded by a
+   test for a terminal, such as ``[ ! -t 0 ] && return``, stops there,
+   because the shell is reading a pipe and not a terminal.  Most aliases
+   and functions are unaffected; the ones defined in such a section are
+   missing, which is confusing precisely because everything around them
+   is there.  On Fedora and related distributions this is where ``ls``,
+   ``ll`` and ``l.`` are defined, so those three are absent while the
+   rest of the aliases are present.  Defining them somewhere that is not
+   behind such a test makes them available here as well.
 
 .. admonition:: This is not a terminal emulator
 

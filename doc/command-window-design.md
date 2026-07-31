@@ -129,6 +129,20 @@ memory.
   the shell keeps no job table -- and sent `SIGTERM` then `SIGKILL`. A command
   that started children of its own leaves those behind. Real job control is
   where PTY pressure comes back.
+- **Start-up file sections gated on a terminal do not run.** The shell is
+  started interactive, so it *does* read the user's rc file, but a fragment that
+  opens with `[ ! -t 0 ] && return` stops there because stdin is a pipe. On
+  Fedora that fragment is `/etc/profile.d/colorls.sh`, so `ls`, `ll` and `l.`
+  are missing while every other alias is present -- confusing exactly because it
+  looks like the rc file was not read at all. Anything of the user's own behind
+  such a test is skipped the same way. Measured: giving the shell a pty as
+  **stdin alone** restores them (3 of 3 versus 0 of 3), with stdout and stderr
+  left as pipes and `TERM` still `dumb`, so no escape sequences reach the
+  scrollback and the line discipline's echo goes to the pty master, which is
+  never read. That is a real option if this turns out to matter -- it is not
+  terminal emulation, only a terminal-shaped stdin -- and it was left undone
+  deliberately, to keep a PTY out of the panel. Documented in `output.rst`
+  instead, where the workaround is to define such aliases outside the guard.
 - **Ambiguous stdin -- resolved by refusing input.** A line typed while a
   command runs would go down the same pipe and be read by that command rather
   than by the shell. The prompt is therefore read-only while a command is
