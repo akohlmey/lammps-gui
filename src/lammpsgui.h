@@ -387,8 +387,10 @@ private slots:
     /** @brief View the log window */
     void viewLog();
 
+    /** @brief Show the shell prompt window */
+    void viewCommand();
+
     /** @brief View current variable definitions */
-    void viewCommand(); ///< Show the shell prompt window
     void viewVariables();
 
     /** @brief Show about dialog */

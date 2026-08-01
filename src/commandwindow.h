@@ -55,7 +55,8 @@ class CommandWindow : public QWidget {
 public:
     /**
      * @brief Constructor
-     * @param lammpsgui Pointer to LammpsGui for sending signals (may be nullptr)
+     * @param lammpsgui Pointer to the main window, which provides quit() and
+     *                  the shared menus (may be nullptr in standalone use)
      * @param parent Parent widget
      */
     explicit CommandWindow(LammpsGui *lammpsgui, QWidget *parent = nullptr);
@@ -155,7 +156,7 @@ private:
     /// after it.
     void updateCompleter(const QString &text);
 
-    LammpsGui *lammpsgui;        ///< Main widget pointer for receiving signals
+    LammpsGui *lammpsgui;        ///< Main window; provides quit() and the shared menus
     QProcess *shell = nullptr;   ///< The long-lived interpreter
     QPlainTextEdit *scrollback;  ///< Read-only transcript of the session
     QLineEdit *prompt;           ///< The input line

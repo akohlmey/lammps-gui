@@ -64,8 +64,8 @@ enum class LayoutMode {
  *   freely placed and stacked, which is what the application has always done.
  * - LayoutMode::Docked puts the views into dock areas around the editor, which
  *   stays the central widget: the charts, image and slide show views share a
- *   tabbed group on the right, the log and the variables view share a group
- *   across the full width at the bottom.
+ *   tabbed group on the right, the log, the variables view and the command
+ *   window share a group across the full width at the bottom.
  *
  * In docked mode the layout owns one QDockWidget per slot, created up front so
  * that a saved arrangement can be restored before the views themselves exist.
@@ -214,8 +214,10 @@ public:
 
 protected:
     /**
-     * @brief Keep the dock proportions when the main window is resized
-     * @param watched Object being watched (the main window)
+     * @brief Track the docked views and their containers
+     * @param watched Object being watched: the main window (resizes keep the
+     *                dock proportions), a dock (a dragged splitter updates
+     *                them), or a view (its close is redirected to its dock)
      * @param event Event to inspect
      * @return true if the event was consumed
      */
