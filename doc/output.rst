@@ -369,7 +369,10 @@ reads the usual start-up file and the aliases and shell functions
 defined there are available -- with one exception, noted below.  The
 directory shown in front of the prompt follows
 the shell, however it was changed.  The window starts in the directory
-of the current input file, which is where a run leaves its output.  The
+of the current input file, which is where a run leaves its output, and
+stays independent afterwards: opening a different input file does not
+move a shell that may be busy.  *File* > *Change to Input Directory*
+moves it to the current input file's directory on request.  The
 up and down arrow keys walk through previously entered commands, which
 are remembered between sessions.
 

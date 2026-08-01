@@ -101,9 +101,10 @@ cooperation, but macOS needs `libproc` and Windows has no equivalent for another
 process, so it is at best a cross-check and not the mechanism.
 
 **Coupling decision:** seed the panel from the GUI's current directory at start,
-then keep them independent. Add an explicit "cd to the input file's directory"
-action rather than syncing silently -- automatic syncing would move the shell
-out from under a running job.
+then keep them independent. The explicit action exists as *File* > *Change to
+Input Directory* rather than syncing silently -- automatic syncing would move
+the shell out from under a running job. When a command is running the cd is
+held in `pendingsetup` until the sentinel reports a prompt.
 
 ## Front end
 

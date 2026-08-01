@@ -404,6 +404,8 @@ void CommandWindow::createMenuBar()
                   &CommandWindow::restartShell);
     addMenuAction(file, "C&lear Output", ":/icons/edit-delete.svg", this,
                   &CommandWindow::clearScrollback);
+    addMenuAction(file, "Change to Input &Directory", ":/icons/document-open.svg", this,
+                  &CommandWindow::changeToInputDirectory);
     file->addSeparator();
     addMenuAction(file, "Command &Aliases...", ":/icons/preferences-desktop.svg", this,
                   &CommandWindow::editAliases);
@@ -557,9 +559,25 @@ void CommandWindow::sendTerminalSize()
 
 void CommandWindow::changeDirectory(const QString &dir)
 {
-    if (!shell || shell->state() != QProcess::Running) return;
-    shell->write(qPrintable(QString("cd \"%1\"\n").arg(dir)));
+    if (dir.isEmpty() || !shell || shell->state() != QProcess::Running) return;
+    const QString command = QString("cd \"%1\"").arg(dir);
+    // a line written now would be read by the running command, not the shell;
+    // the queue is flushed when the sentinel says the shell is at a prompt
+    if (running) {
+        pendingsetup << command << sentinelCommand(shellprogram);
+        return;
+    }
+    shell->write(qPrintable(command + "\n"));
     shell->write(qPrintable(sentinelCommand(shellprogram) + "\n"));
+}
+
+// The shell starts where the input file is and stays independent afterwards: a
+// file opened later must not move it out from under whatever it is doing.  This
+// is the explicit way back.  The GUI itself follows the input file (it makes
+// the file's directory the process working directory), so that is where to ask.
+void CommandWindow::changeToInputDirectory()
+{
+    changeDirectory(QDir::currentPath());
 }
 
 void CommandWindow::submit()

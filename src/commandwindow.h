@@ -78,6 +78,7 @@ public:
      *
      * Sent as a command, so the shell stays the one place that knows where it
      * is and the prompt is updated from its answer like any other change.
+     * Held back until the shell is at a prompt when a command is running.
      */
     void changeDirectory(const QString &dir);
 
@@ -103,15 +104,16 @@ public:
     static QStringList availableShells();
 
 private slots:
-    void submit();          ///< Send the typed line to the shell
-    void readOutput();      ///< Drain the shell's output into the scrollback
-    void shellFinished();   ///< Report that the shell has gone away
-    void interrupt();       ///< Send SIGINT to the shell and what it is running
-    void killCommand();     ///< End the processes the shell is running
-    void restartShell();    ///< Discard the shell and start a fresh one
-    void clearScrollback(); ///< Empty the scrollback, keeping the shell
-    void editAliases();     ///< Edit the aliases defined in every shell
-    void quit();            ///< Quit the application (via LammpsGui::quit)
+    void submit();                 ///< Send the typed line to the shell
+    void readOutput();             ///< Drain the shell's output into the scrollback
+    void shellFinished();          ///< Report that the shell has gone away
+    void interrupt();              ///< Send SIGINT to the shell and what it is running
+    void killCommand();            ///< End the processes the shell is running
+    void restartShell();           ///< Discard the shell and start a fresh one
+    void clearScrollback();        ///< Empty the scrollback, keeping the shell
+    void editAliases();            ///< Edit the aliases defined in every shell
+    void changeToInputDirectory(); ///< Move the shell to the input file's directory
+    void quit();                   ///< Quit the application (via LammpsGui::quit)
 
 protected:
     /**
