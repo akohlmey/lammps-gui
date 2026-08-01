@@ -400,7 +400,7 @@ void LammpsGui::createRunMenu()
                   &LammpsGui::renderImage);
     menu->addSeparator();
     addMenuAction(menu, ":/icons/utilities-terminal.svg", "Open Comman&d Window", "Ctrl+Shift+X",
-                  &LammpsGui::viewCommand);
+                  &LammpsGui::openCommandWindow);
     menu->addSeparator();
 
     auto *ovito = addMenuAction(menu, ":/icons/ovito.png", "View in &OVITO", "Ctrl+Shift+O",
@@ -429,6 +429,9 @@ void LammpsGui::createViewMenu()
                   &LammpsGui::viewSlides);
     addMenuAction(menu, ":/icons/utilities-terminal.svg", "&Variables Window", "Ctrl+Shift+W",
                   &LammpsGui::viewVariables);
+    // no shortcut of its own: Ctrl+Shift+X belongs to Run > Open Command Window
+    addMenuAction(menu, ":/icons/utilities-terminal.svg", "Co&mmand Window", "",
+                  &LammpsGui::viewCommand);
     menu->addSeparator();
     // this menu decides how the windows are arranged, and the layout style is
     // itself a preference, so the settings live here rather than in Edit, which
@@ -2482,17 +2485,31 @@ void LammpsGui::createVariableWindow()
     viewlayout->hide(ViewSlot::Variables);
 }
 
+void LammpsGui::createCommandWindow()
+{
+    if (commandwindow) return;
+    commandwindow = new CommandWindow(this);
+    commandwindow->setWindowTitle("LAMMPS-GUI - Commands");
+    commandwindow->setWindowIcon(QIcon(Cfg::MAIN_ICON));
+    // start where the input file is, which is where a run leaves its output
+    commandwindow->changeDirectory(currentDir);
+    viewlayout->place(ViewSlot::Command, commandwindow);
+}
+
+void LammpsGui::openCommandWindow()
+{
+    createCommandWindow();
+    viewlayout->raise(ViewSlot::Command);
+}
+
 void LammpsGui::viewCommand()
 {
+    // on first use there is nothing to hide, so the toggle opens the window
     if (!commandwindow) {
-        commandwindow = new CommandWindow(this);
-        commandwindow->setWindowTitle("LAMMPS-GUI - Commands");
-        commandwindow->setWindowIcon(QIcon(Cfg::MAIN_ICON));
-        // start where the input file is, which is where a run leaves its output
-        commandwindow->changeDirectory(currentDir);
-        viewlayout->place(ViewSlot::Command, commandwindow);
+        openCommandWindow();
+        return;
     }
-    viewlayout->raise(ViewSlot::Command);
+    viewlayout->toggle(ViewSlot::Command);
 }
 
 void LammpsGui::viewVariables()

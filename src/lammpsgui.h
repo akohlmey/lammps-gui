@@ -387,8 +387,13 @@ private slots:
     /** @brief View the log window */
     void viewLog();
 
-    /** @brief Show the shell prompt window */
+    /** @brief Toggle the shell prompt window from the View menu
+     *
+     * On first use there is nothing to hide, so it opens the window. */
     void viewCommand();
+
+    /** @brief Open and raise the shell prompt window (Run menu) */
+    void openCommandWindow();
 
     /** @brief View current variable definitions */
     void viewVariables();
@@ -482,6 +487,11 @@ private:
      * The failure is otherwise silent: printf() reports success and the
      * runtime drops the bytes.  Must be called after createLogWindow(). */
     void reportCaptureFailure();
+
+    /** @brief Create the shell prompt window if it does not exist yet
+     *
+     * The shell starts in the directory of the current input file. */
+    void createCommandWindow();
 
     /** @brief Warn (modal) if the stdout capture buffer usage was high */
     void warnHighBufferUsage();

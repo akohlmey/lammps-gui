@@ -256,7 +256,8 @@ View
 .. index:: window visibility
 
 The *View* menu offers to show or hide additional windows with log
-output, charts, slide show, variables, or snapshot images.  With the
+output, charts, slide show, variables, snapshot images, or the
+:ref:`Command window <commandwindow>`.  With the
 *Combined Main Window* layout these are panels docked into the main
 window instead of windows of their own, and the same entries show and
 hide the panels.  The default settings for their visibility can be
