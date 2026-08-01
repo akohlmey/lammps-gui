@@ -99,7 +99,6 @@ private slots:
     void clearScrollback(); ///< Empty the scrollback, keeping the shell
     void editAliases();     ///< Edit the aliases defined in every shell
     void quit();            ///< Quit the application (via LammpsGui::quit)
-    void closeWindow();     ///< Close this window
 
 protected:
     /**

@@ -71,7 +71,6 @@ private slots:
     void runBuffer();    ///< Start running simulation
     void nextWarning();  ///< Navigate to next warning
     void openErrorUrl(); ///< Open error documentation URL in browser
-    void closeWindow();  ///< Close this window (void-returning wrapper for QWidget::close)
 
 protected:
     /**

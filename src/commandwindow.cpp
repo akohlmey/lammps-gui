@@ -364,8 +364,7 @@ void CommandWindow::createMenuBar()
                   &CommandWindow::editAliases);
     file->addSeparator();
     scopeShortcut(this,
-                  addMenuAction(file, "&Close", ":/icons/window-close.svg", this,
-                                &CommandWindow::closeWindow),
+                  addMenuAction(file, "&Close", ":/icons/window-close.svg", this, &QWidget::close),
                   QKeySequence(Qt::CTRL | Qt::Key_W));
     auto *quitAct =
         addMenuAction(file, "&Quit", ":/icons/application-exit.svg", this, &CommandWindow::quit);
@@ -772,11 +771,6 @@ void CommandWindow::clearScrollback()
 void CommandWindow::quit()
 {
     if (lammpsgui) lammpsgui->quit();
-}
-
-void CommandWindow::closeWindow()
-{
-    close();
 }
 
 QStringList CommandWindow::pathCommands()

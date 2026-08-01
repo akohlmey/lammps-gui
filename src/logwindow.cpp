@@ -100,23 +100,26 @@ LogWindow::LogWindow(const QString &_filename, LammpsGui *_lammpsgui, QWidget *p
 // window-scoped binding here would be an ambiguous overload of that one.
 void LogWindow::createActions()
 {
+    // the slot parameter is generic so that inherited members such as
+    // QWidget::close() can be connected as well as this window's own slots
     auto add = [this](QAction *&act, const QString &text, const QString &icon,
-                      const QKeySequence &keys, void (LogWindow::*slot)()) {
+                      const QKeySequence &keys, auto slot) {
         act = new QAction(QIcon(icon), text, this);
         scopeShortcut(this, act, keys);
         connect(act, &QAction::triggered, this, slot);
     };
 
-    add(saveAsAct, "Save Log to File ...", ":/icons/document-save-as.svg",
+    // menu texts follow the shared convention of the other view File menus
+    add(saveAsAct, "&Save Log to File ...", ":/icons/document-save-as.svg",
         QKeySequence(Qt::CTRL | Qt::Key_S), &LogWindow::saveAs);
     add(yamlAct, "&Export YAML Data to File ...", ":/icons/yaml-file-icon.svg",
         QKeySequence(Qt::CTRL | Qt::Key_Y), &LogWindow::extractYaml);
     add(nextWarnAct, "&Jump to next warning or error", ":/icons/warning.svg",
         QKeySequence(Qt::CTRL | Qt::Key_N), &LogWindow::nextWarning);
-    add(closeAct, "&Close Window", ":/icons/window-close.svg", QKeySequence(Qt::CTRL | Qt::Key_W),
-        &LogWindow::closeWindow);
-    add(quitAct, "&Quit LAMMPS-GUI", ":/icons/application-exit.svg",
-        QKeySequence(Qt::CTRL | Qt::Key_Q), &LogWindow::quit);
+    add(closeAct, "&Close", ":/icons/window-close.svg", QKeySequence(Qt::CTRL | Qt::Key_W),
+        &LogWindow::close);
+    add(quitAct, "&Quit", ":/icons/application-exit.svg", QKeySequence(Qt::CTRL | Qt::Key_Q),
+        &LogWindow::quit);
 
     // only shown when the cursor sits on a line with an error URL
     add(urlAct, "Open &URL in Web Browser", ":/icons/help-browser.svg", QKeySequence(),
@@ -199,11 +202,6 @@ void LogWindow::changeEvent(QEvent *event)
         const QFont mono = monoFontFromSettings();
         if (document()->defaultFont() != mono) document()->setDefaultFont(mono);
     }
-}
-
-void LogWindow::closeWindow()
-{
-    close();
 }
 
 void LogWindow::quit()
