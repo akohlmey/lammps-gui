@@ -1903,11 +1903,22 @@ void LammpsGui::runDone()
     progress->setValue(Cfg::PROGRESS_MAXIMUM);
     textEdit->setHighlight(CodeEditor::NO_HIGHLIGHT, false);
 
+    // When a whole run produced not a single captured byte, find out which
+    // side lost it while the capture is still active; see probeRunEnd().
+    std::string capturereport;
+    if (capturer->isUsable() && (capturer->totalRead() == 0))
+        capturereport = capturer->probeRunEnd();
+
     capturer->endCapture();
 
     if (logwindow) {
         auto log = capturer->getCapture();
         logwindow->insertPlainText(log.c_str());
+        // only when the final drain stayed empty too was the output really lost
+        if (!capturereport.empty() && log.empty())
+            logwindow->appendPlainText(
+                QString("[no LAMMPS output was captured during this run: %1]\n")
+                    .arg(QString::fromStdString(capturereport)));
         logwindow->moveCursor(QTextCursor::End);
     }
 

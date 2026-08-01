@@ -86,6 +86,26 @@ public:
      */
     const std::string &diagnostic() const { return m_diagnostic; }
 
+    /**
+     * @brief Bytes retrieved through getChunk() since the capture began
+     * @return Byte count; zero after a whole run means the output was lost
+     */
+    size_t totalRead() const { return m_totalread; }
+
+    /**
+     * @brief Decide which side lost the output of a run that captured nothing
+     * @return One line stating whether the redirect still worked at run end,
+     *         empty when there is no active, usable capture to probe
+     *
+     * Performs one more marker round trip while the capture is still active:
+     * a marker that comes back proves the redirect held for the whole run
+     * (the library's output went elsewhere), one that does not means stdout
+     * was re-pointed while the run was underway.  Call before endCapture();
+     * any real output drained alongside the marker is preserved and delivered
+     * through the following endCapture()/getCapture().
+     */
+    std::string probeRunEnd();
+
 private:
     /**
      * @brief Pipe file descriptors for capturing output
@@ -110,8 +130,10 @@ private:
     /// return.  Runs from beginCapture(), before anything else writes.
     void verifyCapture();
 
-    bool m_usable = false;    ///< stdout could be redirected into the pipe
-    std::string m_diagnostic; ///< Why it could not, for reporting to the user
+    bool m_usable = false;       ///< stdout could be redirected into the pipe
+    std::string m_diagnostic;    ///< Why it could not, for reporting to the user
+    size_t m_totalread = 0;      ///< Bytes handed out via getChunk() this capture
+    std::string m_probeleftover; ///< Output drained by probeRunEnd() with its marker
 };
 
 #endif

@@ -134,6 +134,48 @@ TEST_F(StdCaptureTest, BeginCaptureVerifiesItselfAndStaysUsable)
     EXPECT_EQ(capturer.getCapture(), "after the marker");
 }
 
+TEST_F(StdCaptureTest, TotalReadCountsChunkBytes)
+{
+    capturer.beginCapture();
+    EXPECT_EQ(capturer.totalRead(), 0u); // the verification marker does not count
+
+    printf("12345");
+    (void)capturer.getChunk();
+    EXPECT_EQ(capturer.totalRead(), 5u);
+
+    capturer.endCapture();
+}
+
+// The end-of-run probe: on a working capture its marker comes back (an intact
+// redirect), it never leaks the marker, and real output drained along with the
+// marker is handed back through endCapture()/getCapture().
+
+TEST_F(StdCaptureTest, ProbeRunEndReportsAnIntactCapture)
+{
+    capturer.beginCapture();
+    const std::string report = capturer.probeRunEnd();
+    EXPECT_NE(report.find("intact"), std::string::npos);
+
+    capturer.endCapture();
+    EXPECT_TRUE(capturer.getCapture().empty());
+}
+
+TEST_F(StdCaptureTest, ProbeRunEndPreservesRealOutput)
+{
+    capturer.beginCapture();
+    printf("late output");
+    const std::string report = capturer.probeRunEnd();
+    EXPECT_NE(report.find("intact"), std::string::npos);
+
+    capturer.endCapture();
+    EXPECT_EQ(capturer.getCapture(), "late output");
+}
+
+TEST_F(StdCaptureTest, ProbeRunEndWithoutCaptureIsEmpty)
+{
+    EXPECT_TRUE(capturer.probeRunEnd().empty());
+}
+
 // Buffer use tracking
 
 TEST_F(StdCaptureTest, BufferUseInitiallyZero)

@@ -129,6 +129,7 @@ void StdCapture::beginCapture()
     }
     m_capturing = true;
     maxread     = 0;
+    m_totalread = 0;
     notifyCaptureState(true);
     verifyCapture();
 }
@@ -174,12 +175,55 @@ void StdCapture::verifyCapture()
     }
 }
 
+// The counterpart at the other end: when a whole run yielded nothing, decide
+// which side lost it.  One more marker round trip through the still-active
+// capture tells the two failure modes apart: a marker that comes back proves
+// the redirect held for the entire run -- so the library's output went
+// somewhere else -- and one that does not means stdout was re-pointed while
+// the run was underway.  Any real output drained along with the marker is
+// kept and handed back through the next endCapture()/getCapture().
+std::string StdCapture::probeRunEnd()
+{
+    if (!m_capturing || !m_usable) return {};
+
+    static constexpr char marker[] = "__LGUI_CAPTURE_TEST__\n";
+    printf("%s", marker);
+
+    std::string got;
+    for (int wait = 0; wait < 100; ++wait) {
+        int bytesRead = 0;
+#if defined(Q_OS_WIN32)
+        if (pipe_has_data(m_pipe[READ])) bytesRead = read(m_pipe[READ], buf.data(), bufSize - 1);
+#else
+        bytesRead = read(m_pipe[READ], buf.data(), bufSize - 1);
+#endif
+        if (bytesRead > 0) {
+            buf[bytesRead] = 0;
+            got += buf.data();
+        }
+        if (got.find(marker) != std::string::npos) break;
+        std::this_thread::sleep_for(std::chrono::milliseconds(1));
+    }
+
+    const auto pos = got.find(marker);
+    if (pos == std::string::npos) {
+        m_probeleftover = got;
+        return describe("stdout no longer feeds the capture pipe: a marker written at the"
+                        " end of the run did not come back");
+    }
+    m_probeleftover = got.substr(0, pos) + got.substr(pos + sizeof(marker) - 1);
+    return describe("the capture stayed intact for the whole run -- a marker written at"
+                    " its end came back -- so the library's output went elsewhere");
+}
+
 bool StdCapture::endCapture()
 {
     if (!m_capturing) return false;
     notifyCaptureState(false);
     if (m_oldStdOut >= 0) dup2(m_oldStdOut, fileno(stdout));
-    m_captured.clear();
+    // not clear(): keep what an end-of-run probe drained alongside its marker
+    m_captured = m_probeleftover;
+    m_probeleftover.clear();
 
     int bytesRead;
     bool fd_blocked;
@@ -226,6 +270,7 @@ std::string StdCapture::getChunk()
 #endif
     if (bytesRead > 0) {
         buf[bytesRead] = '\0';
+        m_totalread += bytesRead;
     }
     maxread = (maxread > bytesRead) ? maxread : bytesRead;
     return {buf.data()};
