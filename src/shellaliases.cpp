@@ -23,6 +23,9 @@
 #include <QTableWidget>
 #include <QVBoxLayout>
 
+#include <algorithm>
+#include <functional>
+
 namespace {
 
 // QSettings arrays leave a "size" entry behind, which is the only way to tell a
