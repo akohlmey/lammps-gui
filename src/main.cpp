@@ -84,6 +84,16 @@ int main(int argc, char *argv[])
     QCoreApplication::setOrganizationDomain("lammps.org");
     QCoreApplication::setApplicationName("LAMMPS-GUI (QT" stringify(QT_VERSION_MAJOR) ")");
     QCoreApplication::setApplicationVersion(LAMMPS_GUI_VERSION);
+#if defined(LAMMPS_GUI_USE_PLUGIN)
+    {
+        // the library path is stored under a toolchain-qualified key (see
+        // constants.h); carry the value of an installation from before the
+        // split over once, and leave the legacy key for older versions
+        QSettings settings;
+        if (!settings.contains(Keys::PLUGIN_PATH) && settings.contains(Keys::PLUGIN_PATH_LEGACY))
+            settings.setValue(Keys::PLUGIN_PATH, settings.value(Keys::PLUGIN_PATH_LEGACY));
+    }
+#endif
     QCommandLineParser parser;
     QString description(
         "\nThis is LAMMPS-GUI v" LAMMPS_GUI_VERSION "\n"

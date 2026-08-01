@@ -69,7 +69,8 @@
           <li>Show the application-wide Run, View, Tutorials, and About menus in all output windows, so a run can be started or stopped from any of them; Output, Slide Show, and file viewer windows gain a File menu</li>
           <li>Reuse the Output and Charts windows across runs instead of recreating them; the options to keep old Output, Charts, and Image windows have been removed</li>
           <li>Move the Preferences entries from the Edit menu to the View menu and add an option to open the combined main window maximized</li>
-          <li>Fix LAMMPS screen output capture on Windows, which only worked when launched from a console</li>
+          <li>Fix LAMMPS screen output capture on Windows, which only worked when launched from a console; the capture now verifies itself and reports into the Output window when the library's output cannot reach it</li>
+          <li>Remember the LAMMPS shared library path per compiler toolchain, so differently built versions of LAMMPS-GUI on one machine no longer silently use each other's library</li>
           <li>Remember separate main window sizes for the two layout styles, and report the selected layout in the About dialog</li>
         </ul>
       </description>

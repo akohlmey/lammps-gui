@@ -169,7 +169,11 @@ General Settings
      different version can be loaded.  The accompanying *Download LAMMPS
      shared library...* button retrieves a pre-built LAMMPS shared library
      from the LAMMPS web server.  After changing this setting, LAMMPS-GUI
-     needs to be re-launched.
+     needs to be re-launched.  This setting is remembered separately for
+     each compiler toolchain LAMMPS-GUI was built with, so for example an
+     MSVC build and a MinGW build on the same machine each keep their own
+     library: a library built against a different C runtime loads and runs,
+     but its screen output would silently bypass the Output window.
    - **Command window shell:** selects the command interpreter that the
      :ref:`Command window <commandwindow>` starts, from a list of the
      shells installed on the machine: on Unix-like systems the entries of

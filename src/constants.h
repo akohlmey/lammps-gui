@@ -312,36 +312,53 @@ inline const QString MONOFAMILY       = QStringLiteral("monofamily");
 inline const QString MONOSIZE         = QStringLiteral("monosize");
 inline const QString NAME             = QStringLiteral("name");
 inline const QString NTHREADS         = QStringLiteral("nthreads");
-inline const QString PLUGIN_PATH      = QStringLiteral("plugin_path");
-inline const QString RAWBRUSH         = QStringLiteral("rawbrush");
-inline const QString RECENT           = QStringLiteral("recent");
-inline const QString REFLABELBOX      = QStringLiteral("reflabelbox");
-inline const QString REFLABELDIST     = QStringLiteral("reflabeldist");
-inline const QString REFLABELSIZE     = QStringLiteral("reflabelsize");
-inline const QString RETURN           = QStringLiteral("return");
-inline const QString SHELL            = QStringLiteral("shell");
-inline const QString SHINYSTYLE       = QStringLiteral("shinystyle");
-inline const QString SMOOTHBRUSH      = QStringLiteral("smoothbrush");
-inline const QString SMOOTHCHOICE     = QStringLiteral("smoothchoice");
-inline const QString SMOOTHORDER      = QStringLiteral("smoothorder");
-inline const QString SMOOTHWINDOW     = QStringLiteral("smoothwindow");
-inline const QString SOLUTION         = QStringLiteral("solution");
-inline const QString SSAO             = QStringLiteral("ssao");
-inline const QString TITLE            = QStringLiteral("title");
-inline const QString TYPE             = QStringLiteral("type");
-inline const QString UPDCHART         = QStringLiteral("updchart");
-inline const QString UPDFREQ          = QStringLiteral("updfreq");
-inline const QString USEGRADIENT      = QStringLiteral("usegradient");
-inline const QString VALUE            = QStringLiteral("value");
-inline const QString VDWSTYLE         = QStringLiteral("vdwstyle");
-inline const QString VIEWCHART        = QStringLiteral("viewchart");
-inline const QString VIEWLOG          = QStringLiteral("viewlog");
-inline const QString VIEWSLIDE        = QStringLiteral("viewslide");
-inline const QString VROT             = QStringLiteral("vrot");
-inline const QString WEBPAGE          = QStringLiteral("webpage");
-inline const QString XSIZE            = QStringLiteral("xsize");
-inline const QString YSIZE            = QStringLiteral("ysize");
-inline const QString ZOOM             = QStringLiteral("zoom");
+// The library path is the one setting that must not be shared between builds
+// from different compilers: a library built against a different C runtime
+// loads and runs fine -- the plugin uses only the C API -- but its output
+// silently bypasses the stdout capture, whose redirect only covers the
+// runtime of this executable.  Qualifying the key by the toolchain that built
+// the executable keeps an MSVC build and a MinGW build on the same machine
+// from silently using each other's library.  (_MSC_VER first: clang-cl
+// defines both and uses the MSVC runtime.)
+#if defined(_MSC_VER)
+inline const QString PLUGIN_PATH = QStringLiteral("plugin_path_msvc");
+#elif defined(__clang__)
+inline const QString PLUGIN_PATH = QStringLiteral("plugin_path_clang");
+#else
+inline const QString PLUGIN_PATH = QStringLiteral("plugin_path_gcc");
+#endif
+// the unqualified pre-3.1 key; read once at start-up to seed the qualified
+// one, and left in place for older versions that still read it
+inline const QString PLUGIN_PATH_LEGACY = QStringLiteral("plugin_path");
+inline const QString RAWBRUSH           = QStringLiteral("rawbrush");
+inline const QString RECENT             = QStringLiteral("recent");
+inline const QString REFLABELBOX        = QStringLiteral("reflabelbox");
+inline const QString REFLABELDIST       = QStringLiteral("reflabeldist");
+inline const QString REFLABELSIZE       = QStringLiteral("reflabelsize");
+inline const QString RETURN             = QStringLiteral("return");
+inline const QString SHELL              = QStringLiteral("shell");
+inline const QString SHINYSTYLE         = QStringLiteral("shinystyle");
+inline const QString SMOOTHBRUSH        = QStringLiteral("smoothbrush");
+inline const QString SMOOTHCHOICE       = QStringLiteral("smoothchoice");
+inline const QString SMOOTHORDER        = QStringLiteral("smoothorder");
+inline const QString SMOOTHWINDOW       = QStringLiteral("smoothwindow");
+inline const QString SOLUTION           = QStringLiteral("solution");
+inline const QString SSAO               = QStringLiteral("ssao");
+inline const QString TITLE              = QStringLiteral("title");
+inline const QString TYPE               = QStringLiteral("type");
+inline const QString UPDCHART           = QStringLiteral("updchart");
+inline const QString UPDFREQ            = QStringLiteral("updfreq");
+inline const QString USEGRADIENT        = QStringLiteral("usegradient");
+inline const QString VALUE              = QStringLiteral("value");
+inline const QString VDWSTYLE           = QStringLiteral("vdwstyle");
+inline const QString VIEWCHART          = QStringLiteral("viewchart");
+inline const QString VIEWLOG            = QStringLiteral("viewlog");
+inline const QString VIEWSLIDE          = QStringLiteral("viewslide");
+inline const QString VROT               = QStringLiteral("vrot");
+inline const QString WEBPAGE            = QStringLiteral("webpage");
+inline const QString XSIZE              = QStringLiteral("xsize");
+inline const QString YSIZE              = QStringLiteral("ysize");
+inline const QString ZOOM               = QStringLiteral("zoom");
 /// @endcond
 
 } // namespace Keys
