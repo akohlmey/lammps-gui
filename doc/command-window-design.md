@@ -120,10 +120,21 @@ Mostly assembly out of existing pieces:
   arrow keys keep the order the lines were typed in, which is the order they are
   wanted in there; the completion list is sorted, which is the order they are
   wanted in here
-- filename completion: `QCompleter` over a `QFileSystemModel`, rooted at the
-  tracked working directory
 - command completion: a cached scan of `PATH`, refreshed on demand
 - `CodeEditor` already runs several `QCompleter` instances -- copy that pattern
+- filename completion: **not** `QFileSystemModel`, which was tried and did not
+  work. `QLineEdit` hands its completer the *whole line*, so the file model was
+  being asked to resolve `"cat /some/dir/parti"` as one path and matched
+  nothing -- argument completion silently did nothing at all. Two things follow.
+  First, the completer has to match and replace *the word the cursor is in*,
+  which is what `WordCompleter` overrides `splitPath()` and `pathFromIndex()`
+  for; the whole-line behavior is still what the first word wants, and falls
+  out of the same override when there is no space yet. Second, with the word in
+  hand the model can be a plain `QStringListModel` of the names in the tracked
+  working directory -- no path traversal, no absolute paths, no separator
+  question per platform. It is rebuilt when the shell changes directory and
+  whenever completion starts on a new argument, so a file a command has just
+  written is offered without reopening the panel.
 
 **No Emacs-style line editing.** `QLineEdit` covers basic editing but not
 `Ctrl+A/E/K/U/W/Y`, and on Linux `Ctrl+A` is *select all*. Adding those was

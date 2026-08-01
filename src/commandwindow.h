@@ -144,6 +144,10 @@ private:
     /// without repeats, followed by the commands found in PATH.
     void refreshCompletions();
 
+    /// Rebuild the argument completion list from the names in the directory the
+    /// shell is in, with a separator appended to the directories among them.
+    void refreshFileNames();
+
     /// Point the completer at commands for the first word and at file names
     /// after it.
     void updateCompleter(const QString &text);
@@ -156,9 +160,11 @@ private:
     QMenuBar *menubar = nullptr; ///< Own menu bar; hidden in the combined layout
     QPushButton *killbutton;     ///< Ends the running command
     QCompleter *completer;       ///< Completes commands and file names
-    QStringListModel *commands;  ///< Model behind the command completion
+    QStringListModel *commands;  ///< Model behind the command and history completion
+    QStringListModel *filenames; ///< Model behind the argument completion
 
     QString shellprogram;     ///< The interpreter that was started
+    QString filedir;          ///< Directory the argument completions were built from
     QString pending;          ///< Output received so far that is not a complete line
     QString workingdir;       ///< Where the shell last reported itself to be
     QStringList history;      ///< Lines typed so far, oldest first

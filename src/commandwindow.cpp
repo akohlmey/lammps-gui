@@ -22,7 +22,6 @@
 #include <QDir>
 #include <QFile>
 #include <QFileInfo>
-#include <QFileSystemModel>
 #include <QFontMetrics>
 #include <QFontMetricsF>
 #include <QHBoxLayout>
@@ -192,6 +191,31 @@ bool isShellJobControlNoise(const QString &line)
            line.contains("no job control in this shell");
 }
 
+// QLineEdit hands its completer the whole line.  That is right for the first
+// word -- a command name, or a line typed before, both of which are matched
+// whole -- and wrong for everything after it, where what is being typed is a
+// single argument.  Narrow both ends to the word the cursor is in: what gets
+// matched, and what gets replaced when a completion is taken.
+class WordCompleter : public QCompleter {
+public:
+    explicit WordCompleter(QObject *parent) : QCompleter(parent) {}
+
+    QStringList splitPath(const QString &path) const override
+    {
+        return {path.mid(path.lastIndexOf(QLatin1Char(' ')) + 1)};
+    }
+
+    QString pathFromIndex(const QModelIndex &index) const override
+    {
+        // the prefix is the whole line, which is where the part in front of the
+        // word being completed has to come from
+        const QString word = QCompleter::pathFromIndex(index);
+        const QString line = completionPrefix();
+        const int cut      = line.lastIndexOf(QLatin1Char(' '));
+        return (cut < 0) ? word : line.left(cut + 1) + word;
+    }
+};
+
 } // namespace
 
 QString CommandWindow::preferredShell()
@@ -214,8 +238,8 @@ QString CommandWindow::preferredShell()
 
 CommandWindow::CommandWindow(LammpsGui *_lammpsgui, QWidget *parent) :
     QWidget(parent), lammpsgui(_lammpsgui), scrollback(new QPlainTextEdit), prompt(new QLineEdit),
-    cwdlabel(new QLabel), completer(new QCompleter(this)), commands(new QStringListModel(this)),
-    workingdir(QDir::currentPath())
+    cwdlabel(new QLabel), completer(new WordCompleter(this)), commands(new QStringListModel(this)),
+    filenames(new QStringListModel(this)), workingdir(QDir::currentPath())
 {
     scrollback->setReadOnly(true);
     scrollback->setLineWrapMode(QPlainTextEdit::NoWrap);
@@ -747,20 +771,39 @@ void CommandWindow::refreshCompletions()
     commands->setStringList(sorted);
 }
 
+// Only what is in the directory the shell is in, and only its plain names: no
+// path traversal, no absolute paths, nothing to get right per platform.  That
+// covers what the panel is for -- the files a run just wrote, sitting in the
+// directory it wrote them to -- and the shell completes nothing at all here, so
+// this is the only completion an argument gets.
+void CommandWindow::refreshFileNames()
+{
+    QStringList names;
+    const auto entries =
+        QDir(workingdir).entryInfoList(QDir::AllEntries | QDir::NoDotAndDotDot, QDir::Name);
+    for (const auto &entry : entries)
+        names << (entry.isDir() ? entry.fileName() + QLatin1Char('/') : entry.fileName());
+
+    filenames->setStringList(names);
+    filedir = workingdir;
+}
+
 void CommandWindow::updateCompleter(const QString &text)
 {
-    // the first word is a command or a line typed before, everything after it is
-    // most likely a path
-    if (text.contains(' ')) {
-        if (!qobject_cast<QFileSystemModel *>(completer->model())) {
-            auto *files = new QFileSystemModel(completer);
-            files->setRootPath(workingdir);
-            completer->setModel(files);
+    // the first word is a command or a line typed before; anything after it is
+    // an argument, where what is worth offering is what is in the directory
+    if (text.contains(QLatin1Char(' '))) {
+        // rebuilt on the way in as well as after a cd, so a file a command just
+        // wrote is offered without having to reopen the panel
+        if ((completer->model() != filenames) || (filedir != workingdir)) {
+            refreshFileNames();
+            completer->setModel(filenames);
         }
-    } else if (completer->model() != commands) {
-        completer->setModel(commands);
+        return;
     }
-    if ((completer->model() == commands) && commands->stringList().isEmpty()) refreshCompletions();
+
+    if (completer->model() != commands) completer->setModel(commands);
+    if (commands->stringList().isEmpty()) refreshCompletions();
 }
 
 bool CommandWindow::eventFilter(QObject *watched, QEvent *event)
