@@ -117,6 +117,23 @@ TEST_F(StdCaptureTest, EndCaptureWithoutBegin)
     EXPECT_FALSE(capturer.endCapture());
 }
 
+// The self-test built into beginCapture(): a working capture verifies its
+// marker and stays usable, and the marker is fully drained again -- the
+// exact-match expectations of the tests above depend on that as well.
+
+TEST_F(StdCaptureTest, BeginCaptureVerifiesItselfAndStaysUsable)
+{
+    EXPECT_TRUE(capturer.isUsable());
+    capturer.beginCapture();
+    EXPECT_TRUE(capturer.isUsable());
+    EXPECT_TRUE(capturer.diagnostic().empty());
+
+    // nothing of the verification marker may leak into the captured output
+    printf("after the marker");
+    capturer.endCapture();
+    EXPECT_EQ(capturer.getCapture(), "after the marker");
+}
+
 // Buffer use tracking
 
 TEST_F(StdCaptureTest, BufferUseInitiallyZero)

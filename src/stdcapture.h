@@ -105,6 +105,11 @@ private:
     /// Build a diagnostic carrying the descriptor numbers behind it.
     std::string describe(const char *what) const;
 
+    /// Prove a freshly set up capture: write a marker through stdout, read it
+    /// back out of the pipe, and mark the capture unusable when it does not
+    /// return.  Runs from beginCapture(), before anything else writes.
+    void verifyCapture();
+
     bool m_usable = false;    ///< stdout could be redirected into the pipe
     std::string m_diagnostic; ///< Why it could not, for reporting to the user
 };

@@ -130,6 +130,48 @@ void StdCapture::beginCapture()
     m_capturing = true;
     maxread     = 0;
     notifyCaptureState(true);
+    verifyCapture();
+}
+
+// A capture that does not work leaves no trace of its own: printf() reports
+// success and the runtime drops the bytes.  Every probe of the individual steps
+// can pass and the assembled whole still fail, so prove the plumbing whenever
+// it is set up: write a marker through the very stream the library will use and
+// read it back out of the pipe.  This runs in the gap between the redirect and
+// the start of the run, when nothing else writes, so the pipe carries exactly
+// the marker and is drained again before real output arrives.
+void StdCapture::verifyCapture()
+{
+    if (!m_usable || !m_capturing) return;
+
+    static constexpr char marker[] = "__LGUI_CAPTURE_TEST__\n";
+    constexpr int len              = static_cast<int>(sizeof(marker)) - 1;
+    printf("%s", marker); // its return value is the known lie; the read-back is the test
+
+    // the write is a same-process pipe write of a few bytes, so it is visible
+    // at once; the loop only covers scheduling noise
+    std::string got;
+    for (int wait = 0; wait < 100; ++wait) {
+        int bytesRead = 0;
+#if defined(Q_OS_WIN32)
+        if (pipe_has_data(m_pipe[READ])) bytesRead = read(m_pipe[READ], buf.data(), bufSize - 1);
+#else
+        bytesRead = read(m_pipe[READ], buf.data(), bufSize - 1);
+#endif
+        if (bytesRead > 0) {
+            buf[bytesRead] = 0;
+            got += buf.data();
+        }
+        if (static_cast<int>(got.size()) >= len) break;
+        std::this_thread::sleep_for(std::chrono::milliseconds(1));
+    }
+    if (got != marker) {
+        m_usable = false;
+        m_diagnostic =
+            describe(got.empty() ? "the test marker did not come back out of the capture pipe"
+                                 : "the capture pipe returned something other than the test "
+                                   "marker");
+    }
 }
 
 bool StdCapture::endCapture()
