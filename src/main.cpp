@@ -50,9 +50,11 @@ static void initConsoleIO()
         int fd = _fileno(fp);
         return (fd < 0) || (_get_osfhandle(fd) < 0);
     };
-    if (fd_invalid(stdin)) freopen(has_console ? "CONIN$" : "NUL:", "r", stdin);
-    if (fd_invalid(stdout)) freopen(has_console ? "CONOUT$" : "NUL:", "w", stdout);
-    if (fd_invalid(stderr)) freopen(has_console ? "CONOUT$" : "NUL:", "w", stderr);
+    // "NUL" without a colon: that is the spelling verified to work with the
+    // MinGW runtime on an affected system; the "NUL:" form was never proven
+    if (fd_invalid(stdin)) freopen(has_console ? "CONIN$" : "NUL", "r", stdin);
+    if (fd_invalid(stdout)) freopen(has_console ? "CONOUT$" : "NUL", "w", stdout);
+    if (fd_invalid(stderr)) freopen(has_console ? "CONOUT$" : "NUL", "w", stderr);
 }
 #else
 // nothing to do

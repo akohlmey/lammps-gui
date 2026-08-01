@@ -74,7 +74,8 @@ const QStringList months({"Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug"
                           "Nov", "Dec"});
 
 #if defined(Q_OS_WIN32)
-constexpr char NULL_DEVICE[] = "NUL:";
+// "NUL" without a colon: the spelling verified to work with the MinGW runtime
+constexpr char NULL_DEVICE[] = "NUL";
 #else
 constexpr char NULL_DEVICE[] = "/dev/null";
 #endif
