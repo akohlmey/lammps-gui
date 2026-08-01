@@ -176,7 +176,8 @@ General Settings
      ``/etc/shells`` that are actual shells (not ``nologin`` or a
      terminal multiplexer), on Windows ``cmd.exe``, PowerShell, and a
      ``bash.exe`` from an installation such as Git for Windows, when
-     present.  The default is the user's default shell (``SHELL`` on
+     present.  A shell listed under more than one path (for example under
+     both ``/bin`` and ``/usr/bin``) is offered only once.  The default is the user's default shell (``SHELL`` on
      Unix-like systems, ``COMSPEC`` on Windows).  A change takes effect
      when the next shell starts: when the Command window is first opened,
      or on its *File* > *Restart Shell*.

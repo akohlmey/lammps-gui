@@ -285,21 +285,39 @@ QString CommandWindow::preferredShell()
 QStringList CommandWindow::availableShells()
 {
     QStringList shells;
+    // The same shell is usually listed more than once -- /etc/shells names it
+    // under /bin and /usr/bin, which are one directory on current systems, and
+    // $SHELL may spell it either way.  Each *name* is offered once, and the
+    // first path to claim it wins.
+    QSet<QString> seen;
+    const auto addShell = [&shells, &seen](const QString &path) {
+        QString base = QFileInfo(path).fileName();
 #if defined(Q_OS_WIN32)
-    shells << preferredShell(); // %COMSPEC%, i.e. cmd.exe
+        base = base.toLower();
+#endif
+        if (base.isEmpty() || seen.contains(base)) return;
+        if (!QFileInfo::exists(path)) return;
+        seen.insert(base);
+        shells << path;
+    };
+
+#if defined(Q_OS_WIN32)
+    addShell(qEnvironmentVariable("COMSPEC")); // cmd.exe
     // PowerShell (7 as pwsh.exe, the bundled one as powershell.exe) and any
     // bash on the search path
-    for (const auto &name : {QStringLiteral("pwsh.exe"), QStringLiteral("powershell.exe"),
-                             QStringLiteral("bash.exe")}) {
-        const QString found = QStandardPaths::findExecutable(name);
-        if (!found.isEmpty()) shells << found;
-    }
+    for (const auto &name :
+         {QStringLiteral("pwsh.exe"), QStringLiteral("powershell.exe"), QStringLiteral("bash.exe")})
+        addShell(QStandardPaths::findExecutable(name));
     // Git for Windows carries a bash.exe but does not put it on the path
     for (const auto &guess : {QStringLiteral("C:/Program Files/Git/bin/bash.exe"),
-                              QStringLiteral("C:/Program Files (x86)/Git/bin/bash.exe")}) {
-        if (QFileInfo::exists(guess)) shells << guess;
-    }
+                              QStringLiteral("C:/Program Files (x86)/Git/bin/bash.exe")})
+        addShell(guess);
 #else
+    // The user's own shell goes first, under the exact spelling $SHELL uses:
+    // it is the default selection, so it is the name its duplicates yield to.
+    // It may also be missing from /etc/shells altogether (e.g. from a package
+    // that did not register it).
+    addShell(qEnvironmentVariable("SHELL"));
     // the administrative list of login shells; entries that are there to *deny*
     // a login are not shells, and neither are entries that do not exist
     QFile file(QStringLiteral("/etc/shells"));
@@ -311,16 +329,11 @@ QStringList CommandWindow::availableShells()
             // those need the one thing this window does not have: a terminal
             const QString base = QFileInfo(line).fileName();
             if ((base == QLatin1String("tmux")) || (base == QLatin1String("screen"))) continue;
-            if (QFileInfo::exists(line)) shells << line;
+            addShell(line);
         }
     }
-    // the user's own shell may be missing from the list (e.g. from a package
-    // that did not register it); it is what the window uses by default
-    const QString shell = qEnvironmentVariable("SHELL");
-    if (!shell.isEmpty() && QFileInfo::exists(shell)) shells << shell;
-    if (shells.isEmpty()) shells << preferredShell();
 #endif
-    shells.removeDuplicates();
+    if (shells.isEmpty()) shells << preferredShell();
     shells.sort();
     return shells;
 }

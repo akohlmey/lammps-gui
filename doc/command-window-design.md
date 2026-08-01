@@ -234,7 +234,11 @@ memory.
   then `/bin/sh`; `%COMSPEC%` on Windows. It is deliberately a drop down of
   what is installed (`CommandWindow::availableShells()`: `/etc/shells` minus
   `nologin` and the terminal multiplexers, plus `$SHELL`; on Windows `cmd.exe`,
-  PowerShell and a Git-for-Windows `bash.exe`), not free text.
+  PowerShell and a Git-for-Windows `bash.exe`), not free text. Each shell
+  *name* is offered once -- `/bin` and `/usr/bin` are one directory on current
+  systems, so the list would otherwise carry every shell twice -- with the
+  first path to claim a name winning and `$SHELL`'s spelling put first, so the
+  default selection stays an exact match.
 
 ## Environment handed to the shell
 

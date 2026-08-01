@@ -99,7 +99,9 @@ public:
      * On Unix-like systems the entries of @c /etc/shells that exist and are
      * not a @c nologin, plus @c $SHELL.  On Windows @c cmd.exe, PowerShell
      * and any @c bash.exe found on the search path or in a Git for Windows
-     * installation.
+     * installation.  Each shell *name* appears once: a shell listed under
+     * several paths (e.g. @c /bin and @c /usr/bin) is offered only under the
+     * first of them, with the spelling of @c $SHELL taking precedence.
      */
     static QStringList availableShells();
 
