@@ -488,6 +488,14 @@ private:
      * runtime drops the bytes.  Must be called after createLogWindow(). */
     void reportCaptureFailure();
 
+    /** @brief Prove that the library's own output reaches the capture
+     *
+     * Pushes a marker line through the LAMMPS library and drains it from the
+     * capture again; a marker that does not return sets a warning naming the
+     * loaded library file, shown by reportCaptureFailure().  Must run after
+     * beginCapture() and before the runner thread starts. */
+    void verifyLibraryCapture();
+
     /** @brief Create the shell prompt window if it does not exist yet
      *
      * The shell starts in the directory of the current input file. */
@@ -615,6 +623,7 @@ private:
     LammpsRunner *runner;                ///< Thread for running LAMMPS simulations
     QString docver;                      ///< LAMMPS documentation version string
     QString pluginPath;                  ///< Path to LAMMPS shared library (plugin mode)
+    QString capturewarning;              ///< Library-side capture check result for this run
     int runCounter;                      ///< Counter for simulation runs
     int extendSteps;                     ///< Last used step count of the Extend Run dialog
     std::vector<std::string> lammpsArgs; ///< Command-line arguments for LAMMPS

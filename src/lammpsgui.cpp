@@ -2007,17 +2007,45 @@ void LammpsGui::createLogWindow(QSettings &settings)
     viewlayout->setVisible(ViewSlot::Log, settings.value(Keys::VIEWLOG, true).toBool());
 }
 
+// The capture's own marker only proves that the *executable's* writes reach
+// the pipe.  The library is a separate module with runtime state of its own,
+// so push one line through it as well, while the instance is still idle, and
+// drain the marker again.  Which library answers depends on the configured
+// plugin path, not on what sits next to the executable, so a failure names
+// the file actually loaded.  Must run after beginCapture() and before the
+// runner thread starts issuing commands of its own.
+void LammpsGui::verifyLibraryCapture()
+{
+    capturewarning.clear();
+    if (!capturer->isUsable() || !lammps.isOpen()) return;
+
+    lammps.command("print \"__LGUI_LIBCAP__\"");
+    std::string got;
+    for (int i = 0; i < 100; ++i) {
+        got += capturer->getChunk();
+        if (got.find("__LGUI_LIBCAP__") != std::string::npos) return; // proven; marker drained
+        QThread::msleep(1);
+    }
+    capturewarning = "the library's own output does not reach the capture although the"
+                     " executable's does; loaded library: ";
+    capturewarning += pluginPath.isEmpty() ? QString("(linked into the executable)") : pluginPath;
+}
+
 // Must run *after* createLogWindow(): on the first run of a session there is no
 // log window before that, and a message with nowhere to go is dropped -- which
 // on a fresh start is exactly when it is needed.
 void LammpsGui::reportCaptureFailure()
 {
+    if (!logwindow) return;
     // Say so rather than showing an empty window: when stdout cannot be
     // redirected there is no error anywhere else -- the runtime accepts the
     // library's output and drops it, and printf() reports success.
-    if (!capturer->isUsable() && logwindow)
+    if (!capturer->isUsable())
         logwindow->appendPlainText(QString("[LAMMPS output cannot be captured: %1]\n")
                                        .arg(QString::fromStdString(capturer->diagnostic())));
+    if (!capturewarning.isEmpty())
+        logwindow->appendPlainText(
+            QString("[LAMMPS output will not be shown: %1]\n").arg(capturewarning));
 }
 
 void LammpsGui::createChartWindow(QSettings &settings)
@@ -2220,6 +2248,7 @@ void LammpsGui::doRun(bool use_buffer, bool dryrun)
     startLammps();
     if (!lammps.isOpen()) return;
     capturer->beginCapture();
+    verifyLibraryCapture();
 
     ++runCounter;
     updateEditorTitle(currentFile);
@@ -2320,6 +2349,7 @@ void LammpsGui::extendRun()
     status->repaint();
 
     capturer->beginCapture();
+    verifyLibraryCapture();
 
     // append to the windows of the extended run; create them only when missing
     // (e.g. when extending the state of an inspected restart file)
