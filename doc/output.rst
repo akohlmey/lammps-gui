@@ -372,12 +372,14 @@ of the current input file, which is where a run leaves its output.  The
 up and down arrow keys walk through previously entered commands, which
 are remembered between sessions.
 
-The *Tab* key completes the word it is in.  On the first word it offers
-whole lines entered before, sorted and without repeats, and then command
-names from the search path -- so a few characters of a long command line
-bring the whole of it back, which is what a reverse history search is
-for.  On any word after that it offers the names in the directory the
-shell is in, with a ``/`` after the ones that are directories.  Only
+The *Tab* key completes the word it is in.  On a word that starts a
+command -- the first of the line, and equally the first after a ``;``,
+``|``, ``&&`` or ``||`` -- it offers whole lines entered before, sorted
+and without repeats, and then command names from the search path, so a
+few characters of a long command line bring the whole of it back, which
+is what a reverse history search is for.  On any other word it offers
+the names in the directory the shell is in, with a ``/`` after the ones
+that are directories.  Only
 that directory is offered, and only plain names: there is no completion
 across a path, and none of what the shell itself would complete, since
 the shell never sees the line until it is entered.  The list is taken
@@ -452,6 +454,18 @@ in one go.
 interrupt instead.  It is a best effort: without job control the shell
 starts its children with the interrupt signal ignored, so a program that
 does not install a handler of its own will sit through it.
+
+It is also the way out of an unfinished multi-line construct.  A line
+such as ``if true; then`` with nothing after it leaves the shell waiting
+for the rest of it, and what the shell reads next as part of that
+construct is the marker this window ends every command with -- so the
+command never appears to finish, and since the prompt refuses input
+while a command runs, the closing ``fi`` cannot be typed either.
+Interrupting puts the shell back at a prompt and asks it for a fresh
+marker, which brings the prompt back with the session intact.  Several
+commands on one line separated by ``;`` are otherwise nothing special:
+they run as they would in a terminal, and the exit status reported is
+the one of the last of them.
 
 .. admonition:: Output may only appear when a program exits
 

@@ -191,6 +191,16 @@ memory.
   written while a command is running would be read by that command rather than
   by the shell, so an update that falls in that window is held back until the
   sentinel says the shell is at a prompt again.
+- **An unfinished multi-line construct wedges the prompt, and interrupting is
+  the way out.** A line such as `if true; then` with nothing after it leaves the
+  shell waiting for the rest, and what it reads next as part of that construct
+  is the sentinel. Nothing then reports the command as done, so the prompt stays
+  blocked -- and because it is blocked the closing `fi` cannot be typed either.
+  Measured: *Interrupt Command* alone did not help and *Restart Shell* was the
+  only way out, at the cost of the session. *Interrupt Command* therefore now
+  follows its signal with a fresh sentinel, which a shell back at a prompt
+  answers; if a command really was running and survived, its own sentinel is
+  still queued ahead of this one, so the cost is a second, harmless report.
 - **Ambiguous stdin -- resolved by refusing input.** A line typed while a
   command runs would go down the same pipe and be read by that command rather
   than by the shell. The prompt is therefore read-only while a command is

@@ -158,6 +158,7 @@ constexpr int COMMAND_KILL_GRACE       = 500;  ///< Milliseconds between SIGTERM
 constexpr int COMMAND_PGREP_TIMEOUT    = 1000; ///< Milliseconds to wait for pgrep
 constexpr int COMMAND_DEFAULT_WIDTH    = 800;  ///< Default window width
 constexpr int COMMAND_DEFAULT_HEIGHT   = 400;  ///< Default window height
+constexpr int COMMAND_RESYNC_DELAY     = 300;  ///< Milliseconds after an interrupt before resyncing
 constexpr int COMMAND_MIN_COLUMNS      = 20;   ///< Narrowest width worth reporting as COLUMNS
 constexpr int COMMAND_MIN_CWD_WIDTH    = 120; ///< Pixels the directory in front of the prompt keeps
 constexpr int COMMAND_MIN_PROMPT_WIDTH =

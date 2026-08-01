@@ -191,6 +191,34 @@ bool isShellJobControlNoise(const QString &line)
            line.contains("no job control in this shell");
 }
 
+// Where the word being typed starts: after the last blank, or after a separator
+// that ends one command and begins another.  Both the matching and the command/
+// argument decision hang off this, so they cannot disagree about which word the
+// cursor is in.
+int wordStart(const QString &text)
+{
+    int i = text.size();
+    while (i > 0) {
+        const QChar c = text.at(i - 1);
+        if (c.isSpace() || (c == u';') || (c == u'|') || (c == u'&') || (c == u'(')) break;
+        --i;
+    }
+    return i;
+}
+
+// A word is a command rather than an argument when nothing but a separator
+// stands in front of it -- so the word after "a ; b", "a | b" or "a && b" is
+// completed like the first word of the line, which is what it is.
+bool inCommandPosition(const QString &text)
+{
+    int i = wordStart(text);
+    while ((i > 0) && text.at(i - 1).isSpace())
+        --i;
+    if (i == 0) return true;
+    const QChar prev = text.at(i - 1);
+    return (prev == u';') || (prev == u'|') || (prev == u'&') || (prev == u'(');
+}
+
 // QLineEdit hands its completer the whole line.  That is right for the first
 // word -- a command name, or a line typed before, both of which are matched
 // whole -- and wrong for everything after it, where what is being typed is a
@@ -202,7 +230,7 @@ public:
 
     QStringList splitPath(const QString &path) const override
     {
-        return {path.mid(path.lastIndexOf(QLatin1Char(' ')) + 1)};
+        return {path.mid(wordStart(path))};
     }
 
     QString pathFromIndex(const QModelIndex &index) const override
@@ -211,8 +239,7 @@ public:
         // word being completed has to come from
         const QString word = QCompleter::pathFromIndex(index);
         const QString line = completionPrefix();
-        const int cut      = line.lastIndexOf(QLatin1Char(' '));
-        return (cut < 0) ? word : line.left(cut + 1) + word;
+        return line.left(wordStart(line)) + word;
     }
 };
 
@@ -705,7 +732,24 @@ void CommandWindow::interrupt()
     // through this.  File > Restart Shell is the way out of those.
     ::kill(-group, SIGINT);
     appendOutput("\n[interrupt sent; use File > Restart Shell if it had no effect]\n");
+    resynchronize();
 #endif
+}
+
+// A shell left waiting for the rest of an unfinished construct -- "if true;
+// then" and nothing more -- has read the sentinel that framed the line as part
+// of that construct.  Nothing will ever report the command as done, so the
+// prompt stays blocked, and because it is blocked the construct cannot be
+// finished from here either.  The interrupt above puts such a shell back at a
+// prompt; this is what tells the panel about it.  If a command really was
+// running and survived the interrupt, its own sentinel is still queued behind
+// it and arrives first, so this one costs a second, harmless report.
+void CommandWindow::resynchronize()
+{
+    QTimer::singleShot(Cfg::COMMAND_RESYNC_DELAY, this, [this]() {
+        if (shell && (shell->state() == QProcess::Running))
+            shell->write(qPrintable(sentinelCommand(shellprogram) + "\n"));
+    });
 }
 
 void CommandWindow::restartShell()
@@ -790,20 +834,21 @@ void CommandWindow::refreshFileNames()
 
 void CommandWindow::updateCompleter(const QString &text)
 {
-    // the first word is a command or a line typed before; anything after it is
-    // an argument, where what is worth offering is what is in the directory
-    if (text.contains(QLatin1Char(' '))) {
-        // rebuilt on the way in as well as after a cd, so a file a command just
-        // wrote is offered without having to reopen the panel
-        if ((completer->model() != filenames) || (filedir != workingdir)) {
-            refreshFileNames();
-            completer->setModel(filenames);
-        }
+    // a command -- the first word, or the first after a separator -- is
+    // completed from the history and the search path; an argument from the
+    // directory the shell is in
+    if (inCommandPosition(text)) {
+        if (completer->model() != commands) completer->setModel(commands);
+        if (commands->stringList().isEmpty()) refreshCompletions();
         return;
     }
 
-    if (completer->model() != commands) completer->setModel(commands);
-    if (commands->stringList().isEmpty()) refreshCompletions();
+    // rebuilt on the way in as well as after a cd, so a file a command just
+    // wrote is offered without having to reopen the panel
+    if ((completer->model() != filenames) || (filedir != workingdir)) {
+        refreshFileNames();
+        completer->setModel(filenames);
+    }
 }
 
 bool CommandWindow::eventFilter(QObject *watched, QEvent *event)

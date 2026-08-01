@@ -128,6 +128,10 @@ private:
     /// Show the working directory in front of the input line.
     void updatePrompt();
 
+    /// Ask the shell for a fresh sentinel, so the prompt comes back after an
+    /// interrupt even when the sentinel that framed the line was swallowed.
+    void resynchronize();
+
     /// Tell the shell how large the panel is, through COLUMNS and LINES, so
     /// that a program formatting its output to a width uses that rather than
     /// the 80 columns it falls back to when there is no terminal to ask.
