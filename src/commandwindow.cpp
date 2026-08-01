@@ -290,6 +290,10 @@ QStringList CommandWindow::availableShells()
         while (!file.atEnd()) {
             const QString line = QString::fromLocal8Bit(file.readLine()).trimmed();
             if (line.isEmpty() || line.startsWith(u'#') || line.contains("nologin")) continue;
+            // the list also admits terminal multiplexers as login shells, and
+            // those need the one thing this window does not have: a terminal
+            const QString base = QFileInfo(line).fileName();
+            if ((base == QLatin1String("tmux")) || (base == QLatin1String("screen"))) continue;
             if (QFileInfo::exists(line)) shells << line;
         }
     }
