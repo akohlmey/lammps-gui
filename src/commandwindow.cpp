@@ -501,11 +501,13 @@ void CommandWindow::sendTerminalSize()
         return;
     }
 
-    const QString command = sizeCommand(shellprogram, cols, rows);
-    if (command.isEmpty()) return;
+    // record before the dialect check: cmd.exe has no command to take a size,
+    // and without the bookkeeping every sentinel would retry this no-op
     termcols    = cols;
     termrows    = rows;
     sizepending = false;
+    const QString command = sizeCommand(shellprogram, cols, rows);
+    if (command.isEmpty()) return;
     shell->write(qPrintable(command + "\n"));
 }
 
