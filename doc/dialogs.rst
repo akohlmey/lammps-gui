@@ -89,13 +89,14 @@ General Settings
      command-line.  There is no log *file* produced by default, since
      LAMMPS-GUI uses ``-log none``.
    - **Individual Windows** / **Combined Main Window:** selects how the
-     Output, Charts, Image, Slide Show, and Variables views are presented.
+     Output, Charts, Image, Slide Show, Variables, and Command window
+     views are presented.
      With *Individual Windows* each of them is a window of its own, placed
      and stacked freely.  With *Combined Main Window* they become panels
      docked around the editor: the editor keeps the center, the Charts,
      Image, and Slide Show views share a tabbed group on the right, and
-     the Output and Variables views share a group across the full width at
-     the bottom.  The panels have fixed places and are not dragged around;
+     the Output, Variables, and Command window views share a group across
+     the full width at the bottom.  The panels have fixed places and are not dragged around;
      they are shown and hidden from the *View* menu, and the splitters
      between them can be moved to change their proportions.  A panel that
      shares its area with another is named by its tab, one that is alone

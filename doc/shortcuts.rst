@@ -108,8 +108,8 @@ available (On macOS use the Command key instead of Ctrl/Control).
      - Check Input via Heuristics
      - Ctrl+Shift+K
      - Check Input via Dry Run
-     -
-     -
+     - Ctrl+Shift+X
+     - Command Window
 
 Further keybindings of the editor window `are documented with the Qt
 documentation
@@ -130,3 +130,8 @@ also rebind shortcuts for window-specific actions:
 - *Slide Show* window: `Ctrl-S` saves the currently displayed image,
   `Ctrl-C` copies it to the clipboard, `Ctrl-E` exports the
   image sequence to a movie file.
+
+With the *Combined Main Window* layout the sub-windows are panels
+docked into the main window, and a shortcut a panel shares with the
+main window (for example `Ctrl-S`) is left to the main window; the
+panel's own function remains available from its menu entry.

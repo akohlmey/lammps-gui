@@ -91,13 +91,9 @@ Edit
 
 The *Edit* menu offers the usual editor functions like *Undo*, *Redo*,
 *Cut*, *Copy*, *Paste*, and a *Find and Replace* dialog (keyboard
-shortcut `Ctrl-F`).  It can also open a *Preferences* dialog (keyboard
-shortcut `Ctrl-P`) and allows deleting all stored preferences and
-settings, so they are reset to their default values.  Resetting the
-preferences also deletes a LAMMPS shared library that was previously
-downloaded into the configuration folder; the library files for all
-supported platforms are removed in case the configuration folder is
-shared between multiple computers.
+shortcut `Ctrl-F`).  The *Preferences* dialog and the option to reset
+all settings to their defaults have moved to the *View* menu, which is
+where the window layout they configure is controlled.
 
 .. _run_menu:
 
@@ -260,9 +256,19 @@ View
 .. index:: window visibility
 
 The *View* menu offers to show or hide additional windows with log
-output, charts, slide show, variables, or snapshot images.  The
-default settings for their visibility can be changed in the
-*Preferences* dialog.
+output, charts, slide show, variables, or snapshot images.  With the
+*Combined Main Window* layout these are panels docked into the main
+window instead of windows of their own, and the same entries show and
+hide the panels.  The default settings for their visibility can be
+changed in the *Preferences* dialog.
+
+The *View* menu is also where the *Preferences* dialog is opened
+(keyboard shortcut `Ctrl-P`), and where all stored preferences and
+settings can be deleted, so they are reset to their default values.
+Resetting the preferences also deletes a LAMMPS shared library that was
+previously downloaded into the configuration folder; the library files
+for all supported platforms are removed in case the configuration
+folder is shared between multiple computers.
 
 .. _tutorials:
 

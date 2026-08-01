@@ -32,21 +32,23 @@ explanations in the online manual, that URL will be highlighted and
 double-clicking on it shall open the corresponding manual page in
 the web browser.  The option is also available from the context menu.
 
-By default, the *Output* window is replaced each time a run is started.
-The runs are counted and the run number for the current run is displayed
-in the window title.  It is possible to change the behavior of
-LAMMPS-GUI in the preferences dialog to create a *new* *Output* window
-for every run or to not show the current *Output* window.  It is also
-possible to show or hide the *current* *Output* window from the *View*
-menu.
+The *Output* window is reused for every run: starting a run replaces
+its content.  The runs are counted and the run number for the current
+run is displayed in the window title (with the *Combined Main Window*
+layout, in the title of the main window).  Whether the *Output* window
+opens by default can be changed in the preferences dialog, and it can be
+shown or hidden at any time from the *View* menu.
 
 The text in the *Output* window is read-only and cannot be modified, but
 keyboard shortcuts to select and copy all or parts of the text can be
 used to transfer text to another program. Also, the keyboard shortcut
 `Ctrl-S` (`Command-S` on macOS) is available to save the *Output* buffer to a
-file.  The "Select All" and "Copy" functions, as well as a "Save Log to
-File" option are also available from a context menu by clicking with the
-right mouse button into the *Output* window text area.
+file.  The window has a *File* menu carrying these functions, followed
+by the application-wide *Run*, *View*, *Tutorials*, and *About* menus
+that every output window shows, so a run can be started or stopped from
+here as well.  The "Select All" and "Copy" functions, as well as a "Save
+Log to File" option are also available from a context menu by clicking
+with the right mouse button into the *Output* window text area.
 
 .. image:: JPG/lammps-gui-yaml.png
    :align: center
@@ -110,8 +112,7 @@ charts.
 
 The window title shows the current run number that this chart window
 corresponds to.  Same as for the *Output* window, the chart window is
-replaced on each new run, but the behavior can be changed in the
-*Preferences* dialog.
+reused and its charts are replaced on each new run.
 
 .. index:: CSV export
 .. index:: YAML export
@@ -468,6 +469,9 @@ marker, which brings the prompt back with the session intact.  Several
 commands on one line separated by ``;`` are otherwise nothing special:
 they run as they would in a terminal, and the exit status reported is
 the one of the last of them.
+
+On Windows, neither killing nor interrupting a command is supported;
+*File* > *Restart Shell* is the way to get the prompt back there.
 
 .. admonition:: Output may only appear when a program exits
 

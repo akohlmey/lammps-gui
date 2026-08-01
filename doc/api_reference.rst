@@ -481,6 +481,8 @@ WindowLayout Class
 
 .. doxygenenum:: ViewSlot
 
+.. doxygenenum:: LayoutMode
+
 .. doxygenclass:: WindowLayout
    :members:
    :protected-members:
