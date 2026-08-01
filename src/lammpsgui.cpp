@@ -2559,6 +2559,11 @@ void LammpsGui::about()
         version += " with light theme";
     else
         version += " with dark theme";
+    // name the layout the way the preferences dialog does
+    if (dockedLayout())
+        version += " and the combined main window layout";
+    else
+        version += " and the individual windows layout";
     version += "</b><br><br>\n";
     if (lammps.hasPlugin()) {
         version += "LAMMPS library loaded as plugin";
