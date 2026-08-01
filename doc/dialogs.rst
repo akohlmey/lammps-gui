@@ -173,7 +173,8 @@ General Settings
    - **Command window shell:** selects the command interpreter that the
      :ref:`Command window <commandwindow>` starts, from a list of the
      shells installed on the machine: on Unix-like systems the entries of
-     ``/etc/shells``, on Windows ``cmd.exe``, PowerShell, and a
+     ``/etc/shells`` that are actual shells (not ``nologin`` or a
+     terminal multiplexer), on Windows ``cmd.exe``, PowerShell, and a
      ``bash.exe`` from an installation such as Git for Windows, when
      present.  The default is the user's default shell (``SHELL`` on
      Unix-like systems, ``COMSPEC`` on Windows).  A change takes effect

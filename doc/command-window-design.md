@@ -225,10 +225,13 @@ memory.
 - `cmd.exe` needs `@echo off` sent first or it echoes every line, uses
   `%errorlevel%` and `%CD%` for the sentinel, and emits CRLF. `pushd` onto a UNC
   path silently maps a drive letter.
-- Put the shell command in a preference, defaulting to the user's preferred
-  shell rather than a fixed name: `$SHELL` on Unix-like systems, falling back to
-  `/bin/bash` and then `/bin/sh`. Windows has `%COMSPEC%`, which points at
-  `cmd.exe`; the preference lets it be pointed at `pwsh` instead.
+- The shell command is a preference (*Command window shell*, the last line of
+  the General tab), defaulting to the user's preferred shell rather than a
+  fixed name: `$SHELL` on Unix-like systems, falling back to `/bin/bash` and
+  then `/bin/sh`; `%COMSPEC%` on Windows. It is deliberately a drop down of
+  what is installed (`CommandWindow::availableShells()`: `/etc/shells` minus
+  `nologin` and the terminal multiplexers, plus `$SHELL`; on Windows `cmd.exe`,
+  PowerShell and a Git-for-Windows `bash.exe`), not free text.
 
 ## Environment handed to the shell
 
