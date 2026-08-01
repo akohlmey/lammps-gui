@@ -52,7 +52,7 @@ WriteINIStr "${FILENAME}.url" "InternetShortcut" "IconIndex" "${ICONINDEX}"
 !define StrContains '!insertmacro "_StrContainsConstructor"'
 
 !define LAMMPSGUI "LAMMPS-GUI ${VERSION}"
-OutFile "../LAMMPS-GUI-Win10-x86_64-${VERSION}.exe"
+OutFile "../LAMMPS-GUI-Win10-x86_64-v${VERSION}.exe"
 
 Name "${LAMMPSGUI}"
 InstallDir "$LOCALAPPDATA\${LAMMPSGUI}"
