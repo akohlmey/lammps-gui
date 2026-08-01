@@ -349,6 +349,35 @@ void ImageViewer::globalSettings()
     specbox->setToolTip("Width of the specular highlights; \"auto\" derives it from the\n"
                         "shiny factor and \"none\" turns the highlights off");
     layout->addWidget(specbox, idx++, n++, 1, 1);
+
+    n = 0;
+
+    auto *metalbutton = new QCheckBox("Metal Effect ", this);
+    metalbutton->setChecked(usemetal);
+    metalbutton->setToolTip("Render objects as if made of metal instead of colored plastic");
+    layout->addWidget(metalbutton, idx, n++, 1, 1);
+    layout->addWidget(new QLabel("Intensity: "), idx, n++, 1, 1, Qt::AlignVCenter | Qt::AlignRight);
+    auto *metalval = new QDoubleSpinBox;
+    metalval->setRange(0.0, 1.0);
+    metalval->setSingleStep(0.05);
+    metalval->setValue(metalfactor);
+    metalval->setMaximumWidth(fwidth);
+    metalval->setEnabled(usemetal);
+    metalval->setToolTip("How metallic the objects appear; at 1.0 they are rendered\n"
+                         "as bare metal, smaller values blend toward the default look");
+    layout->addWidget(metalval, idx, n++, 1, 1);
+    layout->addWidget(new QLabel("Metal Finish: "), idx, n++, 1, 1,
+                      Qt::AlignVCenter | Qt::AlignRight);
+    auto *metalbox = new QComboBox;
+    metalbox->addItems({"satin", "polished", "mirror"});
+    selectComboItem(metalbox, metalfinish);
+    metalbox->setEnabled(usemetal);
+    metalbox->setToolTip("Surface finish of metallic objects: \"satin\" resembles brushed\n"
+                         "metal, \"polished\" concentrates the sheen, and \"mirror\" reflects\n"
+                         "the surroundings like a curved mirror");
+    layout->addWidget(metalbox, idx++, n++, 1, 1);
+    connect(metalbutton, &QCheckBox::toggled, metalval, &QDoubleSpinBox::setEnabled);
+    connect(metalbutton, &QCheckBox::toggled, metalbox, &QComboBox::setEnabled);
     layout->addWidget(new QHline, idx++, 0, 1, MAXCOLS);
 
     n = 0;
@@ -553,6 +582,10 @@ void ImageViewer::globalSettings()
     useoutline   = outlinebutton->isChecked();
     outlinewidth = olwidth->value();
     if (olcolor->hasAcceptableInput()) outlinecolor = olcolor->text();
+
+    usemetal    = metalbutton->isChecked();
+    metalfactor = metalval->value();
+    metalfinish = metalbox->currentText();
 
     dynamiccenter = (ccombo->currentIndex() == 1);
     xcenter       = xval->value();

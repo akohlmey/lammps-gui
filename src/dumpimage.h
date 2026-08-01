@@ -111,6 +111,9 @@ struct DumpImageParams {
     QString outlinecolor;  ///< outline color name
     QString specular;      ///< specular preset "none"/"wide"/"narrow"/"tight", or "auto" =
                            ///< highlight width derived from the shiny factor
+    bool usemetal;         ///< enable metallic surface shading
+    double metalfactor;    ///< how metallic the objects appear (0.0 - 1.0)
+    QString metalfinish;   ///< metal surface finish "satin"/"polished"/"mirror"
 
     // ---- box / axes ----
     bool showbox;      ///< draw simulation box

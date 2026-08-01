@@ -759,6 +759,9 @@ void ImageViewer::readImageSettings()
     outlinewidth   = 2;
     outlinecolor   = "black";
     specular       = "auto";
+    usemetal       = false;
+    metalfactor    = 0.5;
+    metalfinish    = "satin";
     gammaval       = 1.0;
     atomcustom     = false;
     atomtrans      = 1.0;
@@ -1525,6 +1528,9 @@ DumpImageParams ImageViewer::gatherDumpImageParams(const QString &dumpfilename)
     p.outlinewidth   = outlinewidth;
     p.outlinecolor   = outlinecolor;
     p.specular       = specular;
+    p.usemetal       = usemetal;
+    p.metalfactor    = metalfactor;
+    p.metalfinish    = metalfinish;
 
     // box / axes
     p.showbox    = showbox;
