@@ -53,13 +53,29 @@ namespace {
 constexpr int bufSize = (1 << 16) + 1;
 } // namespace
 
-StdCapture::StdCapture() : m_oldStdOut(0), m_capturing(false), maxread(0), buf(bufSize)
+StdCapture::StdCapture() : m_oldStdOut(-1), m_capturing(false), maxread(0), buf(bufSize)
 {
+#if defined(Q_OS_WIN32)
+    // A Windows GUI-subsystem process is started without a console, and the C
+    // runtime then leaves stdout with no file descriptor at all: fileno(stdout)
+    // is -2 and every attempt to redirect it fails.  Nothing reports this --
+    // printf() still claims to have written the bytes, the runtime simply drops
+    // them -- so the whole capture silently yields an empty Output window.  It
+    // has therefore only ever worked when the program was started from a
+    // console.  Attaching stdout to the null device gives it a real descriptor,
+    // which is all that redirecting it needs; what is written there is replaced
+    // by the pipe in beginCapture() and never reaches the device.
+    if (fileno(stdout) < 0) {
+        if (!freopen("NUL", "w", stdout)) return;
+    }
+#endif
     // make stdout unbuffered so that we don't need to flush the stream
     setvbuf(stdout, nullptr, _IONBF, 0);
 
-    m_pipe[READ]  = 0;
-    m_pipe[WRITE] = 0;
+    // -1 rather than 0: with no console the standard descriptors are free, so 0
+    // is a descriptor a pipe can legitimately be given
+    m_pipe[READ]  = -1;
+    m_pipe[WRITE] = -1;
 #if defined(Q_OS_WIN32)
     if (_pipe(m_pipe, 65536, O_BINARY) == -1) return;
 #else
@@ -73,15 +89,16 @@ StdCapture::StdCapture() : m_oldStdOut(0), m_capturing(false), maxread(0), buf(b
 StdCapture::~StdCapture()
 {
     notifyCaptureState(false);
-    if (m_oldStdOut > 0) close(m_oldStdOut);
-    if (m_pipe[READ] > 0) close(m_pipe[READ]);
-    if (m_pipe[WRITE] > 0) close(m_pipe[WRITE]);
+    if (m_oldStdOut >= 0) close(m_oldStdOut);
+    if (m_pipe[READ] >= 0) close(m_pipe[READ]);
+    if (m_pipe[WRITE] >= 0) close(m_pipe[WRITE]);
 }
 
 void StdCapture::beginCapture()
 {
     if (m_capturing) endCapture();
     if (isStdoutSilenced()) restoreStdout();
+    if (m_pipe[WRITE] < 0) return; // no pipe to capture into
     dup2(m_pipe[WRITE], fileno(stdout));
     m_capturing = true;
     maxread     = 0;
@@ -92,7 +109,7 @@ bool StdCapture::endCapture()
 {
     if (!m_capturing) return false;
     notifyCaptureState(false);
-    dup2(m_oldStdOut, fileno(stdout));
+    if (m_oldStdOut >= 0) dup2(m_oldStdOut, fileno(stdout));
     m_captured.clear();
 
     int bytesRead;
