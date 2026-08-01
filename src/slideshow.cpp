@@ -659,7 +659,7 @@ void SlideShow::createMenuBar()
     if (!lammpsgui) quitAct->setVisible(false); // quit == close in standalone mode
 
     if (dockedLayout()) {
-        menubar->hide();
+        retireViewMenuBar(menubar);
     } else {
         menubar->addMenu(file);
         if (lammpsgui)

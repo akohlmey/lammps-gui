@@ -323,7 +323,7 @@ void CommandWindow::createMenuBar()
 
     if (dockedLayout()) {
         // the main window shows this menu for us while the panel has the focus
-        menubar->hide();
+        retireViewMenuBar(menubar);
         return;
     }
     menubar->addMenu(file);

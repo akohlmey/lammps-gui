@@ -223,7 +223,7 @@ ChartWindow::ChartWindow(const QString &_filename, LammpsGui *_lammpsgui, QWidge
     if (dockedLayout()) {
         // docked, the main window carries one menu bar for all panels and puts
         // this menu at its front while the panel has the focus
-        menu->hide();
+        retireViewMenuBar(menu);
     } else {
         menu->addMenu(file);
         // the application-wide menus are the main window's own objects, so a run

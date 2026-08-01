@@ -1879,7 +1879,7 @@ void ImageViewer::createActions()
     fileMenu->setObjectName(Cfg::VIEW_FILE_MENU);
     if (dockedLayout()) {
         // see ChartWindow: docked, the main window shows this menu for us
-        menuBar->hide();
+        retireViewMenuBar(menuBar);
     } else {
         menuBar->addMenu(fileMenu);
         if (lammpsgui)

@@ -28,6 +28,7 @@
 #include <QIcon>
 #include <QImage>
 #include <QImageReader>
+#include <QMenuBar>
 #include <QMessageBox>
 #include <QPalette>
 #include <QPixmap>
@@ -785,6 +786,15 @@ void applyWindowFlags(QWidget *window)
     flags &= ~Qt::WindowMaximizeButtonHint;
 #endif
     window->setWindowFlags(flags);
+}
+
+void retireViewMenuBar(QMenuBar *menubar)
+{
+    if (!menubar) return;
+    // on macOS this hands the system-wide menu bar back to the main window's;
+    // everywhere else a QMenuBar is not native and this is already false
+    menubar->setNativeMenuBar(false);
+    menubar->hide();
 }
 
 // Local Variables:

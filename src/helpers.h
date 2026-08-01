@@ -25,6 +25,7 @@
 #include <initializer_list>
 #include <memory>
 
+class QMenuBar;
 class QWidget;
 class QImage;
 class QPixmap;
@@ -437,6 +438,30 @@ extern void styleToolButtons(const QSize &size, std::initializer_list<QAbstractB
  * @param window Top-level window to adjust (no-op if null)
  */
 extern void applyWindowFlags(QWidget *window);
+
+/**
+ * @brief Retire an output view's own menu bar in the combined layout
+ *
+ * Docked, a view does not show a menu bar of its own: the main window puts the
+ * view's *File* menu into its menu bar while the view has the focus. The menu
+ * bar object still exists, because it is where the menu was built, so it is
+ * simply hidden -- which is enough on every platform but one.
+ *
+ * On macOS a QMenuBar is not a widget in the window but a handle on the
+ * system-wide menu bar, and the last one to claim a window replaces the one
+ * before it. Docked, both the main window's menu bar and the view's live in the
+ * same window, so opening the first panel handed the system menu bar to a menu
+ * bar that is hidden and empty: everything but the application menu that macOS
+ * assembles itself disappeared. Detaching the view's menu bar from the platform
+ * gives the window back to the main window's, and costs nothing elsewhere,
+ * where a QMenuBar is an ordinary widget already.
+ *
+ * In the individual-window layout each view is a window of its own and claims
+ * its own menu bar legitimately, so this is only for the docked case.
+ *
+ * @param menubar Menu bar of a docked output view (no-op if null)
+ */
+extern void retireViewMenuBar(QMenuBar *menubar);
 
 /**
  * @brief Compute the scroll area size that shows the given content, within a budget
