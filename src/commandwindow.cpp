@@ -35,6 +35,7 @@
 #include <QPushButton>
 #include <QSet>
 #include <QSettings>
+#include <QStandardPaths>
 #include <QStringListModel>
 #include <QTimer>
 #include <QVBoxLayout>
@@ -262,6 +263,45 @@ QString CommandWindow::preferredShell()
     if (QFileInfo::exists("/bin/bash")) return QStringLiteral("/bin/bash");
     return QStringLiteral("/bin/sh");
 #endif
+}
+
+QStringList CommandWindow::availableShells()
+{
+    QStringList shells;
+#if defined(Q_OS_WIN32)
+    shells << preferredShell(); // %COMSPEC%, i.e. cmd.exe
+    // PowerShell (7 as pwsh.exe, the bundled one as powershell.exe) and any
+    // bash on the search path
+    for (const auto &name : {QStringLiteral("pwsh.exe"), QStringLiteral("powershell.exe"),
+                             QStringLiteral("bash.exe")}) {
+        const QString found = QStandardPaths::findExecutable(name);
+        if (!found.isEmpty()) shells << found;
+    }
+    // Git for Windows carries a bash.exe but does not put it on the path
+    for (const auto &guess : {QStringLiteral("C:/Program Files/Git/bin/bash.exe"),
+                              QStringLiteral("C:/Program Files (x86)/Git/bin/bash.exe")}) {
+        if (QFileInfo::exists(guess)) shells << guess;
+    }
+#else
+    // the administrative list of login shells; entries that are there to *deny*
+    // a login are not shells, and neither are entries that do not exist
+    QFile file(QStringLiteral("/etc/shells"));
+    if (file.open(QIODevice::ReadOnly | QIODevice::Text)) {
+        while (!file.atEnd()) {
+            const QString line = QString::fromLocal8Bit(file.readLine()).trimmed();
+            if (line.isEmpty() || line.startsWith(u'#') || line.contains("nologin")) continue;
+            if (QFileInfo::exists(line)) shells << line;
+        }
+    }
+    // the user's own shell may be missing from the list (e.g. from a package
+    // that did not register it); it is what the window uses by default
+    const QString shell = qEnvironmentVariable("SHELL");
+    if (!shell.isEmpty() && QFileInfo::exists(shell)) shells << shell;
+    if (shells.isEmpty()) shells << preferredShell();
+#endif
+    shells.removeDuplicates();
+    shells.sort();
+    return shells;
 }
 
 CommandWindow::CommandWindow(LammpsGui *_lammpsgui, QWidget *parent) :
@@ -503,9 +543,9 @@ void CommandWindow::sendTerminalSize()
 
     // record before the dialect check: cmd.exe has no command to take a size,
     // and without the bookkeeping every sentinel would retry this no-op
-    termcols    = cols;
-    termrows    = rows;
-    sizepending = false;
+    termcols              = cols;
+    termrows              = rows;
+    sizepending           = false;
     const QString command = sizeCommand(shellprogram, cols, rows);
     if (command.isEmpty()) return;
     shell->write(qPrintable(command + "\n"));

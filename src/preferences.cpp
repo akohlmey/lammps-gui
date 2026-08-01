@@ -12,6 +12,7 @@
 #include "preferences.h"
 
 #include "codeeditor.h"
+#include "commandwindow.h"
 #include "constants.h"
 #include "helpers.h"
 #include "lammpsgui.h"
@@ -199,6 +200,8 @@ void Preferences::accept()
     }
     box = tabWidget->findChild<QCheckBox *>("maximized");
     if (box) settings->setValue(Keys::MAXIMIZED, box->isChecked());
+    auto *shell = tabWidget->findChild<QComboBox *>("shell");
+    if (shell) settings->setValue(Keys::SHELL, shell->currentText());
     box = tabWidget->findChild<QCheckBox *>("viewlog");
     if (box) settings->setValue(Keys::VIEWLOG, box->isChecked());
     box = tabWidget->findChild<QCheckBox *>("viewchart");
@@ -456,6 +459,21 @@ GeneralTab::GeneralTab(QSettings *_settings, LammpsWrapper *_lammps, LammpsGui *
     layout->addLayout(pluginlayout, nrow++, 0, 1, 2);
 #endif
     layout->addWidget(new QHline, nrow++, 0, 1, 2);
+
+    // deliberately the last line of the tab: which command interpreter the
+    // command window starts, as a choice of what is installed, not free text
+    auto *shelllabel = new QLabel("Command window shell:");
+    auto *shellcombo = new QComboBox;
+    shellcombo->setObjectName("shell");
+    shellcombo->addItems(CommandWindow::availableShells());
+    const QString curshell = CommandWindow::preferredShell();
+    if (shellcombo->findText(curshell) < 0) shellcombo->insertItem(0, curshell);
+    shellcombo->setCurrentIndex(shellcombo->findText(curshell));
+    shellcombo->setToolTip("Command interpreter started by the Command window.\n"
+                           "Takes effect when the next shell starts: when the window\n"
+                           "is first opened, or on File > Restart Shell.");
+    layout->addWidget(shelllabel, nrow, 0);
+    layout->addWidget(shellcombo, nrow++, 1);
 
     layout->addItem(new QSpacerItem(10, 10, QSizePolicy::Minimum, QSizePolicy::Expanding), nrow, 0);
     layout->addItem(new QSpacerItem(10, 10, QSizePolicy::Minimum, QSizePolicy::Expanding), nrow++,

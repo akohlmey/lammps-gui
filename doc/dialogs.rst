@@ -169,6 +169,15 @@ General Settings
      shared library...* button retrieves a pre-built LAMMPS shared library
      from the LAMMPS web server.  After changing this setting, LAMMPS-GUI
      needs to be re-launched.
+   - **Command window shell:** selects the command interpreter that the
+     :ref:`Command window <commandwindow>` starts, from a list of the
+     shells installed on the machine: on Unix-like systems the entries of
+     ``/etc/shells``, on Windows ``cmd.exe``, PowerShell, and a
+     ``bash.exe`` from an installation such as Git for Windows, when
+     present.  The default is the user's default shell (``SHELL`` on
+     Unix-like systems, ``COMSPEC`` on Windows).  A change takes effect
+     when the next shell starts: when the Command window is first opened,
+     or on its *File* > *Restart Shell*.
 
 Accelerators
 ^^^^^^^^^^^^

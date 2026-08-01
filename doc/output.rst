@@ -387,9 +387,11 @@ again whenever the shell changes directory, and each time completion
 starts on a new argument, so a file a command has just written is
 offered without reopening the panel.
 
-The shell is the one named by the ``SHELL`` environment variable on
-Unix-like systems (falling back to ``/bin/bash`` and then ``/bin/sh``)
-and by ``COMSPEC`` on Windows.  Commands run with ``TERM`` set to
+The shell is the one selected in the *Preferences* dialog (*Command
+window shell*, offering the shells installed on the machine).  Until one
+is selected there, it is the one named by the ``SHELL`` environment
+variable on Unix-like systems (falling back to ``/bin/bash`` and then
+``/bin/sh``) and by ``COMSPEC`` on Windows.  Commands run with ``TERM`` set to
 ``dumb`` and with ``PYTHONUNBUFFERED`` set, so that the output of a
 Python script appears as it is produced rather than all at once when it
 exits.  ``COLUMNS`` and ``LINES`` are set to the size of the panel and

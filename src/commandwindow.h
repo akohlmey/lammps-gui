@@ -85,10 +85,22 @@ public:
      * @brief The command interpreter that will be run
      * @return Path of the user's preferred shell
      *
-     * @c $SHELL on Unix-like systems, falling back to @c /bin/bash and then
-     * @c /bin/sh; @c %COMSPEC% on Windows, falling back to @c cmd.exe.
+     * The shell selected in the preferences, if one was.  Otherwise @c $SHELL
+     * on Unix-like systems, falling back to @c /bin/bash and then @c /bin/sh;
+     * @c %COMSPEC% on Windows, falling back to @c cmd.exe.
      */
     static QString preferredShell();
+
+    /**
+     * @brief The command interpreters installed on this machine
+     * @return Sorted list of shells the preferences can offer
+     *
+     * On Unix-like systems the entries of @c /etc/shells that exist and are
+     * not a @c nologin, plus @c $SHELL.  On Windows @c cmd.exe, PowerShell
+     * and any @c bash.exe found on the search path or in a Git for Windows
+     * installation.
+     */
+    static QStringList availableShells();
 
 private slots:
     void submit();          ///< Send the typed line to the shell
