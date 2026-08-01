@@ -53,6 +53,15 @@ namespace {
 constexpr int bufSize = (1 << 16) + 1;
 } // namespace
 
+// The numbers matter more than the words when this has to be diagnosed from a
+// user's screenshot, so every message carries them.
+std::string StdCapture::describe(const char *what) const
+{
+    return std::string(what) + " (stdout fd " + std::to_string(fileno(stdout)) + ", pipe " +
+           std::to_string(m_pipe[READ]) + "/" + std::to_string(m_pipe[WRITE]) + ", saved " +
+           std::to_string(m_oldStdOut) + ")";
+}
+
 StdCapture::StdCapture() : m_oldStdOut(-1), m_capturing(false), maxread(0), buf(bufSize)
 {
 #if defined(Q_OS_WIN32)
@@ -66,24 +75,36 @@ StdCapture::StdCapture() : m_oldStdOut(-1), m_capturing(false), maxread(0), buf(
     // which is all that redirecting it needs; what is written there is replaced
     // by the pipe in beginCapture() and never reaches the device.
     if (fileno(stdout) < 0) {
-        if (!freopen("NUL", "w", stdout)) return;
+        if (!freopen("NUL", "w", stdout)) {
+            m_diagnostic = "stdout has no file descriptor and could not be attached to NUL";
+            return;
+        }
     }
 #endif
     // make stdout unbuffered so that we don't need to flush the stream
     setvbuf(stdout, nullptr, _IONBF, 0);
 
-    // -1 rather than 0: with no console the standard descriptors are free, so 0
-    // is a descriptor a pipe can legitimately be given
-    m_pipe[READ]  = -1;
-    m_pipe[WRITE] = -1;
 #if defined(Q_OS_WIN32)
-    if (_pipe(m_pipe, 65536, O_BINARY) == -1) return;
+    if (_pipe(m_pipe, 65536, O_BINARY) == -1) {
+        m_diagnostic = "the capture pipe could not be created";
+        return;
+    }
 #else
-    if (pipe(m_pipe) == -1) return;
-    if (fcntl(m_pipe[READ], F_SETFL, fcntl(m_pipe[READ], F_GETFL) | O_NONBLOCK) == -1) return;
+    if (pipe(m_pipe) == -1) {
+        m_diagnostic = "the capture pipe could not be created";
+        return;
+    }
+    if (fcntl(m_pipe[READ], F_SETFL, fcntl(m_pipe[READ], F_GETFL) | O_NONBLOCK) == -1) {
+        m_diagnostic = "the capture pipe could not be made non-blocking";
+        return;
+    }
 #endif
     m_oldStdOut = dup(fileno(stdout));
-    if (m_oldStdOut == -1) return;
+    if (m_oldStdOut == -1) {
+        m_diagnostic = describe("stdout could not be duplicated");
+        return;
+    }
+    m_usable = true;
 }
 
 StdCapture::~StdCapture()
@@ -99,7 +120,13 @@ void StdCapture::beginCapture()
     if (m_capturing) endCapture();
     if (isStdoutSilenced()) restoreStdout();
     if (m_pipe[WRITE] < 0) return; // no pipe to capture into
-    dup2(m_pipe[WRITE], fileno(stdout));
+    if (dup2(m_pipe[WRITE], fileno(stdout)) == -1) {
+        // the library's output now goes wherever stdout pointed, which in a
+        // process without a console is nowhere at all
+        m_usable     = false;
+        m_diagnostic = describe("stdout could not be redirected into the capture pipe");
+        return;
+    }
     m_capturing = true;
     maxread     = 0;
     notifyCaptureState(true);

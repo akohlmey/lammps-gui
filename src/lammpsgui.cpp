@@ -2193,6 +2193,12 @@ void LammpsGui::doRun(bool use_buffer, bool dryrun)
     startLammps();
     if (!lammps.isOpen()) return;
     capturer->beginCapture();
+    // Say so rather than showing an empty window: when stdout cannot be
+    // redirected there is no error anywhere else -- the runtime accepts the
+    // library's output and drops it, and printf() reports success.
+    if (!capturer->isUsable() && logwindow)
+        logwindow->appendPlainText(QString("[LAMMPS output cannot be captured: %1]\n")
+                                       .arg(QString::fromStdString(capturer->diagnostic())));
 
     ++runCounter;
     updateEditorTitle(currentFile);

@@ -69,18 +69,44 @@ public:
      */
     double getBufferUse() const;
 
+    /**
+     * @brief Whether stdout could be redirected at all
+     * @return true when captured output can reach the caller
+     *
+     * False means nothing the library writes can ever be shown, and
+     * @ref diagnostic() says why.  Worth asking: the failure is otherwise
+     * completely silent, because printf() reports success either way and the
+     * runtime simply drops the bytes.
+     */
+    bool isUsable() const { return m_usable; }
+
+    /**
+     * @brief Why capture is not available
+     * @return One line naming the step that failed, empty while capture works
+     */
+    const std::string &diagnostic() const { return m_diagnostic; }
+
 private:
     /**
      * @brief Pipe file descriptors for capturing output
      */
     enum PIPES { READ, WRITE, PIPE_COUNT };
-    int m_pipe[PIPE_COUNT]; ///< Pipe file descriptors
-    int m_oldStdOut;        ///< Original stdout file descriptor
-    bool m_capturing;       ///< Flag indicating if capture is active
-    std::string m_captured; ///< Buffer for captured output
-    int maxread;            ///< High-water mark of bytes read per chunk (for getBufferUse)
+    // -1, not 0: a process without a console leaves the standard descriptors
+    // free, so 0 is one a pipe can legitimately be given.  Initialized here
+    // rather than in the constructor body, which has paths that return early.
+    int m_pipe[PIPE_COUNT] = {-1, -1}; ///< Pipe file descriptors
+    int m_oldStdOut;                   ///< Original stdout file descriptor
+    bool m_capturing;                  ///< Flag indicating if capture is active
+    std::string m_captured;            ///< Buffer for captured output
+    int maxread; ///< High-water mark of bytes read per chunk (for getBufferUse)
 
     std::vector<char> buf; ///< Internal read buffer
+
+    /// Build a diagnostic carrying the descriptor numbers behind it.
+    std::string describe(const char *what) const;
+
+    bool m_usable = false;    ///< stdout could be redirected into the pipe
+    std::string m_diagnostic; ///< Why it could not, for reporting to the user
 };
 
 #endif
