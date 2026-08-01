@@ -212,8 +212,10 @@ memory.
   panel, which streams whatever it is given (verified: a slow producer shows its
   lines as they come). `PYTHONUNBUFFERED=1` is set in the shell's environment to
   cover the common case; anything else needs `stdbuf -oL` or its own flag.
-- **macOS PATH.** An app launched from the Finder inherits a minimal PATH. The
-  shell's environment needs the same fallback logic `findExe()` already applies.
+- **macOS PATH.** An app launched from the Finder inherits a minimal PATH.
+  Done: `shellSearchPath()` appends the same package manager locations
+  `findExe()` falls back to, both to the shell's environment and to the PATH
+  scan behind command completion, so the two agree on what can be run.
 
 ## Portability
 

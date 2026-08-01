@@ -398,7 +398,10 @@ variable on Unix-like systems (falling back to ``/bin/bash`` and then
 ``/bin/sh``) and by ``COMSPEC`` on Windows.  Commands run with ``TERM`` set to
 ``dumb`` and with ``PYTHONUNBUFFERED`` set, so that the output of a
 Python script appears as it is produced rather than all at once when it
-exits.  ``COLUMNS`` and ``LINES`` are set to the size of the panel and
+exits.  On macOS, where an application launched from the Finder inherits
+a minimal ``PATH``, the common package manager locations (Homebrew,
+MacPorts) are appended to it, for the shell and for command completion
+alike.  ``COLUMNS`` and ``LINES`` are set to the size of the panel and
 follow it as it is resized, so a program that formats its output to a
 width uses the width that is actually there rather than the 80 columns
 it would otherwise assume.

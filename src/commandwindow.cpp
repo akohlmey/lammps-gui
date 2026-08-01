@@ -183,6 +183,23 @@ QString sentinelCommand(const QString &program)
     }
 }
 
+// The search path for the shell and for the completion list, which must agree
+// on it.  On macOS an app bundle launched from the Finder inherits a minimal
+// PATH without the package manager locations, so those are appended -- the same
+// ones findExe() falls back to.
+QString shellSearchPath()
+{
+    QString path = qEnvironmentVariable("PATH");
+#if defined(Q_OS_MACOS)
+    const QStringList parts = path.split(QDir::listSeparator(), Qt::SkipEmptyParts);
+    for (const auto &dir : {QStringLiteral("/opt/homebrew/bin"), QStringLiteral("/usr/local/bin"),
+                            QStringLiteral("/opt/local/bin")}) {
+        if (!parts.contains(dir) && QFileInfo::exists(dir)) path += QDir::listSeparator() + dir;
+    }
+#endif
+    return path;
+}
+
 // An interactive shell without a terminal complains whenever it would otherwise
 // hand one to a job -- when a command ends, and loudly when one is killed.  The
 // message says nothing about the command and there is no terminal to be had, so
@@ -446,6 +463,8 @@ void CommandWindow::startShell()
     // bytes reports that its terminal is insufficient instead of writing escape
     // sequences into a scrollback that cannot interpret them.
     env.insert("TERM", "dumb");
+    // a no-op everywhere but on a Finder-launched macOS app; see shellSearchPath()
+    env.insert("PATH", shellSearchPath());
     // a child of the shell block-buffers when it is not on a tty, which would
     // hold a script's output back until it exits
     env.insert("PYTHONUNBUFFERED", "1");
@@ -843,8 +862,8 @@ QStringList CommandWindow::pathCommands()
     static QStringList cached;
     if (!cached.isEmpty()) return cached;
 
-    const auto sep  = QDir::listSeparator();
-    const auto dirs = qEnvironmentVariable("PATH").split(sep, Qt::SkipEmptyParts);
+    // the same path the shell is given, so completion offers what it can run
+    const auto dirs = shellSearchPath().split(QDir::listSeparator(), Qt::SkipEmptyParts);
     for (const auto &dir : dirs) {
         const QFileInfoList entries =
             QDir(dir).entryInfoList(QDir::Files | QDir::Executable | QDir::NoDotAndDotDot);
