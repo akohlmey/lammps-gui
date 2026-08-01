@@ -33,6 +33,7 @@
 #include <QPlainTextEdit>
 #include <QProcessEnvironment>
 #include <QPushButton>
+#include <QSet>
 #include <QSettings>
 #include <QStringListModel>
 #include <QTimer>
@@ -802,9 +803,12 @@ void CommandWindow::refreshCompletions()
     sorted.removeDuplicates();
     sorted.sort();
 
-    // a name that is both a command and a line of its own is offered once
+    // a name that is both a command and a line of its own is offered once; a
+    // set of the history lines keeps this linear -- pathCommands() is a few
+    // thousand names and this runs after every submitted command
+    const QSet<QString> seen(sorted.cbegin(), sorted.cend());
     for (const auto &command : pathCommands())
-        if (!sorted.contains(command)) sorted << command;
+        if (!seen.contains(command)) sorted << command;
 
     commands->setStringList(sorted);
 }
