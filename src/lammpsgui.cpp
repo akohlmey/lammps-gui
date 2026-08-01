@@ -2570,22 +2570,22 @@ void LammpsGui::setFont(const QFont &newFont)
 
 void LammpsGui::about()
 {
-    std::string version = "<b>This is LAMMPS-GUI version " LAMMPS_GUI_VERSION;
-    version += " using Qt version " QT_VERSION_STR;
+    std::string version = "<b>This is LAMMPS-GUI version " LAMMPS_GUI_VERSION "</b>\n";
+    version += "<ul><li> with Qt version " QT_VERSION_STR "</li>\n";
     if (isLightTheme())
-        version += " with light theme";
+        version += "<li>with light theme</li>\n";
     else
-        version += " with dark theme";
+        version += "<li>with dark theme</li>\n";
     // name the layout the way the preferences dialog does
     if (dockedLayout())
-        version += " and the combined main window layout";
+        version += "<li>with combined main window layout</li>\n";
     else
-        version += " and the individual windows layout";
-    version += "</b><br><br>\n";
+        version += "<li>with individual windows layout</li>\n";
+    version += "</ul>\n";
     if (lammps.hasPlugin()) {
         version += "LAMMPS library loaded as plugin";
         if (!pluginPath.isEmpty()) {
-            version += " from file ";
+            version += "<br>\n from file ";
             version += pluginPath.toStdString();
         }
     } else {
