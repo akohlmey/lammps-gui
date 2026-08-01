@@ -65,6 +65,17 @@ public:
      */
     void reset();
 
+    /**
+     * @brief The text of the summary label for the given counters
+     * @param nwarnings Number of warnings/errors counted
+     * @param nlines Number of lines counted
+     * @return Formatted summary text
+     *
+     * The one place the format lives; also used to seed the label before any
+     * highlighting has run.
+     */
+    static QString summaryText(int nwarnings, int nlines);
+
 protected:
     /**
      * @brief Highlight a single block (line) of text

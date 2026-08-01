@@ -55,7 +55,7 @@ LogWindow::LogWindow(const QString &_filename, LammpsGui *_lammpsgui, QWidget *p
 
     document()->setDefaultFont(monoFontFromSettings());
 
-    summary = new QLabel("0 Warnings / Errors - 0 Lines");
+    summary = new QLabel(FlagWarnings::summaryText(0, 0));
     summary->setMargin(1);
 
     auto *frame = new QFrame;
