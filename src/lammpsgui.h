@@ -475,6 +475,12 @@ private:
     /** @brief Create and show/hide the thermo chart window for a run */
     void createChartWindow(QSettings &settings);
 
+    /** @brief Say in the log window when the output capture cannot work
+     *
+     * The failure is otherwise silent: printf() reports success and the
+     * runtime drops the bytes.  Must be called after createLogWindow(). */
+    void reportCaptureFailure();
+
     /** @brief Warn (modal) if the stdout capture buffer usage was high */
     void warnHighBufferUsage();
 

@@ -1993,6 +1993,19 @@ void LammpsGui::createLogWindow(QSettings &settings)
     viewlayout->setVisible(ViewSlot::Log, settings.value(Keys::VIEWLOG, true).toBool());
 }
 
+// Must run *after* createLogWindow(): on the first run of a session there is no
+// log window before that, and a message with nowhere to go is dropped -- which
+// on a fresh start is exactly when it is needed.
+void LammpsGui::reportCaptureFailure()
+{
+    // Say so rather than showing an empty window: when stdout cannot be
+    // redirected there is no error anywhere else -- the runtime accepts the
+    // library's output and drops it, and printf() reports success.
+    if (!capturer->isUsable() && logwindow)
+        logwindow->appendPlainText(QString("[LAMMPS output cannot be captured: %1]\n")
+                                       .arg(QString::fromStdString(capturer->diagnostic())));
+}
+
 void LammpsGui::createChartWindow(QSettings &settings)
 {
     // reuse an existing window: it keeps the position and size it was given
@@ -2193,12 +2206,6 @@ void LammpsGui::doRun(bool use_buffer, bool dryrun)
     startLammps();
     if (!lammps.isOpen()) return;
     capturer->beginCapture();
-    // Say so rather than showing an empty window: when stdout cannot be
-    // redirected there is no error anywhere else -- the runtime accepts the
-    // library's output and drops it, and printf() reports success.
-    if (!capturer->isUsable() && logwindow)
-        logwindow->appendPlainText(QString("[LAMMPS output cannot be captured: %1]\n")
-                                       .arg(QString::fromStdString(capturer->diagnostic())));
 
     ++runCounter;
     updateEditorTitle(currentFile);
@@ -2237,6 +2244,7 @@ void LammpsGui::doRun(bool use_buffer, bool dryrun)
     }
 
     createLogWindow(settings);
+    reportCaptureFailure();
     if (dryrun) {
         if (logwindow) logwindow->setWindowTitle(logwindow->windowTitle() + " (Dry Run)");
         // no chart window and no slide show reset: a dry run produces no
@@ -2303,6 +2311,7 @@ void LammpsGui::extendRun()
     // (e.g. when extending the state of an inspected restart file)
     if (!logwindow) createLogWindow(settings);
     if (!chartwindow) createChartWindow(settings);
+    reportCaptureFailure();
 
     logwindow->moveCursor(QTextCursor::End);
     logwindow->insertPlainText(
