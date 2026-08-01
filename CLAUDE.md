@@ -74,7 +74,7 @@ ctest --test-dir build -R Framebuffer --output-on-failure   # GUI tests need Xvf
 - `test_*` executables — C++ unit tests (GoogleTest v1.17.0, fetched automatically
   via FetchContent); one per tested module: helpers, stdcapture, flagwarnings,
   dumpimage, movieimport, imagecache, leastsquares, plotdata, lepton, levmar,
-  customfunc, analysis, plotaxismath, and fitting
+  customfunc, analysis, plotaxismath, fitting, shortcuts, and windowlayout
 - `CommandLine.*` — command-line flag smoke tests
 - `Framebuffer.*` — Python/PyAutoGUI GUI tests run inside Xvfb; require `xvfb-run` and one of: `magick`, `import`, `xfce4-screenshooter`, or `gnome-screenshot`
 

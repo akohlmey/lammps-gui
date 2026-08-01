@@ -210,6 +210,15 @@ void WindowLayout::makeDockChrome(QDockWidget *d, const QString &title)
 {
     auto *empty = new QWidget(d);
     empty->setObjectName(EMPTY_TITLE_NAME);
+    // An empty title bar is how a dock is told to have none, but a bare QWidget
+    // has no layout and so reports an *invalid* size hint of (-1,-1) -- and Qt
+    // takes the height of the title bar from exactly that hint.  The -1 travels
+    // into the dock's own minimum height, where it surfaces as "Negative sizes
+    // (0,-1) are not possible".  An empty layout costs nothing and makes the
+    // hint the (0,0) that was meant all along.
+    auto *nothing = new QHBoxLayout(empty);
+    nothing->setContentsMargins(0, 0, 0, 0);
+    nothing->setSpacing(0);
     makeTabTitle(d, title);
     d->setTitleBarWidget(empty);
 }
@@ -315,6 +324,20 @@ bool WindowLayout::eventFilter(QObject *watched, QEvent *event)
         }
     }
 
+    // Docked, a view is a child of its dock, so closing the view -- from its
+    // Close entry or with the shortcut -- hid the widget and left the dock, and
+    // with it the tab, behind and empty.  The dock is what has to go, so send
+    // the close there instead.  Only the fixed slots need this: a transient
+    // viewer deletes itself when closed and its dock follows it out.
+    if (event->type() == QEvent::Close && layoutmode == LayoutMode::Docked) {
+        for (int i = 0; i < static_cast<int>(ViewSlot::Count); ++i) {
+            if (views[i] != watched) continue;
+            event->ignore(); // the widget stays, so the dock can show it again
+            hide(static_cast<ViewSlot>(i));
+            return true;
+        }
+    }
+
     if (watched == mainwindow && event->type() == QEvent::Resize &&
         layoutmode == LayoutMode::Docked && !splitpending && mainwindow->isVisible()) {
         auto *re            = static_cast<QResizeEvent *>(event);
@@ -408,6 +431,8 @@ void WindowLayout::saveState() const
 void WindowLayout::prepareDockedView(QWidget *view)
 {
     if (!view) return;
+    // watched for the close it may send itself; see eventFilter()
+    view->installEventFilter(this);
     view->setMinimumSize(0, 0);
     if (auto *l = view->layout()) l->setSizeConstraint(QLayout::SetNoConstraint);
     deferShortcutsToMainWindow(view);

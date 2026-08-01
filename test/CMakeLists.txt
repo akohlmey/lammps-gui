@@ -88,6 +88,20 @@ target_link_libraries(test_shortcuts PRIVATE GTest::gtest_main Qt6::Widgets)
 
 gtest_discover_tests(test_shortcuts)
 
+# Test executable for the docked-layout presentation policy
+add_executable(test_windowlayout
+  test_windowlayout.cpp
+  ${CMAKE_SOURCE_DIR}/src/windowlayout.cpp
+  ${CMAKE_SOURCE_DIR}/src/helpers.cpp
+  ${CMAKE_SOURCE_DIR}/src/stdcapture.cpp
+)
+
+set_target_properties(test_windowlayout PROPERTIES AUTOMOC ON)
+target_include_directories(test_windowlayout PRIVATE ${CMAKE_SOURCE_DIR}/src)
+target_link_libraries(test_windowlayout PRIVATE GTest::gtest_main Qt6::Widgets)
+
+gtest_discover_tests(test_windowlayout)
+
 target_include_directories(test_helpers PRIVATE
   ${CMAKE_SOURCE_DIR}/src
 )
