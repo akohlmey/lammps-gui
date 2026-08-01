@@ -15,7 +15,6 @@
 #include "helpers.h"
 #include "lammpsgui.h"
 
-#include <QEvent>
 #include <QFile>
 #include <QFileInfo>
 #include <QFont>
@@ -27,7 +26,6 @@
 #include <QProcess>
 #include <QResizeEvent>
 #include <QSettings>
-#include <QShortcut>
 #include <QString>
 #include <QStringList>
 #include <QTextCursor>
@@ -40,8 +38,6 @@ FileViewer::FileViewer(const QString &_filename, LammpsGui *_lammpsgui, const QS
     createMenuBar();
     // no menu entry of its own
     addShortcut(this, QKeySequence(Qt::CTRL | Qt::Key_Slash), this, &FileViewer::stopRun);
-
-    installEventFilter(this);
 
     // open and read file. Set editor to read-only.
     QFile file(fileName);
@@ -157,26 +153,6 @@ void FileViewer::quit()
 void FileViewer::stopRun()
 {
     if (lammpsgui) lammpsgui->stopRun();
-}
-
-// event filter to handle "Ambiguous shortcut override" issues
-bool FileViewer::eventFilter(QObject *watched, QEvent *event)
-{
-    if (event->type() == QEvent::ShortcutOverride) {
-        auto *keyEvent = dynamic_cast<QKeyEvent *>(event);
-        if (!keyEvent) return QAbstractScrollArea::eventFilter(watched, event);
-        if (keyEvent->modifiers().testFlag(Qt::ControlModifier) && keyEvent->key() == '/') {
-            stopRun();
-            event->accept();
-            return true;
-        }
-        if (keyEvent->modifiers().testFlag(Qt::ControlModifier) && keyEvent->key() == 'W') {
-            close();
-            event->accept();
-            return true;
-        }
-    }
-    return QWidget::eventFilter(watched, event);
 }
 
 // Local Variables:

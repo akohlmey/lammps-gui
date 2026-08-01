@@ -58,14 +58,6 @@ private slots:
 
 protected:
     /**
-     * @brief Event filter for keyboard shortcuts
-     * @param watched Object being watched
-     * @param event Event to filter
-     * @return true if event handled, false otherwise
-     */
-    bool eventFilter(QObject *watched, QEvent *event) override;
-
-    /**
      * @brief Keep the menu bar across the top of the viewport
      * @param event Resize event
      */

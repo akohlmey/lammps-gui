@@ -282,8 +282,6 @@ void WindowLayout::updateDockChrome()
                 break;
             }
         }
-        // the placeholder stays owned by the dock either way, so it can be
-        // handed back and forth without leaking
         QWidget *wanted = d->findChild<QWidget *>(tabbed ? EMPTY_TITLE_NAME : TAB_TITLE_NAME,
                                                   Qt::FindDirectChildrenOnly);
         if (wanted && d->titleBarWidget() != wanted) {
@@ -291,7 +289,7 @@ void WindowLayout::updateDockChrome()
             // handed back and forth without leaking
             if (auto *previous = d->titleBarWidget()) previous->hide();
             d->setTitleBarWidget(wanted);
-            if (wanted) wanted->show();
+            wanted->show();
         }
     }
 }

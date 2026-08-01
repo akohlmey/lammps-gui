@@ -538,7 +538,7 @@ void CommandWindow::submit()
     appendOutput(QString("%1$ %2\n").arg(workingdir, line));
     prompt->clear();
 
-    if (!line.trimmed().isEmpty() && (history.isEmpty() || history.last() != line)) {
+    if (history.isEmpty() || history.last() != line) {
         history << line;
         // the line just typed is a completion for the next one
         refreshCompletions();
