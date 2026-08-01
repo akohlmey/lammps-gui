@@ -77,7 +77,7 @@ struct CustomCurve {
 /**
  * @brief A named nonlinear-fit parameter
  *
- * Carries the initial guess on input to @ref fitCustomCurve and the fitted
+ * Carries the initial guess on input to fitCustomCurve() and the fitted
  * value on output.
  */
 struct FitParam {

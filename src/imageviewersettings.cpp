@@ -640,7 +640,7 @@ template <typename T> static T *gridWidget(QGridLayout *layout, int row, int &co
     return item ? qobject_cast<T *>(item->widget()) : nullptr;
 }
 
-// The three created widgets of a color-map selector row.
+/// The three created widgets of a color-map selector row.
 struct ColorMapRow {
     QComboBox *map; ///< the map-name combo (carries the object name)
     QLineEdit *min; ///< the minimum-value edit

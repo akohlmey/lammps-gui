@@ -127,19 +127,19 @@ constexpr qint64 MOVIE_WARN_BYTES = 1024LL * 1024LL * 1024LL;
 constexpr double MOVIE_WARN_DISKFRAC = 0.9;
 
 // ---- Docked window layout ------------------------------------------------
-// Version tag written into the saved dock arrangement.  Bump it whenever the
-// set of docks or their default arrangement changes, so QMainWindow discards a
-// saved state that no longer matches instead of restoring something stale.
-// bumped when ViewSlot::Command was added: a saved arrangement from before
-// does not know that panel and must not be restored over the new default
+/// Version tag written into the saved dock arrangement.  Bump it whenever the
+/// set of docks or their default arrangement changes, so QMainWindow discards a
+/// saved state that no longer matches instead of restoring something stale.
+/// Bumped when ViewSlot::Command was added: a saved arrangement from before
+/// does not know that panel and must not be restored over the new default.
 constexpr int DOCK_STATE_VERSION  = 2;
 constexpr int MAIN_DEFAULT_WIDTH  = 1024; ///< Default main window width, individual windows
 constexpr int MAIN_DEFAULT_HEIGHT = 512;  ///< Default main window height, individual windows
-/// Default size of the combined main window: twice the individual-window
-/// default, since it holds the editor plus two dock groups.  Clamped to the
-/// available screen area where it is applied.
-constexpr int DOCK_MAIN_DEFAULT_WIDTH  = 2 * MAIN_DEFAULT_WIDTH;
-constexpr int DOCK_MAIN_DEFAULT_HEIGHT = 2 * MAIN_DEFAULT_HEIGHT;
+// The combined main window defaults to twice the individual-window size,
+// since it holds the editor plus two dock groups.  Clamped to the available
+// screen area where it is applied.
+constexpr int DOCK_MAIN_DEFAULT_WIDTH  = 2 * MAIN_DEFAULT_WIDTH;  ///< Docked main window width
+constexpr int DOCK_MAIN_DEFAULT_HEIGHT = 2 * MAIN_DEFAULT_HEIGHT; ///< Docked main window height
 /** Fraction of the combined window width given to the right hand dock group */
 constexpr double DOCK_SPLIT_HORIZONTAL = 0.5;
 /** Fraction of the combined window height given to the bottom dock group */

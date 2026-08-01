@@ -458,10 +458,10 @@ public:
     /** @brief Destructor */
     ~InputScanner() = default;
 
-    InputScanner(const InputScanner &)            = default;
-    InputScanner(InputScanner &&)                 = default;
-    InputScanner &operator=(const InputScanner &) = default;
-    InputScanner &operator=(InputScanner &&)      = default;
+    InputScanner(const InputScanner &)            = default; ///< Copy constructor
+    InputScanner(InputScanner &&)                 = default; ///< Move constructor
+    InputScanner &operator=(const InputScanner &) = default; ///< Copy assignment
+    InputScanner &operator=(InputScanner &&)      = default; ///< Move assignment
 
     /// scan a whole buffer (split on newlines, 1-based line numbers); results
     /// accumulate, so use a fresh scanner for every buffer
