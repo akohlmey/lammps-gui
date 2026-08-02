@@ -186,12 +186,51 @@ void Highlighter::highlightBlock(const QString &text)
     const QString cmdName = freshLine
                                 ? argText.value(0)
                                 : (syntax->spec(cmdIdx) ? syntax->spec(cmdIdx)->name : QString());
-    const bool dumpish    = (cmdName == QStringLiteral("dump")) ||
-                         (cmdName == QStringLiteral("dump_modify"));
+    const auto isDumpish  = [](const QString &name) {
+        return (name == QStringLiteral("dump")) || (name == QStringLiteral("dump_modify"));
+    };
+    const bool dumpish = isDumpish(cmdName);
     const bool imageKeywords =
         (cmdName == QStringLiteral("dump")) &&
         (!argText.contains(3) || (argText.value(3) == QStringLiteral("image")) ||
          (argText.value(3) == QStringLiteral("movie")));
+
+    // "write_dump ... modify ..." embeds a dump_modify command and
+    // "rerun ... dump ..." a read_dump command.  The keyword splitting off the
+    // embedded section is shown in the color of the command it stands for and
+    // the arguments after it are those of the embedded command.
+    QString splitWord;     // keyword that starts the embedded command
+    QString splitCommand;  // command the keyword stands for
+    int splitFirstArg = 0; // earliest argument position of the keyword
+    int splitBaseArg  = 0; // position the first embedded argument corresponds to
+    if (cmdName == QStringLiteral("write_dump")) {
+        splitWord     = QStringLiteral("modify");
+        splitCommand  = QStringLiteral("dump_modify");
+        splitFirstArg = 4; // group-ID, dump style, and file name come first
+        splitBaseArg  = 2; // the dump ID of a dump_modify command is implicit
+    } else if (cmdName == QStringLiteral("rerun")) {
+        splitWord     = QStringLiteral("dump");
+        splitCommand  = QStringLiteral("read_dump");
+        splitFirstArg = 2; // at least one dump file name comes first
+        splitBaseArg  = 3; // file name and time step of read_dump are implicit
+    }
+
+    // position of the splitting keyword (LAMMPS splits at its first
+    // occurrence) and the spec of the command it embeds
+    int splitArg = -1;
+    int embedIdx = -1;
+    if (!splitWord.isEmpty()) {
+        for (auto it = argText.constBegin(); it != argText.constEnd(); ++it)
+            if ((it.key() >= splitFirstArg) && (it.value() == splitWord) &&
+                ((splitArg < 0) || (it.key() < splitArg)))
+                splitArg = it.key();
+        if (splitArg >= 0) embedIdx = syntax->commandIndex(splitCommand);
+    }
+    const bool embedDumpish = isDumpish(splitCommand);
+    // argument position within the embedded command
+    const auto embedArg = [&](int arg) {
+        return arg - splitArg - 1 + splitBaseArg;
+    };
 
     for (const auto &tok : lt.tokens) {
         QTextCharFormat fmt;
@@ -215,7 +254,12 @@ void Highlighter::highlightBlock(const QString &text)
                     unknown =
                         checkNames && !tok.hasSubst && !tok.fragment && !syntax->knownCommand(word);
                 } else if (tok.argIndex > 0) {
-                    const ArgSpec spec = syntax->argSpec(cmdIdx, tok.argIndex);
+                    // after the splitting keyword the arguments are those of
+                    // the embedded command and use its argument numbering
+                    const bool embedded = (splitArg >= 0) && (tok.argIndex > splitArg);
+                    const ArgSpec spec  = embedded
+                                              ? syntax->argSpec(embedIdx, embedArg(tok.argIndex))
+                                              : syntax->argSpec(cmdIdx, tok.argIndex);
                     switch (spec.role) {
                         case ArgRole::DefineId:
                         case ArgRole::Label:
@@ -254,13 +298,16 @@ void Highlighter::highlightBlock(const QString &text)
                     else if (isReferenceWord(word))
                         fmt = formats[static_cast<int>(Fmt::Variable)];
                     // colors and keywords on dump image / dump_modify lines
-                    if (dumpish) {
+                    if (embedded ? embedDumpish : dumpish) {
                         if (syntax->knownStyle(StyleCat::Color, word))
                             fmt = colorFormat(word);
                         else if (imageKeywords && (tok.argIndex >= 8) &&
                                  syntax->knownStyle(StyleCat::ImageKw, word))
                             fmt = formats[static_cast<int>(Fmt::String)];
                     }
+                    // the keyword splitting off an embedded command
+                    if (tok.argIndex == splitArg)
+                        fmt = cmdFormat(syntax->commandCategory(splitCommand));
                 }
                 break;
             }
@@ -297,6 +344,12 @@ void Highlighter::highlightBlock(const QString &text)
     // store the block state; carry the active command into a continuation
     int out = lt.outState;
     if (freshLine && (out != 0) && (cmdIdx >= 0)) out = SyntaxState::withCommand(out, cmdIdx);
+    // once the splitting keyword has been seen, the rest of the logical line
+    // continues as the embedded command in its own argument numbering
+    if ((out != 0) && (splitArg >= 0) && (embedIdx >= 0)) {
+        out = SyntaxState::withCommand(out, embedIdx);
+        out = SyntaxState::withArgs(out, embedArg(SyntaxState::argsUsed(out)));
+    }
     setCurrentBlockState(out);
 }
 

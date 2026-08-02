@@ -228,6 +228,14 @@ inline int withCommand(int state, int cmdidx)
     return (state & ~(CMD_MASK << CMD_SHIFT)) | (((cmdidx + 1) & CMD_MASK) << CMD_SHIFT);
 }
 
+/// replace the number of arguments consumed so far in a block state; used to
+/// renumber the arguments when a command embeds a second command (the
+/// "modify" section of write_dump, the "dump" section of rerun)
+inline int withArgs(int state, int nargs)
+{
+    return (state & ~(ARG_MASK << ARG_SHIFT)) | ((qMin(nargs, ARG_MAXX) & ARG_MASK) << ARG_SHIFT);
+}
+
 /// true when a line with this previous-line state continues the logical line
 /// (an open continuation, triple-quoted block, or quoted string)
 inline bool logicalContinues(int state)
