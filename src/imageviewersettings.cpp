@@ -168,7 +168,7 @@ void ImageViewer::globalSettings()
                       Qt::AlignVCenter | Qt::AlignRight);
     auto *thetaval = new QSpinBox;
     thetaval->setRange(0, 360);
-    thetaval->setSingleStep(10);
+    thetaval->setSingleStep(5);
     thetaval->setWrapping(true);
     thetaval->setValue(hrot);
     thetaval->setMaximumWidth(fwidth * 3 / 2);
@@ -178,7 +178,7 @@ void ImageViewer::globalSettings()
     layout->addWidget(new QLabel("View phi: "), idx, n++, 1, 1, Qt::AlignVCenter | Qt::AlignRight);
     auto *phival = new QSpinBox;
     phival->setRange(-180, 180);
-    phival->setSingleStep(10);
+    phival->setSingleStep(5);
     phival->setWrapping(true);
     phival->setValue(vrot);
     phival->setMaximumWidth(fwidth * 3 / 2);
