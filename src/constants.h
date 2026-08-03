@@ -257,40 +257,57 @@ inline const QString GROUP_SNAPSHOT = QStringLiteral("snapshot");
 inline const QString GROUP_TUTORIAL = QStringLiteral("tutorial");
 
 // ---- keys ----------------------------------------------------------------
-inline const QString ACCELERATOR      = QStringLiteral("accelerator");
-inline const QString ALIASES          = QStringLiteral("aliases");
-inline const QString ALLFAMILY        = QStringLiteral("allfamily");
-inline const QString ALLSIZE          = QStringLiteral("allsize");
-inline const QString ANTIALIAS        = QStringLiteral("antialias");
-inline const QString AUTOBOND         = QStringLiteral("autobond");
-inline const QString AUTOMATIC        = QStringLiteral("automatic");
-inline const QString AUTOSAVE         = QStringLiteral("autosave");
-inline const QString AXES             = QStringLiteral("axes");
-inline const QString AXESDIAM         = QStringLiteral("axesdiam");
-inline const QString AXESLEN          = QStringLiteral("axeslen");
-inline const QString BACKCOLOR        = QStringLiteral("backcolor");
-inline const QString BACKCOLOR2       = QStringLiteral("backcolor2");
-inline const QString BONDCOLOR        = QStringLiteral("bondcolor");
-inline const QString BONDCOLORMAP     = QStringLiteral("bondcolormap");
-inline const QString BONDCUT          = QStringLiteral("bondcut");
-inline const QString BONDDIAM         = QStringLiteral("bonddiam");
-inline const QString BOX              = QStringLiteral("box");
-inline const QString BOXCOLOR         = QStringLiteral("boxcolor");
-inline const QString BOXDIAM          = QStringLiteral("boxdiam");
-inline const QString CHARTX           = QStringLiteral("chartx");
-inline const QString CHARTY           = QStringLiteral("charty");
-inline const QString CITE             = QStringLiteral("cite");
-inline const QString CMDHISTORY       = QStringLiteral("cmdhistory");
-inline const QString COLOR            = QStringLiteral("color");
-inline const QString COLORMAP         = QStringLiteral("colormap");
-inline const QString COMMAND          = QStringLiteral("command");
-inline const QString DIAMETER         = QStringLiteral("diameter");
-inline const QString DOCKED           = QStringLiteral("docked");
-inline const QString DOCKMAINX        = QStringLiteral("dockmainx");
-inline const QString DOCKMAINY        = QStringLiteral("dockmainy");
-inline const QString DOCKSPLITH       = QStringLiteral("docksplith");
-inline const QString DOCKSPLITV       = QStringLiteral("docksplitv");
-inline const QString DOCKSTATE        = QStringLiteral("dockstate");
+inline const QString ACCELERATOR  = QStringLiteral("accelerator");
+inline const QString ALIASES      = QStringLiteral("aliases");
+inline const QString ALLFAMILY    = QStringLiteral("allfamily");
+inline const QString ALLSIZE      = QStringLiteral("allsize");
+inline const QString ANTIALIAS    = QStringLiteral("antialias");
+inline const QString AUTOBOND     = QStringLiteral("autobond");
+inline const QString AUTOMATIC    = QStringLiteral("automatic");
+inline const QString AUTOSAVE     = QStringLiteral("autosave");
+inline const QString AXES         = QStringLiteral("axes");
+inline const QString AXESDIAM     = QStringLiteral("axesdiam");
+inline const QString AXESLEN      = QStringLiteral("axeslen");
+inline const QString BACKCOLOR    = QStringLiteral("backcolor");
+inline const QString BACKCOLOR2   = QStringLiteral("backcolor2");
+inline const QString BONDCOLOR    = QStringLiteral("bondcolor");
+inline const QString BONDCOLORMAP = QStringLiteral("bondcolormap");
+inline const QString BONDCUT      = QStringLiteral("bondcut");
+inline const QString BONDDIAM     = QStringLiteral("bonddiam");
+inline const QString BOX          = QStringLiteral("box");
+inline const QString BOXCOLOR     = QStringLiteral("boxcolor");
+inline const QString BOXDIAM      = QStringLiteral("boxdiam");
+inline const QString CHARTX       = QStringLiteral("chartx");
+inline const QString CHARTY       = QStringLiteral("charty");
+inline const QString CITE         = QStringLiteral("cite");
+inline const QString CMDHISTORY   = QStringLiteral("cmdhistory");
+inline const QString COLOR        = QStringLiteral("color");
+inline const QString COLORMAP     = QStringLiteral("colormap");
+inline const QString COMMAND      = QStringLiteral("command");
+inline const QString DIAMETER     = QStringLiteral("diameter");
+inline const QString DOCKED       = QStringLiteral("docked");
+inline const QString DOCKMAINX    = QStringLiteral("dockmainx");
+inline const QString DOCKMAINY    = QStringLiteral("dockmainy");
+inline const QString DOCKSPLITH   = QStringLiteral("docksplith");
+inline const QString DOCKSPLITV   = QStringLiteral("docksplitv");
+// The dock arrangement is a QMainWindow::saveState() byte array, and that format
+// belongs to the Qt version that wrote it: restoreState() does not reliably
+// reject a blob from a different feature release, it can crash on one.  So the
+// key is qualified by the Qt feature version and every installed Qt keeps its
+// own arrangement.  The patch level is deliberately left out, so an update
+// within a feature release (6.9.0 -> 6.9.1) keeps the layout the user set up.
+//
+// This is the *runtime* version, not QT_VERSION_MAJOR/MINOR: the format is the
+// business of the Qt that reads the blob back, and Qt stays binary compatible
+// across feature releases, so a shared-library update from 6.9 to 6.10 puts a
+// different Qt under an unchanged executable.  Keying on the compile-time
+// version would hand that new Qt the old one's arrangement -- the very case
+// this guards against.
+inline const QString DOCKSTATE =
+    QStringLiteral("dockstate_%1").arg(QString::fromLatin1(qVersion()).section('.', 0, 1));
+// the unqualified key from before that; unlike PLUGIN_PATH_LEGACY it is dropped
+// rather than kept, because there is no way to tell which Qt version wrote it
+inline const QString DOCKSTATE_LEGACY = QStringLiteral("dockstate");
 inline const QString DOWNLOAD_TIMEOUT = QStringLiteral("download_timeout");
 inline const QString ECHO             = QStringLiteral("echo");
 inline const QString GPUNEIGH         = QStringLiteral("gpuneigh");

@@ -11,12 +11,16 @@
 
 #include "windowlayout.h"
 
+#include "constants.h"
+
 #include <gtest/gtest.h>
 
 #include <QApplication>
 #include <QDockWidget>
 #include <QMainWindow>
 #include <QPlainTextEdit>
+#include <QSettings>
+#include <QTemporaryDir>
 #include <QWidget>
 
 // WindowLayout is the presentation policy for the output views.  Docked, a view
@@ -34,12 +38,27 @@ protected:
             static char *argv[] = {(char *)"test_windowlayout"};
             app                 = new QApplication(argc, argv);
         }
+        // WindowLayout reads and writes QSettings; send those to a throw-away
+        // directory so a test run cannot touch the real configuration
+        QCoreApplication::setOrganizationName("LAMMPS-GUI-Test");
+        QCoreApplication::setApplicationName("test_windowlayout");
+        QSettings::setDefaultFormat(QSettings::IniFormat);
+        settingsdir = new QTemporaryDir;
+        QSettings::setPath(QSettings::IniFormat, QSettings::UserScope, settingsdir->path());
+    }
+
+    static void TearDownTestSuite()
+    {
+        delete settingsdir;
+        settingsdir = nullptr;
     }
 
     static QApplication *app;
+    static QTemporaryDir *settingsdir;
 };
 
-QApplication *WindowLayoutTest::app = nullptr;
+QApplication *WindowLayoutTest::app          = nullptr;
+QTemporaryDir *WindowLayoutTest::settingsdir = nullptr;
 
 // A bare QWidget has no layout and therefore an *invalid* size hint of (-1,-1).
 // Qt takes the height of a dock's title bar straight from that hint, so using
@@ -110,6 +129,52 @@ TEST_F(WindowLayoutTest, ClosingAFloatingViewIsLeftAlone)
     EXPECT_FALSE(layout.isVisible(ViewSlot::Log));
     EXPECT_TRUE(view->isHidden());
     delete view;
+}
+
+// The saved dock arrangement is a QMainWindow::saveState() blob whose format
+// belongs to the Qt release that reads it back, and restoring one written by a
+// different feature release can crash.  The settings key therefore carries the
+// running Qt's feature version -- and only that, so a patch-level update does
+// not silently discard the arrangement the user set up.
+TEST_F(WindowLayoutTest, DockStateKeyIsQualifiedByQtFeatureVersion)
+{
+    const QString version = QString::fromLatin1(qVersion());
+    const QString feature = version.section('.', 0, 1); // "6.9" out of "6.9.1"
+    ASSERT_FALSE(feature.isEmpty());
+
+    EXPECT_EQ(Keys::DOCKSTATE, QString("dockstate_%1").arg(feature));
+
+    // it must not be the unqualified key any more, nor carry the patch level
+    EXPECT_NE(Keys::DOCKSTATE, Keys::DOCKSTATE_LEGACY);
+    if (version != feature) {
+        EXPECT_FALSE(Keys::DOCKSTATE.contains(version));
+    }
+}
+
+// The arrangement has to go out under the versioned key, and an unversioned one
+// left over from before -- written by an unknown Qt, so unsafe to restore -- has
+// to be gone rather than sit there waiting to be picked up.
+TEST_F(WindowLayoutTest, SavingUsesTheVersionedKeyAndDropsTheLegacyOne)
+{
+    {
+        QSettings settings;
+        settings.setValue(Keys::DOCKSTATE_LEGACY, QByteArray("stale-blob-from-some-other-qt"));
+        settings.remove(Keys::DOCKSTATE);
+        settings.sync();
+    }
+
+    QMainWindow window;
+    window.show();
+    WindowLayout layout(&window, LayoutMode::Docked); // reads, and drops the legacy key
+    layout.place(ViewSlot::Log, new QPlainTextEdit);
+    layout.show(ViewSlot::Log);
+    QApplication::processEvents();
+    layout.saveState();
+
+    QSettings settings;
+    settings.sync();
+    EXPECT_FALSE(settings.contains(Keys::DOCKSTATE_LEGACY));
+    EXPECT_FALSE(settings.value(Keys::DOCKSTATE).toByteArray().isEmpty());
 }
 
 // Local Variables:

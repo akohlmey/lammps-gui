@@ -185,6 +185,9 @@ void WindowLayout::createDocks()
     // a saved arrangement wins over the default one above; it is matched to
     // these docks by object name, which is why they all exist by now
     QSettings settings;
+    // an arrangement stored before the key was qualified by Qt version may have
+    // been written by any Qt release and restoring it can crash; see constants.h
+    settings.remove(Keys::DOCKSTATE_LEGACY);
     const QByteArray state = settings.value(Keys::DOCKSTATE).toByteArray();
     if (!state.isEmpty() && mainwindow->restoreState(state, Cfg::DOCK_STATE_VERSION)) {
         // restoreState() also restores visibility, but a dock that has no view
