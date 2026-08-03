@@ -561,13 +561,20 @@ void LammpsGui::createStatusBar()
     status->setFixedWidth(300);
     statusbar->addWidget(status);
 
+    // QSizePolicy::Ignored drops the preferred width along with the minimum, and
+    // QStatusBar lays its non-permanent widgets out with a trailing stretch item
+    // that then claims all the free space: without a stretch factor of their own
+    // the two widgets below end up shown but zero pixels wide.  The individual
+    // windows keep their fixed 400 and need no stretch.
+    const int stretch = docked ? 1 : 0;
+
     dirstatus = new QLabel(QString(" Directory: (unknown)"));
     if (docked)
         dirstatus->setSizePolicy(QSizePolicy::Ignored, QSizePolicy::Preferred);
     else
         dirstatus->setMinimumWidth(Cfg::MINIMUM_WIDTH);
     dirstatus->show();
-    statusbar->addWidget(dirstatus);
+    statusbar->addWidget(dirstatus, stretch);
 
     progress = new QProgressBar();
     progress->setRange(0, Cfg::PROGRESS_MAXIMUM);
@@ -576,7 +583,7 @@ void LammpsGui::createStatusBar()
     else
         progress->setMinimumWidth(Cfg::MINIMUM_WIDTH);
     progress->hide();
-    statusbar->addWidget(progress);
+    statusbar->addWidget(progress, stretch);
 }
 
 #if defined(LAMMPS_GUI_USE_PLUGIN)
