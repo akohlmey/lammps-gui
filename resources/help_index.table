@@ -78,78 +78,6 @@ angle_table.html angle_style table
 angle_table.html angle_style table/omp
 angle_write.html angle_write
 angle_zero.html angle_style zero
-atc_add_molecule.html fix_modify AtC add_molecule
-atc_add_species.html fix_modify AtC add_species
-atc_atom_element_map.html fix_modify AtC atom_element_map
-atc_atomic_charge.html fix_modify AtC atomic_charge
-atc_atom_weight.html fix_modify AtC atom_weight
-atc_boundary_dynamics.html fix_modify AtC boundary_dynamics
-atc_boundary_faceset.html fix_modify AtC boundary_faceset
-atc_boundary_type.html fix_modify AtC boundary type
-atc_consistent_fe_initialization.html fix_modify AtC consistent_fe_initialization
-atc_control_localized_lambda.html fix_modify AtC control localized_lambda
-atc_control_momentum.html fix_modify AtC control momentum
-atc_control_thermal.html fix_modify AtC control thermal
-atc_decomposition.html fix_modify AtC decomposition
-atc_electron_integration.html fix_modify AtC extrinsic electron_integration
-atc_equilibrium_start.html fix_modify AtC equilibrium_start
-atc_extrinsic_exchange.html fix_modify AtC extrinsic exchange
-atc_fe_md_boundary.html fix_modify AtC fe_md_boundary
-atc_filter_scale.html fix_modify AtC filter scale
-atc_filter_type.html fix_modify AtC filter type
-atc_fix_flux.html fix_modify AtC fix_flux
-atc_fix.html fix_modify AtC fix
-atc_hardy_computes.html fix_modify AtC computes
-atc_hardy_fields.html fix_modify AtC fields
-atc_hardy_gradients.html fix_modify AtC gradients
-atc_hardy_kernel.html fix_modify AtC kernel
-atc_hardy_on_the_fly.html fix_modify AtC on_the_fly
-atc_hardy_rates.html fix_modify AtC rates
-atc_initial.html fix_modify AtC initial
-atc_internal_element_set.html fix_modify AtC internal_element_set
-atc_internal_quadrature.html fix_modify AtC internal_quadrature
-atc_kernel_bandwidth.html fix_modify AtC kernel_bandwidth
-atc_lumped_lambda_solve.html fix_modify AtC control lumped_lambda_solve
-atc_mask_direction.html fix_modify AtC control mask_direction
-atc_mass_matrix.html fix_modify AtC mass_matrix
-atc_material.html fix_modify AtC material
-atc_mesh_add_to_nodeset.html fix_modify AtC mesh add_to_nodeset
-atc_mesh_create_elementset.html fix_modify AtC mesh create_elementset
-atc_mesh_create_faceset_box.html fix_modify AtC mesh create_faceset box
-atc_mesh_create_faceset_plane.html fix_modify AtC mesh create_faceset plane
-atc_mesh_create_nodeset.html fix_modify AtC mesh create_nodeset
-atc_mesh_create.html fix_modify AtC mesh create
-atc_mesh_delete_elements.html fix_modify AtC mesh delete_elements
-atc_mesh_nodeset_to_elementset.html fix_modify AtC mesh nodeset_to_elementset
-atc_mesh_output.html fix_modify AtC mesh output
-atc_mesh_quadrature.html fix_modify AtC mesh quadrature
-atc_mesh_read.html fix_modify AtC mesh read
-atc_mesh_write.html fix_modify AtC mesh write
-atc_output_boundary_integral.html fix_modify AtC output boundary_integral
-atc_output_contour_integral.html fix_modify AtC output contour_integral
-atc_output_nodeset.html fix_modify AtC output nodeset
-atc_output.html fix_modify AtC output
-atc_output_volume_integral.html fix_modify AtC output volume_integral
-atc_pair_interactions.html fix_modify AtC pair_interactions
-atc_poisson_solver.html fix_modify AtC poisson_solver
-atc_read_restart.html fix_modify AtC read_restart
-atc_remove_molecule.html fix_modify AtC remove_molecule
-atc_remove_source.html fix_modify AtC remove_source
-atc_remove_species.html fix_modify AtC remove_species
-atc_reset_atomic_reference.html fix_modify AtC reset_atomic_reference_positions
-atc_reset_time.html fix_modify AtC reset_time
-atc_sample_frequency.html fix_modify AtC sample_frequency
-atc_set_reference_pe.html fix_modify AtC set reference_potential_energy
-atc_source_integration.html fix_modify AtC source_integration
-atc_source.html fix_modify AtC source
-atc_temperature_definition.html fix_modify AtC temperature_definition
-atc_time_filter.html fix_modify AtC filter
-atc_time_integration.html fix_modify AtC time_integration
-atc_track_displacement.html fix_modify AtC track_displacement
-atc_unfix_flux.html fix_modify AtC unfix_flux
-atc_unfix.html fix_modify AtC unfix
-atc_write_atom_weights.html fix_modify AtC write_atom_weights
-atc_write_restart.html fix_modify AtC write_restart
 atom_modify.html atom_modify
 atom_style.html atom_style
 balance.html balance
@@ -225,6 +153,14 @@ bond_zero.html bond_style zero
 boundary.html boundary
 change_box.html change_box
 clear.html clear
+Commands_removed.html fix atc
+Commands_removed.html fix latte
+Commands_removed.html fix mscg
+Commands_removed.html fix poems
+Commands_removed.html pair_style agni
+Commands_removed.html pair_style agni/omp
+Commands_removed.html pair_style awpmd/cut
+Commands_removed.html pair_style rann
 comm_modify.html comm_modify
 comm_style.html comm_style
 compute_ackland_atom.html compute ackland/atom
@@ -241,7 +177,6 @@ compute_body_local.html compute body/local
 compute_bond_local.html compute bond/local
 compute_bond.html compute bond
 compute_born_matrix.html compute born/matrix
-compute_bpm_peri_damage_atom.html compute bpm/peri/damage/atom
 compute_centro_atom.html compute centro/atom
 compute_centro_atom.html compute centro/atom/omp
 compute_chunk_atom.html compute chunk/atom
@@ -556,7 +491,6 @@ fix_align_self.html fix align/self
 fix_amoeba_bitorsion.html fix amoeba/bitorsion
 fix_amoeba_pitorsion.html fix amoeba/pitorsion
 fix_append_atoms.html fix append/atoms
-fix_atc.html fix atc
 fix_atom_swap.html fix atom/swap
 fix_atom_weight_apip.html fix atom_weight/apip
 fix_ave_atom.html fix ave/atom
@@ -657,6 +591,7 @@ fix_heat.html fix heat
 fix_hmc.html fix hmc
 fix_hyper_global.html fix hyper/global
 fix_hyper_local.html fix hyper/local
+fix_ilves.html fix ilves
 fix_imd.html fix imd
 fix_indent.html fix indent
 fix_ipi.html fix ipi
@@ -838,15 +773,19 @@ fix_rigid.html fix rigid
 fix_rigid.html fix rigid/nph
 fix_rigid.html fix rigid/nph/omp
 fix_rigid.html fix rigid/nph/small
+fix_rigid.html fix rigid/nph/small/kk
 fix_rigid.html fix rigid/npt
 fix_rigid.html fix rigid/npt/omp
 fix_rigid.html fix rigid/npt/small
+fix_rigid.html fix rigid/npt/small/kk
 fix_rigid.html fix rigid/nve
 fix_rigid.html fix rigid/nve/omp
 fix_rigid.html fix rigid/nve/small
+fix_rigid.html fix rigid/nve/small/kk
 fix_rigid.html fix rigid/nvt
 fix_rigid.html fix rigid/nvt/omp
 fix_rigid.html fix rigid/nvt/small
+fix_rigid.html fix rigid/nvt/small/kk
 fix_rigid.html fix rigid/omp
 fix_rigid.html fix rigid/small
 fix_rigid.html fix rigid/small/kk
@@ -1007,6 +946,7 @@ kspace_style.html kspace_style ewald/dipole/spin
 kspace_style.html kspace_style ewald/disp
 kspace_style.html kspace_style ewald/disp/dipole
 kspace_style.html kspace_style ewald/electrode
+kspace_style.html kspace_style ewald/gpu
 kspace_style.html kspace_style ewald/omp
 kspace_style.html kspace_style msm
 kspace_style.html kspace_style msm/cg
@@ -1060,8 +1000,6 @@ package.html package
 pair_adp.html pair_style adp
 pair_adp.html pair_style adp/kk
 pair_adp.html pair_style adp/omp
-pair_agni.html pair_style agni
-pair_agni.html pair_style agni/omp
 pair_aip_water_2dm.html pair_style aip/water/2dm
 pair_aip_water_2dm.html pair_style aip/water/2dm/opt
 pair_airebo.html pair_style airebo
@@ -1438,6 +1376,19 @@ pair_lambda_input_apip.html pair_style lambda/input/csp/apip
 pair_lambda_zone_apip.html pair_style lambda/zone/apip
 pair_lcbop.html pair_style lcbop
 pair_lcbop.html pair_style lcbop/omp
+pair_ldd.html pair_coeff ldd indicator dpd
+pair_ldd.html pair_coeff ldd indicator lucy
+pair_ldd.html pair_coeff ldd indicator shell
+pair_ldd.html pair_coeff ldd indicator smooth
+pair_ldd.html pair_coeff ldd indicator sphere
+pair_ldd.html pair_coeff ldd potential constant
+pair_ldd.html pair_coeff ldd potential linear
+pair_ldd.html pair_coeff ldd potential mdpd
+pair_ldd.html pair_coeff ldd potential noforce
+pair_ldd.html pair_coeff ldd potential quadratic
+pair_ldd.html pair_coeff ldd potential table/lin
+pair_ldd.html pair_coeff ldd potential table/spline
+pair_ldd.html pair_style ldd
 pair_lebedeva_z.html pair_style lebedeva/z
 pair_lepton.html pair_style lepton
 pair_lepton.html pair_style lepton/coul
@@ -1645,7 +1596,6 @@ pair_pod.html pair_style pod/kk
 pair_polymorphic.html pair_style polymorphic
 pair_python.html pair_style python
 pair_quip.html pair_style quip
-pair_rann.html pair_style rann
 pair_reaxff.html pair_style reaxff
 pair_reaxff.html pair_style reaxff/kk
 pair_reaxff.html pair_style reaxff/omp
