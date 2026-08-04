@@ -21,11 +21,11 @@
 class LammpsGui;
 class QCompleter;
 class QLabel;
-class QLineEdit;
 class QMenuBar;
 class QPlainTextEdit;
 class QPushButton;
 class QStringListModel;
+class ShellPrompt;
 
 /**
  * @brief A shell prompt with a scrollback, next to the simulation
@@ -175,7 +175,7 @@ private:
     LammpsGui *lammpsgui;        ///< Main window; provides quit() and the shared menus
     QProcess *shell = nullptr;   ///< The long-lived interpreter
     QPlainTextEdit *scrollback;  ///< Read-only transcript of the session
-    QLineEdit *prompt;           ///< The input line
+    ShellPrompt *prompt;         ///< The input line
     QLabel *cwdlabel;            ///< Working directory shown in front of it
     QMenuBar *menubar = nullptr; ///< Own menu bar; hidden in the combined layout
     QPushButton *killbutton;     ///< Ends the running command

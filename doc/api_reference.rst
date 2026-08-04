@@ -374,6 +374,15 @@ ShellAliases Class
 
 -----
 
+ShellPrompt Class
+-----------------
+
+.. doxygenclass:: ShellPrompt
+   :members:
+   :protected-members:
+
+-----
+
 Index Variable Helpers
 ----------------------
 

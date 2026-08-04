@@ -102,6 +102,18 @@ target_link_libraries(test_windowlayout PRIVATE GTest::gtest_main Qt6::Widgets)
 
 gtest_discover_tests(test_windowlayout)
 
+# Test executable for the completing shell prompt
+add_executable(test_shellprompt
+  test_shellprompt.cpp
+  ${CMAKE_SOURCE_DIR}/src/shellprompt.cpp
+)
+
+set_target_properties(test_shellprompt PROPERTIES AUTOMOC ON)
+target_include_directories(test_shellprompt PRIVATE ${CMAKE_SOURCE_DIR}/src)
+target_link_libraries(test_shellprompt PRIVATE GTest::gtest_main Qt6::Widgets)
+
+gtest_discover_tests(test_shellprompt)
+
 target_include_directories(test_helpers PRIVATE
   ${CMAKE_SOURCE_DIR}/src
 )

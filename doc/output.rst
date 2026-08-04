@@ -368,7 +368,9 @@ would in a terminal.  The shell is started as an interactive one, so it
 reads the usual start-up file and the aliases and shell functions
 defined there are available -- with one exception, noted below.  The
 directory shown in front of the prompt follows
-the shell, however it was changed.  The window starts in the directory
+the shell, however it was changed.  A directory inside the home
+directory is shown with a leading ``~``, the way a shell prompt writes
+it, and hovering over it shows the path in full.  The window starts in the directory
 of the current input file, which is where a run leaves its output, and
 stays independent afterwards: opening a different input file does not
 move a shell that may be busy.  *File* > *Change to Input Directory*
@@ -390,6 +392,14 @@ the shell never sees the line until it is entered.  The list is taken
 again whenever the shell changes directory, and each time completion
 starts on a new argument, so a file a command has just written is
 offered without reopening the panel.
+
+When a single name matches, *Tab* completes it outright and no list
+appears.  When several do, it offers them in a list; pressing *Tab*
+again walks through them and *Shift-Tab* walks back, with each entry
+appearing in the input line as it is reached.  *Enter* takes the entry
+that is highlighted and goes no further, so the completed line is run by
+the next *Enter*; with nothing highlighted there is nothing to take and
+*Enter* runs the line as it stands.
 
 The shell is the one selected in the *Preferences* dialog (*Command
 window shell*, offering the shells installed on the machine).  Until one

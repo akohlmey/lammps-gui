@@ -100,6 +100,15 @@ relative paths against the right place, and showing it in the prompt.
 cooperation, but macOS needs `libproc` and Windows has no equivalent for another
 process, so it is at best a cross-check and not the mechanism.
 
+Where it is shown -- in front of the input line, and in front of each command in
+the transcript -- a path under the user's home directory is written with a
+leading `~`, as a shell prompt writes it. Only the display is shortened: the
+tracked directory stays the path the shell reported, because that is the one
+that has to reach the file system, and the label's tool tip keeps it in full
+since that is also where the elision is undone. Not on Windows, where `cmd.exe`
+does not know `~` and a prompt showing it would be offering a path that cannot
+be typed back.
+
 **Coupling decision:** seed the panel from the GUI's current directory at start,
 then keep them independent. The explicit action exists as *File* > *Change to
 Input Directory* rather than syncing silently -- automatic syncing would move
@@ -136,6 +145,44 @@ Mostly assembly out of existing pieces:
   question per platform. It is rebuilt when the shell changes directory and
   whenever completion starts on a new argument, so a file a command has just
   written is offered without reopening the panel.
+
+**Tab completes, and taking it back needed a `QLineEdit` subclass**
+(`ShellPrompt`, `src/shellprompt.{cpp,h}`). A prompt where Tab moves the focus
+is not a prompt, but neither an event filter nor `keyPressEvent()` can catch
+that key, for two separate reasons that both end in the same place:
+
+- `QWidget::event()` calls `focusNextPrevChild()` when it sees Tab, *before*
+  `keyPressEvent()` is reached. The key never gets as far as the line edit.
+- While the completion popup is up, `QCompleter` delivers keys to the widget by
+  calling `event()` on it **directly** rather than sending them through the
+  event loop, so an event filter installed on the line edit never sees them
+  either.
+
+Overriding `event()` is the one place both arrive, which is what `ShellPrompt`
+does. Enter had to be dealt with in the same override, and is the more
+interesting half. Left alone, Qt does two things with it at once and neither of
+them all the way: the line edit emits `returnPressed()` as the completer passes
+the key through -- which runs the command and clears the line -- and then, back
+in `QCompleter::eventFilter()`, the completion is put *back* into the line that
+was just cleared. What is left on screen is a command that has already run and
+is still typed, so the Enter meant to confirm it runs it a second time. The
+rule now is the one a shell follows: Enter takes the highlighted entry and stops
+there, and the Enter after that runs the line. With nothing highlighted there is
+nothing to take, so Enter means what it always means -- otherwise a command that
+happens to be the front of a longer one could never be run at all.
+
+Tab itself offers the matches, and Tab again walks them, wrapping rather than
+stopping at the end; Shift+Tab walks back. A word with exactly one match is
+completed without a list appearing. Which list a word is completed from is not
+something the prompt can know, so it emits `completing()` first and leaves that
+to `CommandWindow::updateCompleter()` -- the same slot `textEdited` goes to,
+which matters because a line recalled from the history is *set*, not edited, and
+would otherwise be completed against whichever model was left over.
+
+`test/test_shellprompt.cpp` drives the pair the way the window manager does --
+keys to the popup while there is one, to the line edit otherwise -- because what
+happens is decided as much by `QCompleter` as by the override. Ten of its
+thirteen tests fail against a plain `QLineEdit`.
 
 **No Emacs-style line editing.** `QLineEdit` covers basic editing but not
 `Ctrl+A/E/K/U/W/Y`, and on Linux `Ctrl+A` is *select all*. Adding those was

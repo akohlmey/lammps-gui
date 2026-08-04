@@ -15,6 +15,7 @@
 #include "helpers.h"
 #include "lammpsgui.h"
 #include "shellaliases.h"
+#include "shellprompt.h"
 
 #include <QAbstractItemView>
 #include <QAction>
@@ -200,6 +201,25 @@ QString shellSearchPath()
     return path;
 }
 
+// A shell prompt writes the home directory as "~", which is shorter and is how
+// the path is usually written down anyway.  Only what is shown is shortened: the
+// directory the panel tracks stays the one the shell reported, because that is
+// the one that has to reach the file system.
+QString abbreviateHome(const QString &dir)
+{
+#if defined(Q_OS_WIN32)
+    // cmd.exe does not know "~", so a prompt that showed it would be offering a
+    // path that cannot be typed back
+    return dir;
+#else
+    const QString home = QDir::homePath();
+    if (home.isEmpty()) return dir;
+    if (dir == home) return QStringLiteral("~");
+    if (dir.startsWith(home + QLatin1Char('/'))) return QStringLiteral("~") + dir.mid(home.size());
+    return dir;
+#endif
+}
+
 // An interactive shell without a terminal complains whenever it would otherwise
 // hand one to a job -- when a command ends, and loudly when one is killed.  The
 // message says nothing about the command and there is no terminal to be had, so
@@ -339,7 +359,7 @@ QStringList CommandWindow::availableShells()
 }
 
 CommandWindow::CommandWindow(LammpsGui *_lammpsgui, QWidget *parent) :
-    QWidget(parent), lammpsgui(_lammpsgui), scrollback(new QPlainTextEdit), prompt(new QLineEdit),
+    QWidget(parent), lammpsgui(_lammpsgui), scrollback(new QPlainTextEdit), prompt(new ShellPrompt),
     cwdlabel(new QLabel), completer(new WordCompleter(this)), commands(new QStringListModel(this)),
     filenames(new QStringListModel(this)), workingdir(QDir::currentPath())
 {
@@ -367,6 +387,10 @@ CommandWindow::CommandWindow(LammpsGui *_lammpsgui, QWidget *parent) :
     scrollback->viewport()->installEventFilter(this);
     connect(prompt, &QLineEdit::returnPressed, this, &CommandWindow::submit);
     connect(prompt, &QLineEdit::textEdited, this, &CommandWindow::updateCompleter);
+    // Tab completion starts from a line that was not necessarily typed -- a line
+    // recalled from the history is set, not edited, so textEdited says nothing
+    // about it -- and the list to complete from has to be chosen for it too
+    connect(prompt, &ShellPrompt::completing, this, &CommandWindow::updateCompleter);
 
     completer->setCompletionMode(QCompleter::PopupCompletion);
     completer->setCaseSensitivity(Qt::CaseSensitive);
@@ -631,7 +655,7 @@ void CommandWindow::submit()
     }
 
     // the transcript reads like a session: the prompt, then what came back
-    appendOutput(QString("%1$ %2\n").arg(workingdir, line));
+    appendOutput(QString("%1$ %2\n").arg(abbreviateHome(workingdir), line));
     prompt->clear();
 
     if (history.isEmpty() || history.last() != line) {
@@ -729,7 +753,9 @@ void CommandWindow::updatePrompt()
         // can be spared, and the whole of it stays available as a tool tip
         const QFontMetrics metrics(cwdlabel->font());
         const int budget = qMax(Cfg::COMMAND_MIN_CWD_WIDTH, width() / 2);
-        cwdlabel->setText(metrics.elidedText(workingdir + "$", Qt::ElideLeft, budget));
+        cwdlabel->setText(
+            metrics.elidedText(abbreviateHome(workingdir) + "$", Qt::ElideLeft, budget));
+        // the path in full, and unabbreviated, is what the elision leaves out
         cwdlabel->setToolTip(workingdir);
         prompt->setPlaceholderText("enter a command");
     }
