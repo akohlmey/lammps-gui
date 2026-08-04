@@ -258,6 +258,14 @@ void WindowLayout::applySplit()
     applying         = true;
     auto *rightDock  = sizingDock({ViewSlot::Chart, ViewSlot::Image, ViewSlot::SlideShow});
     auto *bottomDock = sizingDock({ViewSlot::Log, ViewSlot::Variables, ViewSlot::Command});
+    // the transient viewers join the right hand group too, and once the fixed
+    // panels of that group are closed one of them is all it holds
+    if (!rightDock)
+        for (auto *d : auxdocks)
+            if (d && d->isVisible()) {
+                rightDock = d;
+                break;
+            }
     if (rightDock)
         mainwindow->resizeDocks({rightDock}, {int(mainwindow->width() * hsplit)}, Qt::Horizontal);
     if (bottomDock)
@@ -323,6 +331,15 @@ bool WindowLayout::eventFilter(QObject *watched, QEvent *event)
             }
             break;
         }
+        // and the same for a transient viewer, which is always in the right hand
+        // group, so that a splitter dragged while one of them is in front is
+        // remembered like any other
+        for (const auto *d : auxdocks) {
+            if ((d != watched) || d->isHidden()) continue;
+            if ((d->width() > 0) && (mainwindow->width() > 0))
+                hsplit = double(d->width()) / mainwindow->width();
+            break;
+        }
     }
 
     // Docked, a view is a child of its dock, so closing the view -- from its
@@ -383,6 +400,10 @@ void WindowLayout::addAuxiliaryView(QWidget *view, ViewSlot group, const QString
     d->setWidget(view);
     prepareDockedView(view);
     auxdocks << d;
+    // watched and sized like the fixed panels: it shares their group, so it
+    // follows the same proportions and a splitter dragged over it is recorded
+    d->installEventFilter(this);
+    scheduleSplit();
 
     connect(d, &QDockWidget::visibilityChanged, this, [this, d](bool visible) {
         updateDockChrome();
@@ -396,6 +417,9 @@ void WindowLayout::addAuxiliaryView(QWidget *view, ViewSlot group, const QString
     connect(view, &QObject::destroyed, this, [this, d]() {
         auxdocks.removeAll(d);
         d->deleteLater();
+        // closing it frees space in the group, which the panels that stay would
+        // otherwise divide up by size hint
+        scheduleSplit();
     });
 
     d->show();
@@ -502,12 +526,15 @@ void WindowLayout::show(ViewSlot slot)
     auto *w = presenter(slot);
     if (!w) return;
     const ShowGuard guard(showing);
+    // before the change and not after it: scheduling first is what marks the
+    // resizes it causes as ours, so the event filter does not take them for the
+    // user having moved a splitter
+    scheduleSplit();
     w->show();
 
     // deliberately no raise() here: this runs on every periodic update during a
     // run (each new dump image shows the slide show view), and raising would
     // pull the tab group away from whatever the user is looking at
-    scheduleSplit();
 }
 
 void WindowLayout::raise(ViewSlot slot)
@@ -533,6 +560,13 @@ void WindowLayout::raise(ViewSlot slot)
 void WindowLayout::hide(ViewSlot slot)
 {
     const ShowGuard guard(showing);
+    // Closing a panel re-lays out the ones that stay, and Qt hands the freed
+    // space out by size hint rather than by the proportions the window was set
+    // to -- so the split moved whenever a panel was closed, and stayed moved,
+    // because the event filter recorded that transient geometry as the new
+    // target.  Scheduling before the hide covers both halves: it makes the
+    // resizes ours, and it puts the proportions back once the layout settles.
+    scheduleSplit();
     if (auto *w = presenter(slot)) w->hide();
 }
 

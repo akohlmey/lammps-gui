@@ -177,6 +177,54 @@ TEST_F(WindowLayoutTest, SavingUsesTheVersionedKeyAndDropsTheLegacyOne)
     EXPECT_FALSE(settings.value(Keys::DOCKSTATE).toByteArray().isEmpty());
 }
 
+// Closing a panel used to move the splitter and leave it moved.  Qt divides the
+// space a hidden panel frees among the ones that stay by their size hints, and
+// the event filter then recorded that geometry as if the user had dragged the
+// splitter there, so the proportions drifted a little further with every panel
+// that was opened and closed.
+TEST_F(WindowLayoutTest, ClosingAPanelKeepsTheProportions)
+{
+    constexpr double kSplitH = 0.4;
+    constexpr double kSplitV = 0.3;
+    {
+        QSettings settings;
+        settings.setValue(Keys::DOCKSPLITH, kSplitH);
+        settings.setValue(Keys::DOCKSPLITV, kSplitV);
+        settings.remove(Keys::DOCKSTATE); // no saved arrangement to override them
+        settings.sync();
+    }
+
+    QMainWindow window;
+    window.resize(1200, 900);
+    window.show();
+    WindowLayout layout(&window, LayoutMode::Docked);
+
+    // two panels of the right hand group, with size hints far enough apart that
+    // the group would resize itself when one of them goes away
+    auto *wide = new QPlainTextEdit;
+    wide->setMinimumWidth(500);
+    auto *narrow = new QPlainTextEdit;
+    narrow->setMinimumWidth(80);
+    layout.place(ViewSlot::Chart, wide);
+    layout.place(ViewSlot::SlideShow, narrow);
+    layout.place(ViewSlot::Log, new QPlainTextEdit);
+    layout.show(ViewSlot::Chart);
+    layout.show(ViewSlot::SlideShow);
+    layout.show(ViewSlot::Log);
+    QApplication::processEvents();
+    QApplication::processEvents(); // the split is applied from a zero timer
+
+    layout.hide(ViewSlot::SlideShow);
+    QApplication::processEvents();
+    QApplication::processEvents();
+
+    layout.saveState();
+    QSettings settings;
+    settings.sync();
+    EXPECT_NEAR(settings.value(Keys::DOCKSPLITH).toDouble(), kSplitH, 0.02);
+    EXPECT_NEAR(settings.value(Keys::DOCKSPLITV).toDouble(), kSplitV, 0.02);
+}
+
 // Local Variables:
 // c-basic-offset: 4
 // End:
