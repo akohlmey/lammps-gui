@@ -184,6 +184,51 @@ keys to the popup while there is one, to the line edit otherwise -- because what
 happens is decided as much by `QCompleter` as by the override. Ten of its
 thirteen tests fail against a plain `QLineEdit`.
 
+**The `open` command, and why the shell defines it rather than the panel.**
+`open <files>` shows files in the application -- images and movies together in
+one slide show, anything else in a text viewer. The obvious implementation is to
+watch for a line beginning with `open` in `submit()` and never send it to the
+shell. That was rejected: the panel would then have to expand wildcards, braces,
+quotes, `~` and `$VAR` itself, it would get them subtly wrong, and `open` would
+work only as the first word of a line -- not after a `;`, not in a pipeline, not
+in a loop or a sourced script.
+
+What is done instead is to hand the shell a definition of `open` at start-up,
+next to the aliases, which prints one marker line per file:
+
+```sh
+command -v open >/dev/null 2>&1 || open() { if [ "$#" -gt 0 ]; then printf '__LGUI_OPEN_%s\n' "$@"; fi; }
+```
+
+`consume()` already reads the output a line at a time looking for the sentinel,
+so it picks these out of the same stream and does not echo them. The shell has
+then done all the expansion, correctly by definition, and `open` composes like
+any other command.
+
+Three details are worth keeping:
+
+- **The conflict test belongs to the shell.** `command -v` answers for aliases,
+  functions and builtins as well as for `$PATH`, in the environment the user
+  actually has; nothing on this side could match that. macOS has an `open` of
+  its own that does much the same job, so there this defines nothing and the
+  system command keeps working.
+- **`printf` repeats its format** until the arguments run out, so no loop is
+  needed. That is what makes csh possible at all, where an alias body is a
+  single line and `foreach` is therefore unavailable:
+  `alias open 'printf "__LGUI_OPEN_%s\n" \!*'`. Measured: the `foreach` form
+  does not work. `cmd.exe` has neither functions nor a usable equivalent and is
+  left out.
+- **Opening is deferred out of the parsing loop** with a zero timer, and the
+  files collected so far are shown when the command's sentinel arrives. Both
+  halves matter: a movie file opens a modal import dialog, which must not run
+  inside the output parsing, and batching to the end of the command is what
+  makes `open melt-*.png` one slide show rather than one per frame.
+
+Relative names are resolved against the tracked working directory, which is the
+shell's own -- the application's current directory may be somewhere else
+entirely. A file name containing a newline breaks the marker, the same
+limitation the `$PWD` sentinel already has.
+
 **No Emacs-style line editing.** `QLineEdit` covers basic editing but not
 `Ctrl+A/E/K/U/W/Y`, and on Linux `Ctrl+A` is *select all*. Adding those was
 considered and dropped: keeping whatever Qt already provides is consistent with

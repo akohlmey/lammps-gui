@@ -1349,6 +1349,13 @@ void LammpsGui::openImages()
         "*.flv);;Image files (*.png *.jpg *.jpeg *.bmp *.ppm *.pgm *.gif *.tif *.tiff *.tga *.eps "
         "*.sgi *.webp);;Movie files (*.mp4 *.m4v *.mkv *.webm *.avi *.mov *.mpg *.mpeg *.ogv *.wmv "
         "*.flv *.gif);;All files (*)");
+    openImageFiles(files);
+}
+
+// the same without the dialog, for a list that is already in hand -- the command
+// window's "open" hands one over after the shell has expanded it
+void LammpsGui::openImageFiles(const QStringList &files)
+{
     if (files.isEmpty()) return;
 
     auto *viewer = new SlideShow(files.first());

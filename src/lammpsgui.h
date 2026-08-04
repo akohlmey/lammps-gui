@@ -120,9 +120,6 @@ protected:
     /** @brief Open a file in the editor */
     void openFile(const QString &filename);
 
-    /** @brief Open a file in a read-only viewer dialog */
-    void viewFile(const QString &filename);
-
     /** @brief Read a restart file into LAMMPS and open the inspection windows */
     void inspectFile(const QString &filename);
 
@@ -130,6 +127,27 @@ protected:
     void writeFile(const QString &filename);
 
 public:
+    /**
+     * @brief Open a file in a read-only text viewer
+     * @param filename File to show; nothing happens if it is empty
+     *
+     * Refuses an image or a movie file, which belong in openImageFiles(), and a
+     * binary one, which belongs nowhere.  Also reachable from the command
+     * window's "open".
+     */
+    void viewFile(const QString &filename);
+
+    /**
+     * @brief Open image or movie files in a slide show viewer
+     * @param files Images and movies to show together in one viewer
+     *
+     * The list is taken as given: openImages() collects it from a file dialog,
+     * the command window's "open" from a shell that has expanded it.  Movie
+     * files are offered for frame extraction as they are added, which is why
+     * the viewer is shown before they are.
+     */
+    void openImageFiles(const QStringList &files);
+
     /**
      * @brief The menus that act on the application rather than on one view
      * @return Run, View, Tutorials and About, in the order they should appear

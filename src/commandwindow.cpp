@@ -57,6 +57,13 @@ namespace {
 // typed line would miss all of those.
 constexpr auto SENTINEL = "__LGUI_DONE_";
 
+// The "open" command is the shell's half of a viewer: it prints one of these
+// per file and the panel picks them out of the stream, the way it picks out the
+// sentinel.  Letting the shell say which files are meant is the whole point --
+// globs, braces, quoting, ~ and $VAR then expand exactly as they would for any
+// other command, and "open" works in a pipeline or a loop like any other too.
+constexpr auto OPENMARK = "__LGUI_OPEN_";
+
 // Shells do not agree on how to name the exit status, the working directory or
 // the prompt, so the few things this window has to say to one are chosen by
 // family rather than assumed to be POSIX.
@@ -162,6 +169,33 @@ QString aliasCommand(const QString &program, const ShellAlias &alias)
             return QStringLiteral("alias %1 %2").arg(alias.first, singleQuoted(alias.second));
         default:
             return QStringLiteral("alias %1=%2").arg(alias.first, singleQuoted(alias.second));
+    }
+}
+
+// Define "open" as a viewer for the panel, but only when the name is free.
+// The test is left to the shell on purpose: "command -v" answers for aliases,
+// functions and builtins as well as for $PATH, in the environment the user
+// actually has, which nothing on this side could do as well.  macOS has an open
+// of its own that does much the same job, so there this defines nothing.
+QString openCommand(const QString &program)
+{
+    switch (shellKind(program)) {
+        case ShellKind::Cmd:
+            // no functions, and doskey macros do not behave enough like one
+            return {};
+        case ShellKind::Csh:
+            // csh has aliases rather than functions, and an alias body is one
+            // line, so there is no loop to be had here -- but none is needed:
+            // printf repeats its format until the arguments run out.  \!* is
+            // how a csh alias passes them on, and "which" is its "command -v".
+            return QStringLiteral("which open >& /dev/null || "
+                                  "alias open 'printf \"%1%s\\n\" \\!*'")
+                .arg(OPENMARK);
+        default:
+            return QStringLiteral("command -v open >/dev/null 2>&1 || "
+                                  "open() { if [ \"$#\" -gt 0 ]; then "
+                                  "printf '%1%s\\n' \"$@\"; fi; }")
+                .arg(OPENMARK);
     }
 }
 
@@ -542,6 +576,13 @@ void CommandWindow::startShell()
         const QString command = aliasCommand(program, alias);
         if (!command.isEmpty()) shell->write(qPrintable(command + "\n"));
     }
+    // give the shell an "open" that shows a file in this application -- but only
+    // when there is an application to show it in; standalone there is nowhere
+    // for it to go, and a command that silently does nothing is worse than none
+    if (lammpsgui) {
+        const QString command = openCommand(program);
+        if (!command.isEmpty()) shell->write(qPrintable(command + "\n"));
+    }
     // ask where we are, so the prompt is right before anything is typed
     shell->write(qPrintable(sentinelCommand(program) + "\n"));
 }
@@ -687,6 +728,16 @@ void CommandWindow::consume(const QString &chunk)
         const QString line = pending.left(nl);
         pending.remove(0, nl + 1);
 
+        // "open" reports one file per line; collect them and show them once the
+        // command that produced them is done, so that a single "open *.png"
+        // becomes one slide show rather than one per file
+        const int want = line.indexOf(OPENMARK);
+        if (want >= 0) {
+            pendingopen << line.mid(want + int(qstrlen(OPENMARK)));
+            nl = pending.indexOf('\n');
+            continue;
+        }
+
         const int mark = line.indexOf(SENTINEL);
         if (mark >= 0) {
             // "<status>_<directory>"; the status has no underscore in it, so the
@@ -704,6 +755,9 @@ void CommandWindow::consume(const QString &chunk)
                     appendOutput(QString("[exit status %1]\n").arg(status));
             }
             updatePrompt();
+            // out of the parsing loop first: a movie file among them opens a
+            // dialog, which would run the event loop from inside this
+            if (!pendingopen.isEmpty()) QTimer::singleShot(0, this, &CommandWindow::openReported);
             // the shell is at a prompt again, so anything that had to wait for
             // it -- a resize, an edited alias -- can be passed on now
             for (const auto &command : pendingsetup)
@@ -734,6 +788,34 @@ void CommandWindow::appendOutput(const QString &text)
 
     scrollback->appendPlainText(out);
     scrollback->moveCursor(QTextCursor::End);
+}
+
+void CommandWindow::openReported()
+{
+    const QStringList wanted = pendingopen;
+    pendingopen.clear();
+    if (wanted.isEmpty() || !lammpsgui) return;
+
+    // images and movies go into one viewer, so that "open melt-*.png" is a slide
+    // show of the sequence rather than a tab for every frame of it
+    QStringList pictures;
+    for (const auto &name : wanted) {
+        if (name.isEmpty()) continue; // "open" with nothing after it
+        // the shell reported the name as it was written, which for a relative
+        // one means relative to where the shell is -- not to where this
+        // application was started
+        const QFileInfo info(QDir(workingdir), name);
+        if (!info.exists()) {
+            appendOutput(QString("open: no such file: %1\n").arg(name));
+            continue;
+        }
+        const QString path = info.absoluteFilePath();
+        if (isImageFile(path) || isMovieFile(path))
+            pictures << path;
+        else
+            lammpsgui->viewFile(path);
+    }
+    if (!pictures.isEmpty()) lammpsgui->openImageFiles(pictures);
 }
 
 void CommandWindow::updatePrompt()

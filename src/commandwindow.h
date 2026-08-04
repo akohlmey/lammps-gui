@@ -141,6 +141,12 @@ private:
     /// progress bar overwrites its line instead of filling the buffer.
     void appendOutput(const QString &text);
 
+    /// Show the files the shell's "open" reported: images and movies together in
+    /// one slide show, everything else in a text viewer of its own.  Deferred
+    /// out of the output parsing, because importing a movie file asks first and
+    /// that dialog must not run inside it.
+    void openReported();
+
     /// Show the working directory in front of the input line.
     void updatePrompt();
 
@@ -188,6 +194,7 @@ private:
     QString pending;          ///< Output received so far that is not a complete line
     QString workingdir;       ///< Where the shell last reported itself to be
     QStringList history;      ///< Lines typed so far, oldest first
+    QStringList pendingopen;  ///< Files "open" reported, until the command ends
     int historypos   = 0;     ///< Position while walking the history, == size when idle
     bool running     = false; ///< A command was sent and its sentinel is outstanding
     bool priming     = false; ///< Still swallowing the shell's start-up chatter
