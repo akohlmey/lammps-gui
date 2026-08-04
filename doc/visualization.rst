@@ -1160,6 +1160,14 @@ image, restrict the active range, and control the slideshow settings:
 - **Stop**: Last image of the active range.  Defaults to the last image
   and keeps following the growing sequence while a simulation produces
   new images, unless it has been set to a specific value.
+- At the right end of the row, a counter gives the position of the
+  displayed image in the sequence, followed by its file name.  Only the
+  name is shown and not the directory holding it: the directory is the
+  same for every image of a sequence and says nothing about which image
+  this is, while a long path would hold the window open to its width.
+  Hovering over the name shows the full path.  Frames extracted from a
+  movie file are named after the movie and their frame number in it
+  instead.
 
 - **First**: Jump to the first image of the active range.
 - **Previous**: Step back to the previous image.

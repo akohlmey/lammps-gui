@@ -352,7 +352,11 @@ void SlideShow::addImage(const QString &filename, const QString &label)
 
     const int lastidx = imagefiles.size();
     imagefiles.append(filename);
-    imagelabels.append(label.isEmpty() ? filename : label);
+    // the directory is the same for every image of a sequence and says nothing
+    // about which one this is, while the layout is held open to whatever the
+    // longest label needs -- so only the name is shown, and the path it came
+    // from is put in the tool tip when the image is displayed
+    imagelabels.append(label.isEmpty() ? QFileInfo(filename).fileName() : label);
     scrollBar->setMaximum(lastidx);
 
     // Grow the active-range bounds with the sequence. If Stop was pinned to the
@@ -490,6 +494,7 @@ void SlideShow::clear()
     lastFitSize = QSize();
     imageCounter->setText("Image   0 /   0 :");
     imageName->setText("(none)");
+    imageName->setToolTip(QString());
     scrollBar->setMaximum(1);
     startBox->setRange(1, 1);
     startBox->setValue(1);
@@ -605,6 +610,7 @@ void SlideShow::loadImage(int idx)
             imageCounter->setText(
                 QString("Image %1 / %2 :").arg(idx + 1, 3).arg(imagefiles.size(), 3));
             imageName->setText(imagelabels[idx]);
+            imageName->setToolTip(imagefiles[idx]);
             current = idx;
             break;
         }
