@@ -184,21 +184,29 @@ keys to the popup while there is one, to the line edit otherwise -- because what
 happens is decided as much by `QCompleter` as by the override. Ten of its
 thirteen tests fail against a plain `QLineEdit`.
 
-**The `open` command, and why the shell defines it rather than the panel.**
-`open <files>` shows files in the application -- images and movies together in
-one slide show, anything else in a text viewer. The obvious implementation is to
-watch for a line beginning with `open` in `submit()` and never send it to the
-shell. That was rejected: the panel would then have to expand wildcards, braces,
+**The `open`, `edit` and `plot` commands, and why the shell defines them rather
+than the panel.** They hand files to the application instead of printing them:
+`open` shows images and movies together in one slide show and anything else in a
+text viewer, `edit` loads one into the editor, `plot` reads one as a data file
+and asks which columns to draw. Together they are what lets a project be worked
+on from the prompt. The obvious implementation is to watch for a line beginning
+with one of those words in `submit()` and never send it to the shell. That was rejected: the panel would then have to expand wildcards, braces,
 quotes, `~` and `$VAR` itself, it would get them subtly wrong, and `open` would
 work only as the first word of a line -- not after a `;`, not in a pipeline, not
 in a loop or a sourced script.
 
-What is done instead is to hand the shell a definition of `open` at start-up,
-next to the aliases, which prints one marker line per file:
+What is done instead is to hand the shell a definition of each at start-up, next
+to the aliases, which prints one marker line per file:
 
 ```sh
-command -v open >/dev/null 2>&1 || open() { if [ "$#" -gt 0 ]; then printf '__LGUI_OPEN_%s\n' "$@"; fi; }
+command -v open >/dev/null 2>&1 || open() { if [ "$#" -gt 0 ]; then printf '__LGUI_OPEN_show_%s\n' "$@"; fi; }
 ```
+
+The marker carries what to do with the file ahead of the file itself, as
+`<mark><what>_<file>`, so the three commands share one prefix and one parse. No
+keyword has an underscore in it, so the first one ends the keyword and the rest
+of the line is the file name, spaces and all -- the same rule the sentinel uses
+for `$PWD`. The commands and their keywords are the `VIEWERS` table.
 
 `consume()` already reads the output a line at a time looking for the sentinel,
 so it picks these out of the same stream and does not echo them. The shell has
@@ -209,9 +217,12 @@ Three details are worth keeping:
 
 - **The conflict test belongs to the shell.** `command -v` answers for aliases,
   functions and builtins as well as for `$PATH`, in the environment the user
-  actually has; nothing on this side could match that. macOS has an `open` of
-  its own that does much the same job, so there this defines nothing and the
-  system command keeps working.
+  actually has; nothing on this side could match that. It is not a formality
+  either: macOS has an `open` of its own that does much the same job, and GNU
+  plotutils installs a `/usr/bin/plot`. Where the name is taken, the command
+  that was there keeps working and the panel adds nothing. This is also why the
+  first one is not called `view`: that name belongs to vim's read-only mode on
+  most Unix systems, so it would have been defined almost nowhere.
 - **`printf` repeats its format** until the arguments run out, so no loop is
   needed. That is what makes csh possible at all, where an alias body is a
   single line and `foreach` is therefore unavailable:
@@ -220,9 +231,10 @@ Three details are worth keeping:
   left out.
 - **Opening is deferred out of the parsing loop** with a zero timer, and the
   files collected so far are shown when the command's sentinel arrives. Both
-  halves matter: a movie file opens a modal import dialog, which must not run
-  inside the output parsing, and batching to the end of the command is what
-  makes `open melt-*.png` one slide show rather than one per frame.
+  halves matter: a movie file opens a modal import dialog, and `edit` and `plot`
+  open one too (unsaved changes, column picker), none of which may run inside
+  the output parsing. Batching to the end of the command is also what makes
+  `open melt-*.png` one slide show rather than one per frame.
 
 Relative names are resolved against the tracked working directory, which is the
 shell's own -- the application's current directory may be somewhere else

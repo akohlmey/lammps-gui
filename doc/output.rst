@@ -401,26 +401,48 @@ that is highlighted and goes no further, so the completed line is run by
 the next *Enter*; with nothing highlighted there is nothing to take and
 *Enter* runs the line as it stands.
 
-The window adds one command of its own, ``open``, which shows files in
-LAMMPS-GUI rather than printing them: image and movie files go to a
-:ref:`slide show <slideshow>` viewer, all of the ones named in the same
-command together in one, and any other file to a read-only text viewer.
-It is an ordinary shell command, so the shell expands its arguments
-before it runs and wildcards, quoting, ``~`` and variables work there as
+The window adds three commands of its own, which hand files to
+LAMMPS-GUI rather than printing them, so that a whole project can be
+worked on without leaving the prompt:
+
+.. list-table::
+   :header-rows: 1
+   :widths: 12 88
+
+   * - Command
+     - What it does with the files named after it
+   * - ``open``
+     - Image and movie files go to a :ref:`slide show <slideshow>`
+       viewer, all of the ones named in the same command together in
+       one; any other file goes to a read-only text viewer.
+   * - ``edit``
+     - Loads the file into the editor, as *File* > *Open Input File*
+       does -- including the offer to save the current buffer first.
+       The editor holds one file, so naming several says so and opens
+       the first.
+   * - ``plot``
+     - Reads the file as a data file and asks which columns to draw,
+       then opens the plot.  With several files it asks for each in
+       turn, and canceling stops the rest.
+
+These are ordinary shell commands, so the shell expands their arguments
+before they run and wildcards, quoting, ``~`` and variables work there as
 they do anywhere else:
 
 .. code-block:: bash
 
    open melt-*.png                 # the whole sequence, in one slide show
-   open log.lammps in.melt         # two text viewers
+   edit in.melt                    # into the editor
+   plot log.lammps                 # pick columns, then plot
    open $(ls -t *.png | head -1)   # the most recent image
 
-``open`` is defined only when nothing else on the system claims that
-name.  On macOS, where ``open`` already exists and does much the same
-job, the system command keeps working and this one is not defined; the
-same applies to any other ``open`` found on the search path, or defined
-as an alias or a function in the start-up file.  It is not available with
-``cmd.exe``, which has no way to define it.
+Each is defined only when nothing else on the system claims that name,
+which is checked in the shell itself, so an alias or function from the
+start-up file counts as well as a program on the search path.  On macOS
+``open`` already exists and does much the same job, and GNU plotutils
+installs a ``plot``; where that is the case the command that was there
+keeps working and the panel adds nothing.  None of them is available with
+``cmd.exe``, which has no way to define them.
 
 The shell is the one selected in the *Preferences* dialog (*Command
 window shell*, offering the shells installed on the machine).  Until one

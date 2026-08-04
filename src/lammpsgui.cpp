@@ -2393,21 +2393,31 @@ void LammpsGui::plotDataFile()
     QString fileName = QFileDialog::getOpenFileName(this, "Open Data File to Plot",
                                                     QDir::currentPath(), Cfg::FILTER_DATA);
     if (fileName.isEmpty()) return;
+    plotFile(fileName);
+}
 
+// the same for a file that is already in hand -- the command window's "plot"
+// hands one over after the shell has expanded it.  Returns false only when the
+// user canceled the column dialog, which a caller with more files to plot takes
+// as "stop" rather than "ask me again for each of them".
+bool LammpsGui::plotFile(const QString &fileName)
+{
     QString error;
     PlotData data = loadPlotData(fileName, &error);
     if (data.isEmpty()) {
         critical(this, "Plot Data File",
                  "Could not read data from file:", error.isEmpty() ? fileName : error);
-        return;
+        // the file was the problem, not the user, so a caller with more of them
+        // carries on to the next
+        return true;
     }
 
     PlotDataDialog dialog(data, this);
-    if (dialog.exec() != QDialog::Accepted) return;
+    if (dialog.exec() != QDialog::Accepted) return false;
     const QList<int> ycols = dialog.yColumns();
     if (ycols.isEmpty()) {
         warning(this, "Plot Data File", "No data columns were selected to plot.");
-        return;
+        return true;
     }
 
     const PlotData plotData = dialog.buildData();
@@ -2424,6 +2434,7 @@ void LammpsGui::plotDataFile()
     // charts of the current run
     viewlayout->addAuxiliaryView(win, ViewSlot::Chart,
                                  QString("Plot: %1").arg(QFileInfo(fileName).fileName()));
+    return true;
 }
 
 void LammpsGui::renderImage()

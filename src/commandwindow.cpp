@@ -57,12 +57,24 @@ namespace {
 // typed line would miss all of those.
 constexpr auto SENTINEL = "__LGUI_DONE_";
 
-// The "open" command is the shell's half of a viewer: it prints one of these
-// per file and the panel picks them out of the stream, the way it picks out the
-// sentinel.  Letting the shell say which files are meant is the whole point --
-// globs, braces, quoting, ~ and $VAR then expand exactly as they would for any
-// other command, and "open" works in a pipeline or a loop like any other too.
+// The commands the panel adds are the shell's half of a viewer: each prints one
+// of these per file and the panel picks them out of the stream, the way it picks
+// out the sentinel.  Letting the shell say which files are meant is the whole
+// point -- globs, braces, quoting, ~ and $VAR then expand exactly as they would
+// for any other command, and they work in a pipeline or a loop like any other.
+//
+// The line reads "<mark><what>_<file>", and what follows the first underscore is
+// the file, spaces and all, exactly as with the sentinel.
 constexpr auto OPENMARK = "__LGUI_OPEN_";
+
+// The commands themselves, and the word each puts in its marker.  None of them
+// is called "view": that name belongs to vim's read-only mode on most Unix
+// systems, and taking it would mean never being defined at all.
+struct Viewer {
+    const char *name; ///< command the shell gets
+    const char *what; ///< what the panel should do with the files it names
+};
+constexpr Viewer VIEWERS[] = {{"open", "show"}, {"edit", "edit"}, {"plot", "plot"}};
 
 // Shells do not agree on how to name the exit status, the working directory or
 // the prompt, so the few things this window has to say to one are chosen by
@@ -172,13 +184,17 @@ QString aliasCommand(const QString &program, const ShellAlias &alias)
     }
 }
 
-// Define "open" as a viewer for the panel, but only when the name is free.
-// The test is left to the shell on purpose: "command -v" answers for aliases,
-// functions and builtins as well as for $PATH, in the environment the user
-// actually has, which nothing on this side could do as well.  macOS has an open
-// of its own that does much the same job, so there this defines nothing.
-QString openCommand(const QString &program)
+// Define one of the panel's commands in the shell, but only when the name is
+// free.  The test is left to the shell on purpose: "command -v" answers for
+// aliases, functions and builtins as well as for $PATH, in the environment the
+// user actually has, which nothing on this side could do as well.  macOS has an
+// "open" of its own that does much the same job and GNU plotutils installs a
+// "plot", so this is not a formality -- where the name is taken the command
+// that was there keeps working and the panel adds nothing.
+QString viewerCommand(const QString &program, const Viewer &viewer)
 {
+    const QString name = QString::fromLatin1(viewer.name);
+    const QString what = QString::fromLatin1(viewer.what);
     switch (shellKind(program)) {
         case ShellKind::Cmd:
             // no functions, and doskey macros do not behave enough like one
@@ -188,14 +204,14 @@ QString openCommand(const QString &program)
             // line, so there is no loop to be had here -- but none is needed:
             // printf repeats its format until the arguments run out.  \!* is
             // how a csh alias passes them on, and "which" is its "command -v".
-            return QStringLiteral("which open >& /dev/null || "
-                                  "alias open 'printf \"%1%s\\n\" \\!*'")
-                .arg(OPENMARK);
+            return QStringLiteral("which %1 >& /dev/null || "
+                                  "alias %1 'printf \"%2%3_%s\\n\" \\!*'")
+                .arg(name, OPENMARK, what);
         default:
-            return QStringLiteral("command -v open >/dev/null 2>&1 || "
-                                  "open() { if [ \"$#\" -gt 0 ]; then "
-                                  "printf '%1%s\\n' \"$@\"; fi; }")
-                .arg(OPENMARK);
+            return QStringLiteral("command -v %1 >/dev/null 2>&1 || "
+                                  "%1() { if [ \"$#\" -gt 0 ]; then "
+                                  "printf '%2%3_%s\\n' \"$@\"; fi; }")
+                .arg(name, OPENMARK, what);
     }
 }
 
@@ -576,12 +592,15 @@ void CommandWindow::startShell()
         const QString command = aliasCommand(program, alias);
         if (!command.isEmpty()) shell->write(qPrintable(command + "\n"));
     }
-    // give the shell an "open" that shows a file in this application -- but only
-    // when there is an application to show it in; standalone there is nowhere
-    // for it to go, and a command that silently does nothing is worse than none
+    // give the shell the commands that show a file in this application -- but
+    // only when there is an application to show it in; standalone there is
+    // nowhere for them to go, and a command that silently does nothing is worse
+    // than no command at all
     if (lammpsgui) {
-        const QString command = openCommand(program);
-        if (!command.isEmpty()) shell->write(qPrintable(command + "\n"));
+        for (const auto &viewer : VIEWERS) {
+            const QString command = viewerCommand(program, viewer);
+            if (!command.isEmpty()) shell->write(qPrintable(command + "\n"));
+        }
     }
     // ask where we are, so the prompt is right before anything is typed
     shell->write(qPrintable(sentinelCommand(program) + "\n"));
@@ -799,23 +818,51 @@ void CommandWindow::openReported()
     // images and movies go into one viewer, so that "open melt-*.png" is a slide
     // show of the sequence rather than a tab for every frame of it
     QStringList pictures;
-    for (const auto &name : wanted) {
-        if (name.isEmpty()) continue; // "open" with nothing after it
+    QStringList toedit;
+    QStringList toplot;
+    for (const auto &entry : wanted) {
+        // "<what>_<file>", the same shape as the sentinel: no keyword has an
+        // underscore in it, so the first one ends it and the rest is the file
+        const int sep = entry.indexOf('_');
+        if (sep < 1) continue;
+        const QString what = entry.left(sep);
+        const QString name = entry.mid(sep + 1);
+        if (name.isEmpty()) continue; // the command was given nothing to show
+
         // the shell reported the name as it was written, which for a relative
         // one means relative to where the shell is -- not to where this
         // application was started
         const QFileInfo info(QDir(workingdir), name);
         if (!info.exists()) {
-            appendOutput(QString("open: no such file: %1\n").arg(name));
+            appendOutput(QString("%1: no such file: %2\n").arg(what, name));
             continue;
         }
         const QString path = info.absoluteFilePath();
-        if (isImageFile(path) || isMovieFile(path))
+        if (what == QLatin1String("edit"))
+            toedit << path;
+        else if (what == QLatin1String("plot"))
+            toplot << path;
+        else if (isImageFile(path) || isMovieFile(path))
             pictures << path;
         else
             lammpsgui->viewFile(path);
     }
+
     if (!pictures.isEmpty()) lammpsgui->openImageFiles(pictures);
+
+    // one editor, one file in it: naming several is a mistake worth saying so
+    // about rather than opening whichever happened to be last
+    if (!toedit.isEmpty()) {
+        if (toedit.size() > 1)
+            appendOutput(QString("edit: the editor holds one file at a time, opening \"%1\"\n")
+                             .arg(QFileInfo(toedit.first()).fileName()));
+        lammpsgui->openFile(toedit.first());
+    }
+
+    // each plot asks which columns to draw, so a canceled dialog means "stop",
+    // not "ask me again for every remaining file"
+    for (const auto &path : toplot)
+        if (!lammpsgui->plotFile(path)) break;
 }
 
 void CommandWindow::updatePrompt()

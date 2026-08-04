@@ -117,9 +117,6 @@ public:
     LammpsGui &operator=(LammpsGui &&)      = delete;
 
 protected:
-    /** @brief Open a file in the editor */
-    void openFile(const QString &filename);
-
     /** @brief Read a restart file into LAMMPS and open the inspection windows */
     void inspectFile(const QString &filename);
 
@@ -127,6 +124,27 @@ protected:
     void writeFile(const QString &filename);
 
 public:
+    /**
+     * @brief Load a file into the editor
+     * @param filename File to edit; nothing happens if it is empty
+     *
+     * Ends a running simulation and closes the output windows, and offers to
+     * save the current buffer first if it was changed.  Also reachable from the
+     * command window's "edit".
+     */
+    void openFile(const QString &filename);
+
+    /**
+     * @brief Plot the columns of a data file, asking which ones
+     * @param fileName Data file to read
+     * @return false only if the user canceled the column dialog
+     *
+     * The return value lets a caller with several files to plot stop at the
+     * first cancel rather than ask again for each of the rest.  Also reachable
+     * from the command window's "plot".
+     */
+    bool plotFile(const QString &fileName);
+
     /**
      * @brief Open a file in a read-only text viewer
      * @param filename File to show; nothing happens if it is empty
