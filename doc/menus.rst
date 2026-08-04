@@ -67,6 +67,20 @@ In addition, up to 5 recent file names will be listed after the *Open Input File
 entry that allows re-opening recently opened files.  This list is stored
 when quitting and recovered when starting again.
 
+**Files that are not what they are opened as.** Each of these entries
+expects a certain kind of file, and the file dialogs offer *All files*
+as well, so a file can be picked that does not fit: a binary file for the
+editor or the text viewer, something that is not a picture for the slide
+show, an image for the plotter.  Rather than refuse it or fill a window
+with unreadable content, LAMMPS-GUI asks -- *"... does not look like a
+text file.  Do you want to open it anyway?"* -- and the answer defaults
+to *No*, since the usual reason to see the question is a name that was
+mistyped or a file that was picked by mistake.  Answering *Yes* opens it
+regardless, which is occasionally what is wanted: an input file with a
+stray null byte in it can still be edited.  A file that looks right is
+never asked about.  The same check applies to the ``edit``, ``open`` and
+``plot`` commands of the :ref:`command window <commandwindow>`.
+
 **Plotting external data files.** The *Plot Data File...* entry
 (`Ctrl-Shift-P`) opens a dialog to select a file with column-oriented
 numeric data and plots it in a standalone :ref:`Charts window <charts>`

@@ -521,6 +521,34 @@ bool isLightTheme()
     return (fg > bg);
 }
 
+// standardized "this is not what you asked for" confirmation dialog
+bool confirmUnexpectedFile(QWidget *parent, const QString &filename, const QString &kind)
+{
+    QMessageBox mb(parent);
+    mb.setWindowTitle("Unexpected File Type");
+    mb.setWindowIcon(parent ? parent->windowIcon() : QIcon());
+    mb.setText(
+        QString("\"%1\" does not look like a %2 file.").arg(QFileInfo(filename).fileName(), kind));
+    mb.setInformativeText("Do you want to open it anyway?");
+    const int extent = mb.style()->pixelMetric(QStyle::PM_MessageBoxIconSize, nullptr, &mb);
+    mb.setIconPixmap(
+        QIcon(":/icons/system-help.svg").pixmap(QSize(extent, extent), mb.devicePixelRatioF()));
+    mb.setStandardButtons(QMessageBox::Yes | QMessageBox::No);
+
+    auto *button = mb.button(QMessageBox::Yes);
+    button->setIcon(QIcon(":/icons/dialog-ok.svg"));
+    button = mb.button(QMessageBox::No);
+    button->setIcon(QIcon(":/icons/dialog-no.svg"));
+
+    // the usual reason to be asked this is a name that was mistyped or a file
+    // that was mis-picked, so the safe answer is the one Return and Escape give
+    mb.setDefaultButton(QMessageBox::No);
+    mb.setEscapeButton(QMessageBox::No);
+
+    if (parent) mb.setFont(parent->font());
+    return mb.exec() == QMessageBox::Yes;
+}
+
 // standardized "Unsaved Changes" confirmation dialog
 int showUnsavedChangesDialog(QWidget *parent, const QString &filename, const QString &question)
 {

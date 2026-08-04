@@ -259,6 +259,24 @@ extern int showUnsavedChangesDialog(QWidget *parent, const QString &filename,
                                     const QString &question);
 
 /**
+ * @brief Ask before opening a file that is not what it is being opened as
+ * @param parent   Pointer to the parent widget
+ * @param filename File about to be opened; only its name is shown
+ * @param kind     What it was expected to be, worded to follow "a": "text",
+ *                 "data", "image or movie"
+ * @return true if the user wants to go ahead
+ *
+ * For the cases where opening the wrong file is a mistake rather than an error:
+ * a binary in the editor, a picture handed to the plotter.  Answering No is
+ * what Return and Escape do, because the usual reason to see this is a name
+ * that was mistyped or a file that was mis-picked.  Ask only when the file
+ * fails the test for its kind -- a file that looks right must never produce a
+ * dialog.
+ */
+[[nodiscard]] extern bool confirmUnexpectedFile(QWidget *parent, const QString &filename,
+                                                const QString &kind);
+
+/**
  * @brief Apply the bundled SVG icons to a dialog button box's standard buttons
  * @param box The button box whose standard buttons should be re-iconed
  *

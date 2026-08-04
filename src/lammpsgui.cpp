@@ -1218,6 +1218,13 @@ void LammpsGui::openFile(const QString &fileName)
     // do nothing, if no file name provided
     if (fileName.isEmpty()) return;
 
+    // A name that does not exist yet is a new file and perfectly fine.  One that
+    // does and is not text is almost always a mistake, and asking has to happen
+    // here, before the run is ended and the output windows are closed for it.
+    if (QFileInfo::exists(fileName) && looksLikeBinaryFile(fileName) &&
+        !confirmUnexpectedFile(this, fileName, "text"))
+        return;
+
     if (lammps.isRunning()) {
         stopRun();
         runner->wait();
@@ -1320,12 +1327,9 @@ void LammpsGui::viewFile(const QString &fileName)
         return;
     }
 
-    if (looksLikeBinaryFile(fileName)) {
-        warning(this, "Cannot View Binary File as Text",
-                "\"" + QFileInfo(fileName).fileName() +
-                    "\" appears to be a binary file and cannot be displayed in the text viewer.");
-        return;
-    }
+    // unlike an image or a movie, which have a viewer of their own to be sent
+    // to, a binary file has nowhere else to go -- so this is the user's call
+    if (looksLikeBinaryFile(fileName) && !confirmUnexpectedFile(this, fileName, "text")) return;
 
     QFile file(fileName);
     if (!file.open(QIODevice::ReadOnly | QFile::Text)) {
@@ -1357,6 +1361,15 @@ void LammpsGui::openImages()
 void LammpsGui::openImageFiles(const QStringList &files)
 {
     if (files.isEmpty()) return;
+
+    // the file dialog offers "All files" as well, so what arrives here need not
+    // be a picture at all.  One question for the action rather than one per
+    // file: it names the first that does not fit and covers the whole list.
+    for (const auto &f : files) {
+        if (isImageFile(f) || isMovieFile(f)) continue;
+        if (!confirmUnexpectedFile(this, f, "image or movie")) return;
+        break;
+    }
 
     auto *viewer = new SlideShow(files.first());
     viewer->setAttribute(Qt::WA_DeleteOnClose);
@@ -2402,6 +2415,13 @@ void LammpsGui::plotDataFile()
 // as "stop" rather than "ask me again for each of them".
 bool LammpsGui::plotFile(const QString &fileName)
 {
+    // the parsers report what they could not read, but a picture handed to the
+    // plotter is a mistake to catch before that rather than an error to explain
+    if (looksLikeBinaryFile(fileName) && !confirmUnexpectedFile(this, fileName, "data")) {
+        // declining this one file is not declining the rest of them
+        return true;
+    }
+
     QString error;
     PlotData data = loadPlotData(fileName, &error);
     if (data.isEmpty()) {
