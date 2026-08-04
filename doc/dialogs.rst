@@ -98,7 +98,12 @@ General Settings
      the Output, Variables, and Command window views share a group across
      the full width at the bottom.  The panels have fixed places and are not dragged around;
      they are shown and hidden from the *View* menu, and the splitters
-     between them can be moved to change their proportions.  A panel that
+     between them can be moved to change their proportions.  The windows
+     opened on demand join them rather than floating above: a text viewer,
+     an inspected data file or image, a slide show of image or movie files
+     opened with *View Image or Movie File(s)...*, and a plot made with
+     *Plot Data File...* all become further tabs of the group on the
+     right, and are closed from their own *File* menu.  A panel that
      shares its area with another is named by its tab, one that is alone
      by a title bar.  The proportions are kept when the main window is
      resized and restored in the next session, and the main window

@@ -1354,7 +1354,10 @@ void LammpsGui::openImages()
     auto *viewer = new SlideShow(files.first());
     viewer->setAttribute(Qt::WA_DeleteOnClose);
     viewer->setWindowIcon(QIcon(Cfg::MAIN_ICON));
-    viewer->show();
+    // combined layout: the viewer joins the tab group on the right, next to the
+    // slide show of the current run rather than in a window of its own
+    viewlayout->addAuxiliaryView(viewer, ViewSlot::SlideShow,
+                                 QString("Slides: %1").arg(QFileInfo(files.first()).fileName()));
 
     // the import dialog of a movie file is modal to the (already visible)
     // slide show window, so a movie must not be added before it is shown
@@ -2407,9 +2410,13 @@ void LammpsGui::plotDataFile()
     win->setAttribute(Qt::WA_DeleteOnClose);
     win->setWindowTitle(QString("Plot: %1 - LAMMPS-GUI").arg(QFileInfo(fileName).fileName()));
     win->setWindowIcon(QIcon(Cfg::MAIN_ICON));
-    win->setMinimumSize(Cfg::MINIMUM_WIDTH, Cfg::MINIMUM_HEIGHT);
+    // a minimum size becomes a floor the dock area cannot get below
+    if (!dockedLayout()) win->setMinimumSize(Cfg::MINIMUM_WIDTH, Cfg::MINIMUM_HEIGHT);
     win->loadData(plotData, dialog.xColumn(), ycols);
-    win->show();
+    // combined layout: the plot joins the tab group on the right, next to the
+    // charts of the current run
+    viewlayout->addAuxiliaryView(win, ViewSlot::Chart,
+                                 QString("Plot: %1").arg(QFileInfo(fileName).fileName()));
 }
 
 void LammpsGui::renderImage()
