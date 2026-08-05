@@ -114,7 +114,7 @@ jobs:
         COVERITY_EMAIL: ${{ secrets.COVERITY_SCAN_EMAIL }}
       run: |
         tar -czf cov-int.tgz cov-int
-        version="$(git rev-parse --short HEAD)"
+        version="$(git describe HEAD)"
         project_enc="$(jq -rn --arg v "$COVERITY_PROJECT" '$v|@uri')"
         curl -sS --fail-with-body \
              --form token="${COVERITY_TOKEN}" \
