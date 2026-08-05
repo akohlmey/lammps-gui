@@ -45,8 +45,19 @@ has been found extremely useful in creating, debugging, and tweaking
 visualization facility of the `dump image command
 <https://docs.lammps.org/dump_image.html>`_.
 
-LAMMPS-GUI is Copyright (c) |copyright|, and distributed under the
-terms of the GNU General Public License version 2.0 or later (GPL-2.0-or-later).
+--------
+
+LAMMPS-GUI is Copyright (c) |copyright|, and its source code is
+distributed under the terms of the :choosealicense:`GPL-2.0` or later.
+
+It uses the custom rangeslider widget for Qt written by Hoyoung Lee and
+distributed under the :choosealicense:`CeCILL-2.1`.
+
+It uses the Lepton library by Peter Eastman and OpenMM contributors
+distributed under the :choosealicense:`MIT`.
+
+The LAMMPS-GUI documentation is available under the
+:choosealicense:`CC-BY-4.0`.
 
 --------
 
