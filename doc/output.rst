@@ -430,24 +430,29 @@ the next *Enter*; with nothing highlighted there is nothing to take and
 
 The window adds three commands of its own, which hand files to
 LAMMPS-GUI rather than printing them, so that a whole project can be
-worked on without leaving the prompt:
+worked on without leaving the prompt.  Each of them goes by two names,
+for the reason given below:
 
 .. list-table::
    :header-rows: 1
-   :widths: 12 88
+   :widths: 10 14 76
 
    * - Command
+     - Also
      - What it does with the files named after it
    * - ``open``
+     - ``gui-open``
      - Image and movie files go to a :ref:`slide show <slideshow>`
        viewer, all of the ones named in the same command together in
        one; any other file goes to a read-only text viewer.
    * - ``edit``
+     - ``gui-edit``
      - Loads the file into the editor, as *File* > *Open Input File*
        does -- including the offer to save the current buffer first.
        The editor holds one file, so naming several says so and opens
        the first.
    * - ``plot``
+     - ``gui-plot``
      - Reads the file as a data file and asks which columns to draw,
        then opens the plot.  With several files it asks for each in
        turn, and canceling stops the rest.
@@ -462,13 +467,20 @@ they do anywhere else:
    edit in.melt                    # into the editor
    plot log.lammps                 # pick columns, then plot
    open $(ls -t *.png | head -1)   # the most recent image
+   gui-plot log.lammps             # the same as "plot", under its second name
 
-Each is defined only when nothing else on the system claims that name,
+The short name is defined only when nothing else on the system claims it,
 which is checked in the shell itself, so an alias or function from the
 start-up file counts as well as a program on the search path.  On macOS
 ``open`` already exists and does much the same job, and GNU plotutils
 installs a ``plot``; where that is the case the command that was there
-keeps working and the panel adds nothing.  None of them is available with
+keeps working and only the second name is added.  That is what the second
+name is for: nothing else is likely to be called ``gui-open``, so it is
+defined whatever else is on the system, and a line that uses it works the
+same way on every machine.  Both names do the same thing -- the work
+itself is in a function called ``__lgui_show``, ``__lgui_edit`` or
+``__lgui_plot``, which is what the names lead to and what turns up in a
+listing of what the shell has defined.  None of this is available with
 ``cmd.exe``, which has no way to define them.
 
 The shell is the one selected in the *Preferences* dialog (*Command

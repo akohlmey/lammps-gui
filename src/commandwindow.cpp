@@ -76,6 +76,13 @@ struct Viewer {
 };
 constexpr Viewer VIEWERS[] = {{"open", "show"}, {"edit", "edit"}, {"plot", "plot"}};
 
+// Each of them is defined under a second name as well, this one prefixed, which
+// is what is left when the short one turns out to be taken.  It is longer and
+// nothing else is likely to be called that, which is the whole point: unlike the
+// short names it is defined whatever else is on the system, so there is always a
+// way to reach the viewers.
+constexpr auto VIEWERPREFIX = "gui-";
+
 // Shells do not agree on how to name the exit status, the working directory or
 // the prompt, so the few things this window has to say to one are chosen by
 // family rather than assumed to be POSIX.
@@ -184,34 +191,47 @@ QString aliasCommand(const QString &program, const ShellAlias &alias)
     }
 }
 
-// Define one of the panel's commands in the shell, but only when the name is
-// free.  The test is left to the shell on purpose: "command -v" answers for
-// aliases, functions and builtins as well as for $PATH, in the environment the
-// user actually has, which nothing on this side could do as well.  macOS has an
-// "open" of its own that does much the same job and GNU plotutils installs a
-// "plot", so this is not a formality -- where the name is taken the command
-// that was there keeps working and the panel adds nothing.
-QString viewerCommand(const QString &program, const Viewer &viewer)
+// Define one of the panel's commands in the shell, under its short name only
+// when that name is free.  The test is left to the shell on purpose: "command
+// -v" answers for aliases, functions and builtins as well as for $PATH, in the
+// environment the user actually has, which nothing on this side could do as
+// well.  macOS has an "open" of its own that does much the same job and GNU
+// plotutils installs a "plot", so this is not a formality -- where the name is
+// taken the command that was there keeps working and only the prefixed name is
+// added, which is defined either way.
+QStringList viewerCommands(const QString &program, const Viewer &viewer)
 {
-    const QString name = QString::fromLatin1(viewer.name);
-    const QString what = QString::fromLatin1(viewer.what);
+    const QString name     = QString::fromLatin1(viewer.name);
+    const QString what     = QString::fromLatin1(viewer.what);
+    const QString prefixed = QLatin1String(VIEWERPREFIX) + name;
     switch (shellKind(program)) {
         case ShellKind::Cmd:
             // no functions, and doskey macros do not behave enough like one
             return {};
-        case ShellKind::Csh:
+        case ShellKind::Csh: {
             // csh has aliases rather than functions, and an alias body is one
             // line, so there is no loop to be had here -- but none is needed:
             // printf repeats its format until the arguments run out.  \!* is
             // how a csh alias passes them on, and "which" is its "command -v".
-            return QStringLiteral("which %1 >& /dev/null || "
-                                  "alias %1 'printf \"%2%3_%s\\n\" \\!*'")
-                .arg(name, OPENMARK, what);
-        default:
-            return QStringLiteral("command -v %1 >/dev/null 2>&1 || "
-                                  "%1() { if [ \"$#\" -gt 0 ]; then "
-                                  "printf '%2%3_%s\\n' \"$@\"; fi; }")
-                .arg(name, OPENMARK, what);
+            const QString body = QStringLiteral("'printf \"%1%2_%s\\n\" \\!*'").arg(OPENMARK, what);
+            return {QStringLiteral("alias %1 %2").arg(prefixed, body),
+                    QStringLiteral("which %1 >& /dev/null || alias %1 %2").arg(name, body)};
+        }
+        default: {
+            // What the commands do is written once, in a function of its own,
+            // because the prefixed name has to be given to the shell as an alias
+            // rather than as a function: a "-" in a function name is something
+            // bash and zsh accept and dash rejects outright, while all of them
+            // take it in an alias.  The short name stays a function, so that it
+            // is what it always was where it is defined at all.
+            const QString helper = QStringLiteral("__lgui_") + what;
+            return {QStringLiteral("%1() { if [ \"$#\" -gt 0 ]; then "
+                                   "printf '%2%3_%s\\n' \"$@\"; fi; }")
+                        .arg(helper, OPENMARK, what),
+                    QStringLiteral("alias %1='%2'").arg(prefixed, helper),
+                    QStringLiteral("command -v %1 >/dev/null 2>&1 || %1() { %2 \"$@\"; }")
+                        .arg(name, helper)};
+        }
     }
 }
 
@@ -598,8 +618,8 @@ void CommandWindow::startShell()
     // than no command at all
     if (lammpsgui) {
         for (const auto &viewer : VIEWERS) {
-            const QString command = viewerCommand(program, viewer);
-            if (!command.isEmpty()) shell->write(qPrintable(command + "\n"));
+            for (const auto &command : viewerCommands(program, viewer))
+                shell->write(qPrintable(command + "\n"));
         }
     }
     // ask where we are, so the prompt is right before anything is typed
