@@ -50,10 +50,10 @@ visualization facility of the `dump image command
 LAMMPS-GUI is Copyright (c) |copyright|, and its source code is
 distributed under the terms of the :choosealicense:`GPL-2.0` or later.
 
-It uses the custom rangeslider widget for Qt written by Hoyoung Lee and
-distributed under the :choosealicense:`CeCILL-2.1`.
+Custom rangeslider widget for Qt written by Hoyoung Lee and distributed
+under the :choosealicense:`CeCILL-2.1`.
 
-It uses the Lepton library by Peter Eastman and OpenMM contributors
+Lepton library written by Peter Eastman and OpenMM contributors
 distributed under the :choosealicense:`MIT`.
 
 The LAMMPS-GUI documentation is available under the
