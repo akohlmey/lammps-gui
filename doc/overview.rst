@@ -86,7 +86,7 @@ and testing simulation setups.
    - Many adjustable settings and preferences are persistent, including the 5 most recent files
    - Thermodynamic output is captured and displayed as a line graph in a *Charts* window
    - Export of thermodynamic data to CSV, YAML, and multi-column text format
-   - Create simple plots from imported CSV, YAML, JSON, and plain multi-column data
+   - Create simple plots from imported CSV, YAML, and plain multi-column data
    - Multiple post-processing options for plot data, and plot style customizations
    - Interactive visualization of current state via calling `dump image <https://docs.lammps.org/dump_image.html>`_
    - Capture of images created by `dump image <https://docs.lammps.org/dump_image.html>`_ in the *Slide Show* window

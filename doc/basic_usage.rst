@@ -28,14 +28,20 @@ LAMMPS-GUI supports the following command-line options:
 
    * - Option
      - Description
+   * - ``-p <path>``, ``--pluginpath <path>``
+     - Set the path to the LAMMPS shared library (plugin mode only)
+   * - ``-h``, ``--help``
+     - Print usage information and exit
+   * - ``--help-all``
+     - Same as above but also show generic Qt command-line options
+   * - ``-v``, ``--version``
+     - Print version information and exit
    * - ``-x <width>``, ``--width <width>``
      - Override the editor window width in pixels
    * - ``-y <height>``, ``--height <height>``
      - Override the editor window height in pixels
    * - ``-s <style>``, ``--style <style>``
      - Set the visual style of the application (default: ``Fusion``)
-   * - ``-p <path>``, ``--pluginpath <path>``
-     - Set the path to the LAMMPS shared library (plugin mode only)
    * - ``-c <file>``, ``--chart <file>``
      - Open ``file`` directly in a standalone :ref:`Charts window <charts>`;
        a column-picker dialog is shown first
@@ -44,10 +50,6 @@ LAMMPS-GUI supports the following command-line options:
        multiple times to load several images at once
    * - ``-t <file>``, ``--text <file>``
      - Open ``file`` in a standalone text viewer
-   * - ``-v``, ``--version``
-     - Print version information and exit
-   * - ``-h``, ``--help``
-     - Print usage information and exit
 
 The optional ``file`` argument specifies a LAMMPS input file to open on
 startup.  If no file is provided, LAMMPS-GUI starts with an empty
@@ -58,7 +60,9 @@ option ``Windows`` which is a visual style somewhat resembling
 
 The ``-c``, ``-i``, and ``-t`` flags open a standalone viewer without
 the main editor window; they are mutually exclusive with each other and
-with the ``file`` positional argument.
+with the ``file`` positional argument.  The ``-i`` flag does not support
+wildcards via filename globbing, but that can be emulated; for example
+on a Bourne shell with: ``lammps-gui $(for f in image-*.png; do echo " -i $f"; done)``.
 
 Launching LAMMPS-GUI
 ^^^^^^^^^^^^^^^^^^^^
@@ -205,7 +209,7 @@ choosing to run anyway or when the pre-run check is disabled.
    :align: center
    :scale: 75%
 
-.. admonition:: Up to three additional windows may open during a run:
+.. admonition:: Up to three additional windows or tabs may open during a run:
 
    - An :ref:`Output window <logfile>` with the captured screen output from LAMMPS
    - A :ref:`Charts window <charts>` with a line graph created from thermodynamic output of the run

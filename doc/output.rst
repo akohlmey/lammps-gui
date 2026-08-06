@@ -2,6 +2,33 @@
 Monitoring LAMMPS output
 ************************
 
+.. admonition:: LAMMPS-GUI Viewing Modes
+   :class: note
+
+   Since version 3.1 LAMMPS-GUI supports two viewing
+   modes: 1. individual windows mode, where each output is displayed in
+   a separate window and 2. combined window mode, where there is only
+   one main window that may be split once vertically and the upper part
+   once more horizontally and then the upper left section is the editor
+   window and the upper right and bottom sections contain one or more tabs
+   with the same content as the individual windows.  This viewing mode
+   can be changes in the :doc:`Preferences dialog <dialogs>`.
+
+   Any references to a "window" throughout the remainder of the
+   documentation thus refers to either the corresponding individual
+   window or the corresponding tab in the upper right or bottom part of
+   the combined window.
+
+   The behavior for both modes is largely the same with two exceptions:
+
+   1. There can be only one menu bar, so the displayed menu bar is that
+      of the section / tab that has currently the focus. If access to
+      the menu bar of a specific window is needed, e.g. to open a new
+      LAMMPS input file, it may be needed to first click into the
+      corresponding area to switch focus.
+   2. *Image Viewer* and *Slide Show Viewer* lose the auto-resize option
+      to show the image without scroll bars if the screen size supports it.
+
 .. _logfile:
 
 Output Window
