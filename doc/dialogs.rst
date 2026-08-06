@@ -46,6 +46,8 @@ document.  Clicking on the *Done* button will dismiss the dialog.
 
 ------
 
+.. _preferences:
+
 Preferences
 -----------
 
@@ -108,7 +110,10 @@ General Settings
      by a title bar.  The proportions are kept when the main window is
      resized and restored in the next session, and the main window
      remembers a size of its own for each of the two layouts.  Changing
-     this setting relaunches LAMMPS-GUI.  In the combined window the views
+     this setting relaunches LAMMPS-GUI.  A single session can be started
+     in either layout without changing this setting, with the ``-j`` or
+     ``-w`` :ref:`command-line flag <command-line-options>`.
+     In the combined window the views
      do not remember individual window sizes, and a keyboard shortcut that
      a view shares with the main window (for example ``Ctrl+S``) is left to
      the main window, so only its menu entry remains for the view.

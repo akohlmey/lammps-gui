@@ -552,13 +552,26 @@ QAction *addMenuAction(QMenu *menu, const QString &text, const QString &icon, Re
 
 /**
  * @brief Whether the output views are docked into the main window
- * @return true when the docked layout is selected in the preferences
+ * @return true when the docked layout is in effect for this session
  *
  * The layout is chosen once at startup (WindowLayout applies it), so this only
- * reads the stored preference.  Widgets consult it for the things that make no
- * sense in a dock, such as remembering their own window size.
+ * reads the stored preference, or what forceLayout() was given instead.
+ * Widgets consult it for the things that make no sense in a dock, such as
+ * remembering their own window size.
  */
 extern bool dockedLayout();
+
+/**
+ * @brief Override the stored layout preference for this session
+ * @param docked true for the combined main window, false for individual windows
+ *
+ * What the -j/--joined and -w/--windows command-line flags do.  The preference
+ * itself is left alone: the choice applies to the process it was given to and
+ * nothing else, which is also why a relaunch (which passes no arguments on)
+ * goes back to what the preferences say.  Call before the first window is
+ * built, since that is when the layout is decided.
+ */
+extern void forceLayout(bool docked);
 
 /**
  * @brief Record the key sequences the main window's menus already use

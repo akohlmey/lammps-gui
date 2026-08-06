@@ -50,6 +50,19 @@ LAMMPS-GUI supports the following command-line options:
        multiple times to load several images at once
    * - ``-t <file>``, ``--text <file>``
      - Open ``file`` in a standalone text viewer
+   * - ``-j``, ``--joined``
+     - Use the *Combined Main Window* layout for this run, whatever the
+       preferences say
+   * - ``-w``, ``--windows``
+     - Use the *Individual Windows* layout for this run, whatever the
+       preferences say
+
+The ``-j`` and ``-w`` flags select the window layout (see the
+:ref:`Preferences dialog <preferences>`)
+for the process they are given to and nothing else: the stored preference
+is not changed, so the next start without a flag is back to what the
+*Preferences* dialog shows, and so is a relaunch (which passes no
+arguments on).  Giving both at once is an error.
 
 The optional ``file`` argument specifies a LAMMPS input file to open on
 startup.  If no file is provided, LAMMPS-GUI starts with an empty

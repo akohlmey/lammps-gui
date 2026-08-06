@@ -31,8 +31,9 @@
 #include <QStyleFactory>
 #include <QtGlobal>
 
-#if defined(Q_OS_WIN32)
 #include <cstdio>
+
+#if defined(Q_OS_WIN32)
 #include <io.h>
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
@@ -121,7 +122,9 @@ int main(int argc, char *argv[])
          {{"s", "style"}, "Set LAMMPS-GUI's visual style (default: Fusion)", "style", "Fusion"},
          {{"c", "chart"}, "Open FILE directly in the chart/plot viewer", "file"},
          {{"i", "image"}, "Open FILE in the snapshot viewer (may be given multiple times)", "file"},
-         {{"t", "text"}, "Open FILE in the text file viewer", "file"}});
+         {{"t", "text"}, "Open FILE in the text file viewer", "file"},
+         {{"j", "joined"}, "Dock the output views into the main window for this run"},
+         {{"w", "windows"}, "Show the output views as individual windows for this run"}});
     parser.addPositionalArgument("file", "The LAMMPS input file to open (optional).");
     parser.process(app);
 
@@ -138,6 +141,17 @@ int main(int argc, char *argv[])
         }
     }
 #endif
+
+    // -j/--joined and -w/--windows pick the layout for this run and leave the
+    // preference alone.  This has to happen before any window is built, since
+    // that is when the choice is read, and before the standalone viewers below
+    // as well: they consult it too, for the chrome a dock panel does without.
+    if (parser.isSet("joined") && parser.isSet("windows")) {
+        fputs("Options -j/--joined and -w/--windows cannot be combined.\n", stderr);
+        return 1;
+    }
+    if (parser.isSet("joined")) forceLayout(true);
+    if (parser.isSet("windows")) forceLayout(false);
 
     int width  = parser.value("width").toInt();
     int height = parser.value("height").toInt();

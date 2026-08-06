@@ -774,8 +774,20 @@ QSize fitViewerWindow(QWidget *window, QScrollArea *area, const QSize &content, 
 
 // shared window-manager hint policy for output windows (see helpers.h)
 
+namespace {
+/// What the command line asked for, if it asked for anything: -1 leaves the
+/// choice to the preferences, which is the case in all but a forced session.
+int forcedlayout = -1;
+} // namespace
+
+void forceLayout(bool docked)
+{
+    forcedlayout = docked ? 1 : 0;
+}
+
 bool dockedLayout()
 {
+    if (forcedlayout >= 0) return forcedlayout > 0;
     return QSettings().value(Keys::DOCKED, false).toBool();
 }
 
