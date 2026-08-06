@@ -31,7 +31,6 @@ jobs:
       uses: actions/checkout@v7
       with:
         ref: develop
-        fetch-depth: 1
 
     - name: Decide whether there is anything new to scan
       id: changes
