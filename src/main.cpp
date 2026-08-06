@@ -153,6 +153,14 @@ int main(int argc, char *argv[])
     if (parser.isSet("joined")) forceLayout(true);
     if (parser.isSet("windows")) forceLayout(false);
 
+    // A standalone viewer is opened without a main window, so there is nothing
+    // for it to dock into and it is an individual window whatever the
+    // preference or the flags say.  It has to be told, because it asks the same
+    // question the docked panels do and answers it the same way: a viewer that
+    // took itself for a panel would come up with no menu bar of its own, since
+    // in the combined window the main window shows that menu on its behalf.
+    if (parser.isSet("chart") || parser.isSet("image") || parser.isSet("text")) forceLayout(false);
+
     int width  = parser.value("width").toInt();
     int height = parser.value("height").toInt();
 

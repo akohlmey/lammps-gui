@@ -73,7 +73,10 @@ option ``Windows`` which is a visual style somewhat resembling
 
 The ``-c``, ``-i``, and ``-t`` flags open a standalone viewer without
 the main editor window; they are mutually exclusive with each other and
-with the ``file`` positional argument.  The ``-i`` flag does not support
+with the ``file`` positional argument.  Such a viewer is always an
+individual window with a menu bar of its own, since there is no main
+window for it to be a panel of, whatever the layout preference or
+``-j`` say.  The ``-i`` flag does not support
 wildcards via filename globbing, but that can be emulated; for example
 on a Bourne shell with: ``lammps-gui $(for f in image-*.png; do echo " -i $f"; done)``.
 
