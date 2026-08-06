@@ -222,7 +222,12 @@ void WindowLayout::makeDockChrome(QDockWidget *d, const QString &title)
     auto *nothing = new QHBoxLayout(empty);
     nothing->setContentsMargins(0, 0, 0, 0);
     nothing->setSpacing(0);
-    makeTabTitle(d, title);
+    // The tab title is not installed yet, and a bare child that was never
+    // explicitly hidden becomes visible along with the dock -- floating over
+    // the view at its default geometry, where it shines through a view that
+    // paints no background of its own.  Start it hidden; updateDockChrome()
+    // shows it if and when it makes it the title bar.
+    makeTabTitle(d, title)->hide();
     d->setTitleBarWidget(empty);
 }
 
