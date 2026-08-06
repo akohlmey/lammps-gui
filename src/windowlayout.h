@@ -167,11 +167,28 @@ public:
      * @param slot Slot to toggle
      * @return Visibility of the view after the call (false for an empty slot)
      *
+     * Docked, a view that is on screen without holding the keyboard focus is
+     * raised and focused rather than hidden, so the key that opened a panel is
+     * also the key that goes back to it; a second press, with the focus in it
+     * by then, hides it as before.
+     *
      * Persists the new state for the slots that have a "show by default"
      * preference (Output and Charts), so the next session starts the way the
      * session ended.
      */
     bool toggle(ViewSlot slot);
+
+    /**
+     * @brief Move the keyboard focus to the neighboring pane
+     * @param forward true for the next pane, false for the previous one
+     *
+     * The panes are the editor and the panels that are on screen, walked in
+     * the order they are arranged around it and wrapping at either end.  A
+     * panel behind a tab is not a pane of its own: it is reached with the key
+     * that opens it, which raises it within its group.  Does nothing with
+     * individual windows, where the window manager has a key for this.
+     */
+    void focusNextPane(bool forward);
 
     /**
      * @brief Check whether the view in a slot is visible
@@ -271,6 +288,11 @@ private:
 
     /// Build the dock widgets, arrange them, and restore a saved arrangement.
     void createDocks();
+
+    /// The panels that are on screen, in the order focusNextPane() walks them:
+    /// the group on the right before the one across the bottom, and within a
+    /// group the fixed slots before the transient viewers tabbed into it.
+    QList<QDockWidget *> orderedPanels() const;
 
     /// The dock holding a slot, or nullptr in windowed mode.
     QDockWidget *dock(ViewSlot slot) const { return docks[static_cast<int>(slot)]; }

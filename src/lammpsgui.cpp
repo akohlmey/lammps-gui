@@ -432,6 +432,20 @@ void LammpsGui::createViewMenu()
     // no shortcut of its own: Ctrl+Shift+X belongs to Run > Open Command Window
     addMenuAction(menu, ":/icons/utilities-terminal.svg", "Co&mmand Window", "",
                   &LammpsGui::viewCommand);
+
+    // Walking the panels is only meaningful while they are panels: with
+    // individual windows this is the window manager's job and its key does it.
+    // The layout is read rather than asked of viewlayout, which does not exist
+    // yet when the menus are built.
+    if (dockedLayout()) {
+        menu->addSeparator();
+        addMenuAction(menu, ":/icons/go-next-2.svg", "&Next Panel", "F6", [this]() {
+            if (viewlayout) viewlayout->focusNextPane(true);
+        });
+        addMenuAction(menu, ":/icons/go-previous-2.svg", "&Previous Panel", "Shift+F6", [this]() {
+            if (viewlayout) viewlayout->focusNextPane(false);
+        });
+    }
     menu->addSeparator();
     // this menu decides how the windows are arranged, and the layout style is
     // itself a preference, so the settings live here rather than in Edit, which

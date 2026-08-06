@@ -277,6 +277,13 @@ window instead of windows of their own, and the same entries show and
 hide the panels.  The default settings for their visibility can be
 changed in the *Preferences* dialog.
 
+With that layout the menu also has the *Next Panel* (`F6`) and
+*Previous Panel* (`Shift-F6`) entries, which move the keyboard focus
+between the editor and the panels around it; see :ref:`the keyboard
+shortcuts <shortcuts>` for what they walk through.  They are not shown
+with individual windows, where switching windows is the window
+manager's job.
+
 The *View* menu is also where the *Preferences* dialog is opened
 (keyboard shortcut `Ctrl-P`), and where all stored preferences and
 settings can be deleted, so they are reset to their default values.

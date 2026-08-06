@@ -1,3 +1,5 @@
+.. _shortcuts:
+
 ******************
 Keyboard Shortcuts
 ******************
@@ -135,3 +137,18 @@ With the *Combined Main Window* layout the sub-windows are panels
 docked into the main window, and a shortcut a panel shares with the
 main window (for example `Ctrl-S`) is left to the main window; the
 panel's own function remains available from its menu entry.
+
+That layout also has keyboard shortcuts for moving between the panels:
+
+- `F6` moves the keyboard focus to the next panel and `Shift-F6` to the
+  previous one, walking the editor, the group on the right and the group
+  across the bottom in turn and wrapping around at either end.  A panel
+  that shares a tab group with others is reached this way when its tab
+  is the one in front; the transient panels -- a text viewer, an
+  inspected file, a plot of a data file -- are walked like any other.
+- The shortcut that opens a panel also returns to it: pressing it while
+  the panel is on screen but is not the one being worked in moves the
+  focus there instead of hiding it, and pressing it again -- with the
+  focus in the panel by then -- hides it as before.  With individual
+  windows the shortcut toggles the window as it always has, since there
+  the stacking and the focus belong to the window manager.

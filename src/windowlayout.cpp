@@ -15,6 +15,7 @@
 #include "helpers.h"
 
 #include <QAction>
+#include <QApplication>
 #include <QDockWidget>
 #include <QEvent>
 #include <QHBoxLayout>
@@ -80,6 +81,13 @@ QString dockTitle(ViewSlot slot)
 QString dockObjectName(ViewSlot slot)
 {
     return QStringLiteral("dock_") + dockTitle(slot).remove(' ').toLower();
+}
+
+// Whether the keyboard focus is in a view: on it, or on any widget it holds.
+bool holdsFocus(const QWidget *view)
+{
+    const QWidget *focus = QApplication::focusWidget();
+    return view && focus && ((view == focus) || view->isAncestorOf(focus));
 }
 
 // Qt draws a tab bar only once two docks share an area.  A panel that is alone
@@ -589,9 +597,69 @@ bool WindowLayout::isVisible(ViewSlot slot) const
     return w && w->isVisible();
 }
 
+QList<QDockWidget *> WindowLayout::orderedPanels() const
+{
+    QList<QDockWidget *> all;
+    for (auto *d : docks)
+        if (d) all << d;
+    all += auxdocks;
+
+    // by dock area rather than by slot, so a transient viewer is walked where
+    // it actually sits and the order follows what is on the screen
+    QList<QDockWidget *> panels;
+    for (auto area : {Qt::RightDockWidgetArea, Qt::BottomDockWidgetArea, Qt::LeftDockWidgetArea,
+                      Qt::TopDockWidgetArea})
+        for (auto *d : all)
+            if (d->isVisible() && d->widget() && (mainwindow->dockWidgetArea(d) == area))
+                panels << d;
+    return panels;
+}
+
+void WindowLayout::focusNextPane(bool forward)
+{
+    if ((layoutmode != LayoutMode::Docked) || !mainwindow) return;
+
+    // the editor is a pane like the panels are, and it is the one the walk
+    // starts from when the focus is somewhere that belongs to none of them
+    auto *editor      = mainwindow->centralWidget();
+    const auto panels = orderedPanels();
+    const int count   = panels.size() + 1;
+    if (count < 2) return; // nothing but the editor
+
+    int current = 0;
+    for (int i = 0; i < panels.size(); ++i)
+        if (holdsFocus(panels[i])) {
+            current = i + 1;
+            break;
+        }
+
+    const int next = (current + (forward ? 1 : count - 1)) % count;
+    if (next == 0) {
+        if (editor) editor->setFocus(Qt::OtherFocusReason);
+        return;
+    }
+    auto *d = panels[next - 1];
+    d->raise(); // it shares a tab group, so being shown is not being in front
+    // the focus belongs on the view, not on the dock, which takes none itself
+    if (auto *w = d->widget()) w->setFocus(Qt::OtherFocusReason);
+}
+
 bool WindowLayout::toggle(ViewSlot slot)
 {
     if (!presenter(slot)) return false;
+
+    // Docked, a panel has three states rather than two: it can be on screen
+    // without being the one that is worked in.  Asking for it then means going
+    // to it, not dismissing it, so the key that opened a panel is also the key
+    // that returns to it -- and pressing it twice still gets rid of it, because
+    // the first press is what put the focus there.  With individual windows the
+    // stacking and the focus belong to the window manager, so the plain toggle
+    // stays: a raise that the window manager declines would leave the key with
+    // nothing to hide.
+    if ((layoutmode == LayoutMode::Docked) && isVisible(slot) && !holdsFocus(view(slot))) {
+        raise(slot);
+        return true;
+    }
 
     const bool visible = !isVisible(slot);
     // an explicit request from the View menu: bring it to the front of its tab
