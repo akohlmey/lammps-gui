@@ -833,6 +833,7 @@ void ChartWindow::postProcess()
     analysisbox->addItem("Birch-Murnaghan EOS fit");
     analysisbox->addItem("Custom function");
     analysisbox->addItem("Custom fit");
+    analysisbox->addItem("Maxwell-Boltzmann fit");
     form->addRow("Analysis:", analysisbox);
 
     auto *paramLabel = new QLabel;
@@ -884,6 +885,7 @@ void ChartWindow::postProcess()
         const bool fit       = (idx == 4); // custom-function nonlinear fit
         const bool expr      = plot || fit;
         const bool eos       = (idx == 2);
+        const bool maxbolt   = (idx == 5); // Maxwell-Boltzmann distribution fit
         const bool showRange = (idx != 0); // show for all except autocorrelation
         exprLabel->setVisible(expr);
         exprEdit->setVisible(expr);
@@ -899,6 +901,14 @@ void ChartWindow::postProcess()
             paramSpin->setVisible(true);
             paramSpin->setRange(1, qMin(npoints - 1, 8));
             paramSpin->setValue(qMin(3, qMin(npoints - 1, 8)));
+        } else if (maxbolt) { // spatial dimensions the energies were drawn in
+            paramLabel->setText("Dimensions:");
+            paramSpin->setVisible(true);
+            paramSpin->setRange(1, 3);
+            paramSpin->setValue(3);
+            paramSpin->setToolTip("Degrees of freedom per atom: the exponent of the\n"
+                                  "prefactor is d/2 - 1, so the familiar sqrt(E) shape\n"
+                                  "is the three-dimensional case.");
         } else if (eos) { // EOS: only show the x-axis confirmation
             paramSpin->setVisible(false);
         } else if (expr) { // custom function/fit: expression field(s) only
@@ -1047,6 +1057,101 @@ void ChartWindow::postProcess()
                       .arg(fit.rms, 0, 'g', 6)
                       .arg(fit.iterations);
         information(this, "Custom Fit", report);
+        return;
+    }
+
+    if (which == 5) { // Maxwell-Boltzmann distribution of per-atom energies
+        // f(E) = A * E^(d/2 - 1) * exp(-E/kT), the distribution of the kinetic
+        // energy of d degrees of freedom.  The amplitude is fitted rather than
+        // derived, because a histogram carries an arbitrary normalization: raw
+        // counts, a normalized fraction, and a density all differ by a constant
+        // that says nothing about the temperature.
+        const int ndim = paramSpin->value();
+
+        // E = 0 is outside the domain for d = 1, and negative energies are not
+        // in it at all; dropping them keeps the model finite everywhere it is
+        // evaluated instead of letting one point poison the residuals
+        std::vector<double> exs, eys;
+        for (std::size_t i = 0; i < xs.size(); ++i)
+            if (xs[i] > 0.0) {
+                exs.push_back(xs[i]);
+                eys.push_back(ys[i]);
+            }
+        const std::size_t dropped = xs.size() - exs.size();
+        if (exs.size() < 3) {
+            warning(this, "Maxwell-Boltzmann Fit",
+                    "Fewer than 3 data points with a positive energy.\n"
+                    "The x axis has to be the energy, not the bin index.");
+            return;
+        }
+
+        // The initial guesses come from the data rather than from constants:
+        // the distribution's mean is <E> = (d/2) kT, and the histogram weights
+        // give that mean directly, which puts kT within a factor of two even
+        // for a badly cut histogram.  The amplitude then follows from matching
+        // the model's peak to the tallest bin.
+        double sumy = 0.0, sumxy = 0.0, ymax = 0.0;
+        for (std::size_t i = 0; i < exs.size(); ++i) {
+            const double w = qMax(0.0, eys[i]); // negative weights are not counts
+            sumy += w;
+            sumxy += w * exs[i];
+            ymax = qMax(ymax, eys[i]);
+        }
+        const double power = 0.5 * ndim - 1.0;
+        double kt0         = (sumy > 0.0) ? (2.0 * sumxy / (sumy * ndim)) : 1.0;
+        if (!(kt0 > 0.0)) kt0 = 1.0;
+        double shape = 0.0; // the model's own peak height at kT = kt0, A = 1
+        for (double x : exs)
+            shape = qMax(shape, std::pow(x, power) * std::exp(-x / kt0));
+        const double a0 = (shape > 0.0 && ymax > 0.0) ? (ymax / shape) : 1.0;
+
+        // built for LeptonMini, whose "^" is exponentiation
+        QString expr = QStringLiteral("A*exp(-x/kT)");
+        if (ndim == 3) expr = QStringLiteral("A*sqrt(x)*exp(-x/kT)");
+        if (ndim == 1) expr = QStringLiteral("A*exp(-x/kT)/sqrt(x)");
+
+        const QList<FitParam> initial = {{QStringLiteral("A"), a0}, {QStringLiteral("kT"), kt0}};
+        const auto emm                = std::minmax_element(exs.begin(), exs.end());
+        const CustomFit fit =
+            fitCustomCurve(expr, initial, exs, eys, *emm.first, *emm.second, Ncurve);
+        if (!fit.ok) {
+            warning(this, "Maxwell-Boltzmann Fit",
+                    QString("The fit could not be completed:\n%1").arg(fit.error));
+            return;
+        }
+
+        double kt = 0.0, amp = 0.0;
+        for (const auto &p : fit.params) {
+            if (p.name == QLatin1String("kT")) kt = p.value;
+            if (p.name == QLatin1String("A")) amp = p.value;
+        }
+        const QString fitName = QStringLiteral("Maxwell-Boltzmann");
+        chart->setFitCurve(fit.curve, fitName, /* eosMode= */ true);
+        setProcessedLabel("M-B fit");
+        resetRangeSliders();        // a fit re-fits to the whole data set; match the sliders
+        smooth->setCurrentIndex(2); // "Both" = raw data + fit overlay
+
+        QString report = QString("Maxwell-Boltzmann fit in %1 dimension(s):\n"
+                                 "  f(E) = %2\n\n"
+                                 "  kT = %3\n"
+                                 "  <E> = (d/2) kT = %4\n"
+                                 "  A  = %5\n\n"
+                                 "  RMS residual = %6\n  iterations   = %7\n")
+                             .arg(ndim)
+                             .arg(expr)
+                             .arg(kt, 0, 'g', 8)
+                             .arg(0.5 * ndim * kt, 0, 'g', 8)
+                             .arg(amp, 0, 'g', 8)
+                             .arg(fit.rms, 0, 'g', 6)
+                             .arg(fit.iterations);
+        if (dropped > 0)
+            report += QString("\n%1 point(s) at E <= 0 were left out of the fit.\n")
+                          .arg(static_cast<int>(dropped));
+        // kT is in the energy units of the data, and the file does not say what
+        // those are, so converting it to a temperature is left to the reader
+        report += "\nkT is in the energy units of the plotted data; divide by the\n"
+                  "Boltzmann constant in those units to obtain a temperature.";
+        information(this, "Maxwell-Boltzmann Fit", report);
         return;
     }
 
