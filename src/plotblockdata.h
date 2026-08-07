@@ -41,7 +41,7 @@ enum class AveFileKind {
 };
 
 /**
- * @brief One per-timestep block of a fix ave/* output file
+ * @brief One per-timestep block of a fix ave/\* output file
  *
  * A block is the table LAMMPS writes for a single output timestep: the rows of
  * a vector, the bins of a histogram, or the time windows of a correlation
@@ -56,7 +56,7 @@ struct PlotDataBlock {
 };
 
 /**
- * @brief A parsed block-structured fix ave/* output file
+ * @brief A parsed block-structured fix ave/\* output file
  *
  * All blocks of a well-formed file have the same columns; blocks of differing
  * shape can still occur when a file was appended to by a second fix, and are
@@ -87,7 +87,7 @@ struct PlotBlockData {
 QString aveFileKindName(AveFileKind kind);
 
 /**
- * @brief Parse the native (whitespace-separated) fix ave/* block format
+ * @brief Parse the native (whitespace-separated) fix ave/\* block format
  * @param text  File contents
  * @param error Optional out-parameter set to a message on failure
  * @return Parsed blocks (empty on failure)
@@ -115,7 +115,7 @@ PlotBlockData parseAveBlocks(const QString &text, QString *error = nullptr);
 PlotBlockData parseAveBlocksYaml(const QString &text, QString *error = nullptr);
 
 /**
- * @brief Test whether a file's contents are block-structured fix ave/* output
+ * @brief Test whether a file's contents are block-structured fix ave/\* output
  * @param text File contents
  * @return true if the file should be imported through the block path
  *

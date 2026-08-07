@@ -193,24 +193,31 @@ int main(int argc, char *argv[])
     if (parser.isSet("chart")) {
         const QString fileName = parser.value("chart");
         QString error;
-        PlotData data = loadPlotData(fileName, &error);
-        if (data.isEmpty()) {
-            critical(nullptr, "Plot Data File",
-                     "Could not read data from file:", error.isEmpty() ? fileName : error);
-            return 1;
+        // fix ave/* output needs its blocks reduced to a table first
+        const PlotBlockData blocks = loadPlotBlockData(fileName);
+        PlotData data;
+        if (blocks.isEmpty()) {
+            data = loadPlotData(fileName, &error);
+            if (data.isEmpty()) {
+                critical(nullptr, "Plot Data File",
+                         "Could not read data from file:", error.isEmpty() ? fileName : error);
+                return 1;
+            }
         }
-        PlotDataDialog dialog(data, nullptr);
-        if (dialog.exec() != QDialog::Accepted) return 0;
-        const PlotData plotData = dialog.buildData();
-        const int xcol          = dialog.xColumn();
-        QList<int> ycols        = dialog.yColumns();
+        auto dialog = blocks.isEmpty() ? std::make_unique<PlotDataDialog>(data, nullptr)
+                                       : std::make_unique<PlotDataDialog>(blocks, nullptr);
+        if (dialog->exec() != QDialog::Accepted) return 0;
+        const PlotData plotData  = dialog->buildData();
+        const PlotErrors plotErr = dialog->buildErrors();
+        const int xcol           = dialog->xColumn();
+        QList<int> ycols         = dialog->yColumns();
         if (ycols.isEmpty()) ycols.append(xcol);
         auto *win = new ChartWindow(fileName, nullptr);
         win->setAttribute(Qt::WA_DeleteOnClose);
         win->setWindowTitle(QString("Plot: %1 - LAMMPS-GUI").arg(QFileInfo(fileName).fileName()));
         win->setWindowIcon(QIcon(Cfg::MAIN_ICON));
         win->setMinimumSize(Cfg::MINIMUM_WIDTH, Cfg::MINIMUM_HEIGHT);
-        win->loadData(plotData, xcol, ycols);
+        win->loadData(plotData, xcol, ycols, plotErr);
         win->show();
         return app.exec();
     }

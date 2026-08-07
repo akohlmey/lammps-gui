@@ -2437,24 +2437,31 @@ bool LammpsGui::plotFile(const QString &fileName)
     }
 
     QString error;
-    PlotData data = loadPlotData(fileName, &error);
-    if (data.isEmpty()) {
-        critical(this, "Plot Data File",
-                 "Could not read data from file:", error.isEmpty() ? fileName : error);
-        // the file was the problem, not the user, so a caller with more of them
-        // carries on to the next
-        return true;
+    // the block-structured output of the fix ave/* styles is not a flat table
+    // and gets the import dialog that can reduce it to one
+    const PlotBlockData blocks = loadPlotBlockData(fileName);
+    PlotData data;
+    if (blocks.isEmpty()) {
+        data = loadPlotData(fileName, &error);
+        if (data.isEmpty()) {
+            critical(this, "Plot Data File",
+                     "Could not read data from file:", error.isEmpty() ? fileName : error);
+            // the file was the problem, not the user, so a caller with more of
+            // them carries on to the next
+            return true;
+        }
     }
 
-    PlotDataDialog dialog(data, this);
-    if (dialog.exec() != QDialog::Accepted) return false;
-    const QList<int> ycols = dialog.yColumns();
+    auto dialog = blocks.isEmpty() ? std::make_unique<PlotDataDialog>(data, this)
+                                   : std::make_unique<PlotDataDialog>(blocks, this);
+    if (dialog->exec() != QDialog::Accepted) return false;
+    const QList<int> ycols = dialog->yColumns();
     if (ycols.isEmpty()) {
         warning(this, "Plot Data File", "No data columns were selected to plot.");
         return true;
     }
 
-    const PlotData plotData = dialog.buildData();
+    const PlotData plotData = dialog->buildData();
 
     // standalone chart window (no live simulation); cleans itself up on close
     auto *win = new ChartWindow(fileName, nullptr);
@@ -2463,7 +2470,7 @@ bool LammpsGui::plotFile(const QString &fileName)
     win->setWindowIcon(QIcon(Cfg::MAIN_ICON));
     // a minimum size becomes a floor the dock area cannot get below
     if (!dockedLayout()) win->setMinimumSize(Cfg::MINIMUM_WIDTH, Cfg::MINIMUM_HEIGHT);
-    win->loadData(plotData, dialog.xColumn(), ycols);
+    win->loadData(plotData, dialog->xColumn(), ycols, dialog->buildErrors());
     // combined layout: the plot joins the tab group on the right, next to the
     // charts of the current run
     viewlayout->addAuxiliaryView(win, ViewSlot::Chart,

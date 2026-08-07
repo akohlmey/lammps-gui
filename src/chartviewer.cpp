@@ -1117,18 +1117,26 @@ void ChartWindow::addDataFile()
     if (fileName.isEmpty()) return;
 
     QString error;
-    PlotData data = loadPlotData(fileName, &error);
-    if (data.isEmpty()) {
-        critical(this, "Add Data from File",
-                 "Could not read data from file:", error.isEmpty() ? fileName : error);
-        return;
+    // fix ave/* output is block structured and gets the import dialog that can
+    // reduce it to a flat table first
+    const PlotBlockData blocks = loadPlotBlockData(fileName);
+    PlotData data;
+    if (blocks.isEmpty()) {
+        data = loadPlotData(fileName, &error);
+        if (data.isEmpty()) {
+            critical(this, "Add Data from File",
+                     "Could not read data from file:", error.isEmpty() ? fileName : error);
+            return;
+        }
     }
 
-    PlotDataDialog dialog(data, this);
-    if (dialog.exec() != QDialog::Accepted) return;
-    const PlotData plotData = dialog.buildData();
-    const QList<int> ycols  = dialog.yColumns();
-    const int xcol          = dialog.xColumn();
+    auto dialog = blocks.isEmpty() ? std::make_unique<PlotDataDialog>(data, this)
+                                   : std::make_unique<PlotDataDialog>(blocks, this);
+    if (dialog->exec() != QDialog::Accepted) return;
+    const PlotData plotData  = dialog->buildData();
+    const PlotErrors plotErr = dialog->buildErrors();
+    const QList<int> ycols   = dialog->yColumns();
+    const int xcol           = dialog->xColumn();
     if (ycols.isEmpty() || xcol < 0 || xcol >= plotData.columnCount()) return;
 
     ChartViewer *chart = currentChart();
@@ -1154,7 +1162,14 @@ void ChartWindow::addDataFile()
         const std::vector<double> &yvals = plotData.column(ycol);
         for (int r = 0; r < nrow; ++r)
             pts.append(QPointF(xvals[r], yvals[r]));
-        chart->addOverlaySeries(pts, plotData.columnName(ycol), palette[colorIdx % palette.size()]);
+        QList<double> errs;
+        if (static_cast<std::size_t>(ycol) < plotErr.size()) {
+            const std::vector<double> &e = plotErr[ycol];
+            if (e.size() == static_cast<std::size_t>(nrow))
+                errs = QList<double>(e.cbegin(), e.cend());
+        }
+        chart->addOverlaySeries(pts, plotData.columnName(ycol), palette[colorIdx % palette.size()],
+                                errs);
         ++colorIdx;
     }
     // new data was added (and re-fit to the full range): match the sliders to it
@@ -1602,11 +1617,14 @@ QRectF columnMinMax(const ChartColumn &col)
     // include extra overlay data series added from secondary files
     for (auto &s : col.overlaySeries) {
         if (s && s->isVisible()) {
-            for (auto &p : s->points) {
-                xmin = qMin(xmin, p.x());
-                xmax = qMax(xmax, p.x());
-                ymin = qMin(ymin, p.y());
-                ymax = qMax(ymax, p.y());
+            const bool err = s->hasErrors();
+            for (int i = 0; i < s->points.size(); ++i) {
+                const QPointF &p = s->points[i];
+                const double e   = err ? qAbs(s->yerr[i]) : 0.0;
+                xmin             = qMin(xmin, p.x());
+                xmax             = qMax(xmax, p.x());
+                ymin             = qMin(ymin, p.y() - e);
+                ymax             = qMax(ymax, p.y() + e);
             }
         }
     }
@@ -1798,11 +1816,12 @@ void setColumnFitCurve(PlotWidget *plot, ChartColumn &col, const QList<QPointF> 
 
 // Add an extra overlay data series (from a secondary file) to the column.
 void addColumnOverlay(PlotWidget *plot, ChartColumn &col, const QList<QPointF> &pts,
-                      const QString &name, const QColor &color)
+                      const QString &name, const QColor &color, const QList<double> &yerr)
 {
     auto s  = std::make_unique<PlotSeries>();
     s->name = name;
     s->replace(pts);
+    if (yerr.size() == pts.size()) s->yerr = yerr;
     addColumnSeries(plot, s.get(), color, col.rawWidth);
     col.overlaySeries.push_back(std::move(s));
     resetColumnZoom(plot, col);
@@ -2057,9 +2076,9 @@ void ChartViewer::setFitCurve(const QList<QPointF> &points, const QString &name,
 /* -------------------------------------------------------------------- */
 
 void ChartViewer::addOverlaySeries(const QList<QPointF> &pts, const QString &name,
-                                   const QColor &color)
+                                   const QColor &color, const QList<double> &yerr)
 {
-    addColumnOverlay(plot, *col, pts, name, color);
+    addColumnOverlay(plot, *col, pts, name, color, yerr);
 }
 
 /* -------------------------------------------------------------------- */

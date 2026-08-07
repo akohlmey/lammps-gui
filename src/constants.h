@@ -90,6 +90,10 @@ constexpr double CHART_YPAD_FRACTION = 0.05;  ///< Relative y-axis margin around
 // ---- Chart post-processing dialog ----------------------------------------
 constexpr int POSTPROCESS_EXPR_WIDTH = 260; ///< Min width of the custom-function expression field
 
+// ---- Plot data import dialog ---------------------------------------------
+constexpr int PLOTDIALOG_COLUMN_LIST_HEIGHT = 180; ///< Min height of the column-role list
+constexpr int PLOTDIALOG_PREVIEW_ROWS       = 8;   ///< Data rows shown in the preview table
+
 // ---- Chart smoothing (Savitzky-Golay) ------------------------------------
 constexpr int SMOOTH_WINDOW_MIN     = 5;   ///< Min smoothing window size
 constexpr int SMOOTH_WINDOW_MAX     = 999; ///< Max smoothing window size

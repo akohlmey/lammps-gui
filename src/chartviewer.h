@@ -448,11 +448,13 @@ public:
      * @param pts   (x, y) data points
      * @param name  Series name (shown as a tooltip / legend entry)
      * @param color Line color
+     * @param yerr  Optional error bars, one per point (ignored if the size differs)
      *
      * Overlay series are always shown in full (no smoothing); they are
      * included in the axis range calculation.
      */
-    void addOverlaySeries(const QList<QPointF> &pts, const QString &name, const QColor &color);
+    void addOverlaySeries(const QList<QPointF> &pts, const QString &name, const QColor &color,
+                          const QList<double> &yerr = {});
 
     /** @brief Number of overlay series currently displayed */
     int overlaySeriesCount() const { return static_cast<int>(col->overlaySeries.size()); }
