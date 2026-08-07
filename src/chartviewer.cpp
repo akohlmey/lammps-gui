@@ -937,10 +937,18 @@ void ChartWindow::postProcess()
     if (which != 0) {
         const double fitXmin = fitFromSpin->value();
         const double fitXmax = fitToSpin->value();
+        // The spin boxes start out holding the data range rounded to their own
+        // decimals, and that rounding can land a hair *inside* the data, which
+        // would drop the first or the last point from a range the user never
+        // touched -- silently, and enough to move a fitted parameter.  A bound
+        // is therefore only honored to the precision the widget can express:
+        // half of its last digit, plus the resolution of a double this large.
+        const double fitEps = 0.5 * std::pow(10.0, -fitFromSpin->decimals()) +
+                              1.0e-12 * qMax(qAbs(fitXmin), qAbs(fitXmax));
         if (fitXmin < fitXmax) {
             std::vector<double> fxs, fys;
             for (std::size_t i = 0; i < xs.size(); ++i) {
-                if (xs[i] >= fitXmin && xs[i] <= fitXmax) {
+                if ((xs[i] >= fitXmin - fitEps) && (xs[i] <= fitXmax + fitEps)) {
                     fxs.push_back(xs[i]);
                     fys.push_back(ys[i]);
                 }
