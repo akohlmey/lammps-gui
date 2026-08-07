@@ -1,6 +1,7 @@
 AboutDialog
 accessors
 addAction
+addShortcut
 Alvares
 anticorrelation
 argIndex
@@ -11,6 +12,7 @@ backend
 backends
 bmap
 bondbyvalue
+Bourne
 buildDumpImageCommand
 camelCase
 cecill
@@ -22,6 +24,7 @@ cmake
 CMake
 colormap
 colormaps
+correlator
 completers
 cn
 cpp
@@ -35,6 +38,8 @@ cueing
 customfunc
 customizations
 dateCompare
+defocus
+defocusing
 der
 dereferenced
 desaturated
@@ -65,12 +70,15 @@ fitViewerWindow
 fixSettings
 flagwarnings
 flatpak
+forceLayout
 Framebuffer
 frameWidth
 fromRgbF
+getCapture
 getChunk
 geturl
 Gissinger
+globbing
 gnuplot
 Golay
 GPG
@@ -83,6 +91,7 @@ gridlines
 gui
 GUIEditorChecks
 hasExe
+histo
 Homebrew
 Hoyoung
 html
@@ -99,6 +108,7 @@ isMovieFile
 isOverridden
 Jacobian
 json
+keyPressEvent
 kspace
 lammps
 lammpsImageColors
@@ -120,6 +130,8 @@ matsci
 maxlag
 MBytes
 memoized
+mis
+misrecognized
 mistyped
 monofamily
 monosize
@@ -137,6 +149,7 @@ Nullsoft
 num
 numParams
 octahedron
+openImages
 Ok
 ok
 parsePlotCsv
@@ -146,11 +159,15 @@ parsers
 Pixmap
 pixmap
 plotaxismath
+plotblockdata
 plotdata
 PlotSeries
 plottable
+plotutils
 pluginpath
 pre
+preselect
+preselected
 prev
 printf
 probeMovie
@@ -161,14 +178,17 @@ px
 py
 QChart
 QColor
+QCompleter
 QDialog
 QFont
 QFrame
 QImage
+QMenu
 QML
 QObject
 QPainter
 QSettings
+QShortcut
 QSize
 QSlider
 QString
@@ -187,8 +207,10 @@ sampleOutdated
 Savitzky
 screenshooter
 scrollable
+scrollback
 ScrollBarExtent
 selectable
+setCompleter
 setData
 setIcon
 setStyles
@@ -205,6 +227,8 @@ spacings
 specular
 spinbox
 splitLine
+splitter
+splitters
 src
 SSAO
 stdcapture
@@ -258,6 +282,7 @@ vlines
 Waals
 webpage
 whitespace
+WidgetWithChildrenShortcut
 wireframe
 www
 Xcode

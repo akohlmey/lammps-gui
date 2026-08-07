@@ -680,7 +680,8 @@ how the model is expressed; it is driven by the custom-fit code with
 LeptonMini expressions and their symbolic derivatives, and solves the
 damped normal equations with the leastsquares LU solver.  LeptonMini is
 based on the Lepton library by Peter Eastman and OpenMM contributors
-distributed under the :choosealicense:`MIT`.
+distributed under the `MIT License
+<https://choosealicense.com/licenses/mit/>`_.
 
 .. doxygenfile:: levmar.h
 
@@ -695,7 +696,8 @@ used for custom-function plotting and custom curve fits in the chart
 post-processing dialog. The fit builds its Jacobian from LeptonMini's
 analytic derivatives and minimizes with the Levenberg-Marquardt solver.
 LeptonMini is based on the Lepton library by Peter Eastman and OpenMM
-contributors distributed under the :choosealicense:`MIT`.
+contributors distributed under the `MIT License
+<https://choosealicense.com/licenses/mit/>`_.
 
 .. doxygenfile:: customfunc.h
 
