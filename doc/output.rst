@@ -327,11 +327,14 @@ The following analyses are available:
   :math:`\langle E\rangle = (d/2)k_BT` alone.  That second estimate makes
   no assumption about the shape -- equipartition fixes it -- so the two
   agreeing is a sign that the data really is the distribution being fitted,
-  and the dialog says so when they differ by more than 10%.  They part
-  company when *d* does not match the system, and when the histogram does
-  not cover the whole distribution: energies beyond its range are missing
-  from :math:`\langle E\rangle` and lower it, while the fitted shape is not
-  affected.  Note that :math:`k_BT` comes out in the energy units of
+  and the dialog says so when they differ by more than 10%.  On a system
+  the model describes -- unconstrained atoms, and a histogram wide enough
+  to hold the whole distribution -- the two land within a fraction of a
+  percent of each other, and the weighting then hardly matters either.
+  They part company when *d* does not match the system, and when the
+  histogram does not cover the whole distribution: energies beyond its
+  range are missing from :math:`\langle E\rangle` and lower it, while the
+  fitted shape is not affected.  Note that :math:`k_BT` comes out in the energy units of
   the plotted data, which the data file does not record; divide by the
   Boltzmann constant in those units to obtain a temperature.  Points at
   :math:`E \le 0` are left out of the fit and counted in the report.

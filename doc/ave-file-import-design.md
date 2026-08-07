@@ -322,9 +322,28 @@ what a mixture of constrained and unconstrained atoms should look like.  It
 is not implemented: whether an effective `d` is a meaningful quantity or a
 way to hide a bad sample is a judgment about the system, not about fitting.
 
-### What the test histogram actually is (and why no fit returns 275 K)
+### The two test histograms
 
-Worth recording, because it looks like a bug and is not.  `in.peptide`
+The clean reference is `in.melt`: a Lennard-Jones melt, unconstrained atoms
+in NVE, 200 bins covering the whole distribution (0.0015% of the samples
+fall outside).  Everything agrees there, which is what a case the model
+describes is supposed to look like:
+
+| estimate | kT |
+| --- | --- |
+| fitted shape, weighted by bin population | 1.5837 |
+| fitted shape, uniform weights | 1.5829 |
+| `<E> = (3/2) kT`, model-free | 1.5802 |
+
+Three points follow.  The weighting is immaterial when the model fits the
+data (0.05% apart) -- it only decides anything when the model *cannot*
+describe all of the data.  The shape fit and the equipartition estimate
+agree to 0.2%, so the 10% disagreement warning does not cry wolf on good
+data.  And a histogram wide enough to hold the whole distribution is what
+makes the model-free estimate usable at all.
+
+The cautionary case is the peptide example, which looks like a bug and is
+not.  `in.peptide`
 histograms `ke/atom` **of the water group**, and the water is rigid under
 `fix shake`.  A rigid 3-site molecule has 6 degrees of freedom for 3 atoms,
 so `d = 2` per atom and `<E> = kT`, not `(3/2) kT`.  The data agrees: the
