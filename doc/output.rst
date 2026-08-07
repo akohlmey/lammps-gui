@@ -416,22 +416,14 @@ The files written by `fix ave/time
 ave/histo <https://docs.lammps.org/fix_ave_histo.html>`_, `fix
 ave/correlate <https://docs.lammps.org/fix_ave_correlate.html>`_, `fix
 ave/correlate/long
-<https://docs.lammps.org/fix_ave_correlate_long.html>`_, and `fix ave/chunk
-<https://docs.lammps.org/fix_ave_chunk.html>`_ are not flat
+<https://docs.lammps.org/fix_ave_correlate_long.html>`_, and `fix
+ave/chunk <https://docs.lammps.org/fix_ave_chunk.html>`_ are not flat
 tables.  Each is a sequence of blocks, one per output timestep, and each
 block is a small table of its own: the rows of a vector, the bins of a
-histogram, the time windows of a correlation function, or the chunks of a
-profile.  Such a file is
-recognized when it is opened, and the column picker then grows a *Data
-blocks* group above the usual column grid, which reduces the blocks to the
-one flat table that grid refers to.
-
-.. figure:: JPG/lammps-gui-import-blocks.png
-   :align: center
-   :width: 45%
-
-   The column picker for a ``fix ave/histo`` file: the *Data blocks* group
-   reduces the 12 blocks to the one table the columns below refer to.
+histogram, the time windows of a correlation function, or the chunks of
+a profile.  Such a file is recognized when it is opened, and the column
+picker then grows a *Data blocks* group above the usual column grid,
+which reduces the blocks to the one flat table that grid refers to.
 
 There are two ways to reduce the blocks:
 
@@ -520,6 +512,62 @@ multiple chart-related settings, like the default title, colors for the
 graphs, default choice of the raw / smooth graph selection, whether the
 grid for the major and minor ticks is drawn, and the default chart graph
 size.
+
+Here is a simple example for reproducing the radial distribution
+function g(r) and the Maxwell-Boltzmann distribution of the kinetic
+energy in a liquid LJ model.  This uses the following input with `fix
+ave/time <https://docs.lammps.org/fix_ave_time.html>`_ and `fix
+ave/histo <https://docs.lammps.org/fix_ave_histo.html>`_ where the
+first block of averaged data is skipped as equilibration data and
+the rest is presented as a plot of the average with standard deviation:
+
+.. code-block:: LAMMPS
+
+   lattice         fcc 0.8442
+   region          box block 0 10 0 10 0 10
+   create_box      1 box
+   create_atoms    1 box
+   mass            1 1.0
+
+   velocity        all create 3.0 87287 loop geom
+
+   pair_style      lj/cut 2.5
+   pair_coeff      1 1 1.0 1.0 2.5
+
+   neighbor        0.3 bin
+   neigh_modify    every 20 delay 0 check no
+
+   fix             1 all nve
+
+   compute         rdf all rdf 200 1 1
+   fix             rdf all ave/time 100 10 1000 c_rdf[*] mode vector &
+                      file melt_rdf.dat
+
+   compute         ke_atom all ke/atom
+   fix             hist_ke all ave/histo 100 10 1000  0.0 20.0 200  c_ke_atom &
+                      file melt_histo_ke.dat mode vector
+
+   thermo_style    custom step temp pe press
+   thermo          1000
+   run             50000
+
+
+.. |rdfimport1| image:: JPG/plot-import-gofr.png
+   :width: 41%
+
+.. |rdfimport2| image:: JPG/plot-chart-gofr.png
+   :width: 58%
+
+|rdfimport1|  |rdfimport2|
+
+.. |ekinimport1| image:: JPG/plot-import-histo.png
+   :width: 41%
+
+.. |ekinimport2| image:: JPG/plot-chart-histo.png
+   :width: 58%
+
+|ekinimport1|  |ekinimport2|
+
 
 ------
 
