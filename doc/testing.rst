@@ -100,7 +100,8 @@ Current Test Coverage
 The unit tests cover the utility functions, the stdout capture, the log
 window warning highlighter, the dump-image command builder, the movie import
 and image cache of the Slide Show window, the plot data model with its file
-parsers and writers, the chart axis-layout math, and the Qt-free math
+parsers and writers, the block-structured ``fix ave/*`` file parsers and
+their reduction to a plottable table, the chart axis-layout math, and the Qt-free math
 toolkit (least squares and smoothing, autocorrelation, curve fitting, the
 Levenberg-Marquardt solver, the vendored LeptonMini expression parser, and
 the custom-function layer on top of them).  Command-line tests validate
@@ -330,6 +331,35 @@ cover:
   for unequal columns and malformed input
 - Dispatch by file extension and content-based YAML detection in log files
 - CSV, ``.dat``, and YAML export round-trips, including YAML quoting rules
+
+test_plotblockdata.cpp
+----------------------
+
+Tests for the parsers of the block-structured output files written by the
+``fix ave/*`` styles and for their reduction to a flat table
+(``src/plotblockdata.{h,cpp}``).  Test cases cover:
+
+- The native format of ``fix ave/time`` in vector mode, ``fix ave/histo``,
+  ``fix ave/correlate``, and the comment-delimited blocks of
+  ``fix ave/correlate/long``, including the column and per-block scalar
+  names taken from the default header comments
+- A single value in vector mode, whose block header is exactly as wide as
+  its data rows
+- ``overwrite`` (a single block), a header written again mid-file by a
+  second fix instance, a last block cut short by an interrupted run, and
+  blocks whose row count changes
+- Format recognition from the block structure alone, for files whose
+  headers were replaced with ``title1``/``title2``/``title3``, and
+  ``fix ave/chunk`` through the generic path
+- Rejecting flat tables, including a ``fix ave/time`` scalar file whose
+  header comment reads like a block file's
+- The vector-mode YAML variant, with its synthesized row index, and the
+  scalar-mode YAML shape being left to the flat parser
+- Single-block and block-range reduction with hand-computed means,
+  standard deviations, and standard errors, clamped and reversed ranges,
+  and blocks dropped for having a different shape
+- The per-format import defaults, including a running average being
+  recognized so that its blocks are not averaged
 
 test_plotaxismath.cpp
 ---------------------

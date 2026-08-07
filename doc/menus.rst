@@ -101,7 +101,10 @@ itself writes), and `JSON <https://www.json.org/>`_; the format is
 recognized from the file name extension or, failing that, from the
 content.  After the file is read, a dialog lets you pick which column
 provides the x axis and which columns to plot; column names can also be
-edited at this point.  Because there is no associated simulation, the
+edited at this point.  The block-structured output of the ``fix ave/*``
+styles is recognized as such, and that dialog then also offers to average
+the blocks with error bars or to show a single one (see :ref:`importing
+fix ave/\* output <aveimport>`).  Because there is no associated simulation, the
 *Units* and *Norm* controls are hidden in such a standalone chart window.
 All the post-processing and export features described for the
 :ref:`Charts window <charts>` are available here as well.

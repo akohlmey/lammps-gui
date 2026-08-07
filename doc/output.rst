@@ -340,6 +340,97 @@ the command line with the ``-c``/``--chart`` flag (see
    The column-picker dialog shown when opening an external data file with
    *Plot Data File...*.
 
+.. index:: fix ave import
+.. index:: block-structured data
+
+.. _aveimport:
+
+Import fix ave/\* output files
+------------------------------
+
+The files written by `fix ave/time
+<https://docs.lammps.org/fix_ave_time.html>`_ in *vector* mode, `fix
+ave/histo <https://docs.lammps.org/fix_ave_histo.html>`_, `fix
+ave/correlate <https://docs.lammps.org/fix_ave_correlate.html>`_, and `fix
+ave/correlate/long
+<https://docs.lammps.org/fix_ave_correlate_long.html>`_ are not flat
+tables.  Each is a sequence of blocks, one per output timestep, and each
+block is a small table of its own: the rows of a vector, the bins of a
+histogram, or the time windows of a correlation function.  Such a file is
+recognized when it is opened, and the column picker then grows a *Data
+blocks* group above the usual column grid, which reduces the blocks to the
+one flat table that grid refers to.
+
+.. figure:: JPG/lammps-gui-import-blocks.png
+   :align: center
+   :width: 45%
+
+   The column picker for a ``fix ave/histo`` file: the *Data blocks* group
+   reduces the 12 blocks to the one table the columns below refer to.
+
+There are two ways to reduce the blocks:
+
+*Average blocks*
+   Average a range of blocks row by row and show the spread as error bars.
+   The range covers the whole file, and the two spin boxes select a part
+   of it; raising the first one is how a leading stretch of equilibration
+   is left out.  Nothing is dropped without being said: the line below
+   reports how many blocks were averaged, and how many were dropped for
+   having a different number of rows than the last block of the range.
+
+*Single block*
+   Show one block as it stands, by default the last one.
+
+The error bars are the standard deviation of the blocks by default; the
+standard error of the mean and no error bars at all are the other choices.
+Note that successive averaging windows are not strictly independent, so
+the standard error of the mean is a *lower bound* on the true uncertainty
+rather than the uncertainty itself.  Error bars need at least two blocks
+to average.
+
+Which reduction the dialog starts on depends on the format.  A histogram
+or a correlation function starts out averaged over the whole file, since
+its evolution over time is rarely what is wanted.  A correlator that
+accumulates over the whole run does not: for ``fix ave/correlate/long``,
+and for ``fix ave/correlate`` with ``ave running``, every block is a
+successive estimate of the same quantity rather than an independent sample
+of it, so averaging the blocks would be statistically wrong and the last
+block is the answer.  That case is recognized from a sample count that
+grows from block to block.
+
+The columns that are preselected also follow from the format: the bin
+coordinate against the *normalized* bin count for a histogram (the
+per-block totals differ, so that is the column that may be averaged), the
+time delta against the correlation columns for a correlation function.
+
+The *Format* combo shows what the file was recognized as, and can be
+corrected.  Recognition uses the file's own header comments, which the
+``title1``, ``title2`` and ``title3`` keywords let you replace, so it can
+be wrong; when the headers are missing the format is recovered from the
+block structure instead.  Correcting the format only moves the
+preselected reduction and columns.  It never reinterprets the data, which
+was read before the dialog opened, and no reduction ever discards a column
+-- a misrecognized file plots just as completely, only with different
+columns preselected.
+
+Changing the reduction rebuilds the column list below it.  Column roles,
+edited names, and derived columns are kept across that: the derived
+columns are re-evaluated against the new table.  Since any column can
+serve as the x axis and the *Compute derived column* section can scale
+one, a time-delta column in timesteps is turned into one in time units
+with an expression such as ``TimeDelta*0.001``.
+
+Error bars, once imported, behave like the rest of the chart data:
+smoothing operates on the values alone and leaves the bars on the raw
+series, the axis range covers them, and exporting the chart writes them as
+an extra ``<name>-err`` column next to the values they belong to.  Reading
+such an exported file back in simply gives one more data column.
+
+The output of `fix ave/chunk
+<https://docs.lammps.org/fix_ave_chunk.html>`_ has the same block
+structure and imports through the same path, but has no preselected
+columns or reduction of its own yet.
+
 The *Preferences* dialog has a *Charts* tab, where you can configure
 multiple chart-related settings, like the default title, colors for the
 graphs, default choice of the raw / smooth graph selection, whether the
