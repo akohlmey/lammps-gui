@@ -5,19 +5,21 @@ Monitoring LAMMPS output
 .. admonition:: LAMMPS-GUI Viewing Modes
    :class: note
 
-   Since version 3.1 LAMMPS-GUI supports two viewing
-   modes: 1. individual windows mode, where each output is displayed in
-   a separate window and 2. combined window mode, where there is only
-   one main window that may be split once vertically and the upper part
-   once more horizontally and then the upper left section is the editor
-   window and the upper right and bottom sections contain one or more tabs
-   with the same content as the individual windows.  This viewing mode
-   can be changes in the :doc:`Preferences dialog <dialogs>`.
+   Since version 3.1 LAMMPS-GUI supports two viewing modes: 1)
+   individual windows mode, where each output is displayed in a separate
+   window and 2) combined window mode, where there is only one main
+   window that may be split once vertically and the upper part once more
+   horizontally and then the upper left section is the editor window and
+   the upper right and bottom sections contain one or more tabs with the
+   same content as the individual windows.  This viewing mode can be
+   changed in the :doc:`Preferences dialog <dialogs>` or (temporarily)
+   selected with the ``-w`` or ``-j`` :ref:`Command-line options
+   <command-line-options>`.
 
    Any references to a "window" throughout the remainder of the
    documentation thus refers to either the corresponding individual
    window or the corresponding tab in the upper right or bottom part of
-   the combined window.
+   the combined window.  Screenshots are of the individual windows.
 
    The behavior for both modes is largely the same with two exceptions:
 
@@ -25,11 +27,14 @@ Monitoring LAMMPS output
       of the section / tab that has currently the focus. If access to
       the menu bar of a specific window is needed, e.g. to open a new
       LAMMPS input file, it may be needed to first click into the
-      corresponding area to switch focus.
+      corresponding area or use the `F6` or `Shift-F6` keyboard
+      shortcuts to switch focus.
    2. *Image Viewer* and *Slide Show Viewer* lose the auto-resize option
       to show the image without scroll bars if the screen size supports it.
 
 .. _logfile:
+
+------
 
 Output Window
 ^^^^^^^^^^^^^
@@ -89,6 +94,8 @@ shortcut `Ctrl-Y` (`Command-Y` on macOS) is available to save only the
 YAML parts to a file.  This option is also available from a context menu
 by clicking with the right mouse button into the *Output* window text
 area.
+
+------
 
 .. _charts:
 
@@ -168,6 +175,23 @@ the YAML export from the *Charts* window differs from that of the
 last change of output fields or timestep setting, while the export from
 the log will contain *all* YAML output but *segmented* into individual
 runs.
+
+.. admonition:: Slowdown of Simulations from Charts Data Processing
+   :class: warning
+
+   Using frequent thermo output during long simulations can result in a
+   significant slowdown of that simulation since it is accumulating many
+   data points for each of the thermo properties in the chart window to
+   be redrawn with every update.  The updates are consuming additional
+   CPU time when smoothing enabled.  This slowdown can be confirmed when
+   an increasing percentage of the total run time is spent in the
+   "Output" or "Other" sections of the `MPI task timing breakdown
+   <https://docs.lammps.org/Run_output.html>`_.  It is thus recommended
+   to use a large enough value as argument `N` for the `thermo command
+   <https://docs.lammps.org/thermo.html>`_ and to select plotting only
+   the "Raw" data in the *Charts* window during such simulations.  It is
+   always possible to switch between the different display styles for
+   charts during the simulation and after it has finished.
 
 .. index:: chart style
 .. index:: legend
@@ -321,22 +345,7 @@ graphs, default choice of the raw / smooth graph selection, whether the
 grid for the major and minor ticks is drawn, and the default chart graph
 size.
 
-.. admonition:: Slowdown of Simulations from Charts Data Processing
-   :class: warning
-
-   Using frequent thermo output during long simulations can result in a
-   significant slowdown of that simulation since it is accumulating many
-   data points for each of the thermo properties in the chart window to
-   be redrawn with every update.  The updates are consuming additional
-   CPU time when smoothing enabled.  This slowdown can be confirmed when
-   an increasing percentage of the total run time is spent in the
-   "Output" or "Other" sections of the `MPI task timing breakdown
-   <https://docs.lammps.org/Run_output.html>`_.  It is thus recommended
-   to use a large enough value as argument `N` for the `thermo command
-   <https://docs.lammps.org/thermo.html>`_ and to select plotting only
-   the "Raw" data in the *Charts* window during such simulations.  It is
-   always possible to switch between the different display styles for
-   charts during the simulation and after it has finished.
+------
 
 Variable Info
 ^^^^^^^^^^^^^
@@ -373,13 +382,19 @@ command
 at the beginning of an input file. That would record logs to files
 ``logfile-1.txt``, ``logfile-2.txt``, and so on for successive runs.
 
+------
+
 .. _commandwindow:
 
 Command window
---------------
+^^^^^^^^^^^^^^
 
 .. index:: command window
 .. index:: shell
+
+.. image:: JPG/lammps-gui-command.png
+   :align: right
+   :scale: 50%
 
 The *Command window* is opened from the *Run* menu with *Open Command
 Window* or the `Ctrl-Shift-X` keyboard shortcut.  It shows a shell
@@ -593,7 +608,8 @@ On Windows, neither killing nor interrupting a command is supported;
    rest of the aliases are present.  *File* > *Command Aliases...* is
    where to put them back, and it starts out holding exactly those.
 
-.. admonition:: This is not a terminal emulator
+.. admonition:: This is **NOT** a terminal emulator
+   :class: warning
 
    There is no pseudo terminal behind the prompt, only a pipe.  Programs
    that need a real terminal -- editors, pagers, anything using curses,

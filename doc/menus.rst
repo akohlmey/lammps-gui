@@ -14,6 +14,16 @@ corresponding underlined letter, that is `Alt-F` activates the
 corresponding to the underlined letters can be used to select entries
 instead of using the mouse.
 
+.. admonition:: LAMMPS-GUI Joined Window Mode
+   :class: note
+
+   In joined window mode there can be only one menu bar, so the
+   displayed menu bar is that of the section / tab that has currently
+   the focus.  If access to the menu bar of a specific window is needed,
+   e.g. to open a new LAMMPS input file, it may be needed to either
+   first click into the corresponding area or use the `F6` or `Shift-F6`
+   keyboard shortcuts to switch focus.
+
 .. _files:
 
 File
@@ -105,9 +115,13 @@ Edit
 
 The *Edit* menu offers the usual editor functions like *Undo*, *Redo*,
 *Cut*, *Copy*, *Paste*, and a *Find and Replace* dialog (keyboard
-shortcut `Ctrl-F`).  The *Preferences* dialog and the option to reset
-all settings to their defaults have moved to the *View* menu, which is
-where the window layout they configure is controlled.
+shortcut `Ctrl-F`).
+
+.. versionchanged:: 3.1
+
+The *Preferences* dialog and the option to reset all settings to their
+defaults have moved to the *View* menu, which is where the window layout
+they configure is controlled.
 
 .. _run_menu:
 
@@ -172,7 +186,7 @@ in case it missed something and LAMMPS behaves in unexpected ways.
 .. index:: Check Input
 
 .. image:: JPG/lammps-gui-lint-error.png
-   :align: center
+   :align: right
    :width: 50%
 
 The *Check Input via Heuristics* entry (keyboard shortcut `Ctrl-K`)
@@ -219,7 +233,7 @@ variables are passed to the LAMMPS instance when it is created and are
 thus set *before* a run is started.
 
 .. image:: JPG/lammps-gui-variables.png
-   :align: center
+   :align: right
    :scale: 50%
 
 The *Set Variables* dialog will be pre-populated with entries that
@@ -302,6 +316,10 @@ Tutorials
 .. index:: LAMMPS tutorials
 .. index:: tutorial wizard
 
+.. image:: JPG/lammps-gui-tutorials.png
+   :align: right
+   :scale: 50%
+
 The *Tutorials* menu supports several collections of LAMMPS tutorials for
 beginners and intermediate LAMMPS users.  The menu has one submenu per
 collection, for example *Soft Matter* (the molecular tutorials documented
@@ -331,10 +349,6 @@ missing.  That dialog offers a *Report Issue* button that opens the
 issue tracker of the tutorial's file repository in a web browser, so
 the missing files can be reported; alternatively they can be reported
 by email to akohlmey@gmail.com.
-
-.. image:: JPG/lammps-gui-tutorials.png
-   :align: center
-   :scale: 50%
 
 About
 ^^^^^
@@ -366,6 +380,17 @@ relaunched to activate it.  The checksum of the downloaded file is
 verified before it replaces the current library, which is renamed to a
 backup name first; leftover backup files and partial downloads in the
 configuration folder are cleaned up on the next launch of LAMMPS-GUI.
+
+.. |updatelib1| image:: JPG/update-dialog.png
+   :width: 27%
+
+.. |updatelib2| image:: JPG/update-progress.png
+   :width: 45%
+
+.. |updatelib3| image:: JPG/update-relaunch.png
+   :width: 27%
+
+|updatelib1|  |updatelib2|  |updatelib3|
 
 -------------
 

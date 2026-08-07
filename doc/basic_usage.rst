@@ -37,9 +37,9 @@ LAMMPS-GUI supports the following command-line options:
    * - ``-v``, ``--version``
      - Print version information and exit
    * - ``-x <width>``, ``--width <width>``
-     - Override the editor window width in pixels
+     - Override the editor/main  window width in pixels
    * - ``-y <height>``, ``--height <height>``
-     - Override the editor window height in pixels
+     - Override the editor/main window height in pixels
    * - ``-s <style>``, ``--style <style>``
      - Set the visual style of the application (default: ``Fusion``)
    * - ``-c <file>``, ``--chart <file>``
