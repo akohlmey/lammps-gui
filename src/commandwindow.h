@@ -46,8 +46,6 @@ class ShellPrompt;
  * at all.  This class does not implement any of them; it only observes the
  * result, by appending a sentinel to every command that reports the exit status
  * and the shell's working directory.
- *
- * @see doc/command-window-design.md for the reasoning and the known gaps
  */
 class CommandWindow : public QWidget {
     Q_OBJECT
