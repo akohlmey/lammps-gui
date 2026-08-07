@@ -22,6 +22,7 @@
 #include <QLabel>
 #include <QLayout>
 #include <QMainWindow>
+#include <QPointer>
 #include <QResizeEvent>
 #include <QSettings>
 #include <QShortcut>
@@ -412,6 +413,14 @@ void WindowLayout::addAuxiliaryView(QWidget *view, ViewSlot group, const QString
 
     d->setWidget(view);
     prepareDockedView(view);
+    // A transient view is closed for good, and it is the destruction of the
+    // widget that takes the dock -- the tab -- with it (see below).  Not every
+    // one of them was built to delete itself, though, and one that only hides
+    // left its dock behind: an empty tab, or an empty panel that collapses the
+    // group and takes the tabs of the views beside it out of reach.  So this is
+    // settled here, for whatever is made a transient panel, rather than left to
+    // each maker to remember.
+    view->setAttribute(Qt::WA_DeleteOnClose);
     auxdocks << d;
     // watched and sized like the fixed panels: it shares their group, so it
     // follows the same proportions and a splitter dragged over it is recorded
@@ -426,8 +435,11 @@ void WindowLayout::addAuxiliaryView(QWidget *view, ViewSlot group, const QString
             emit viewActivated(w);
         }
     });
-    // the viewers delete themselves when closed, so the dock goes with them
-    connect(view, &QObject::destroyed, this, [this, d]() {
+    // the viewers delete themselves when closed, so the dock goes with them --
+    // held weakly, because on the way out the main window may take the dock
+    // first and destroy the view it holds along with it
+    connect(view, &QObject::destroyed, this, [this, d = QPointer<QDockWidget>(d)]() {
+        if (!d) return;
         auxdocks.removeAll(d);
         d->deleteLater();
         // closing it frees space in the group, which the panels that stay would

@@ -16,6 +16,7 @@
 
 #include <QList>
 #include <QPair>
+#include <QPointer>
 #include <QString>
 #include <string>
 #include <vector>
@@ -644,9 +645,11 @@ private:
      * Holds references to the three tabs (info, data, image) in an inspect dialog
      */
     struct InspectData {
-        QWidget *info;  ///< Information tab widget
-        QWidget *data;  ///< Data viewing tab widget
-        QWidget *image; ///< Image rendering tab widget
+        /// Held weakly: a view that is closed deletes itself, and purgeInspectList()
+        /// reaps the entry rather than the widget in that case
+        QPointer<QWidget> info;  ///< Information tab widget
+        QPointer<QWidget> data;  ///< Data viewing tab widget
+        QPointer<QWidget> image; ///< Image rendering tab widget
     };
     QList<InspectData *> inspectList; ///< List of open inspect dialogs
 

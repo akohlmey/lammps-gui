@@ -19,6 +19,7 @@
 #include <QDockWidget>
 #include <QMainWindow>
 #include <QPlainTextEdit>
+#include <QPointer>
 #include <QSettings>
 #include <QTemporaryDir>
 #include <QWidget>
@@ -112,6 +113,37 @@ TEST_F(WindowLayoutTest, ClosingADockedViewClosesItsDock)
     EXPECT_FALSE(layout.isVisible(ViewSlot::Log));
     // the widget itself stays, so showing the panel again brings it back
     EXPECT_FALSE(view->isHidden());
+}
+
+// A transient viewer is closed for good, unlike a fixed panel that is only put
+// away: the widget goes, and its dock -- the tab naming it -- with it.  Left
+// behind, that dock was an empty panel which collapsed the group it shared and
+// took the tabs of the views beside it out of reach.
+TEST_F(WindowLayoutTest, ClosingATransientViewRemovesItsDock)
+{
+    QMainWindow window;
+    window.show();
+    WindowLayout layout(&window, LayoutMode::Docked);
+
+    const int fixeddocks = window.findChildren<QDockWidget *>().size();
+    auto *first          = new QPlainTextEdit;
+    auto *second         = new QPlainTextEdit;
+    layout.addAuxiliaryView(first, ViewSlot::Chart, "first");
+    layout.addAuxiliaryView(second, ViewSlot::Chart, "second");
+    QApplication::processEvents();
+    ASSERT_EQ(window.findChildren<QDockWidget *>().size(), fixeddocks + 2);
+
+    const QPointer<QPlainTextEdit> closed = first;
+    first->close();
+    QApplication::processEvents();
+    // the widget deletes itself, and the dock follows on the next round
+    QApplication::sendPostedEvents(nullptr, QEvent::DeferredDelete);
+    QApplication::sendPostedEvents(nullptr, QEvent::DeferredDelete);
+
+    EXPECT_TRUE(closed.isNull());
+    EXPECT_EQ(window.findChildren<QDockWidget *>().size(), fixeddocks + 1);
+    // the panel it shared the group with is untouched
+    EXPECT_FALSE(second->isHidden());
 }
 
 // Undocked, a view is a window and closing it is Qt's business, not ours.
