@@ -142,10 +142,13 @@ Deviations are summed in a second pass, so a small spread on top of a
 large mean keeps its digits.
 
 Error type defaults to the **standard deviation**, named as such in the
-dialog, with the standard error of the mean and "none" available.  Neither
-is the whole truth -- successive Nfreq windows are not strictly
-independent, so the standard error is a lower bound -- which is a reason to
-name what is drawn rather than to pick for the user.
+dialog, with the standard error of the mean, the min/max range of the
+blocks, and "none" available.  None of them is the whole truth --
+successive Nfreq windows are not strictly independent, so the standard
+error is a lower bound -- which is a reason to name what is drawn rather
+than to pick for the user.  The min/max range makes no statistical claim at
+all; it is also the one type whose bars are **asymmetric**, since the
+extremes of a set of blocks need not straddle their mean evenly.
 
 `aveImportDefaults()` picks the mode and the preselected columns per kind,
 and detects the running-average case from an `Ncount` column that grows
@@ -154,13 +157,25 @@ from block to block.
 ## Error-bar rendering
 
 `PlotSeries` carries `QList<double> yerr` (parallel to `points`; empty =
-none) and `PlotWidget` draws capped vertical bars in the series color at
-reduced alpha, before any curve so they stay behind the data.  Cached
-column bounds cover y +/- err so the bars fit inside the plot.  Smoothing
-operates on the values alone.  In points-only display mode the bars move to
-the visible marker series, and only one of the two ever carries them.
-Chart export writes a `<name>-err` column; the importers stay oblivious and
-read it back as an ordinary column.
+none) plus `yerrLo` for the lower half of asymmetric bars (empty = the bar
+reaches `yerr` in both directions), and `PlotErrors` mirrors that split
+column-wise as `upper`/`lower`.  `PlotWidget` draws capped vertical bars
+before any curve, so they stay behind the data.
+
+The bars have a **color and line width of their own** (`errColor`,
+`errWidth`), not a faded copy of the series color: a bar that is a shade of
+the curve it crosses is unreadable exactly where it matters.  An invalid
+`errColor` means "use the configured default", which is what lets a color
+changed in the preferences reach charts that already exist; the *Chart
+Style* dialog sets the style per chart, for every series of that chart that
+carries bars, and the charts preferences tab holds the defaults.
+
+Cached column bounds cover the bar ends so they fit inside the plot.
+Smoothing operates on the values alone.  In points-only display mode the
+bars move to the visible marker series, and only one of the two ever
+carries them.  Chart export writes a `<name>-err` column, or `-errlo` plus
+`-errhi` for asymmetric bars; the importers stay oblivious and read them
+back as ordinary columns.
 
 ## Import dialog
 
