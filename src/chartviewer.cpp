@@ -52,6 +52,7 @@
 #include <QMenuBar>
 #include <QMessageBox>
 #include <QPushButton>
+#include <QRegularExpression>
 #include <QSettings>
 #include <QSignalBlocker>
 #include <QSpinBox>
@@ -160,6 +161,28 @@ void setColumnData(ChartColumn &col, const QList<QPointF> &points, const QList<d
                    const QList<double> &yerrLo = {});
 void setColumnSmoothFlags(ChartColumn &col, bool doRaw, bool doSmooth, int window, int order);
 void applyColumnStyleDefaults(ChartColumn &col);
+QList<QPointF> calc_sgsmooth(const QList<QPointF> &input, std::size_t window, int order);
+
+// Value at x of a curve given by its sampled points, by linear interpolation.
+// Used to write a fit curve -- which is sampled on a dense grid of its own over
+// the data range -- against the x values of the data it was fitted to.  The
+// points are in increasing x, as every curve the fits produce is, and x is
+// inside their range, as every data x is.
+double interpolateCurve(const QList<QPointF> &pts, double x)
+{
+    if (pts.isEmpty()) return 0.0;
+    if (x <= pts.first().x()) return pts.first().y();
+    if (x >= pts.last().x()) return pts.last().y();
+    // the first point at or past x; the interval before it brackets x
+    const auto hi = std::lower_bound(pts.cbegin(), pts.cend(), x, [](const QPointF &p, double v) {
+        return p.x() < v;
+    });
+    const QPointF &b = *hi;
+    const QPointF &a = *(hi - 1);
+    const double dx  = b.x() - a.x();
+    if (dx <= 0.0) return a.y(); // coincident samples: nothing to interpolate
+    return a.y() + (b.y() - a.y()) * (x - a.x()) / dx;
+}
 
 // Pick the error bars of one data column out of a PlotErrors and convert them
 // for a PlotSeries. Bars of the wrong length are dropped rather than padded, so
@@ -1495,35 +1518,104 @@ void ChartWindow::saveAs()
 PlotData ChartWindow::chartsToPlotData() const
 {
     PlotData data;
-    QStringList names;
-    names << "Step";
-    // error bars are exported as an extra column next to the values they
-    // belong to; re-importing that file simply yields one more data column.
-    // Bars that reach up and down by different amounts need two columns.
-    for (const auto &c : cols) {
-        names << c->series->name;
-        if (c->series->hasAsymErrors())
-            names << (c->series->name + "-errlo") << (c->series->name + "-errhi");
-        else if (c->series->hasErrors())
-            names << (c->series->name + "-err");
-    }
-    data.setColumnNames(names);
+    if (cols.empty()) return data;
 
-    const int lines = cols.empty() ? 0 : cols[0]->series->count();
-    for (int i = 0; i < lines; ++i) {
-        std::vector<double> row;
-        row.reserve(names.size());
-        row.push_back(cols[0]->series->at(i).x());
-        for (const auto &c : cols) {
-            row.push_back(c->series->at(i).y());
-            if (c->series->hasAsymErrors()) {
-                row.push_back(c->series->errLow(i));
-                row.push_back(c->series->errHigh(i));
-            } else if (c->series->hasErrors()) {
-                row.push_back(c->series->errHigh(i));
+    // A flat table has one x column, so every exported series has to live on
+    // one grid: the x values of the first chart.  The raw values are always
+    // written -- they are the data, and losing them to a display setting would
+    // be a poor trade -- and the results of the post-processing follow.
+    const PlotSeries &ref = *cols.front()->series;
+    const int nrow        = ref.count();
+    if (nrow < 1) return data;
+
+    std::vector<double> xs;
+    xs.reserve(nrow);
+    for (int i = 0; i < nrow; ++i)
+        xs.push_back(ref.at(i).x());
+    data.addColumn(QStringLiteral("Step"), xs);
+
+    // whether a series can be written against those x values as they stand
+    auto sameGrid = [&xs, nrow](const PlotSeries *s) {
+        if (!s || (s->count() != nrow)) return false;
+        for (int i = 0; i < nrow; ++i)
+            if (s->at(i).x() != xs[static_cast<std::size_t>(i)]) return false;
+        return true;
+    };
+    auto yValues = [nrow](const PlotSeries *s) {
+        std::vector<double> v;
+        v.reserve(nrow);
+        for (int i = 0; i < nrow; ++i)
+            v.push_back(s->at(i).y());
+        return v;
+    };
+    // a column name has to survive whitespace-separated and comma-separated
+    // formats alike, and fit labels are free text (an expression, say)
+    auto exportName = [](QString name) {
+        return name.replace(QRegularExpression(QStringLiteral("[\\s,]+")), QStringLiteral("_"));
+    };
+
+    for (const auto &c : cols) {
+        const PlotSeries *s = c->series.get();
+        // a chart on a grid of its own cannot share this table; in practice all
+        // charts of a window are filled from the same x values
+        if (!sameGrid(s)) continue;
+        const QString name = exportName(s->name);
+        data.addColumn(name, yValues(s));
+
+        // error bars go next to the values they belong to; re-importing the
+        // file simply yields one more data column.  Bars that reach up and
+        // down by different amounts need two.
+        if (s->hasAsymErrors()) {
+            std::vector<double> lo, hi;
+            lo.reserve(nrow);
+            hi.reserve(nrow);
+            for (int i = 0; i < nrow; ++i) {
+                lo.push_back(s->errLow(i));
+                hi.push_back(s->errHigh(i));
+            }
+            data.addColumn(name + "-errlo", std::move(lo));
+            data.addColumn(name + "-errhi", std::move(hi));
+        } else if (s->hasErrors()) {
+            std::vector<double> err;
+            err.reserve(nrow);
+            for (int i = 0; i < nrow; ++i)
+                err.push_back(s->errHigh(i));
+            data.addColumn(name + "-err", std::move(err));
+        }
+
+        // The smoothed curve shares the raw x values by construction.  It is
+        // computed here rather than read off the column, because the single
+        // shared view only ever computes it for the chart it is showing, and
+        // which chart that is should not decide what a file contains.
+        if (c->doSmooth && !c->eosMode && (s->count() > 2 * c->window)) {
+            const QList<QPointF> sm = calc_sgsmooth(s->points, c->window, c->order);
+            if (sm.size() == nrow) {
+                std::vector<double> ys;
+                ys.reserve(nrow);
+                for (const QPointF &p : sm)
+                    ys.push_back(p.y());
+                data.addColumn(name + "-smooth", std::move(ys));
             }
         }
-        data.appendRow(row);
+
+        // A fit curve is sampled on a dense grid of its own over the data
+        // range, so it is written as the fitted function evaluated at each data
+        // x -- which is also what makes it comparable to the values beside it.
+        if (c->fit && c->fit->isVisible() && (c->fit->count() > 1)) {
+            std::vector<double> fit;
+            fit.reserve(nrow);
+            for (int i = 0; i < nrow; ++i)
+                fit.push_back(interpolateCurve(c->fit->points, xs[static_cast<std::size_t>(i)]));
+            data.addColumn(exportName(c->fit->name.isEmpty() ? name + "-fit" : c->fit->name),
+                           std::move(fit));
+        }
+
+        // overlay series carry their own x values, and resampling data that was
+        // measured elsewhere would be inventing it, so only one that already
+        // sits on this grid can join the table
+        for (const auto &o : c->overlaySeries)
+            if (o && o->isVisible() && sameGrid(o.get()))
+                data.addColumn(exportName(o->name) + "-added", yValues(o.get()));
     }
     return data;
 }
