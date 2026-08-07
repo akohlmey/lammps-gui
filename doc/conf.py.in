@@ -9,6 +9,7 @@ import sys
 import os
 from datetime import date
 
+# import enchant only if present
 has_enchant = False
 try:
     import enchant
@@ -48,7 +49,6 @@ needs_sphinx = '6.0.0'
 extensions = [
         'breathe',
         'sphinxcontrib.jquery',
-        'sphinx_licenseinfo',
         'sphinx_sitemap',
         'notfound.extension',
         ]

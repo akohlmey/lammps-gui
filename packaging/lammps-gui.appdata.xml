@@ -63,12 +63,17 @@
       <description>
         <p>Feature release adding an alternative single-window layout and a command window.</p>
         <ul>
-          <li>Add a preference to combine the editor and all output views into a single main window with dockable panels: charts, image, and slide show in a tabbed group on the right, output, variables, and command window tabbed across the bottom; panel proportions are kept across resizes and sessions</li>
-          <li>Add a Command window: a shell prompt with scrollback next to the simulation, with persistent history, command and file name completion, configurable aliases, and kill/interrupt/restart controls</li>
+          <li>Add a preference to combine the editor and all output views into a single main window with dockable panels: charts, image, slide show, and plots of imported data in a tabbed group on the right, output, variables, and command window tabbed across the bottom; panel proportions are kept across resizes, across closing a panel, and across sessions</li>
+          <li>Add the -j/--joined and -w/--windows command-line flags to select the window layout for a single session without changing the preference, and F6/Shift-F6 to cycle the focus between the sections of the combined window</li>
+          <li>Add a Command window: a shell prompt with scrollback next to the simulation, with persistent history, completion of commands, file names, and earlier command lines, configurable aliases, and kill/interrupt/restart controls</li>
           <li>Add a preference selecting which of the installed shells the Command window starts</li>
+          <li>Add open, edit, and plot commands to the Command window, also under the names gui-open, gui-edit, and gui-plot, which are defined even where the short name is already taken, to send files from the prompt to a slide show, the editor, or a plot</li>
           <li>Show the application-wide Run, View, Tutorials, and About menus in all output windows, so a run can be started or stopped from any of them; Output, Slide Show, and file viewer windows gain a File menu</li>
           <li>Reuse the Output and Charts windows across runs instead of recreating them; the options to keep old Output, Charts, and Image windows have been removed</li>
           <li>Move the Preferences entries from the Edit menu to the View menu and add an option to open the combined main window maximized</li>
+          <li>Ask before opening a file that does not look like what it is being opened as, such as a binary file in the editor or an image in the plotter, instead of filling a window with unreadable content</li>
+          <li>Highlight the LAMMPS commands embedded in write_dump and rerun lines</li>
+          <li>Step the view angles in the Image Viewer by 5 degrees instead of 10</li>
           <li>Fix LAMMPS screen output capture on Windows, which only worked when launched from a console; the capture now verifies itself and reports into the Output window when the library's output cannot reach it</li>
           <li>Remember the LAMMPS shared library path per compiler toolchain, so differently built versions of LAMMPS-GUI on one machine no longer silently use each other's library</li>
           <li>Remember separate main window sizes for the two layout styles, and report the selected layout in the About dialog</li>

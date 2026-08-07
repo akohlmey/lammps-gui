@@ -112,6 +112,9 @@ Thumbs.db
 # CodeQL build artifacts
 /_codeql_*
 
+# Claude's custom folders
+/.claude
+
 # tutorial folders
 /tutorial*
 
