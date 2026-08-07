@@ -257,6 +257,18 @@ target_link_libraries(test_plotdata PRIVATE GTest::gtest_main Qt6::Core)
 
 gtest_discover_tests(test_plotdata)
 
+# Test executable for the block-structured fix ave/* file parsers
+add_executable(test_plotblockdata
+  test_plotblockdata.cpp
+  ${CMAKE_SOURCE_DIR}/src/plotblockdata.cpp
+  ${CMAKE_SOURCE_DIR}/src/plotdata.cpp
+)
+
+target_include_directories(test_plotblockdata PRIVATE ${CMAKE_SOURCE_DIR}/src)
+target_link_libraries(test_plotblockdata PRIVATE GTest::gtest_main Qt6::Core)
+
+gtest_discover_tests(test_plotblockdata)
+
 # Test executable for the vendored LeptonMini expression parser (Qt-free)
 add_executable(test_lepton
   test_lepton.cpp

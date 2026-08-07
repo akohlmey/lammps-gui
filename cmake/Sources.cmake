@@ -73,6 +73,8 @@ set(PROJECT_SOURCES
   ${CMAKE_SOURCE_DIR}/src/logwindow.h
   ${CMAKE_SOURCE_DIR}/src/movieimport.cpp
   ${CMAKE_SOURCE_DIR}/src/movieimport.h
+  ${CMAKE_SOURCE_DIR}/src/plotblockdata.cpp
+  ${CMAKE_SOURCE_DIR}/src/plotblockdata.h
   ${CMAKE_SOURCE_DIR}/src/plotdata.cpp
   ${CMAKE_SOURCE_DIR}/src/plotdata.h
   ${CMAKE_SOURCE_DIR}/src/plotdatadialog.cpp

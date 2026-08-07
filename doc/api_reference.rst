@@ -638,6 +638,25 @@ plot data from files.
 
 -----
 
+Block-Structured fix ave/\* Files
+---------------------------------
+
+Data model and parsers (``src/plotblockdata.h``) for the block-structured
+output files of ``fix ave/time`` in vector mode, ``fix ave/histo`` and
+``fix ave/correlate``, which are reduced to a flat :cpp:class:`PlotData`
+before they are plotted.
+
+.. doxygenstruct:: PlotDataBlock
+   :members:
+
+.. doxygenstruct:: PlotBlockData
+   :members:
+
+.. doxygenfile:: plotblockdata.h
+   :sections: func enum
+
+-----
+
 Least-Squares Toolkit
 ---------------------
 
