@@ -140,6 +140,7 @@ enum class BlockErrorType {
     None,     ///< no error bars
     StdDev,   ///< standard deviation of the blocks
     StdError, ///< standard error of the mean, sigma/sqrt(N)
+    MinMax,   ///< full spread: the bar spans the smallest to the largest value
 };
 
 /**
@@ -154,7 +155,9 @@ QString blockErrorTypeName(BlockErrorType type);
  */
 struct BlockAverage {
     PlotData data;         ///< per-row mean of every column
-    PlotErrors errors;     ///< per-column error bars; all empty if there are none
+    PlotErrors errors;     ///< per-column error bars; empty if there are none.  Only
+                           ///< BlockErrorType::MinMax fills the lower half, since the
+                           ///< spread of the blocks need not straddle their mean evenly.
     int usedBlocks    = 0; ///< number of blocks that contributed to the mean
     int skippedBlocks = 0; ///< blocks in the range dropped for having a different shape
 };
@@ -182,7 +185,9 @@ PlotData singleBlock(const PlotBlockData &data, int index);
  * does not lose its significant digits.
  *
  * Note that successive averaging windows are not strictly independent, so the
- * standard error is a lower bound on the true uncertainty.
+ * standard error is a lower bound on the true uncertainty.  BlockErrorType::MinMax
+ * makes no statistical claim at all: it just marks the range the blocks covered,
+ * which is why it is the one error type with an asymmetric result.
  */
 BlockAverage averageBlocks(const PlotBlockData &data, int first, int last, BlockErrorType type);
 

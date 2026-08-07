@@ -464,6 +464,8 @@ QString blockErrorTypeName(BlockErrorType type)
             return QStringLiteral("standard deviation");
         case BlockErrorType::StdError:
             return QStringLiteral("standard error of the mean");
+        case BlockErrorType::MinMax:
+            return QStringLiteral("min/max of the blocks");
         case BlockErrorType::None:
             break;
     }
@@ -525,24 +527,42 @@ BlockAverage averageBlocks(const PlotBlockData &data, int first, int last, Block
         out.data.appendRow(row);
     }
 
-    // a spread needs at least two blocks; the second pass over the deviations
-    // keeps a small spread on top of a large mean from losing its digits
+    // a spread needs at least two blocks
     if ((type == BlockErrorType::None) || (used.size() < 2)) return out;
 
-    out.errors.assign(ncol, std::vector<double>(nrow, 0.0));
+    // the full spread is not a deviation from the mean but the distance to the
+    // extremes, and reaches up and down by different amounts
+    if (type == BlockErrorType::MinMax) {
+        out.errors.upper.assign(ncol, std::vector<double>(nrow, 0.0));
+        out.errors.lower.assign(ncol, std::vector<double>(nrow, 0.0));
+        for (int b : used)
+            for (int c = 0; c < ncol; ++c) {
+                const std::vector<double> &col = data.blocks[b].rows.column(c);
+                for (int r = 0; r < nrow; ++r) {
+                    const double d = col[r] - mean[c][r];
+                    if (d > out.errors.upper[c][r]) out.errors.upper[c][r] = d;
+                    if (-d > out.errors.lower[c][r]) out.errors.lower[c][r] = -d;
+                }
+            }
+        return out;
+    }
+
+    // the second pass over the deviations keeps a small spread on top of a
+    // large mean from losing its digits
+    out.errors.upper.assign(ncol, std::vector<double>(nrow, 0.0));
     for (int b : used)
         for (int c = 0; c < ncol; ++c) {
             const std::vector<double> &col = data.blocks[b].rows.column(c);
             for (int r = 0; r < nrow; ++r) {
                 const double d = col[r] - mean[c][r];
-                out.errors[c][r] += d * d;
+                out.errors.upper[c][r] += d * d;
             }
         }
     const double scale = (type == BlockErrorType::StdError) ? 1.0 / ((n - 1.0) * n)
                                                             : 1.0 / (n - 1.0);
     for (int c = 0; c < ncol; ++c)
         for (int r = 0; r < nrow; ++r)
-            out.errors[c][r] = std::sqrt(out.errors[c][r] * scale);
+            out.errors.upper[c][r] = std::sqrt(out.errors.upper[c][r] * scale);
     return out;
 }
 

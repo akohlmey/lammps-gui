@@ -242,8 +242,12 @@ QGroupBox *PlotDataDialog::buildBlockGroup()
     lastSpin->setRange(1, nblock);
     lastSpin->setValue(nblock);
     errCombo = new QComboBox;
-    for (auto t : {BlockErrorType::StdDev, BlockErrorType::StdError, BlockErrorType::None})
+    for (auto t : {BlockErrorType::StdDev, BlockErrorType::StdError, BlockErrorType::MinMax,
+                   BlockErrorType::None})
         errCombo->addItem(blockErrorTypeName(t), static_cast<int>(t));
+    errCombo->setToolTip("What the error bars report: the spread of the averaged blocks,\n"
+                         "the resulting uncertainty of their mean, or the full range the\n"
+                         "blocks covered (which reaches up and down by different amounts).");
     rangeLabel = new QLabel;
     avgRow->addWidget(avgRadio);
     avgRow->addWidget(new QLabel("from"));
@@ -337,7 +341,7 @@ void PlotDataDialog::applyReduction()
         if (avg.skippedBlocks > 0)
             text += QString("; %1 dropped for having a different number of rows")
                         .arg(avg.skippedBlocks);
-        if (avg.errors.empty() && (errorType() != BlockErrorType::None))
+        if (avg.errors.isEmpty() && (errorType() != BlockErrorType::None))
             text += "; error bars need at least two blocks";
         statusLabel->setText(text);
     } else {
@@ -360,7 +364,7 @@ void PlotDataDialog::applyReduction()
         std::vector<double> values;
         if (evaluateColumn(d.second, values).isEmpty()) {
             workingData.addColumn(d.first, std::move(values));
-            workingErrors.emplace_back();
+            workingErrors.appendEmpty();
             derivedColumns.append(d);
         }
     }
@@ -511,7 +515,7 @@ void PlotDataDialog::computeColumn()
     }
 
     workingData.addColumn(colName, std::move(values));
-    workingErrors.emplace_back(); // a derived column has no error bars
+    workingErrors.appendEmpty(); // a derived column has no error bars
     derivedColumns.append({colName, expr});
     appendColumnRow(colName, true);
     deriveNameEdit->clear();

@@ -87,6 +87,20 @@ constexpr int CHART_DEFAULT_WIDTH    = 640;   ///< Default chart width
 constexpr int CHART_DEFAULT_HEIGHT   = 480;   ///< Default chart height
 constexpr double CHART_YPAD_FRACTION = 0.05;  ///< Relative y-axis margin around the data range
 
+// ---- Chart series style defaults -----------------------------------------
+// The color defaults are indices into the fixed palette of the color combo
+// boxes in the charts preferences tab (black, blue, red, green, gray).
+constexpr int RAWBRUSH_DEFAULT      = 1;    ///< Default raw series color (blue)
+constexpr int SMOOTHBRUSH_DEFAULT   = 2;    ///< Default processed series color (red)
+constexpr int ERRBRUSH_DEFAULT      = 0;    ///< Default error bar color (black)
+constexpr double LINE_WIDTH_MIN     = 0.5;  ///< Min configurable line width
+constexpr double LINE_WIDTH_MAX     = 20.0; ///< Max configurable line width
+constexpr double LINE_WIDTH_DEFAULT = 3.0;  ///< Default data series line width
+constexpr double ERR_WIDTH_DEFAULT  = 1.5;  ///< Default error bar line width
+constexpr double POINT_SIZE_MIN     = 1.0;  ///< Min configurable marker diameter
+constexpr double POINT_SIZE_MAX     = 40.0; ///< Max configurable marker diameter
+constexpr double POINT_SIZE_DEFAULT = 8.0;  ///< Default marker diameter
+
 // ---- Chart post-processing dialog ----------------------------------------
 constexpr int POSTPROCESS_EXPR_WIDTH = 260; ///< Min width of the custom-function expression field
 
@@ -314,6 +328,8 @@ inline const QString DOCKSTATE =
 inline const QString DOCKSTATE_LEGACY = QStringLiteral("dockstate");
 inline const QString DOWNLOAD_TIMEOUT = QStringLiteral("download_timeout");
 inline const QString ECHO             = QStringLiteral("echo");
+inline const QString ERRBRUSH         = QStringLiteral("errbrush");
+inline const QString ERRWIDTH         = QStringLiteral("errwidth");
 inline const QString GPUNEIGH         = QStringLiteral("gpuneigh");
 inline const QString GPUPAIRONLY      = QStringLiteral("gpupaironly");
 inline const QString GRID             = QStringLiteral("grid");
@@ -352,6 +368,9 @@ inline const QString PLUGIN_PATH = QStringLiteral("plugin_path_gcc");
 // one, and left in place for older versions that still read it
 inline const QString PLUGIN_PATH_LEGACY = QStringLiteral("plugin_path");
 inline const QString RAWBRUSH           = QStringLiteral("rawbrush");
+inline const QString RAWMODE            = QStringLiteral("rawmode");
+inline const QString RAWPOINTSIZE       = QStringLiteral("rawpointsize");
+inline const QString RAWWIDTH           = QStringLiteral("rawwidth");
 inline const QString RECENT             = QStringLiteral("recent");
 inline const QString REFLABELBOX        = QStringLiteral("reflabelbox");
 inline const QString REFLABELDIST       = QStringLiteral("reflabeldist");
@@ -361,7 +380,10 @@ inline const QString SHELL              = QStringLiteral("shell");
 inline const QString SHINYSTYLE         = QStringLiteral("shinystyle");
 inline const QString SMOOTHBRUSH        = QStringLiteral("smoothbrush");
 inline const QString SMOOTHCHOICE       = QStringLiteral("smoothchoice");
+inline const QString SMOOTHMODE         = QStringLiteral("smoothmode");
 inline const QString SMOOTHORDER        = QStringLiteral("smoothorder");
+inline const QString SMOOTHPOINTSIZE    = QStringLiteral("smoothpointsize");
+inline const QString SMOOTHWIDTH        = QStringLiteral("smoothwidth");
 inline const QString SMOOTHWINDOW       = QStringLiteral("smoothwindow");
 inline const QString SOLUTION           = QStringLiteral("solution");
 inline const QString SSAO               = QStringLiteral("ssao");

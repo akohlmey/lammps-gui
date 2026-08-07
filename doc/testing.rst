@@ -356,8 +356,9 @@ Tests for the parsers of the block-structured output files written by the
 - The vector-mode YAML variant, with its synthesized row index, and the
   scalar-mode YAML shape being left to the flat parser
 - Single-block and block-range reduction with hand-computed means,
-  standard deviations, and standard errors, clamped and reversed ranges,
-  and blocks dropped for having a different shape
+  standard deviations, standard errors, and min/max spreads (whose bars
+  are asymmetric and end exactly on the extreme values), clamped and
+  reversed ranges, and blocks dropped for having a different shape
 - The per-format import defaults, including a running average being
   recognized so that its blocks are not averaged
 

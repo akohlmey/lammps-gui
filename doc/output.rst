@@ -211,6 +211,12 @@ row, opens a dialog to change how the data is drawn.  The *Raw data* and
 style (*Lines*, *Points*, or *Lines and Points*), the color, the line
 width, and the point size.  This makes it possible, for example, to show
 the raw data as faint points and the smoothed curve as a bold line.  The
+*Error bars* group sets the color and line width of the error bars of
+every series of the chart that has them (only imported data can, see
+:ref:`importing fix ave/\* output <aveimport>`); they are drawn in
+their own color so that they stay readable where they overlap the curve
+they belong to.  The defaults for all three groups are in the *Charts
+Settings* tab of the *Preferences* dialog.  The
 *Legend* placement selector in the same dialog adds an in-plot legend
 that lists the visible named series; it can be turned *Off* or anchored
 to any of the four plot corners (*Top left*, *Top right*, *Bottom
@@ -381,12 +387,19 @@ There are two ways to reduce the blocks:
 *Single block*
    Show one block as it stands, by default the last one.
 
-The error bars are the standard deviation of the blocks by default; the
-standard error of the mean and no error bars at all are the other choices.
-Note that successive averaging windows are not strictly independent, so
-the standard error of the mean is a *lower bound* on the true uncertainty
-rather than the uncertainty itself.  Error bars need at least two blocks
-to average.
+The error bars are the standard deviation of the blocks by default.  The
+standard error of the mean, the *min/max of the blocks*, and no error bars
+at all are the other choices.  Note that successive averaging windows are
+not strictly independent, so the standard error of the mean is a *lower
+bound* on the true uncertainty rather than the uncertainty itself.  The
+min/max choice makes no statistical claim: the bar simply spans the
+smallest to the largest value any of the averaged blocks had for that row,
+so it usually reaches further in one direction than in the other.  Error
+bars need at least two blocks to average.
+
+How the bars are drawn -- their color and line width -- is set in the
+*Chart Style...* dialog of the chart window, and its defaults are in the
+*Charts Settings* tab of the *Preferences* dialog.
 
 Which reduction the dialog starts on depends on the format.  A histogram
 or a correlation function starts out averaged over the whole file, since

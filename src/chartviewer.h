@@ -12,6 +12,7 @@
 #ifndef CHARTVIEWER_H
 #define CHARTVIEWER_H
 
+#include "constants.h"  // Cfg defaults for the ChartColumn series styles below
 #include "plotdata.h"   // PlotData table + PlotErrors used by loadData() below
 #include "plotseries.h" // PlotSeries model + RefAnchor used by RefLine below
 
@@ -165,7 +166,8 @@ public:
      * @param xcol  Index of the column to use as the shared x axis
      * @param ycols Indices of the columns to plot, one chart each
      * @param yerrs Optional error bars, indexed like the columns of @p data;
-     *              an empty or wrongly sized entry means that column has none
+     *              an empty or wrongly sized entry means that column has none.
+     *              Their lower half is used where it is filled in
      *
      * Replaces any existing charts; each selected y column becomes a chart
      * titled by its column name, with the x axis labeled by the x column.
@@ -299,14 +301,18 @@ struct ChartColumn {
     bool doRaw    = true;                      ///< Show raw data series
     bool doSmooth = false;                     ///< Show smoothed data series
     bool eosMode  = false; ///< True when fit is a BM EOS overlay (visibility follows doSmooth)
+    // the styles below are seeded from the chart preferences when the column is
+    // created, and then belong to the column (the Chart Style dialog edits them)
     ChartDisplayMode dispmode = ChartDisplayMode::Lines; ///< How the raw series is drawn
-    QColor rawColor;                   ///< Raw series color override (invalid = theme default)
-    qreal rawWidth              = 3.0; ///< Raw series line width
-    qreal rawPointSize          = 8.0; ///< Raw series marker diameter
+    QColor rawColor; ///< Raw series color override (invalid = configured default)
+    qreal rawWidth              = Cfg::LINE_WIDTH_DEFAULT; ///< Raw series line width
+    qreal rawPointSize          = Cfg::POINT_SIZE_DEFAULT; ///< Raw series marker diameter
     ChartDisplayMode smoothmode = ChartDisplayMode::Lines; ///< How the processed series is drawn
-    QColor smoothcolor;          ///< Processed series color (invalid = theme default)
-    qreal smoothwidth     = 3.0; ///< Processed series line width
-    qreal smoothpointsize = 8.0; ///< Processed series marker diameter
+    QColor smoothcolor; ///< Processed series color (invalid = configured default)
+    qreal smoothwidth     = Cfg::LINE_WIDTH_DEFAULT; ///< Processed series line width
+    qreal smoothpointsize = Cfg::POINT_SIZE_DEFAULT; ///< Processed series marker diameter
+    QColor errColor; ///< Error bar color of every series of this column (invalid = configured)
+    qreal errWidth = Cfg::ERR_WIDTH_DEFAULT;                ///< Error bar line width
     std::vector<std::unique_ptr<PlotSeries>> overlaySeries; ///< Extra series from secondary files
     std::vector<std::unique_ptr<PlotSeries>> vlines;        ///< Reference line series (decorative)
     QList<RefLine> reflineDefs; ///< Reference line definitions (parallel to vlines)
@@ -449,12 +455,13 @@ public:
      * @param name  Series name (shown as a tooltip / legend entry)
      * @param color Line color
      * @param yerr  Optional error bars, one per point (ignored if the size differs)
+     * @param yerrLo Optional lower half of asymmetric error bars (empty = symmetric)
      *
      * Overlay series are always shown in full (no smoothing); they are
      * included in the axis range calculation.
      */
     void addOverlaySeries(const QList<QPointF> &pts, const QString &name, const QColor &color,
-                          const QList<double> &yerr = {});
+                          const QList<double> &yerr = {}, const QList<double> &yerrLo = {});
 
     /** @brief Number of overlay series currently displayed */
     int overlaySeriesCount() const { return static_cast<int>(col->overlaySeries.size()); }
@@ -510,6 +517,22 @@ public:
     qreal smoothWidth() const { return col->smoothwidth; }
     /** @brief Current processed-series marker diameter */
     qreal smoothPointSize() const { return col->smoothpointsize; }
+
+    /**
+     * @brief Set how the error bars of this chart are drawn
+     * @param color Bar color (invalid color falls back to the color of the series)
+     * @param width Bar line width; the end caps grow with it
+     *
+     * The style applies to every series of the chart that carries error bars,
+     * so that the bars read as one annotation layer rather than as part of the
+     * curve they belong to.
+     */
+    void setErrorStyle(const QColor &color, qreal width);
+
+    /** @brief Current error bar color (may be invalid, meaning the series color) */
+    QColor errorColor() const { return col->errColor; }
+    /** @brief Current error bar line width */
+    qreal errorWidth() const { return col->errWidth; }
 
     /**
      * @brief Overlay a fit curve on the chart

@@ -156,8 +156,28 @@ QList<FitParam> parseFitParams(const QString &text, bool *ok)
 // block appears; they are pure (no PlotWidget), so no other helper is required.
 namespace {
 bool appendColumnPoint(ChartColumn &col, double x, double y);
-void setColumnData(ChartColumn &col, const QList<QPointF> &points, const QList<double> &yerr = {});
+void setColumnData(ChartColumn &col, const QList<QPointF> &points, const QList<double> &yerr = {},
+                   const QList<double> &yerrLo = {});
 void setColumnSmoothFlags(ChartColumn &col, bool doRaw, bool doSmooth, int window, int order);
+void applyColumnStyleDefaults(ChartColumn &col);
+
+// Pick the error bars of one data column out of a PlotErrors and convert them
+// for a PlotSeries. Bars of the wrong length are dropped rather than padded, so
+// a mismatch can only lose the annotation, never shift it onto other points.
+void columnErrors(const PlotErrors &errors, int column, int nrow, QList<double> &yerr,
+                  QList<double> &yerrLo)
+{
+    yerr.clear();
+    yerrLo.clear();
+    const auto col = static_cast<std::size_t>(column);
+    if (col >= errors.upper.size()) return;
+    const std::vector<double> &up = errors.upper[col];
+    if (up.size() != static_cast<std::size_t>(nrow)) return;
+    yerr = QList<double>(up.cbegin(), up.cend());
+    if (col >= errors.lower.size()) return;
+    const std::vector<double> &lo = errors.lower[col];
+    if (lo.size() == static_cast<std::size_t>(nrow)) yerrLo = QList<double>(lo.cbegin(), lo.cend());
+}
 } // namespace
 
 /* -------------------------------------------------------------------- */
@@ -491,6 +511,7 @@ void ChartWindow::addChart(const QString &title, int index)
     c->series->name = title;
     c->yTitle       = title;
     c->lastUpdate   = QTime::currentTime();
+    applyColumnStyleDefaults(*c); // the configured defaults, until the style dialog overrides them
     cols.push_back(std::move(c));
     columns->addItem(title, index);
     columns->show();
@@ -555,13 +576,10 @@ void ChartWindow::loadData(const PlotData &data, int xcol, const QList<int> &yco
         points.reserve(nrow);
         for (int r = 0; r < nrow; ++r)
             points.append(QPointF(xvals[r], yvals[r]));
-        QList<double> errs;
-        if (static_cast<std::size_t>(ycol) < yerrs.size()) {
-            const std::vector<double> &e = yerrs[ycol];
-            if (e.size() == static_cast<std::size_t>(nrow))
-                errs = QList<double>(e.cbegin(), e.cend());
-        }
-        setColumnData(*cols.back(), points, errs); // data only; the active one is drawn below
+        QList<double> errs, errsLo;
+        columnErrors(yerrs, ycol, nrow, errs, errsLo);
+        // data only; the active one is drawn below
+        setColumnData(*cols.back(), points, errs, errsLo);
         ++idx;
     }
     // shared X-axis labeling on the single plot (standalone uses %.6g)
@@ -654,7 +672,7 @@ void ChartWindow::changeStyle()
     // build a line-width spin box preset to the given width
     auto widthBox = [](qreal width) {
         auto *w = new QDoubleSpinBox;
-        w->setRange(0.5, 20.0);
+        w->setRange(Cfg::LINE_WIDTH_MIN, Cfg::LINE_WIDTH_MAX);
         w->setSingleStep(0.5);
         w->setValue(width);
         return w;
@@ -663,15 +681,26 @@ void ChartWindow::changeStyle()
     // build a point-diameter spin box preset to the given size
     auto pointBox = [](qreal size) {
         auto *w = new QDoubleSpinBox;
-        w->setRange(1.0, 40.0);
+        w->setRange(Cfg::POINT_SIZE_MIN, Cfg::POINT_SIZE_MAX);
         w->setSingleStep(1.0);
         w->setValue(size);
         return w;
     };
 
+    // a chart that has no color of its own draws in the configured one, so that
+    // is what the dialog has to start from and hand back
+    auto configuredColor = [](const QString &key, int fallback) {
+        QSettings settings;
+        settings.beginGroup(Keys::GROUP_CHARTS);
+        int idx = settings.value(key, fallback).toInt();
+        settings.endGroup();
+        if ((idx < 0) || (idx >= mybrushes.size())) idx = 0;
+        return mybrushes[idx].color();
+    };
+
     // raw data section
     QColor rawChosen = chart->displayColor();
-    if (!rawChosen.isValid()) rawChosen = QColor(100, 150, 255);
+    if (!rawChosen.isValid()) rawChosen = configuredColor(Keys::RAWBRUSH, Cfg::RAWBRUSH_DEFAULT);
     auto *rawMode      = modeBox(chart->displayMode());
     auto *rawColorBtn  = colorButton(rawChosen);
     auto *rawWidthSpin = widthBox(chart->displayWidth());
@@ -686,7 +715,8 @@ void ChartWindow::changeStyle()
 
     // processed data section
     QColor procChosen = chart->smoothColor();
-    if (!procChosen.isValid()) procChosen = QColor(255, 125, 125);
+    if (!procChosen.isValid())
+        procChosen = configuredColor(Keys::SMOOTHBRUSH, Cfg::SMOOTHBRUSH_DEFAULT);
     auto *procMode      = modeBox(chart->smoothMode());
     auto *procColorBtn  = colorButton(procChosen);
     auto *procWidthSpin = widthBox(chart->smoothWidth());
@@ -698,6 +728,19 @@ void ChartWindow::changeStyle()
     procForm->addRow("Line width:", procWidthSpin);
     procForm->addRow("Point size:", procPointSpin);
     layout->addWidget(procBox);
+
+    // error bar section; the bars of every series of this chart share one style
+    QColor errChosen = chart->errorColor();
+    if (!errChosen.isValid()) errChosen = configuredColor(Keys::ERRBRUSH, Cfg::ERRBRUSH_DEFAULT);
+    auto *errColorBtn  = colorButton(errChosen);
+    auto *errWidthSpin = widthBox(chart->errorWidth());
+    auto *errBox       = new QGroupBox("Error bars");
+    errBox->setToolTip("Applies to the error bars of every series of this chart.\n"
+                       "Only imported data can carry error bars.");
+    auto *errForm = new QFormLayout(errBox);
+    errForm->addRow("Color:", errColorBtn);
+    errForm->addRow("Line width:", errWidthSpin);
+    layout->addWidget(errBox);
 
     // in-plot legend section
     auto *legendCombo = new QComboBox;
@@ -724,6 +767,7 @@ void ChartWindow::changeStyle()
                                rawChosen, rawWidthSpin->value(), rawPointSpin->value());
         chart->setSmoothStyle(static_cast<ChartDisplayMode>(procMode->currentData().toInt()),
                               procChosen, procWidthSpin->value(), procPointSpin->value());
+        chart->setErrorStyle(errChosen, errWidthSpin->value());
         legendPos = static_cast<LegendPos>(legendCombo->currentData().toInt());
         // viewer is created unconditionally in the constructor and never reset to null
         viewer->setLegendPos(legendPos);
@@ -1162,14 +1206,10 @@ void ChartWindow::addDataFile()
         const std::vector<double> &yvals = plotData.column(ycol);
         for (int r = 0; r < nrow; ++r)
             pts.append(QPointF(xvals[r], yvals[r]));
-        QList<double> errs;
-        if (static_cast<std::size_t>(ycol) < plotErr.size()) {
-            const std::vector<double> &e = plotErr[ycol];
-            if (e.size() == static_cast<std::size_t>(nrow))
-                errs = QList<double>(e.cbegin(), e.cend());
-        }
+        QList<double> errs, errsLo;
+        columnErrors(plotErr, ycol, nrow, errs, errsLo);
         chart->addOverlaySeries(pts, plotData.columnName(ycol), palette[colorIdx % palette.size()],
-                                errs);
+                                errs, errsLo);
         ++colorIdx;
     }
     // new data was added (and re-fit to the full range): match the sliders to it
@@ -1458,10 +1498,14 @@ PlotData ChartWindow::chartsToPlotData() const
     QStringList names;
     names << "Step";
     // error bars are exported as an extra column next to the values they
-    // belong to; re-importing that file simply yields one more data column
+    // belong to; re-importing that file simply yields one more data column.
+    // Bars that reach up and down by different amounts need two columns.
     for (const auto &c : cols) {
         names << c->series->name;
-        if (c->series->hasErrors()) names << (c->series->name + "-err");
+        if (c->series->hasAsymErrors())
+            names << (c->series->name + "-errlo") << (c->series->name + "-errhi");
+        else if (c->series->hasErrors())
+            names << (c->series->name + "-err");
     }
     data.setColumnNames(names);
 
@@ -1472,7 +1516,12 @@ PlotData ChartWindow::chartsToPlotData() const
         row.push_back(cols[0]->series->at(i).x());
         for (const auto &c : cols) {
             row.push_back(c->series->at(i).y());
-            if (c->series->hasErrors()) row.push_back(c->series->yerr[i]);
+            if (c->series->hasAsymErrors()) {
+                row.push_back(c->series->errLow(i));
+                row.push_back(c->series->errHigh(i));
+            } else if (c->series->hasErrors()) {
+                row.push_back(c->series->errHigh(i));
+            }
         }
         data.appendRow(row);
     }
@@ -1617,14 +1666,12 @@ QRectF columnMinMax(const ChartColumn &col)
     // include extra overlay data series added from secondary files
     for (auto &s : col.overlaySeries) {
         if (s && s->isVisible()) {
-            const bool err = s->hasErrors();
             for (int i = 0; i < s->points.size(); ++i) {
                 const QPointF &p = s->points[i];
-                const double e   = err ? qAbs(s->yerr[i]) : 0.0;
                 xmin             = qMin(xmin, p.x());
                 xmax             = qMax(xmax, p.x());
-                ymin             = qMin(ymin, p.y() - e);
-                ymax             = qMax(ymax, p.y() + e);
+                ymin             = qMin(ymin, p.y() - s->errLow(i));
+                ymax             = qMax(ymax, p.y() + s->errHigh(i));
             }
         }
     }
@@ -1684,7 +1731,10 @@ void renderColumnSeries(PlotWidget *plot, PlotSeries *line, std::unique_ptr<Plot
         points->replace(line->points);
         // exactly one of the two visible series carries the error bars, so they
         // are neither drawn twice nor lost when the line itself is hidden
-        if (!wantLines) points->yerr = line->yerr;
+        if (!wantLines) {
+            points->yerr   = line->yerr;
+            points->yerrLo = line->yerrLo;
+        }
         if (!plot->hasSeries(points.get()))
             addColumnSeries(plot, points.get(), color, width);
         else
@@ -1696,19 +1746,40 @@ void renderColumnSeries(PlotWidget *plot, PlotSeries *line, std::unique_ptr<Plot
     }
 }
 
+// Give every series of a column that carries error bars the column's error bar
+// style, so that the bars read as one annotation layer across raw, processed,
+// and overlay data rather than as part of the curve they belong to.
+void styleColumnErrors(ChartColumn &col, const QColor &color, qreal width)
+{
+    auto apply = [&color, width](PlotSeries *s) {
+        if (!s) return;
+        s->errColor = color;
+        s->errWidth = width;
+    };
+    apply(col.series.get());
+    apply(col.scatter.get());
+    apply(col.smooth.get());
+    apply(col.smoothScatter.get());
+    for (auto &s : col.overlaySeries)
+        apply(s.get());
+}
+
 // Recompute and (re)draw a column's raw and smoothed series onto the plot.
 void refreshColumn(PlotWidget *plot, ChartColumn &col)
 {
     QSettings settings;
     settings.beginGroup(Keys::GROUP_CHARTS);
-    int rawidx    = settings.value(Keys::RAWBRUSH, 1).toInt();
-    int smoothidx = settings.value(Keys::SMOOTHBRUSH, 2).toInt();
+    int rawidx    = settings.value(Keys::RAWBRUSH, Cfg::RAWBRUSH_DEFAULT).toInt();
+    int smoothidx = settings.value(Keys::SMOOTHBRUSH, Cfg::SMOOTHBRUSH_DEFAULT).toInt();
+    int erridx    = settings.value(Keys::ERRBRUSH, Cfg::ERRBRUSH_DEFAULT).toInt();
     if ((rawidx < 0) || (rawidx >= mybrushes.size())) rawidx = 0;
     if ((smoothidx < 0) || (smoothidx >= mybrushes.size())) smoothidx = 0;
+    if ((erridx < 0) || (erridx >= mybrushes.size())) erridx = 0;
     settings.endGroup();
 
     const QColor rawcol = col.rawColor.isValid() ? col.rawColor : mybrushes[rawidx].color();
     const QColor smcol = col.smoothcolor.isValid() ? col.smoothcolor : mybrushes[smoothidx].color();
+    const QColor errcol = col.errColor.isValid() ? col.errColor : mybrushes[erridx].color();
 
     if (col.doRaw)
         renderColumnSeries(plot, col.series.get(), col.scatter, col.dispmode, rawcol, col.rawWidth,
@@ -1733,6 +1804,8 @@ void refreshColumn(PlotWidget *plot, ChartColumn &col)
     } else {
         if (col.eosMode && col.fit) col.fit->setVisible(false);
     }
+    // after rendering, so that series created on demand above are styled too
+    styleColumnErrors(col, errcol, col.errWidth);
     plot->update();
 }
 
@@ -1794,6 +1867,14 @@ void setColumnSmoothStyle(PlotWidget *plot, ChartColumn &col, ChartDisplayMode m
     resetColumnZoom(plot, col);
 }
 
+// Set the error bar style of every series of the column and redraw.
+void setColumnErrorStyle(PlotWidget *plot, ChartColumn &col, const QColor &color, qreal width)
+{
+    col.errColor = color;
+    col.errWidth = width;
+    refreshColumn(plot, col);
+}
+
 // Set or replace the column's fit-curve overlay (EOS, polynomial, custom).
 void setColumnFitCurve(PlotWidget *plot, ChartColumn &col, const QList<QPointF> &points,
                        const QString &name, bool eos)
@@ -1816,14 +1897,19 @@ void setColumnFitCurve(PlotWidget *plot, ChartColumn &col, const QList<QPointF> 
 
 // Add an extra overlay data series (from a secondary file) to the column.
 void addColumnOverlay(PlotWidget *plot, ChartColumn &col, const QList<QPointF> &pts,
-                      const QString &name, const QColor &color, const QList<double> &yerr)
+                      const QString &name, const QColor &color, const QList<double> &yerr,
+                      const QList<double> &yerrLo)
 {
     auto s  = std::make_unique<PlotSeries>();
     s->name = name;
     s->replace(pts);
-    if (yerr.size() == pts.size()) s->yerr = yerr;
+    if (yerr.size() == pts.size()) {
+        s->yerr = yerr;
+        if (yerrLo.size() == pts.size()) s->yerrLo = yerrLo;
+    }
     addColumnSeries(plot, s.get(), color, col.rawWidth);
     col.overlaySeries.push_back(std::move(s));
+    refreshColumn(plot, col); // hands the new series the column's error bar style
     resetColumnZoom(plot, col);
 }
 
@@ -1867,6 +1953,46 @@ void setColumnReferenceLines(PlotWidget *plot, ChartColumn &col, const QList<Ref
     plot->update();
 }
 
+// Seed a fresh column's series styles from the chart preferences.  Colors are
+// deliberately left invalid: refreshColumn() resolves those against the
+// preferences on every redraw, so a color edited in the preferences dialog
+// reaches charts that already exist.  Out-of-range values from a hand-edited
+// settings file are clamped rather than honored, so that no setting can produce
+// an invisible curve.
+void applyColumnStyleDefaults(ChartColumn &col)
+{
+    auto mode = [](const QVariant &value) {
+        const int m = value.toInt();
+        if ((m < static_cast<int>(ChartDisplayMode::Lines)) ||
+            (m > static_cast<int>(ChartDisplayMode::LinesAndPoints)))
+            return ChartDisplayMode::Lines;
+        return static_cast<ChartDisplayMode>(m);
+    };
+
+    QSettings settings;
+    settings.beginGroup(Keys::GROUP_CHARTS);
+    const int lines  = static_cast<int>(ChartDisplayMode::Lines);
+    col.dispmode     = mode(settings.value(Keys::RAWMODE, lines));
+    col.smoothmode   = mode(settings.value(Keys::SMOOTHMODE, lines));
+    col.rawWidth     = qBound(Cfg::LINE_WIDTH_MIN,
+                              settings.value(Keys::RAWWIDTH, Cfg::LINE_WIDTH_DEFAULT).toDouble(),
+                              Cfg::LINE_WIDTH_MAX);
+    col.smoothwidth  = qBound(Cfg::LINE_WIDTH_MIN,
+                              settings.value(Keys::SMOOTHWIDTH, Cfg::LINE_WIDTH_DEFAULT).toDouble(),
+                              Cfg::LINE_WIDTH_MAX);
+    col.errWidth     = qBound(Cfg::LINE_WIDTH_MIN,
+                              settings.value(Keys::ERRWIDTH, Cfg::ERR_WIDTH_DEFAULT).toDouble(),
+                              Cfg::LINE_WIDTH_MAX);
+    col.rawPointSize = qBound(
+        Cfg::POINT_SIZE_MIN, settings.value(Keys::RAWPOINTSIZE, Cfg::POINT_SIZE_DEFAULT).toDouble(),
+        Cfg::POINT_SIZE_MAX);
+    col.smoothpointsize =
+        qBound(Cfg::POINT_SIZE_MIN,
+               settings.value(Keys::SMOOTHPOINTSIZE, Cfg::POINT_SIZE_DEFAULT).toDouble(),
+               Cfg::POINT_SIZE_MAX);
+    settings.endGroup();
+}
+
 // Apply smoothing flags/parameters to the column WITHOUT redrawing (so a
 // non-active column can be updated without touching the shared plot).
 void setColumnSmoothFlags(ChartColumn &col, bool doRaw, bool doSmooth, int window, int order)
@@ -1891,21 +2017,24 @@ void setColumnSmoothFlags(ChartColumn &col, bool doRaw, bool doSmooth, int windo
 // Replace a column's raw series with a full point list (and optional error
 // bars) and recompute its cached bounds, WITHOUT redrawing (for loading
 // non-active columns).
-void setColumnData(ChartColumn &col, const QList<QPointF> &points, const QList<double> &yerr)
+void setColumnData(ChartColumn &col, const QList<QPointF> &points, const QList<double> &yerr,
+                   const QList<double> &yerrLo)
 {
     col.series->replace(points); // drops any previous error bars
-    if (yerr.size() == points.size()) col.series->yerr = yerr;
+    if (yerr.size() == points.size()) {
+        col.series->yerr = yerr;
+        if (yerrLo.size() == points.size()) col.series->yerrLo = yerrLo;
+    }
     col.lastX   = points.isEmpty() ? -1.0 : points.last().x();
     col.rawXmin = col.rawYmin = 1.0e100;
     col.rawXmax = col.rawYmax = -1.0e100;
     for (int i = 0; i < points.size(); ++i) {
         const QPointF &p = points[i];
-        // the bars have to fit inside the plot, so the bounds cover y +/- err
-        const double e = col.series->hasErrors() ? qAbs(col.series->yerr[i]) : 0.0;
-        col.rawXmin    = qMin(col.rawXmin, p.x());
-        col.rawXmax    = qMax(col.rawXmax, p.x());
-        col.rawYmin    = qMin(col.rawYmin, p.y() - e);
-        col.rawYmax    = qMax(col.rawYmax, p.y() + e);
+        // the bars have to fit inside the plot, so the bounds cover the bar ends
+        col.rawXmin = qMin(col.rawXmin, p.x());
+        col.rawXmax = qMax(col.rawXmax, p.x());
+        col.rawYmin = qMin(col.rawYmin, p.y() - col.series->errLow(i));
+        col.rawYmax = qMax(col.rawYmax, p.y() + col.series->errHigh(i));
     }
 }
 
@@ -2068,6 +2197,13 @@ void ChartViewer::setSmoothStyle(ChartDisplayMode mode, const QColor &color, qre
 
 /* -------------------------------------------------------------------- */
 
+void ChartViewer::setErrorStyle(const QColor &color, qreal width)
+{
+    setColumnErrorStyle(plot, *col, color, width);
+}
+
+/* -------------------------------------------------------------------- */
+
 void ChartViewer::setFitCurve(const QList<QPointF> &points, const QString &name, bool eos)
 {
     setColumnFitCurve(plot, *col, points, name, eos);
@@ -2076,9 +2212,10 @@ void ChartViewer::setFitCurve(const QList<QPointF> &points, const QString &name,
 /* -------------------------------------------------------------------- */
 
 void ChartViewer::addOverlaySeries(const QList<QPointF> &pts, const QString &name,
-                                   const QColor &color, const QList<double> &yerr)
+                                   const QColor &color, const QList<double> &yerr,
+                                   const QList<double> &yerrLo)
 {
-    addColumnOverlay(plot, *col, pts, name, color, yerr);
+    addColumnOverlay(plot, *col, pts, name, color, yerr, yerrLo);
 }
 
 /* -------------------------------------------------------------------- */

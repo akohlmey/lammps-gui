@@ -351,23 +351,27 @@ void PlotWidget::doRender(QPainter &p, const QRectF &target) const
     p.save();
     p.setClipRect(plot);
 
-    // error bars first, so that they stay behind every data curve
-    constexpr double ERRCAP = 3.0; // half width of the cap, in pixels
+    // error bars first, so that they stay behind every data curve.  They are
+    // drawn in their own color and width (the chart style dialog sets both), so
+    // that they stay readable where they overlap the curve they belong to.
     for (const PlotSeries *s : m_series) {
         if (!s || !s->visible || !s->hasErrors()) continue;
-        QColor barColor = s->color;
-        barColor.setAlphaF(0.6 * barColor.alphaF());
-        p.setPen(QPen(barColor, 1.0));
+        const QColor barColor = s->errColor.isValid() ? s->errColor : s->color;
+        const double barWidth = qMax(0.5, s->errWidth);
+        // caps grow with the bar so that thick bars do not end in a stub
+        const double cap = qMax(3.0, 2.0 * barWidth);
+        p.setPen(QPen(barColor, barWidth, Qt::SolidLine, Qt::FlatCap));
         p.setBrush(Qt::NoBrush);
         for (int i = 0; i < s->points.size(); ++i) {
-            const double e = s->yerr[i];
-            if (!(e > 0.0)) continue;
+            const double eup = s->errHigh(i);
+            const double edn = s->errLow(i);
+            if (!(eup > 0.0) && !(edn > 0.0)) continue;
             const double px = mapX(s->points[i].x());
-            const double lo = mapY(s->points[i].y() - e);
-            const double hi = mapY(s->points[i].y() + e);
+            const double lo = mapY(s->points[i].y() - edn);
+            const double hi = mapY(s->points[i].y() + eup);
             p.drawLine(QPointF(px, lo), QPointF(px, hi));
-            p.drawLine(QPointF(px - ERRCAP, lo), QPointF(px + ERRCAP, lo));
-            p.drawLine(QPointF(px - ERRCAP, hi), QPointF(px + ERRCAP, hi));
+            p.drawLine(QPointF(px - cap, lo), QPointF(px + cap, lo));
+            p.drawLine(QPointF(px - cap, hi), QPointF(px + cap, hi));
         }
     }
 

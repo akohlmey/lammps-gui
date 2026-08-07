@@ -299,6 +299,16 @@ This tab allows adjusting settings of the :ref:`Charts window <charts>`.
 Specifically, one can set the default chart title (if the title contains
 '%f' it will be replaced with the name of the current input file), one
 can select whether by default the raw data, the smoothed data, or both
-will be plotted, one can set the colors for the two lines, the default
-smoothing parameters, the default size of the chart graph in pixels, and
-whether you want to display major and minor grid lines.
+will be plotted, the default smoothing parameters, the default size of
+the chart graph in pixels, and whether you want to display major and
+minor grid lines.
+
+The *Raw data*, *Processed data*, and *Error bars* groups hold the
+defaults of the per-chart *Chart Style...* dialog (see :ref:`Adjust chart
+style <charts>`): the display style (*Lines*, *Points*, or *Lines +
+Points*), the color, the line width, and the point size of the two data
+series, plus the color and line width of the error bars that imported
+data can carry.  Changing a color here also applies to charts that are
+already open, since a chart only stores a color of its own once one is
+picked in its *Chart Style...* dialog; the widths and display styles are
+picked up by charts created afterwards.

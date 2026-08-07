@@ -421,28 +421,52 @@ TEST(AveReduce, MeanOverAllBlocks)
     EXPECT_DOUBLE_EQ(avg.data.column(0)[1], 2.0);
     EXPECT_DOUBLE_EQ(avg.data.column(1)[0], 12.0);
     EXPECT_DOUBLE_EQ(avg.data.column(1)[1], 22.0);
-    EXPECT_TRUE(avg.errors.empty());
+    EXPECT_TRUE(avg.errors.isEmpty());
 }
 
 TEST(AveReduce, StandardDeviation)
 {
     const PlotBlockData d  = parseAveBlocks(reduce_sample);
     const BlockAverage avg = averageBlocks(d, 0, 2, BlockErrorType::StdDev);
-    ASSERT_EQ(avg.errors.size(), 2u);
-    ASSERT_EQ(avg.errors[1].size(), 2u);
-    EXPECT_DOUBLE_EQ(avg.errors[1][0], 2.0);
-    EXPECT_DOUBLE_EQ(avg.errors[1][1], std::sqrt(12.0));
+    ASSERT_EQ(avg.errors.columnCount(), 2u);
+    ASSERT_EQ(avg.errors.upper[1].size(), 2u);
+    EXPECT_DOUBLE_EQ(avg.errors.upper[1][0], 2.0);
+    EXPECT_DOUBLE_EQ(avg.errors.upper[1][1], std::sqrt(12.0));
     // a column that is the same in every block has no spread
-    EXPECT_DOUBLE_EQ(avg.errors[0][0], 0.0);
+    EXPECT_DOUBLE_EQ(avg.errors.upper[0][0], 0.0);
+    // the deviation reaches equally far up and down
+    EXPECT_FALSE(avg.errors.isAsymmetric());
 }
 
 TEST(AveReduce, StandardError)
 {
     const PlotBlockData d  = parseAveBlocks(reduce_sample);
     const BlockAverage avg = averageBlocks(d, 0, 2, BlockErrorType::StdError);
-    ASSERT_EQ(avg.errors.size(), 2u);
-    EXPECT_DOUBLE_EQ(avg.errors[1][0], 2.0 / std::sqrt(3.0));
-    EXPECT_DOUBLE_EQ(avg.errors[1][1], 2.0);
+    ASSERT_EQ(avg.errors.columnCount(), 2u);
+    EXPECT_DOUBLE_EQ(avg.errors.upper[1][0], 2.0 / std::sqrt(3.0));
+    EXPECT_DOUBLE_EQ(avg.errors.upper[1][1], 2.0);
+}
+
+TEST(AveReduce, MinMaxSpread)
+{
+    const PlotBlockData d  = parseAveBlocks(reduce_sample);
+    const BlockAverage avg = averageBlocks(d, 0, 2, BlockErrorType::MinMax);
+    ASSERT_TRUE(avg.errors.isAsymmetric());
+    ASSERT_EQ(avg.errors.columnCount(), 2u);
+    ASSERT_EQ(avg.errors.lower.size(), 2u);
+    ASSERT_EQ(avg.errors.upper[1].size(), 2u);
+    // row 1: 10, 12, 14 around a mean of 12 -- the spread happens to be even
+    EXPECT_DOUBLE_EQ(avg.errors.upper[1][0], 2.0);
+    EXPECT_DOUBLE_EQ(avg.errors.lower[1][0], 2.0);
+    // row 2: 20, 26, 20 around a mean of 22 -- reaching further up than down
+    EXPECT_DOUBLE_EQ(avg.errors.upper[1][1], 4.0);
+    EXPECT_DOUBLE_EQ(avg.errors.lower[1][1], 2.0);
+    // a column that is the same in every block spans nothing
+    EXPECT_DOUBLE_EQ(avg.errors.upper[0][0], 0.0);
+    EXPECT_DOUBLE_EQ(avg.errors.lower[0][0], 0.0);
+    // the bars end exactly on the extreme values of the blocks
+    EXPECT_DOUBLE_EQ(avg.data.column(1)[1] + avg.errors.upper[1][1], 26.0);
+    EXPECT_DOUBLE_EQ(avg.data.column(1)[1] - avg.errors.lower[1][1], 20.0);
 }
 
 TEST(AveReduce, SubRangeAndClamping)
@@ -453,7 +477,7 @@ TEST(AveReduce, SubRangeAndClamping)
     EXPECT_EQ(avg.usedBlocks, 2);
     EXPECT_DOUBLE_EQ(avg.data.column(1)[0], 13.0);
     EXPECT_DOUBLE_EQ(avg.data.column(1)[1], 23.0);
-    EXPECT_DOUBLE_EQ(avg.errors[1][0], std::sqrt(2.0));
+    EXPECT_DOUBLE_EQ(avg.errors.upper[1][0], std::sqrt(2.0));
 
     // a reversed or out-of-range range is repaired, not rejected
     EXPECT_EQ(averageBlocks(d, 2, 1, BlockErrorType::None).usedBlocks, 2);
@@ -465,7 +489,7 @@ TEST(AveReduce, SingleBlockHasNoErrorBars)
     const PlotBlockData d  = parseAveBlocks(reduce_sample);
     const BlockAverage avg = averageBlocks(d, 1, 1, BlockErrorType::StdDev);
     EXPECT_EQ(avg.usedBlocks, 1);
-    EXPECT_TRUE(avg.errors.empty());
+    EXPECT_TRUE(avg.errors.isEmpty());
     EXPECT_DOUBLE_EQ(avg.data.column(1)[0], 12.0);
 }
 
@@ -497,6 +521,7 @@ TEST(AveReduce, ErrorTypeNames)
 {
     EXPECT_EQ(blockErrorTypeName(BlockErrorType::StdDev), "standard deviation");
     EXPECT_EQ(blockErrorTypeName(BlockErrorType::StdError), "standard error of the mean");
+    EXPECT_EQ(blockErrorTypeName(BlockErrorType::MinMax), "min/max of the blocks");
     EXPECT_EQ(blockErrorTypeName(BlockErrorType::None), "none");
 }
 
