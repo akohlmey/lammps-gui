@@ -57,6 +57,7 @@ dumpimage
 dylib
 elif
 eps
+equipartition
 exe
 executables
 extendRun

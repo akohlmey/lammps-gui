@@ -312,13 +312,26 @@ The following analyses are available:
   data.  This is what a histogram of the per-atom kinetic energy is
   expected to follow, so importing a ``fix ave/histo`` file of
   ``c_ke/atom`` and fitting it reads the temperature off the shape of the
-  distribution.  The *Dimensions* selector sets *d* (three by default,
-  which is the familiar :math:`\sqrt{E}` prefactor).  The amplitude is
+  distribution.  The *Dimensions* selector sets *d*, the degrees of freedom **per atom**
+  (three by default, which is the familiar :math:`\sqrt{E}` prefactor).
+  Constrained and rigid molecules have fewer: a rigid 3-site water held by
+  `fix shake <https://docs.lammps.org/fix_shake.html>`_ has six degrees of
+  freedom per molecule, so two per atom, and fitting such a histogram with
+  *d* = 3 returns a temperature that is wrong by a factor of two.  The
+  amplitude is
   fitted rather than derived, because a histogram carries an arbitrary
   normalization -- raw counts, a normalized fraction, and a density differ
-  by a constant that says nothing about the temperature.  Reported are
-  :math:`k_BT`, the mean energy :math:`\langle E\rangle = (d/2)k_BT`, and
-  the amplitude.  Note that :math:`k_BT` comes out in the energy units of
+  by a constant that says nothing about the temperature.  Reported are :math:`k_BT` and the amplitude from the fitted shape, and
+  next to them the measured mean energy :math:`\langle E\rangle` with the
+  :math:`k_BT` that follows from it through
+  :math:`\langle E\rangle = (d/2)k_BT` alone.  That second estimate makes
+  no assumption about the shape -- equipartition fixes it -- so the two
+  agreeing is a sign that the data really is the distribution being fitted,
+  and the dialog says so when they differ by more than 10%.  They part
+  company when *d* does not match the system, and when the histogram does
+  not cover the whole distribution: energies beyond its range are missing
+  from :math:`\langle E\rangle` and lower it, while the fitted shape is not
+  affected.  Note that :math:`k_BT` comes out in the energy units of
   the plotted data, which the data file does not record; divide by the
   Boltzmann constant in those units to obtain a temperature.  Points at
   :math:`E \le 0` are left out of the fit and counted in the report.

@@ -321,3 +321,28 @@ histogram far better -- `d = 2.41`, and a 2.7x smaller residual -- which is
 what a mixture of constrained and unconstrained atoms should look like.  It
 is not implemented: whether an effective `d` is a meaningful quantity or a
 way to hide a bad sample is a judgment about the system, not about fitting.
+
+### What the test histogram actually is (and why no fit returns 275 K)
+
+Worth recording, because it looks like a bug and is not.  `in.peptide`
+histograms `ke/atom` **of the water group**, and the water is rigid under
+`fix shake`.  A rigid 3-site molecule has 6 degrees of freedom for 3 atoms,
+so `d = 2` per atom and `<E> = kT`, not `(3/2) kT`.  The data agrees: the
+mean over the histogram is 0.496, and adding back the 2.5% of samples above
+its 2.0 cutoff gives 0.546 = `kT` at 275 K, to three digits.
+
+But no single-Gamma fit returns 0.5465 either: `d = 3` gives 0.249 (the
+wrong model), `d = 2` gives 0.622.  The reason is that the per-atom kinetic
+energy of a *rigid* molecule is not a Gamma distribution at all but a
+mixture -- the oxygen carries almost only the centre-of-mass motion, the
+hydrogens carry that plus most of the rotation -- so the atoms are drawn
+from different distributions that happen to average to `<E> = kT`.
+
+The fitting code is not at fault, which is worth being able to state: on a
+synthetic Gamma histogram, binned and truncated exactly like this file, the
+fit recovers `kT = 0.5465` to four decimals, weighted or not (the
+regression test `CustomFit.MaxwellBoltzmannIsRecovered` pins that down).
+Truncation does *not* bias a shape fit -- the shape inside the range fixes
+the parameters -- while it does bias the mean.  That asymmetry is why the
+report shows both numbers: they disagree exactly when the model is wrong
+for the system or the histogram is too narrow, and the dialog says so.

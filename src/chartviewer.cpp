@@ -923,9 +923,10 @@ void ChartWindow::postProcess()
             paramSpin->setVisible(true);
             paramSpin->setRange(1, 3);
             paramSpin->setValue(3);
-            paramSpin->setToolTip("Degrees of freedom per atom: the exponent of the\n"
-                                  "prefactor is d/2 - 1, so the familiar sqrt(E) shape\n"
-                                  "is the three-dimensional case.");
+            paramSpin->setToolTip("Degrees of freedom per atom: the exponent of the prefactor is\n"
+                                  "d/2 - 1, so the familiar sqrt(E) shape is the free three-\n"
+                                  "dimensional case.  Constrained or rigid molecules have fewer:\n"
+                                  "a rigid 3-site water has 6 per molecule, so 2 per atom.");
         } else if (eos) { // EOS: only show the x-axis confirmation
             paramSpin->setVisible(false);
         } else if (expr) { // custom function/fit: expression field(s) only
@@ -1188,20 +1189,41 @@ void ChartWindow::postProcess()
         resetRangeSliders();        // a fit re-fits to the whole data set; match the sliders
         smooth->setCurrentIndex(2); // "Both" = raw data + fit overlay
 
-        QString report = QString("Maxwell-Boltzmann fit in %1 dimension(s), %8:\n"
-                                 "  f(E) = %2\n\n"
-                                 "  kT = %3\n"
-                                 "  <E> = (d/2) kT = %4\n"
-                                 "  A  = %5\n\n"
-                                 "  RMS residual = %6\n  iterations   = %7\n")
+        // Equipartition fixes <E> = (d/2) kT whatever the shape of the
+        // distribution, so the measured mean is a second, model-free estimate
+        // of kT.  Reporting both turns a wrong d -- or a histogram that is not
+        // the distribution being fitted -- from an invisible bias into a
+        // visible disagreement.  It is the mean of the fitted points, so a
+        // histogram whose tail was cut off makes it come out low.
+        const double meanE    = (sumy > 0.0) ? (sumxy / sumy) : 0.0;
+        const double ktMoment = 2.0 * meanE / ndim;
+
+        QString report = QString("Maxwell-Boltzmann fit in %1 dimension(s), %2:\n"
+                                 "  f(E) = %3\n\n"
+                                 "  kT  = %4   (from the fitted shape)\n"
+                                 "  A   = %5\n\n"
+                                 "  <E> = %6   (measured)\n"
+                                 "  kT  = %7   (from <E> = (d/2) kT alone)\n\n"
+                                 "  RMS residual = %8\n  iterations   = %9\n")
                              .arg(ndim)
+                             .arg(weightNote)
                              .arg(expr)
                              .arg(kt, 0, 'g', 8)
-                             .arg(0.5 * ndim * kt, 0, 'g', 8)
                              .arg(amp, 0, 'g', 8)
+                             .arg(meanE, 0, 'g', 8)
+                             .arg(ktMoment, 0, 'g', 8)
                              .arg(fit.rms, 0, 'g', 6)
-                             .arg(fit.iterations)
-                             .arg(weightNote);
+                             .arg(fit.iterations);
+        // a disagreement between the two is the data telling us that it is not
+        // the distribution being fitted, which is worth saying out loud
+        if ((kt > 0.0) && (ktMoment > 0.0) && (qAbs(kt - ktMoment) > 0.1 * qMax(kt, ktMoment))) {
+            report += "\nThe two disagree by more than 10%, so this data is not quite the "
+                      "distribution being fitted to it. Check the degrees of freedom: "
+                      "constrained or rigid molecules have fewer than three per atom, and a "
+                      "rigid 3-site water has two. Check as well that the histogram covers "
+                      "the whole distribution, since a tail beyond its range is missing from "
+                      "<E> and lowers it.\n";
+        }
         if (dropped > 0)
             report += QString("\n%1 point(s) at E <= 0 were left out of the fit.\n")
                           .arg(static_cast<int>(dropped));
