@@ -163,6 +163,20 @@ imported for further processing with Microsoft Excel, `LibreOffice Calc
 <https://pandas.pydata.org/>`_, or as YAML which can be imported into
 Python with `PyYAML <https://pyyaml.org/>`_ or pandas.
 
+The export is not limited to the raw values: the results of the
+post-processing are written beside them, so that what was worked out in
+the chart window can be taken elsewhere.  Each chart contributes its
+values, its error bars if it has any (as a ``-err`` column, or a
+``-errlo`` and a ``-errhi`` column when they are asymmetric), its smoothed
+curve while smoothing is on (``-smooth``), any fit curve that is being
+shown, and any series added from a second file (``-added``).  A flat table
+has a single x column, so everything in it is written against the x values
+of the data: a fit curve, which is sampled on a dense grid of its own, is
+written as the fitted function evaluated at each data point -- which is
+also what makes it directly comparable to the values beside it.  A series
+that carries x values of its own that do not match, as an added file
+generally does, is left out rather than resampled.
+
 Thermo output data from successive run commands in the input script is
 combined into a single data set unless the format, number, or names of
 output columns are changed with a `thermo_style
@@ -293,6 +307,21 @@ The following analyses are available:
   of the expression; on success the fitted curve is overlaid and the
   fitted parameters, the root-mean-square residual, and the number of
   iterations are reported.
+- *Maxwell-Boltzmann fit* fits the distribution of the kinetic energy of
+  *d* degrees of freedom, :math:`f(E) = A\,E^{d/2-1}\exp(-E/k_BT)`, to the
+  data.  This is what a histogram of the per-atom kinetic energy is
+  expected to follow, so importing a ``fix ave/histo`` file of
+  ``c_ke/atom`` and fitting it reads the temperature off the shape of the
+  distribution.  The *Dimensions* selector sets *d* (three by default,
+  which is the familiar :math:`\sqrt{E}` prefactor).  The amplitude is
+  fitted rather than derived, because a histogram carries an arbitrary
+  normalization -- raw counts, a normalized fraction, and a density differ
+  by a constant that says nothing about the temperature.  Reported are
+  :math:`k_BT`, the mean energy :math:`\langle E\rangle = (d/2)k_BT`, and
+  the amplitude.  Note that :math:`k_BT` comes out in the energy units of
+  the plotted data, which the data file does not record; divide by the
+  Boltzmann constant in those units to obtain a temperature.  Points at
+  :math:`E \le 0` are left out of the fit and counted in the report.
 
 The expressions for *Custom function* and *Custom fit* are parsed and
 evaluated with a bundled subset of the Lepton expression parser, the same
@@ -357,12 +386,14 @@ Import fix ave/\* output files
 The files written by `fix ave/time
 <https://docs.lammps.org/fix_ave_time.html>`_ in *vector* mode, `fix
 ave/histo <https://docs.lammps.org/fix_ave_histo.html>`_, `fix
-ave/correlate <https://docs.lammps.org/fix_ave_correlate.html>`_, and `fix
+ave/correlate <https://docs.lammps.org/fix_ave_correlate.html>`_, `fix
 ave/correlate/long
-<https://docs.lammps.org/fix_ave_correlate_long.html>`_ are not flat
+<https://docs.lammps.org/fix_ave_correlate_long.html>`_, and `fix ave/chunk
+<https://docs.lammps.org/fix_ave_chunk.html>`_ are not flat
 tables.  Each is a sequence of blocks, one per output timestep, and each
 block is a small table of its own: the rows of a vector, the bins of a
-histogram, or the time windows of a correlation function.  Such a file is
+histogram, the time windows of a correlation function, or the chunks of a
+profile.  Such a file is
 recognized when it is opened, and the column picker then grows a *Data
 blocks* group above the usual column grid, which reduces the blocks to the
 one flat table that grid refers to.
@@ -415,6 +446,18 @@ The columns that are preselected also follow from the format: the bin
 coordinate against the *normalized* bin count for a histogram (the
 per-block totals differ, so that is the column that may be averaged), the
 time delta against the correlation columns for a correlation function.
+
+A ``fix ave/chunk`` file is preselected only when its chunks form a
+*profile*, that is when they vary along a single coordinate: a chart has
+one x axis, and a two- or three-dimensional grid of chunks has no
+meaningful projection onto it.  That is decided from the coordinate values
+in the file rather than from the binning style, which the file does not
+record, so a ``bin/1d`` or ``bin/sphere`` profile always qualifies, and a
+``bin/cylinder`` or ``bin/2d`` run that used a single bin in its other
+dimension qualifies as well -- the varying coordinate becomes the x axis.
+Chunks that are a real grid, and chunks that are not bins at all (by
+molecule, by type, or from a compute), are still imported in full; they
+just get the same generic column defaults as any other block file.
 
 The *Format* combo shows what the file was recognized as, and can be
 corrected.  Recognition uses the file's own header comments, which the

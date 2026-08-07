@@ -349,8 +349,12 @@ Tests for the parsers of the block-structured output files written by the
   second fix instance, a last block cut short by an interrupted run, and
   blocks whose row count changes
 - Format recognition from the block structure alone, for files whose
-  headers were replaced with ``title1``/``title2``/``title3``, and
-  ``fix ave/chunk`` through the generic path
+  headers were replaced with ``title1``/``title2``/``title3``
+- ``fix ave/chunk``: a one-dimensional profile and a compressed-chunk-ID
+  file getting the coordinate as their x axis, a cylindrical binning with
+  a single axial bin recognized as one-dimensional from its values, and a
+  real two-dimensional grid and non-binned chunks keeping the generic
+  defaults
 - Rejecting flat tables, including a ``fix ave/time`` scalar file whose
   header comment reads like a block file's
 - The vector-mode YAML variant, with its synthesized row index, and the

@@ -208,7 +208,28 @@ conversion is needed:
 A dedicated Delta-t field only becomes relevant for the deferred
 across-block evolution mode, whose x axis is the block timestep.
 
-## Upstream YAML recommendations (for a LAMMPS-side effort)
+## Upstream metadata work (the LAMMPS-side effort this really wants)
+
+Everything the import does to *guess* what a file holds -- the header
+sniffing, the coordinate counting, the running-average detection -- exists
+only because the files do not say.  Better metadata upstream is worth more
+than any further heuristics on this side, and is where the effort should
+go next.  Two pieces of it:
+
+- **A structured output format that survives an interrupted run.**  This is
+  the hard constraint, not the serialization: a simulation that is killed
+  mid-run must still leave a file that parses.  Line-oriented and YAML
+  output have that property for free -- a truncated file is a shorter file
+  -- while JSON does not, since an unclosed array or object makes the whole
+  document invalid under a strict parser.  Ideas on the table include
+  closing the structure after every block, and writing one self-contained
+  document per block.  Whatever is chosen, the reader must treat a missing
+  tail as normal rather than as corruption.
+- **Column descriptions.**  There is infrastructure for carrying more
+  meaningful per-column descriptions than `c_rdf[2]`.  Emitting those into
+  the output files would remove the step where a user has to rename columns
+  in the import dialog to know later what they were, and would let the
+  dialog preselect by meaning instead of by position.
 
 Native-format parsing is required regardless (existing files, old
 versions), so YAML output for ave/histo/ave/correlate is *orthogonal*,
@@ -242,14 +263,41 @@ ave/time's YAML where backward-compatible):
 
 - **Across-block evolution** (x = block timestep, y = one chosen cell or
   one of the per-block scalars), with the step-to-time Delta-t field it
-  needs.
-- **fix ave/chunk defaults.**  It already parses and imports through the
-  generic path without losing data; what is missing is a kind of its own
-  with preselected columns (first coord column as x) and reduction.
+  needs.  This is the one gap that leaves parsed data unreachable: the
+  per-block `scalars` (histo's total/missing counts and value range) are
+  stored by the parser and no part of the UI can plot them.
 - **Overlay a few blocks** in mode A: multi-select and load the extras
   through the existing overlay-series mechanism (histogram evolution as
   3-4 overlaid snapshots).
 - **Shaded error-band style**, nicer than bars for correlation functions.
 - **Generic "this column is the error of that column" role** in the
   dialog for arbitrary flat files -- the plumbing for it already exists.
-- **Step/bar histogram drawing style.**
+
+Settled, and deliberately *not* on the list:
+
+- **No further chart drawing styles** (a step/bar style for histograms was
+  considered and dropped).  What a histogram needs instead is to get its
+  processed form *out* -- which is why the exporters now write the
+  smoothed curve, the fit, and the added series next to the raw values.
+- **`fix ave/chunk` beyond one dimension.**  A chart has one x axis; a 2-d
+  or 3-d grid of chunks has no honest projection onto it, so those files
+  keep the generic defaults instead of being flattened into something that
+  looks like a profile but is not one.
+
+## Fitting imported data
+
+`fitCustomCurve()` (Levenberg-Marquardt over a LeptonMini expression) is
+the mechanism; a named fit in the Postprocess dialog is then just a preset
+expression with initial guesses derived from the data.  The
+Maxwell-Boltzmann fit, `A E^(d/2-1) exp(-E/kT)`, is the first one built
+that way: `kT` is estimated from the histogram's own first moment
+(`<E> = (d/2) kT`, so the weights give it directly) and `A` from matching
+the model's peak to the tallest bin, which puts a two-parameter fit inside
+its basin from any reasonable histogram.
+
+The amplitude is fitted rather than derived on purpose: a histogram's
+normalization (counts, fraction, density) is arbitrary and says nothing
+about the temperature.  For the same reason `kT` is reported in the energy
+units of the data and not converted to a temperature -- the file does not
+record its units.  That is one more thing the upstream metadata work above
+would fix.
