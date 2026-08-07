@@ -74,7 +74,8 @@ ctest --test-dir build -R Framebuffer --output-on-failure   # GUI tests need Xvf
 - `test_*` executables — C++ unit tests (GoogleTest v1.17.0, fetched automatically
   via FetchContent); one per tested module: helpers, stdcapture, flagwarnings,
   dumpimage, movieimport, imagecache, leastsquares, plotdata, lepton, levmar,
-  customfunc, analysis, plotaxismath, fitting, shortcuts, and windowlayout
+  customfunc, analysis, plotaxismath, plotblockdata, fitting, shortcuts, and
+  windowlayout
 - `CommandLine.*` — command-line flag smoke tests
 - `Framebuffer.*` — Python/PyAutoGUI GUI tests run inside Xvfb; require `xvfb-run` and one of: `magick`, `import`, `xfce4-screenshooter`, or `gnome-screenshot`
 
@@ -238,7 +239,8 @@ decisions and caveats as binding unless we explicitly revise them here.
 | `src/plotseries.h` | Neutral chart model value types (`PlotSeries`, `PlotAxis`) consumed by `PlotWidget` |
 | `src/plotaxismath.{cpp,h}` | Qt-free axis-layout helpers (nice ticks, tick values, printf label formatting) |
 | `src/plotdata.{cpp,h}` | Column-oriented numeric data model + CSV/`.dat`/YAML/JSON parsers and writers |
-| `src/plotdatadialog.{cpp,h}` | Column-picker dialog for plotting an external data file |
+| `src/plotblockdata.{cpp,h}` | Block-structured `fix ave/*` file parsers (native + vector-mode YAML), format detection, and reduction of the blocks to a flat `PlotData` with error bars |
+| `src/plotdatadialog.{cpp,h}` | Column-picker dialog for plotting an external data file; grows a block-reduction group for `fix ave/*` files |
 | `src/analysis.{cpp,h}` | Qt-free post-processing analyses (autocorrelation) |
 | `src/leastsquares.{cpp,h}` | Qt-free dense LU solver + Savitzky-Golay smoothing |
 | `src/fitting.{cpp,h}` | Qt-free polynomial + Birch-Murnaghan EOS fits (on `leastsquares`) |
