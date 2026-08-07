@@ -14,7 +14,7 @@ corresponding underlined letter, that is `Alt-F` activates the
 corresponding to the underlined letters can be used to select entries
 instead of using the mouse.
 
-.. admonition:: LAMMPS-GUI Joined Window Mode
+.. admonition:: LAMMPS-GUI Combined Window Mode
    :class: note
 
    In joined window mode there can be only one menu bar, so the
@@ -119,9 +119,9 @@ shortcut `Ctrl-F`).
 
 .. versionchanged:: 3.1
 
-The *Preferences* dialog and the option to reset all settings to their
-defaults have moved to the *View* menu, which is where the window layout
-they configure is controlled.
+   The *Preferences* dialog and the option to reset all settings to
+   their defaults have moved to the *View* menu, which is where the
+   window layout they configure is controlled.
 
 .. _run_menu:
 

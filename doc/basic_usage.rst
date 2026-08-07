@@ -37,7 +37,7 @@ LAMMPS-GUI supports the following command-line options:
    * - ``-v``, ``--version``
      - Print version information and exit
    * - ``-x <width>``, ``--width <width>``
-     - Override the editor/main  window width in pixels
+     - Override the editor/main window width in pixels
    * - ``-y <height>``, ``--height <height>``
      - Override the editor/main window height in pixels
    * - ``-s <style>``, ``--style <style>``
@@ -51,10 +51,10 @@ LAMMPS-GUI supports the following command-line options:
    * - ``-t <file>``, ``--text <file>``
      - Open ``file`` in a standalone text viewer
    * - ``-j``, ``--joined``
-     - Use the *Combined Main Window* layout for this run, whatever the
+     - Selects the *Combined Window Mode* for this run, whatever the
        preferences say
    * - ``-w``, ``--windows``
-     - Use the *Individual Windows* layout for this run, whatever the
+     - Selects the *Individual Window Mode* for this run, whatever the
        preferences say
 
 The ``-j`` and ``-w`` flags select the window layout (see the

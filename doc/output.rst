@@ -6,20 +6,20 @@ Monitoring LAMMPS output
    :class: note
 
    Since version 3.1 LAMMPS-GUI supports two viewing modes: 1)
-   individual windows mode, where each output is displayed in a separate
+   individual window mode, where each output is displayed in a separate
    window and 2) combined window mode, where there is only one main
    window that may be split once vertically and the upper part once more
    horizontally and then the upper left section is the editor window and
    the upper right and bottom sections contain one or more tabs with the
-   same content as the individual windows.  This viewing mode can be
-   changed in the :doc:`Preferences dialog <dialogs>` or (temporarily)
-   selected with the ``-w`` or ``-j`` :ref:`Command-line options
-   <command-line-options>`.
+   same content as the corresponding individual window.  This viewing
+   mode can be changed in the :doc:`Preferences dialog <dialogs>` or
+   (temporarily) selected with the ``-w`` or ``-j`` :ref:`command-line
+   options <command-line-options>`.
 
-   Any references to a "window" throughout the remainder of the
+   Any reference to a "window" throughout the remainder of this
    documentation thus refers to either the corresponding individual
-   window or the corresponding tab in the upper right or bottom part of
-   the combined window.  Screenshots are of the individual windows.
+   window or the tab in the upper right or bottom part of the combined
+   window.  Screenshots are of the individual windows.
 
    The behavior for both modes is largely the same with two exceptions:
 
@@ -29,12 +29,13 @@ Monitoring LAMMPS output
       LAMMPS input file, it may be needed to first click into the
       corresponding area or use the `F6` or `Shift-F6` keyboard
       shortcuts to switch focus.
-   2. *Image Viewer* and *Slide Show Viewer* lose the auto-resize option
-      to show the image without scroll bars if the screen size supports it.
-
-.. _logfile:
+   2. The *Image Viewer* and *Slide Show* windows lose the auto-resize
+      option to show the image without scroll bars if the screen size
+      supports it.
 
 ------
+
+.. _logfile:
 
 Output Window
 ^^^^^^^^^^^^^
@@ -124,11 +125,11 @@ The plots are updated regularly with new data as the run progresses, so
 they can be used to visually monitor the evolution of available
 properties.  The update interval can be set in the *Preferences* dialog.
 By default, the raw data for the selected property is plotted as a blue
-graph.  From the "Plot:" drop-down menu on the second row (immediately to the right of
-the *Chart Style...* and *Postprocess...* quick-access buttons),
-you can select whether to plot only raw data graph, only a smoothed data
-graph, or both graphs on top of each other.  The smoothing process uses
-a `Savitzky-Golay convolution filter
+graph.  From the "Plot:" drop-down menu on the second row (immediately
+to the right of the *Chart Style...* and *Postprocess...* quick-access
+buttons), you can select whether to plot only raw data graph, only a
+smoothed data graph, or both graphs on top of each other.  The smoothing
+process uses a `Savitzky-Golay convolution filter
 <https://en.wikipedia.org/wiki/Savitzky%E2%80%93Golay_filter>`_.  The
 convolution window width (left) and order (right) parameters can be set
 in the boxes next to the drop-down menu.  Default settings are 10 and 4
@@ -183,8 +184,8 @@ runs.
    significant slowdown of that simulation since it is accumulating many
    data points for each of the thermo properties in the chart window to
    be redrawn with every update.  The updates are consuming additional
-   CPU time when smoothing enabled.  This slowdown can be confirmed when
-   an increasing percentage of the total run time is spent in the
+   CPU time when smoothing is enabled.  This slowdown can be confirmed
+   when an increasing percentage of the total run time is spent in the
    "Output" or "Other" sections of the `MPI task timing breakdown
    <https://docs.lammps.org/Run_output.html>`_.  It is thus recommended
    to use a large enough value as argument `N` for the `thermo command
