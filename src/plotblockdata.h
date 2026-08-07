@@ -20,6 +20,7 @@
 
 #include "plotdata.h"
 
+#include <QList>
 #include <QString>
 #include <QStringList>
 #include <vector>
@@ -131,6 +132,81 @@ bool looksLikeAveBlocks(const QString &text);
  * @return Parsed blocks; empty if the file is not block structured
  */
 PlotBlockData loadPlotBlockData(const QString &filename, QString *error = nullptr);
+
+/* --- reducing blocks to one plottable table --------------------------- */
+
+/** @brief Which uncertainty a block average reports */
+enum class BlockErrorType {
+    None,     ///< no error bars
+    StdDev,   ///< standard deviation of the blocks
+    StdError, ///< standard error of the mean, sigma/sqrt(N)
+};
+
+/**
+ * @brief Name of an error type as offered in the import dialog
+ * @param type Error type
+ * @return Descriptive name, e.g. "standard deviation"
+ */
+QString blockErrorTypeName(BlockErrorType type);
+
+/**
+ * @brief One flat table averaged over a range of blocks
+ */
+struct BlockAverage {
+    PlotData data;         ///< per-row mean of every column
+    PlotErrors errors;     ///< per-column error bars; all empty if there are none
+    int usedBlocks    = 0; ///< number of blocks that contributed to the mean
+    int skippedBlocks = 0; ///< blocks in the range dropped for having a different shape
+};
+
+/**
+ * @brief Extract the rows of a single block (import mode "single block")
+ * @param data  Parsed blocks
+ * @param index Block index; clamped to the available range
+ * @return That block's table, or an empty table if there are no blocks
+ */
+PlotData singleBlock(const PlotBlockData &data, int index);
+
+/**
+ * @brief Average a contiguous range of blocks row by row (import mode "average")
+ * @param data  Parsed blocks
+ * @param first First block of the range (inclusive)
+ * @param last  Last block of the range (inclusive)
+ * @param type  Which uncertainty to report as error bars
+ * @return Means, error bars, and how many blocks contributed
+ *
+ * The last block of the range sets the expected shape; blocks of a different
+ * shape are dropped and counted in BlockAverage::skippedBlocks rather than
+ * silently reinterpreted.  Error bars need at least two contributing blocks,
+ * and are computed in two passes so that a small spread on top of a large mean
+ * does not lose its significant digits.
+ *
+ * Note that successive averaging windows are not strictly independent, so the
+ * standard error is a lower bound on the true uncertainty.
+ */
+BlockAverage averageBlocks(const PlotBlockData &data, int first, int last, BlockErrorType type);
+
+/**
+ * @brief Where the import dialog starts out for a given file
+ */
+struct AveImportDefaults {
+    bool averageBlocks = false; ///< true: average all blocks; false: show the last block
+    int xColumn        = 0;     ///< index of the column to put on the x axis
+    QList<int> yColumns;        ///< indices of the columns to plot
+};
+
+/**
+ * @brief Pick the import defaults that suit a parsed file
+ * @param data Parsed blocks
+ * @return Reduction mode and column roles to preselect in the dialog
+ *
+ * Histograms and correlation functions default to the block average, because
+ * their time evolution is rarely what is wanted.  A file whose correlator
+ * accumulates over the whole run defaults to the last block instead: there
+ * every block is a successive estimate of the same quantity, so averaging them
+ * would be statistically wrong.
+ */
+AveImportDefaults aveImportDefaults(const PlotBlockData &data);
 
 #endif
 

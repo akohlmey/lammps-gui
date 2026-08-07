@@ -5,7 +5,10 @@
 
 #include "gtest/gtest.h"
 
+#include <QList>
 #include <QString>
+
+#include <cmath>
 
 namespace {
 
@@ -42,7 +45,8 @@ const char ave_histo[] =
     "4 2 40 0.2\n";
 
 // fix ave/correlate: block header "step nwindows", rows
-// "index timedelta ncount c1 ..."  (here with nevery 5)
+// "index timedelta ncount c1 ..."  (here with nevery 5).  With the default
+// "ave one" the sample counts start over in every window.
 const char ave_correlate[] = "# Time-correlated data for fix mycorr\n"
                              "# Timestep Number-of-time-windows\n"
                              "# Index TimeDelta Ncount v_vx*v_vx\n"
@@ -51,9 +55,9 @@ const char ave_correlate[] = "# Time-correlated data for fix mycorr\n"
                              "2 5 99 0.5\n"
                              "3 10 98 0.25\n"
                              "2000 3\n"
-                             "1 0 200 1\n"
-                             "2 5 199 0.6\n"
-                             "3 10 198 0.3\n";
+                             "1 0 100 1\n"
+                             "2 5 99 0.6\n"
+                             "3 10 98 0.3\n";
 
 // fix ave/correlate/long: two title lines only, blocks delimited by a comment,
 // first column already simulation time
@@ -368,6 +372,182 @@ TEST(AveBlocksYaml, ScalarModeIsNotBlockData)
     const PlotBlockData d = parseAveBlocksYaml(ave_time_yaml_scalar, &err);
     EXPECT_TRUE(d.isEmpty());
     EXPECT_FALSE(err.isEmpty());
+}
+
+// --- reduction to a plottable table -----------------------------------
+
+// three blocks of two rows, with hand-computable statistics:
+//   column "v" row 0:  10, 12, 14  -> mean 12, stddev 2,        stderr 2/sqrt(3)
+//   column "v" row 1:  20, 26, 20  -> mean 22, stddev sqrt(12), stderr 2
+const char reduce_sample[] = "# Time-averaged data for fix r\n"
+                             "# TimeStep Number-of-rows\n"
+                             "# Row v\n"
+                             "100 2\n"
+                             "1 10\n"
+                             "2 20\n"
+                             "200 2\n"
+                             "1 12\n"
+                             "2 26\n"
+                             "300 2\n"
+                             "1 14\n"
+                             "2 20\n";
+
+TEST(AveReduce, SingleBlock)
+{
+    const PlotBlockData d = parseAveBlocks(reduce_sample);
+    ASSERT_EQ(d.blockCount(), 3);
+
+    const PlotData last = singleBlock(d, 2);
+    ASSERT_EQ(last.rowCount(), 2);
+    EXPECT_EQ(last.columnNames(), QStringList({"Row", "v"}));
+    EXPECT_DOUBLE_EQ(last.column(1)[0], 14.0);
+
+    // out-of-range indices clamp rather than fail
+    EXPECT_DOUBLE_EQ(singleBlock(d, -5).column(1)[0], 10.0);
+    EXPECT_DOUBLE_EQ(singleBlock(d, 99).column(1)[0], 14.0);
+    EXPECT_TRUE(singleBlock(PlotBlockData(), 0).isEmpty());
+}
+
+TEST(AveReduce, MeanOverAllBlocks)
+{
+    const PlotBlockData d  = parseAveBlocks(reduce_sample);
+    const BlockAverage avg = averageBlocks(d, 0, 2, BlockErrorType::None);
+    EXPECT_EQ(avg.usedBlocks, 3);
+    EXPECT_EQ(avg.skippedBlocks, 0);
+    ASSERT_EQ(avg.data.rowCount(), 2);
+    EXPECT_EQ(avg.data.columnNames(), QStringList({"Row", "v"}));
+    // the row index column averages to itself
+    EXPECT_DOUBLE_EQ(avg.data.column(0)[0], 1.0);
+    EXPECT_DOUBLE_EQ(avg.data.column(0)[1], 2.0);
+    EXPECT_DOUBLE_EQ(avg.data.column(1)[0], 12.0);
+    EXPECT_DOUBLE_EQ(avg.data.column(1)[1], 22.0);
+    EXPECT_TRUE(avg.errors.empty());
+}
+
+TEST(AveReduce, StandardDeviation)
+{
+    const PlotBlockData d  = parseAveBlocks(reduce_sample);
+    const BlockAverage avg = averageBlocks(d, 0, 2, BlockErrorType::StdDev);
+    ASSERT_EQ(avg.errors.size(), 2u);
+    ASSERT_EQ(avg.errors[1].size(), 2u);
+    EXPECT_DOUBLE_EQ(avg.errors[1][0], 2.0);
+    EXPECT_DOUBLE_EQ(avg.errors[1][1], std::sqrt(12.0));
+    // a column that is the same in every block has no spread
+    EXPECT_DOUBLE_EQ(avg.errors[0][0], 0.0);
+}
+
+TEST(AveReduce, StandardError)
+{
+    const PlotBlockData d  = parseAveBlocks(reduce_sample);
+    const BlockAverage avg = averageBlocks(d, 0, 2, BlockErrorType::StdError);
+    ASSERT_EQ(avg.errors.size(), 2u);
+    EXPECT_DOUBLE_EQ(avg.errors[1][0], 2.0 / std::sqrt(3.0));
+    EXPECT_DOUBLE_EQ(avg.errors[1][1], 2.0);
+}
+
+TEST(AveReduce, SubRangeAndClamping)
+{
+    const PlotBlockData d = parseAveBlocks(reduce_sample);
+    // trimming the first block as equilibration: mean of 12, 14 and of 26, 20
+    const BlockAverage avg = averageBlocks(d, 1, 2, BlockErrorType::StdDev);
+    EXPECT_EQ(avg.usedBlocks, 2);
+    EXPECT_DOUBLE_EQ(avg.data.column(1)[0], 13.0);
+    EXPECT_DOUBLE_EQ(avg.data.column(1)[1], 23.0);
+    EXPECT_DOUBLE_EQ(avg.errors[1][0], std::sqrt(2.0));
+
+    // a reversed or out-of-range range is repaired, not rejected
+    EXPECT_EQ(averageBlocks(d, 2, 1, BlockErrorType::None).usedBlocks, 2);
+    EXPECT_EQ(averageBlocks(d, -3, 42, BlockErrorType::None).usedBlocks, 3);
+}
+
+TEST(AveReduce, SingleBlockHasNoErrorBars)
+{
+    const PlotBlockData d  = parseAveBlocks(reduce_sample);
+    const BlockAverage avg = averageBlocks(d, 1, 1, BlockErrorType::StdDev);
+    EXPECT_EQ(avg.usedBlocks, 1);
+    EXPECT_TRUE(avg.errors.empty());
+    EXPECT_DOUBLE_EQ(avg.data.column(1)[0], 12.0);
+}
+
+TEST(AveReduce, BlocksOfOtherShapeAreDropped)
+{
+    const char text[] = "# Time-averaged data for fix a\n"
+                        "# TimeStep Number-of-rows\n"
+                        "# Row v\n"
+                        "100 2\n"
+                        "1 10\n"
+                        "2 20\n"
+                        "200 3\n" // a chunk count changed mid-run
+                        "1 99\n"
+                        "2 99\n"
+                        "3 99\n"
+                        "300 2\n"
+                        "1 14\n"
+                        "2 24\n";
+    const PlotBlockData d  = parseAveBlocks(text);
+    const BlockAverage avg = averageBlocks(d, 0, 2, BlockErrorType::None);
+    EXPECT_EQ(avg.usedBlocks, 2);
+    EXPECT_EQ(avg.skippedBlocks, 1);
+    ASSERT_EQ(avg.data.rowCount(), 2);
+    EXPECT_DOUBLE_EQ(avg.data.column(1)[0], 12.0);
+    EXPECT_DOUBLE_EQ(avg.data.column(1)[1], 22.0);
+}
+
+TEST(AveReduce, ErrorTypeNames)
+{
+    EXPECT_EQ(blockErrorTypeName(BlockErrorType::StdDev), "standard deviation");
+    EXPECT_EQ(blockErrorTypeName(BlockErrorType::StdError), "standard error of the mean");
+    EXPECT_EQ(blockErrorTypeName(BlockErrorType::None), "none");
+}
+
+// --- per-format import defaults ---------------------------------------
+
+TEST(AveDefaults, Histo)
+{
+    const AveImportDefaults def = aveImportDefaults(parseAveBlocks(ave_histo));
+    // averaging the bins is what a histogram import is usually for
+    EXPECT_TRUE(def.averageBlocks);
+    EXPECT_EQ(def.xColumn, 1); // Coord
+    // the per-block totals differ, so only the normalized column is preselected
+    EXPECT_EQ(def.yColumns, QList<int>({3})); // Count/Total
+}
+
+TEST(AveDefaults, Correlate)
+{
+    const AveImportDefaults def = aveImportDefaults(parseAveBlocks(ave_correlate));
+    EXPECT_TRUE(def.averageBlocks);
+    EXPECT_EQ(def.xColumn, 1);                // TimeDelta
+    EXPECT_EQ(def.yColumns, QList<int>({3})); // neither Index nor Ncount
+}
+
+TEST(AveDefaults, RunningCorrelateUsesLastBlock)
+{
+    // "ave running": Ncount accumulates, so every block is a better estimate of
+    // the same quantity and averaging them would be wrong
+    const char text[]           = "# Time-correlated data for fix c\n"
+                                  "# Timestep Number-of-time-windows\n"
+                                  "# Index TimeDelta Ncount v_a*v_a\n"
+                                  "1000 2\n"
+                                  "1 0 100 1\n"
+                                  "2 5 99 0.5\n"
+                                  "2000 2\n"
+                                  "1 0 200 1\n"
+                                  "2 5 199 0.6\n";
+    const AveImportDefaults def = aveImportDefaults(parseAveBlocks(text));
+    EXPECT_FALSE(def.averageBlocks);
+}
+
+TEST(AveDefaults, CorrelateLongAndTimeVector)
+{
+    const AveImportDefaults cl = aveImportDefaults(parseAveBlocks(ave_correlate_long));
+    EXPECT_FALSE(cl.averageBlocks); // the correlator accumulates over the run
+    EXPECT_EQ(cl.xColumn, 0);       // Time
+    EXPECT_EQ(cl.yColumns, QList<int>({1}));
+
+    const AveImportDefaults tv = aveImportDefaults(parseAveBlocks(ave_time_vector));
+    EXPECT_FALSE(tv.averageBlocks);
+    EXPECT_EQ(tv.xColumn, 0); // Row
+    EXPECT_EQ(tv.yColumns, QList<int>({1, 2}));
 }
 
 } // namespace

@@ -455,6 +455,182 @@ PlotBlockData loadPlotBlockData(const QString &filename, QString *error)
     return data;
 }
 
+/* -------------------------------------------------------------------- */
+
+QString blockErrorTypeName(BlockErrorType type)
+{
+    switch (type) {
+        case BlockErrorType::StdDev:
+            return QStringLiteral("standard deviation");
+        case BlockErrorType::StdError:
+            return QStringLiteral("standard error of the mean");
+        case BlockErrorType::None:
+            break;
+    }
+    return QStringLiteral("none");
+}
+
+PlotData singleBlock(const PlotBlockData &data, int index)
+{
+    if (data.blocks.empty()) return {};
+    if (index < 0) index = 0;
+    if (index >= data.blockCount()) index = data.blockCount() - 1;
+    return data.blocks[index].rows;
+}
+
+BlockAverage averageBlocks(const PlotBlockData &data, int first, int last, BlockErrorType type)
+{
+    BlockAverage out;
+    if (data.blocks.empty()) return out;
+
+    const int nblock = data.blockCount();
+    const int lo     = qBound(0, qMin(first, last), nblock - 1);
+    const int hi     = qBound(0, qMax(first, last), nblock - 1);
+
+    // the last block of the range sets the shape every other block has to match
+    const PlotData &ref = data.blocks[hi].rows;
+    const int ncol      = ref.columnCount();
+    const int nrow      = ref.rowCount();
+    if ((ncol < 1) || (nrow < 1)) return out;
+
+    std::vector<int> used;
+    used.reserve(hi - lo + 1);
+    for (int b = lo; b <= hi; ++b) {
+        const PlotData &r = data.blocks[b].rows;
+        if ((r.columnCount() == ncol) && (r.rowCount() == nrow))
+            used.push_back(b);
+        else
+            ++out.skippedBlocks;
+    }
+    if (used.empty()) return out;
+    out.usedBlocks = static_cast<int>(used.size());
+
+    const double n = static_cast<double>(used.size());
+    std::vector<std::vector<double>> mean(ncol, std::vector<double>(nrow, 0.0));
+    for (int b : used)
+        for (int c = 0; c < ncol; ++c) {
+            const std::vector<double> &col = data.blocks[b].rows.column(c);
+            for (int r = 0; r < nrow; ++r)
+                mean[c][r] += col[r];
+        }
+    for (int c = 0; c < ncol; ++c)
+        for (int r = 0; r < nrow; ++r)
+            mean[c][r] /= n;
+
+    out.data.setColumnNames(ref.columnNames());
+    std::vector<double> row(ncol);
+    for (int r = 0; r < nrow; ++r) {
+        for (int c = 0; c < ncol; ++c)
+            row[c] = mean[c][r];
+        out.data.appendRow(row);
+    }
+
+    // a spread needs at least two blocks; the second pass over the deviations
+    // keeps a small spread on top of a large mean from losing its digits
+    if ((type == BlockErrorType::None) || (used.size() < 2)) return out;
+
+    out.errors.assign(ncol, std::vector<double>(nrow, 0.0));
+    for (int b : used)
+        for (int c = 0; c < ncol; ++c) {
+            const std::vector<double> &col = data.blocks[b].rows.column(c);
+            for (int r = 0; r < nrow; ++r) {
+                const double d = col[r] - mean[c][r];
+                out.errors[c][r] += d * d;
+            }
+        }
+    const double scale = (type == BlockErrorType::StdError) ? 1.0 / ((n - 1.0) * n)
+                                                            : 1.0 / (n - 1.0);
+    for (int c = 0; c < ncol; ++c)
+        for (int r = 0; r < nrow; ++r)
+            out.errors[c][r] = std::sqrt(out.errors[c][r] * scale);
+    return out;
+}
+
+/* -------------------------------------------------------------------- */
+
+namespace {
+
+// Index of the column with this name, or -1.
+int columnIndex(const QStringList &names, const QString &name)
+{
+    return names.indexOf(name);
+}
+
+// Does the sample count grow from block to block?  That is what "ave running"
+// looks like: every block is a successive estimate of the same quantity rather
+// than an independent sample of it, so the blocks must not be averaged.
+bool isRunningAverage(const PlotBlockData &data)
+{
+    if (data.blockCount() < 2) return false;
+    const int c = columnIndex(data.columnNames(), QStringLiteral("Ncount"));
+    if (c < 0) return false;
+    double prev = 0.0;
+    for (int b = 0; b < data.blockCount(); ++b) {
+        const PlotData &rows = data.blocks[b].rows;
+        if ((rows.columnCount() <= c) || (rows.rowCount() < 1)) return false;
+        const double v = rows.column(c)[0];
+        if ((b > 0) && (v <= prev)) return false;
+        prev = v;
+    }
+    return true;
+}
+
+} // namespace
+
+AveImportDefaults aveImportDefaults(const PlotBlockData &data)
+{
+    AveImportDefaults out;
+    const QStringList names = data.columnNames();
+    const int ncol          = names.size();
+    if (ncol < 1) return out;
+
+    QStringList skip; // columns that are neither x nor a useful y
+    switch (data.kind) {
+        case AveFileKind::AveHisto: {
+            out.averageBlocks = true;
+            out.xColumn       = qMax(0, columnIndex(names, QStringLiteral("Coord")));
+            // the per-block totals differ, so the normalized column is the one
+            // that may be averaged across blocks
+            const int y = columnIndex(names, QStringLiteral("Count/Total"));
+            if (y >= 0) {
+                out.yColumns << y;
+                return out;
+            }
+            skip << QStringLiteral("Bin");
+            break;
+        }
+        case AveFileKind::AveCorrelate: {
+            out.averageBlocks = !isRunningAverage(data);
+            // index, time delta, sample count, then one column per value pair
+            const int x = columnIndex(names, QStringLiteral("TimeDelta"));
+            out.xColumn = (x >= 0) ? x : qMin(1, ncol - 1);
+            skip << QStringLiteral("Index") << QStringLiteral("Ncount");
+            if (x < 0) {
+                // the default headers were replaced, so go by position instead
+                for (int c = 3; c < ncol; ++c)
+                    out.yColumns << c;
+                if (!out.yColumns.isEmpty()) return out;
+            }
+            break;
+        }
+        case AveFileKind::AveCorrelateLong:
+            // the correlator accumulates over the whole run, so the last block
+            // is the answer and averaging the blocks would be wrong
+            out.xColumn = qMax(0, columnIndex(names, QStringLiteral("Time")));
+            break;
+        case AveFileKind::AveTimeVector:
+            out.xColumn = qMax(0, columnIndex(names, QStringLiteral("Row")));
+            break;
+        case AveFileKind::Unknown:
+            break;
+    }
+
+    for (int c = 0; c < ncol; ++c)
+        if ((c != out.xColumn) && !skip.contains(names[c])) out.yColumns << c;
+    if (out.yColumns.isEmpty() && (ncol > 1)) out.yColumns << ((out.xColumn == 0) ? 1 : 0);
+    return out;
+}
+
 // Local Variables:
 // c-basic-offset: 4
 // End:

@@ -97,6 +97,16 @@ private:
 };
 
 /**
+ * @brief Per-column error bars, parallel to the columns of a PlotData
+ *
+ * Entry @c i holds the symmetric +/- error of column @c i, or is empty when
+ * that column has no error bars.  Errors are kept beside the table rather than
+ * as extra columns so that they never appear as plottable columns of their own,
+ * and so that columns added later (e.g. a derived column) simply have none.
+ */
+using PlotErrors = std::vector<std::vector<double>>;
+
+/**
  * @brief Parse comma-separated values into a PlotData
  * @param text  File contents
  * @param error Optional out-parameter set to a message on failure
