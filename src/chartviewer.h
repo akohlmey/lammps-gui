@@ -109,6 +109,16 @@ public:
     void resetCharts();
 
     /**
+     * @brief Clear the window for a new run
+     * @param filename Name of the log/input file the new run belongs to
+     *
+     * Drops all charts and reference lines and re-reads the chart preferences,
+     * so the window can be reused instead of destroyed and recreated for every
+     * run.  Keeps the position and size the window currently has on screen.
+     */
+    void reset(const QString &filename);
+
+    /**
      * @brief Manually update chart display zoom status
      *
      * This is needed at an end of a run when the run finishes too quickly
@@ -191,14 +201,6 @@ protected:
      */
     void closeEvent(QCloseEvent *event) override;
 
-    /**
-     * @brief Event filter for keyboard shortcuts
-     * @param watched Object being watched
-     * @param event Event to filter
-     * @return true if event handled, false otherwise
-     */
-    bool eventFilter(QObject *watched, QEvent *event) override;
-
 private:
     /// Collect the displayed charts into a PlotData (column 0 "Step", then one
     /// column per chart) for the data exporters.
@@ -214,6 +216,11 @@ private:
     /// Set the processed-series Plot-combo slot label and remember it on the
     /// active column (so it is restored when switching columns).
     void setProcessedLabel(const QString &label);
+
+    /// Apply the chart preferences (title template, smoothing, legend position,
+    /// reference-label style) to the already created widgets.  Shared by the
+    /// constructor and reset(); must not run before `viewer` exists.
+    void applyChartSettings();
 
     /// Move both range-slider handles back to the full extent (no plot update).
     void resetRangeSliders();

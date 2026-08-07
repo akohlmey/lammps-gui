@@ -30,6 +30,8 @@
 #include <QKeySequence>
 #include <QLabel>
 #include <QLocale>
+#include <QMenu>
+#include <QMenuBar>
 #include <QMessageBox>
 #include <QPalette>
 #include <QPixmap>
@@ -100,20 +102,13 @@ SlideShow::SlideShow(const QString &fileName, LammpsGui *_lammpsgui, QWidget *pa
     imageName->setMinimumHeight(buttonhint.height());
     imageName->setMaximumHeight(buttonhint.height());
 
-    auto *shortcut = new QShortcut(QKeySequence(Qt::CTRL | Qt::Key_W), this);
-    connect(shortcut, &QShortcut::activated, this, &QWidget::close);
-    shortcut = new QShortcut(QKeySequence(Qt::CTRL | Qt::Key_Slash), this);
-    connect(shortcut, &QShortcut::activated, this, &SlideShow::stopRun);
-    shortcut = new QShortcut(QKeySequence(Qt::CTRL | Qt::Key_Q), this);
-    connect(shortcut, &QShortcut::activated, this, &SlideShow::quit);
-    shortcut = new QShortcut(QKeySequence(Qt::CTRL | Qt::Key_C), this);
-    connect(shortcut, &QShortcut::activated, this, &SlideShow::copy);
-    shortcut = new QShortcut(QKeySequence(Qt::CTRL | Qt::Key_E), this);
-    connect(shortcut, &QShortcut::activated, this, &SlideShow::movie);
-    shortcut = new QShortcut(QKeySequence(Qt::CTRL | Qt::Key_S), this);
-    connect(shortcut, &QShortcut::activated, this, &SlideShow::saveCurrentImage);
+    // the File menu below carries these, so they are bound once each; only
+    // "stop run" has no menu entry of its own
+    addShortcut(this, QKeySequence(Qt::CTRL | Qt::Key_Slash), this, &SlideShow::stopRun);
+    createMenuBar();
 
-    auto *mainLayout  = new QVBoxLayout;
+    auto *mainLayout = new QVBoxLayout;
+    mainLayout->setMenuBar(menubar);
     auto *toolsLayout = new QHBoxLayout;
     auto *botLayout   = new QHBoxLayout;
     auto *navLayout   = new QHBoxLayout;
@@ -271,6 +266,12 @@ SlideShow::SlideShow(const QString &fileName, LammpsGui *_lammpsgui, QWidget *pa
     connect(imgflipv, &QPushButton::released, this, &SlideShow::doImageFlipV);
     connect(normal, &QPushButton::released, this, &SlideShow::normalSize);
     connect(fitwin, &QPushButton::released, this, &SlideShow::resetWindowSize);
+    // a docked panel is sized by its dock area, not by the image, and the main
+    // window toolbar right above already carries a stop button
+    if (dockedLayout()) {
+        fitwin->hide();
+        stoprun->hide();
+    }
 
     toolsLayout->addWidget(tomovie, 1);
     toolsLayout->addWidget(toimage, 1);
@@ -351,7 +352,11 @@ void SlideShow::addImage(const QString &filename, const QString &label)
 
     const int lastidx = imagefiles.size();
     imagefiles.append(filename);
-    imagelabels.append(label.isEmpty() ? filename : label);
+    // the directory is the same for every image of a sequence and says nothing
+    // about which one this is, while the layout is held open to whatever the
+    // longest label needs -- so only the name is shown, and the path it came
+    // from is put in the tool tip when the image is displayed
+    imagelabels.append(label.isEmpty() ? QFileInfo(filename).fileName() : label);
     scrollBar->setMaximum(lastidx);
 
     // Grow the active-range bounds with the sequence. If Stop was pinned to the
@@ -489,6 +494,7 @@ void SlideShow::clear()
     lastFitSize = QSize();
     imageCounter->setText("Image   0 /   0 :");
     imageName->setText("(none)");
+    imageName->setToolTip(QString());
     scrollBar->setMaximum(1);
     startBox->setRange(1, 1);
     startBox->setValue(1);
@@ -604,6 +610,7 @@ void SlideShow::loadImage(int idx)
             imageCounter->setText(
                 QString("Image %1 / %2 :").arg(idx + 1, 3).arg(imagefiles.size(), 3));
             imageName->setText(imagelabels[idx]);
+            imageName->setToolTip(imagefiles[idx]);
             current = idx;
             break;
         }
@@ -626,6 +633,45 @@ void SlideShow::copy()
 #else
     fprintf(stderr, "Copy image to clipboard not supported on this platform\n");
 #endif
+}
+
+// Its own File menu plus the application-wide menus of the main window, so a
+// run can be started or stopped from here as well.  Docked, the main window
+// shows the File menu for us and this bar stays hidden.
+void SlideShow::createMenuBar()
+{
+    menubar    = new QMenuBar;
+    auto *file = new QMenu("&File", menubar);
+    file->setObjectName(Cfg::VIEW_FILE_MENU);
+
+    scopeShortcut(this,
+                  addMenuAction(file, "&Save Image As...", ":/icons/document-save-as.svg", this,
+                                &SlideShow::saveCurrentImage),
+                  QKeySequence(Qt::CTRL | Qt::Key_S));
+    scopeShortcut(
+        this, addMenuAction(file, "&Copy Image", ":/icons/edit-copy.svg", this, &SlideShow::copy),
+        QKeySequence(Qt::CTRL | Qt::Key_C));
+    scopeShortcut(this,
+                  addMenuAction(file, "&Export Movie...", ":/icons/export-movie.svg", this,
+                                &SlideShow::movie),
+                  QKeySequence(Qt::CTRL | Qt::Key_E));
+    file->addSeparator();
+    scopeShortcut(this,
+                  addMenuAction(file, "&Close", ":/icons/window-close.svg", this, &QWidget::close),
+                  QKeySequence(Qt::CTRL | Qt::Key_W));
+    auto *quitAct =
+        addMenuAction(file, "&Quit", ":/icons/application-exit.svg", this, &SlideShow::quit);
+    scopeShortcut(this, quitAct, QKeySequence(Qt::CTRL | Qt::Key_Q));
+    if (!lammpsgui) quitAct->setVisible(false); // quit == close in standalone mode
+
+    if (dockedLayout()) {
+        retireViewMenuBar(menubar);
+    } else {
+        menubar->addMenu(file);
+        if (lammpsgui)
+            for (auto *shared : lammpsgui->sharedMenus())
+                menubar->addMenu(shared);
+    }
 }
 
 void SlideShow::quit()
@@ -862,6 +908,11 @@ void SlideShow::scaleImage(double factor)
 
 void SlideShow::adjustWindowSize()
 {
+    // A docked panel is sized by its dock area.  Fitting the window around the
+    // image resizes this widget, and that request travels up through the dock to
+    // the main window -- which then jumps about as images are loaded.
+    if (dockedLayout()) return;
+
     if (maxwidth == 0 || maxheight == 0) return;
 
     // size of the largest image as displayed, i.e. with the current rotation

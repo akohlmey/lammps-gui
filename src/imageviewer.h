@@ -249,6 +249,8 @@ private:
     int outlinewidth;                            ///< Outline width in pixels
     QString outlinecolor;                        ///< Outline color
     QString specular;                            ///< Specular preset or "auto"
+    double metalfactor;                          ///< Metallic shading strength
+    QString metalfinish;                         ///< Metal surface finish preset
     double atomtrans;                            ///< Atom transparency
     double bondtrans;                            ///< Bond transparency
     double ambientlight;                         ///< ambient light setting
@@ -289,6 +291,7 @@ private:
     bool usedepthcue;                            ///< Depth cueing enabled flag
     bool usedefocus;                             ///< Defocus enabled flag
     bool useoutline;                             ///< Outline drawing enabled flag
+    bool usemetal;                               ///< Metallic shading enabled flag
     bool showatoms;                              ///< Show atoms
     bool showbonds;                              ///< Show bonds if atom style supports it
     bool autobond;                               ///< Dynamic bonds from cutoff flag

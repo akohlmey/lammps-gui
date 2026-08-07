@@ -69,7 +69,16 @@ command names are colored by category.  Arguments are colored by their
 role in the command, for example the ID, group-ID, and style name of a
 `fix <https://docs.lammps.org/fix.html>`_ command.  IDs use the same
 color whether they are being defined (``fix``, ``compute``, ``dump``)
-or referenced (``fix_modify``, ``unfix``, and so on).  Lines joined with
+or referenced (``fix_modify``, ``unfix``, and so on).  A few commands
+embed a second command in their argument list; the keyword that starts
+the embedded part is shown in the color of the command it stands for,
+that is the ``modify`` keyword of the `write_dump
+<https://docs.lammps.org/write_dump.html>`_ command is colored like
+``dump_modify`` and the ``dump`` keyword of the `rerun
+<https://docs.lammps.org/rerun.html>`_ command like ``read_dump``.  The
+arguments following such a keyword are colored as arguments of the
+embedded command, also when the command is spread over multiple lines
+with ``&`` line continuations.  Lines joined with
 the ``&`` line continuation character are highlighted in the context of
 the command they continue, including style names or quoted strings that
 are split across lines.

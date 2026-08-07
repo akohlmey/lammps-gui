@@ -74,7 +74,7 @@ ctest --test-dir build -R Framebuffer --output-on-failure   # GUI tests need Xvf
 - `test_*` executables — C++ unit tests (GoogleTest v1.17.0, fetched automatically
   via FetchContent); one per tested module: helpers, stdcapture, flagwarnings,
   dumpimage, movieimport, imagecache, leastsquares, plotdata, lepton, levmar,
-  customfunc, analysis, plotaxismath, and fitting
+  customfunc, analysis, plotaxismath, fitting, shortcuts, and windowlayout
 - `CommandLine.*` — command-line flag smoke tests
 - `Framebuffer.*` — Python/PyAutoGUI GUI tests run inside Xvfb; require `xvfb-run` and one of: `magick`, `import`, `xfce4-screenshooter`, or `gnome-screenshot`
 
@@ -155,7 +155,7 @@ main.cpp
 
 **Dialog widget wiring.** `ImageViewer` and the `Preferences` tabs connect widgets to slots via `setObjectName("...")` + later `findChild<T>("...")` rather than stored member pointers. Preserve object names exactly when refactoring these dialogs (a wrong/renamed name fails the lookup silently, with no compile error).
 
-**Shared helpers (prefer over re-rolling).** Use the `StdoutSilencer` RAII guard (`helpers.h`) instead of manual `silenceStdout()`/`restoreStdout()` pairs; the `QtMessageSilencer` RAII guard (`helpers.h`) around a call whose Qt-internal warnings are expected and handled (note it cannot catch messages a library prints straight to stderr, such as libpng's `libpng error:` lines); `LammpsWrapper::lastErrorMessage()` instead of a hand-managed `getLastErrorMessage()` buffer; `LammpsGui::addMenuAction()` to build menu actions; `monoFontFromSettings()` for the configured fixed-width font; `styleDialogButtons()` to apply the bundled SVG icons to a `QDialogButtonBox`; `toolButtonSize()`/`styleToolButtons()` for square toolbar buttons; `applyWindowFlags()` for the shared output-window WM hints.
+**Shared helpers (prefer over re-rolling).** Use the `StdoutSilencer` RAII guard (`helpers.h`) instead of manual `silenceStdout()`/`restoreStdout()` pairs; the `QtMessageSilencer` RAII guard (`helpers.h`) around a call whose Qt-internal warnings are expected and handled (note it cannot catch messages a library prints straight to stderr, such as libpng's `libpng error:` lines); `LammpsWrapper::lastErrorMessage()` instead of a hand-managed `getLastErrorMessage()` buffer; `LammpsGui::addMenuAction()` to build menu actions; `monoFontFromSettings()` for the configured fixed-width font; `styleDialogButtons()` to apply the bundled SVG icons to a `QDialogButtonBox`; `toolButtonSize()`/`styleToolButtons()` for square toolbar buttons; `applyWindowFlags()` for the shared output-window WM hints; `retireViewMenuBar()` for a docked view's own menu bar (on macOS a `QMenuBar` is a handle on the system-wide bar, so a hidden one left native inside the main window blanks the real menu bar -- hiding it is not enough).
 
 ### String handling & modern C++ conventions
 
@@ -254,12 +254,15 @@ decisions and caveats as binding unless we explicitly revise them here.
 | `src/movieimport.{cpp,h}` | `MovieInfo` + ffprobe/ffmpeg probe and frame-extraction free functions, plus the `MovieImportDialog` confirmation dialog |
 | `src/preferences.{cpp,h}` | Tabbed settings dialog (general, accelerators, snapshot image, editor, charts) |
 | `src/setvariables.{cpp,h}` | Dialog for editing index-style LAMMPS variable name/value pairs |
+| `src/shellaliases.{cpp,h}` | `ShellAliases`: table of aliases defined in every shell the `CommandWindow` starts (works around rc sections gated on a terminal, and `ls` dropping its column format off one) |
 | `src/tutorialwizard.{cpp,h}` | Step-by-step wizard for setting up and launching LAMMPS tutorials |
 | `src/tutorials.{cpp,h}` | `TutorialCollection` metadata/registry for the available tutorial collections |
 | `src/fileviewer.{cpp,h}` | Read-only text viewer for files referenced in input scripts |
 | `src/aboutdialog.{cpp,h}` | Auto-scrolling About dialog showing LAMMPS version and style info |
 | `src/urldownloader.{cpp,h}` | HTTPS file downloader (respects `https_proxy` setting; stall timeout + abort) |
 | `src/downloadprogress.{cpp,h}` | Splash-style transient progress dialog with Cancel for batch downloads (tutorial wizard) |
+| `src/commandwindow.{cpp,h}` | `CommandWindow`: shell prompt with scrollback; forwards typed lines to one persistent `$SHELL`/`%COMSPEC%` process, tracks its cwd via a sentinel. Not a terminal emulator (no PTY, `TERM=dumb`) |
+| `src/windowlayout.{cpp,h}` | `WindowLayout` + `ViewSlot` + `LayoutMode`: presentation policy for the output views (show/hide/toggle); implements both the individual-windows and the `QDockWidget` docked layout, selected by the `Keys::DOCKED` preference |
 | `src/helpers.{cpp,h}` | Platform utilities, dialog/font/toolbar helpers, stdout and Qt-message silencing |
 | `src/qaddon.{cpp,h}` | Utility widgets: `QHline`, `QColorCompleter`, `QColorValidator`, `VerticalLabel` |
 | `src/rangebandslider.{cpp,h}` | Horizontal `QSlider` that paints an active sub-range on its track (distinct from the third-party `rangeslider`) |

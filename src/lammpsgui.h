@@ -42,6 +42,7 @@ class QWizardPage;
 
 class ChartWindow;
 class CodeEditor;
+class CommandWindow;
 class DownloadProgress;
 class GeneralTab;
 class Highlighter;
@@ -53,6 +54,7 @@ class SlideShow;
 class StdCapture;
 class TutorialWizard;
 class URLDownloader;
+class WindowLayout;
 
 /**
  * @brief Main application window for LAMMPS-GUI
@@ -116,17 +118,82 @@ public:
     LammpsGui &operator=(LammpsGui &&)      = delete;
 
 protected:
-    /** @brief Open a file in the editor */
-    void openFile(const QString &filename);
-
-    /** @brief Open a file in a read-only viewer dialog */
-    void viewFile(const QString &filename);
-
     /** @brief Read a restart file into LAMMPS and open the inspection windows */
     void inspectFile(const QString &filename);
 
     /** @brief Write current editor content to a file */
     void writeFile(const QString &filename);
+
+public:
+    /**
+     * @brief Load a file into the editor
+     * @param filename File to edit; nothing happens if it is empty
+     *
+     * Ends a running simulation and closes the output windows, and offers to
+     * save the current buffer first if it was changed.  Also reachable from the
+     * command window's "edit".
+     */
+    void openFile(const QString &filename);
+
+    /**
+     * @brief Plot the columns of a data file, asking which ones
+     * @param fileName Data file to read
+     * @return false only if the user canceled the column dialog
+     *
+     * The return value lets a caller with several files to plot stop at the
+     * first cancel rather than ask again for each of the rest.  Also reachable
+     * from the command window's "plot".
+     */
+    bool plotFile(const QString &fileName);
+
+    /**
+     * @brief Open a file in a read-only text viewer
+     * @param filename File to show; nothing happens if it is empty
+     *
+     * Refuses an image or a movie file, which belong in openImageFiles(), and a
+     * binary one, which belongs nowhere.  Also reachable from the command
+     * window's "open".
+     */
+    void viewFile(const QString &filename);
+
+    /**
+     * @brief Open image or movie files in a slide show viewer
+     * @param files Images and movies to show together in one viewer
+     *
+     * The list is taken as given: openImages() collects it from a file dialog,
+     * the command window's "open" from a shell that has expanded it.  Movie
+     * files are offered for frame extraction as they are added, which is why
+     * the viewer is shown before they are.
+     */
+    void openImageFiles(const QStringList &files);
+
+    /**
+     * @brief The menus that act on the application rather than on one view
+     * @return Run, View, Tutorials and About, in the order they should appear
+     *
+     * These are owned by the main window but shown by every window that has a
+     * menu bar: a QMenu can be added to more than one QMenuBar, which puts the
+     * *same* actions there rather than duplicates.  That is what lets a run be
+     * started or stopped from any window, and it is also why the accelerators
+     * stay unambiguous -- one action matches once, however many menus show it.
+     */
+    QList<QMenu *> sharedMenus() const;
+
+    /**
+     * @brief Put the focused view's own menu at the front of the menu bar
+     * @param focused Widget that just took the keyboard focus
+     *
+     * Combined layout only; does nothing with individual windows, where each
+     * window carries its own menu bar.
+     */
+    void updateMenuBarForFocus(QWidget *focused);
+
+protected:
+    /** @brief Set the editor window title from the current file and run number
+     *
+     * In the docked layout the views are named by their dock tab and no longer
+     * carry a window title with the run number, so the editor title shows it. */
+    void updateEditorTitle(const QString &file);
 
     /** @brief Update the recent files list */
     void updateRecents(const QString &filename = "");
@@ -357,6 +424,14 @@ private slots:
     /** @brief View the log window */
     void viewLog();
 
+    /** @brief Toggle the shell prompt window from the View menu
+     *
+     * On first use there is nothing to hide, so it opens the window. */
+    void viewCommand();
+
+    /** @brief Open and raise the shell prompt window (Run menu) */
+    void openCommandWindow();
+
     /** @brief View current variable definitions */
     void viewVariables();
 
@@ -444,6 +519,25 @@ private:
     /** @brief Create and show/hide the thermo chart window for a run */
     void createChartWindow(QSettings &settings);
 
+    /** @brief Say in the log window when the output capture cannot work
+     *
+     * The failure is otherwise silent: printf() reports success and the
+     * runtime drops the bytes.  Must be called after createLogWindow(). */
+    void reportCaptureFailure();
+
+    /** @brief Prove that the library's own output reaches the capture
+     *
+     * Pushes a marker line through the LAMMPS library and drains it from the
+     * capture again; a marker that does not return sets a warning naming the
+     * loaded library file, shown by reportCaptureFailure().  Must run after
+     * beginCapture() and before the runner thread starts. */
+    void verifyLibraryCapture();
+
+    /** @brief Create the shell prompt window if it does not exist yet
+     *
+     * The shell starts in the directory of the current input file. */
+    void createCommandWindow();
+
     /** @brief Warn (modal) if the stdout capture buffer usage was high */
     void warnHighBufferUsage();
 
@@ -514,32 +608,36 @@ private:
     // Central GUI elements
     CodeEditor *textEdit;           ///< Custom code editor widget
     QMenuBar *menubar;              ///< Menu bar with menus and actions
+    QMenu *filemenu;                ///< Editor File menu, swapped out for a view's own when docked
+    QMenu *editmenu;                ///< Editor Edit menu, shown only for the editor
+    QMenu *currentviewmenu;         ///< View menu currently at the front of the bar
+    QMenu *runmenu;                 ///< Run menu, shared with the other windows
+    QMenu *viewmenu;                ///< View menu, shared with the other windows
+    QMenu *tutorialmenu;            ///< Tutorials menu, shared with the other windows
+    QMenu *aboutmenu;               ///< About menu, shared with the other windows
     QStatusBar *statusbar;          ///< status bar
     QList<QAction *> recentActions; ///< list of actions for recent files
 
-    LammpsSyntax syntax;       ///< Syntax registry for highlighting and input checking
-    bool dryRunActive = false; ///< current run is an input check dry run
-    Highlighter *highlighter;  ///< Syntax highlighter for LAMMPS input
-    StdCapture *capturer;      ///< Captures stdout/stderr from LAMMPS
-    QLabel *status;            ///< Status bar label for general status
-    QLabel *cpuuse;            ///< Status bar label for CPU usage
-    int lastCpuBucket;         ///< Last applied cpuuse color bucket (-1 = none yet)
-    LogWindow *logwindow;      ///< Window displaying LAMMPS output log
-    ImageViewer *imagewindow;  ///< Window for viewing single images
-    ChartWindow *chartwindow;  ///< Window for displaying charts
-    /// Chart windows of previous runs kept open for comparison when the
-    /// "replace on new run" preference is off. They delete themselves when
-    /// closed (the QPointer entries reset to null) and any still-open
-    /// windows are deleted when the main window is destroyed.
-    QList<QPointer<ChartWindow>> oldChartWindows;
-    SlideShow *slideshow;    ///< Window for image slideshow
-    QTimer *logupdater;      ///< Timer for periodic log updates
-    QLabel *dirstatus;       ///< Status bar label showing current directory
-    QProgressBar *progress;  ///< Progress bar for long operations
-    Preferences *prefdialog; ///< Preferences dialog
-    QLabel *lammpsstatus;    ///< Status bar label for LAMMPS state
-    QLabel *varwindow;       ///< Window showing variable definitions
-    TutorialWizard *wizard;  ///< Tutorial wizard dialog
+    LammpsSyntax syntax;          ///< Syntax registry for highlighting and input checking
+    bool dryRunActive = false;    ///< current run is an input check dry run
+    Highlighter *highlighter;     ///< Syntax highlighter for LAMMPS input
+    StdCapture *capturer;         ///< Captures stdout/stderr from LAMMPS
+    QLabel *status;               ///< Status bar label for general status
+    QLabel *cpuuse;               ///< Status bar label for CPU usage
+    int lastCpuBucket;            ///< Last applied cpuuse color bucket (-1 = none yet)
+    LogWindow *logwindow;         ///< Window displaying LAMMPS output log
+    ImageViewer *imagewindow;     ///< Window for viewing single images
+    ChartWindow *chartwindow;     ///< Window for displaying charts
+    SlideShow *slideshow;         ///< Window for image slideshow
+    CommandWindow *commandwindow; ///< Window with a shell prompt
+    QTimer *logupdater;           ///< Timer for periodic log updates
+    QLabel *dirstatus;            ///< Status bar label showing current directory
+    QProgressBar *progress;       ///< Progress bar for long operations
+    Preferences *prefdialog;      ///< Preferences dialog
+    QLabel *lammpsstatus;         ///< Status bar label for LAMMPS state
+    QLabel *varwindow;            ///< Window showing variable definitions
+    TutorialWizard *wizard;       ///< Tutorial wizard dialog
+    WindowLayout *viewlayout;     ///< Presentation policy for the output windows above
 
     /**
      * @brief Container for inspect dialog widgets
@@ -547,9 +645,11 @@ private:
      * Holds references to the three tabs (info, data, image) in an inspect dialog
      */
     struct InspectData {
-        QWidget *info;  ///< Information tab widget
-        QWidget *data;  ///< Data viewing tab widget
-        QWidget *image; ///< Image rendering tab widget
+        /// Held weakly: a view that is closed deletes itself, and purgeInspectList()
+        /// reaps the entry rather than the widget in that case
+        QPointer<QWidget> info;  ///< Information tab widget
+        QPointer<QWidget> data;  ///< Data viewing tab widget
+        QPointer<QWidget> image; ///< Image rendering tab widget
     };
     QList<InspectData *> inspectList; ///< List of open inspect dialogs
 
@@ -562,6 +662,7 @@ private:
     LammpsRunner *runner;                ///< Thread for running LAMMPS simulations
     QString docver;                      ///< LAMMPS documentation version string
     QString pluginPath;                  ///< Path to LAMMPS shared library (plugin mode)
+    QString capturewarning;              ///< Library-side capture check result for this run
     int runCounter;                      ///< Counter for simulation runs
     int extendSteps;                     ///< Last used step count of the Extend Run dialog
     std::vector<std::string> lammpsArgs; ///< Command-line arguments for LAMMPS

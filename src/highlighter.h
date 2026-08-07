@@ -30,7 +30,11 @@
  * the context of their logical command.  Command words keep the historically
  * grown per-category colors; arguments are colored by their role from the
  * LammpsSyntax command spec table plus lexical classes (numbers, strings,
- * comments, variable references, special words).  Command and style names
+ * comments, variable references, special words).  Keywords that embed a
+ * second command in a command line -- the "modify" of `write_dump` and the
+ * "dump" of `rerun` -- are shown in the color of the command they stand for
+ * (`dump_modify` and `read_dump`, respectively) and the arguments after
+ * them are colored as arguments of that command.  Command and style names
  * that are unknown to the populated syntax registry are flagged with a wavy
  * underline, except for the word currently being edited at the cursor.
  */

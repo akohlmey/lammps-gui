@@ -29,7 +29,7 @@
       <caption>LAMMPS-GUI slideshow window</caption>
     </screenshot>
     <screenshot>
-      <image>https://lammps-gui.lammps.org/_images/lammps-gui-image.png</image>
+      <image>https://lammps-gui.lammps.org/_images/lammps-gui-image-water.png</image>
       <caption>LAMMPS-GUI snapshot image window</caption>
     </screenshot>
   </screenshots>
@@ -58,20 +58,29 @@
   <content_rating type="oars-1.1" />
 
   <releases>
+    <!-- provisional timestamp; update when 3.1.0 is actually released -->
+    <release version="3.1.0" timestamp="1785583467">
+      <description>
+        <p>Feature release adding an alternative single-window layout and a command window.</p>
+        <ul>
+          <li>Add a preference to combine the editor and all output views into a single main window with dockable panels: charts, image, and slide show in a tabbed group on the right, output, variables, and command window tabbed across the bottom; panel proportions are kept across resizes and sessions</li>
+          <li>Add a Command window: a shell prompt with scrollback next to the simulation, with persistent history, command and file name completion, configurable aliases, and kill/interrupt/restart controls</li>
+          <li>Add a preference selecting which of the installed shells the Command window starts</li>
+          <li>Show the application-wide Run, View, Tutorials, and About menus in all output windows, so a run can be started or stopped from any of them; Output, Slide Show, and file viewer windows gain a File menu</li>
+          <li>Reuse the Output and Charts windows across runs instead of recreating them; the options to keep old Output, Charts, and Image windows have been removed</li>
+          <li>Move the Preferences entries from the Edit menu to the View menu and add an option to open the combined main window maximized</li>
+          <li>Fix LAMMPS screen output capture on Windows, which only worked when launched from a console; the capture now verifies itself and reports into the Output window when the library's output cannot reach it</li>
+          <li>Remember the LAMMPS shared library path per compiler toolchain, so differently built versions of LAMMPS-GUI on one machine no longer silently use each other's library</li>
+          <li>Remember separate main window sizes for the two layout styles, and report the selected layout in the About dialog</li>
+        </ul>
+      </description>
+    </release>
     <release version="3.0.7" timestamp="1785424779">
       <description>
         <p>Maintenance release with small feature additions and bug fixes.
         The bulk of the changes are actually implemented in LAMMPS:</p>
         <ul>
-          <li>add GUI support for dump image enhancements in LAMMPS:</li>
-          <ul>
-            <li>depth cueing</li>
-            <li>depth of focus</li>
-            <li>specular settings (change appearance of material)</li>
-            <li>outline drawing style</li>
-            <li>set SSAO samples to adjust rendering speed</li>
-            <li>adjust image gamma value</li>
-          </ul>
+          <li>add GUI support for dump image enhancements in LAMMPS: depth cueing, depth of focus, specular settings (change appearance of material), outline drawing style, set SSAO samples to adjust rendering speed, adjust image gamma value</li>
           <li>fix warnings indicated by coverity scan</li>
         </ul>
       </description>

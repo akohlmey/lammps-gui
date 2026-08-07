@@ -63,7 +63,12 @@ CodeEditor::CodeEditor(QWidget *parent) :
     colorComp(new QCompleter(this)), imagekwComp(new QCompleter(this)), highlight(NO_HIGHLIGHT),
     highlighterror(false), reformatOnReturn(false), automaticCompletion(true), docver("")
 {
-    helpAction = new QShortcut(QKeySequence::fromString("Ctrl+?"), parent);
+    // owned by this widget, not by the main window: a QShortcut parented to the
+    // main window is a sibling of this editor, and when the main window deletes
+    // its children the two race -- whichever goes first leaves the other with a
+    // dangling pointer.  Qt::WindowShortcut resolves to the containing window
+    // either way, so the scope is unchanged.
+    helpAction = new QShortcut(QKeySequence::fromString("Ctrl+?"), this);
     connect(helpAction, &QShortcut::activated, this, &CodeEditor::getHelp);
 
     // set up each completer with consistent settings
@@ -129,14 +134,9 @@ CodeEditor::CodeEditor(QWidget *parent) :
     setCursorWidth(2);
 }
 
-CodeEditor::~CodeEditor()
-{
-    // helpAction's parent is the main window (not this widget), so we
-    // must delete it explicitly.  All other children (lineNumberArea,
-    // completers) are Qt children of this widget and are automatically
-    // deleted by Qt's parent-child ownership.
-    delete helpAction;
-}
+// every child (helpAction, lineNumberArea, the completers) is a Qt child of
+// this widget and is deleted by Qt's parent-child ownership
+CodeEditor::~CodeEditor() = default;
 
 int CodeEditor::lineNumberAreaWidth()
 {

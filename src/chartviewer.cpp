@@ -53,6 +53,7 @@
 #include <QMessageBox>
 #include <QPushButton>
 #include <QSettings>
+#include <QSignalBlocker>
 #include <QSpinBox>
 #include <QStringList>
 #include <QTextStream>
@@ -218,7 +219,20 @@ ChartWindow::ChartWindow(const QString &_filename, LammpsGui *_lammpsgui, QWidge
     row2->setSpacing(LAYOUT_SPACING);
     top->setSpacing(LAYOUT_SPACING);
 
-    menu->addMenu(file);
+    file->setObjectName(Cfg::VIEW_FILE_MENU);
+    if (dockedLayout()) {
+        // docked, the main window carries one menu bar for all panels and puts
+        // this menu at its front while the panel has the focus
+        retireViewMenuBar(menu);
+    } else {
+        menu->addMenu(file);
+        // the application-wide menus are the main window's own objects, so a run
+        // can be started or stopped from here without a second set of actions to
+        // keep in step (and without a second binding for their accelerators)
+        if (lammpsgui)
+            for (auto *shared : lammpsgui->sharedMenus())
+                menu->addMenu(shared);
+    }
     menu->setSizePolicy(QSizePolicy::Minimum, QSizePolicy::Minimum);
 
     // workaround for incorrect highlight bug on macOS
@@ -226,24 +240,13 @@ ChartWindow::ChartWindow(const QString &_filename, LammpsGui *_lammpsgui, QWidge
     dummy->hide();
 
     // plot title and axis labels
-    settings.beginGroup(Keys::GROUP_CHARTS);
-    QString mytitle;
-    if (lammpsgui) {
-        // live simulation: use the configured title template
-        mytitle = settings.value(Keys::TITLE, Cfg::CHART_TITLE_DEFAULT)
-                      .toString()
-                      .replace("%f", filename);
-    } else {
-        // standalone/plot mode: just the base filename, no "Thermo:" prefix
-        mytitle = QFileInfo(filename).fileName();
-    }
-    chartTitle  = new QLineEdit(mytitle);
+    // the settings-derived contents of these widgets are filled in by the
+    // applyChartSettings() call further down (shared with reset())
+    chartTitle  = new QLineEdit;
     chartYlabel = new QLineEdit("");
     if (!lammpsgui) chartXlabel = new QLineEdit("");
 
     // plot smoothing
-    int smoothchoice = settings.value(Keys::SMOOTHCHOICE, 0).toInt();
-    smoothFlagsFromChoice(smoothchoice, doRaw, doSmooth);
     // list of choices must be kept in sync with list in preferences
     smooth = new QComboBox;
     smooth->addItem("Raw");
@@ -251,22 +254,16 @@ ChartWindow::ChartWindow(const QString &_filename, LammpsGui *_lammpsgui, QWidge
     // post-process fit/function replaces it and overrides the label with its name
     smooth->addItem("Smooth");
     smooth->addItem("Both");
-    smooth->setCurrentIndex(smoothchoice);
     window = new QSpinBox;
     window->setRange(Cfg::SMOOTH_WINDOW_MIN, Cfg::SMOOTH_WINDOW_MAX);
-    window->setValue(settings.value(Keys::SMOOTHWINDOW, Cfg::SMOOTH_WINDOW_DEFAULT).toInt());
-    window->setEnabled(doSmooth);
     window->setToolTip("Smoothing Window Size");
     // no keyboard tracking: valueChanged then fires once per committed edit
     // instead of re-smoothing on every typed digit
     window->setKeyboardTracking(false);
     order = new QSpinBox;
     order->setRange(Cfg::SMOOTH_ORDER_MIN, Cfg::SMOOTH_ORDER_MAX);
-    order->setValue(settings.value(Keys::SMOOTHORDER, Cfg::SMOOTH_ORDER_DEFAULT).toInt());
-    order->setEnabled(doSmooth);
     order->setToolTip("Smoothing Order");
     order->setKeyboardTracking(false);
-    settings.endGroup();
 
     columns = new QComboBox;
     row1->addWidget(menu);
@@ -330,14 +327,6 @@ ChartWindow::ChartWindow(const QString &_filename, LammpsGui *_lammpsgui, QWidge
     auto *ppBtn    = makeToolBtn(":/icons/chart-smooth.svg", "Postprocess...");
     // square toolbar buttons with a snug, uniform icon (shared policy)
     styleToolButtons(toolButtonSize(styleBtn), {styleBtn, refBtn, ppBtn});
-    settings.beginGroup(Keys::GROUP_CHARTS);
-    legendPos       = static_cast<LegendPos>(settings.value(Keys::LEGEND, 0).toInt());
-    double defRefPt = font().pointSizeF();
-    if (defRefPt <= 0.0) defRefPt = 9.0; // pixel-size app fonts report <= 0 pt
-    refLabelSize  = settings.value(Keys::REFLABELSIZE, defRefPt).toDouble();
-    refLabelDist  = settings.value(Keys::REFLABELDIST, 4.0).toDouble();
-    refLabelBoxed = settings.value(Keys::REFLABELBOX, false).toBool();
-    settings.endGroup();
     connect(styleBtn, &QPushButton::clicked, this, &ChartWindow::changeStyle);
     connect(refBtn, &QPushButton::clicked, this, &ChartWindow::referenceLines);
     connect(ppBtn, &QPushButton::clicked, this, &ChartWindow::postProcess);
@@ -357,7 +346,7 @@ ChartWindow::ChartWindow(const QString &_filename, LammpsGui *_lammpsgui, QWidge
                   &ChartWindow::saveAs);
     auto *copyAct = addMenuAction(file, "Copy &Graph to Clipboard", ":/icons/edit-copy.svg", this,
                                   &ChartWindow::copy);
-    copyAct->setShortcut(QKeySequence(QKeySequence::Copy));
+    scopeShortcut(this, copyAct, QKeySequence(QKeySequence::Copy));
     addMenuAction(file, "&Export data to CSV...", ":/icons/csv-file-icon.svg", this,
                   &ChartWindow::exportCsv);
     addMenuAction(file, "Export data to &Gnuplot...", ":/icons/txt-file-icon.svg", this,
@@ -379,23 +368,24 @@ ChartWindow::ChartWindow(const QString &_filename, LammpsGui *_lammpsgui, QWidge
     file->addSeparator();
     auto *stopAct =
         addMenuAction(file, "Stop &Run", ":/icons/process-stop.svg", this, &ChartWindow::stopRun);
-    stopAct->setShortcut(QKeySequence(Qt::CTRL | Qt::Key_Slash));
+    scopeShortcut(this, stopAct, QKeySequence(Qt::CTRL | Qt::Key_Slash));
     // without a live simulation there is nothing to stop
     if (!lammpsgui) stopAct->setVisible(false);
     auto *closeAct =
         addMenuAction(file, "&Close", ":/icons/window-close.svg", this, &QWidget::close);
-    closeAct->setShortcut(QKeySequence(Qt::CTRL | Qt::Key_W));
+    scopeShortcut(this, closeAct, QKeySequence(Qt::CTRL | Qt::Key_W));
     auto *quitAct =
         addMenuAction(file, "&Quit", ":/icons/application-exit.svg", this, &ChartWindow::quit);
-    quitAct->setShortcut(QKeySequence(Qt::CTRL | Qt::Key_Q));
+    scopeShortcut(this, quitAct, QKeySequence(Qt::CTRL | Qt::Key_Q));
     if (!lammpsgui) quitAct->setVisible(false); // quit == close in standalone mode
     auto *layout = new QVBoxLayout;
     layout->addLayout(top);
     layout->setSpacing(LAYOUT_SPACING);
     // the single shared chart view; it renders whichever column is active
     viewer = new ChartViewer;
-    viewer->setLegendPos(legendPos);
-    viewer->setRefLabelStyle(refLabelSize, refLabelDist, refLabelBoxed);
+    // seed the settings-derived widget contents; must stay ahead of the
+    // connect() calls below so it does not trigger the change slots
+    applyChartSettings();
     layout->addWidget(viewer);
     setLayout(layout);
 
@@ -411,9 +401,11 @@ ChartWindow::ChartWindow(const QString &_filename, LammpsGui *_lammpsgui, QWidge
     connect(yrange, &RangeSlider::sliderMoved, this, &ChartWindow::updateYRange);
 
     applyWindowFlags(this);
-    installEventFilter(this);
-    resize(settings.value(Keys::CHARTX, Cfg::CHART_DEFAULT_WIDTH).toInt(),
-           settings.value(Keys::CHARTY, Cfg::CHART_DEFAULT_HEIGHT).toInt());
+    // in a docked layout the dock area decides the size, and the remembered
+    // one belongs to a free-floating window, so it is neither read nor written
+    if (!dockedLayout())
+        resize(settings.value(Keys::CHARTX, Cfg::CHART_DEFAULT_WIDTH).toInt(),
+               settings.value(Keys::CHARTY, Cfg::CHART_DEFAULT_HEIGHT).toInt());
 }
 
 int ChartWindow::getStep() const
@@ -424,6 +416,58 @@ int ChartWindow::getStep() const
             return static_cast<int>(series->at(series->count() - 1).x());
     }
     return -1;
+}
+
+void ChartWindow::applyChartSettings()
+{
+    QSettings settings;
+    settings.beginGroup(Keys::GROUP_CHARTS);
+
+    if (lammpsgui) {
+        // live simulation: use the configured title template
+        chartTitle->setText(settings.value(Keys::TITLE, Cfg::CHART_TITLE_DEFAULT)
+                                .toString()
+                                .replace("%f", filename));
+    } else {
+        // standalone/plot mode: just the base filename, no "Thermo:" prefix
+        chartTitle->setText(QFileInfo(filename).fileName());
+    }
+
+    // plot smoothing; block the change slots, the derived state is applied here
+    const int smoothchoice = settings.value(Keys::SMOOTHCHOICE, 0).toInt();
+    smoothFlagsFromChoice(smoothchoice, doRaw, doSmooth);
+    {
+        const QSignalBlocker blockSmooth(smooth);
+        const QSignalBlocker blockWindow(window);
+        const QSignalBlocker blockOrder(order);
+        smooth->setCurrentIndex(smoothchoice);
+        window->setValue(settings.value(Keys::SMOOTHWINDOW, Cfg::SMOOTH_WINDOW_DEFAULT).toInt());
+        order->setValue(settings.value(Keys::SMOOTHORDER, Cfg::SMOOTH_ORDER_DEFAULT).toInt());
+    }
+    window->setEnabled(doSmooth);
+    order->setEnabled(doSmooth);
+
+    legendPos       = static_cast<LegendPos>(settings.value(Keys::LEGEND, 0).toInt());
+    double defRefPt = font().pointSizeF();
+    if (defRefPt <= 0.0) defRefPt = 9.0; // pixel-size app fonts report <= 0 pt
+    refLabelSize  = settings.value(Keys::REFLABELSIZE, defRefPt).toDouble();
+    refLabelDist  = settings.value(Keys::REFLABELDIST, 4.0).toDouble();
+    refLabelBoxed = settings.value(Keys::REFLABELBOX, false).toBool();
+    settings.endGroup();
+
+    viewer->setLegendPos(legendPos);
+    viewer->setRefLabelStyle(refLabelSize, refLabelDist, refLabelBoxed);
+}
+
+void ChartWindow::reset(const QString &_filename)
+{
+    filename = _filename;
+    resetCharts();
+    refLines.clear();
+    // chart preferences are read when a window is created, so a reused window
+    // has to pick up any edits made since the previous run here
+    applyChartSettings();
+    chartYlabel->clear();
 }
 
 void ChartWindow::resetCharts()
@@ -1470,32 +1514,12 @@ void ChartWindow::changeChart(int)
 
 void ChartWindow::closeEvent(QCloseEvent *event)
 {
-    QSettings settings;
-    if (!isMaximized()) {
+    if (!isMaximized() && !dockedLayout()) {
+        QSettings settings;
         settings.setValue(Keys::CHARTX, width());
         settings.setValue(Keys::CHARTY, height());
     }
     QWidget::closeEvent(event);
-}
-
-// event filter to handle "Ambiguous shortcut override" issues
-bool ChartWindow::eventFilter(QObject *watched, QEvent *event)
-{
-    if (event->type() == QEvent::ShortcutOverride) {
-        auto *keyEvent = dynamic_cast<QKeyEvent *>(event);
-        if (!keyEvent) return QWidget::eventFilter(watched, event);
-        if (keyEvent->modifiers().testFlag(Qt::ControlModifier) && keyEvent->key() == '/') {
-            stopRun();
-            event->accept();
-            return true;
-        }
-        if (keyEvent->modifiers().testFlag(Qt::ControlModifier) && keyEvent->key() == 'W') {
-            close();
-            event->accept();
-            return true;
-        }
-    }
-    return QWidget::eventFilter(watched, event);
 }
 
 /* -------------------------------------------------------------------- */

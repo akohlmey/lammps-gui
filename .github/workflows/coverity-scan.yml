@@ -31,7 +31,6 @@ jobs:
       uses: actions/checkout@v7
       with:
         ref: develop
-        fetch-depth: 1
 
     - name: Decide whether there is anything new to scan
       id: changes
@@ -114,7 +113,7 @@ jobs:
         COVERITY_EMAIL: ${{ secrets.COVERITY_SCAN_EMAIL }}
       run: |
         tar -czf cov-int.tgz cov-int
-        version="$(git rev-parse --short HEAD)"
+        version="$(git describe HEAD)"
         project_enc="$(jq -rn --arg v "$COVERITY_PROJECT" '$v|@uri')"
         curl -sS --fail-with-body \
              --form token="${COVERITY_TOKEN}" \

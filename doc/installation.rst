@@ -109,9 +109,9 @@ or browse dialog on the first invocation.  When the flatpak version
 is updated, it may be required to reset the shared library location
 with ``-p ""`` and re-download the latest version.
 
-.. versionchanged:: 3.0.1
+.. versionchanged:: 3.1
 
-   The minimum LAMMPS version required by LAMMPS-GUI is now 4 July 2026
+   The minimum LAMMPS version required by LAMMPS-GUI is now 27 August 2026
 
 GPU support and MPI parallelization
 -----------------------------------

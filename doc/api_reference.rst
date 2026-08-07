@@ -365,6 +365,24 @@ SetVariables Class
 
 -----
 
+ShellAliases Class
+------------------
+
+.. doxygenclass:: ShellAliases
+   :members:
+   :protected-members:
+
+-----
+
+ShellPrompt Class
+-----------------
+
+.. doxygenclass:: ShellPrompt
+   :members:
+   :protected-members:
+
+-----
+
 Index Variable Helpers
 ----------------------
 
@@ -457,6 +475,28 @@ AboutDialog Class
 
 Utility Components
 ==================
+
+CommandWindow Class
+-------------------
+
+.. doxygenclass:: CommandWindow
+   :members:
+   :protected-members:
+
+-----
+
+WindowLayout Class
+------------------
+
+.. doxygenenum:: ViewSlot
+
+.. doxygenenum:: LayoutMode
+
+.. doxygenclass:: WindowLayout
+   :members:
+   :protected-members:
+
+-----
 
 URLDownloader Class
 -------------------
@@ -634,11 +674,13 @@ Nonlinear Least Squares
 -----------------------
 
 Compact, self-contained (Qt-free) Levenberg-Marquardt solver
-(``src/levmar.h``) for nonlinear least-squares fits. The model is supplied as a
-residual/Jacobian callback, so the core is independent of how the model is
-expressed; it is driven by the custom-fit code with LeptonMini expressions and
-their symbolic derivatives, and solves the damped normal equations with the
-leastsquares LU solver.
+(``src/levmar.h``) for nonlinear least-squares fits. The model is
+supplied as a residual/Jacobian callback, so the core is independent of
+how the model is expressed; it is driven by the custom-fit code with
+LeptonMini expressions and their symbolic derivatives, and solves the
+damped normal equations with the leastsquares LU solver.  LeptonMini is
+based on the Lepton library by Peter Eastman and OpenMM contributors
+distributed under the :choosealicense:`MIT`.
 
 .. doxygenfile:: levmar.h
 
@@ -647,11 +689,13 @@ leastsquares LU solver.
 Custom-Function Evaluation and Fitting
 --------------------------------------
 
-Evaluation and nonlinear fitting of user-supplied mathematical expressions
-(``src/customfunc.h``) via the vendored LeptonMini parser, used for
-custom-function plotting and custom curve fits in the chart post-processing
-dialog. The fit builds its Jacobian from LeptonMini's analytic derivatives and
-minimizes with the Levenberg-Marquardt solver.
+Evaluation and nonlinear fitting of user-supplied mathematical
+expressions (``src/customfunc.h``) via the vendored LeptonMini parser,
+used for custom-function plotting and custom curve fits in the chart
+post-processing dialog. The fit builds its Jacobian from LeptonMini's
+analytic derivatives and minimizes with the Levenberg-Marquardt solver.
+LeptonMini is based on the Lepton library by Peter Eastman and OpenMM
+contributors distributed under the :choosealicense:`MIT`.
 
 .. doxygenfile:: customfunc.h
 

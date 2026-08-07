@@ -14,6 +14,7 @@
 #include "aboutdialog.h"
 #include "chartviewer.h"
 #include "codeeditor.h"
+#include "commandwindow.h"
 #include "downloadprogress.h"
 #include "fileviewer.h"
 #include "findandreplace.h"
@@ -32,6 +33,7 @@
 #include "syntaxcheck.h"
 #include "tutorialwizard.h"
 #include "urldownloader.h"
+#include "windowlayout.h"
 
 #include <QAction>
 #include <QApplication>
@@ -56,6 +58,7 @@
 #include <QProcess>
 #include <QProgressBar>
 #include <QPushButton>
+#include <QScreen>
 #include <QSettings>
 #include <QStandardPaths>
 #include <QStatusBar>
@@ -146,7 +149,9 @@ void LammpsGui::setupUi(QSettings &settings, QFont &allFont, QFont &monoFont)
     textEdit->setEnabled(true);
     textEdit->setAcceptDrops(true);
     textEdit->setStyleSheet(bannerstyle);
-    textEdit->setMinimumSize(Cfg::MINIMUM_WIDTH, Cfg::MINIMUM_HEIGHT);
+    // combined layout: the editor shares the window with the dock areas, so a
+    // minimum of its own is a floor under all of them
+    if (!dockedLayout()) textEdit->setMinimumSize(Cfg::MINIMUM_WIDTH, Cfg::MINIMUM_HEIGHT);
 
     // set up menu bar and menus with their actions and shortcuts
     menubar = new QMenuBar(this);
@@ -157,6 +162,27 @@ void LammpsGui::setupUi(QSettings &settings, QFont &allFont, QFont &monoFont)
     createTutorialMenu();
     createAboutMenu();
     setMenuBar(menubar);
+
+    // publish the menu accelerators so the output views can leave those
+    // sequences to this window when they are docked inside it
+    {
+        // addMenuAction() parents the actions to this window rather than to the
+        // menu they are shown in, so this is where they are found
+        QList<QKeySequence> menukeys;
+        for (const auto *action : findChildren<QAction *>())
+            if (!action->shortcut().isEmpty()) menukeys << action->shortcut();
+        setMainWindowShortcuts(menukeys);
+
+        // The combined layout swaps File and Edit out of the menu bar while a
+        // panel has the focus, and an action in a menu that is attached nowhere
+        // has no shortcut context left -- Ctrl+Q, Ctrl+N, Ctrl+O and Ctrl+S
+        // would all stop working there.  Associating them with the window keeps
+        // their accelerators alive whichever menu is currently shown.
+        for (auto *menu : {filemenu, editmenu})
+            if (menu)
+                for (auto *action : menu->actions())
+                    addAction(action);
+    }
 
     // Status bar
     createStatusBar();
@@ -189,9 +215,36 @@ void LammpsGui::setupUi(QSettings &settings, QFont &allFont, QFont &monoFont)
     // use default so the background logo is fully shown
     // use last values unless overridden from command-line
     // do not accept a geometry smaller than minimum, revert to default instead
-    if (mainx < Cfg::MINIMUM_WIDTH) mainx = settings.value(Keys::MAINX, 1024).toInt();
-    if (mainy < Cfg::MINIMUM_HEIGHT) mainy = settings.value(Keys::MAINY, 512).toInt();
+    // the two layouts want very different window sizes -- the combined window
+    // has to fit the editor, a dock group beside it and one below -- so each
+    // remembers its own
+    const bool docked = dockedLayout();
+    int defaultx      = docked ? Cfg::DOCK_MAIN_DEFAULT_WIDTH : Cfg::MAIN_DEFAULT_WIDTH;
+    int defaulty      = docked ? Cfg::DOCK_MAIN_DEFAULT_HEIGHT : Cfg::MAIN_DEFAULT_HEIGHT;
+    // the combined default is deliberately large; do not open off-screen with it
+    if (const auto *screen = QGuiApplication::primaryScreen()) {
+        const QRect avail = screen->availableGeometry();
+        defaultx          = qMin(defaultx, avail.width());
+        defaulty          = qMin(defaulty, avail.height());
+    }
+    if (mainx < Cfg::MINIMUM_WIDTH)
+        mainx = settings.value(docked ? Keys::DOCKMAINX : Keys::MAINX, defaultx).toInt();
+    if (mainy < Cfg::MINIMUM_HEIGHT)
+        mainy = settings.value(docked ? Keys::DOCKMAINY : Keys::MAINY, defaulty).toInt();
     resize(mainx, mainy);
+
+    // the docked layout sizes its dock areas relative to the main window, so
+    // this has to come after the resize() above and before the first view
+    viewlayout = new WindowLayout(this, docked ? LayoutMode::Docked : LayoutMode::Windows);
+
+    // combined layout: the leading menus follow the focused panel, and also the
+    // panel the user just asked to see (a click on a tab moves neither focus)
+    if (docked) {
+        connect(qApp, &QApplication::focusChanged, this, [this](QWidget *, QWidget *now) {
+            updateMenuBarForFocus(now);
+        });
+        connect(viewlayout, &WindowLayout::viewActivated, this, &LammpsGui::updateMenuBarForFocus);
+    }
 
     createVariableWindow();
 }
@@ -209,7 +262,9 @@ QAction *LammpsGui::addMenuAction(QMenu *menu, const QString &iconpath, const QS
 
 void LammpsGui::createFileMenu()
 {
-    auto *menu = menubar->addMenu("&File");
+    auto *menu = new QMenu("&File", this);
+    menubar->addMenu(menu);
+    filemenu = menu;
     addMenuAction(menu, ":/icons/document-new.svg", "&New Input File", "Ctrl+N",
                   &LammpsGui::newDocument);
     addMenuAction(menu, ":/icons/document-open.svg", "&Open Input File", "Ctrl+O",
@@ -241,12 +296,18 @@ void LammpsGui::createFileMenu()
     }
     menu->addSeparator();
 
-    addMenuAction(menu, ":/icons/application-exit.svg", "&Quit", "Ctrl+Q", &LammpsGui::quit);
+    // Name the roles rather than leaving macOS to guess them from the label:
+    // it moves these into the application menu by matching the text, which is
+    // fragile and does nothing on the other platforms either way.
+    addMenuAction(menu, ":/icons/application-exit.svg", "&Quit", "Ctrl+Q", &LammpsGui::quit)
+        ->setMenuRole(QAction::QuitRole);
 }
 
 void LammpsGui::createEditMenu()
 {
-    auto *menu = menubar->addMenu("&Edit");
+    auto *menu = new QMenu("&Edit", this);
+    menubar->addMenu(menu);
+    editmenu = menu;
     addMenuAction(menu, ":/icons/edit-undo.svg", "&Undo", "Ctrl+Z", &LammpsGui::undo);
     addMenuAction(menu, ":/icons/edit-redo.svg", "&Redo", "Ctrl+Shift+Z", &LammpsGui::redo);
     menu->addSeparator();
@@ -262,16 +323,56 @@ void LammpsGui::createEditMenu()
     addMenuAction(menu, ":/icons/search.svg", "&Find and Replace...", "Ctrl+F",
                   &LammpsGui::findAndReplace);
     menu->addSeparator();
+}
 
-    addMenuAction(menu, ":/icons/preferences-desktop.svg", "P&references...", "Ctrl+P",
-                  &LammpsGui::preferences);
-    addMenuAction(menu, ":/icons/preferences-reset.svg", "Reset Preferences to &Defaults", "",
-                  &LammpsGui::defaults);
+// Combined layout: one menu bar for the whole window, whose leading menus
+// belong to whichever view has the focus.  The application-wide half never
+// changes, so only the front of the bar is rebuilt.  A view publishes its own
+// menu by object name rather than through a common base class, which is how the
+// dialogs in this code base are wired as well.
+void LammpsGui::updateMenuBarForFocus(QWidget *focused)
+{
+    if (!menubar || !viewlayout || viewlayout->mode() != LayoutMode::Docked) return;
+
+    // Walk up from the focused widget to the view that owns it.  The search has
+    // to stop below this window: searching it would find every view's menu at
+    // once, since the panels are its descendants.  The search within a view is
+    // recursive, because a view may hang its menu off its own menu bar rather
+    // than off itself.
+    QMenu *viewfile = nullptr;
+    for (auto *w = focused; w && w != this; w = w->parentWidget()) {
+        if (auto *found = w->findChild<QMenu *>(Cfg::VIEW_FILE_MENU)) {
+            viewfile = found;
+            break;
+        }
+    }
+    if (viewfile == currentviewmenu) return; // nothing moved between views
+
+    currentviewmenu = viewfile;
+    menubar->clear(); // removes the actions, the menus are owned elsewhere
+    if (viewfile) {
+        menubar->addMenu(viewfile);
+    } else {
+        menubar->addMenu(filemenu);
+        menubar->addMenu(editmenu);
+    }
+    for (auto *shared : sharedMenus())
+        menubar->addMenu(shared);
+}
+
+QList<QMenu *> LammpsGui::sharedMenus() const
+{
+    QList<QMenu *> shared;
+    for (auto *menu : {runmenu, viewmenu, tutorialmenu, aboutmenu})
+        if (menu) shared << menu;
+    return shared;
 }
 
 void LammpsGui::createRunMenu()
 {
-    auto *menu = menubar->addMenu("&Run");
+    auto *menu = new QMenu("&Run", this);
+    menubar->addMenu(menu);
+    runmenu = menu;
     addMenuAction(menu, ":/icons/system-run.svg", "&Run LAMMPS from Editor Buffer", "Ctrl+Return",
                   &LammpsGui::runBuffer);
     addMenuAction(menu, ":/icons/run-file.svg", "Run LAMMPS from &File", "Ctrl+Shift+Return",
@@ -298,6 +399,9 @@ void LammpsGui::createRunMenu()
     addMenuAction(menu, ":/icons/image-viewer.svg", "Create &Image", "Ctrl+I",
                   &LammpsGui::renderImage);
     menu->addSeparator();
+    addMenuAction(menu, ":/icons/utilities-terminal.svg", "Open Comman&d Window", "Ctrl+Shift+X",
+                  &LammpsGui::openCommandWindow);
+    menu->addSeparator();
 
     auto *ovito = addMenuAction(menu, ":/icons/ovito.png", "View in &OVITO", "Ctrl+Shift+O",
                                 &LammpsGui::startExe);
@@ -312,7 +416,9 @@ void LammpsGui::createRunMenu()
 
 void LammpsGui::createViewMenu()
 {
-    auto *menu = menubar->addMenu("&View");
+    auto *menu = new QMenu("&View", this);
+    menubar->addMenu(menu);
+    viewmenu = menu;
     addMenuAction(menu, ":/icons/utilities-terminal.svg", "&Output Window", "Ctrl+Shift+L",
                   &LammpsGui::viewLog);
     addMenuAction(menu, ":/icons/x-office-drawing.svg", "&Charts Window", "Ctrl+Shift+C",
@@ -323,11 +429,39 @@ void LammpsGui::createViewMenu()
                   &LammpsGui::viewSlides);
     addMenuAction(menu, ":/icons/utilities-terminal.svg", "&Variables Window", "Ctrl+Shift+W",
                   &LammpsGui::viewVariables);
+    // no shortcut of its own: Ctrl+Shift+X belongs to Run > Open Command Window
+    addMenuAction(menu, ":/icons/utilities-terminal.svg", "Co&mmand Window", "",
+                  &LammpsGui::viewCommand);
+
+    // Walking the panels is only meaningful while they are panels: with
+    // individual windows this is the window manager's job and its key does it.
+    // The layout is read rather than asked of viewlayout, which does not exist
+    // yet when the menus are built.
+    if (dockedLayout()) {
+        menu->addSeparator();
+        addMenuAction(menu, ":/icons/go-next-2.svg", "&Next Panel", "F6", [this]() {
+            if (viewlayout) viewlayout->focusNextPane(true);
+        });
+        addMenuAction(menu, ":/icons/go-previous-2.svg", "&Previous Panel", "Shift+F6", [this]() {
+            if (viewlayout) viewlayout->focusNextPane(false);
+        });
+    }
+    menu->addSeparator();
+    // this menu decides how the windows are arranged, and the layout style is
+    // itself a preference, so the settings live here rather than in Edit, which
+    // belongs to the editor alone and is not shown while a panel has the focus
+    addMenuAction(menu, ":/icons/preferences-desktop.svg", "P&references...", "Ctrl+P",
+                  &LammpsGui::preferences)
+        ->setMenuRole(QAction::PreferencesRole);
+    addMenuAction(menu, ":/icons/preferences-reset.svg", "Reset Preferences to &Defaults", "",
+                  &LammpsGui::defaults);
 }
 
 void LammpsGui::createTutorialMenu()
 {
-    auto *menu              = menubar->addMenu("&Tutorials");
+    auto *menu = new QMenu("&Tutorials", this);
+    menubar->addMenu(menu);
+    tutorialmenu            = menu;
     const auto &collections = tutorialCollections();
     for (int c = 0; c < collections.size(); ++c) {
         const auto &coll = collections[c];
@@ -370,9 +504,12 @@ void LammpsGui::createTutorialMenu()
 
 void LammpsGui::createAboutMenu()
 {
-    auto *menu = menubar->addMenu("&About");
+    auto *menu = new QMenu("&About", this);
+    menubar->addMenu(menu);
+    aboutmenu = menu;
     addMenuAction(menu, ":/icons/lammps-gui-icon-128x128.png", "&About LAMMPS-GUI", "Ctrl+Shift+A",
-                  &LammpsGui::about);
+                  &LammpsGui::about)
+        ->setMenuRole(QAction::AboutRole);
     addMenuAction(menu, ":/icons/help-faq.svg", "Quick &Help", "Ctrl+Shift+H", &LammpsGui::help);
     addMenuAction(menu, ":/icons/system-help.svg", "LAMMPS-&GUI Documentation", "Ctrl+Shift+G",
                   &LammpsGui::howto);
@@ -429,19 +566,38 @@ void LammpsGui::createStatusBar()
     cpuuse->hide();
 
     status = new QLabel(Cfg::STATUS_READY);
+    // The status bar sets the floor under the whole window: two 400-wide
+    // minimums plus labels that report their full text width leave it unable to
+    // shrink past ~1100.  With individual windows that is a fair price for a
+    // readable directory line, but the combined window has to be free to be made
+    // small, so there the labels are allowed to be clipped instead.
+    const bool docked = dockedLayout();
     status->setFixedWidth(300);
     statusbar->addWidget(status);
 
+    // QSizePolicy::Ignored drops the preferred width along with the minimum, and
+    // QStatusBar lays its non-permanent widgets out with a trailing stretch item
+    // that then claims all the free space: without a stretch factor of their own
+    // the two widgets below end up shown but zero pixels wide.  The individual
+    // windows keep their fixed 400 and need no stretch.
+    const int stretch = docked ? 1 : 0;
+
     dirstatus = new QLabel(QString(" Directory: (unknown)"));
-    dirstatus->setMinimumWidth(Cfg::MINIMUM_WIDTH);
+    if (docked)
+        dirstatus->setSizePolicy(QSizePolicy::Ignored, QSizePolicy::Preferred);
+    else
+        dirstatus->setMinimumWidth(Cfg::MINIMUM_WIDTH);
     dirstatus->show();
-    statusbar->addWidget(dirstatus);
+    statusbar->addWidget(dirstatus, stretch);
 
     progress = new QProgressBar();
     progress->setRange(0, Cfg::PROGRESS_MAXIMUM);
-    progress->setMinimumWidth(Cfg::MINIMUM_WIDTH);
+    if (docked)
+        progress->setSizePolicy(QSizePolicy::Ignored, QSizePolicy::Preferred);
+    else
+        progress->setMinimumWidth(Cfg::MINIMUM_WIDTH);
     progress->hide();
-    statusbar->addWidget(progress);
+    statusbar->addWidget(progress, stretch);
 }
 
 #if defined(LAMMPS_GUI_USE_PLUGIN)
@@ -682,11 +838,13 @@ void LammpsGui::setupAccelerators(QSettings &settings)
 /* -------------------------------------------------------------------- */
 
 LammpsGui::LammpsGui(QWidget *parent, const QString &filename, int width, int height) :
-    QMainWindow(parent), textEdit(nullptr), menubar(nullptr), highlighter(nullptr),
-    capturer(new StdCapture), status(nullptr), cpuuse(nullptr), lastCpuBucket(-1),
-    logwindow(nullptr), imagewindow(nullptr), chartwindow(nullptr), slideshow(nullptr),
-    logupdater(nullptr), dirstatus(nullptr), progress(nullptr), prefdialog(nullptr),
-    lammpsstatus(nullptr), varwindow(nullptr), wizard(nullptr), runner(nullptr), runCounter(0),
+    QMainWindow(parent), textEdit(nullptr), menubar(nullptr), filemenu(nullptr), editmenu(nullptr),
+    currentviewmenu(nullptr), runmenu(nullptr), viewmenu(nullptr), tutorialmenu(nullptr),
+    aboutmenu(nullptr), highlighter(nullptr), capturer(new StdCapture), status(nullptr),
+    cpuuse(nullptr), lastCpuBucket(-1), logwindow(nullptr), imagewindow(nullptr),
+    chartwindow(nullptr), slideshow(nullptr), commandwindow(nullptr), logupdater(nullptr),
+    dirstatus(nullptr), progress(nullptr), prefdialog(nullptr), lammpsstatus(nullptr),
+    varwindow(nullptr), wizard(nullptr), viewlayout(nullptr), runner(nullptr), runCounter(0),
     extendSteps(Cfg::EXTEND_STEPS_DEFAULT), nthreads(1), mainx(width), mainy(height)
 {
 #if QT_CONFIG(clipboard)
@@ -756,7 +914,7 @@ LammpsGui::LammpsGui(QWidget *parent, const QString &filename, int width, int he
     if ((filename.size() > 0) && !filename.endsWith("lammps-gui.exe")) {
         openFile(filename);
     } else {
-        setWindowTitle("LAMMPS-GUI - Editor - *unknown*");
+        updateEditorTitle(QString());
     }
 
     // start LAMMPS, fill the syntax registry from introspection, and feed the
@@ -793,11 +951,18 @@ LammpsGui::LammpsGui(QWidget *parent, const QString &filename, int width, int he
     applyProxySetting(lammps, settings);
 
     // finally show the window
-    showNormal();
+    // only the combined window opens maximized; see the preferences dialog
+    if (dockedLayout() && settings.value(Keys::MAXIMIZED, false).toBool())
+        showMaximized();
+    else
+        showNormal();
 }
 
 LammpsGui::~LammpsGui()
 {
+    // remember the dock arrangement while the docks are still around
+    viewlayout->saveState();
+
     delete highlighter;
     delete capturer;
     delete status;
@@ -808,10 +973,7 @@ LammpsGui::~LammpsGui()
     delete dirstatus;
     delete varwindow;
     delete slideshow;
-    // kept chart windows of previous runs delete themselves when closed, so
-    // their QPointer entries are null by now unless they are still open
-    for (const auto &window : oldChartWindows)
-        delete window;
+    delete commandwindow;
 }
 
 void LammpsGui::newDocument()
@@ -859,7 +1021,7 @@ void LammpsGui::newDocument()
         lammps.close();
     }
     lammpsstatus->hide();
-    setWindowTitle("LAMMPS-GUI - Editor - *unknown*");
+    updateEditorTitle(QString());
     runCounter = 0;
 }
 
@@ -1070,6 +1232,13 @@ void LammpsGui::openFile(const QString &fileName)
     // do nothing, if no file name provided
     if (fileName.isEmpty()) return;
 
+    // A name that does not exist yet is a new file and perfectly fine.  One that
+    // does and is not text is almost always a mistake, and asking has to happen
+    // here, before the run is ended and the output windows are closed for it.
+    if (QFileInfo::exists(fileName) && looksLikeBinaryFile(fileName) &&
+        !confirmUnexpectedFile(this, fileName, "text"))
+        return;
+
     if (lammps.isRunning()) {
         stopRun();
         runner->wait();
@@ -1134,7 +1303,7 @@ void LammpsGui::openFile(const QString &fileName)
         textEdit->moveCursor(QTextCursor::Start, QTextCursor::MoveAnchor);
         file.close();
     }
-    setWindowTitle(QString("LAMMPS-GUI - Editor - " + currentFile));
+    updateEditorTitle(currentFile);
     runCounter = 0;
     textEdit->document()->setModified(false);
     textEdit->setGroupList();
@@ -1172,12 +1341,9 @@ void LammpsGui::viewFile(const QString &fileName)
         return;
     }
 
-    if (looksLikeBinaryFile(fileName)) {
-        warning(this, "Cannot View Binary File as Text",
-                "\"" + QFileInfo(fileName).fileName() +
-                    "\" appears to be a binary file and cannot be displayed in the text viewer.");
-        return;
-    }
+    // unlike an image or a movie, which have a viewer of their own to be sent
+    // to, a binary file has nowhere else to go -- so this is the user's call
+    if (looksLikeBinaryFile(fileName) && !confirmUnexpectedFile(this, fileName, "text")) return;
 
     QFile file(fileName);
     if (!file.open(QIODevice::ReadOnly | QFile::Text)) {
@@ -1186,7 +1352,8 @@ void LammpsGui::viewFile(const QString &fileName)
     } else {
         file.close();
         auto *viewer = new FileViewer(fileName, this);
-        viewer->show();
+        // combined layout: a text viewer joins the tab group on the right
+        viewlayout->addAuxiliaryView(viewer, ViewSlot::Chart, QFileInfo(fileName).fileName());
     }
 }
 
@@ -1200,12 +1367,31 @@ void LammpsGui::openImages()
         "*.flv);;Image files (*.png *.jpg *.jpeg *.bmp *.ppm *.pgm *.gif *.tif *.tiff *.tga *.eps "
         "*.sgi *.webp);;Movie files (*.mp4 *.m4v *.mkv *.webm *.avi *.mov *.mpg *.mpeg *.ogv *.wmv "
         "*.flv *.gif);;All files (*)");
+    openImageFiles(files);
+}
+
+// the same without the dialog, for a list that is already in hand -- the command
+// window's "open" hands one over after the shell has expanded it
+void LammpsGui::openImageFiles(const QStringList &files)
+{
     if (files.isEmpty()) return;
+
+    // the file dialog offers "All files" as well, so what arrives here need not
+    // be a picture at all.  One question for the action rather than one per
+    // file: it names the first that does not fit and covers the whole list.
+    for (const auto &f : files) {
+        if (isImageFile(f) || isMovieFile(f)) continue;
+        if (!confirmUnexpectedFile(this, f, "image or movie")) return;
+        break;
+    }
 
     auto *viewer = new SlideShow(files.first());
     viewer->setAttribute(Qt::WA_DeleteOnClose);
     viewer->setWindowIcon(QIcon(Cfg::MAIN_ICON));
-    viewer->show();
+    // combined layout: the viewer joins the tab group on the right, next to the
+    // slide show of the current run rather than in a window of its own
+    viewlayout->addAuxiliaryView(viewer, ViewSlot::SlideShow,
+                                 QString("Slides: %1").arg(QFileInfo(files.first()).fileName()));
 
     // the import dialog of a movie file is modal to the (already visible)
     // slide show window, so a movie must not be added before it is shown
@@ -1328,7 +1514,9 @@ void LammpsGui::inspectFile(const QString &fileName)
             dumpinfo.close();
             auto *infoviewer = new FileViewer(
                 infolog, this, QString("LAMMPS-GUI: restart info for %1").arg(shortName));
-            infoviewer->show();
+            // this is output from the info command, so it belongs with the log
+            viewlayout->addAuxiliaryView(infoviewer, ViewSlot::Log,
+                                         QString("Info: %1").arg(shortName));
             ilist->info = infoviewer;
             dumpinfo.remove();
             // read_restart restores the pair style but not the kspace style, so a
@@ -1357,13 +1545,16 @@ void LammpsGui::inspectFile(const QString &fileName)
             }
             auto *dataviewer = new FileViewer(
                 infodata, this, QString("LAMMPS-GUI: data file for %1").arg(shortName));
-            dataviewer->show();
+            viewlayout->addAuxiliaryView(dataviewer, ViewSlot::Chart,
+                                         QString("Data: %1").arg(shortName));
             ilist->data = dataviewer;
             QFile(infodata).remove();
             auto *inspect_image = new ImageViewer(fileName, &lammps, this);
             inspect_image->setFont(font());
-            inspect_image->setMinimumSize(Cfg::MINIMUM_WIDTH, Cfg::MINIMUM_HEIGHT);
-            inspect_image->show();
+            if (!dockedLayout())
+                inspect_image->setMinimumSize(Cfg::MINIMUM_WIDTH, Cfg::MINIMUM_HEIGHT);
+            viewlayout->addAuxiliaryView(inspect_image, ViewSlot::Chart,
+                                         QString("Image: %1").arg(shortName));
             ilist->image = inspect_image;
         }
     }
@@ -1387,7 +1578,7 @@ void LammpsGui::writeFile(const QString &fileName)
     // update the session state only after the file was opened successfully
     currentFile = path.fileName();
     currentDir  = path.absolutePath();
-    setWindowTitle(QString("LAMMPS-GUI - Editor - " + currentFile));
+    updateEditorTitle(currentFile);
     QDir::setCurrent(currentDir);
 
     updateRecents(path.absoluteFilePath());
@@ -1456,8 +1647,9 @@ void LammpsGui::quit()
     // store some global settings
     QSettings settings;
     if (!isMaximized()) {
-        settings.setValue(Keys::MAINX, width());
-        settings.setValue(Keys::MAINY, height());
+        const bool docked = dockedLayout();
+        settings.setValue(docked ? Keys::DOCKMAINX : Keys::MAINX, width());
+        settings.setValue(docked ? Keys::DOCKMAINY : Keys::MAINY, height());
     }
     settings.sync();
 
@@ -1667,16 +1859,15 @@ void LammpsGui::updateSlideShow()
     QString imagefile = lammps.lastThermoString("imagename", 0);
     if (imagefile.isEmpty()) return;
 
+    const bool showslides = QSettings().value(Keys::VIEWSLIDE, true).toBool();
     if (!slideshow) {
         slideshow = new SlideShow(currentFile, this);
-        if (QSettings().value(Keys::VIEWSLIDE, true).toBool())
-            slideshow->show();
-        else
-            slideshow->hide();
+        viewlayout->place(ViewSlot::SlideShow, slideshow);
+        viewlayout->setVisible(ViewSlot::SlideShow, showslides);
     } else {
         slideshow->setWindowTitle(
             QString("LAMMPS-GUI - Slide Show - %1 - Run %2").arg(currentFile).arg(runCounter));
-        if (QSettings().value(Keys::VIEWSLIDE, true).toBool()) slideshow->show();
+        if (showslides) viewlayout->show(ViewSlot::SlideShow);
     }
     slideshow->addImage(imagefile);
 }
@@ -1756,11 +1947,22 @@ void LammpsGui::runDone()
     progress->setValue(Cfg::PROGRESS_MAXIMUM);
     textEdit->setHighlight(CodeEditor::NO_HIGHLIGHT, false);
 
+    // When a whole run produced not a single captured byte, find out which
+    // side lost it while the capture is still active; see probeRunEnd().
+    std::string capturereport;
+    if (capturer->isUsable() && (capturer->totalRead() == 0))
+        capturereport = capturer->probeRunEnd();
+
     capturer->endCapture();
 
     if (logwindow) {
         auto log = capturer->getCapture();
         logwindow->insertPlainText(log.c_str());
+        // only when the final drain stayed empty too was the output really lost
+        if (!capturereport.empty() && log.empty())
+            logwindow->appendPlainText(
+                QString("[no LAMMPS output was captured during this run: %1]\n")
+                    .arg(QString::fromStdString(capturereport)));
         logwindow->moveCursor(QTextCursor::End);
     }
 
@@ -1826,41 +2028,85 @@ void LammpsGui::restartLammps()
 
 void LammpsGui::createLogWindow(QSettings &settings)
 {
-    // if configured, delete old log window before opening new one
-    if (settings.value(Keys::LOGREPLACE, true).toBool()) delete logwindow;
-    logwindow = new LogWindow(currentFile, this);
-    logwindow->setReadOnly(true);
-    logwindow->setCenterOnScroll(true);
+    // reuse an existing window: it keeps the position and size it was given
+    // on screen, and in a docked layout it stays where it was docked
+    if (logwindow) {
+        logwindow->reset(currentFile);
+    } else {
+        logwindow = new LogWindow(currentFile, this);
+        logwindow->setReadOnly(true);
+        logwindow->setCenterOnScroll(true);
+        logwindow->setLineWrapMode(LogWindow::NoWrap);
+    }
     logwindow->moveCursor(QTextCursor::End);
-    logwindow->setLineWrapMode(LogWindow::NoWrap);
     logwindow->setWindowTitle(
         QString("LAMMPS-GUI - Output - %1 - Run %2").arg(currentFile).arg(runCounter));
     logwindow->setWindowIcon(QIcon(Cfg::MAIN_ICON));
-    logwindow->setMinimumSize(Cfg::MINIMUM_WIDTH, Cfg::MINIMUM_HEIGHT);
+    // a dock area decides the size of its panel, and an explicit minimum only
+    // fights it: it becomes a hard floor that keeps the default split from
+    // settling where it was asked to
+    if (!dockedLayout()) logwindow->setMinimumSize(Cfg::MINIMUM_WIDTH, Cfg::MINIMUM_HEIGHT);
 
-    if (settings.value(Keys::VIEWLOG, true).toBool())
-        logwindow->show();
-    else
-        logwindow->hide();
+    viewlayout->place(ViewSlot::Log, logwindow);
+    viewlayout->setVisible(ViewSlot::Log, settings.value(Keys::VIEWLOG, true).toBool());
+}
+
+// The capture's own marker only proves that the *executable's* writes reach
+// the pipe.  The library is a separate module with runtime state of its own,
+// so push one line through it as well, while the instance is still idle, and
+// drain the marker again.  Which library answers depends on the configured
+// plugin path, not on what sits next to the executable, so a failure names
+// the file actually loaded.  Must run after beginCapture() and before the
+// runner thread starts issuing commands of its own.
+void LammpsGui::verifyLibraryCapture()
+{
+    capturewarning.clear();
+    if (!capturer->isUsable() || !lammps.isOpen()) return;
+
+    lammps.command("print \"__LGUI_LIBCAP__\"");
+    std::string got;
+    for (int i = 0; i < 100; ++i) {
+        got += capturer->getChunk();
+        if (got.find("__LGUI_LIBCAP__") != std::string::npos) return; // proven; marker drained
+        QThread::msleep(1);
+    }
+    capturewarning = "the library's own output does not reach the capture although the"
+                     " executable's does; loaded library: ";
+    capturewarning += pluginPath.isEmpty() ? QString("(linked into the executable)") : pluginPath;
+}
+
+// Must run *after* createLogWindow(): on the first run of a session there is no
+// log window before that, and a message with nowhere to go is dropped -- which
+// on a fresh start is exactly when it is needed.
+void LammpsGui::reportCaptureFailure()
+{
+    if (!logwindow) return;
+    // Say so rather than showing an empty window: when stdout cannot be
+    // redirected there is no error anywhere else -- the runtime accepts the
+    // library's output and drops it, and printf() reports success.
+    if (!capturer->isUsable())
+        logwindow->appendPlainText(QString("[LAMMPS output cannot be captured: %1]\n")
+                                       .arg(QString::fromStdString(capturer->diagnostic())));
+    if (!capturewarning.isEmpty())
+        logwindow->appendPlainText(
+            QString("[LAMMPS output will not be shown: %1]\n").arg(capturewarning));
 }
 
 void LammpsGui::createChartWindow(QSettings &settings)
 {
-    // if configured, delete old chart window before opening new one
-    if (settings.value(Keys::CHARTREPLACE, true).toBool()) {
-        delete chartwindow;
-    } else if (chartwindow) {
-        // the old chart window stays open for comparison with the new run, but
-        // its pointer is replaced below: have it delete itself when closed and
-        // remember it so windows still open at exit are deleted, too
-        chartwindow->setAttribute(Qt::WA_DeleteOnClose);
-        oldChartWindows.append(chartwindow);
-    }
-    chartwindow = new ChartWindow(currentFile, this);
+    // reuse an existing window: it keeps the position and size it was given
+    // on screen, and in a docked layout it stays where it was docked
+    if (chartwindow)
+        chartwindow->reset(currentFile);
+    else
+        chartwindow = new ChartWindow(currentFile, this);
     chartwindow->setWindowTitle(
         QString("LAMMPS-GUI - Charts - %1 - Run %2").arg(currentFile).arg(runCounter));
     chartwindow->setWindowIcon(QIcon(Cfg::MAIN_ICON));
-    chartwindow->setMinimumSize(Cfg::MINIMUM_WIDTH, Cfg::MINIMUM_HEIGHT);
+    // a dock area decides the size of its panel, and an explicit minimum only
+    // fights it: it becomes a hard floor that keeps the default split from
+    // settling where it was asked to
+    if (!dockedLayout()) chartwindow->setMinimumSize(Cfg::MINIMUM_WIDTH, Cfg::MINIMUM_HEIGHT);
 
     const auto *unitptr = static_cast<const char *>(lammps.extractGlobal("units"));
     if (unitptr) chartwindow->setUnits(QString::fromUtf8(unitptr));
@@ -1868,10 +2114,8 @@ void LammpsGui::createChartWindow(QSettings &settings)
     chartwindow->setNorm(normflag != 0);
     chartwindow->setRangeEnabled(false);
 
-    if (settings.value(Keys::VIEWCHART, true).toBool())
-        chartwindow->show();
-    else
-        chartwindow->hide();
+    viewlayout->place(ViewSlot::Chart, chartwindow);
+    viewlayout->setVisible(ViewSlot::Chart, settings.value(Keys::VIEWCHART, true).toBool());
 }
 
 namespace {
@@ -2048,8 +2292,10 @@ void LammpsGui::doRun(bool use_buffer, bool dryrun)
     startLammps();
     if (!lammps.isOpen()) return;
     capturer->beginCapture();
+    verifyLibraryCapture();
 
     ++runCounter;
+    updateEditorTitle(currentFile);
 
     // must delete all variables since clear does not delete them
     clearVariables();
@@ -2085,6 +2331,7 @@ void LammpsGui::doRun(bool use_buffer, bool dryrun)
     }
 
     createLogWindow(settings);
+    reportCaptureFailure();
     if (dryrun) {
         if (logwindow) logwindow->setWindowTitle(logwindow->windowTitle() + " (Dry Run)");
         // no chart window and no slide show reset: a dry run produces no
@@ -2097,7 +2344,7 @@ void LammpsGui::doRun(bool use_buffer, bool dryrun)
     if (slideshow) {
         slideshow->setWindowTitle(QString("LAMMPS-GUI - Slide Show - " + currentFile));
         slideshow->clear();
-        slideshow->hide();
+        viewlayout->hide(ViewSlot::SlideShow);
     }
 }
 
@@ -2146,11 +2393,13 @@ void LammpsGui::extendRun()
     status->repaint();
 
     capturer->beginCapture();
+    verifyLibraryCapture();
 
     // append to the windows of the extended run; create them only when missing
     // (e.g. when extending the state of an inspected restart file)
     if (!logwindow) createLogWindow(settings);
     if (!chartwindow) createChartWindow(settings);
+    reportCaptureFailure();
 
     logwindow->moveCursor(QTextCursor::End);
     logwindow->insertPlainText(
@@ -2171,21 +2420,38 @@ void LammpsGui::plotDataFile()
     QString fileName = QFileDialog::getOpenFileName(this, "Open Data File to Plot",
                                                     QDir::currentPath(), Cfg::FILTER_DATA);
     if (fileName.isEmpty()) return;
+    plotFile(fileName);
+}
+
+// the same for a file that is already in hand -- the command window's "plot"
+// hands one over after the shell has expanded it.  Returns false only when the
+// user canceled the column dialog, which a caller with more files to plot takes
+// as "stop" rather than "ask me again for each of them".
+bool LammpsGui::plotFile(const QString &fileName)
+{
+    // the parsers report what they could not read, but a picture handed to the
+    // plotter is a mistake to catch before that rather than an error to explain
+    if (looksLikeBinaryFile(fileName) && !confirmUnexpectedFile(this, fileName, "data")) {
+        // declining this one file is not declining the rest of them
+        return true;
+    }
 
     QString error;
     PlotData data = loadPlotData(fileName, &error);
     if (data.isEmpty()) {
         critical(this, "Plot Data File",
                  "Could not read data from file:", error.isEmpty() ? fileName : error);
-        return;
+        // the file was the problem, not the user, so a caller with more of them
+        // carries on to the next
+        return true;
     }
 
     PlotDataDialog dialog(data, this);
-    if (dialog.exec() != QDialog::Accepted) return;
+    if (dialog.exec() != QDialog::Accepted) return false;
     const QList<int> ycols = dialog.yColumns();
     if (ycols.isEmpty()) {
         warning(this, "Plot Data File", "No data columns were selected to plot.");
-        return;
+        return true;
     }
 
     const PlotData plotData = dialog.buildData();
@@ -2195,9 +2461,14 @@ void LammpsGui::plotDataFile()
     win->setAttribute(Qt::WA_DeleteOnClose);
     win->setWindowTitle(QString("Plot: %1 - LAMMPS-GUI").arg(QFileInfo(fileName).fileName()));
     win->setWindowIcon(QIcon(Cfg::MAIN_ICON));
-    win->setMinimumSize(Cfg::MINIMUM_WIDTH, Cfg::MINIMUM_HEIGHT);
+    // a minimum size becomes a floor the dock area cannot get below
+    if (!dockedLayout()) win->setMinimumSize(Cfg::MINIMUM_WIDTH, Cfg::MINIMUM_HEIGHT);
     win->loadData(plotData, dialog.xColumn(), ycols);
-    win->show();
+    // combined layout: the plot joins the tab group on the right, next to the
+    // charts of the current run
+    viewlayout->addAuxiliaryView(win, ViewSlot::Chart,
+                                 QString("Plot: %1").arg(QFileInfo(fileName).fileName()));
+    return true;
 }
 
 void LammpsGui::renderImage()
@@ -2260,67 +2531,43 @@ void LammpsGui::renderImage()
                 lammps.command("undump " + id);
         }
 
-        // if configured, delete old image window before opening new one
-        if (QSettings().value(Keys::IMAGEREPLACE, true).toBool()) delete imagewindow;
+        // delete the old image window before opening the new one
+        delete imagewindow;
         imagewindow = new ImageViewer(currentFile, &lammps, this);
-        imagewindow->setMinimumSize(Cfg::MINIMUM_WIDTH, Cfg::MINIMUM_HEIGHT);
+        if (!dockedLayout()) imagewindow->setMinimumSize(Cfg::MINIMUM_WIDTH, Cfg::MINIMUM_HEIGHT);
+        viewlayout->place(ViewSlot::Image, imagewindow);
     } else {
         warning(this, "Image Viewer File Creation Error",
                 "Cannot create snapshot image while LAMMPS is running");
         return;
     }
-    imagewindow->show();
+    // an explicit request to look at the new image
+    viewlayout->raise(ViewSlot::Image);
 }
 
 void LammpsGui::viewSlides()
 {
     if (!slideshow) {
         slideshow = new SlideShow(currentFile, this);
-        slideshow->setMinimumSize(Cfg::MINIMUM_WIDTH, Cfg::MINIMUM_HEIGHT);
+        if (!dockedLayout()) slideshow->setMinimumSize(Cfg::MINIMUM_WIDTH, Cfg::MINIMUM_HEIGHT);
+        viewlayout->place(ViewSlot::SlideShow, slideshow);
     }
-    if (slideshow->isVisible())
-        slideshow->hide();
-    else
-        slideshow->show();
+    viewlayout->toggle(ViewSlot::SlideShow);
 }
 
 void LammpsGui::viewChart()
 {
-    QSettings settings;
-    if (chartwindow) {
-        if (chartwindow->isVisible()) {
-            chartwindow->hide();
-            settings.setValue(Keys::VIEWCHART, false);
-        } else {
-            chartwindow->show();
-            settings.setValue(Keys::VIEWCHART, true);
-        }
-    }
+    viewlayout->toggle(ViewSlot::Chart);
 }
 
 void LammpsGui::viewLog()
 {
-    QSettings settings;
-    if (logwindow) {
-        if (logwindow->isVisible()) {
-            logwindow->hide();
-            settings.setValue(Keys::VIEWLOG, false);
-        } else {
-            logwindow->show();
-            settings.setValue(Keys::VIEWLOG, true);
-        }
-    }
+    viewlayout->toggle(ViewSlot::Log);
 }
 
 void LammpsGui::viewImage()
 {
-    if (imagewindow) {
-        if (imagewindow->isVisible()) {
-            imagewindow->hide();
-        } else {
-            imagewindow->show();
-        }
-    }
+    viewlayout->toggle(ViewSlot::Image);
 }
 
 void LammpsGui::createVariableWindow()
@@ -2341,7 +2588,35 @@ void LammpsGui::createVariableWindow()
 
     // apply before hide(): applyWindowFlags() calls setWindowFlags(), which re-shows the widget
     applyWindowFlags(varwindow);
-    varwindow->hide();
+    viewlayout->place(ViewSlot::Variables, varwindow);
+    viewlayout->hide(ViewSlot::Variables);
+}
+
+void LammpsGui::createCommandWindow()
+{
+    if (commandwindow) return;
+    commandwindow = new CommandWindow(this);
+    commandwindow->setWindowTitle("LAMMPS-GUI - Commands");
+    commandwindow->setWindowIcon(QIcon(Cfg::MAIN_ICON));
+    // start where the input file is, which is where a run leaves its output
+    commandwindow->changeDirectory(currentDir);
+    viewlayout->place(ViewSlot::Command, commandwindow);
+}
+
+void LammpsGui::openCommandWindow()
+{
+    createCommandWindow();
+    viewlayout->raise(ViewSlot::Command);
+}
+
+void LammpsGui::viewCommand()
+{
+    // on first use there is nothing to hide, so the toggle opens the window
+    if (!commandwindow) {
+        openCommandWindow();
+        return;
+    }
+    viewlayout->toggle(ViewSlot::Command);
 }
 
 void LammpsGui::viewVariables()
@@ -2349,11 +2624,17 @@ void LammpsGui::viewVariables()
     // varwindow is destroyed when the editor is reset (newDocument()/openFile()),
     // so recreate it on demand here -- mirrors viewSlides()
     if (!varwindow) createVariableWindow();
-    if (varwindow->isVisible()) {
-        varwindow->hide();
-    } else {
-        varwindow->show();
-    }
+    viewlayout->toggle(ViewSlot::Variables);
+}
+
+// Docked, the views are named by their tab and no longer carry the run number
+// in a window title of their own, so the editor title takes it over.
+void LammpsGui::updateEditorTitle(const QString &file)
+{
+    QString title = "LAMMPS-GUI - Editor - " + (file.isEmpty() ? QString("*unknown*") : file);
+    if (viewlayout && viewlayout->mode() == LayoutMode::Docked && runCounter > 0)
+        title += QString(" - Run %1").arg(runCounter);
+    setWindowTitle(title);
 }
 
 void LammpsGui::setDocver()
@@ -2396,17 +2677,22 @@ void LammpsGui::setFont(const QFont &newFont)
 
 void LammpsGui::about()
 {
-    std::string version = "<b>This is LAMMPS-GUI version " LAMMPS_GUI_VERSION;
-    version += " using Qt version " QT_VERSION_STR;
+    std::string version = "<b>This is LAMMPS-GUI version " LAMMPS_GUI_VERSION "</b>\n";
+    version += "<ul><li> with Qt version " QT_VERSION_STR "</li>\n";
     if (isLightTheme())
-        version += " with light theme";
+        version += "<li>with light theme</li>\n";
     else
-        version += " with dark theme";
-    version += "</b><br><br>\n";
+        version += "<li>with dark theme</li>\n";
+    // name the layout the way the preferences dialog does
+    if (dockedLayout())
+        version += "<li>with combined main window layout</li>\n";
+    else
+        version += "<li>with individual windows layout</li>\n";
+    version += "</ul>\n";
     if (lammps.hasPlugin()) {
         version += "LAMMPS library loaded as plugin";
         if (!pluginPath.isEmpty()) {
-            version += " from file ";
+            version += "<br>\n from file ";
             version += pluginPath.toStdString();
         }
     } else {

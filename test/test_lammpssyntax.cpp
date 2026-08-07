@@ -411,6 +411,17 @@ TEST(LammpsSyntaxTest, SyntaxStateWithCommand)
     EXPECT_EQ(SyntaxState::argsUsed(patched), 3);
 }
 
+TEST(LammpsSyntaxTest, SyntaxStateWithArgs)
+{
+    const int state   = SyntaxState::pack(SyntaxState::CONTINUE, 42, 7);
+    const int patched = SyntaxState::withArgs(state, 2);
+    EXPECT_EQ(SyntaxState::argsUsed(patched), 2);
+    EXPECT_EQ(SyntaxState::cmdIndex(patched), 42);
+    EXPECT_EQ(SyntaxState::flags(patched), SyntaxState::CONTINUE);
+    // the argument counter saturates like in pack()
+    EXPECT_EQ(SyntaxState::argsUsed(SyntaxState::withArgs(state, 9999)), SyntaxState::ARG_MAXX);
+}
+
 // ---------------------------------------------------------------------------
 // registry
 

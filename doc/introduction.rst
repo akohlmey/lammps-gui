@@ -170,9 +170,9 @@ Visualization Components
 **RangeSlider (thirdparty/rangeslider/rangeslider.h/.cpp)**
   Custom slider widget with two handles for selecting a range of
   values. This is code written by Hoyoung Lee and distributed under the
-  CeCILL-A license as circulated by CEA, CNRS and INRIA at the following
-  URL: "http://www.cecill.info".  Used in :cpp:class:`ChartWindow` for
-  selecting x- and y-direction plot ranges.  See :cpp:class:`RangeSlider`
+  :choosealicense:`CeCILL-2.1`.  Used in :cpp:class:`ChartWindow` for
+  selecting x- and y-direction plot ranges.  See
+  :cpp:class:`RangeSlider`
 
 **RangeBandSlider (rangebandslider.h/.cpp)**
   Horizontal ``QSlider`` that paints an active sub-range on its track,

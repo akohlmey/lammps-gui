@@ -76,6 +76,44 @@ add_executable(test_helpers
   ${CMAKE_SOURCE_DIR}/src/stdcapture.cpp
 )
 
+# Test executable for the widget-scoped shortcut helpers
+add_executable(test_shortcuts
+  test_shortcuts.cpp
+  ${CMAKE_SOURCE_DIR}/src/helpers.cpp
+  ${CMAKE_SOURCE_DIR}/src/stdcapture.cpp
+)
+
+target_include_directories(test_shortcuts PRIVATE ${CMAKE_SOURCE_DIR}/src)
+target_link_libraries(test_shortcuts PRIVATE GTest::gtest_main Qt6::Widgets)
+
+gtest_discover_tests(test_shortcuts)
+
+# Test executable for the docked-layout presentation policy
+add_executable(test_windowlayout
+  test_windowlayout.cpp
+  ${CMAKE_SOURCE_DIR}/src/windowlayout.cpp
+  ${CMAKE_SOURCE_DIR}/src/helpers.cpp
+  ${CMAKE_SOURCE_DIR}/src/stdcapture.cpp
+)
+
+set_target_properties(test_windowlayout PROPERTIES AUTOMOC ON)
+target_include_directories(test_windowlayout PRIVATE ${CMAKE_SOURCE_DIR}/src)
+target_link_libraries(test_windowlayout PRIVATE GTest::gtest_main Qt6::Widgets)
+
+gtest_discover_tests(test_windowlayout)
+
+# Test executable for the completing shell prompt
+add_executable(test_shellprompt
+  test_shellprompt.cpp
+  ${CMAKE_SOURCE_DIR}/src/shellprompt.cpp
+)
+
+set_target_properties(test_shellprompt PROPERTIES AUTOMOC ON)
+target_include_directories(test_shellprompt PRIVATE ${CMAKE_SOURCE_DIR}/src)
+target_link_libraries(test_shellprompt PRIVATE GTest::gtest_main Qt6::Widgets)
+
+gtest_discover_tests(test_shellprompt)
+
 target_include_directories(test_helpers PRIVATE
   ${CMAKE_SOURCE_DIR}/src
 )

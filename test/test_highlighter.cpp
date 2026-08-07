@@ -44,12 +44,18 @@ protected:
                            "pair_coeff particle 2 keyword,keyword,substyle:pair*\n"
                            "dump particle 5 defid,group,style:dump,int,file\n"
                            "dump_modify modify 2 label,keyword\n"
+                           "write_dump output 3 group,style:dump,file\n"
+                           // the keyword role at position 3 is not in the
+                           // shipped table; it makes the argument renumbering
+                           // of the "rerun ... dump ..." section observable
+                           "read_dump output 2 file,int,keyword\n"
+                           "rerun run 1 file\n"
                            "units lattice 1 style:units\n"
                            "run run 1 int\n"
                            "unfix special 1 label\n"
                            "print output 1 any\n"));
-        syntax.setCommands({"fix", "pair_style", "pair_coeff", "dump", "dump_modify", "units",
-                            "run", "unfix", "print", "clear"});
+        syntax.setCommands({"fix", "pair_style", "pair_coeff", "dump", "dump_modify", "write_dump",
+                            "read_dump", "rerun", "units", "run", "unfix", "print", "clear"});
         syntax.setStyles(StyleCat::Fix, {"nvt", "nve"});
         syntax.setStyles(StyleCat::Pair, {"lj/cut", "zero", "hybrid"});
         syntax.setStyles(StyleCat::Dump, {"atom", "image", "movie"});
@@ -312,6 +318,52 @@ TEST_F(HighlighterTest, DumpImageColorsAndKeywords)
     EXPECT_NE(whiteFmt.background(), QBrush()); // chip background set on a light theme
     const auto redFmt = formatAt(doc, 1, 39);
     EXPECT_EQ(redFmt.foreground().color(), QColor(QStringLiteral("red")));
+}
+
+TEST_F(HighlighterTest, EmbeddedCommandSections)
+{
+    LammpsSyntax syntax;
+    seed(syntax);
+    QTextDocument doc;
+    doc.setPlainText(
+        QStringLiteral("write_dump all image out.png type type modify backcolor white\n"
+                       "dump_modify 2 backcolor white\n"
+                       "rerun dump.file first 100 dump x y z\n"
+                       "read_dump dump.file 100 x y z\n"
+                       "write_dump all image out.png type type modify &\n"
+                       "backcolor white\n"
+                       "print modify"));
+    Highlighter hl(&syntax, &doc);
+    hl.rehighlight();
+
+    // the "modify" keyword of write_dump is colored like the dump_modify
+    // command word and thus differs from the write_dump command word
+    const auto modifyFmt = formatAt(doc, 0, 39);
+    EXPECT_EQ(modifyFmt.foreground(), formatAt(doc, 1, 0).foreground());
+    EXPECT_EQ(modifyFmt.fontWeight(), QFont::Bold);
+    EXPECT_NE(modifyFmt.foreground(), formatAt(doc, 0, 0).foreground());
+
+    // the arguments after it are dump_modify arguments: the first one is the
+    // keyword position of dump_modify (its dump ID is implicit here) and
+    // color names render in their own color as on a dump_modify line
+    EXPECT_EQ(formatAt(doc, 0, 46), formatAt(doc, 1, 14)); // backcolor
+    EXPECT_EQ(formatAt(doc, 0, 56), formatAt(doc, 1, 24)); // white
+    // ... and the section continues across a '&' line continuation
+    EXPECT_EQ(formatAt(doc, 5, 0), formatAt(doc, 1, 14));  // backcolor
+    EXPECT_EQ(formatAt(doc, 5, 10), formatAt(doc, 1, 24)); // white
+
+    // the "dump" keyword of rerun is colored like the read_dump command word
+    const auto dumpFmt = formatAt(doc, 2, 26);
+    EXPECT_EQ(dumpFmt.foreground(), formatAt(doc, 3, 0).foreground());
+    EXPECT_NE(dumpFmt.foreground(), formatAt(doc, 2, 0).foreground());
+
+    // the arguments after it are read_dump arguments starting at the first
+    // field, since the file name and time step of read_dump are implicit here
+    EXPECT_EQ(formatAt(doc, 2, 31), formatAt(doc, 3, 24)); // x
+    EXPECT_NE(formatAt(doc, 2, 33), formatAt(doc, 3, 24)); // y (no role)
+
+    // the keywords are only special in their own commands
+    EXPECT_NE(formatAt(doc, 6, 6).foreground(), modifyFmt.foreground());
 }
 
 TEST_F(HighlighterTest, VarRefOverlayInsideStrings)

@@ -46,6 +46,8 @@ document.  Clicking on the *Done* button will dismiss the dialog.
 
 ------
 
+.. _preferences:
+
 Preferences
 -----------
 
@@ -88,6 +90,33 @@ General Settings
      <logfile>`. This is equivalent to using ``-echo screen`` on the
      command-line.  There is no log *file* produced by default, since
      LAMMPS-GUI uses ``-log none``.
+   - **Individual Windows** / **Combined Main Window:** selects how the
+     Output, Charts, Image, Slide Show, Variables, and Command window
+     views are presented.
+     With *Individual Windows* each of them is a window of its own, placed
+     and stacked freely.  With *Combined Main Window* they become panels
+     docked around the editor: the editor keeps the center, the Charts,
+     Image, and Slide Show views share a tabbed group on the right, and
+     the Output, Variables, and Command window views share a group across
+     the full width at the bottom.  The panels have fixed places and are not dragged around;
+     they are shown and hidden from the *View* menu, and the splitters
+     between them can be moved to change their proportions.  The windows
+     opened on demand join them rather than floating above: a text viewer,
+     an inspected data file or image, a slide show of image or movie files
+     opened with *View Image or Movie File(s)...*, and a plot made with
+     *Plot Data File...* all become further tabs of the group on the
+     right, and are closed from their own *File* menu.  A panel that
+     shares its area with another is named by its tab, one that is alone
+     by a title bar.  The proportions are kept when the main window is
+     resized and restored in the next session, and the main window
+     remembers a size of its own for each of the two layouts.  Changing
+     this setting relaunches LAMMPS-GUI.  A single session can be started
+     in either layout without changing this setting, with the ``-j`` or
+     ``-w`` :ref:`command-line flag <command-line-options>`.
+     In the combined window the views
+     do not remember individual window sizes, and a keyboard shortcut that
+     a view shares with the main window (for example ``Ctrl+S``) is left to
+     the main window, so only its menu entry remains for the view.
    - **Include citation details:** when checked, full citation info will be
      included in the Output window.  This is equivalent to using ``-cite
      screen`` on the command-line.
@@ -99,15 +128,11 @@ General Settings
    - **Show Slide Show window by default:** when checked, a Slide Show
      window will be shown with images from a dump image command, if
      present, in the LAMMPS input.
-   - **Replace Output window on new run:** when checked, an existing
-     Output window will be replaced on a new LAMMPS run; otherwise each
-     run will create a new Output window.
-   - **Replace Charts window on new run:** when checked, an existing
-     Charts window will be replaced on a new LAMMPS run; otherwise each
-     run will create a new Charts window.
-   - **Replace Image window on new render:** when checked, an existing
-     Image window will be replaced when a new snapshot image is requested;
-     otherwise each command will create a new Image window.
+   - **Open main window maximized:** when checked, LAMMPS-GUI starts with
+     its main window filling the screen instead of restoring the size it
+     had when it was last closed.  This applies to the combined main window
+     only and is disabled for individual windows, where a maximized main
+     window would cover the very windows it is meant to sit beside.
    - **Download tutorial solutions enabled:** this controls whether the
      "Download solutions" option is enabled by default when setting up
      a tutorial.
@@ -154,7 +179,22 @@ General Settings
      different version can be loaded.  The accompanying *Download LAMMPS
      shared library...* button retrieves a pre-built LAMMPS shared library
      from the LAMMPS web server.  After changing this setting, LAMMPS-GUI
-     needs to be re-launched.
+     needs to be re-launched.  This setting is remembered separately for
+     each compiler toolchain LAMMPS-GUI was built with, so for example an
+     MSVC build and a MinGW build on the same machine each keep their own
+     library: a library built against a different C runtime loads and runs,
+     but its screen output would silently bypass the Output window.
+   - **Command window shell:** selects the command interpreter that the
+     :ref:`Command window <commandwindow>` starts, from a list of the
+     shells installed on the machine: on Unix-like systems the entries of
+     ``/etc/shells`` that are actual shells (not ``nologin`` or a
+     terminal multiplexer), on Windows ``cmd.exe``, PowerShell, and a
+     ``bash.exe`` from an installation such as Git for Windows, when
+     present.  A shell listed under more than one path (for example under
+     both ``/bin`` and ``/usr/bin``) is offered only once.  The default is the user's default shell (``SHELL`` on
+     Unix-like systems, ``COMSPEC`` on Windows).  A change takes effect
+     when the next shell starts: when the Command window is first opened,
+     or on its *File* > *Restart Shell*.
 
 Accelerators
 ^^^^^^^^^^^^
