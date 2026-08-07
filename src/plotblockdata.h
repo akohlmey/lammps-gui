@@ -38,6 +38,7 @@ enum class AveFileKind {
     AveHisto,         ///< `fix ave/histo` (and `fix ave/histo/weight`)
     AveCorrelate,     ///< `fix ave/correlate`
     AveCorrelateLong, ///< `fix ave/correlate/long`
+    AveChunk,         ///< `fix ave/chunk`
 };
 
 /**

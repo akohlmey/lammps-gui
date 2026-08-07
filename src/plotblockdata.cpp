@@ -128,9 +128,7 @@ AveFileKind detectKind(const QString &firstComment, bool commentDelimited, int h
     if (firstComment.contains("Histogrammed data for fix")) return AveFileKind::AveHisto;
     if (firstComment.contains("Time-correlated data for fix")) return AveFileKind::AveCorrelate;
     if (firstComment.contains("Time-averaged data for fix")) return AveFileKind::AveTimeVector;
-    // fix ave/chunk is recognized as block structured and imports through the
-    // generic path, but has no defaults of its own yet
-    if (firstComment.contains("Chunk-averaged data for fix")) return AveFileKind::Unknown;
+    if (firstComment.contains("Chunk-averaged data for fix")) return AveFileKind::AveChunk;
 
     if ((headerWidth == 6) && (rows.columnCount() == 4)) return AveFileKind::AveHisto;
     if (headerWidth == 2)
@@ -183,6 +181,8 @@ QString aveFileKindName(AveFileKind kind)
             return QStringLiteral("fix ave/correlate");
         case AveFileKind::AveCorrelateLong:
             return QStringLiteral("fix ave/correlate/long");
+        case AveFileKind::AveChunk:
+            return QStringLiteral("fix ave/chunk");
         case AveFileKind::Unknown:
             break;
     }
@@ -576,6 +576,48 @@ int columnIndex(const QStringList &names, const QString &name)
     return names.indexOf(name);
 }
 
+// The one coordinate column of a chunk file that varies inside a block, or -1.
+//
+// `fix ave/chunk` writes one Coord column per binning dimension: bin/1d and
+// bin/sphere one, bin/2d and bin/cylinder two (the cylinder writes the axial
+// and the radial coordinate), bin/3d three, and the non-binning chunk styles
+// none.  A chart has a single x axis, so only data that is 1-d can be given
+// column defaults.  That is decided from the values rather than from a style
+// name -- which the file does not carry anyway -- so a 2-d or cylindrical run
+// with a single bin in its other dimension qualifies just as well.
+int lonelyCoordColumn(const PlotBlockData &data)
+{
+    const QStringList names = data.columnNames();
+    QList<int> coords;
+    for (int c = 0; c < names.size(); ++c)
+        if (names[c].startsWith(QStringLiteral("Coord"))) coords << c;
+    if (coords.isEmpty()) return -1;
+
+    // the widest block, since an interrupted run can cut the last one short and
+    // a single row would make every coordinate look constant
+    const PlotData *rows = nullptr;
+    for (const auto &b : data.blocks)
+        if (!rows || (b.rows.rowCount() > rows->rowCount())) rows = &b.rows;
+    if (!rows || (rows->rowCount() < 2)) return -1;
+
+    int varying = -1;
+    for (int c : coords) {
+        if (c >= rows->columnCount()) return -1;
+        const std::vector<double> &v = rows->column(c);
+        bool varies                  = false;
+        for (std::size_t r = 1; r < v.size(); ++r)
+            if (v[r] != v[0]) {
+                varies = true;
+                break;
+            }
+        if (varies) {
+            if (varying >= 0) return -1; // a real grid, not a profile
+            varying = c;
+        }
+    }
+    return varying;
+}
+
 // Does the sample count grow from block to block?  That is what "ave running"
 // looks like: every block is a successive estimate of the same quantity rather
 // than an independent sample of it, so the blocks must not be averaged.
@@ -641,6 +683,27 @@ AveImportDefaults aveImportDefaults(const PlotBlockData &data)
         case AveFileKind::AveTimeVector:
             out.xColumn = qMax(0, columnIndex(names, QStringLiteral("Row")));
             break;
+        case AveFileKind::AveChunk: {
+            const int x = lonelyCoordColumn(data);
+            // a 2-d or 3-d grid, or chunks that are not bins at all: nothing
+            // here fits one x axis, so leave the file on the generic defaults
+            // it had before it was recognized -- it still imports in full
+            if (x < 0) break;
+            // a profile averaged over the run is what a chunk file is usually
+            // for.  The running-average check is deliberately not applied here:
+            // its Ncount column is the atom count per bin, not a sample count,
+            // so it can drift upwards by chance and would misread the file --
+            // and averaging the blocks of an "ave running" profile only weights
+            // the early samples more heavily, it does not make it meaningless
+            // the way it would for a correlator.
+            out.averageBlocks = true;
+            out.xColumn       = x;
+            // the bookkeeping columns; Ncount stays, being the atoms per bin
+            skip << QStringLiteral("Chunk") << QStringLiteral("OrigID");
+            for (const QString &n : names)
+                if (n.startsWith(QStringLiteral("Coord"))) skip << n;
+            break;
+        }
         case AveFileKind::Unknown:
             break;
     }

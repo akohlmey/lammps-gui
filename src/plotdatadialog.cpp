@@ -60,8 +60,8 @@ static std::string sanitizeVarName(const QString &name)
 
 // The kinds offered in the format combo, in the order they appear there.
 static const AveFileKind ave_kinds[] = {AveFileKind::AveTimeVector, AveFileKind::AveHisto,
-                                        AveFileKind::AveCorrelate, AveFileKind::AveCorrelateLong,
-                                        AveFileKind::Unknown};
+                                        AveFileKind::AveCorrelate,  AveFileKind::AveCorrelateLong,
+                                        AveFileKind::AveChunk,      AveFileKind::Unknown};
 
 PlotDataDialog::PlotDataDialog(const PlotData &data, QWidget *parent) :
     QDialog(parent), workingData(data), colsLayout(nullptr), xgroup(nullptr), sizeLabel(nullptr),

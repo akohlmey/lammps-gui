@@ -304,8 +304,8 @@ TEST(AveBlocksFallback, VectorWithoutDefaultTitles)
     EXPECT_EQ(d.kind, AveFileKind::AveTimeVector);
 }
 
-// fix ave/chunk parses through the generic path without losing data
-TEST(AveBlocksFallback, ChunkIsGenericBlockData)
+// fix ave/chunk from a 1-d binning: recognized, and the coordinate is the x axis
+TEST(AveBlocksFallback, ChunkIsBlockData)
 {
     const char text[]     = "# Chunk-averaged data for fix mychunk and group all\n"
                             "# Timestep Number-of-chunks Total-count\n"
@@ -314,7 +314,7 @@ TEST(AveBlocksFallback, ChunkIsGenericBlockData)
                             "1 0.5 250 0.8\n"
                             "2 1.5 250 0.9\n";
     const PlotBlockData d = parseAveBlocks(text);
-    EXPECT_EQ(d.kind, AveFileKind::Unknown);
+    EXPECT_EQ(d.kind, AveFileKind::AveChunk);
     EXPECT_EQ(d.fixId, "mychunk");
     ASSERT_EQ(d.blockCount(), 1);
     EXPECT_EQ(names(d.blocks[0]), QStringList({"Chunk", "Coord1", "Ncount", "density/mass"}));
@@ -573,6 +573,97 @@ TEST(AveDefaults, CorrelateLongAndTimeVector)
     EXPECT_FALSE(tv.averageBlocks);
     EXPECT_EQ(tv.xColumn, 0); // Row
     EXPECT_EQ(tv.yColumns, QList<int>({1, 2}));
+}
+
+// --- fix ave/chunk: only 1-d binning gets defaults ---------------------
+
+// bin/1d and bin/sphere write a single Coord column
+TEST(AveChunkDefaults, OneDimensionalBinning)
+{
+    const char text[]           = "# Chunk-averaged data for fix p and group all\n"
+                                  "# Timestep Number-of-chunks Total-count\n"
+                                  "# Chunk Coord1 Ncount density/mass\n"
+                                  "1000 3 300\n"
+                                  "1 0.5 100 0.8\n"
+                                  "2 1.5 110 0.9\n"
+                                  "3 2.5 90 0.7\n"
+                                  "2000 3 300\n"
+                                  "1 0.5 102 0.82\n"
+                                  "2 1.5 108 0.88\n"
+                                  "3 2.5 90 0.7\n";
+    const AveImportDefaults def = aveImportDefaults(parseAveBlocks(text));
+    // a profile is normally wanted averaged over the run.  The first bin's
+    // Ncount grows from block to block here, which must NOT be read as an
+    // accumulating average the way the identically named sample count of a
+    // correlate file is: in a chunk file it is an atom count that fluctuates.
+    EXPECT_TRUE(def.averageBlocks);
+    EXPECT_EQ(def.xColumn, 1); // Coord1
+    // the chunk index is bookkeeping, but the atom count per bin is data
+    EXPECT_EQ(def.yColumns, QList<int>({2, 3}));
+}
+
+// "compress yes" inserts an OrigID column ahead of the coordinates
+TEST(AveChunkDefaults, CompressedChunkIds)
+{
+    const char text[]           = "# Chunk-averaged data for fix p and group all\n"
+                                  "# Timestep Number-of-chunks Total-count\n"
+                                  "# Chunk OrigID Coord1 Ncount vx\n"
+                                  "1000 2 200\n"
+                                  "1 7 0.5 100 0.1\n"
+                                  "2 9 1.5 100 0.2\n";
+    const AveImportDefaults def = aveImportDefaults(parseAveBlocks(text));
+    EXPECT_EQ(def.xColumn, 2);                   // Coord1
+    EXPECT_EQ(def.yColumns, QList<int>({3, 4})); // Ncount and vx, not OrigID
+}
+
+// bin/cylinder writes an axial and a radial coordinate; with a single bin along
+// the axis the data is still 1-d, which only the values can tell us
+TEST(AveChunkDefaults, DegenerateCylinderIsOneDimensional)
+{
+    const char text[]           = "# Chunk-averaged data for fix p and group all\n"
+                                  "# Timestep Number-of-chunks Total-count\n"
+                                  "# Chunk Coord1 Coord2 Ncount temp\n"
+                                  "1000 3 300\n"
+                                  "1 5.0 0.5 100 300.1\n"
+                                  "2 5.0 1.5 100 299.4\n"
+                                  "3 5.0 2.5 100 301.7\n";
+    const AveImportDefaults def = aveImportDefaults(parseAveBlocks(text));
+    EXPECT_EQ(def.xColumn, 2);                   // the radial Coord2, which varies
+    EXPECT_EQ(def.yColumns, QList<int>({3, 4})); // the constant Coord1 is dropped
+}
+
+// a real 2-d grid has no single x axis, so it keeps the generic defaults
+TEST(AveChunkDefaults, TwoDimensionalGridStaysGeneric)
+{
+    const char text[]           = "# Chunk-averaged data for fix p and group all\n"
+                                  "# Timestep Number-of-chunks Total-count\n"
+                                  "# Chunk Coord1 Coord2 Ncount temp\n"
+                                  "1000 4 400\n"
+                                  "1 0.5 0.5 100 300.1\n"
+                                  "2 0.5 1.5 100 299.4\n"
+                                  "3 1.5 0.5 100 301.7\n"
+                                  "4 1.5 1.5 100 300.9\n";
+    const PlotBlockData d       = parseAveBlocks(text);
+    const AveImportDefaults def = aveImportDefaults(d);
+    EXPECT_EQ(d.kind, AveFileKind::AveChunk); // still recognized ...
+    EXPECT_FALSE(def.averageBlocks);          // ... but reduced to nothing special
+    EXPECT_EQ(def.xColumn, 0);
+    EXPECT_EQ(def.yColumns, QList<int>({1, 2, 3, 4})); // every column is offered
+}
+
+// chunks that are not bins (by type, molecule, compute) have no Coord column
+TEST(AveChunkDefaults, NonBinnedChunksStayGeneric)
+{
+    const char text[]           = "# Chunk-averaged data for fix p and group all\n"
+                                  "# Timestep Number-of-chunks Total-count\n"
+                                  "# Chunk Ncount c_ke\n"
+                                  "1000 2 200\n"
+                                  "1 100 1.5\n"
+                                  "2 100 1.6\n";
+    const AveImportDefaults def = aveImportDefaults(parseAveBlocks(text));
+    EXPECT_FALSE(def.averageBlocks);
+    EXPECT_EQ(def.xColumn, 0);
+    EXPECT_EQ(def.yColumns, QList<int>({1, 2}));
 }
 
 } // namespace
