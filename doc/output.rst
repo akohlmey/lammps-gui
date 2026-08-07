@@ -323,6 +323,18 @@ The following analyses are available:
   Boltzmann constant in those units to obtain a temperature.  Points at
   :math:`E \le 0` are left out of the fit and counted in the report.
 
+  A measured distribution is rarely a Maxwell-Boltzmann distribution
+  exactly, and then the *Weighting* selector decides which part of it the
+  one curve follows.  *By bin population* (the default) counts every bin in
+  proportion to the number of samples it holds, which keeps the fit on the
+  bulk of the distribution and its peak; it is scale-free, so it behaves
+  the same whether the histogram holds counts, fractions, or a density.
+  *By error bars* is the textbook :math:`1/\sigma^2` weighting, which
+  favors the points of smallest uncertainty -- on a histogram usually the
+  sparse tail, so it matches the peak *less* well.  *None* weights every
+  bin alike.  Restricting the *Fit x-range* is the other way to say which
+  part of a distribution matters.
+
 The expressions for *Custom function* and *Custom fit* are parsed and
 evaluated with a bundled subset of the Lepton expression parser, the same
 library used by the LAMMPS `Lepton-based styles

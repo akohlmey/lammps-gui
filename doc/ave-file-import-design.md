@@ -301,3 +301,23 @@ about the temperature.  For the same reason `kT` is reported in the energy
 units of the data and not converted to a temperature -- the file does not
 record its units.  That is one more thing the upstream metadata work above
 would fix.
+
+**Weighting matters more than the solver here.**  A measured distribution
+is rarely Maxwell-Boltzmann exactly -- a peptide histogram peaks at a lower
+energy than its own tail implies -- and then the weighting, not the fit
+quality, decides which part of it the single curve follows.  Counting each
+bin in proportion to its population is the default because it keeps the fit
+on the bulk of the distribution: on the test histogram it brings the fitted
+peak from 93% to 98% of the measured one.  The textbook `1/sigma^2`
+weighting does the opposite (82%), since the smallest error bars sit in the
+sparse tail.  `fitCustomCurve()` takes optional weights and applies them as
+`sqrt(w)` on the residuals and the Jacobian rows, so the solver knows
+nothing about them; the reported RMS stays unweighted so that fits under
+different weightings remain comparable.
+
+A three-parameter variant with the exponent free (`A E^q exp(-E/kT)`, i.e.
+an effective, non-integer number of degrees of freedom) describes that test
+histogram far better -- `d = 2.41`, and a 2.7x smaller residual -- which is
+what a mixture of constrained and unconstrained atoms should look like.  It
+is not implemented: whether an effective `d` is a meaningful quantity or a
+way to hide a bad sample is a judgment about the system, not about fitting.
