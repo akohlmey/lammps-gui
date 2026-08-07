@@ -27,11 +27,13 @@
 #include <QCheckBox>
 #include <QComboBox>
 #include <QDialogButtonBox>
+#include <QDoubleSpinBox>
 #include <QDoubleValidator>
 #include <QFileDialog>
 #include <QFont>
 #include <QFontDialog>
 #include <QFontInfo>
+#include <QFormLayout>
 #include <QFrame>
 #include <QGroupBox>
 #include <QHBoxLayout>
@@ -260,6 +262,22 @@ void Preferences::accept()
     if (combo) settings->setValue(Keys::RAWBRUSH, combo->currentIndex());
     combo = tabWidget->findChild<QComboBox *>("smoothbrush");
     if (combo) settings->setValue(Keys::SMOOTHBRUSH, combo->currentIndex());
+    combo = tabWidget->findChild<QComboBox *>("errbrush");
+    if (combo) settings->setValue(Keys::ERRBRUSH, combo->currentIndex());
+    combo = tabWidget->findChild<QComboBox *>("rawmode");
+    if (combo) settings->setValue(Keys::RAWMODE, combo->currentIndex());
+    combo = tabWidget->findChild<QComboBox *>("smoothmode");
+    if (combo) settings->setValue(Keys::SMOOTHMODE, combo->currentIndex());
+    auto *dspin = tabWidget->findChild<QDoubleSpinBox *>("rawwidth");
+    if (dspin) settings->setValue(Keys::RAWWIDTH, dspin->value());
+    dspin = tabWidget->findChild<QDoubleSpinBox *>("smoothwidth");
+    if (dspin) settings->setValue(Keys::SMOOTHWIDTH, dspin->value());
+    dspin = tabWidget->findChild<QDoubleSpinBox *>("errwidth");
+    if (dspin) settings->setValue(Keys::ERRWIDTH, dspin->value());
+    dspin = tabWidget->findChild<QDoubleSpinBox *>("rawpointsize");
+    if (dspin) settings->setValue(Keys::RAWPOINTSIZE, dspin->value());
+    dspin = tabWidget->findChild<QDoubleSpinBox *>("smoothpointsize");
+    if (dspin) settings->setValue(Keys::SMOOTHPOINTSIZE, dspin->value());
     spin = tabWidget->findChild<QSpinBox *>("smoothwindow");
     if (spin) settings->setValue(Keys::SMOOTHWINDOW, spin->value());
     spin = tabWidget->findChild<QSpinBox *>("smoothorder");
@@ -1076,25 +1094,74 @@ ChartsTab::ChartsTab(QSettings *_settings, QWidget *parent) : QWidget(parent), s
     smoothval->setObjectName("smoothchoice");
     smoothval->setCurrentIndex(settings->value(Keys::SMOOTHCHOICE, 0).toInt());
 
-    auto *rawbrlbl = new QLabel("Raw plot color:");
-    auto *rawbrush = new QComboBox;
-    rawbrush->addItem("Black");
-    rawbrush->addItem("Blue");
-    rawbrush->addItem("Red");
-    rawbrush->addItem("Green");
-    rawbrush->addItem("Gray");
-    rawbrush->setObjectName("rawbrush");
-    rawbrush->setCurrentIndex(settings->value(Keys::RAWBRUSH, 1).toInt());
+    // the series style defaults, laid out like the per-chart "Chart Style"
+    // dialog they preset.  Color lists and display-mode lists must be kept in
+    // sync with mybrushes and ChartDisplayMode in chartviewer.
+    auto colorBox = [this](const QString &name, const QString &key, int fallback) {
+        auto *combo = new QComboBox;
+        combo->addItem("Black");
+        combo->addItem("Blue");
+        combo->addItem("Red");
+        combo->addItem("Green");
+        combo->addItem("Gray");
+        combo->setObjectName(name);
+        combo->setCurrentIndex(settings->value(key, fallback).toInt());
+        return combo;
+    };
+    auto modeBox = [this](const QString &name, const QString &key) {
+        auto *combo = new QComboBox;
+        combo->addItem("Lines");
+        combo->addItem("Points");
+        combo->addItem("Lines + Points");
+        combo->setObjectName(name);
+        combo->setCurrentIndex(settings->value(key, 0).toInt());
+        return combo;
+    };
+    auto widthBox = [this](const QString &name, const QString &key, double fallback) {
+        auto *spin = new QDoubleSpinBox;
+        spin->setRange(Cfg::LINE_WIDTH_MIN, Cfg::LINE_WIDTH_MAX);
+        spin->setSingleStep(0.5);
+        spin->setObjectName(name);
+        spin->setValue(settings->value(key, fallback).toDouble());
+        return spin;
+    };
+    auto pointBox = [this](const QString &name, const QString &key) {
+        auto *spin = new QDoubleSpinBox;
+        spin->setRange(Cfg::POINT_SIZE_MIN, Cfg::POINT_SIZE_MAX);
+        spin->setSingleStep(1.0);
+        spin->setObjectName(name);
+        spin->setValue(settings->value(key, Cfg::POINT_SIZE_DEFAULT).toDouble());
+        return spin;
+    };
 
-    auto *smoothbrlbl = new QLabel("Smooth plot color:");
-    auto *smoothbrush = new QComboBox;
-    smoothbrush->addItem("Black");
-    smoothbrush->addItem("Blue");
-    smoothbrush->addItem("Red");
-    smoothbrush->addItem("Green");
-    smoothbrush->addItem("Gray");
-    smoothbrush->setObjectName("smoothbrush");
-    smoothbrush->setCurrentIndex(settings->value(Keys::SMOOTHBRUSH, 2).toInt());
+    auto *rawbox  = new QGroupBox("Raw data");
+    auto *rawform = new QFormLayout(rawbox);
+    rawform->addRow("Display:", modeBox("rawmode", Keys::RAWMODE));
+    rawform->addRow("Color:", colorBox("rawbrush", Keys::RAWBRUSH, Cfg::RAWBRUSH_DEFAULT));
+    rawform->addRow("Line width:", widthBox("rawwidth", Keys::RAWWIDTH, Cfg::LINE_WIDTH_DEFAULT));
+    rawform->addRow("Point size:", pointBox("rawpointsize", Keys::RAWPOINTSIZE));
+
+    auto *procbox  = new QGroupBox("Processed data");
+    auto *procform = new QFormLayout(procbox);
+    procform->addRow("Display:", modeBox("smoothmode", Keys::SMOOTHMODE));
+    procform->addRow("Color:",
+                     colorBox("smoothbrush", Keys::SMOOTHBRUSH, Cfg::SMOOTHBRUSH_DEFAULT));
+    procform->addRow("Line width:",
+                     widthBox("smoothwidth", Keys::SMOOTHWIDTH, Cfg::LINE_WIDTH_DEFAULT));
+    procform->addRow("Point size:", pointBox("smoothpointsize", Keys::SMOOTHPOINTSIZE));
+
+    auto *errbox = new QGroupBox("Error bars");
+    errbox->setToolTip("Error bars are drawn for imported data that carries an\n"
+                       "uncertainty, e.g. the average of a set of fix ave/* blocks.");
+    auto *errform = new QFormLayout(errbox);
+    errform->addRow("Color:", colorBox("errbrush", Keys::ERRBRUSH, Cfg::ERRBRUSH_DEFAULT));
+    errform->addRow("Line width:", widthBox("errwidth", Keys::ERRWIDTH, Cfg::ERR_WIDTH_DEFAULT));
+
+    auto *stylerow = new QHBoxLayout;
+    stylerow->addWidget(rawbox);
+    stylerow->addWidget(procbox);
+    stylerow->addWidget(errbox);
+    stylerow->addStretch(1);
 
     auto *smwindlbl = new QLabel("Default smoothing window:");
     auto *smwindval = new QSpinBox;
@@ -1136,10 +1203,7 @@ ChartsTab::ChartsTab(QSettings *_settings, QWidget *parent) : QWidget(parent), s
     grid->addWidget(titlehlp, i++, 2, Qt::AlignTop);
     grid->addWidget(smoothlbl, i, 0, Qt::AlignTop);
     grid->addWidget(smoothval, i++, 1, Qt::AlignTop);
-    grid->addWidget(rawbrlbl, i, 0, Qt::AlignTop);
-    grid->addWidget(rawbrush, i++, 1, Qt::AlignTop);
-    grid->addWidget(smoothbrlbl, i, 0, Qt::AlignTop);
-    grid->addWidget(smoothbrush, i++, 1, Qt::AlignTop);
+    grid->addLayout(stylerow, i++, 0, 1, 3);
     grid->addWidget(smwindlbl, i, 0, Qt::AlignTop);
     grid->addWidget(smwindval, i++, 1, Qt::AlignTop);
     grid->addWidget(smordrlbl, i, 0, Qt::AlignTop);

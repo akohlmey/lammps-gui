@@ -40,7 +40,7 @@ using ShellAlias = QPair<QString, QString>;
  * Only what is in the table is sent, and only when a shell starts or the table
  * is accepted; nothing else ever reaches the shell without being typed.
  *
- * @see CommandWindow, doc/command-window-design.md
+ * @see CommandWindow
  */
 class ShellAliases : public QDialog {
     Q_OBJECT

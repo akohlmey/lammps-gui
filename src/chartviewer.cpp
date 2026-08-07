@@ -52,6 +52,7 @@
 #include <QMenuBar>
 #include <QMessageBox>
 #include <QPushButton>
+#include <QRegularExpression>
 #include <QSettings>
 #include <QSignalBlocker>
 #include <QSpinBox>
@@ -156,8 +157,50 @@ QList<FitParam> parseFitParams(const QString &text, bool *ok)
 // block appears; they are pure (no PlotWidget), so no other helper is required.
 namespace {
 bool appendColumnPoint(ChartColumn &col, double x, double y);
-void setColumnData(ChartColumn &col, const QList<QPointF> &points);
+void setColumnData(ChartColumn &col, const QList<QPointF> &points, const QList<double> &yerr = {},
+                   const QList<double> &yerrLo = {});
 void setColumnSmoothFlags(ChartColumn &col, bool doRaw, bool doSmooth, int window, int order);
+void applyColumnStyleDefaults(ChartColumn &col);
+QList<QPointF> calc_sgsmooth(const QList<QPointF> &input, std::size_t window, int order);
+
+// Value at x of a curve given by its sampled points, by linear interpolation.
+// Used to write a fit curve -- which is sampled on a dense grid of its own over
+// the data range -- against the x values of the data it was fitted to.  The
+// points are in increasing x, as every curve the fits produce is, and x is
+// inside their range, as every data x is.
+double interpolateCurve(const QList<QPointF> &pts, double x)
+{
+    if (pts.isEmpty()) return 0.0;
+    if (x <= pts.first().x()) return pts.first().y();
+    if (x >= pts.last().x()) return pts.last().y();
+    // the first point at or past x; the interval before it brackets x
+    const auto hi = std::lower_bound(pts.cbegin(), pts.cend(), x, [](const QPointF &p, double v) {
+        return p.x() < v;
+    });
+    const QPointF &b = *hi;
+    const QPointF &a = *(hi - 1);
+    const double dx  = b.x() - a.x();
+    if (dx <= 0.0) return a.y(); // coincident samples: nothing to interpolate
+    return a.y() + (b.y() - a.y()) * (x - a.x()) / dx;
+}
+
+// Pick the error bars of one data column out of a PlotErrors and convert them
+// for a PlotSeries. Bars of the wrong length are dropped rather than padded, so
+// a mismatch can only lose the annotation, never shift it onto other points.
+void columnErrors(const PlotErrors &errors, int column, int nrow, QList<double> &yerr,
+                  QList<double> &yerrLo)
+{
+    yerr.clear();
+    yerrLo.clear();
+    const auto col = static_cast<std::size_t>(column);
+    if (col >= errors.upper.size()) return;
+    const std::vector<double> &up = errors.upper[col];
+    if (up.size() != static_cast<std::size_t>(nrow)) return;
+    yerr = QList<double>(up.cbegin(), up.cend());
+    if (col >= errors.lower.size()) return;
+    const std::vector<double> &lo = errors.lower[col];
+    if (lo.size() == static_cast<std::size_t>(nrow)) yerrLo = QList<double>(lo.cbegin(), lo.cend());
+}
 } // namespace
 
 /* -------------------------------------------------------------------- */
@@ -491,6 +534,7 @@ void ChartWindow::addChart(const QString &title, int index)
     c->series->name = title;
     c->yTitle       = title;
     c->lastUpdate   = QTime::currentTime();
+    applyColumnStyleDefaults(*c); // the configured defaults, until the style dialog overrides them
     cols.push_back(std::move(c));
     columns->addItem(title, index);
     columns->show();
@@ -535,7 +579,8 @@ void ChartWindow::setRangeEnabled(bool enabled)
     order->setEnabled(enabled && doSmooth);
 }
 
-void ChartWindow::loadData(const PlotData &data, int xcol, const QList<int> &ycols)
+void ChartWindow::loadData(const PlotData &data, int xcol, const QList<int> &ycols,
+                           const PlotErrors &yerrs)
 {
     resetCharts();
     if (data.isEmpty() || ycols.isEmpty()) return;
@@ -554,7 +599,10 @@ void ChartWindow::loadData(const PlotData &data, int xcol, const QList<int> &yco
         points.reserve(nrow);
         for (int r = 0; r < nrow; ++r)
             points.append(QPointF(xvals[r], yvals[r]));
-        setColumnData(*cols.back(), points); // data only; the active one is drawn below
+        QList<double> errs, errsLo;
+        columnErrors(yerrs, ycol, nrow, errs, errsLo);
+        // data only; the active one is drawn below
+        setColumnData(*cols.back(), points, errs, errsLo);
         ++idx;
     }
     // shared X-axis labeling on the single plot (standalone uses %.6g)
@@ -647,7 +695,7 @@ void ChartWindow::changeStyle()
     // build a line-width spin box preset to the given width
     auto widthBox = [](qreal width) {
         auto *w = new QDoubleSpinBox;
-        w->setRange(0.5, 20.0);
+        w->setRange(Cfg::LINE_WIDTH_MIN, Cfg::LINE_WIDTH_MAX);
         w->setSingleStep(0.5);
         w->setValue(width);
         return w;
@@ -656,15 +704,26 @@ void ChartWindow::changeStyle()
     // build a point-diameter spin box preset to the given size
     auto pointBox = [](qreal size) {
         auto *w = new QDoubleSpinBox;
-        w->setRange(1.0, 40.0);
+        w->setRange(Cfg::POINT_SIZE_MIN, Cfg::POINT_SIZE_MAX);
         w->setSingleStep(1.0);
         w->setValue(size);
         return w;
     };
 
+    // a chart that has no color of its own draws in the configured one, so that
+    // is what the dialog has to start from and hand back
+    auto configuredColor = [](const QString &key, int fallback) {
+        QSettings settings;
+        settings.beginGroup(Keys::GROUP_CHARTS);
+        int idx = settings.value(key, fallback).toInt();
+        settings.endGroup();
+        if ((idx < 0) || (idx >= mybrushes.size())) idx = 0;
+        return mybrushes[idx].color();
+    };
+
     // raw data section
     QColor rawChosen = chart->displayColor();
-    if (!rawChosen.isValid()) rawChosen = QColor(100, 150, 255);
+    if (!rawChosen.isValid()) rawChosen = configuredColor(Keys::RAWBRUSH, Cfg::RAWBRUSH_DEFAULT);
     auto *rawMode      = modeBox(chart->displayMode());
     auto *rawColorBtn  = colorButton(rawChosen);
     auto *rawWidthSpin = widthBox(chart->displayWidth());
@@ -679,7 +738,8 @@ void ChartWindow::changeStyle()
 
     // processed data section
     QColor procChosen = chart->smoothColor();
-    if (!procChosen.isValid()) procChosen = QColor(255, 125, 125);
+    if (!procChosen.isValid())
+        procChosen = configuredColor(Keys::SMOOTHBRUSH, Cfg::SMOOTHBRUSH_DEFAULT);
     auto *procMode      = modeBox(chart->smoothMode());
     auto *procColorBtn  = colorButton(procChosen);
     auto *procWidthSpin = widthBox(chart->smoothWidth());
@@ -691,6 +751,19 @@ void ChartWindow::changeStyle()
     procForm->addRow("Line width:", procWidthSpin);
     procForm->addRow("Point size:", procPointSpin);
     layout->addWidget(procBox);
+
+    // error bar section; the bars of every series of this chart share one style
+    QColor errChosen = chart->errorColor();
+    if (!errChosen.isValid()) errChosen = configuredColor(Keys::ERRBRUSH, Cfg::ERRBRUSH_DEFAULT);
+    auto *errColorBtn  = colorButton(errChosen);
+    auto *errWidthSpin = widthBox(chart->errorWidth());
+    auto *errBox       = new QGroupBox("Error bars");
+    errBox->setToolTip("Applies to the error bars of every series of this chart.\n"
+                       "Only imported data can carry error bars.");
+    auto *errForm = new QFormLayout(errBox);
+    errForm->addRow("Color:", errColorBtn);
+    errForm->addRow("Line width:", errWidthSpin);
+    layout->addWidget(errBox);
 
     // in-plot legend section
     auto *legendCombo = new QComboBox;
@@ -717,6 +790,7 @@ void ChartWindow::changeStyle()
                                rawChosen, rawWidthSpin->value(), rawPointSpin->value());
         chart->setSmoothStyle(static_cast<ChartDisplayMode>(procMode->currentData().toInt()),
                               procChosen, procWidthSpin->value(), procPointSpin->value());
+        chart->setErrorStyle(errChosen, errWidthSpin->value());
         legendPos = static_cast<LegendPos>(legendCombo->currentData().toInt());
         // viewer is created unconditionally in the constructor and never reset to null
         viewer->setLegendPos(legendPos);
@@ -759,6 +833,7 @@ void ChartWindow::postProcess()
     analysisbox->addItem("Birch-Murnaghan EOS fit");
     analysisbox->addItem("Custom function");
     analysisbox->addItem("Custom fit");
+    analysisbox->addItem("Maxwell-Boltzmann fit");
     form->addRow("Analysis:", analysisbox);
 
     auto *paramLabel = new QLabel;
@@ -778,6 +853,21 @@ void ChartWindow::postProcess()
     paramsEdit->setPlaceholderText("name=guess, e.g. a=1, b=0.5");
     paramsEdit->setMinimumWidth(Cfg::POSTPROCESS_EXPR_WIDTH);
     form->addRow(paramsLabel, paramsEdit);
+
+    // which part of the data a fit follows when the model cannot describe all
+    // of it, shown for the distribution fit where the choice actually decides
+    // whether the peak or the tail is matched
+    auto *weightLabel = new QLabel("Weighting:");
+    auto *weightCombo = new QComboBox;
+    weightCombo->addItem("by bin population");
+    weightCombo->addItem("by error bars (1/sigma^2)");
+    weightCombo->addItem("none (uniform)");
+    weightCombo->setToolTip("Which residuals the fit cares about most.\n"
+                            "By bin population: every bin counts in proportion to the samples it\n"
+                            "holds, so the fit follows the bulk of the distribution and its peak.\n"
+                            "By error bars: the textbook weighting, which favors the points with\n"
+                            "the smallest uncertainty -- usually the sparse tail of a histogram.");
+    form->addRow(weightLabel, weightCombo);
 
     auto *fitLabelLabel = new QLabel("Label:");
     auto *fitLabelEdit  = new QLineEdit;
@@ -810,6 +900,7 @@ void ChartWindow::postProcess()
         const bool fit       = (idx == 4); // custom-function nonlinear fit
         const bool expr      = plot || fit;
         const bool eos       = (idx == 2);
+        const bool maxbolt   = (idx == 5); // Maxwell-Boltzmann distribution fit
         const bool showRange = (idx != 0); // show for all except autocorrelation
         exprLabel->setVisible(expr);
         exprEdit->setVisible(expr);
@@ -817,6 +908,8 @@ void ChartWindow::postProcess()
         paramsEdit->setVisible(fit);
         fitLabelLabel->setVisible(fit);
         fitLabelEdit->setVisible(fit);
+        weightLabel->setVisible(maxbolt);
+        weightCombo->setVisible(maxbolt);
         fitRangeLabel->setVisible(showRange);
         fitRangeWidget->setVisible(showRange);
         paramLabel->setVisible(!expr && !eos);
@@ -825,6 +918,15 @@ void ChartWindow::postProcess()
             paramSpin->setVisible(true);
             paramSpin->setRange(1, qMin(npoints - 1, 8));
             paramSpin->setValue(qMin(3, qMin(npoints - 1, 8)));
+        } else if (maxbolt) { // spatial dimensions the energies were drawn in
+            paramLabel->setText("Dimensions:");
+            paramSpin->setVisible(true);
+            paramSpin->setRange(1, 3);
+            paramSpin->setValue(3);
+            paramSpin->setToolTip("Degrees of freedom per atom: the exponent of the prefactor is\n"
+                                  "d/2 - 1, so the familiar sqrt(E) shape is the free three-\n"
+                                  "dimensional case.  Constrained or rigid molecules have fewer:\n"
+                                  "a rigid 3-site water has 6 per molecule, so 2 per atom.");
         } else if (eos) { // EOS: only show the x-axis confirmation
             paramSpin->setVisible(false);
         } else if (expr) { // custom function/fit: expression field(s) only
@@ -848,13 +950,16 @@ void ChartWindow::postProcess()
 
     if (dialog.exec() != QDialog::Accepted) return;
 
-    // gather the (x, y) data of the selected chart
-    std::vector<double> xs, ys;
+    // gather the (x, y) data of the selected chart, with its error bars where
+    // it has them (a weighted fit can use those as standard deviations)
+    std::vector<double> xs, ys, es;
     xs.reserve(npoints);
     ys.reserve(npoints);
+    es.reserve(npoints);
     for (int i = 0; i < npoints; ++i) {
         xs.push_back(chart->getStep(i));
         ys.push_back(chart->getData(i));
+        es.push_back(chart->getError(i));
     }
 
     const int which = analysisbox->currentIndex();
@@ -863,17 +968,27 @@ void ChartWindow::postProcess()
     if (which != 0) {
         const double fitXmin = fitFromSpin->value();
         const double fitXmax = fitToSpin->value();
+        // The spin boxes start out holding the data range rounded to their own
+        // decimals, and that rounding can land a hair *inside* the data, which
+        // would drop the first or the last point from a range the user never
+        // touched -- silently, and enough to move a fitted parameter.  A bound
+        // is therefore only honored to the precision the widget can express:
+        // half of its last digit, plus the resolution of a double this large.
+        const double fitEps = 0.5 * std::pow(10.0, -fitFromSpin->decimals()) +
+                              1.0e-12 * qMax(qAbs(fitXmin), qAbs(fitXmax));
         if (fitXmin < fitXmax) {
-            std::vector<double> fxs, fys;
+            std::vector<double> fxs, fys, fes;
             for (std::size_t i = 0; i < xs.size(); ++i) {
-                if (xs[i] >= fitXmin && xs[i] <= fitXmax) {
+                if ((xs[i] >= fitXmin - fitEps) && (xs[i] <= fitXmax + fitEps)) {
                     fxs.push_back(xs[i]);
                     fys.push_back(ys[i]);
+                    fes.push_back(es[i]);
                 }
             }
             if (fxs.size() >= 2) {
                 xs = std::move(fxs);
                 ys = std::move(fys);
+                es = std::move(fes);
             } else {
                 warning(this, "Postprocess",
                         "Fewer than 2 data points in the selected x-range; using full data.");
@@ -965,6 +1080,158 @@ void ChartWindow::postProcess()
                       .arg(fit.rms, 0, 'g', 6)
                       .arg(fit.iterations);
         information(this, "Custom Fit", report);
+        return;
+    }
+
+    if (which == 5) { // Maxwell-Boltzmann distribution of per-atom energies
+        // f(E) = A * E^(d/2 - 1) * exp(-E/kT), the distribution of the kinetic
+        // energy of d degrees of freedom.  The amplitude is fitted rather than
+        // derived, because a histogram carries an arbitrary normalization: raw
+        // counts, a normalized fraction, and a density all differ by a constant
+        // that says nothing about the temperature.
+        const int ndim = paramSpin->value();
+
+        // E = 0 is outside the domain for d = 1, and negative energies are not
+        // in it at all; dropping them keeps the model finite everywhere it is
+        // evaluated instead of letting one point poison the residuals
+        std::vector<double> exs, eys, ees;
+        for (std::size_t i = 0; i < xs.size(); ++i)
+            if (xs[i] > 0.0) {
+                exs.push_back(xs[i]);
+                eys.push_back(ys[i]);
+                ees.push_back(es[i]);
+            }
+        const std::size_t dropped = xs.size() - exs.size();
+        if (exs.size() < 3) {
+            warning(this, "Maxwell-Boltzmann Fit",
+                    "Fewer than 3 data points with a positive energy.\n"
+                    "The x axis has to be the energy, not the bin index.");
+            return;
+        }
+
+        // The initial guesses come from the data rather than from constants:
+        // the distribution's mean is <E> = (d/2) kT, and the histogram weights
+        // give that mean directly, which puts kT within a factor of two even
+        // for a badly cut histogram.  The amplitude then follows from matching
+        // the model's peak to the tallest bin.
+        double sumy = 0.0, sumxy = 0.0, ymax = 0.0;
+        for (std::size_t i = 0; i < exs.size(); ++i) {
+            const double w = qMax(0.0, eys[i]); // negative weights are not counts
+            sumy += w;
+            sumxy += w * exs[i];
+            ymax = qMax(ymax, eys[i]);
+        }
+        const double power = 0.5 * ndim - 1.0;
+        double kt0         = (sumy > 0.0) ? (2.0 * sumxy / (sumy * ndim)) : 1.0;
+        if (!(kt0 > 0.0)) kt0 = 1.0;
+        double shape = 0.0; // the model's own peak height at kT = kt0, A = 1
+        for (double x : exs)
+            shape = qMax(shape, std::pow(x, power) * std::exp(-x / kt0));
+        const double a0 = (shape > 0.0 && ymax > 0.0) ? (ymax / shape) : 1.0;
+
+        // built for LeptonMini, whose "^" is exponentiation
+        QString expr = QStringLiteral("A*exp(-x/kT)");
+        if (ndim == 3) expr = QStringLiteral("A*sqrt(x)*exp(-x/kT)");
+        if (ndim == 1) expr = QStringLiteral("A*exp(-x/kT)/sqrt(x)");
+
+        // Which residuals the fit should care about.  A measured distribution
+        // is rarely a Maxwell-Boltzmann distribution exactly, and then the
+        // weighting decides which part of it the one curve follows.  Counting
+        // every bin in proportion to its population keeps the fit on the bulk
+        // of the distribution and its peak; it is also scale-free, so it works
+        // the same whether the histogram holds counts, fractions, or a density.
+        // Weighting by the error bars instead is the textbook choice, but on a
+        // histogram it favors the sparse tail, whose bars are the smallest.
+        const int weighting = weightCombo->currentIndex();
+        std::vector<double> weights;
+        QString weightNote;
+        if (weighting == 0) { // by bin population
+            weights.reserve(eys.size());
+            for (double y : eys)
+                weights.push_back(qMax(0.0, y));
+            weightNote = QStringLiteral("weighted by bin population");
+        } else if (weighting == 1) { // by the error bars, as 1/sigma^2
+            double smallest = 0.0;
+            for (double s : ees)
+                if ((s > 0.0) && ((smallest == 0.0) || (s < smallest))) smallest = s;
+            if (smallest > 0.0) {
+                weights.reserve(ees.size());
+                // a bin that came out identical in every block would otherwise
+                // carry infinite weight; the smallest real spread stands in
+                for (double s : ees)
+                    weights.push_back(1.0 / ((s > 0.0) ? (s * s) : (smallest * smallest)));
+                weightNote = QStringLiteral("weighted by 1/sigma^2 of the error bars");
+            } else {
+                weightNote = QStringLiteral("unweighted (the data carries no error bars)");
+            }
+        } else {
+            weightNote = QStringLiteral("unweighted");
+        }
+
+        const QList<FitParam> initial = {{QStringLiteral("A"), a0}, {QStringLiteral("kT"), kt0}};
+        const auto emm                = std::minmax_element(exs.begin(), exs.end());
+        const CustomFit fit = fitCustomCurve(expr, initial, exs, eys, *emm.first, *emm.second,
+                                             Ncurve, QStringLiteral("x"), weights);
+        if (!fit.ok) {
+            warning(this, "Maxwell-Boltzmann Fit",
+                    QString("The fit could not be completed:\n%1").arg(fit.error));
+            return;
+        }
+
+        double kt = 0.0, amp = 0.0;
+        for (const auto &p : fit.params) {
+            if (p.name == QLatin1String("kT")) kt = p.value;
+            if (p.name == QLatin1String("A")) amp = p.value;
+        }
+        const QString fitName = QStringLiteral("Maxwell-Boltzmann");
+        chart->setFitCurve(fit.curve, fitName, /* eosMode= */ true);
+        setProcessedLabel("M-B fit");
+        resetRangeSliders();        // a fit re-fits to the whole data set; match the sliders
+        smooth->setCurrentIndex(2); // "Both" = raw data + fit overlay
+
+        // Equipartition fixes <E> = (d/2) kT whatever the shape of the
+        // distribution, so the measured mean is a second, model-free estimate
+        // of kT.  Reporting both turns a wrong d -- or a histogram that is not
+        // the distribution being fitted -- from an invisible bias into a
+        // visible disagreement.  It is the mean of the fitted points, so a
+        // histogram whose tail was cut off makes it come out low.
+        const double meanE    = (sumy > 0.0) ? (sumxy / sumy) : 0.0;
+        const double ktMoment = 2.0 * meanE / ndim;
+
+        QString report = QString("Maxwell-Boltzmann fit in %1 dimension(s), %2:\n"
+                                 "  f(E) = %3\n\n"
+                                 "  kT  = %4   (from the fitted shape)\n"
+                                 "  A   = %5\n\n"
+                                 "  <E> = %6   (measured)\n"
+                                 "  kT  = %7   (from <E> = (d/2) kT alone)\n\n"
+                                 "  RMS residual = %8\n  iterations   = %9\n")
+                             .arg(ndim)
+                             .arg(weightNote)
+                             .arg(expr)
+                             .arg(kt, 0, 'g', 8)
+                             .arg(amp, 0, 'g', 8)
+                             .arg(meanE, 0, 'g', 8)
+                             .arg(ktMoment, 0, 'g', 8)
+                             .arg(fit.rms, 0, 'g', 6)
+                             .arg(fit.iterations);
+        // a disagreement between the two is the data telling us that it is not
+        // the distribution being fitted, which is worth saying out loud
+        if ((kt > 0.0) && (ktMoment > 0.0) && (qAbs(kt - ktMoment) > 0.1 * qMax(kt, ktMoment))) {
+            report += "\nThe two disagree by more than 10%, so this data is not quite the "
+                      "distribution being fitted to it. Check the degrees of freedom: "
+                      "constrained or rigid molecules have fewer than three per atom, and a "
+                      "rigid 3-site water has two. Check as well that the histogram covers "
+                      "the whole distribution, since a tail beyond its range is missing from "
+                      "<E> and lowers it.\n";
+        }
+        if (dropped > 0)
+            report += QString("\n%1 point(s) at E <= 0 were left out of the fit.\n")
+                          .arg(static_cast<int>(dropped));
+        // kT is in the energy units of the data, and the file does not say what
+        // those are, so converting it to a temperature is left to the reader
+        report += "\nkT is in the energy units of the plotted data; divide by the\n"
+                  "Boltzmann constant in those units to obtain a temperature.";
+        information(this, "Maxwell-Boltzmann Fit", report);
         return;
     }
 
@@ -1110,18 +1377,26 @@ void ChartWindow::addDataFile()
     if (fileName.isEmpty()) return;
 
     QString error;
-    PlotData data = loadPlotData(fileName, &error);
-    if (data.isEmpty()) {
-        critical(this, "Add Data from File",
-                 "Could not read data from file:", error.isEmpty() ? fileName : error);
-        return;
+    // fix ave/* output is block structured and gets the import dialog that can
+    // reduce it to a flat table first
+    const PlotBlockData blocks = loadPlotBlockData(fileName);
+    PlotData data;
+    if (blocks.isEmpty()) {
+        data = loadPlotData(fileName, &error);
+        if (data.isEmpty()) {
+            critical(this, "Add Data from File",
+                     "Could not read data from file:", error.isEmpty() ? fileName : error);
+            return;
+        }
     }
 
-    PlotDataDialog dialog(data, this);
-    if (dialog.exec() != QDialog::Accepted) return;
-    const PlotData plotData = dialog.buildData();
-    const QList<int> ycols  = dialog.yColumns();
-    const int xcol          = dialog.xColumn();
+    auto dialog = blocks.isEmpty() ? std::make_unique<PlotDataDialog>(data, this)
+                                   : std::make_unique<PlotDataDialog>(blocks, this);
+    if (dialog->exec() != QDialog::Accepted) return;
+    const PlotData plotData  = dialog->buildData();
+    const PlotErrors plotErr = dialog->buildErrors();
+    const QList<int> ycols   = dialog->yColumns();
+    const int xcol           = dialog->xColumn();
     if (ycols.isEmpty() || xcol < 0 || xcol >= plotData.columnCount()) return;
 
     ChartViewer *chart = currentChart();
@@ -1147,7 +1422,10 @@ void ChartWindow::addDataFile()
         const std::vector<double> &yvals = plotData.column(ycol);
         for (int r = 0; r < nrow; ++r)
             pts.append(QPointF(xvals[r], yvals[r]));
-        chart->addOverlaySeries(pts, plotData.columnName(ycol), palette[colorIdx % palette.size()]);
+        QList<double> errs, errsLo;
+        columnErrors(plotErr, ycol, nrow, errs, errsLo);
+        chart->addOverlaySeries(pts, plotData.columnName(ycol), palette[colorIdx % palette.size()],
+                                errs, errsLo);
         ++colorIdx;
     }
     // new data was added (and re-fit to the full range): match the sliders to it
@@ -1433,20 +1711,104 @@ void ChartWindow::saveAs()
 PlotData ChartWindow::chartsToPlotData() const
 {
     PlotData data;
-    QStringList names;
-    names << "Step";
-    for (const auto &c : cols)
-        names << c->series->name;
-    data.setColumnNames(names);
+    if (cols.empty()) return data;
 
-    const int lines = cols.empty() ? 0 : cols[0]->series->count();
-    for (int i = 0; i < lines; ++i) {
-        std::vector<double> row;
-        row.reserve(names.size());
-        row.push_back(cols[0]->series->at(i).x());
-        for (const auto &c : cols)
-            row.push_back(c->series->at(i).y());
-        data.appendRow(row);
+    // A flat table has one x column, so every exported series has to live on
+    // one grid: the x values of the first chart.  The raw values are always
+    // written -- they are the data, and losing them to a display setting would
+    // be a poor trade -- and the results of the post-processing follow.
+    const PlotSeries &ref = *cols.front()->series;
+    const int nrow        = ref.count();
+    if (nrow < 1) return data;
+
+    std::vector<double> xs;
+    xs.reserve(nrow);
+    for (int i = 0; i < nrow; ++i)
+        xs.push_back(ref.at(i).x());
+    data.addColumn(QStringLiteral("Step"), xs);
+
+    // whether a series can be written against those x values as they stand
+    auto sameGrid = [&xs, nrow](const PlotSeries *s) {
+        if (!s || (s->count() != nrow)) return false;
+        for (int i = 0; i < nrow; ++i)
+            if (s->at(i).x() != xs[static_cast<std::size_t>(i)]) return false;
+        return true;
+    };
+    auto yValues = [nrow](const PlotSeries *s) {
+        std::vector<double> v;
+        v.reserve(nrow);
+        for (int i = 0; i < nrow; ++i)
+            v.push_back(s->at(i).y());
+        return v;
+    };
+    // a column name has to survive whitespace-separated and comma-separated
+    // formats alike, and fit labels are free text (an expression, say)
+    auto exportName = [](QString name) {
+        return name.replace(QRegularExpression(QStringLiteral("[\\s,]+")), QStringLiteral("_"));
+    };
+
+    for (const auto &c : cols) {
+        const PlotSeries *s = c->series.get();
+        // a chart on a grid of its own cannot share this table; in practice all
+        // charts of a window are filled from the same x values
+        if (!sameGrid(s)) continue;
+        const QString name = exportName(s->name);
+        data.addColumn(name, yValues(s));
+
+        // error bars go next to the values they belong to; re-importing the
+        // file simply yields one more data column.  Bars that reach up and
+        // down by different amounts need two.
+        if (s->hasAsymErrors()) {
+            std::vector<double> lo, hi;
+            lo.reserve(nrow);
+            hi.reserve(nrow);
+            for (int i = 0; i < nrow; ++i) {
+                lo.push_back(s->errLow(i));
+                hi.push_back(s->errHigh(i));
+            }
+            data.addColumn(name + "-errlo", std::move(lo));
+            data.addColumn(name + "-errhi", std::move(hi));
+        } else if (s->hasErrors()) {
+            std::vector<double> err;
+            err.reserve(nrow);
+            for (int i = 0; i < nrow; ++i)
+                err.push_back(s->errHigh(i));
+            data.addColumn(name + "-err", std::move(err));
+        }
+
+        // The smoothed curve shares the raw x values by construction.  It is
+        // computed here rather than read off the column, because the single
+        // shared view only ever computes it for the chart it is showing, and
+        // which chart that is should not decide what a file contains.
+        if (c->doSmooth && !c->eosMode && (s->count() > 2 * c->window)) {
+            const QList<QPointF> sm = calc_sgsmooth(s->points, c->window, c->order);
+            if (sm.size() == nrow) {
+                std::vector<double> ys;
+                ys.reserve(nrow);
+                for (const QPointF &p : sm)
+                    ys.push_back(p.y());
+                data.addColumn(name + "-smooth", std::move(ys));
+            }
+        }
+
+        // A fit curve is sampled on a dense grid of its own over the data
+        // range, so it is written as the fitted function evaluated at each data
+        // x -- which is also what makes it comparable to the values beside it.
+        if (c->fit && c->fit->isVisible() && (c->fit->count() > 1)) {
+            std::vector<double> fit;
+            fit.reserve(nrow);
+            for (int i = 0; i < nrow; ++i)
+                fit.push_back(interpolateCurve(c->fit->points, xs[static_cast<std::size_t>(i)]));
+            data.addColumn(exportName(c->fit->name.isEmpty() ? name + "-fit" : c->fit->name),
+                           std::move(fit));
+        }
+
+        // overlay series carry their own x values, and resampling data that was
+        // measured elsewhere would be inventing it, so only one that already
+        // sits on this grid can join the table
+        for (const auto &o : c->overlaySeries)
+            if (o && o->isVisible() && sameGrid(o.get()))
+                data.addColumn(exportName(o->name) + "-added", yValues(o.get()));
     }
     return data;
 }
@@ -1589,11 +1951,12 @@ QRectF columnMinMax(const ChartColumn &col)
     // include extra overlay data series added from secondary files
     for (auto &s : col.overlaySeries) {
         if (s && s->isVisible()) {
-            for (auto &p : s->points) {
-                xmin = qMin(xmin, p.x());
-                xmax = qMax(xmax, p.x());
-                ymin = qMin(ymin, p.y());
-                ymax = qMax(ymax, p.y());
+            for (int i = 0; i < s->points.size(); ++i) {
+                const QPointF &p = s->points[i];
+                xmin             = qMin(xmin, p.x());
+                xmax             = qMax(xmax, p.x());
+                ymin             = qMin(ymin, p.y() - s->errLow(i));
+                ymax             = qMax(ymax, p.y() + s->errHigh(i));
             }
         }
     }
@@ -1651,6 +2014,12 @@ void renderColumnSeries(PlotWidget *plot, PlotSeries *line, std::unique_ptr<Plot
         }
         points->name = line->name; // share the line's name so the legend dedups them
         points->replace(line->points);
+        // exactly one of the two visible series carries the error bars, so they
+        // are neither drawn twice nor lost when the line itself is hidden
+        if (!wantLines) {
+            points->yerr   = line->yerr;
+            points->yerrLo = line->yerrLo;
+        }
         if (!plot->hasSeries(points.get()))
             addColumnSeries(plot, points.get(), color, width);
         else
@@ -1662,19 +2031,40 @@ void renderColumnSeries(PlotWidget *plot, PlotSeries *line, std::unique_ptr<Plot
     }
 }
 
+// Give every series of a column that carries error bars the column's error bar
+// style, so that the bars read as one annotation layer across raw, processed,
+// and overlay data rather than as part of the curve they belong to.
+void styleColumnErrors(ChartColumn &col, const QColor &color, qreal width)
+{
+    auto apply = [&color, width](PlotSeries *s) {
+        if (!s) return;
+        s->errColor = color;
+        s->errWidth = width;
+    };
+    apply(col.series.get());
+    apply(col.scatter.get());
+    apply(col.smooth.get());
+    apply(col.smoothScatter.get());
+    for (auto &s : col.overlaySeries)
+        apply(s.get());
+}
+
 // Recompute and (re)draw a column's raw and smoothed series onto the plot.
 void refreshColumn(PlotWidget *plot, ChartColumn &col)
 {
     QSettings settings;
     settings.beginGroup(Keys::GROUP_CHARTS);
-    int rawidx    = settings.value(Keys::RAWBRUSH, 1).toInt();
-    int smoothidx = settings.value(Keys::SMOOTHBRUSH, 2).toInt();
+    int rawidx    = settings.value(Keys::RAWBRUSH, Cfg::RAWBRUSH_DEFAULT).toInt();
+    int smoothidx = settings.value(Keys::SMOOTHBRUSH, Cfg::SMOOTHBRUSH_DEFAULT).toInt();
+    int erridx    = settings.value(Keys::ERRBRUSH, Cfg::ERRBRUSH_DEFAULT).toInt();
     if ((rawidx < 0) || (rawidx >= mybrushes.size())) rawidx = 0;
     if ((smoothidx < 0) || (smoothidx >= mybrushes.size())) smoothidx = 0;
+    if ((erridx < 0) || (erridx >= mybrushes.size())) erridx = 0;
     settings.endGroup();
 
     const QColor rawcol = col.rawColor.isValid() ? col.rawColor : mybrushes[rawidx].color();
     const QColor smcol = col.smoothcolor.isValid() ? col.smoothcolor : mybrushes[smoothidx].color();
+    const QColor errcol = col.errColor.isValid() ? col.errColor : mybrushes[erridx].color();
 
     if (col.doRaw)
         renderColumnSeries(plot, col.series.get(), col.scatter, col.dispmode, rawcol, col.rawWidth,
@@ -1699,6 +2089,8 @@ void refreshColumn(PlotWidget *plot, ChartColumn &col)
     } else {
         if (col.eosMode && col.fit) col.fit->setVisible(false);
     }
+    // after rendering, so that series created on demand above are styled too
+    styleColumnErrors(col, errcol, col.errWidth);
     plot->update();
 }
 
@@ -1760,6 +2152,14 @@ void setColumnSmoothStyle(PlotWidget *plot, ChartColumn &col, ChartDisplayMode m
     resetColumnZoom(plot, col);
 }
 
+// Set the error bar style of every series of the column and redraw.
+void setColumnErrorStyle(PlotWidget *plot, ChartColumn &col, const QColor &color, qreal width)
+{
+    col.errColor = color;
+    col.errWidth = width;
+    refreshColumn(plot, col);
+}
+
 // Set or replace the column's fit-curve overlay (EOS, polynomial, custom).
 void setColumnFitCurve(PlotWidget *plot, ChartColumn &col, const QList<QPointF> &points,
                        const QString &name, bool eos)
@@ -1782,13 +2182,19 @@ void setColumnFitCurve(PlotWidget *plot, ChartColumn &col, const QList<QPointF> 
 
 // Add an extra overlay data series (from a secondary file) to the column.
 void addColumnOverlay(PlotWidget *plot, ChartColumn &col, const QList<QPointF> &pts,
-                      const QString &name, const QColor &color)
+                      const QString &name, const QColor &color, const QList<double> &yerr,
+                      const QList<double> &yerrLo)
 {
     auto s  = std::make_unique<PlotSeries>();
     s->name = name;
     s->replace(pts);
+    if (yerr.size() == pts.size()) {
+        s->yerr = yerr;
+        if (yerrLo.size() == pts.size()) s->yerrLo = yerrLo;
+    }
     addColumnSeries(plot, s.get(), color, col.rawWidth);
     col.overlaySeries.push_back(std::move(s));
+    refreshColumn(plot, col); // hands the new series the column's error bar style
     resetColumnZoom(plot, col);
 }
 
@@ -1832,6 +2238,46 @@ void setColumnReferenceLines(PlotWidget *plot, ChartColumn &col, const QList<Ref
     plot->update();
 }
 
+// Seed a fresh column's series styles from the chart preferences.  Colors are
+// deliberately left invalid: refreshColumn() resolves those against the
+// preferences on every redraw, so a color edited in the preferences dialog
+// reaches charts that already exist.  Out-of-range values from a hand-edited
+// settings file are clamped rather than honored, so that no setting can produce
+// an invisible curve.
+void applyColumnStyleDefaults(ChartColumn &col)
+{
+    auto mode = [](const QVariant &value) {
+        const int m = value.toInt();
+        if ((m < static_cast<int>(ChartDisplayMode::Lines)) ||
+            (m > static_cast<int>(ChartDisplayMode::LinesAndPoints)))
+            return ChartDisplayMode::Lines;
+        return static_cast<ChartDisplayMode>(m);
+    };
+
+    QSettings settings;
+    settings.beginGroup(Keys::GROUP_CHARTS);
+    const int lines  = static_cast<int>(ChartDisplayMode::Lines);
+    col.dispmode     = mode(settings.value(Keys::RAWMODE, lines));
+    col.smoothmode   = mode(settings.value(Keys::SMOOTHMODE, lines));
+    col.rawWidth     = qBound(Cfg::LINE_WIDTH_MIN,
+                              settings.value(Keys::RAWWIDTH, Cfg::LINE_WIDTH_DEFAULT).toDouble(),
+                              Cfg::LINE_WIDTH_MAX);
+    col.smoothwidth  = qBound(Cfg::LINE_WIDTH_MIN,
+                              settings.value(Keys::SMOOTHWIDTH, Cfg::LINE_WIDTH_DEFAULT).toDouble(),
+                              Cfg::LINE_WIDTH_MAX);
+    col.errWidth     = qBound(Cfg::LINE_WIDTH_MIN,
+                              settings.value(Keys::ERRWIDTH, Cfg::ERR_WIDTH_DEFAULT).toDouble(),
+                              Cfg::LINE_WIDTH_MAX);
+    col.rawPointSize = qBound(
+        Cfg::POINT_SIZE_MIN, settings.value(Keys::RAWPOINTSIZE, Cfg::POINT_SIZE_DEFAULT).toDouble(),
+        Cfg::POINT_SIZE_MAX);
+    col.smoothpointsize =
+        qBound(Cfg::POINT_SIZE_MIN,
+               settings.value(Keys::SMOOTHPOINTSIZE, Cfg::POINT_SIZE_DEFAULT).toDouble(),
+               Cfg::POINT_SIZE_MAX);
+    settings.endGroup();
+}
+
 // Apply smoothing flags/parameters to the column WITHOUT redrawing (so a
 // non-active column can be updated without touching the shared plot).
 void setColumnSmoothFlags(ChartColumn &col, bool doRaw, bool doSmooth, int window, int order)
@@ -1853,19 +2299,27 @@ void setColumnSmoothFlags(ChartColumn &col, bool doRaw, bool doSmooth, int windo
     col.order    = order;
 }
 
-// Replace a column's raw series with a full point list and recompute its cached
-// bounds, WITHOUT redrawing (for loading non-active columns).
-void setColumnData(ChartColumn &col, const QList<QPointF> &points)
+// Replace a column's raw series with a full point list (and optional error
+// bars) and recompute its cached bounds, WITHOUT redrawing (for loading
+// non-active columns).
+void setColumnData(ChartColumn &col, const QList<QPointF> &points, const QList<double> &yerr,
+                   const QList<double> &yerrLo)
 {
-    col.series->replace(points);
+    col.series->replace(points); // drops any previous error bars
+    if (yerr.size() == points.size()) {
+        col.series->yerr = yerr;
+        if (yerrLo.size() == points.size()) col.series->yerrLo = yerrLo;
+    }
     col.lastX   = points.isEmpty() ? -1.0 : points.last().x();
     col.rawXmin = col.rawYmin = 1.0e100;
     col.rawXmax = col.rawYmax = -1.0e100;
-    for (const auto &p : points) {
+    for (int i = 0; i < points.size(); ++i) {
+        const QPointF &p = points[i];
+        // the bars have to fit inside the plot, so the bounds cover the bar ends
         col.rawXmin = qMin(col.rawXmin, p.x());
         col.rawXmax = qMax(col.rawXmax, p.x());
-        col.rawYmin = qMin(col.rawYmin, p.y());
-        col.rawYmax = qMax(col.rawYmax, p.y());
+        col.rawYmin = qMin(col.rawYmin, p.y() - col.series->errLow(i));
+        col.rawYmax = qMax(col.rawYmax, p.y() + col.series->errHigh(i));
     }
 }
 
@@ -2028,6 +2482,13 @@ void ChartViewer::setSmoothStyle(ChartDisplayMode mode, const QColor &color, qre
 
 /* -------------------------------------------------------------------- */
 
+void ChartViewer::setErrorStyle(const QColor &color, qreal width)
+{
+    setColumnErrorStyle(plot, *col, color, width);
+}
+
+/* -------------------------------------------------------------------- */
+
 void ChartViewer::setFitCurve(const QList<QPointF> &points, const QString &name, bool eos)
 {
     setColumnFitCurve(plot, *col, points, name, eos);
@@ -2036,9 +2497,10 @@ void ChartViewer::setFitCurve(const QList<QPointF> &points, const QString &name,
 /* -------------------------------------------------------------------- */
 
 void ChartViewer::addOverlaySeries(const QList<QPointF> &pts, const QString &name,
-                                   const QColor &color)
+                                   const QColor &color, const QList<double> &yerr,
+                                   const QList<double> &yerrLo)
 {
-    addColumnOverlay(plot, *col, pts, name, color);
+    addColumnOverlay(plot, *col, pts, name, color, yerr, yerrLo);
 }
 
 /* -------------------------------------------------------------------- */

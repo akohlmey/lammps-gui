@@ -82,7 +82,8 @@ CustomCurve evalCustomCurve(const QString &expression, double xmin, double xmax,
 
 CustomFit fitCustomCurve(const QString &expression, const QList<FitParam> &initialParams,
                          const std::vector<double> &xdata, const std::vector<double> &ydata,
-                         double xmin, double xmax, int nsamples, const QString &variable)
+                         double xmin, double xmax, int nsamples, const QString &variable,
+                         const std::vector<double> &weights)
 {
     CustomFit result;
 
@@ -153,6 +154,17 @@ CustomFit fitCustomCurve(const QString &expression, const QList<FitParam> &initi
             probe[pnames[j]] = initialParams[j].value;
         (void)model.evaluate(probe);
 
+        // A weighted least-squares problem is the unweighted one on residuals
+        // and Jacobian rows scaled by sqrt(w), so the solver itself needs to
+        // know nothing about weights.
+        const bool weighted = (weights.size() == static_cast<std::size_t>(m));
+        std::vector<double> sqrtw;
+        if (weighted) {
+            sqrtw.reserve(weights.size());
+            for (double w : weights)
+                sqrtw.push_back(std::sqrt(qMax(0.0, w)));
+        }
+
         // residual/Jacobian callback for the Levenberg-Marquardt solver
         const LevmarModel fn = [&](const std::vector<double> &p, std::vector<double> &res,
                                    std::vector<std::vector<double>> &jac) -> bool {
@@ -164,11 +176,12 @@ CustomFit fitCustomCurve(const QString &expression, const QList<FitParam> &initi
                     vars[var]            = xdata[i];
                     const double modeled = model.evaluate(vars);
                     if (!std::isfinite(modeled)) return false;
-                    res[i] = modeled - ydata[i];
+                    const double sw = weighted ? sqrtw[i] : 1.0;
+                    res[i]          = (modeled - ydata[i]) * sw;
                     for (int j = 0; j < n; ++j) {
                         const double d = derivs[j].evaluate(vars);
                         if (!std::isfinite(d)) return false;
-                        jac[i][j] = d;
+                        jac[i][j] = d * sw;
                     }
                 }
             } catch (const std::exception &) {
@@ -202,7 +215,19 @@ CustomFit fitCustomCurve(const QString &expression, const QList<FitParam> &initi
             if (std::isfinite(y)) result.curve.append(QPointF(x, y));
         }
 
-        result.rms        = lm.rms;
+        // the solver's residual is the weighted one, whose scale depends on the
+        // weights; report the plain one so fits stay comparable across them
+        if (weighted) {
+            double sum = 0.0;
+            for (int i = 0; i < m; ++i) {
+                fitted[var]    = xdata[i];
+                const double d = model.evaluate(fitted) - ydata[i];
+                sum += d * d;
+            }
+            result.rms = std::sqrt(sum / static_cast<double>(m));
+        } else {
+            result.rms = lm.rms;
+        }
         result.iterations = lm.iterations;
         result.ok         = true;
     } catch (const std::exception &e) {

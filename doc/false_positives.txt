@@ -57,6 +57,7 @@ dumpimage
 dylib
 elif
 eps
+equipartition
 exe
 executables
 extendRun
@@ -166,6 +167,7 @@ plottable
 plotutils
 pluginpath
 pre
+prefactor
 preselect
 preselected
 prev

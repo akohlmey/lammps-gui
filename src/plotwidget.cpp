@@ -350,6 +350,31 @@ void PlotWidget::doRender(QPainter &p, const QRectF &target) const
     // series (clipped to the plot area)
     p.save();
     p.setClipRect(plot);
+
+    // error bars first, so that they stay behind every data curve.  They are
+    // drawn in their own color and width (the chart style dialog sets both), so
+    // that they stay readable where they overlap the curve they belong to.
+    for (const PlotSeries *s : m_series) {
+        if (!s || !s->visible || !s->hasErrors()) continue;
+        const QColor barColor = s->errColor.isValid() ? s->errColor : s->color;
+        const double barWidth = qMax(0.5, s->errWidth);
+        // caps grow with the bar so that thick bars do not end in a stub
+        const double cap = qMax(3.0, 2.0 * barWidth);
+        p.setPen(QPen(barColor, barWidth, Qt::SolidLine, Qt::FlatCap));
+        p.setBrush(Qt::NoBrush);
+        for (int i = 0; i < s->points.size(); ++i) {
+            const double eup = s->errHigh(i);
+            const double edn = s->errLow(i);
+            if (!(eup > 0.0) && !(edn > 0.0)) continue;
+            const double px = mapX(s->points[i].x());
+            const double lo = mapY(s->points[i].y() - edn);
+            const double hi = mapY(s->points[i].y() + eup);
+            p.drawLine(QPointF(px, lo), QPointF(px, hi));
+            p.drawLine(QPointF(px - cap, lo), QPointF(px + cap, lo));
+            p.drawLine(QPointF(px - cap, hi), QPointF(px + cap, hi));
+        }
+    }
+
     for (const PlotSeries *s : m_series) {
         if (!s || !s->visible || s->points.isEmpty()) continue;
         if (s->type == PlotSeriesType::Line) {

@@ -163,6 +163,20 @@ imported for further processing with Microsoft Excel, `LibreOffice Calc
 <https://pandas.pydata.org/>`_, or as YAML which can be imported into
 Python with `PyYAML <https://pyyaml.org/>`_ or pandas.
 
+The export is not limited to the raw values: the results of the
+post-processing are written beside them, so that what was worked out in
+the chart window can be taken elsewhere.  Each chart contributes its
+values, its error bars if it has any (as a ``-err`` column, or a
+``-errlo`` and a ``-errhi`` column when they are asymmetric), its smoothed
+curve while smoothing is on (``-smooth``), any fit curve that is being
+shown, and any series added from a second file (``-added``).  A flat table
+has a single x column, so everything in it is written against the x values
+of the data: a fit curve, which is sampled on a dense grid of its own, is
+written as the fitted function evaluated at each data point -- which is
+also what makes it directly comparable to the values beside it.  A series
+that carries x values of its own that do not match, as an added file
+generally does, is left out rather than resampled.
+
 Thermo output data from successive run commands in the input script is
 combined into a single data set unless the format, number, or names of
 output columns are changed with a `thermo_style
@@ -211,6 +225,12 @@ row, opens a dialog to change how the data is drawn.  The *Raw data* and
 style (*Lines*, *Points*, or *Lines and Points*), the color, the line
 width, and the point size.  This makes it possible, for example, to show
 the raw data as faint points and the smoothed curve as a bold line.  The
+*Error bars* group sets the color and line width of the error bars of
+every series of the chart that has them (only imported data can, see
+:ref:`importing fix ave/\* output <aveimport>`); they are drawn in
+their own color so that they stay readable where they overlap the curve
+they belong to.  The defaults for all three groups are in the *Charts
+Settings* tab of the *Preferences* dialog.  The
 *Legend* placement selector in the same dialog adds an in-plot legend
 that lists the visible named series; it can be turned *Off* or anchored
 to any of the four plot corners (*Top left*, *Top right*, *Bottom
@@ -287,6 +307,49 @@ The following analyses are available:
   of the expression; on success the fitted curve is overlaid and the
   fitted parameters, the root-mean-square residual, and the number of
   iterations are reported.
+- *Maxwell-Boltzmann fit* fits the distribution of the kinetic energy of
+  *d* degrees of freedom, :math:`f(E) = A\,E^{d/2-1}\exp(-E/k_BT)`, to the
+  data.  This is what a histogram of the per-atom kinetic energy is
+  expected to follow, so importing a ``fix ave/histo`` file of
+  ``c_ke/atom`` and fitting it reads the temperature off the shape of the
+  distribution.  The *Dimensions* selector sets *d*, the degrees of freedom **per atom**
+  (three by default, which is the familiar :math:`\sqrt{E}` prefactor).
+  Constrained and rigid molecules have fewer: a rigid 3-site water held by
+  `fix shake <https://docs.lammps.org/fix_shake.html>`_ has six degrees of
+  freedom per molecule, so two per atom, and fitting such a histogram with
+  *d* = 3 returns a temperature that is wrong by a factor of two.  The
+  amplitude is
+  fitted rather than derived, because a histogram carries an arbitrary
+  normalization -- raw counts, a normalized fraction, and a density differ
+  by a constant that says nothing about the temperature.  Reported are :math:`k_BT` and the amplitude from the fitted shape, and
+  next to them the measured mean energy :math:`\langle E\rangle` with the
+  :math:`k_BT` that follows from it through
+  :math:`\langle E\rangle = (d/2)k_BT` alone.  That second estimate makes
+  no assumption about the shape -- equipartition fixes it -- so the two
+  agreeing is a sign that the data really is the distribution being fitted,
+  and the dialog says so when they differ by more than 10%.  On a system
+  the model describes -- unconstrained atoms, and a histogram wide enough
+  to hold the whole distribution -- the two land within a fraction of a
+  percent of each other, and the weighting then hardly matters either.
+  They part company when *d* does not match the system, and when the
+  histogram does not cover the whole distribution: energies beyond its
+  range are missing from :math:`\langle E\rangle` and lower it, while the
+  fitted shape is not affected.  Note that :math:`k_BT` comes out in the energy units of
+  the plotted data, which the data file does not record; divide by the
+  Boltzmann constant in those units to obtain a temperature.  Points at
+  :math:`E \le 0` are left out of the fit and counted in the report.
+
+  A measured distribution is rarely a Maxwell-Boltzmann distribution
+  exactly, and then the *Weighting* selector decides which part of it the
+  one curve follows.  *By bin population* (the default) counts every bin in
+  proportion to the number of samples it holds, which keeps the fit on the
+  bulk of the distribution and its peak; it is scale-free, so it behaves
+  the same whether the histogram holds counts, fractions, or a density.
+  *By error bars* is the textbook :math:`1/\sigma^2` weighting, which
+  favors the points of smallest uncertainty -- on a histogram usually the
+  sparse tail, so it matches the peak *less* well.  *None* weights every
+  bin alike.  Restricting the *Fit x-range* is the other way to say which
+  part of a distribution matters.
 
 The expressions for *Custom function* and *Custom fit* are parsed and
 evaluated with a bundled subset of the Lepton expression parser, the same
@@ -340,11 +403,171 @@ the command line with the ``-c``/``--chart`` flag (see
    The column-picker dialog shown when opening an external data file with
    *Plot Data File...*.
 
+.. index:: fix ave import
+.. index:: block-structured data
+
+.. _aveimport:
+
+Import fix ave/\* output files
+------------------------------
+
+The files written by `fix ave/time
+<https://docs.lammps.org/fix_ave_time.html>`_ in *vector* mode, `fix
+ave/histo <https://docs.lammps.org/fix_ave_histo.html>`_, `fix
+ave/correlate <https://docs.lammps.org/fix_ave_correlate.html>`_, `fix
+ave/correlate/long
+<https://docs.lammps.org/fix_ave_correlate_long.html>`_, and `fix
+ave/chunk <https://docs.lammps.org/fix_ave_chunk.html>`_ are not flat
+tables.  Each is a sequence of blocks, one per output timestep, and each
+block is a small table of its own: the rows of a vector, the bins of a
+histogram, the time windows of a correlation function, or the chunks of
+a profile.  Such a file is recognized when it is opened, and the column
+picker then grows a *Data blocks* group above the usual column grid,
+which reduces the blocks to the one flat table that grid refers to.
+
+There are two ways to reduce the blocks:
+
+*Average blocks*
+   Average a range of blocks row by row and show the spread as error bars.
+   The range covers the whole file, and the two spin boxes select a part
+   of it; raising the first one is how a leading stretch of equilibration
+   is left out.  Nothing is dropped without being said: the line below
+   reports how many blocks were averaged, and how many were dropped for
+   having a different number of rows than the last block of the range.
+
+*Single block*
+   Show one block as it stands, by default the last one.
+
+The error bars are the standard deviation of the blocks by default.  The
+standard error of the mean, the *min/max of the blocks*, and no error bars
+at all are the other choices.  Note that successive averaging windows are
+not strictly independent, so the standard error of the mean is a *lower
+bound* on the true uncertainty rather than the uncertainty itself.  The
+min/max choice makes no statistical claim: the bar simply spans the
+smallest to the largest value any of the averaged blocks had for that row,
+so it usually reaches further in one direction than in the other.  Error
+bars need at least two blocks to average.
+
+How the bars are drawn -- their color and line width -- is set in the
+*Chart Style...* dialog of the chart window, and its defaults are in the
+*Charts Settings* tab of the *Preferences* dialog.
+
+Which reduction the dialog starts on depends on the format.  A histogram
+or a correlation function starts out averaged over the whole file, since
+its evolution over time is rarely what is wanted.  A correlator that
+accumulates over the whole run does not: for ``fix ave/correlate/long``,
+and for ``fix ave/correlate`` with ``ave running``, every block is a
+successive estimate of the same quantity rather than an independent sample
+of it, so averaging the blocks would be statistically wrong and the last
+block is the answer.  That case is recognized from a sample count that
+grows from block to block.
+
+The columns that are preselected also follow from the format: the bin
+coordinate against the *normalized* bin count for a histogram (the
+per-block totals differ, so that is the column that may be averaged), the
+time delta against the correlation columns for a correlation function.
+
+A ``fix ave/chunk`` file is preselected only when its chunks form a
+*profile*, that is when they vary along a single coordinate: a chart has
+one x axis, and a two- or three-dimensional grid of chunks has no
+meaningful projection onto it.  That is decided from the coordinate values
+in the file rather than from the binning style, which the file does not
+record, so a ``bin/1d`` or ``bin/sphere`` profile always qualifies, and a
+``bin/cylinder`` or ``bin/2d`` run that used a single bin in its other
+dimension qualifies as well -- the varying coordinate becomes the x axis.
+Chunks that are a real grid, and chunks that are not bins at all (by
+molecule, by type, or from a compute), are still imported in full; they
+just get the same generic column defaults as any other block file.
+
+The *Format* combo shows what the file was recognized as, and can be
+corrected.  Recognition uses the file's own header comments, which the
+``title1``, ``title2`` and ``title3`` keywords let you replace, so it can
+be wrong; when the headers are missing the format is recovered from the
+block structure instead.  Correcting the format only moves the
+preselected reduction and columns.  It never reinterprets the data, which
+was read before the dialog opened, and no reduction ever discards a column
+-- a misrecognized file plots just as completely, only with different
+columns preselected.
+
+Changing the reduction rebuilds the column list below it.  Column roles,
+edited names, and derived columns are kept across that: the derived
+columns are re-evaluated against the new table.  Since any column can
+serve as the x axis and the *Compute derived column* section can scale
+one, a time-delta column in timesteps is turned into one in time units
+with an expression such as ``TimeDelta*0.001``.
+
+Error bars, once imported, behave like the rest of the chart data:
+smoothing operates on the values alone and leaves the bars on the raw
+series, the axis range covers them, and exporting the chart writes them as
+an extra ``<name>-err`` column next to the values they belong to.  Reading
+such an exported file back in simply gives one more data column.
+
+The output of `fix ave/chunk
+<https://docs.lammps.org/fix_ave_chunk.html>`_ has the same block
+structure and imports through the same path, but has no preselected
+columns or reduction of its own yet.
+
 The *Preferences* dialog has a *Charts* tab, where you can configure
 multiple chart-related settings, like the default title, colors for the
 graphs, default choice of the raw / smooth graph selection, whether the
 grid for the major and minor ticks is drawn, and the default chart graph
 size.
+
+Here is a simple example for reproducing the radial distribution
+function g(r) and the Maxwell-Boltzmann distribution of the kinetic
+energy in a liquid LJ model.  This uses the following input with `fix
+ave/time <https://docs.lammps.org/fix_ave_time.html>`_ and `fix
+ave/histo <https://docs.lammps.org/fix_ave_histo.html>`_ where the
+first block of averaged data is skipped as equilibration data and
+the rest is presented as a plot of the average with standard deviation:
+
+.. code-block:: LAMMPS
+
+   lattice         fcc 0.8442
+   region          box block 0 10 0 10 0 10
+   create_box      1 box
+   create_atoms    1 box
+   mass            1 1.0
+
+   velocity        all create 3.0 87287 loop geom
+
+   pair_style      lj/cut 2.5
+   pair_coeff      1 1 1.0 1.0 2.5
+
+   neighbor        0.3 bin
+   neigh_modify    every 20 delay 0 check no
+
+   fix             1 all nve
+
+   compute         rdf all rdf 200 1 1
+   fix             rdf all ave/time 100 10 1000 c_rdf[*] mode vector &
+                      file melt_rdf.dat
+
+   compute         ke_atom all ke/atom
+   fix             hist_ke all ave/histo 100 10 1000  0.0 20.0 200  c_ke_atom &
+                      file melt_histo_ke.dat mode vector
+
+   thermo_style    custom step temp pe press
+   thermo          1000
+   run             50000
+
+
+.. |rdfimport1| image:: JPG/plot-import-gofr.png
+   :width: 41%
+
+.. |rdfimport2| image:: JPG/plot-chart-gofr.png
+   :width: 58%
+
+|rdfimport1|  |rdfimport2|
+
+.. |ekinimport1| image:: JPG/plot-import-histo.png
+   :width: 41%
+
+.. |ekinimport2| image:: JPG/plot-chart-histo.png
+   :width: 58%
+
+|ekinimport1|  |ekinimport2|
+
 
 ------
 

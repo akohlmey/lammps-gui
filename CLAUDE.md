@@ -74,7 +74,8 @@ ctest --test-dir build -R Framebuffer --output-on-failure   # GUI tests need Xvf
 - `test_*` executables — C++ unit tests (GoogleTest v1.17.0, fetched automatically
   via FetchContent); one per tested module: helpers, stdcapture, flagwarnings,
   dumpimage, movieimport, imagecache, leastsquares, plotdata, lepton, levmar,
-  customfunc, analysis, plotaxismath, fitting, shortcuts, and windowlayout
+  customfunc, analysis, plotaxismath, plotblockdata, fitting, shortcuts, and
+  windowlayout
 - `CommandLine.*` — command-line flag smoke tests
 - `Framebuffer.*` — Python/PyAutoGUI GUI tests run inside Xvfb; require `xvfb-run` and one of: `magick`, `import`, `xfce4-screenshooter`, or `gnome-screenshot`
 
@@ -141,7 +142,7 @@ main.cpp
 
 **Plugin vs. linked mode.** When built with `LAMMPS_GUI_USE_PLUGIN=ON` (default), the executable has no link-time dependency on LAMMPS. `plugin/liblammpsplugin.c` provides `dlopen`-based dispatch; `LammpsWrapper` calls through function pointers loaded at startup. This lets the GUI ship as a standalone binary that can download or swap LAMMPS shared libraries.
 
-**Native chart rendering.** Charts are drawn by a single self-contained renderer, `PlotWidget` (`src/plotwidget.{cpp,h}`), a `QWidget`+`QPainter` 2D line/scatter plotter that depends only on Qt Widgets — no Qt Charts, Qt Graphs, or QML. `ChartWindow` owns one `ChartColumn` per thermo column — the neutral `PlotSeries` data objects (`src/plotseries.h`) live there — plus a *single* `ChartViewer` that is rebound (via `setColumn()`) to whichever column is selected and renders it through `PlotWidget`; axis-layout math (nice ticks, label formatting) lives in the Qt-free `plotaxismath` (`src/plotaxismath.{cpp,h}`). Both the old one-`ChartViewer`-per-column layout and the `ChartBackend`/QtCharts/QtGraphs abstraction were removed once the native single-view renderer reached parity; history and rationale are in `doc/native-chart-backend.md`.
+**Native chart rendering.** Charts are drawn by a single self-contained renderer, `PlotWidget` (`src/plotwidget.{cpp,h}`), a `QWidget`+`QPainter` 2D line/scatter plotter that depends only on Qt Widgets — no Qt Charts, Qt Graphs, or QML. `ChartWindow` owns one `ChartColumn` per thermo column — the neutral `PlotSeries` data objects (`src/plotseries.h`) live there — plus a *single* `ChartViewer` that is rebound (via `setColumn()`) to whichever column is selected and renders it through `PlotWidget`; axis-layout math (nice ticks, label formatting) lives in the Qt-free `plotaxismath` (`src/plotaxismath.{cpp,h}`). Both the old one-`ChartViewer`-per-column layout and the `ChartBackend`/QtCharts/QtGraphs abstraction were removed once the native single-view renderer reached parity.
 
 **Threading model.** LAMMPS simulations run on a `LammpsRunner` (QThread). `StdCapture` intercepts the LAMMPS library's stdout by replacing the file descriptor before `LammpsRunner::run()` starts. A `QTimer` in `LammpsGui` polls `StdCapture::getChunk()` to feed `LogWindow` without blocking the UI thread.
 
@@ -238,7 +239,8 @@ decisions and caveats as binding unless we explicitly revise them here.
 | `src/plotseries.h` | Neutral chart model value types (`PlotSeries`, `PlotAxis`) consumed by `PlotWidget` |
 | `src/plotaxismath.{cpp,h}` | Qt-free axis-layout helpers (nice ticks, tick values, printf label formatting) |
 | `src/plotdata.{cpp,h}` | Column-oriented numeric data model + CSV/`.dat`/YAML/JSON parsers and writers |
-| `src/plotdatadialog.{cpp,h}` | Column-picker dialog for plotting an external data file |
+| `src/plotblockdata.{cpp,h}` | Block-structured `fix ave/*` file parsers (native + vector-mode YAML), format detection, and reduction of the blocks to a flat `PlotData` with error bars |
+| `src/plotdatadialog.{cpp,h}` | Column-picker dialog for plotting an external data file; grows a block-reduction group for `fix ave/*` files |
 | `src/analysis.{cpp,h}` | Qt-free post-processing analyses (autocorrelation) |
 | `src/leastsquares.{cpp,h}` | Qt-free dense LU solver + Savitzky-Golay smoothing |
 | `src/fitting.{cpp,h}` | Qt-free polynomial + Birch-Murnaghan EOS fits (on `leastsquares`) |

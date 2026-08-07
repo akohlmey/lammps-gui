@@ -215,3 +215,73 @@ TEST(CustomFit, RejectsTooFewPoints)
     EXPECT_FALSE(f.ok);
     EXPECT_FALSE(f.error.isEmpty());
 }
+
+// ---- weighted fitting ----------------------------------------------------
+
+// A Maxwell-Boltzmann distribution sampled the way fix ave/histo writes one --
+// binned, and cut off before its tail has died away -- is still recovered
+// exactly, weighted or not: the shape inside the range fixes the parameters.
+TEST(CustomFit, MaxwellBoltzmannIsRecovered)
+{
+    constexpr double kT = 0.5465; // kcal/mol, i.e. 275 K in real units
+    std::vector<double> xs, ys;
+    makeData(xs, ys, 100, 0.01, 0.02, [](double x) {
+        return 0.3 * std::sqrt(x) * std::exp(-x / kT);
+    });
+
+    const QList<FitParam> init = {{"A", 1.0}, {"kT", 0.2}};
+    std::vector<double> weights(ys.begin(), ys.end()); // by bin population
+
+    const CustomFit plain = fitCustomCurve("A*sqrt(x)*exp(-x/kT)", init, xs, ys, 0.01, 1.99, 20);
+    ASSERT_TRUE(plain.ok) << plain.error.toStdString();
+    EXPECT_NEAR(plain.params[1].value, kT, 1e-6);
+
+    const CustomFit weighted = fitCustomCurve("A*sqrt(x)*exp(-x/kT)", init, xs, ys, 0.01, 1.99, 20,
+                                              QStringLiteral("x"), weights);
+    ASSERT_TRUE(weighted.ok) << weighted.error.toStdString();
+    EXPECT_NEAR(weighted.params[0].value, 0.3, 1e-6);
+    EXPECT_NEAR(weighted.params[1].value, kT, 1e-6);
+    // the reported residual stays unweighted, so the two remain comparable
+    EXPECT_NEAR(weighted.rms, plain.rms, 1e-9);
+}
+
+// Weighting decides which part of the data a model that cannot describe all of
+// it will follow.  Two half-ranges of different curvature, joined: weighting by
+// the y values pulls the single fitted line towards the larger ones.
+TEST(CustomFit, WeightsShiftTheSolution)
+{
+    std::vector<double> xs, ys;
+    makeData(xs, ys, 21, 0.0, 0.5, [](double x) {
+        return (x < 5.0) ? (10.0 - x) : (2.0 + 0.1 * x);
+    });
+
+    const QList<FitParam> init = {{"a", 1.0}, {"b", 1.0}};
+    const CustomFit plain      = fitCustomCurve("a*x + b", init, xs, ys, 0.0, 10.0, 10);
+    ASSERT_TRUE(plain.ok) << plain.error.toStdString();
+
+    std::vector<double> weights(ys.begin(), ys.end());
+    const CustomFit weighted =
+        fitCustomCurve("a*x + b", init, xs, ys, 0.0, 10.0, 10, QStringLiteral("x"), weights);
+    ASSERT_TRUE(weighted.ok) << weighted.error.toStdString();
+
+    // the weighted fit sits closer to the high-value branch at x = 0 ...
+    EXPECT_GT(weighted.params[1].value, plain.params[1].value);
+    // ... and pays for it with a larger unweighted residual
+    EXPECT_GT(weighted.rms, plain.rms);
+}
+
+// a wrongly sized weight vector is ignored rather than misapplied
+TEST(CustomFit, WrongSizedWeightsAreIgnored)
+{
+    std::vector<double> xs, ys;
+    makeData(xs, ys, 12, 0.0, 0.4, [](double x) {
+        return 3.0 * x + 1.0;
+    });
+    const QList<FitParam> init  = {{"a", 0.0}, {"b", 0.0}};
+    const std::vector<double> w = {1.0, 2.0, 3.0}; // shorter than the data
+    const CustomFit f =
+        fitCustomCurve("a*x + b", init, xs, ys, 0.0, 4.4, 10, QStringLiteral("x"), w);
+    ASSERT_TRUE(f.ok) << f.error.toStdString();
+    EXPECT_NEAR(f.params[0].value, 3.0, 1e-6);
+    EXPECT_NEAR(f.params[1].value, 1.0, 1e-6);
+}
