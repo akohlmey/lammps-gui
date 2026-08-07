@@ -421,6 +421,20 @@ public:
     double getData(int index) const { return (index < 0) ? 0.0 : col->series->at(index).y(); }
 
     /**
+     * @brief Get the error bar half-height at a given index
+     * @param index Data point index
+     * @return Half the extent of the error bar, or 0 if the series has none
+     *
+     * Asymmetric bars are reported by their mean half-height, which is what a
+     * fit weighted by the uncertainty can use as a standard deviation.
+     */
+    double getError(int index) const
+    {
+        if ((index < 0) || !col->series->hasErrors()) return 0.0;
+        return 0.5 * (col->series->errLow(index) + col->series->errHigh(index));
+    }
+
+    /**
      * @brief Set chart title
      * @param tlabel New title
      */

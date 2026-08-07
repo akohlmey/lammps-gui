@@ -854,6 +854,21 @@ void ChartWindow::postProcess()
     paramsEdit->setMinimumWidth(Cfg::POSTPROCESS_EXPR_WIDTH);
     form->addRow(paramsLabel, paramsEdit);
 
+    // which part of the data a fit follows when the model cannot describe all
+    // of it, shown for the distribution fit where the choice actually decides
+    // whether the peak or the tail is matched
+    auto *weightLabel = new QLabel("Weighting:");
+    auto *weightCombo = new QComboBox;
+    weightCombo->addItem("by bin population");
+    weightCombo->addItem("by error bars (1/sigma^2)");
+    weightCombo->addItem("none (uniform)");
+    weightCombo->setToolTip("Which residuals the fit cares about most.\n"
+                            "By bin population: every bin counts in proportion to the samples it\n"
+                            "holds, so the fit follows the bulk of the distribution and its peak.\n"
+                            "By error bars: the textbook weighting, which favors the points with\n"
+                            "the smallest uncertainty -- usually the sparse tail of a histogram.");
+    form->addRow(weightLabel, weightCombo);
+
     auto *fitLabelLabel = new QLabel("Label:");
     auto *fitLabelEdit  = new QLineEdit;
     fitLabelEdit->setPlaceholderText("optional name for the fitted curve");
@@ -893,6 +908,8 @@ void ChartWindow::postProcess()
         paramsEdit->setVisible(fit);
         fitLabelLabel->setVisible(fit);
         fitLabelEdit->setVisible(fit);
+        weightLabel->setVisible(maxbolt);
+        weightCombo->setVisible(maxbolt);
         fitRangeLabel->setVisible(showRange);
         fitRangeWidget->setVisible(showRange);
         paramLabel->setVisible(!expr && !eos);
@@ -932,13 +949,16 @@ void ChartWindow::postProcess()
 
     if (dialog.exec() != QDialog::Accepted) return;
 
-    // gather the (x, y) data of the selected chart
-    std::vector<double> xs, ys;
+    // gather the (x, y) data of the selected chart, with its error bars where
+    // it has them (a weighted fit can use those as standard deviations)
+    std::vector<double> xs, ys, es;
     xs.reserve(npoints);
     ys.reserve(npoints);
+    es.reserve(npoints);
     for (int i = 0; i < npoints; ++i) {
         xs.push_back(chart->getStep(i));
         ys.push_back(chart->getData(i));
+        es.push_back(chart->getError(i));
     }
 
     const int which = analysisbox->currentIndex();
@@ -956,16 +976,18 @@ void ChartWindow::postProcess()
         const double fitEps = 0.5 * std::pow(10.0, -fitFromSpin->decimals()) +
                               1.0e-12 * qMax(qAbs(fitXmin), qAbs(fitXmax));
         if (fitXmin < fitXmax) {
-            std::vector<double> fxs, fys;
+            std::vector<double> fxs, fys, fes;
             for (std::size_t i = 0; i < xs.size(); ++i) {
                 if ((xs[i] >= fitXmin - fitEps) && (xs[i] <= fitXmax + fitEps)) {
                     fxs.push_back(xs[i]);
                     fys.push_back(ys[i]);
+                    fes.push_back(es[i]);
                 }
             }
             if (fxs.size() >= 2) {
                 xs = std::move(fxs);
                 ys = std::move(fys);
+                es = std::move(fes);
             } else {
                 warning(this, "Postprocess",
                         "Fewer than 2 data points in the selected x-range; using full data.");
@@ -1071,11 +1093,12 @@ void ChartWindow::postProcess()
         // E = 0 is outside the domain for d = 1, and negative energies are not
         // in it at all; dropping them keeps the model finite everywhere it is
         // evaluated instead of letting one point poison the residuals
-        std::vector<double> exs, eys;
+        std::vector<double> exs, eys, ees;
         for (std::size_t i = 0; i < xs.size(); ++i)
             if (xs[i] > 0.0) {
                 exs.push_back(xs[i]);
                 eys.push_back(ys[i]);
+                ees.push_back(es[i]);
             }
         const std::size_t dropped = xs.size() - exs.size();
         if (exs.size() < 3) {
@@ -1110,10 +1133,44 @@ void ChartWindow::postProcess()
         if (ndim == 3) expr = QStringLiteral("A*sqrt(x)*exp(-x/kT)");
         if (ndim == 1) expr = QStringLiteral("A*exp(-x/kT)/sqrt(x)");
 
+        // Which residuals the fit should care about.  A measured distribution
+        // is rarely a Maxwell-Boltzmann distribution exactly, and then the
+        // weighting decides which part of it the one curve follows.  Counting
+        // every bin in proportion to its population keeps the fit on the bulk
+        // of the distribution and its peak; it is also scale-free, so it works
+        // the same whether the histogram holds counts, fractions, or a density.
+        // Weighting by the error bars instead is the textbook choice, but on a
+        // histogram it favors the sparse tail, whose bars are the smallest.
+        const int weighting = weightCombo->currentIndex();
+        std::vector<double> weights;
+        QString weightNote;
+        if (weighting == 0) { // by bin population
+            weights.reserve(eys.size());
+            for (double y : eys)
+                weights.push_back(qMax(0.0, y));
+            weightNote = QStringLiteral("weighted by bin population");
+        } else if (weighting == 1) { // by the error bars, as 1/sigma^2
+            double smallest = 0.0;
+            for (double s : ees)
+                if ((s > 0.0) && ((smallest == 0.0) || (s < smallest))) smallest = s;
+            if (smallest > 0.0) {
+                weights.reserve(ees.size());
+                // a bin that came out identical in every block would otherwise
+                // carry infinite weight; the smallest real spread stands in
+                for (double s : ees)
+                    weights.push_back(1.0 / ((s > 0.0) ? (s * s) : (smallest * smallest)));
+                weightNote = QStringLiteral("weighted by 1/sigma^2 of the error bars");
+            } else {
+                weightNote = QStringLiteral("unweighted (the data carries no error bars)");
+            }
+        } else {
+            weightNote = QStringLiteral("unweighted");
+        }
+
         const QList<FitParam> initial = {{QStringLiteral("A"), a0}, {QStringLiteral("kT"), kt0}};
         const auto emm                = std::minmax_element(exs.begin(), exs.end());
-        const CustomFit fit =
-            fitCustomCurve(expr, initial, exs, eys, *emm.first, *emm.second, Ncurve);
+        const CustomFit fit = fitCustomCurve(expr, initial, exs, eys, *emm.first, *emm.second,
+                                             Ncurve, QStringLiteral("x"), weights);
         if (!fit.ok) {
             warning(this, "Maxwell-Boltzmann Fit",
                     QString("The fit could not be completed:\n%1").arg(fit.error));
@@ -1131,7 +1188,7 @@ void ChartWindow::postProcess()
         resetRangeSliders();        // a fit re-fits to the whole data set; match the sliders
         smooth->setCurrentIndex(2); // "Both" = raw data + fit overlay
 
-        QString report = QString("Maxwell-Boltzmann fit in %1 dimension(s):\n"
+        QString report = QString("Maxwell-Boltzmann fit in %1 dimension(s), %8:\n"
                                  "  f(E) = %2\n\n"
                                  "  kT = %3\n"
                                  "  <E> = (d/2) kT = %4\n"
@@ -1143,7 +1200,8 @@ void ChartWindow::postProcess()
                              .arg(0.5 * ndim * kt, 0, 'g', 8)
                              .arg(amp, 0, 'g', 8)
                              .arg(fit.rms, 0, 'g', 6)
-                             .arg(fit.iterations);
+                             .arg(fit.iterations)
+                             .arg(weightNote);
         if (dropped > 0)
             report += QString("\n%1 point(s) at E <= 0 were left out of the fit.\n")
                           .arg(static_cast<int>(dropped));

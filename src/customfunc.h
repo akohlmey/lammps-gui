@@ -133,13 +133,22 @@ CustomCurve evalCustomCurve(const QString &expression, double xmin, double xmax,
  * @param xmax          Upper bound for sampling the fitted curve
  * @param nsamples      Number of sub-intervals (clamped to >= 1); nsamples+1 points
  * @param variable      Name of the independent variable (default "x")
+ * @param weights       Optional per-point weights w_i for a weighted fit, which
+ *                      minimizes sum w_i (model_i - y_i)^2.  Empty (the default)
+ *                      or a wrongly sized vector means every point counts the
+ *                      same; negative entries are treated as zero.  Weighting
+ *                      decides which part of the data a model that cannot
+ *                      describe all of it will follow
  * @return Fit result; on a parse/dimension/evaluation error @ref CustomFit::ok
- *         is false and @ref CustomFit::error describes the problem
+ *         is false and @ref CustomFit::error describes the problem.
+ *         @ref CustomFit::rms is the plain, unweighted residual either way, so
+ *         that fits with different weightings stay comparable
  */
 CustomFit fitCustomCurve(const QString &expression, const QList<FitParam> &initialParams,
                          const std::vector<double> &xdata, const std::vector<double> &ydata,
                          double xmin, double xmax, int nsamples,
-                         const QString &variable = QStringLiteral("x"));
+                         const QString &variable            = QStringLiteral("x"),
+                         const std::vector<double> &weights = {});
 
 #endif
 
