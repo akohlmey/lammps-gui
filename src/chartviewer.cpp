@@ -156,7 +156,7 @@ QList<FitParam> parseFitParams(const QString &text, bool *ok)
 // block appears; they are pure (no PlotWidget), so no other helper is required.
 namespace {
 bool appendColumnPoint(ChartColumn &col, double x, double y);
-void setColumnData(ChartColumn &col, const QList<QPointF> &points);
+void setColumnData(ChartColumn &col, const QList<QPointF> &points, const QList<double> &yerr = {});
 void setColumnSmoothFlags(ChartColumn &col, bool doRaw, bool doSmooth, int window, int order);
 } // namespace
 
@@ -535,7 +535,8 @@ void ChartWindow::setRangeEnabled(bool enabled)
     order->setEnabled(enabled && doSmooth);
 }
 
-void ChartWindow::loadData(const PlotData &data, int xcol, const QList<int> &ycols)
+void ChartWindow::loadData(const PlotData &data, int xcol, const QList<int> &ycols,
+                           const PlotErrors &yerrs)
 {
     resetCharts();
     if (data.isEmpty() || ycols.isEmpty()) return;
@@ -554,7 +555,13 @@ void ChartWindow::loadData(const PlotData &data, int xcol, const QList<int> &yco
         points.reserve(nrow);
         for (int r = 0; r < nrow; ++r)
             points.append(QPointF(xvals[r], yvals[r]));
-        setColumnData(*cols.back(), points); // data only; the active one is drawn below
+        QList<double> errs;
+        if (static_cast<std::size_t>(ycol) < yerrs.size()) {
+            const std::vector<double> &e = yerrs[ycol];
+            if (e.size() == static_cast<std::size_t>(nrow))
+                errs = QList<double>(e.cbegin(), e.cend());
+        }
+        setColumnData(*cols.back(), points, errs); // data only; the active one is drawn below
         ++idx;
     }
     // shared X-axis labeling on the single plot (standalone uses %.6g)
@@ -1435,8 +1442,12 @@ PlotData ChartWindow::chartsToPlotData() const
     PlotData data;
     QStringList names;
     names << "Step";
-    for (const auto &c : cols)
+    // error bars are exported as an extra column next to the values they
+    // belong to; re-importing that file simply yields one more data column
+    for (const auto &c : cols) {
         names << c->series->name;
+        if (c->series->hasErrors()) names << (c->series->name + "-err");
+    }
     data.setColumnNames(names);
 
     const int lines = cols.empty() ? 0 : cols[0]->series->count();
@@ -1444,8 +1455,10 @@ PlotData ChartWindow::chartsToPlotData() const
         std::vector<double> row;
         row.reserve(names.size());
         row.push_back(cols[0]->series->at(i).x());
-        for (const auto &c : cols)
+        for (const auto &c : cols) {
             row.push_back(c->series->at(i).y());
+            if (c->series->hasErrors()) row.push_back(c->series->yerr[i]);
+        }
         data.appendRow(row);
     }
     return data;
@@ -1651,6 +1664,9 @@ void renderColumnSeries(PlotWidget *plot, PlotSeries *line, std::unique_ptr<Plot
         }
         points->name = line->name; // share the line's name so the legend dedups them
         points->replace(line->points);
+        // exactly one of the two visible series carries the error bars, so they
+        // are neither drawn twice nor lost when the line itself is hidden
+        if (!wantLines) points->yerr = line->yerr;
         if (!plot->hasSeries(points.get()))
             addColumnSeries(plot, points.get(), color, width);
         else
@@ -1853,19 +1869,24 @@ void setColumnSmoothFlags(ChartColumn &col, bool doRaw, bool doSmooth, int windo
     col.order    = order;
 }
 
-// Replace a column's raw series with a full point list and recompute its cached
-// bounds, WITHOUT redrawing (for loading non-active columns).
-void setColumnData(ChartColumn &col, const QList<QPointF> &points)
+// Replace a column's raw series with a full point list (and optional error
+// bars) and recompute its cached bounds, WITHOUT redrawing (for loading
+// non-active columns).
+void setColumnData(ChartColumn &col, const QList<QPointF> &points, const QList<double> &yerr)
 {
-    col.series->replace(points);
+    col.series->replace(points); // drops any previous error bars
+    if (yerr.size() == points.size()) col.series->yerr = yerr;
     col.lastX   = points.isEmpty() ? -1.0 : points.last().x();
     col.rawXmin = col.rawYmin = 1.0e100;
     col.rawXmax = col.rawYmax = -1.0e100;
-    for (const auto &p : points) {
-        col.rawXmin = qMin(col.rawXmin, p.x());
-        col.rawXmax = qMax(col.rawXmax, p.x());
-        col.rawYmin = qMin(col.rawYmin, p.y());
-        col.rawYmax = qMax(col.rawYmax, p.y());
+    for (int i = 0; i < points.size(); ++i) {
+        const QPointF &p = points[i];
+        // the bars have to fit inside the plot, so the bounds cover y +/- err
+        const double e = col.series->hasErrors() ? qAbs(col.series->yerr[i]) : 0.0;
+        col.rawXmin    = qMin(col.rawXmin, p.x());
+        col.rawXmax    = qMax(col.rawXmax, p.x());
+        col.rawYmin    = qMin(col.rawYmin, p.y() - e);
+        col.rawYmax    = qMax(col.rawYmax, p.y() + e);
     }
 }
 

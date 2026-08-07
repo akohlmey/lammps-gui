@@ -40,6 +40,7 @@ enum class RefAnchor { Start, Center, End };
 struct PlotSeries {
     PlotSeriesType type = PlotSeriesType::Line; ///< line vs. scatter rendering
     QList<QPointF> points;                      ///< data points in axis coordinates
+    QList<double> yerr;                         ///< symmetric y error per point (empty = none)
     QColor color       = Qt::black;             ///< line / marker color
     qreal width        = 1.0;                   ///< line width (Line series)
     Qt::PenStyle style = Qt::SolidLine;         ///< line style, e.g. dashed reference lines
@@ -54,8 +55,14 @@ struct PlotSeries {
     // points list directly
     /** @brief Append one (x, y) point */
     void append(double x, double y) { points.append(QPointF(x, y)); }
-    /** @brief Replace all points */
-    void replace(const QList<QPointF> &p) { points = p; }
+    /** @brief Replace all points (and drop any error bars, which no longer fit) */
+    void replace(const QList<QPointF> &p)
+    {
+        points = p;
+        yerr.clear();
+    }
+    /** @brief Whether the series carries usable error bars */
+    bool hasErrors() const { return yerr.size() == points.size(); }
     /** @brief Number of points */
     int count() const { return static_cast<int>(points.size()); }
     /** @brief Point at index i */

@@ -12,6 +12,7 @@
 #ifndef CHARTVIEWER_H
 #define CHARTVIEWER_H
 
+#include "plotdata.h"   // PlotData table + PlotErrors used by loadData() below
 #include "plotseries.h" // PlotSeries model + RefAnchor used by RefLine below
 
 #include <QColor>
@@ -37,7 +38,6 @@ class RangeSlider;
 class ChartViewer;
 struct ChartColumn;
 class LammpsGui;
-class PlotData;
 enum class LegendPos; // defined in plotwidget.h
 
 /** @brief Orientation of a reference line: a vertical line at x, or a horizontal line at y */
@@ -164,12 +164,15 @@ public:
      * @param data  Parsed column data
      * @param xcol  Index of the column to use as the shared x axis
      * @param ycols Indices of the columns to plot, one chart each
+     * @param yerrs Optional error bars, indexed like the columns of @p data;
+     *              an empty or wrongly sized entry means that column has none
      *
      * Replaces any existing charts; each selected y column becomes a chart
      * titled by its column name, with the x axis labeled by the x column.
      * Unlike the live thermo feed this loads all rows in one shot.
      */
-    void loadData(const PlotData &data, int xcol, const QList<int> &ycols);
+    void loadData(const PlotData &data, int xcol, const QList<int> &ycols,
+                  const PlotErrors &yerrs = {});
 
 private slots:
     void quit();                          ///< Close window and quit

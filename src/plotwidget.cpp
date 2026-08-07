@@ -350,6 +350,27 @@ void PlotWidget::doRender(QPainter &p, const QRectF &target) const
     // series (clipped to the plot area)
     p.save();
     p.setClipRect(plot);
+
+    // error bars first, so that they stay behind every data curve
+    constexpr double ERRCAP = 3.0; // half width of the cap, in pixels
+    for (const PlotSeries *s : m_series) {
+        if (!s || !s->visible || !s->hasErrors()) continue;
+        QColor barColor = s->color;
+        barColor.setAlphaF(0.6 * barColor.alphaF());
+        p.setPen(QPen(barColor, 1.0));
+        p.setBrush(Qt::NoBrush);
+        for (int i = 0; i < s->points.size(); ++i) {
+            const double e = s->yerr[i];
+            if (!(e > 0.0)) continue;
+            const double px = mapX(s->points[i].x());
+            const double lo = mapY(s->points[i].y() - e);
+            const double hi = mapY(s->points[i].y() + e);
+            p.drawLine(QPointF(px, lo), QPointF(px, hi));
+            p.drawLine(QPointF(px - ERRCAP, lo), QPointF(px + ERRCAP, lo));
+            p.drawLine(QPointF(px - ERRCAP, hi), QPointF(px + ERRCAP, hi));
+        }
+    }
+
     for (const PlotSeries *s : m_series) {
         if (!s || !s->visible || s->points.isEmpty()) continue;
         if (s->type == PlotSeriesType::Line) {
