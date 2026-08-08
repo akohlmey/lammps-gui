@@ -207,7 +207,7 @@ std::string StdCapture::probeRunEnd()
 
     const auto pos = got.find(marker);
     if (pos == std::string::npos) {
-        m_probeleftover = got;
+        m_probeleftover = std::move(got);
         return describe("stdout no longer feeds the capture pipe: a marker written at the"
                         " end of the run did not come back");
     }
