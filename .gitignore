@@ -127,3 +127,9 @@ build-qt*
 /*.pdf
 /*.json
 /*.py
+
+/count-commits.sh
+/quarters.txt
+/year-vs-lines-of-code.sh
+
+
