@@ -350,6 +350,12 @@ The following analyses are available:
   sparse tail, so it matches the peak *less* well.  *None* weights every
   bin alike.  Restricting the *Fit x-range* is the other way to say which
   part of a distribution matters.
+- *Overlay other data column* copies the data of another column of the
+  same chart window onto the current chart, for a direct comparison in one
+  plot.  The entry is only offered when the window has more than one
+  column.  The copy is a snapshot: it does not follow the source column
+  afterwards, and it occupies the same overlay slot as a fitted curve, so
+  the next fit or overlay replaces it.
 
 The expressions for *Custom function* and *Custom fit* are parsed and
 evaluated with a bundled subset of the Lepton expression parser, the same

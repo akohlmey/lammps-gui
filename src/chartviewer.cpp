@@ -834,7 +834,21 @@ void ChartWindow::postProcess()
     analysisbox->addItem("Custom function");
     analysisbox->addItem("Custom fit");
     analysisbox->addItem("Maxwell-Boltzmann fit");
+    // overlaying another column needs another column to exist
+    if (cols.size() > 1) analysisbox->addItem("Overlay other data column");
     form->addRow("Analysis:", analysisbox);
+
+    // source selector for the column-overlay entry (data of the choices is the
+    // position in cols, which lines up with the position in the columns combo)
+    auto *overlayLabel = new QLabel("Column:");
+    auto *overlayCombo = new QComboBox;
+    overlayCombo->setToolTip("The column whose data is copied onto the current chart.\n"
+                             "The copy takes the overlay slot a fitted curve would use,\n"
+                             "so the next fit or overlay replaces it.");
+    const int overlaySelf = activeIndex();
+    for (int i = 0; i < static_cast<int>(cols.size()); ++i)
+        if (i != overlaySelf) overlayCombo->addItem(columns->itemText(i), i);
+    form->addRow(overlayLabel, overlayCombo);
 
     auto *paramLabel = new QLabel;
     auto *paramSpin  = new QSpinBox;
@@ -900,8 +914,9 @@ void ChartWindow::postProcess()
         const bool fit       = (idx == 4); // custom-function nonlinear fit
         const bool expr      = plot || fit;
         const bool eos       = (idx == 2);
-        const bool maxbolt   = (idx == 5); // Maxwell-Boltzmann distribution fit
-        const bool showRange = (idx != 0); // show for all except autocorrelation
+        const bool maxbolt   = (idx == 5);             // Maxwell-Boltzmann distribution fit
+        const bool overlay   = (idx == 6);             // copy of another column as overlay
+        const bool showRange = (idx != 0) && !overlay; // fitting analyses only
         exprLabel->setVisible(expr);
         exprEdit->setVisible(expr);
         paramsLabel->setVisible(fit);
@@ -910,11 +925,15 @@ void ChartWindow::postProcess()
         fitLabelEdit->setVisible(fit);
         weightLabel->setVisible(maxbolt);
         weightCombo->setVisible(maxbolt);
-        if (plot) fitRangeLabel->setText("Plot x-range:");
-        else fitRangeLabel->setText("Fit x-range:");
+        overlayLabel->setVisible(overlay);
+        overlayCombo->setVisible(overlay);
+        if (plot)
+            fitRangeLabel->setText("Plot x-range:");
+        else
+            fitRangeLabel->setText("Fit x-range:");
         fitRangeLabel->setVisible(showRange);
         fitRangeWidget->setVisible(showRange);
-        paramLabel->setVisible(!expr && !eos);
+        paramLabel->setVisible(!expr && !eos && !overlay);
         if (idx == 1) { // polynomial degree
             paramLabel->setText("Degree:");
             paramSpin->setVisible(true);
@@ -932,6 +951,8 @@ void ChartWindow::postProcess()
         } else if (eos) { // EOS: only show the x-axis confirmation
             paramSpin->setVisible(false);
         } else if (expr) { // custom function/fit: expression field(s) only
+            paramSpin->setVisible(false);
+        } else if (overlay) { // column overlay: source selector only
             paramSpin->setVisible(false);
         } else { // autocorrelation max lag
             paramLabel->setText("Max lag:");
@@ -965,6 +986,24 @@ void ChartWindow::postProcess()
     }
 
     const int which = analysisbox->currentIndex();
+
+    if (which == 6) { // overlay a snapshot of another column of this window
+        const int src = overlayCombo->currentData().toInt();
+        if ((src < 0) || (src >= static_cast<int>(cols.size()))) return;
+        const auto &series = cols[src]->series;
+        if (!series || (series->count() < 2)) {
+            warning(this, "Postprocess", "The selected column has too few data points.");
+            return;
+        }
+        // a copy, deliberately: the overlay is a snapshot for comparison and
+        // does not follow the source column afterwards
+        const QString title = columns->itemText(src);
+        chart->setFitCurve(series->points, title, /* eosMode= */ true);
+        setProcessedLabel(title.length() > 12 ? QStringLiteral("Overlay") : title);
+        resetRangeSliders();        // the overlay may extend the data range
+        smooth->setCurrentIndex(2); // "Both" = raw data + overlay
+        return;
+    }
 
     // filter to the user-specified x-range for fitting analyses (not autocorrelation)
     if (which != 0) {
