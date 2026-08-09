@@ -435,15 +435,21 @@ void WindowLayout::addAuxiliaryView(QWidget *view, ViewSlot group, const QString
             emit viewActivated(w);
         }
     });
-    // the viewers delete themselves when closed, so the dock goes with them --
+    // The viewers delete themselves when closed, so the dock goes with them --
     // held weakly, because on the way out the main window may take the dock
-    // first and destroy the view it holds along with it
-    connect(view, &QObject::destroyed, this, [this, d = QPointer<QDockWidget>(d)]() {
-        if (!d) return;
-        auxdocks.removeAll(d);
-        d->deleteLater();
-        // closing it frees space in the group, which the panels that stay would
-        // otherwise divide up by size hint
+    // first and destroy the view it holds along with it.  In that case this
+    // fires from inside the dock's own teardown, where its dynamic type has
+    // already decayed to QWidget: a QPointer to the QDockWidget must not be
+    // formed then (its typed conversion is a downcast the sanitizer rightly
+    // flags), so liveness is tracked at the QObject level and the pointer
+    // value for the bookkeeping is captured separately, compared but never
+    // dereferenced.
+    connect(view, &QObject::destroyed, this, [this, dock = d, alive = QPointer<QObject>(d)]() {
+        if (!alive) return;
+        auxdocks.removeAll(dock);
+        alive->deleteLater();
+        // closing it frees space in the group, which the panels that
+        // stay would otherwise divide up by size hint
         scheduleSplit();
     });
 

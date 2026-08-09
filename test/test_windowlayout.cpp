@@ -257,6 +257,35 @@ TEST_F(WindowLayoutTest, ClosingAPanelKeepsTheProportions)
     EXPECT_NEAR(settings.value(Keys::DOCKSPLITV).toDouble(), kSplitV, 0.02);
 }
 
+// On the way out, a dock can be destroyed before the transient view it holds:
+// the dock's own teardown then deletes the view, and the view's
+// destroyed-handler runs while the dock is half destructed, its dynamic type
+// already decayed to QWidget.  The handler must not form a QDockWidget pointer
+// to it then -- that downcast is what the undefined-behavior sanitizer used to
+// flag on quitting with an auxiliary tab open -- so it tracks liveness at the
+// QObject level and never dereferences the typed pointer.
+TEST_F(WindowLayoutTest, DockFirstTeardownOfATransientView)
+{
+    auto *window = new QMainWindow;
+    window->show();
+    // a QObject child of the window, deleted along with it after the docks
+    auto *layout = new WindowLayout(window, LayoutMode::Docked);
+    layout->place(ViewSlot::Chart, new QPlainTextEdit);
+    layout->show(ViewSlot::Chart);
+    layout->addAuxiliaryView(new QPlainTextEdit, ViewSlot::Chart, "aux");
+    QApplication::processEvents();
+
+    // the dock deletes the view from inside its own teardown, firing the
+    // handler against the half-destructed dock
+    const auto docks = window->findChildren<QDockWidget *>();
+    for (auto *dock : docks)
+        if (dock->objectName().startsWith("dock_aux")) delete dock;
+    QApplication::processEvents();
+
+    delete window; // takes the fixed docks and the layout with it
+    QApplication::processEvents();
+}
+
 // Local Variables:
 // c-basic-offset: 4
 // End:
