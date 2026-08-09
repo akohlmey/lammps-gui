@@ -388,13 +388,36 @@ opened with *File* -> *Plot Data File...* (`Ctrl-Shift-P`, see
 associated simulation, so the *Units* and *Norm* controls are hidden.
 The column-picker dialog shown before the chart opens lets you select
 which column provides the x axis and which columns to plot, and also
-allows renaming columns.  An "X-Axis:" label field in the first toolbar
-row (to the right of "Title:" and "Y:") lets you edit the x-axis label
-after the chart opens.  All the styling, export, and post-processing
-features described above work the same way.  The same column-picker and
-standalone chart window are also launched when LAMMPS-GUI is invoked from
-the command line with the ``-c``/``--chart`` flag (see
-:ref:`command-line options <command-line-options>`).
+allows renaming columns.  A rename takes effect immediately: each column
+has exactly one name at any time, used in the column list, the preview,
+and the expressions described below alike.  An "X-Axis:" label field in
+the first toolbar row (to the right of "Title:" and "Y:") lets you edit
+the x-axis label after the chart opens.  All the styling, export, and
+post-processing features described above work the same way.  The same
+column-picker and standalone chart window are also launched when
+LAMMPS-GUI is invoked from the command line with the ``-c``/``--chart``
+flag (see :ref:`command-line options <command-line-options>`).
+
+The *Compute derived column* section of the column picker appends a new
+column computed row by row from an expression.  Column values are
+referenced by name in braces, in the manner of Python format strings:
+``{name}`` is the column's value in the current row, so an area-normalized
+energy is, for example, ``{pe}/{area}*16021.766``.  The braces end the
+name before the expression parser sees it, so names with special
+characters -- ``{c_rdf[2]}``, ``{g(r)}``, or ``{E / N}`` -- work the same
+way as plain ones.  A colon inside the braces selects a per-column
+constant instead of the current-row value: ``{name:first}``,
+``{name:last}``, ``{name:min}``, ``{name:max}``, and ``{name:mean}``.
+Dividing by ``{name:first}`` scales a column relative to its initial
+value, and ``{name}-{name:mean}`` removes the mean.  The variable ``row``
+is the 0-based row index.  Everything outside braces is never a column
+lookup, and the expression syntax is otherwise that of the bundled Lepton
+parser used by the post-processing analyses above.  Because a colon in a
+column name would be ambiguous there, renames refuse names containing
+``{``, ``}``, or ``:`` (a file may still supply such a name, but it has to
+be renamed before the column can be referenced).  Renaming a column also
+rewrites the references in already added derived columns, so they keep
+meaning the same data.
 
 .. figure:: JPG/lammps-gui-import-data.png
    :align: center
@@ -494,7 +517,7 @@ edited names, and derived columns are kept across that: the derived
 columns are re-evaluated against the new table.  Since any column can
 serve as the x axis and the *Compute derived column* section can scale
 one, a time-delta column in timesteps is turned into one in time units
-with an expression such as ``TimeDelta*0.001``.
+with an expression such as ``{TimeDelta}*0.001``.
 
 Error bars, once imported, behave like the rest of the chart data:
 smoothing operates on the values alone and leaves the bars on the raw

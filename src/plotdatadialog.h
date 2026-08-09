@@ -45,9 +45,13 @@ class QTableWidget;
  * A small preview of the first rows is shown to help identify column content.
  *
  * A "Compute derived column" section at the bottom lets the user add derived columns
- * from expressions that reference the existing column names as variables
- * (e.g. @c nfcc/ntot or @c load_eV_per_Ang*1.602176634).  The column's
- * first-row value is also available under @c colname_first.
+ * from expressions that reference the existing columns by name in braces, like
+ * Python format strings (e.g. @c {nfcc}/{ntot} or @c {load}*1.602176634).
+ * @c {name:first}, @c {name:last}, @c {name:min}, @c {name:max}, and
+ * @c {name:mean} are per-column constants, and @c row is the 0-based row
+ * index.  Each column has exactly one live name: renaming it takes effect
+ * immediately, updates the preview, and rewrites the references in already
+ * added derived columns.  See substituteColumnRefs() in customfunc.h.
  *
  * For a block-structured `fix ave/\*` file (see plotblockdata.h) the dialog
  * grows a "Data blocks" group above the column grid, which reduces the blocks
@@ -104,7 +108,7 @@ public:
     QList<int> yColumns() const;
 
     /**
-     * @brief User-edited column names (may differ from the original parsed names)
+     * @brief The live column names (renames take effect as they are made)
      *
      * Each entry corresponds to a column by index in @ref buildData().
      * @return List of column name strings, one per column
@@ -114,9 +118,9 @@ public:
     /**
      * @brief Return the working data with renames and derived columns applied
      *
-     * Includes any columns added via the "Compute derived column" section and
-     * applies the user's name edits.  Use this in place of calling
-     * renameColumns() on the original data.
+     * Includes any columns added via the "Compute derived column" section;
+     * renames are already committed when they are made, so this is the
+     * working copy as it stands.
      * @return Updated PlotData ready for plotting
      */
     PlotData buildData() const;
@@ -135,6 +139,15 @@ private slots:
     void computeColumn();
     /** @brief Re-reduce the blocks after a change in the "Data blocks" group */
     void applyReduction();
+    /**
+     * @brief Commit an edited column name (connected to the name editors)
+     *
+     * Renames the column in the working data, updates the preview header, and
+     * rewrites the braced references in stored derived-column expressions so
+     * they keep meaning the same column.  An empty, duplicate, or syntactically
+     * unusable name (braces or colon) is refused and the editor reverted.
+     */
+    void commitRename();
 
 private:
     /** @brief Assemble the dialog, with the block group first if there is one */
@@ -153,7 +166,7 @@ private:
     BlockErrorType errorType() const;
     /**
      * @brief Evaluate a derived-column expression over the working data
-     * @param expr   Expression referencing the column names as variables
+     * @param expr   Expression referencing columns as @c {name} (see customfunc.h)
      * @param values Out-parameter receiving one value per row
      * @return An error message, or an empty string on success
      */

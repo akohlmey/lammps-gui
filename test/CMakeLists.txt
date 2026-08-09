@@ -304,6 +304,26 @@ target_link_libraries(test_customfunc PRIVATE GTest::gtest_main Qt6::Core lepton
 
 gtest_discover_tests(test_customfunc)
 
+# Test executable for the column-picker dialog's derived-column expressions
+# and live column renames (offscreen QApplication)
+add_executable(test_plotdatadialog
+  test_plotdatadialog.cpp
+  ${CMAKE_SOURCE_DIR}/src/plotdatadialog.cpp
+  ${CMAKE_SOURCE_DIR}/src/plotdata.cpp
+  ${CMAKE_SOURCE_DIR}/src/plotblockdata.cpp
+  ${CMAKE_SOURCE_DIR}/src/customfunc.cpp
+  ${CMAKE_SOURCE_DIR}/src/levmar.cpp
+  ${CMAKE_SOURCE_DIR}/src/leastsquares.cpp
+  ${CMAKE_SOURCE_DIR}/src/helpers.cpp
+  ${CMAKE_SOURCE_DIR}/src/stdcapture.cpp
+)
+
+set_target_properties(test_plotdatadialog PROPERTIES AUTOMOC ON)
+target_include_directories(test_plotdatadialog PRIVATE ${CMAKE_SOURCE_DIR}/src)
+target_link_libraries(test_plotdatadialog PRIVATE GTest::gtest_main Qt6::Widgets lepton_mini)
+
+gtest_discover_tests(test_plotdatadialog)
+
 # Test executable for the post-processing analyses (Qt-free)
 add_executable(test_analysis
   test_analysis.cpp

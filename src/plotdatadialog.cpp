@@ -36,26 +36,19 @@
 #include <QTableWidgetItem>
 #include <QVBoxLayout>
 
-#include <cctype>
 #include <exception>
 #include <map>
 #include <string>
+#include <utility>
+#include <vector>
 
-// Sanitize a column name to a valid LeptonMini variable identifier.
-// Replaces anything that is not alphanumeric or '_' with '_', and
-// prepends '_' if the name starts with a digit.
-static std::string sanitizeVarName(const QString &name)
+// A user-entered column name must stay usable in a {name} reference, so the
+// characters that have a meaning there are refused up front.
+static QString validateColumnName(const QString &name)
 {
-    std::string result;
-    for (QChar c : name) {
-        if (c.isLetterOrNumber() || c == '_')
-            result += c.toLatin1();
-        else
-            result += '_';
-    }
-    if (!result.empty() && std::isdigit(static_cast<unsigned char>(result[0])))
-        result = "_" + result;
-    return result.empty() ? std::string("_col") : std::move(result);
+    if (name.contains('{') || name.contains('}') || name.contains(':'))
+        return QStringLiteral("Column names must not contain '{', '}', or ':'.");
+    return {};
 }
 
 // The kinds offered in the format combo, in the order they appear there.
@@ -155,7 +148,7 @@ void PlotDataDialog::buildUi()
     deriveNameEdit->setPlaceholderText("new column name");
     deriveExprEdit = new QLineEdit;
     deriveExprEdit->setPlaceholderText(
-        "expression using column names, e.g.  nfcc/ntot  or  pe/area*16021.766");
+        "expression with {column} references, e.g.  {nfcc}/{ntot}  or  {pe}/{area}*16021.766");
     deriveExprEdit->setMinimumWidth(280);
     auto *addBtn = new QPushButton("Add column");
     namRow->addWidget(new QLabel("Name:"));
@@ -165,8 +158,10 @@ void PlotDataDialog::buildUi()
     exprRow->addWidget(addBtn);
     deriveLayout->addLayout(namRow);
     deriveLayout->addLayout(exprRow);
-    deriveLayout->addWidget(
-        new QLabel("Column names are variables (use colname_first for the first-row value)."));
+    deriveLayout->addWidget(new QLabel(
+        "Column values are referenced by name in braces: {name} is the value in the current\n"
+        "row, {name:first}, {name:last}, {name:min}, {name:max}, and {name:mean} are\n"
+        "per-column constants, and row is the 0-based row index."));
     layout->addWidget(deriveBox);
 
     auto *buttons = new QDialogButtonBox(QDialogButtonBox::Ok | QDialogButtonBox::Cancel);
@@ -330,6 +325,11 @@ void PlotDataDialog::applyReduction()
     if (blockData.isEmpty() || !avgRadio) return;
     updateBlockLabels();
 
+    // the reduction below rebuilds the table with the file's own column names,
+    // but the (renamed) live names belong to the columns, so they are carried
+    // over; the derived-column tail of the list falls off with renameColumns()
+    const QStringList liveNames = workingData.columnNames();
+
     if (avgRadio->isChecked()) {
         const BlockAverage avg =
             averageBlocks(blockData, firstSpin->value() - 1, lastSpin->value() - 1, errorType());
@@ -354,6 +354,7 @@ void PlotDataDialog::applyReduction()
                                  .arg(blockData.blocks[index].step)
                                  .arg(workingData.rowCount()));
     }
+    if (!liveNames.isEmpty()) workingData.renameColumns(liveNames);
     workingErrors.resize(workingData.columnCount());
 
     // derived columns were computed from the previous reduction, so they are
@@ -386,6 +387,7 @@ void PlotDataDialog::appendColumnRow(const QString &name, bool checked)
     auto *nameEdit = new QLineEdit(name);
     nameEdit->setPlaceholderText("column name");
     nameEdit->setMinimumWidth(120);
+    connect(nameEdit, &QLineEdit::editingFinished, this, &PlotDataDialog::commitRename);
     ynames.append(nameEdit);
     colsLayout->addWidget(xb, row + 1, 0, Qt::AlignHCenter);
     colsLayout->addWidget(cb, row + 1, 1, Qt::AlignHCenter);
@@ -394,13 +396,12 @@ void PlotDataDialog::appendColumnRow(const QString &name, bool checked)
 
 void PlotDataDialog::rebuildColumnRows()
 {
-    // a changed reduction does not change the columns, so keep the roles and
-    // the names the user has already assigned instead of resetting them
-    QStringList prevNames;
+    // a changed reduction does not change the columns, so keep the roles the
+    // user has already assigned instead of resetting them; the names need no
+    // such carrying because renames are committed straight into workingData
     QList<bool> prevY;
     int prevX = -1;
     if (!ychecks.isEmpty() && !resetColumnRoles) {
-        prevNames = columnNames();
         for (auto *cb : ychecks)
             prevY.append(cb->isChecked());
         prevX = xgroup->checkedId();
@@ -421,7 +422,7 @@ void PlotDataDialog::rebuildColumnRows()
 
     for (int c = 0; c < ncol; ++c) {
         const bool y = (c < prevY.size()) ? prevY[c] : defaultYColumns.contains(c);
-        appendColumnRow(c < prevNames.size() ? prevNames[c] : workingData.columnName(c), y);
+        appendColumnRow(workingData.columnName(c), y);
     }
     if (ncol > 0) {
         const int x = qBound(0, (prevX >= 0) ? prevX : defaultXColumn, ncol - 1);
@@ -467,34 +468,82 @@ void PlotDataDialog::refreshPreview()
 
 QString PlotDataDialog::evaluateColumn(const QString &expr, std::vector<double> &values) const
 {
-    const int ncol = workingData.columnCount();
     const int nrow = workingData.rowCount();
 
-    // map "<sanitized column name>_first" to the column's first-row value for LeptonMini
-    std::map<std::string, double> constants;
-    for (int c = 0; c < ncol; ++c) {
-        const std::string var = sanitizeVarName(workingData.columnName(c));
-        if (nrow > 0) constants[var + "_first"] = workingData.column(c).front();
-    }
+    const ColumnRefExpr subst = substituteColumnRefs(expr, workingData.columnNames());
+    if (!subst.ok) return subst.error;
 
-    CompiledExpression program(expr);
+    CompiledExpression program(subst.expr);
     if (!program.isValid()) return program.error();
+
+    // accessor references are per-column constants and bound once; the
+    // current-row references are rebound for every row
+    std::map<std::string, double> vars;
+    std::vector<std::pair<std::string, int>> rowRefs;
+    for (const auto &ref : subst.refs) {
+        const std::string var = ref.variable.toStdString();
+        if (ref.accessor.isEmpty())
+            rowRefs.emplace_back(var, ref.column);
+        else
+            vars[var] = columnAccessor(workingData.column(ref.column), ref.accessor);
+    }
 
     values.clear();
     values.reserve(static_cast<std::size_t>(nrow));
     try {
-        std::map<std::string, double> vars = std::move(constants);
-        vars["row"]                        = 0.0;
         for (int r = 0; r < nrow; ++r) {
-            for (int c = 0; c < ncol; ++c)
-                vars[sanitizeVarName(workingData.columnName(c))] = workingData.column(c)[r];
+            for (const auto &[var, c] : rowRefs)
+                vars[var] = workingData.column(c)[r];
             vars["row"] = static_cast<double>(r);
             values.push_back(program.evaluate(vars));
         }
     } catch (const std::exception &e) {
-        return QString::fromUtf8(e.what());
+        // the usual cause is a bare column name, which Lepton can only report
+        // as an undefined variable; point to the reference syntax instead
+        QString error = QString::fromUtf8(e.what());
+        if (error.contains(QStringLiteral("No value specified for variable")))
+            error += QStringLiteral("\nColumn values are referenced as {name}.");
+        return error;
     }
     return {};
+}
+
+void PlotDataDialog::commitRename()
+{
+    auto *edit  = qobject_cast<QLineEdit *>(sender());
+    const int c = static_cast<int>(ynames.indexOf(edit));
+    if (c < 0) return;
+
+    const QString oldName = workingData.columnName(c);
+    const QString newName = edit->text().trimmed();
+    if (newName == oldName) return;
+    if (newName.isEmpty()) { // an emptied field falls back to the current name
+        edit->setText(oldName);
+        return;
+    }
+
+    QString error = validateColumnName(newName);
+    if (error.isEmpty() && workingData.columnNames().contains(newName))
+        error = QStringLiteral("There already is a column named '%1'.").arg(newName);
+    if (!error.isEmpty()) {
+        // revert before the dialog: losing focus to it re-fires editingFinished,
+        // which then takes the name-unchanged early return above
+        edit->setText(oldName);
+        warning(this, "Rename Column", error);
+        return;
+    }
+
+    // one live name per column: rename the working table, keep the stored
+    // derived columns valid by rewriting their references, update the preview
+    QStringList names = workingData.columnNames();
+    names[c]          = newName;
+    workingData.renameColumns(names);
+    for (auto &d : derivedColumns) {
+        if (d.first == oldName) d.first = newName;
+        d.second = renameColumnRefs(d.second, oldName, newName);
+    }
+    edit->setText(newName);
+    refreshPreview();
 }
 
 void PlotDataDialog::computeColumn()
@@ -503,6 +552,14 @@ void PlotDataDialog::computeColumn()
     const QString expr    = deriveExprEdit->text().trimmed();
     if (colName.isEmpty() || expr.isEmpty()) {
         warning(this, "Compute Column", "Enter both a column name and an expression.");
+        return;
+    }
+
+    QString invalid = validateColumnName(colName);
+    if (invalid.isEmpty() && workingData.columnNames().contains(colName))
+        invalid = QStringLiteral("There already is a column named '%1'.").arg(colName);
+    if (!invalid.isEmpty()) {
+        warning(this, "Compute Column", invalid);
         return;
     }
 
@@ -542,17 +599,14 @@ QList<int> PlotDataDialog::yColumns() const
 
 QStringList PlotDataDialog::columnNames() const
 {
-    QStringList names;
-    for (auto *e : ynames)
-        names << (e->text().trimmed().isEmpty() ? e->placeholderText() : e->text().trimmed());
-    return names;
+    return workingData.columnNames();
 }
 
 PlotData PlotDataDialog::buildData() const
 {
-    PlotData result = workingData;
-    result.renameColumns(columnNames());
-    return result;
+    // renames are committed into the working copy as they are made, so the
+    // working copy already is the result
+    return workingData;
 }
 
 PlotErrors PlotDataDialog::buildErrors() const
