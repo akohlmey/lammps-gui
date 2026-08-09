@@ -51,6 +51,7 @@
 #include <QMenu>
 #include <QMenuBar>
 #include <QMessageBox>
+#include <QMetaMethod>
 #include <QPushButton>
 #include <QRegularExpression>
 #include <QSettings>
@@ -225,6 +226,18 @@ void ChartWindow::setProcessedLabel(const QString &label)
 {
     if (active >= 0) cols[active]->procLabel = label;
     smooth->setItemText(1, label);
+}
+
+void ChartWindow::presentResultWindow(ChartWindow *win, const QString &title)
+{
+    win->setAttribute(Qt::WA_DeleteOnClose);
+    win->setWindowIcon(QIcon(Cfg::MAIN_ICON));
+    // a minimum size becomes a floor the dock area cannot get below
+    if (!dockedLayout()) win->setMinimumSize(Cfg::MINIMUM_WIDTH, Cfg::MINIMUM_HEIGHT);
+    if (isSignalConnected(QMetaMethod::fromSignal(&ChartWindow::resultWindowCreated)))
+        emit resultWindowCreated(win, title);
+    else
+        win->show();
 }
 
 void ChartWindow::resetRangeSliders()
@@ -1150,12 +1163,9 @@ void ChartWindow::postProcess()
             result.appendRow({static_cast<double>(k), acf[k]});
 
         auto *win = new ChartWindow(filename + " (ACF)", nullptr);
-        win->setAttribute(Qt::WA_DeleteOnClose);
         win->setWindowTitle("Autocorrelation - LAMMPS-GUI");
-        win->setWindowIcon(QIcon(Cfg::MAIN_ICON));
-        win->setMinimumSize(Cfg::MINIMUM_WIDTH, Cfg::MINIMUM_HEIGHT);
         win->loadData(result, 0, {1});
-        win->show();
+        presentResultWindow(win, "ACF: " + chart->getName());
         return;
     }
 
@@ -1224,12 +1234,9 @@ void ChartWindow::postProcess()
             result.appendRow({kgrid[i], values[i]});
 
         auto *win = new ChartWindow(filename + ((which == AnaSq) ? " (Sq)" : " (FT)"), nullptr);
-        win->setAttribute(Qt::WA_DeleteOnClose);
         win->setWindowTitle(wtitle + " - LAMMPS-GUI");
-        win->setWindowIcon(QIcon(Cfg::MAIN_ICON));
-        win->setMinimumSize(Cfg::MINIMUM_WIDTH, Cfg::MINIMUM_HEIGHT);
         win->loadData(result, 0, {1});
-        win->show();
+        presentResultWindow(win, ((which == AnaSq) ? "S(q): " : "FT: ") + chart->getName());
         return;
     }
 

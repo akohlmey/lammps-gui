@@ -412,6 +412,18 @@ private slots:
     /** @brief Open an external data file and plot selected columns */
     void plotDataFile();
 
+    /**
+     * @brief Adopt a chart window a post-processing analysis created
+     * @param win   The new chart window (self-deleting on close)
+     * @param title Short label for its tab in the combined layout
+     *
+     * Hands the window to the WindowLayout, so in the docked layout it joins
+     * the Charts tab group instead of opening as a free window, and connects
+     * the window's own resultWindowCreated() signal here, so results of
+     * results (a transform of an autocorrelation) join the same group.
+     */
+    void adoptChartResult(ChartWindow *win, const QString &title);
+
     /** @brief View a slideshow of images */
     void viewSlides();
 

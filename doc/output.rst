@@ -388,6 +388,12 @@ The following analyses are available:
   afterwards, and it occupies the same overlay slot as a fitted curve, so
   the next fit or overlay replaces it.
 
+The analyses whose result has a new x axis -- autocorrelation, Fourier
+transform, and structure factor -- show that result in a chart window of
+its own.  With the *Combined Main Window* layout it does not open as a
+free window but joins the Charts tab group as a tab, as do any results
+computed from it in turn; closing the tab discards it.
+
 The expressions for *Custom function* and *Custom fit* are parsed and
 evaluated with a bundled subset of the Lepton expression parser, the same
 library used by the LAMMPS `Lepton-based styles
