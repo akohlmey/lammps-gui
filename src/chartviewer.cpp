@@ -910,6 +910,8 @@ void ChartWindow::postProcess()
         fitLabelEdit->setVisible(fit);
         weightLabel->setVisible(maxbolt);
         weightCombo->setVisible(maxbolt);
+        if (plot) fitRangeLabel->setText("Plot x-range:");
+        else fitRangeLabel->setText("Fit x-range:");
         fitRangeLabel->setVisible(showRange);
         fitRangeWidget->setVisible(showRange);
         paramLabel->setVisible(!expr && !eos);
