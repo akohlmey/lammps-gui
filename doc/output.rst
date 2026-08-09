@@ -266,6 +266,9 @@ or a fitted value.
 .. index:: equation of state
 .. index:: custom function
 .. index:: custom fit
+.. index:: fourier transform
+.. index:: spectral density
+.. index:: structure factor
 
 Post-process data
 -----------------
@@ -350,6 +353,46 @@ The following analyses are available:
   sparse tail, so it matches the peak *less* well.  *None* weights every
   bin alike.  Restricting the *Fit x-range* is the other way to say which
   part of a distribution matters.
+- *Fourier transform* computes a transform of the data and shows it in a
+  new chart window, with the angular frequency (rad per x unit) as the
+  abscissa.  Three kinds are offered: the one-sided *cosine* transform
+  :math:`2\int y(x)\cos(kx)\,dx` -- applied to a correlation function,
+  for example imported ``fix ave/correlate`` output, this is the spectral
+  density (Wiener-Khinchin theorem) -- the matching *sine* transform, and
+  the *power spectrum* :math:`|\int y(x)e^{-ikx}\,dx|^2`, which does not
+  care where the data starts on the x axis.  The transform integral is
+  evaluated directly (no FFT), so the x values need not be equally spaced
+  and the output grid is free: it defaults to reaching the Nyquist limit
+  of the mean sample spacing, and both its range and its resolution can
+  be changed.  The *Data x-range* restricts which part of the data is
+  transformed, and the *Hann* window fades the data to zero toward the
+  end of the range, which suppresses the ringing that truncating a
+  correlation function before it has decayed would cause, at the price
+  of some broadening.
+- *Structure factor* computes the static structure factor
+  :math:`S(q) = 1 + 4\pi\rho\int r^2\,(g(r)-1)\,\frac{\sin(qr)}{qr}\,dr`
+  from radial distribution function data, such as the imported output of
+  ``compute rdf`` written by ``fix ave/time`` in vector mode.  It is
+  applied to the plain :math:`g(r)` chart directly: the :math:`-1` shift
+  is part of the formula, so no derived column is needed.  *Density* is
+  the number density :math:`N/V` in the units of the r axis cubed; it
+  scales :math:`S(q)-1`, so getting it wrong stretches the structure away
+  from 1 but moves no peak.  The :math:`\sin(qr)/(qr)` form is regular at
+  :math:`q=0`, so the output grid may start at zero.  Truncating
+  :math:`g(r)` at the cutoff of the compute shows up as ringing in
+  :math:`S(q)`; the *Hann* window suppresses it.
+- *Overlay other data column* copies the data of another column of the
+  same chart window onto the current chart, for a direct comparison in one
+  plot.  The entry is only offered when the window has more than one
+  column.  The copy is a snapshot: it does not follow the source column
+  afterwards, and it occupies the same overlay slot as a fitted curve, so
+  the next fit or overlay replaces it.
+
+The analyses whose result has a new x axis -- autocorrelation, Fourier
+transform, and structure factor -- show that result in a chart window of
+its own.  With the *Combined Main Window* layout it does not open as a
+free window but joins the Charts tab group as a tab, as do any results
+computed from it in turn; closing the tab discards it.
 
 The expressions for *Custom function* and *Custom fit* are parsed and
 evaluated with a bundled subset of the Lepton expression parser, the same
@@ -388,13 +431,36 @@ opened with *File* -> *Plot Data File...* (`Ctrl-Shift-P`, see
 associated simulation, so the *Units* and *Norm* controls are hidden.
 The column-picker dialog shown before the chart opens lets you select
 which column provides the x axis and which columns to plot, and also
-allows renaming columns.  An "X-Axis:" label field in the first toolbar
-row (to the right of "Title:" and "Y:") lets you edit the x-axis label
-after the chart opens.  All the styling, export, and post-processing
-features described above work the same way.  The same column-picker and
-standalone chart window are also launched when LAMMPS-GUI is invoked from
-the command line with the ``-c``/``--chart`` flag (see
-:ref:`command-line options <command-line-options>`).
+allows renaming columns.  A rename takes effect immediately: each column
+has exactly one name at any time, used in the column list, the preview,
+and the expressions described below alike.  An "X-Axis:" label field in
+the first toolbar row (to the right of "Title:" and "Y:") lets you edit
+the x-axis label after the chart opens.  All the styling, export, and
+post-processing features described above work the same way.  The same
+column-picker and standalone chart window are also launched when
+LAMMPS-GUI is invoked from the command line with the ``-c``/``--chart``
+flag (see :ref:`command-line options <command-line-options>`).
+
+The *Compute derived column* section of the column picker appends a new
+column computed row by row from an expression.  Column values are
+referenced by name in braces, in the manner of Python format strings:
+``{name}`` is the column's value in the current row, so an area-normalized
+energy is, for example, ``{pe}/{area}*16021.766``.  The braces end the
+name before the expression parser sees it, so names with special
+characters -- ``{c_rdf[2]}``, ``{g(r)}``, or ``{E / N}`` -- work the same
+way as plain ones.  A colon inside the braces selects a per-column
+constant instead of the current-row value: ``{name:first}``,
+``{name:last}``, ``{name:min}``, ``{name:max}``, and ``{name:mean}``.
+Dividing by ``{name:first}`` scales a column relative to its initial
+value, and ``{name}-{name:mean}`` removes the mean.  The variable ``row``
+is the 0-based row index.  Everything outside braces is never a column
+lookup, and the expression syntax is otherwise that of the bundled Lepton
+parser used by the post-processing analyses above.  Because a colon in a
+column name would be ambiguous there, renames refuse names containing
+``{``, ``}``, or ``:`` (a file may still supply such a name, but it has to
+be renamed before the column can be referenced).  Renaming a column also
+rewrites the references in already added derived columns, so they keep
+meaning the same data.
 
 .. figure:: JPG/lammps-gui-import-data.png
    :align: center
@@ -494,7 +560,7 @@ edited names, and derived columns are kept across that: the derived
 columns are re-evaluated against the new table.  Since any column can
 serve as the x axis and the *Compute derived column* section can scale
 one, a time-delta column in timesteps is turned into one in time units
-with an expression such as ``TimeDelta*0.001``.
+with an expression such as ``{TimeDelta}*0.001``.
 
 Error bars, once imported, behave like the rest of the chart data:
 smoothing operates on the values alone and leaves the bars on the raw

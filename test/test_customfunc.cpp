@@ -78,6 +78,103 @@ TEST(CustomFunc, EmptyExpression)
     EXPECT_TRUE(c.points.isEmpty());
 }
 
+// {name} spans become generated variables; everything else passes through
+TEST(ColumnRefs, Substitute)
+{
+    const QStringList names   = {"Step", "Temp"};
+    const ColumnRefExpr subst = substituteColumnRefs("{Temp}/2 + {Step}", names);
+    ASSERT_TRUE(subst.ok);
+    ASSERT_EQ(subst.refs.size(), 2);
+    EXPECT_EQ(subst.refs[0].column, 1);
+    EXPECT_TRUE(subst.refs[0].accessor.isEmpty());
+    EXPECT_EQ(subst.refs[1].column, 0);
+    EXPECT_EQ(subst.expr, subst.refs[0].variable + "/2 + " + subst.refs[1].variable);
+}
+
+// names with brackets, operators, parentheses, and spaces all resolve, since
+// the braces end the span before Lepton ever sees the name
+TEST(ColumnRefs, AwkwardNames)
+{
+    const QStringList names = {"c_rdf[2]", "g(r)", "r / sigma", "2theta"};
+    const ColumnRefExpr subst =
+        substituteColumnRefs("{c_rdf[2]}*{g(r)}-{r / sigma}+{2theta}", names);
+    ASSERT_TRUE(subst.ok);
+    ASSERT_EQ(subst.refs.size(), 4);
+    for (int i = 0; i < 4; ++i)
+        EXPECT_EQ(subst.refs[i].column, i);
+    // the rewritten expression must be valid for the Lepton parser
+    const CompiledExpression program(subst.expr);
+    EXPECT_TRUE(program.isValid());
+}
+
+// repeated references to the same column reuse one generated variable
+TEST(ColumnRefs, DeduplicatesReferences)
+{
+    const ColumnRefExpr subst = substituteColumnRefs("{a}*{a}+{a:mean}", {"a"});
+    ASSERT_TRUE(subst.ok);
+    ASSERT_EQ(subst.refs.size(), 2); // {a} and {a:mean}
+    EXPECT_TRUE(subst.refs[0].accessor.isEmpty());
+    EXPECT_EQ(subst.refs[1].accessor, "mean");
+}
+
+// a colon inside braces always selects an accessor
+TEST(ColumnRefs, Accessors)
+{
+    for (const char *acc : {"first", "last", "min", "max", "mean"}) {
+        const ColumnRefExpr subst = substituteColumnRefs(QString("{T:%1}").arg(acc), {"T"});
+        ASSERT_TRUE(subst.ok) << acc;
+        ASSERT_EQ(subst.refs.size(), 1);
+        EXPECT_EQ(subst.refs[0].column, 0);
+        EXPECT_EQ(subst.refs[0].accessor, acc);
+    }
+    const ColumnRefExpr bad = substituteColumnRefs("{T:median}", {"T"});
+    EXPECT_FALSE(bad.ok);
+    EXPECT_TRUE(bad.error.contains("median"));
+}
+
+// lookup failures name the offender; a colon-in-name column is called out as
+// unreferenceable rather than reported as missing
+TEST(ColumnRefs, Errors)
+{
+    ColumnRefExpr r = substituteColumnRefs("{nope}+1", {"Step", "Temp"});
+    EXPECT_FALSE(r.ok);
+    EXPECT_TRUE(r.error.contains("nope"));
+    EXPECT_TRUE(r.error.contains("{Step}"));
+
+    r = substituteColumnRefs("{T:ps}", {"T:ps"});
+    EXPECT_FALSE(r.ok);
+    EXPECT_TRUE(r.error.contains("rename"));
+
+    EXPECT_FALSE(substituteColumnRefs("{Step", {"Step"}).ok);  // unmatched {
+    EXPECT_FALSE(substituteColumnRefs("Step}", {"Step"}).ok);  // unmatched }
+    EXPECT_FALSE(substituteColumnRefs("{} + 1", {"Step"}).ok); // empty span
+    EXPECT_TRUE(substituteColumnRefs("1 + 2", {"Step"}).ok);   // no refs at all
+}
+
+// renaming rewrites exactly the spans of the renamed column
+TEST(ColumnRefs, Rename)
+{
+    EXPECT_EQ(renameColumnRefs("{old}*2+{old:mean}-{other}", "old", "new"),
+              QString("{new}*2+{new:mean}-{other}"));
+    // the new name may be one the old was a prefix of, and vice versa
+    EXPECT_EQ(renameColumnRefs("{T}+{T2}", "T", "T2x"), QString("{T2x}+{T2}"));
+    // text outside braces and incomplete spans are left alone
+    EXPECT_EQ(renameColumnRefs("old + {old", "old", "new"), QString("old + {old"));
+}
+
+// per-column accessor constants
+TEST(ColumnRefs, ColumnAccessor)
+{
+    const std::vector<double> col = {3.0, -1.0, 4.0, 2.0};
+    EXPECT_DOUBLE_EQ(columnAccessor(col, "first"), 3.0);
+    EXPECT_DOUBLE_EQ(columnAccessor(col, "last"), 2.0);
+    EXPECT_DOUBLE_EQ(columnAccessor(col, "min"), -1.0);
+    EXPECT_DOUBLE_EQ(columnAccessor(col, "max"), 4.0);
+    EXPECT_DOUBLE_EQ(columnAccessor(col, "mean"), 2.0);
+    EXPECT_TRUE(std::isnan(columnAccessor({}, "first")));
+    EXPECT_TRUE(std::isnan(columnAccessor(col, "median")));
+}
+
 // a syntactically invalid expression is reported as an error
 TEST(CustomFunc, InvalidSyntax)
 {

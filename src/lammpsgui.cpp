@@ -2096,10 +2096,14 @@ void LammpsGui::createChartWindow(QSettings &settings)
 {
     // reuse an existing window: it keeps the position and size it was given
     // on screen, and in a docked layout it stays where it was docked
-    if (chartwindow)
+    if (chartwindow) {
         chartwindow->reset(currentFile);
-    else
+    } else {
         chartwindow = new ChartWindow(currentFile, this);
+        // post-processing results with a new x axis open windows of their own;
+        // adopting them keeps them as tabs in the docked layout
+        connect(chartwindow, &ChartWindow::resultWindowCreated, this, &LammpsGui::adoptChartResult);
+    }
     chartwindow->setWindowTitle(
         QString("LAMMPS-GUI - Charts - %1 - Run %2").arg(currentFile).arg(runCounter));
     chartwindow->setWindowIcon(QIcon(Cfg::MAIN_ICON));
@@ -2472,10 +2476,16 @@ bool LammpsGui::plotFile(const QString &fileName)
     if (!dockedLayout()) win->setMinimumSize(Cfg::MINIMUM_WIDTH, Cfg::MINIMUM_HEIGHT);
     win->loadData(plotData, dialog->xColumn(), ycols, dialog->buildErrors());
     // combined layout: the plot joins the tab group on the right, next to the
-    // charts of the current run
-    viewlayout->addAuxiliaryView(win, ViewSlot::Chart,
-                                 QString("Plot: %1").arg(QFileInfo(fileName).fileName()));
+    // charts of the current run; adoption also chains its post-processing
+    // result windows into the same group
+    adoptChartResult(win, QString("Plot: %1").arg(QFileInfo(fileName).fileName()));
     return true;
+}
+
+void LammpsGui::adoptChartResult(ChartWindow *win, const QString &title)
+{
+    connect(win, &ChartWindow::resultWindowCreated, this, &LammpsGui::adoptChartResult);
+    viewlayout->addAuxiliaryView(win, ViewSlot::Chart, title);
 }
 
 void LammpsGui::renderImage()

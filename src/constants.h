@@ -102,7 +102,8 @@ constexpr double POINT_SIZE_MAX     = 40.0; ///< Max configurable marker diamete
 constexpr double POINT_SIZE_DEFAULT = 8.0;  ///< Default marker diameter
 
 // ---- Chart post-processing dialog ----------------------------------------
-constexpr int POSTPROCESS_EXPR_WIDTH = 260; ///< Min width of the custom-function expression field
+constexpr int POSTPROCESS_EXPR_WIDTH  = 260; ///< Min width of the custom-function expression field
+constexpr int POSTPROCESS_GRID_POINTS = 200; ///< Default number of Fourier output grid points
 
 // ---- Plot data import dialog ---------------------------------------------
 constexpr int PLOTDIALOG_COLUMN_LIST_HEIGHT = 180; ///< Min height of the column-role list

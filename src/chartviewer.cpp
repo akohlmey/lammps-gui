@@ -51,6 +51,7 @@
 #include <QMenu>
 #include <QMenuBar>
 #include <QMessageBox>
+#include <QMetaMethod>
 #include <QPushButton>
 #include <QRegularExpression>
 #include <QSettings>
@@ -62,6 +63,7 @@
 #include <QVBoxLayout>
 #include <QVariant>
 #include <algorithm>
+#include <utility>
 
 #include "plotwidget.h"
 
@@ -224,6 +226,18 @@ void ChartWindow::setProcessedLabel(const QString &label)
 {
     if (active >= 0) cols[active]->procLabel = label;
     smooth->setItemText(1, label);
+}
+
+void ChartWindow::presentResultWindow(ChartWindow *win, const QString &title)
+{
+    win->setAttribute(Qt::WA_DeleteOnClose);
+    win->setWindowIcon(QIcon(Cfg::MAIN_ICON));
+    // a minimum size becomes a floor the dock area cannot get below
+    if (!dockedLayout()) win->setMinimumSize(Cfg::MINIMUM_WIDTH, Cfg::MINIMUM_HEIGHT);
+    if (isSignalConnected(QMetaMethod::fromSignal(&ChartWindow::resultWindowCreated)))
+        emit resultWindowCreated(win, title);
+    else
+        win->show();
 }
 
 void ChartWindow::resetRangeSliders()
@@ -803,6 +817,25 @@ void ChartWindow::changeStyle()
     }
 }
 
+// for the Nyquist default of the Fourier output grid (M_PI needs feature-test
+// macros on some of the platforms the packaging cross-compiles for)
+static constexpr double pi_const = 3.14159265358979323846;
+
+// Identifiers of the post-processing analyses, stored as the item data of the
+// analysis combo.  The Overlay entry exists only when the window has more than
+// one column, so combo positions are not stable identifiers.
+enum PostAnalysis {
+    AnaAcf = 0,
+    AnaPoly,
+    AnaEos,
+    AnaFunc,
+    AnaFit,
+    AnaMaxBolt,
+    AnaFourier,
+    AnaSq,
+    AnaOverlay,
+};
+
 void ChartWindow::postProcess()
 {
     // the single view is bound to the currently selected column
@@ -828,13 +861,29 @@ void ChartWindow::postProcess()
     auto *form = new QFormLayout(&dialog);
 
     auto *analysisbox = new QComboBox;
-    analysisbox->addItem("Autocorrelation");
-    analysisbox->addItem("Polynomial fit");
-    analysisbox->addItem("Birch-Murnaghan EOS fit");
-    analysisbox->addItem("Custom function");
-    analysisbox->addItem("Custom fit");
-    analysisbox->addItem("Maxwell-Boltzmann fit");
+    analysisbox->addItem("Autocorrelation", AnaAcf);
+    analysisbox->addItem("Polynomial fit", AnaPoly);
+    analysisbox->addItem("Birch-Murnaghan EOS fit", AnaEos);
+    analysisbox->addItem("Custom function", AnaFunc);
+    analysisbox->addItem("Custom fit", AnaFit);
+    analysisbox->addItem("Maxwell-Boltzmann fit", AnaMaxBolt);
+    analysisbox->addItem("Fourier transform", AnaFourier);
+    analysisbox->addItem("Structure factor", AnaSq);
+    // overlaying another column needs another column to exist
+    if (cols.size() > 1) analysisbox->addItem("Overlay other data column", AnaOverlay);
     form->addRow("Analysis:", analysisbox);
+
+    // source selector for the column-overlay entry (data of the choices is the
+    // position in cols, which lines up with the position in the columns combo)
+    auto *overlayLabel = new QLabel("Column:");
+    auto *overlayCombo = new QComboBox;
+    overlayCombo->setToolTip("The column whose data is copied onto the current chart.\n"
+                             "The copy takes the overlay slot a fitted curve would use,\n"
+                             "so the next fit or overlay replaces it.");
+    const int overlaySelf = activeIndex();
+    for (int i = 0; i < static_cast<int>(cols.size()); ++i)
+        if (i != overlaySelf) overlayCombo->addItem(columns->itemText(i), i);
+    form->addRow(overlayLabel, overlayCombo);
 
     auto *paramLabel = new QLabel;
     auto *paramSpin  = new QSpinBox;
@@ -869,6 +918,68 @@ void ChartWindow::postProcess()
                             "the smallest uncertainty -- usually the sparse tail of a histogram.");
     form->addRow(weightLabel, weightCombo);
 
+    // Fourier transform kind; the k values are angular (rad per x unit)
+    auto *ftKindLabel = new QLabel("Transform:");
+    auto *ftKindCombo = new QComboBox;
+    ftKindCombo->addItem("Cosine (spectral density)", static_cast<int>(FourierKind::Cosine));
+    ftKindCombo->addItem("Sine", static_cast<int>(FourierKind::Sine));
+    ftKindCombo->addItem("Power spectrum", static_cast<int>(FourierKind::Power));
+    ftKindCombo->setToolTip("Cosine: 2 Int y(x) cos(kx) dx -- the spectral density when the data\n"
+                            "is a correlation function (Wiener-Khinchin).\n"
+                            "Sine: 2 Int y(x) sin(kx) dx.\n"
+                            "Power: |Int y(x) exp(-ikx) dx|^2, insensitive to where the data\n"
+                            "starts on the x axis.\n"
+                            "k is the angular frequency, in rad per x unit.");
+    form->addRow(ftKindLabel, ftKindCombo);
+
+    // taper shared by the Fourier transform and the structure factor
+    auto *taperLabel = new QLabel("Window:");
+    auto *taperCombo = new QComboBox;
+    taperCombo->addItem("none", static_cast<int>(FourierWindow::None));
+    taperCombo->addItem("Hann taper", static_cast<int>(FourierWindow::Hann));
+    taperCombo->setToolTip("A Hann taper fades the data to zero toward the end of the range,\n"
+                           "suppressing the ringing caused by truncating data (a correlation\n"
+                           "function, or g(r)-1 at the compute's cutoff) before it has decayed\n"
+                           "to zero, at the price of some broadening.");
+    form->addRow(taperLabel, taperCombo);
+
+    // output grid of the transforms; the default reaches the Nyquist limit of
+    // the data's mean spacing
+    const double meanDx = (dataXmax - dataXmin) / static_cast<double>(npoints - 1);
+    auto *gridLabel     = new QLabel("Output grid:");
+    auto *gridWidget    = new QWidget;
+    auto *gridRow       = new QHBoxLayout(gridWidget);
+    gridRow->setContentsMargins(0, 0, 0, 0);
+    auto *gridFromSpin = new QDoubleSpinBox;
+    gridFromSpin->setDecimals(6);
+    gridFromSpin->setRange(0.0, 1e15);
+    gridFromSpin->setValue(0.0);
+    auto *gridToSpin = new QDoubleSpinBox;
+    gridToSpin->setDecimals(6);
+    gridToSpin->setRange(0.0, 1e15);
+    gridToSpin->setValue((meanDx > 0.0) ? (pi_const / meanDx) : 1.0);
+    auto *gridPointsSpin = new QSpinBox;
+    gridPointsSpin->setRange(2, 100000);
+    gridPointsSpin->setValue(Cfg::POSTPROCESS_GRID_POINTS);
+    gridRow->addWidget(new QLabel("from"));
+    gridRow->addWidget(gridFromSpin, 1);
+    gridRow->addWidget(new QLabel("to"));
+    gridRow->addWidget(gridToSpin, 1);
+    gridRow->addWidget(new QLabel("points"));
+    gridRow->addWidget(gridPointsSpin);
+    form->addRow(gridLabel, gridWidget);
+
+    // number density scaling S(q) - 1
+    auto *rhoLabel = new QLabel("Density:");
+    auto *rhoSpin  = new QDoubleSpinBox;
+    rhoSpin->setDecimals(6);
+    rhoSpin->setRange(1e-15, 1e15);
+    rhoSpin->setValue(1.0);
+    rhoSpin->setToolTip("Number density N/V of the system, in the units of the r axis\n"
+                        "cubed.  It scales S(q) - 1, so getting it wrong stretches the\n"
+                        "structure away from 1 but moves no peak.");
+    form->addRow(rhoLabel, rhoSpin);
+
     auto *fitLabelLabel = new QLabel("Label:");
     auto *fitLabelEdit  = new QLineEdit;
     fitLabelEdit->setPlaceholderText("optional name for the fitted curve");
@@ -896,12 +1007,17 @@ void ChartWindow::postProcess()
 
     // swap the parameter widgets to match the selected analysis
     auto configure = [=, &dialog](int idx) {
-        const bool plot      = (idx == 3); // custom-function plotting
-        const bool fit       = (idx == 4); // custom-function nonlinear fit
+        const int id         = analysisbox->itemData(idx).toInt();
+        const bool plot      = (id == AnaFunc); // custom-function plotting
+        const bool fit       = (id == AnaFit);  // custom-function nonlinear fit
         const bool expr      = plot || fit;
-        const bool eos       = (idx == 2);
-        const bool maxbolt   = (idx == 5); // Maxwell-Boltzmann distribution fit
-        const bool showRange = (idx != 0); // show for all except autocorrelation
+        const bool eos       = (id == AnaEos);
+        const bool maxbolt   = (id == AnaMaxBolt); // Maxwell-Boltzmann distribution fit
+        const bool fourier   = (id == AnaFourier); // generic Fourier transform
+        const bool sq        = (id == AnaSq);      // structure factor from g(r)
+        const bool transform = fourier || sq;
+        const bool overlay   = (id == AnaOverlay);         // copy of another column as overlay
+        const bool showRange = (id != AnaAcf) && !overlay; // analyses on an x-range of the data
         exprLabel->setVisible(expr);
         exprEdit->setVisible(expr);
         paramsLabel->setVisible(fit);
@@ -910,12 +1026,26 @@ void ChartWindow::postProcess()
         fitLabelEdit->setVisible(fit);
         weightLabel->setVisible(maxbolt);
         weightCombo->setVisible(maxbolt);
-        if (plot) fitRangeLabel->setText("Plot x-range:");
-        else fitRangeLabel->setText("Fit x-range:");
+        ftKindLabel->setVisible(fourier);
+        ftKindCombo->setVisible(fourier);
+        taperLabel->setVisible(transform);
+        taperCombo->setVisible(transform);
+        gridLabel->setVisible(transform);
+        gridWidget->setVisible(transform);
+        rhoLabel->setVisible(sq);
+        rhoSpin->setVisible(sq);
+        overlayLabel->setVisible(overlay);
+        overlayCombo->setVisible(overlay);
+        if (plot)
+            fitRangeLabel->setText("Plot x-range:");
+        else if (transform)
+            fitRangeLabel->setText("Data x-range:");
+        else
+            fitRangeLabel->setText("Fit x-range:");
         fitRangeLabel->setVisible(showRange);
         fitRangeWidget->setVisible(showRange);
-        paramLabel->setVisible(!expr && !eos);
-        if (idx == 1) { // polynomial degree
+        paramLabel->setVisible(!expr && !eos && !overlay && !transform);
+        if (id == AnaPoly) { // polynomial degree
             paramLabel->setText("Degree:");
             paramSpin->setVisible(true);
             paramSpin->setRange(1, qMin(npoints - 1, 8));
@@ -932,6 +1062,10 @@ void ChartWindow::postProcess()
         } else if (eos) { // EOS: only show the x-axis confirmation
             paramSpin->setVisible(false);
         } else if (expr) { // custom function/fit: expression field(s) only
+            paramSpin->setVisible(false);
+        } else if (transform) { // Fourier transforms: their own rows only
+            paramSpin->setVisible(false);
+        } else if (overlay) { // column overlay: source selector only
             paramSpin->setVisible(false);
         } else { // autocorrelation max lag
             paramLabel->setText("Max lag:");
@@ -964,10 +1098,28 @@ void ChartWindow::postProcess()
         es.push_back(chart->getError(i));
     }
 
-    const int which = analysisbox->currentIndex();
+    const int which = analysisbox->currentData().toInt();
+
+    if (which == AnaOverlay) { // overlay a snapshot of another column of this window
+        const int src = overlayCombo->currentData().toInt();
+        if ((src < 0) || (src >= static_cast<int>(cols.size()))) return;
+        const auto &series = cols[src]->series;
+        if (!series || (series->count() < 2)) {
+            warning(this, "Postprocess", "The selected column has too few data points.");
+            return;
+        }
+        // a copy, deliberately: the overlay is a snapshot for comparison and
+        // does not follow the source column afterwards
+        const QString title = columns->itemText(src);
+        chart->setFitCurve(series->points, title, /* eosMode= */ true);
+        setProcessedLabel(title.length() > 12 ? QStringLiteral("Overlay") : title);
+        resetRangeSliders();        // the overlay may extend the data range
+        smooth->setCurrentIndex(2); // "Both" = raw data + overlay
+        return;
+    }
 
     // filter to the user-specified x-range for fitting analyses (not autocorrelation)
-    if (which != 0) {
+    if (which != AnaAcf) {
         const double fitXmin = fitFromSpin->value();
         const double fitXmax = fitToSpin->value();
         // The spin boxes start out holding the data range rounded to their own
@@ -998,7 +1150,7 @@ void ChartWindow::postProcess()
         }
     }
 
-    if (which == 0) { // autocorrelation -> new window (the abscissa becomes lag)
+    if (which == AnaAcf) { // autocorrelation -> new window (the abscissa becomes lag)
         const std::vector<double> acf = autocorrelation(ys, paramSpin->value());
         if (acf.empty()) {
             warning(this, "Postprocess",
@@ -1011,12 +1163,80 @@ void ChartWindow::postProcess()
             result.appendRow({static_cast<double>(k), acf[k]});
 
         auto *win = new ChartWindow(filename + " (ACF)", nullptr);
-        win->setAttribute(Qt::WA_DeleteOnClose);
         win->setWindowTitle("Autocorrelation - LAMMPS-GUI");
-        win->setWindowIcon(QIcon(Cfg::MAIN_ICON));
-        win->setMinimumSize(Cfg::MINIMUM_WIDTH, Cfg::MINIMUM_HEIGHT);
         win->loadData(result, 0, {1});
-        win->show();
+        presentResultWindow(win, "ACF: " + chart->getName());
+        return;
+    }
+
+    if ((which == AnaFourier) || (which == AnaSq)) { // transform -> new window
+        // the quadrature integrates left to right; chart data usually is
+        // ascending in x, but an imported table need not be
+        if (!std::is_sorted(xs.begin(), xs.end())) {
+            std::vector<std::pair<double, double>> pts;
+            pts.reserve(xs.size());
+            for (std::size_t i = 0; i < xs.size(); ++i)
+                pts.emplace_back(xs[i], ys[i]);
+            std::sort(pts.begin(), pts.end());
+            for (std::size_t i = 0; i < pts.size(); ++i) {
+                xs[i] = pts[i].first;
+                ys[i] = pts[i].second;
+            }
+        }
+
+        double kmin = gridFromSpin->value();
+        double kmax = gridToSpin->value();
+        if (kmin > kmax) std::swap(kmin, kmax);
+        if (kmax <= kmin) {
+            warning(this, "Postprocess", "The output grid has zero extent.");
+            return;
+        }
+        const int nk = gridPointsSpin->value();
+        std::vector<double> kgrid;
+        kgrid.reserve(nk);
+        for (int i = 0; i < nk; ++i)
+            kgrid.push_back(kmin + (kmax - kmin) * static_cast<double>(i) / (nk - 1.0));
+        const auto taperKind = static_cast<FourierWindow>(taperCombo->currentData().toInt());
+
+        std::vector<double> values;
+        QString xname, yname, wtitle;
+        if (which == AnaSq) {
+            values = structureFactor(xs, ys, rhoSpin->value(), kgrid, taperKind);
+            xname  = "q";
+            yname  = "S(q): " + chart->getName();
+            wtitle = "Structure Factor";
+        } else {
+            const auto kind = static_cast<FourierKind>(ftKindCombo->currentData().toInt());
+            values          = fourierTransform(xs, ys, kgrid, kind, taperKind);
+            xname           = "omega";
+            switch (kind) {
+                case FourierKind::Cosine:
+                    yname = "FT cos: ";
+                    break;
+                case FourierKind::Sine:
+                    yname = "FT sin: ";
+                    break;
+                case FourierKind::Power:
+                    yname = "FT power: ";
+                    break;
+            }
+            yname += chart->getName();
+            wtitle = "Fourier Transform";
+        }
+        if (values.empty()) {
+            warning(this, "Postprocess", "Could not compute the transform (insufficient data).");
+            return;
+        }
+
+        PlotData result;
+        result.setColumnNames({xname, yname});
+        for (std::size_t i = 0; i < values.size(); ++i)
+            result.appendRow({kgrid[i], values[i]});
+
+        auto *win = new ChartWindow(filename + ((which == AnaSq) ? " (Sq)" : " (FT)"), nullptr);
+        win->setWindowTitle(wtitle + " - LAMMPS-GUI");
+        win->loadData(result, 0, {1});
+        presentResultWindow(win, ((which == AnaSq) ? "S(q): " : "FT: ") + chart->getName());
         return;
     }
 
@@ -1026,7 +1246,7 @@ void ChartWindow::postProcess()
     const double xmax    = *mm.second;
     constexpr int Ncurve = 200;
 
-    if (which == 3) { // custom function f(x) evaluated over the data x range
+    if (which == AnaFunc) { // custom function f(x) evaluated over the data x range
         const QString expr       = exprEdit->text().trimmed();
         const CustomCurve result = evalCustomCurve(expr, xmin, xmax, Ncurve);
         if (!result.ok) {
@@ -1051,7 +1271,7 @@ void ChartWindow::postProcess()
         return;
     }
 
-    if (which == 4) { // custom nonlinear least-squares fit of f(x) to the data
+    if (which == AnaFit) { // custom nonlinear least-squares fit of f(x) to the data
         const QString expr            = exprEdit->text().trimmed();
         bool paramsOk                 = false;
         const QList<FitParam> initial = parseFitParams(paramsEdit->text(), &paramsOk);
@@ -1085,7 +1305,7 @@ void ChartWindow::postProcess()
         return;
     }
 
-    if (which == 5) { // Maxwell-Boltzmann distribution of per-atom energies
+    if (which == AnaMaxBolt) { // Maxwell-Boltzmann distribution of per-atom energies
         // f(E) = A * E^(d/2 - 1) * exp(-E/kT), the distribution of the kinetic
         // energy of d degrees of freedom.  The amplitude is fitted rather than
         // derived, because a histogram carries an arbitrary normalization: raw
@@ -1237,7 +1457,7 @@ void ChartWindow::postProcess()
         return;
     }
 
-    if (which == 1) { // polynomial fit
+    if (which == AnaPoly) { // polynomial fit
         const PolynomialFit f = polynomialFit(xs, ys, paramSpin->value());
         if (!f.ok) {
             warning(this, "Postprocess", "Polynomial fit failed (too few points).");

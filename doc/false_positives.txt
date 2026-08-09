@@ -110,6 +110,7 @@ isOverridden
 Jacobian
 json
 keyPressEvent
+Khinchin
 kspace
 lammps
 lammpsImageColors
@@ -149,6 +150,7 @@ nullptr
 Nullsoft
 num
 numParams
+Nyquist
 octahedron
 openImages
 Ok

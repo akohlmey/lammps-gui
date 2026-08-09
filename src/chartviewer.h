@@ -176,6 +176,21 @@ public:
     void loadData(const PlotData &data, int xcol, const QList<int> &ycols,
                   const PlotErrors &yerrs = {});
 
+signals:
+    /**
+     * @brief A post-processing analysis opened a new chart window
+     * @param window The new window (self-deleting on close), not yet shown
+     * @param title  Short label for a tab in a combined layout
+     *
+     * Emitted for the analyses whose result has a new x axis (autocorrelation,
+     * Fourier transform, structure factor) and therefore opens a chart window
+     * of its own.  The receiver decides how to present it -- LammpsGui hands it
+     * to its WindowLayout, so in the docked layout it becomes a tab beside the
+     * charts instead of a free window.  Without a receiver the window shows
+     * itself.
+     */
+    void resultWindowCreated(ChartWindow *window, const QString &title);
+
 private slots:
     void quit();                          ///< Close window and quit
     void stopRun();                       ///< Stop running simulation
@@ -221,6 +236,11 @@ private:
     /// Set the processed-series Plot-combo slot label and remember it on the
     /// active column (so it is restored when switching columns).
     void setProcessedLabel(const QString &label);
+
+    /// Present a post-processing result window: through resultWindowCreated()
+    /// when connected (the docked layout captures it as a tab), on its own
+    /// otherwise.  Applies the shared window attributes either way.
+    void presentResultWindow(ChartWindow *win, const QString &title);
 
     /// Apply the chart preferences (title template, smoothing, legend position,
     /// reference-label style) to the already created widgets.  Shared by the

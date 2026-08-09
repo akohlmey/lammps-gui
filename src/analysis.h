@@ -33,6 +33,72 @@
  */
 std::vector<double> autocorrelation(const std::vector<double> &y, int maxlag);
 
+/**
+ * @brief Kind of Fourier transform computed by fourierTransform()
+ */
+enum class FourierKind {
+    Cosine, ///< one-sided cosine transform 2 * integral y(x) cos(kx) dx
+    Sine,   ///< one-sided sine transform   2 * integral y(x) sin(kx) dx
+    Power   ///< power spectrum |integral y(x) exp(-ikx) dx|^2
+};
+
+/**
+ * @brief Window (taper) applied to the data before a Fourier transform
+ */
+enum class FourierWindow {
+    None, ///< transform the data as it stands
+    Hann  ///< Hann taper: 1 at the first sample decaying to 0 at the last
+};
+
+/**
+ * @brief Fourier transform of sampled data by direct quadrature
+ *
+ * Computes the transform integral over the sampled x range with the
+ * trapezoidal rule, evaluated at each requested k value.  Working on the
+ * integral directly keeps arbitrary (also non-uniformly spaced) x grids and
+ * arbitrary output grids possible; with the modest series lengths of chart
+ * data the O(N*M) cost is irrelevant.  The cosine and sine transforms are the
+ * one-sided conventions with their factor 2, so the cosine transform of an
+ * autocorrelation function is the spectral density (Wiener-Khinchin); k is an
+ * angular frequency (rad per x unit).  The Hann taper is 1 at the first
+ * sample and 0 at the last, which suppresses the ringing of data truncated
+ * before it has decayed to zero.
+ *
+ * @param x      Sample positions, ascending
+ * @param y      Sample values (same length as @p x)
+ * @param k      Angular frequencies / wavenumbers to evaluate at
+ * @param kind   Which transform to compute
+ * @param window Taper applied to @p y before transforming
+ * @return One value per entry of @p k; empty if the input has fewer than two
+ *         samples or the lengths of @p x and @p y differ
+ */
+std::vector<double> fourierTransform(const std::vector<double> &x, const std::vector<double> &y,
+                                     const std::vector<double> &k, FourierKind kind,
+                                     FourierWindow window = FourierWindow::None);
+
+/**
+ * @brief Static structure factor from a radial distribution function
+ *
+ * Computes @f$ S(q) = 1 + 4\pi\rho \int_0^R r^2\,(g(r)-1)\,
+ * \frac{\sin(qr)}{qr}\,dr @f$ by the trapezoidal rule over the sampled r
+ * range.  The @f$\sin(qr)/(qr)@f$ form is regular at @f$ q = 0 @f$ (where it
+ * is 1), so the q grid may start at zero.  The -1 shift is applied here, so
+ * @p g is the plain radial distribution function as imported.  The optional
+ * Hann taper is applied to @f$ g(r)-1 @f$ to suppress the ringing from
+ * truncating it at a finite R where it has not fully decayed.
+ *
+ * @param r      Radial sample positions, ascending
+ * @param g      Radial distribution function values (same length as @p r)
+ * @param rho    Number density N/V, in the units of the r axis cubed
+ * @param q      Wavenumbers to evaluate at (angular, rad per r unit)
+ * @param window Taper applied to g(r)-1 before transforming
+ * @return S(q), one value per entry of @p q; empty if the input has fewer
+ *         than two samples or the lengths of @p r and @p g differ
+ */
+std::vector<double> structureFactor(const std::vector<double> &r, const std::vector<double> &g,
+                                    double rho, const std::vector<double> &q,
+                                    FourierWindow window = FourierWindow::None);
+
 #endif
 
 // Local Variables:
