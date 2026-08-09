@@ -266,6 +266,9 @@ or a fitted value.
 .. index:: equation of state
 .. index:: custom function
 .. index:: custom fit
+.. index:: fourier transform
+.. index:: spectral density
+.. index:: structure factor
 
 Post-process data
 -----------------
@@ -350,6 +353,34 @@ The following analyses are available:
   sparse tail, so it matches the peak *less* well.  *None* weights every
   bin alike.  Restricting the *Fit x-range* is the other way to say which
   part of a distribution matters.
+- *Fourier transform* computes a transform of the data and shows it in a
+  new chart window, with the angular frequency (rad per x unit) as the
+  abscissa.  Three kinds are offered: the one-sided *cosine* transform
+  :math:`2\int y(x)\cos(kx)\,dx` -- applied to a correlation function,
+  for example imported ``fix ave/correlate`` output, this is the spectral
+  density (Wiener-Khinchin theorem) -- the matching *sine* transform, and
+  the *power spectrum* :math:`|\int y(x)e^{-ikx}\,dx|^2`, which does not
+  care where the data starts on the x axis.  The transform integral is
+  evaluated directly (no FFT), so the x values need not be equally spaced
+  and the output grid is free: it defaults to reaching the Nyquist limit
+  of the mean sample spacing, and both its range and its resolution can
+  be changed.  The *Data x-range* restricts which part of the data is
+  transformed, and the *Hann* window fades the data to zero toward the
+  end of the range, which suppresses the ringing that truncating a
+  correlation function before it has decayed would cause, at the price
+  of some broadening.
+- *Structure factor* computes the static structure factor
+  :math:`S(q) = 1 + 4\pi\rho\int r^2\,(g(r)-1)\,\frac{\sin(qr)}{qr}\,dr`
+  from radial distribution function data, such as the imported output of
+  ``compute rdf`` written by ``fix ave/time`` in vector mode.  It is
+  applied to the plain :math:`g(r)` chart directly: the :math:`-1` shift
+  is part of the formula, so no derived column is needed.  *Density* is
+  the number density :math:`N/V` in the units of the r axis cubed; it
+  scales :math:`S(q)-1`, so getting it wrong stretches the structure away
+  from 1 but moves no peak.  The :math:`\sin(qr)/(qr)` form is regular at
+  :math:`q=0`, so the output grid may start at zero.  Truncating
+  :math:`g(r)` at the cutoff of the compute shows up as ringing in
+  :math:`S(q)`; the *Hann* window suppresses it.
 - *Overlay other data column* copies the data of another column of the
   same chart window onto the current chart, for a direct comparison in one
   plot.  The entry is only offered when the window has more than one

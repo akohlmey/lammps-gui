@@ -62,6 +62,7 @@
 #include <QVBoxLayout>
 #include <QVariant>
 #include <algorithm>
+#include <utility>
 
 #include "plotwidget.h"
 
@@ -803,6 +804,10 @@ void ChartWindow::changeStyle()
     }
 }
 
+// for the Nyquist default of the Fourier output grid (M_PI needs feature-test
+// macros on some of the platforms the packaging cross-compiles for)
+static constexpr double pi_const = 3.14159265358979323846;
+
 // Identifiers of the post-processing analyses, stored as the item data of the
 // analysis combo.  The Overlay entry exists only when the window has more than
 // one column, so combo positions are not stable identifiers.
@@ -813,6 +818,8 @@ enum PostAnalysis {
     AnaFunc,
     AnaFit,
     AnaMaxBolt,
+    AnaFourier,
+    AnaSq,
     AnaOverlay,
 };
 
@@ -847,6 +854,8 @@ void ChartWindow::postProcess()
     analysisbox->addItem("Custom function", AnaFunc);
     analysisbox->addItem("Custom fit", AnaFit);
     analysisbox->addItem("Maxwell-Boltzmann fit", AnaMaxBolt);
+    analysisbox->addItem("Fourier transform", AnaFourier);
+    analysisbox->addItem("Structure factor", AnaSq);
     // overlaying another column needs another column to exist
     if (cols.size() > 1) analysisbox->addItem("Overlay other data column", AnaOverlay);
     form->addRow("Analysis:", analysisbox);
@@ -896,6 +905,68 @@ void ChartWindow::postProcess()
                             "the smallest uncertainty -- usually the sparse tail of a histogram.");
     form->addRow(weightLabel, weightCombo);
 
+    // Fourier transform kind; the k values are angular (rad per x unit)
+    auto *ftKindLabel = new QLabel("Transform:");
+    auto *ftKindCombo = new QComboBox;
+    ftKindCombo->addItem("Cosine (spectral density)", static_cast<int>(FourierKind::Cosine));
+    ftKindCombo->addItem("Sine", static_cast<int>(FourierKind::Sine));
+    ftKindCombo->addItem("Power spectrum", static_cast<int>(FourierKind::Power));
+    ftKindCombo->setToolTip("Cosine: 2 Int y(x) cos(kx) dx -- the spectral density when the data\n"
+                            "is a correlation function (Wiener-Khinchin).\n"
+                            "Sine: 2 Int y(x) sin(kx) dx.\n"
+                            "Power: |Int y(x) exp(-ikx) dx|^2, insensitive to where the data\n"
+                            "starts on the x axis.\n"
+                            "k is the angular frequency, in rad per x unit.");
+    form->addRow(ftKindLabel, ftKindCombo);
+
+    // taper shared by the Fourier transform and the structure factor
+    auto *taperLabel = new QLabel("Window:");
+    auto *taperCombo = new QComboBox;
+    taperCombo->addItem("none", static_cast<int>(FourierWindow::None));
+    taperCombo->addItem("Hann taper", static_cast<int>(FourierWindow::Hann));
+    taperCombo->setToolTip("A Hann taper fades the data to zero toward the end of the range,\n"
+                           "suppressing the ringing caused by truncating data (a correlation\n"
+                           "function, or g(r)-1 at the compute's cutoff) before it has decayed\n"
+                           "to zero, at the price of some broadening.");
+    form->addRow(taperLabel, taperCombo);
+
+    // output grid of the transforms; the default reaches the Nyquist limit of
+    // the data's mean spacing
+    const double meanDx = (dataXmax - dataXmin) / static_cast<double>(npoints - 1);
+    auto *gridLabel     = new QLabel("Output grid:");
+    auto *gridWidget    = new QWidget;
+    auto *gridRow       = new QHBoxLayout(gridWidget);
+    gridRow->setContentsMargins(0, 0, 0, 0);
+    auto *gridFromSpin = new QDoubleSpinBox;
+    gridFromSpin->setDecimals(6);
+    gridFromSpin->setRange(0.0, 1e15);
+    gridFromSpin->setValue(0.0);
+    auto *gridToSpin = new QDoubleSpinBox;
+    gridToSpin->setDecimals(6);
+    gridToSpin->setRange(0.0, 1e15);
+    gridToSpin->setValue((meanDx > 0.0) ? (pi_const / meanDx) : 1.0);
+    auto *gridPointsSpin = new QSpinBox;
+    gridPointsSpin->setRange(2, 100000);
+    gridPointsSpin->setValue(Cfg::POSTPROCESS_GRID_POINTS);
+    gridRow->addWidget(new QLabel("from"));
+    gridRow->addWidget(gridFromSpin, 1);
+    gridRow->addWidget(new QLabel("to"));
+    gridRow->addWidget(gridToSpin, 1);
+    gridRow->addWidget(new QLabel("points"));
+    gridRow->addWidget(gridPointsSpin);
+    form->addRow(gridLabel, gridWidget);
+
+    // number density scaling S(q) - 1
+    auto *rhoLabel = new QLabel("Density:");
+    auto *rhoSpin  = new QDoubleSpinBox;
+    rhoSpin->setDecimals(6);
+    rhoSpin->setRange(1e-15, 1e15);
+    rhoSpin->setValue(1.0);
+    rhoSpin->setToolTip("Number density N/V of the system, in the units of the r axis\n"
+                        "cubed.  It scales S(q) - 1, so getting it wrong stretches the\n"
+                        "structure away from 1 but moves no peak.");
+    form->addRow(rhoLabel, rhoSpin);
+
     auto *fitLabelLabel = new QLabel("Label:");
     auto *fitLabelEdit  = new QLineEdit;
     fitLabelEdit->setPlaceholderText("optional name for the fitted curve");
@@ -928,9 +999,12 @@ void ChartWindow::postProcess()
         const bool fit       = (id == AnaFit);  // custom-function nonlinear fit
         const bool expr      = plot || fit;
         const bool eos       = (id == AnaEos);
-        const bool maxbolt   = (id == AnaMaxBolt);         // Maxwell-Boltzmann distribution fit
+        const bool maxbolt   = (id == AnaMaxBolt); // Maxwell-Boltzmann distribution fit
+        const bool fourier   = (id == AnaFourier); // generic Fourier transform
+        const bool sq        = (id == AnaSq);      // structure factor from g(r)
+        const bool transform = fourier || sq;
         const bool overlay   = (id == AnaOverlay);         // copy of another column as overlay
-        const bool showRange = (id != AnaAcf) && !overlay; // fitting analyses only
+        const bool showRange = (id != AnaAcf) && !overlay; // analyses on an x-range of the data
         exprLabel->setVisible(expr);
         exprEdit->setVisible(expr);
         paramsLabel->setVisible(fit);
@@ -939,15 +1013,25 @@ void ChartWindow::postProcess()
         fitLabelEdit->setVisible(fit);
         weightLabel->setVisible(maxbolt);
         weightCombo->setVisible(maxbolt);
+        ftKindLabel->setVisible(fourier);
+        ftKindCombo->setVisible(fourier);
+        taperLabel->setVisible(transform);
+        taperCombo->setVisible(transform);
+        gridLabel->setVisible(transform);
+        gridWidget->setVisible(transform);
+        rhoLabel->setVisible(sq);
+        rhoSpin->setVisible(sq);
         overlayLabel->setVisible(overlay);
         overlayCombo->setVisible(overlay);
         if (plot)
             fitRangeLabel->setText("Plot x-range:");
+        else if (transform)
+            fitRangeLabel->setText("Data x-range:");
         else
             fitRangeLabel->setText("Fit x-range:");
         fitRangeLabel->setVisible(showRange);
         fitRangeWidget->setVisible(showRange);
-        paramLabel->setVisible(!expr && !eos && !overlay);
+        paramLabel->setVisible(!expr && !eos && !overlay && !transform);
         if (id == AnaPoly) { // polynomial degree
             paramLabel->setText("Degree:");
             paramSpin->setVisible(true);
@@ -965,6 +1049,8 @@ void ChartWindow::postProcess()
         } else if (eos) { // EOS: only show the x-axis confirmation
             paramSpin->setVisible(false);
         } else if (expr) { // custom function/fit: expression field(s) only
+            paramSpin->setVisible(false);
+        } else if (transform) { // Fourier transforms: their own rows only
             paramSpin->setVisible(false);
         } else if (overlay) { // column overlay: source selector only
             paramSpin->setVisible(false);
@@ -1066,6 +1152,80 @@ void ChartWindow::postProcess()
         auto *win = new ChartWindow(filename + " (ACF)", nullptr);
         win->setAttribute(Qt::WA_DeleteOnClose);
         win->setWindowTitle("Autocorrelation - LAMMPS-GUI");
+        win->setWindowIcon(QIcon(Cfg::MAIN_ICON));
+        win->setMinimumSize(Cfg::MINIMUM_WIDTH, Cfg::MINIMUM_HEIGHT);
+        win->loadData(result, 0, {1});
+        win->show();
+        return;
+    }
+
+    if ((which == AnaFourier) || (which == AnaSq)) { // transform -> new window
+        // the quadrature integrates left to right; chart data usually is
+        // ascending in x, but an imported table need not be
+        if (!std::is_sorted(xs.begin(), xs.end())) {
+            std::vector<std::pair<double, double>> pts;
+            pts.reserve(xs.size());
+            for (std::size_t i = 0; i < xs.size(); ++i)
+                pts.emplace_back(xs[i], ys[i]);
+            std::sort(pts.begin(), pts.end());
+            for (std::size_t i = 0; i < pts.size(); ++i) {
+                xs[i] = pts[i].first;
+                ys[i] = pts[i].second;
+            }
+        }
+
+        double kmin = gridFromSpin->value();
+        double kmax = gridToSpin->value();
+        if (kmin > kmax) std::swap(kmin, kmax);
+        if (kmax <= kmin) {
+            warning(this, "Postprocess", "The output grid has zero extent.");
+            return;
+        }
+        const int nk = gridPointsSpin->value();
+        std::vector<double> kgrid;
+        kgrid.reserve(nk);
+        for (int i = 0; i < nk; ++i)
+            kgrid.push_back(kmin + (kmax - kmin) * static_cast<double>(i) / (nk - 1.0));
+        const auto taperKind = static_cast<FourierWindow>(taperCombo->currentData().toInt());
+
+        std::vector<double> values;
+        QString xname, yname, wtitle;
+        if (which == AnaSq) {
+            values = structureFactor(xs, ys, rhoSpin->value(), kgrid, taperKind);
+            xname  = "q";
+            yname  = "S(q): " + chart->getName();
+            wtitle = "Structure Factor";
+        } else {
+            const auto kind = static_cast<FourierKind>(ftKindCombo->currentData().toInt());
+            values          = fourierTransform(xs, ys, kgrid, kind, taperKind);
+            xname           = "omega";
+            switch (kind) {
+                case FourierKind::Cosine:
+                    yname = "FT cos: ";
+                    break;
+                case FourierKind::Sine:
+                    yname = "FT sin: ";
+                    break;
+                case FourierKind::Power:
+                    yname = "FT power: ";
+                    break;
+            }
+            yname += chart->getName();
+            wtitle = "Fourier Transform";
+        }
+        if (values.empty()) {
+            warning(this, "Postprocess", "Could not compute the transform (insufficient data).");
+            return;
+        }
+
+        PlotData result;
+        result.setColumnNames({xname, yname});
+        for (std::size_t i = 0; i < values.size(); ++i)
+            result.appendRow({kgrid[i], values[i]});
+
+        auto *win = new ChartWindow(filename + ((which == AnaSq) ? " (Sq)" : " (FT)"), nullptr);
+        win->setAttribute(Qt::WA_DeleteOnClose);
+        win->setWindowTitle(wtitle + " - LAMMPS-GUI");
         win->setWindowIcon(QIcon(Cfg::MAIN_ICON));
         win->setMinimumSize(Cfg::MINIMUM_WIDTH, Cfg::MINIMUM_HEIGHT);
         win->loadData(result, 0, {1});
