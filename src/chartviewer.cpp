@@ -803,6 +803,19 @@ void ChartWindow::changeStyle()
     }
 }
 
+// Identifiers of the post-processing analyses, stored as the item data of the
+// analysis combo.  The Overlay entry exists only when the window has more than
+// one column, so combo positions are not stable identifiers.
+enum PostAnalysis {
+    AnaAcf = 0,
+    AnaPoly,
+    AnaEos,
+    AnaFunc,
+    AnaFit,
+    AnaMaxBolt,
+    AnaOverlay,
+};
+
 void ChartWindow::postProcess()
 {
     // the single view is bound to the currently selected column
@@ -828,14 +841,14 @@ void ChartWindow::postProcess()
     auto *form = new QFormLayout(&dialog);
 
     auto *analysisbox = new QComboBox;
-    analysisbox->addItem("Autocorrelation");
-    analysisbox->addItem("Polynomial fit");
-    analysisbox->addItem("Birch-Murnaghan EOS fit");
-    analysisbox->addItem("Custom function");
-    analysisbox->addItem("Custom fit");
-    analysisbox->addItem("Maxwell-Boltzmann fit");
+    analysisbox->addItem("Autocorrelation", AnaAcf);
+    analysisbox->addItem("Polynomial fit", AnaPoly);
+    analysisbox->addItem("Birch-Murnaghan EOS fit", AnaEos);
+    analysisbox->addItem("Custom function", AnaFunc);
+    analysisbox->addItem("Custom fit", AnaFit);
+    analysisbox->addItem("Maxwell-Boltzmann fit", AnaMaxBolt);
     // overlaying another column needs another column to exist
-    if (cols.size() > 1) analysisbox->addItem("Overlay other data column");
+    if (cols.size() > 1) analysisbox->addItem("Overlay other data column", AnaOverlay);
     form->addRow("Analysis:", analysisbox);
 
     // source selector for the column-overlay entry (data of the choices is the
@@ -910,13 +923,14 @@ void ChartWindow::postProcess()
 
     // swap the parameter widgets to match the selected analysis
     auto configure = [=, &dialog](int idx) {
-        const bool plot      = (idx == 3); // custom-function plotting
-        const bool fit       = (idx == 4); // custom-function nonlinear fit
+        const int id         = analysisbox->itemData(idx).toInt();
+        const bool plot      = (id == AnaFunc); // custom-function plotting
+        const bool fit       = (id == AnaFit);  // custom-function nonlinear fit
         const bool expr      = plot || fit;
-        const bool eos       = (idx == 2);
-        const bool maxbolt   = (idx == 5);             // Maxwell-Boltzmann distribution fit
-        const bool overlay   = (idx == 6);             // copy of another column as overlay
-        const bool showRange = (idx != 0) && !overlay; // fitting analyses only
+        const bool eos       = (id == AnaEos);
+        const bool maxbolt   = (id == AnaMaxBolt);         // Maxwell-Boltzmann distribution fit
+        const bool overlay   = (id == AnaOverlay);         // copy of another column as overlay
+        const bool showRange = (id != AnaAcf) && !overlay; // fitting analyses only
         exprLabel->setVisible(expr);
         exprEdit->setVisible(expr);
         paramsLabel->setVisible(fit);
@@ -934,7 +948,7 @@ void ChartWindow::postProcess()
         fitRangeLabel->setVisible(showRange);
         fitRangeWidget->setVisible(showRange);
         paramLabel->setVisible(!expr && !eos && !overlay);
-        if (idx == 1) { // polynomial degree
+        if (id == AnaPoly) { // polynomial degree
             paramLabel->setText("Degree:");
             paramSpin->setVisible(true);
             paramSpin->setRange(1, qMin(npoints - 1, 8));
@@ -985,9 +999,9 @@ void ChartWindow::postProcess()
         es.push_back(chart->getError(i));
     }
 
-    const int which = analysisbox->currentIndex();
+    const int which = analysisbox->currentData().toInt();
 
-    if (which == 6) { // overlay a snapshot of another column of this window
+    if (which == AnaOverlay) { // overlay a snapshot of another column of this window
         const int src = overlayCombo->currentData().toInt();
         if ((src < 0) || (src >= static_cast<int>(cols.size()))) return;
         const auto &series = cols[src]->series;
@@ -1006,7 +1020,7 @@ void ChartWindow::postProcess()
     }
 
     // filter to the user-specified x-range for fitting analyses (not autocorrelation)
-    if (which != 0) {
+    if (which != AnaAcf) {
         const double fitXmin = fitFromSpin->value();
         const double fitXmax = fitToSpin->value();
         // The spin boxes start out holding the data range rounded to their own
@@ -1037,7 +1051,7 @@ void ChartWindow::postProcess()
         }
     }
 
-    if (which == 0) { // autocorrelation -> new window (the abscissa becomes lag)
+    if (which == AnaAcf) { // autocorrelation -> new window (the abscissa becomes lag)
         const std::vector<double> acf = autocorrelation(ys, paramSpin->value());
         if (acf.empty()) {
             warning(this, "Postprocess",
@@ -1065,7 +1079,7 @@ void ChartWindow::postProcess()
     const double xmax    = *mm.second;
     constexpr int Ncurve = 200;
 
-    if (which == 3) { // custom function f(x) evaluated over the data x range
+    if (which == AnaFunc) { // custom function f(x) evaluated over the data x range
         const QString expr       = exprEdit->text().trimmed();
         const CustomCurve result = evalCustomCurve(expr, xmin, xmax, Ncurve);
         if (!result.ok) {
@@ -1090,7 +1104,7 @@ void ChartWindow::postProcess()
         return;
     }
 
-    if (which == 4) { // custom nonlinear least-squares fit of f(x) to the data
+    if (which == AnaFit) { // custom nonlinear least-squares fit of f(x) to the data
         const QString expr            = exprEdit->text().trimmed();
         bool paramsOk                 = false;
         const QList<FitParam> initial = parseFitParams(paramsEdit->text(), &paramsOk);
@@ -1124,7 +1138,7 @@ void ChartWindow::postProcess()
         return;
     }
 
-    if (which == 5) { // Maxwell-Boltzmann distribution of per-atom energies
+    if (which == AnaMaxBolt) { // Maxwell-Boltzmann distribution of per-atom energies
         // f(E) = A * E^(d/2 - 1) * exp(-E/kT), the distribution of the kinetic
         // energy of d degrees of freedom.  The amplitude is fitted rather than
         // derived, because a histogram carries an arbitrary normalization: raw
@@ -1276,7 +1290,7 @@ void ChartWindow::postProcess()
         return;
     }
 
-    if (which == 1) { // polynomial fit
+    if (which == AnaPoly) { // polynomial fit
         const PolynomialFit f = polynomialFit(xs, ys, paramSpin->value());
         if (!f.ok) {
             warning(this, "Postprocess", "Polynomial fit failed (too few points).");
