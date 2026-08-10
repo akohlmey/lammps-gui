@@ -31,8 +31,6 @@ jobs:
       uses: actions/checkout@v7
       with:
         ref: develop
-        # full history *and* tags, so that "git describe" below has something
-        # to describe (the default, fetch-depth: 1, fetches neither)
         fetch-depth: 0
 
     - name: Decide whether there is anything new to scan
