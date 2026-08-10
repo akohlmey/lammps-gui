@@ -834,6 +834,7 @@ enum PostAnalysis {
     AnaFourier,
     AnaSq,
     AnaOverlay,
+    AnaSmooth,
 };
 
 void ChartWindow::postProcess()
@@ -872,7 +873,18 @@ void ChartWindow::postProcess()
     analysisbox->addItem("Autocorrelation", AnaAcf);
     analysisbox->addItem("Fourier transform", AnaFourier);
     analysisbox->addItem("Structure factor", AnaSq);
+    // the way back: a fit or overlay takes the processed-series slot, and this
+    // entry vacates it again, so the offer is only made while one is in place
+    if (chart->hasCustom()) {
+        analysisbox->insertSeparator(99);
+        analysisbox->addItem("Smoothed data (restore)", AnaSmooth);
+    }
     form->addRow("Analysis:", analysisbox);
+
+    // note shown only for the restore entry, whose whole effect it states
+    auto *restoreNote = new QLabel("Removes the fitted or overlaid curve and returns\n"
+                                   "the plot to smoothing the raw data.");
+    form->addRow(restoreNote);
 
     // source selector for the column-overlay entry (data of the choices is the
     // position in cols, which lines up with the position in the columns combo)
@@ -1017,8 +1029,11 @@ void ChartWindow::postProcess()
         const bool fourier   = (id == AnaFourier); // generic Fourier transform
         const bool sq        = (id == AnaSq);      // structure factor from g(r)
         const bool transform = fourier || sq;
-        const bool overlay   = (id == AnaOverlay);         // copy of another column as overlay
-        const bool showRange = (id != AnaAcf) && !overlay; // analyses on an x-range of the data
+        const bool overlay   = (id == AnaOverlay); // copy of another column as overlay
+        const bool restore   = (id == AnaSmooth);  // vacate the processed-series slot
+        // analyses on an x-range of the data
+        const bool showRange = (id != AnaAcf) && !overlay && !restore;
+        restoreNote->setVisible(restore);
         exprLabel->setVisible(expr);
         exprEdit->setVisible(expr);
         paramsLabel->setVisible(fit);
@@ -1045,7 +1060,7 @@ void ChartWindow::postProcess()
             fitRangeLabel->setText("Fit x-range:");
         fitRangeLabel->setVisible(showRange);
         fitRangeWidget->setVisible(showRange);
-        paramLabel->setVisible(!expr && !eos && !overlay && !transform);
+        paramLabel->setVisible(!expr && !eos && !overlay && !transform && !restore);
         if (id == AnaPoly) { // polynomial degree
             paramLabel->setText("Degree:");
             paramSpin->setVisible(true);
@@ -1068,6 +1083,8 @@ void ChartWindow::postProcess()
             paramSpin->setVisible(false);
         } else if (overlay) { // column overlay: source selector only
             paramSpin->setVisible(false);
+        } else if (restore) { // restore smoothing: the note says it all
+            paramSpin->setVisible(false);
         } else { // autocorrelation max lag
             paramLabel->setText("Max lag:");
             paramSpin->setVisible(true);
@@ -1087,6 +1104,16 @@ void ChartWindow::postProcess()
 
     if (dialog.exec() != QDialog::Accepted) return;
 
+    const int which = analysisbox->currentData().toInt();
+
+    if (which == AnaSmooth) { // back to the Savitzky-Golay smooth of the raw data
+        chart->clearFitCurve();
+        setProcessedLabel(QStringLiteral("Smooth"));
+        resetRangeSliders(); // the fit or overlay may have stretched the data range
+        selectSmooth(0);     // re-enables the smoothing parameter boxes and redraws
+        return;
+    }
+
     // gather the (x, y) data of the selected chart, with its error bars where
     // it has them (a weighted fit can use those as standard deviations)
     std::vector<double> xs, ys, es;
@@ -1099,8 +1126,6 @@ void ChartWindow::postProcess()
         es.push_back(chart->getError(i));
     }
 
-    const int which = analysisbox->currentData().toInt();
-
     if (which == AnaOverlay) { // overlay a snapshot of another column of this window
         const int src = overlayCombo->currentData().toInt();
         if ((src < 0) || (src >= static_cast<int>(cols.size()))) return;
@@ -1112,7 +1137,7 @@ void ChartWindow::postProcess()
         // a copy, deliberately: the overlay is a snapshot for comparison and
         // does not follow the source column afterwards
         const QString title = columns->itemText(src);
-        chart->setFitCurve(series->points, title, /* eosMode= */ true);
+        chart->setFitCurve(series->points, title);
         setProcessedLabel(title.length() > 12 ? QStringLiteral("Overlay") : title);
         resetRangeSliders();        // the overlay may extend the data range
         smooth->setCurrentIndex(2); // "Both" = raw data + overlay
@@ -1260,7 +1285,7 @@ void ChartWindow::postProcess()
                     "The expression did not produce a usable curve over the data range.");
             return;
         }
-        chart->setFitCurve(result.points, expr, /* eosMode= */ true);
+        chart->setFitCurve(result.points, expr);
         setProcessedLabel("Custom f(x)");
         resetRangeSliders();        // a fit re-fits to the whole data set; match the sliders
         smooth->setCurrentIndex(2); // "Both" = raw data + function overlay
@@ -1289,7 +1314,7 @@ void ChartWindow::postProcess()
         }
         const QString label   = fitLabelEdit->text().trimmed();
         const QString fitName = label.isEmpty() ? expr : label;
-        chart->setFitCurve(fit.curve, fitName, /* eosMode= */ true);
+        chart->setFitCurve(fit.curve, fitName);
         setProcessedLabel(fitName.length() > 12 ? "Custom fit" : fitName);
         resetRangeSliders();        // a fit re-fits to the whole data set; match the sliders
         smooth->setCurrentIndex(2); // "Both" = raw data + fit overlay
@@ -1407,7 +1432,7 @@ void ChartWindow::postProcess()
             if (p.name == QLatin1String("A")) amp = p.value;
         }
         const QString fitName = QStringLiteral("Maxwell-Boltzmann");
-        chart->setFitCurve(fit.curve, fitName, /* eosMode= */ true);
+        chart->setFitCurve(fit.curve, fitName);
         setProcessedLabel("M-B fit");
         resetRangeSliders();        // a fit re-fits to the whole data set; match the sliders
         smooth->setCurrentIndex(2); // "Both" = raw data + fit overlay
@@ -1470,7 +1495,7 @@ void ChartWindow::postProcess()
             curve.append(QPointF(x, evalPolynomial(f.coeffs, x)));
         }
         const QString polyName = QString("Poly deg %1").arg(static_cast<int>(f.coeffs.size()) - 1);
-        chart->setFitCurve(curve, polyName, /* eosMode= */ true);
+        chart->setFitCurve(curve, polyName);
         setProcessedLabel(polyName);
         resetRangeSliders();        // a fit re-fits to the whole data set; match the sliders
         smooth->setCurrentIndex(2); // "Both" = raw data + fit overlay
@@ -1535,7 +1560,7 @@ void ChartWindow::postProcess()
             if (x > 0.0) curve.append(QPointF(x, evalBirchMurnaghan(f, x)));
         }
         // EOS fit: hide in Raw mode, visible in EOS-fit/Both modes; raw data as points
-        chart->setFitCurve(curve, "EOS fit", /* eosMode= */ true);
+        chart->setFitCurve(curve, "EOS fit");
         chart->setDisplayStyle(ChartDisplayMode::Points, chart->displayColor(),
                                chart->displayWidth(), chart->displayPointSize());
         setProcessedLabel("EOS fit");
@@ -1852,9 +1877,9 @@ void ChartWindow::selectSmooth(int)
     // the processed-slot label does not depend on the Raw/Smooth/Both choice; it
     // is "Smooth" unless a post-process fit overrode it (set in postProcess and
     // restored on column switch in changeChart)
-    const bool isEos = currentChart() && currentChart()->isEosFit();
+    const bool hasCustom = currentChart() && currentChart()->hasCustom();
     // SG smooth parameters are only relevant when smoothing without a fit overlay
-    const bool sgEnabled = doSmooth && !isEos;
+    const bool sgEnabled = doSmooth && !hasCustom;
     window->setEnabled(sgEnabled);
     order->setEnabled(sgEnabled);
     updateSmooth();
@@ -2003,7 +2028,7 @@ PlotData ChartWindow::chartsToPlotData() const
         // computed here rather than read off the column, because the single
         // shared view only ever computes it for the chart it is showing, and
         // which chart that is should not decide what a file contains.
-        if (c->doSmooth && !c->eosMode && (s->count() > 2 * c->window)) {
+        if (c->doSmooth && !c->custom && (s->count() > 2 * c->window)) {
             const QList<QPointF> sm = calc_sgsmooth(s->points, c->window, c->order);
             if (sm.size() == nrow) {
                 std::vector<double> ys;
@@ -2088,8 +2113,8 @@ void ChartWindow::changeChart(int)
     }
 
     // sync the SG parameter spinbox state (irrelevant while a fit overrides the slot)
-    const bool isEos     = currentChart() && currentChart()->isEosFit();
-    const bool sgEnabled = doSmooth && !isEos;
+    const bool hasCustom = currentChart() && currentChart()->hasCustom();
+    const bool sgEnabled = doSmooth && !hasCustom;
     window->setEnabled(sgEnabled);
     order->setEnabled(sgEnabled);
 
@@ -2294,12 +2319,12 @@ void refreshColumn(PlotWidget *plot, ChartColumn &col)
                            col.rawPointSize);
 
     if (col.doSmooth) {
-        if (col.eosMode && col.fit && !col.fit->points.isEmpty()) {
-            // EOS fit acts as the "processed" series; suppress the SG smooth
+        if (col.custom && col.fit && !col.fit->points.isEmpty()) {
+            // the custom curve acts as the "processed" series; suppress the SG smooth
             col.fit->setVisible(true);
             if (col.smooth) col.smooth->setVisible(false);
             if (col.smoothScatter) col.smoothScatter->setVisible(false);
-        } else if (!col.eosMode && col.series->count() > (2 * col.window)) {
+        } else if (!col.custom && col.series->count() > (2 * col.window)) {
             if (col.fit) col.fit->setVisible(false);
             if (!col.smooth) {
                 col.smooth       = std::make_unique<PlotSeries>();
@@ -2310,7 +2335,7 @@ void refreshColumn(PlotWidget *plot, ChartColumn &col)
                                col.smoothwidth, col.smoothpointsize);
         }
     } else {
-        if (col.eosMode && col.fit) col.fit->setVisible(false);
+        if (col.custom && col.fit) col.fit->setVisible(false);
     }
     // after rendering, so that series created on demand above are styled too
     styleColumnErrors(col, errcol, col.errWidth);
@@ -2383,23 +2408,32 @@ void setColumnErrorStyle(PlotWidget *plot, ChartColumn &col, const QColor &color
     refreshColumn(plot, col);
 }
 
-// Set or replace the column's fit-curve overlay (EOS, polynomial, custom).
+// Set or replace the custom curve (fit, function, or overlay) of the column.
 void setColumnFitCurve(PlotWidget *plot, ChartColumn &col, const QList<QPointF> &points,
-                       const QString &name, bool eos)
+                       const QString &name)
 {
-    col.eosMode = eos;
+    col.custom = true;
     if (!col.fit) {
         col.fit = std::make_unique<PlotSeries>();
         addColumnSeries(plot, col.fit.get(), QColor(220, 30, 30), 2.0); // distinct fit-curve color
     }
     if (!name.isEmpty()) col.fit->name = name;
     col.fit->replace(points);
-    if (col.eosMode) {
-        // visibility follows doSmooth: refreshColumn will show/hide it correctly
-        refreshColumn(plot, col);
-    } else {
-        col.fit->setVisible(true);
+    // visibility follows doSmooth: refreshColumn shows/hides it correctly
+    refreshColumn(plot, col);
+    resetColumnZoom(plot, col);
+}
+
+// Remove the fit-curve overlay and return the processed-series slot to the
+// Savitzky-Golay smooth, which refreshColumn() recomputes on demand.
+void clearColumnFitCurve(PlotWidget *plot, ChartColumn &col)
+{
+    col.custom = false;
+    if (col.fit) {
+        col.fit->replace({});
+        col.fit->setVisible(false);
     }
+    refreshColumn(plot, col);
     resetColumnZoom(plot, col);
 }
 
@@ -2514,7 +2548,7 @@ void setColumnSmoothFlags(ChartColumn &col, bool doRaw, bool doSmooth, int windo
     if (!doSmooth) {
         if (col.smooth) col.smooth->setVisible(false);
         if (col.smoothScatter) col.smoothScatter->setVisible(false);
-        if (col.eosMode && col.fit) col.fit->setVisible(false);
+        if (col.custom && col.fit) col.fit->setVisible(false);
     }
     col.doRaw    = doRaw;
     col.doSmooth = doSmooth;
@@ -2712,9 +2746,16 @@ void ChartViewer::setErrorStyle(const QColor &color, qreal width)
 
 /* -------------------------------------------------------------------- */
 
-void ChartViewer::setFitCurve(const QList<QPointF> &points, const QString &name, bool eos)
+void ChartViewer::setFitCurve(const QList<QPointF> &points, const QString &name)
 {
-    setColumnFitCurve(plot, *col, points, name, eos);
+    setColumnFitCurve(plot, *col, points, name);
+}
+
+/* -------------------------------------------------------------------- */
+
+void ChartViewer::clearFitCurve()
+{
+    clearColumnFitCurve(plot, *col);
 }
 
 /* -------------------------------------------------------------------- */

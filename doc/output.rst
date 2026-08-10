@@ -387,6 +387,11 @@ The following analyses are available:
   column.  The copy is a snapshot: it does not follow the source column
   afterwards, and it occupies the same overlay slot as a fitted curve, so
   the next fit or overlay replaces it.
+- *Smoothed data (restore)* removes a fitted or overlaid curve again and
+  returns the plot to the Savitzky-Golay smoothing of the raw data.  The
+  entry is only offered while a fit or overlay is in place; afterwards the
+  "Plot:" drop-down reads "Smooth" again and the smoothing window and
+  order controls are re-enabled.
 
 The analyses whose result has a new x axis -- autocorrelation, Fourier
 transform, and structure factor -- show that result in a chart window of
@@ -404,7 +409,9 @@ When any fit or custom-function overlay is active, the "Plot:" drop-down
 treats the overlay as the "smoothed" series: selecting "Smoothed" or
 "Both" shows the overlay curve, while selecting "Raw" hides it.  This
 applies uniformly to all analysis types (polynomial, EOS, custom function,
-and custom fit).
+and custom fit).  To get the plain smoothed series back, select the
+*Smoothed data (restore)* entry the dialog offers while an overlay is
+active.
 
 .. figure:: JPG/lammps-gui-post-function.png
    :align: center

@@ -320,7 +320,8 @@ struct ChartColumn {
     QTime lastUpdate;                          ///< Time of last chart update
     bool doRaw    = true;                      ///< Show raw data series
     bool doSmooth = false;                     ///< Show smoothed data series
-    bool eosMode  = false; ///< True when fit is a BM EOS overlay (visibility follows doSmooth)
+    bool custom   = false; ///< True when a custom curve (fit/function/overlay) takes the
+                           ///< processed-series slot (visibility follows doSmooth)
     // the styles below are seeded from the chart preferences when the column is
     // created, and then belong to the column (the Chart Style dialog edits them)
     ChartDisplayMode dispmode = ChartDisplayMode::Lines; ///< How the raw series is drawn
@@ -569,22 +570,31 @@ public:
     qreal errorWidth() const { return col->errWidth; }
 
     /**
-     * @brief Overlay a fit curve on the chart
+     * @brief Put a custom curve into the processed-series slot of the chart
      * @param points  Curve points (x, y) drawn as an overlay line; created on
      *                the first call and replaced on subsequent calls
      * @param name    Optional series name for the overlay (e.g. the fitted
      *                expression or a user label); shown wherever series names
      *                are surfaced
-     * @param eosFit  When true the curve is treated as an EOS fit: its
-     *                visibility follows the doSmooth flag (hidden in Raw mode,
-     *                visible in Smoothed/Both mode) and it replaces the
-     *                Savitzky-Golay series while active.
+     *
+     * The curve -- a fitted curve, an evaluated custom function, or a column
+     * overlay -- takes the place of the Savitzky-Golay smooth while it is set:
+     * its visibility follows the Raw/Smoothed/Both choice (hidden in Raw
+     * mode), and clearFitCurve() returns the slot to the smooth.
      */
-    void setFitCurve(const QList<QPointF> &points, const QString &name = QString(),
-                     bool eosFit = false);
+    void setFitCurve(const QList<QPointF> &points, const QString &name = QString());
 
-    /** @brief True when the current fit overlay is a Birch-Murnaghan EOS fit */
-    bool isEosFit() const { return col->eosMode && col->fit && !col->fit->points.isEmpty(); }
+    /** @brief True when a custom curve occupies the processed-series slot */
+    bool hasCustom() const { return col->custom && col->fit && !col->fit->points.isEmpty(); }
+
+    /**
+     * @brief Remove the fit-curve overlay set with setFitCurve()
+     *
+     * The overlay curve is emptied and hidden and the processed-series slot
+     * falls back to the Savitzky-Golay smooth of the raw data, which is
+     * recomputed on the redraw this triggers.
+     */
+    void clearFitCurve();
 
     /**
      * @brief Get X-axis label
