@@ -861,16 +861,17 @@ void ChartWindow::postProcess()
     auto *form = new QFormLayout(&dialog);
 
     auto *analysisbox = new QComboBox;
-    analysisbox->addItem("Autocorrelation", AnaAcf);
-    analysisbox->addItem("Polynomial fit", AnaPoly);
-    analysisbox->addItem("Birch-Murnaghan EOS fit", AnaEos);
     analysisbox->addItem("Custom function", AnaFunc);
-    analysisbox->addItem("Custom fit", AnaFit);
-    analysisbox->addItem("Maxwell-Boltzmann fit", AnaMaxBolt);
-    analysisbox->addItem("Fourier transform", AnaFourier);
-    analysisbox->addItem("Structure factor", AnaSq);
     // overlaying another column needs another column to exist
     if (cols.size() > 1) analysisbox->addItem("Overlay other data column", AnaOverlay);
+    analysisbox->addItem("Birch-Murnaghan EOS fit", AnaEos);
+    analysisbox->addItem("Maxwell-Boltzmann fit", AnaMaxBolt);
+    analysisbox->addItem("Polynomial fit", AnaPoly);
+    analysisbox->addItem("Custom fit", AnaFit);
+    analysisbox->insertSeparator(99);
+    analysisbox->addItem("Autocorrelation", AnaAcf);
+    analysisbox->addItem("Fourier transform", AnaFourier);
+    analysisbox->addItem("Structure factor", AnaSq);
     form->addRow("Analysis:", analysisbox);
 
     // source selector for the column-overlay entry (data of the choices is the
