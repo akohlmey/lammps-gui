@@ -15,6 +15,7 @@
 #include <QPlainTextEdit>
 
 class LammpsGui;
+class QEvent;
 class QMenuBar;
 class QResizeEvent;
 
@@ -62,6 +63,12 @@ protected:
      * @param event Resize event
      */
     void resizeEvent(QResizeEvent *event) override;
+
+    /**
+     * @brief Keep the fixed-width document font when the widget font changes
+     * @param event Change event
+     */
+    void changeEvent(QEvent *event) override;
 
 private:
     /// Build the File menu, append the main window's shared menus, and reserve

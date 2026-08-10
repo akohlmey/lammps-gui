@@ -15,6 +15,7 @@
 #include "helpers.h"
 #include "lammpsgui.h"
 
+#include <QEvent>
 #include <QFile>
 #include <QFileInfo>
 #include <QFont>
@@ -143,6 +144,14 @@ void FileViewer::resizeEvent(QResizeEvent *event)
     if (!menubar || menubar->isHidden()) return;
     const QRect cr = contentsRect();
     menubar->setGeometry(cr.left(), cr.top(), cr.width(), menubar->sizeHint().height());
+}
+
+// Docked, this widget inherits the main window's proportional font and
+// QPlainTextEdit adopts it as the document font; see reassertMonoFont().
+void FileViewer::changeEvent(QEvent *event)
+{
+    QPlainTextEdit::changeEvent(event);
+    if (event->type() == QEvent::FontChange) reassertMonoFont(document());
 }
 
 void FileViewer::quit()

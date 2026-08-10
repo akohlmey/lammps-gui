@@ -41,6 +41,7 @@
 #include <QStyle>
 #include <QStyleHints>
 #include <QTemporaryFile>
+#include <QTextDocument>
 #include <QWidget>
 
 #include <algorithm>
@@ -101,6 +102,14 @@ QFont monoFontFromSettings()
     mono_font.setStyleHint(GUI_MONOFONT->styleHint());
     mono_font.setFixedPitch(true);
     return mono_font;
+}
+
+// re-assert the configured fixed-width font on a text view's document (see helpers.h)
+void reassertMonoFont(QTextDocument *document)
+{
+    if (!document) return;
+    const QFont mono = monoFontFromSettings();
+    if (document->defaultFont() != mono) document->setDefaultFont(mono);
 }
 
 // re-exec the current process in place; returns only if the re-exec failed

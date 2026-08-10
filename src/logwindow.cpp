@@ -190,18 +190,12 @@ void LogWindow::closeEvent(QCloseEvent *event)
     QPlainTextEdit::closeEvent(event);
 }
 
-// Docked, this widget is a child of the main window and inherits its
-// proportional font; QPlainTextEdit then adopts that as the document font and
-// the log loses its fixed pitch.  Re-assert the configured fixed-width font
-// whenever the inherited one changes.  Setting only the document font does not
-// feed back into the widget font, so this cannot recurse.
+// Docked, this widget inherits the main window's proportional font and
+// QPlainTextEdit adopts it as the document font; see reassertMonoFont().
 void LogWindow::changeEvent(QEvent *event)
 {
     QPlainTextEdit::changeEvent(event);
-    if (event->type() == QEvent::FontChange) {
-        const QFont mono = monoFontFromSettings();
-        if (document()->defaultFont() != mono) document()->setDefaultFont(mono);
-    }
+    if (event->type() == QEvent::FontChange) reassertMonoFont(document());
 }
 
 void LogWindow::quit()

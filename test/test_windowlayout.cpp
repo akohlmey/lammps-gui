@@ -12,17 +12,23 @@
 #include "windowlayout.h"
 
 #include "constants.h"
+#include "helpers.h"
 
 #include <gtest/gtest.h>
 
 #include <QApplication>
 #include <QDockWidget>
+#include <QEvent>
+#include <QFont>
 #include <QMainWindow>
 #include <QPlainTextEdit>
 #include <QPointer>
 #include <QSettings>
 #include <QTemporaryDir>
+#include <QTextDocument>
 #include <QWidget>
+
+#include <memory>
 
 // WindowLayout is the presentation policy for the output views.  Docked, a view
 // is a child of a dock widget rather than a window of its own, and two things
@@ -284,6 +290,51 @@ TEST_F(WindowLayoutTest, DockFirstTeardownOfATransientView)
 
     delete window; // takes the fixed docks and the layout with it
     QApplication::processEvents();
+}
+
+// Docked, a view inherits the main window's proportional font, and
+// QPlainTextEdit adopts the inherited font as its document font: the mono font
+// the view's constructor put on the document is silently replaced.  FileViewer
+// and LogWindow therefore re-assert it from their changeEvent() overrides, and
+// this pins the mechanism that fix relies on: becoming a dock's child fires
+// FontChange, and reassertMonoFont() puts the configured fixed-width font back.
+namespace {
+class MonoKeepingView : public QPlainTextEdit {
+protected:
+    void changeEvent(QEvent *event) override
+    {
+        QPlainTextEdit::changeEvent(event);
+        if (event->type() == QEvent::FontChange) reassertMonoFont(document());
+    }
+};
+} // namespace
+
+TEST_F(WindowLayoutTest, DockedViewKeepsItsMonoDocumentFont)
+{
+    // normally allocated in main(); monoFontFromSettings() falls back to it
+    if (!GUI_MONOFONT) GUI_MONOFONT = std::make_unique<QFont>();
+
+    QMainWindow window;
+    // a main window font that cannot resolve equal to the views' default font,
+    // so becoming its child is guaranteed to change theirs
+    QFont prop = window.font();
+    prop.setPointSize(prop.pointSize() + 2);
+    window.setFont(prop);
+    window.show();
+    WindowLayout layout(&window, LayoutMode::Docked);
+
+    auto *keeping = new MonoKeepingView;
+    keeping->document()->setDefaultFont(monoFontFromSettings());
+    auto *bare = new QPlainTextEdit;
+    bare->document()->setDefaultFont(monoFontFromSettings());
+    layout.addAuxiliaryView(keeping, ViewSlot::Chart, "keeping");
+    layout.addAuxiliaryView(bare, ViewSlot::Chart, "bare");
+    QApplication::processEvents();
+
+    EXPECT_EQ(keeping->document()->defaultFont(), monoFontFromSettings());
+    // without the override the font is lost -- and if this ever starts to
+    // fail, Qt no longer clobbers the document font and the guard is moot
+    EXPECT_NE(bare->document()->defaultFont(), monoFontFromSettings());
 }
 
 // Local Variables:

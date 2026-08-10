@@ -34,6 +34,7 @@ class QAbstractButton;
 class QDialogButtonBox;
 class QMessageBox;
 class QScrollArea;
+class QTextDocument;
 
 // OS specific default fonts (managed via unique_ptr for automatic cleanup)
 extern std::unique_ptr<QFont> GUI_MONOFONT;
@@ -45,6 +46,20 @@ extern std::unique_ptr<QFont> GUI_ALLFONT;
  *         settings, falling back to the platform default GUI_MONOFONT
  */
 QFont monoFontFromSettings();
+
+/**
+ * @brief Re-assert the configured fixed-width font on a text view's document
+ *
+ * Docked, a text view is a child of the main window and inherits its
+ * proportional font; QPlainTextEdit reacts to the resulting FontChange event
+ * by adopting the widget font as the document font, and the view loses its
+ * fixed pitch.  A view that must keep it calls this from its changeEvent()
+ * override on QEvent::FontChange.  Setting only the document font does not
+ * feed back into the widget font, so this cannot recurse.
+ *
+ * @param document The view's text document (no-op if null)
+ */
+extern void reassertMonoFont(QTextDocument *document);
 
 /**
  * @brief Compare two date strings in LAMMPS "DD MMM YYYY" format (e.g. "22 Jul 2025")
