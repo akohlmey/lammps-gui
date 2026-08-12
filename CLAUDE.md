@@ -28,31 +28,12 @@ cmake --build build -j$(nproc)
 
 Default install prefix is `$HOME/.local` (no root required).
 
-**Useful CMake options:**
-
-| Option | Default | Description |
-|---|---|---|
-| `LAMMPS_GUI_USE_PLUGIN` | `ON` | Load LAMMPS `.so` at runtime via dlopen |
-| `BUILD_DOC` | `ON` | Build Sphinx HTML docs along with the app (slow; disable for code-only work) |
-| `BUILD_DOC_ONLY` | `OFF` | Build only Sphinx/Doxygen docs, skip the C++ binary entirely |
-| `ENABLE_TESTING` | `OFF` | Enable unit + GUI tests (Linux only) |
-
 **Documentation-only build** (no C++ compilation needed):
 ```bash
 cmake -S . -B build-doc -DBUILD_DOC_ONLY=ON
 cmake --build build-doc --target doc
 # Output: build-doc/doc/html/index.html
 ```
-
-**Documentation build targets** (when `BUILD_DOC=ON` or `BUILD_DOC_ONLY=ON`):
-
-| Target | Description |
-|---|---|
-| `html` / `doc` | Full Sphinx HTML docs (runs Doxygen first) |
-| `doxygen` | Doxygen XML only (intermediate step) |
-| `pdf` | LaTeX → PDF (requires `pdflatex` + `latexmk`) |
-| `spelling` | Sphinx spell checker |
-| `linkcheck` | Sphinx broken-link checker |
 
 ## Testing
 
@@ -71,30 +52,9 @@ ctest --test-dir build -R Framebuffer --output-on-failure   # GUI tests need Xvf
 ```
 
 **Test categories:**
-- `test_*` executables — C++ unit tests (GoogleTest v1.17.0, fetched automatically
-  via FetchContent); one per tested module: helpers, stdcapture, flagwarnings,
-  dumpimage, movieimport, imagecache, leastsquares, plotdata, lepton, levmar,
-  customfunc, analysis, plotaxismath, plotblockdata, fitting, shortcuts, and
-  windowlayout
+- `test_*` executables — C++ unit tests (GoogleTest, fetched via FetchContent), one per tested module
 - `CommandLine.*` — command-line flag smoke tests
 - `Framebuffer.*` — Python/PyAutoGUI GUI tests run inside Xvfb; require `xvfb-run` and one of: `magick`, `import`, `xfce4-screenshooter`, or `gnome-screenshot`
-
-## Static analysis (CodeQL)
-
-The `codeql-analysis.yml` workflow runs CodeQL on every push to `develop` in
-**build mode** (it compiles via CMake) with the `security-and-quality` query
-suite; its config is `.github/codeql/cpp.yml`. Two settled points:
-
-- **`paths`/`paths-ignore` do nothing for built C/C++.** CodeQL honors them only
-  for interpreted languages or `build-mode: none`, so they cannot scope analysis
-  to `src/` or exclude `thirdparty/`, `plugin/`, or generated `build/` moc files;
-  dismiss those alerts in the code-scanning UI instead.
-- **Do not switch to `build-mode: none`.** It was tried and reverted: on this Qt
-  codebase, no-build extraction misparses the `slots`/`signals` macros (reported
-  as `int` bit-fields), cannot resolve cross-file references (false "unused"
-  statics), and has weak dataflow (false `constant-comparison`) -- roughly 50
-  false positives. Build mode analyzes the real compiled + moc output and is
-  accurate.
 
 ## Code Style
 
@@ -219,61 +179,20 @@ decisions and caveats as binding unless we explicitly revise them here.
 - Prefer **deterministic checks/lookup tables** for known cases; use the LLM for
   the fuzzy long tail and explanation.
 
-### Source file map
+### Source layout notes (non-obvious only)
 
-| File(s) | Responsibility |
-|---|---|
-| `src/main.cpp` | App entry point, CLI parsing, font init |
-| `src/lammpsgui.{cpp,h}` | Main window: menus, file ops, run control, tutorial wizard glue |
-| `src/lammpswrapper.{cpp,h}` | All calls to the LAMMPS C library API |
-| `src/lammpsrunner.{cpp,h}` | Background thread that calls `lammps->commandsString()` / `lammps->file()` |
-| `src/stdcapture.{cpp,h}` | fd-level stdout capture using a pipe |
-| `src/codeeditor.{cpp,h}` | Custom editor: line numbers, context menu help, drag-and-drop |
-| `src/linenumberarea.h` | Header-only margin widget used internally by `CodeEditor` |
-| `src/highlighter.{cpp,h}` | Syntax highlighting rules for LAMMPS input scripts |
-| `src/findandreplace.{cpp,h}` | Non-modal find/replace dialog for the editor |
-| `src/logwindow.{cpp,h}` | Log viewer; delegates warning highlighting to `FlagWarnings` |
-| `src/flagwarnings.{cpp,h}` | QSyntaxHighlighter for warnings/errors/URLs in log text |
-| `src/chartviewer.{cpp,h}` | `ChartWindow` (container; owns N `ChartColumn` data objects) + a single rebindable `ChartViewer` that renders the active `ChartColumn`'s `PlotSeries` via `PlotWidget` |
-| `src/plotwidget.{cpp,h}` | `QWidget`+`QPainter` 2D line/scatter chart renderer — the only chart backend (no chart module/QML) |
-| `src/plotseries.h` | Neutral chart model value types (`PlotSeries`, `PlotAxis`) consumed by `PlotWidget` |
-| `src/plotaxismath.{cpp,h}` | Qt-free axis-layout helpers (nice ticks, tick values, printf label formatting) |
-| `src/plotdata.{cpp,h}` | Column-oriented numeric data model + CSV/`.dat`/YAML/JSON parsers and writers |
-| `src/plotblockdata.{cpp,h}` | Block-structured `fix ave/*` file parsers (native + vector-mode YAML), format detection, and reduction of the blocks to a flat `PlotData` with error bars |
-| `src/plotdatadialog.{cpp,h}` | Column-picker dialog for plotting an external data file; grows a block-reduction group for `fix ave/*` files |
-| `src/analysis.{cpp,h}` | Qt-free post-processing analyses (autocorrelation) |
-| `src/leastsquares.{cpp,h}` | Qt-free dense LU solver + Savitzky-Golay smoothing |
-| `src/fitting.{cpp,h}` | Qt-free polynomial + Birch-Murnaghan EOS fits (on `leastsquares`) |
-| `src/levmar.{cpp,h}` | Qt-free Levenberg-Marquardt nonlinear least-squares solver |
-| `src/customfunc.{cpp,h}` | Evaluate/fit user expressions via `LeptonMini` (custom-function plot + nonlinear fit) |
-| `src/imageviewer.{cpp,h}` | Dump-image viewer with interactive re-render controls (dialog builders split into `imageviewersettings.cpp`) |
-| `src/imageviewersettings.cpp` | ImageViewer settings/visualization dialog builders, split out of `imageviewer.cpp` to keep that translation unit manageable |
-| `src/imageviewer_internal.h` | Header-only impl-detail symbols shared between `imageviewer.cpp` and `imageviewersettings.cpp` |
-| `src/dumpimage.{cpp,h}` | `DumpImageParams` struct + assembly of the LAMMPS `dump image` command from `ImageViewer` widget state |
-| `src/colormaps.{cpp,h}` | Named `dump image` color-map definitions (`ColorMapStop` color stops) |
-| `src/slideshow.{cpp,h}` | Slideshow viewer for sequences of dump images with playback controls |
-| `src/imagecache.{cpp,h}` | `ImageCache`: temp-dir-backed cache of ImageMagick-converted images and extracted movie frames, owned by `SlideShow` |
-| `src/movieimport.{cpp,h}` | `MovieInfo` + ffprobe/ffmpeg probe and frame-extraction free functions, plus the `MovieImportDialog` confirmation dialog |
-| `src/preferences.{cpp,h}` | Tabbed settings dialog (general, accelerators, snapshot image, editor, charts) |
-| `src/setvariables.{cpp,h}` | Dialog for editing index-style LAMMPS variable name/value pairs |
-| `src/shellaliases.{cpp,h}` | `ShellAliases`: table of aliases defined in every shell the `CommandWindow` starts (works around rc sections gated on a terminal, and `ls` dropping its column format off one) |
-| `src/tutorialwizard.{cpp,h}` | Step-by-step wizard for setting up and launching LAMMPS tutorials |
-| `src/tutorials.{cpp,h}` | `TutorialCollection` metadata/registry for the available tutorial collections |
-| `src/fileviewer.{cpp,h}` | Read-only text viewer for files referenced in input scripts |
-| `src/aboutdialog.{cpp,h}` | Auto-scrolling About dialog showing LAMMPS version and style info |
-| `src/urldownloader.{cpp,h}` | HTTPS file downloader (respects `https_proxy` setting; stall timeout + abort) |
-| `src/downloadprogress.{cpp,h}` | Splash-style transient progress dialog with Cancel for batch downloads (tutorial wizard) |
-| `src/commandwindow.{cpp,h}` | `CommandWindow`: shell prompt with scrollback; forwards typed lines to one persistent `$SHELL`/`%COMSPEC%` process, tracks its cwd via a sentinel. Not a terminal emulator (no PTY, `TERM=dumb`) |
-| `src/windowlayout.{cpp,h}` | `WindowLayout` + `ViewSlot` + `LayoutMode`: presentation policy for the output views (show/hide/toggle); implements both the individual-windows and the `QDockWidget` docked layout, selected by the `Keys::DOCKED` preference |
-| `src/helpers.{cpp,h}` | Platform utilities, dialog/font/toolbar helpers, stdout and Qt-message silencing |
-| `src/qaddon.{cpp,h}` | Utility widgets: `QHline`, `QColorCompleter`, `QColorValidator`, `VerticalLabel` |
-| `src/rangebandslider.{cpp,h}` | Horizontal `QSlider` that paints an active sub-range on its track (distinct from the third-party `rangeslider`) |
-| `src/constants.h` | `Cfg` namespace (magic numbers, string constants) and `Keys` namespace (QSettings keys) |
-| `thirdparty/rangeslider/rangeslider.{cpp,h}` | Dual-handle range slider widget (third-party, **CeCILL-A license**) |
-| `thirdparty/lepton_mini/` | Vendored JIT-less subset of the Lepton expression parser, namespace `LeptonMini` (MIT); built as the `lepton_mini` static library |
-| `plugin/liblammpsplugin.{c,h}` | C shim for dynamic LAMMPS library loading |
-| `cmake/` | CMake include files: `Platform`, `Sources` (the `PROJECT_SOURCES` list), `Testing`, `Sanitizer`, `Documentation`, `Packaging` |
-| `resources/` | Qt resources: icons, help tables, commands list |
-| `test/` | Unit tests (GoogleTest) and Python GUI tests (PyAutoGUI/Xvfb) |
-| `doc/` | Sphinx documentation sources (`requirements.txt` for venv) |
-| `packaging/` | Platform packaging scripts (flatpak, DMG, NSIS, tgz) |
+`src/` is one `.cpp/.h` pair per widget/module with self-describing names; read
+the file headers for specifics. What the names alone don't tell you:
+
+- Qt-free modules (unit-testable without Qt): `plotaxismath`, `analysis`,
+  `leastsquares`, `fitting`, `levmar`; `thirdparty/lepton_mini/` is a vendored
+  JIT-less Lepton subset (namespace `LeptonMini`, MIT), built as the
+  `lepton_mini` static library.
+- `src/rangebandslider.{cpp,h}` (in-tree) is distinct from the third-party
+  dual-handle `thirdparty/rangeslider/` (CeCILL-A license).
+- `src/imageviewersettings.cpp` holds `ImageViewer`'s dialog builders (split out
+  to keep `imageviewer.cpp` manageable); shared impl-detail symbols live in
+  `src/imageviewer_internal.h`.
+- `CommandWindow` is not a terminal emulator: no PTY, `TERM=dumb`, one
+  persistent `$SHELL`/`%COMSPEC%` process, cwd tracked via a sentinel;
+  `ShellAliases` restores aliases lost to non-interactive shells.
