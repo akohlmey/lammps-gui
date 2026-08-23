@@ -14,7 +14,7 @@ if (LAMMPS_GUI_USE_PLUGIN AND NOT BUILD_DOC_ONLY)
   find_program(FLATPAK_COMMAND flatpak DOC "Path to flatpak command")
   find_program(FLATPAK_BUILDER flatpak-builder DOC "Path to flatpak-builder command")
   if(FLATPAK_COMMAND AND FLATPAK_BUILDER)
-    set(FLATPAK_BUNDLE "LAMMPS-GUI-Linux-x86_64-${PROJECT_VERSION}.flatpak")
+    set(FLATPAK_BUNDLE "LAMMPS-GUI-Linux-x86_64-v${PROJECT_VERSION}.flatpak")
     add_custom_target(flatpak
       COMMAND ${FLATPAK_COMMAND} --user remote-add --if-not-exists flathub https://dl.flathub.org/repo/flathub.flatpakrepo
       COMMAND ${FLATPAK_BUILDER} --force-clean --verbose --repo=${CMAKE_CURRENT_BINARY_DIR}/flatpak-repo

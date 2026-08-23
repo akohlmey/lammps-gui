@@ -466,6 +466,24 @@ The dialog is organized into the following sections:
      for a matte appearance), *wide*, *narrow*, or *tight* (small
      sharp highlights with a plastic-like appearance).
 
+**Metal Effect**
+   Controls metallic shading, which renders objects as if they were
+   made of metal rather than of colored plastic.  Metal reflects light
+   back directly and colors it in the process, so the rendering
+   approximates the surroundings with a bright sky above and a dark
+   ground below; a dark background makes the effect look the most
+   convincing.  The color assigned to an object tints its reflections.
+
+   - **Metal Effect** (checkbox): Enable or disable metallic shading.
+   - **Intensity**: How metallic the objects appear (range: 0.0 --
+     1.0).  At 1.0 the objects are rendered as bare metal, smaller
+     values blend toward the default appearance.
+   - **Metal Finish**: The surface finish of metallic objects: *satin*
+     (the default) has a broad soft sheen and resembles brushed metal,
+     *polished* concentrates the sheen into a narrower streak, and
+     *mirror* reflects the surroundings the way a curved mirror does,
+     making spheres look like polished ball bearings.
+
 **Center**
    Adjusts the center point of the rendered view.  The drop-down list
    selects between **Center (static)**, where the center fractions refer
@@ -1142,6 +1160,14 @@ image, restrict the active range, and control the slideshow settings:
 - **Stop**: Last image of the active range.  Defaults to the last image
   and keeps following the growing sequence while a simulation produces
   new images, unless it has been set to a specific value.
+- At the right end of the row, a counter gives the position of the
+  displayed image in the sequence, followed by its file name.  Only the
+  name is shown and not the directory holding it: the directory is the
+  same for every image of a sequence and says nothing about which image
+  this is, while a long path would hold the window open to its width.
+  Hovering over the name shows the full path.  Frames extracted from a
+  movie file are named after the movie and their frame number in it
+  instead.
 
 - **First**: Jump to the first image of the active range.
 - **Previous**: Step back to the previous image.

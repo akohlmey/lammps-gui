@@ -167,12 +167,12 @@ Visualization Components
   when `FFmpeg <https://ffmpeg.org/>`_ or `ImageMagick
   <https://imagemagick.org/>`_ is available.  See :cpp:class:`SlideShow`
 
-**RangeSlider (thirdparty/rangeslider/rangeslider.h/.cpp)**
-  Custom slider widget with two handles for selecting a range of
-  values. This is code written by Hoyoung Lee and distributed under the
-  CeCILL-A license as circulated by CEA, CNRS and INRIA at the following
-  URL: "http://www.cecill.info".  Used in :cpp:class:`ChartWindow` for
-  selecting x- and y-direction plot ranges.  See :cpp:class:`RangeSlider`
+**RangeSlider (thirdparty/rangeslider/rangeslider.h/.cpp)** Custom
+  slider widget with two handles for selecting a range of values. This
+  is code written by Hoyoung Lee and distributed under the `CeCILL Free
+  Software License <https://choosealicense.com/licenses/cecill-2.1/>`_.
+  Used in :cpp:class:`ChartWindow` for selecting x- and y-direction plot
+  ranges.  See :cpp:class:`RangeSlider`
 
 **RangeBandSlider (rangebandslider.h/.cpp)**
   Horizontal ``QSlider`` that paints an active sub-range on its track,

@@ -12,6 +12,7 @@
 #include "preferences.h"
 
 #include "codeeditor.h"
+#include "commandwindow.h"
 #include "constants.h"
 #include "helpers.h"
 #include "lammpsgui.h"
@@ -22,14 +23,17 @@
 #include "urldownloader.h"
 
 #include <QApplication>
+#include <QButtonGroup>
 #include <QCheckBox>
 #include <QComboBox>
 #include <QDialogButtonBox>
+#include <QDoubleSpinBox>
 #include <QDoubleValidator>
 #include <QFileDialog>
 #include <QFont>
 #include <QFontDialog>
 #include <QFontInfo>
+#include <QFormLayout>
 #include <QFrame>
 #include <QGroupBox>
 #include <QHBoxLayout>
@@ -188,12 +192,18 @@ void Preferences::accept()
     if (box) settings->setValue(Keys::ECHO, box->isChecked());
     box = tabWidget->findChild<QCheckBox *>("cite");
     if (box) settings->setValue(Keys::CITE, box->isChecked());
-    box = tabWidget->findChild<QCheckBox *>("logreplace");
-    if (box) settings->setValue(Keys::LOGREPLACE, box->isChecked());
-    box = tabWidget->findChild<QCheckBox *>("chartreplace");
-    if (box) settings->setValue(Keys::CHARTREPLACE, box->isChecked());
-    box = tabWidget->findChild<QCheckBox *>("imagereplace");
-    if (box) settings->setValue(Keys::IMAGEREPLACE, box->isChecked());
+    auto *radio = tabWidget->findChild<QRadioButton *>("layoutdocked");
+    if (radio) {
+        // the layout is applied when the main window is built, so a change
+        // only takes effect in a fresh process
+        if (radio->isChecked() != settings->value(Keys::DOCKED, false).toBool())
+            setRelaunch(QString("The window layout was changed."));
+        settings->setValue(Keys::DOCKED, radio->isChecked());
+    }
+    box = tabWidget->findChild<QCheckBox *>("maximized");
+    if (box) settings->setValue(Keys::MAXIMIZED, box->isChecked());
+    auto *shell = tabWidget->findChild<QComboBox *>("shell");
+    if (shell) settings->setValue(Keys::SHELL, shell->currentText());
     box = tabWidget->findChild<QCheckBox *>("viewlog");
     if (box) settings->setValue(Keys::VIEWLOG, box->isChecked());
     box = tabWidget->findChild<QCheckBox *>("viewchart");
@@ -252,6 +262,22 @@ void Preferences::accept()
     if (combo) settings->setValue(Keys::RAWBRUSH, combo->currentIndex());
     combo = tabWidget->findChild<QComboBox *>("smoothbrush");
     if (combo) settings->setValue(Keys::SMOOTHBRUSH, combo->currentIndex());
+    combo = tabWidget->findChild<QComboBox *>("errbrush");
+    if (combo) settings->setValue(Keys::ERRBRUSH, combo->currentIndex());
+    combo = tabWidget->findChild<QComboBox *>("rawmode");
+    if (combo) settings->setValue(Keys::RAWMODE, combo->currentIndex());
+    combo = tabWidget->findChild<QComboBox *>("smoothmode");
+    if (combo) settings->setValue(Keys::SMOOTHMODE, combo->currentIndex());
+    auto *dspin = tabWidget->findChild<QDoubleSpinBox *>("rawwidth");
+    if (dspin) settings->setValue(Keys::RAWWIDTH, dspin->value());
+    dspin = tabWidget->findChild<QDoubleSpinBox *>("smoothwidth");
+    if (dspin) settings->setValue(Keys::SMOOTHWIDTH, dspin->value());
+    dspin = tabWidget->findChild<QDoubleSpinBox *>("errwidth");
+    if (dspin) settings->setValue(Keys::ERRWIDTH, dspin->value());
+    dspin = tabWidget->findChild<QDoubleSpinBox *>("rawpointsize");
+    if (dspin) settings->setValue(Keys::RAWPOINTSIZE, dspin->value());
+    dspin = tabWidget->findChild<QDoubleSpinBox *>("smoothpointsize");
+    if (dspin) settings->setValue(Keys::SMOOTHPOINTSIZE, dspin->value());
     spin = tabWidget->findChild<QSpinBox *>("smoothwindow");
     if (spin) settings->setValue(Keys::SMOOTHWINDOW, spin->value());
     spin = tabWidget->findChild<QSpinBox *>("smoothorder");
@@ -270,7 +296,9 @@ void Preferences::accept()
     // the process image, so nothing after it runs and pending changes must be
     // flushed to disk first
     if (needRelaunch) {
-        warning(this, "Relaunching LAMMPS-GUI", "LAMMPS library plugin path was changed.",
+        if (relaunchReasons.isEmpty())
+            relaunchReasons << QString("LAMMPS library plugin path was changed.");
+        warning(this, "Relaunching LAMMPS-GUI", relaunchReasons.join(' '),
                 "LAMMPS-GUI must be relaunched to activate it.");
         settings->sync();
         relaunchApplication();
@@ -300,15 +328,43 @@ GeneralTab::GeneralTab(QSettings *_settings, LammpsWrapper *_lammps, LammpsGui *
     auto *sldv = new QCheckBox("Show Slide Show window by default");
     sldv->setObjectName("viewslide");
     sldv->setChecked(settings->value(Keys::VIEWSLIDE, true).toBool());
-    auto *logr = new QCheckBox("Replace Output window on new run");
-    logr->setObjectName("logreplace");
-    logr->setChecked(settings->value(Keys::LOGREPLACE, true).toBool());
-    auto *imgr = new QCheckBox("Replace Image window on new render");
-    imgr->setObjectName("imagereplace");
-    imgr->setChecked(settings->value(Keys::IMAGEREPLACE, true).toBool());
-    auto *pltr = new QCheckBox("Replace Charts window on new run");
-    pltr->setObjectName("chartreplace");
-    pltr->setChecked(settings->value(Keys::CHARTREPLACE, true).toBool());
+    auto *maxi = new QCheckBox("Open main window maximized");
+    maxi->setObjectName("maximized");
+    maxi->setChecked(settings->value(Keys::MAXIMIZED, false).toBool());
+    maxi->setToolTip("Start with the main window filling the screen instead of\n"
+                     "restoring the size it had when it was last closed.\n"
+                     "Only applies to the combined main window: with individual\n"
+                     "windows the output windows would end up behind it.");
+    // window layout: the first choice on the tab, on a line of its own
+    const bool isdocked = settings->value(Keys::DOCKED, false).toBool();
+    auto *winlayout     = new QRadioButton("Individual Windows");
+    winlayout->setObjectName("layoutwindows");
+    winlayout->setChecked(!isdocked);
+    winlayout->setToolTip("Show the Output, Charts, Image, Slide Show and Variables views as\n"
+                          "individual windows that are placed and stacked freely.");
+    auto *docklayout = new QRadioButton("Combined Main Window");
+    docklayout->setObjectName("layoutdocked");
+    docklayout->setChecked(isdocked);
+    docklayout->setToolTip("Show those views as panels docked around the editor inside the\n"
+                           "main window: charts, image and slide show in a tabbed group on\n"
+                           "the right, output and variables across the bottom.");
+    auto *layoutgroup = new QButtonGroup(this);
+    layoutgroup->addButton(winlayout);
+    layoutgroup->addButton(docklayout);
+
+    // opening maximized only makes sense for the combined window; with
+    // individual windows a maximized main window covers the very views it is
+    // supposed to sit beside, so the option is forced off there
+    auto applyLayoutStyle = [maxi](bool docked) {
+        maxi->setEnabled(docked);
+        if (!docked) maxi->setChecked(false);
+    };
+    connect(docklayout, &QRadioButton::toggled, maxi, applyLayoutStyle);
+    applyLayoutStyle(isdocked);
+    auto *layoutrow = new QHBoxLayout;
+    layoutrow->addWidget(new QLabel("Window Layout Style:"));
+    layoutrow->addWidget(winlayout);
+    layoutrow->addWidget(docklayout);
 
     settings->beginGroup(Keys::GROUP_TUTORIAL);
     auto *solution = new QCheckBox("Download tutorial solutions enabled");
@@ -341,16 +397,15 @@ GeneralTab::GeneralTab(QSettings *_settings, LammpsWrapper *_lammps, LammpsGui *
     chartval->setObjectName("updchart");
 
     int nrow = 0;
+    layout->addLayout(layoutrow, nrow++, 0, 1, 2);
     layout->addWidget(new QHline, nrow++, 0, 1, 2);
     layout->addWidget(echo, nrow, 0);
     layout->addWidget(cite, nrow++, 1);
     layout->addWidget(new QHline, nrow++, 0, 1, 2);
     layout->addWidget(logv, nrow, 0);
-    layout->addWidget(logr, nrow++, 1);
-    layout->addWidget(pltv, nrow, 0);
-    layout->addWidget(pltr, nrow++, 1);
+    layout->addWidget(pltv, nrow++, 1);
     layout->addWidget(sldv, nrow, 0);
-    layout->addWidget(imgr, nrow++, 1);
+    layout->addWidget(maxi, nrow++, 1);
     layout->addWidget(new QHline, nrow++, 0, 1, 2);
     layout->addWidget(solution, nrow, 0);
     layout->addWidget(webpage, nrow++, 1);
@@ -422,6 +477,21 @@ GeneralTab::GeneralTab(QSettings *_settings, LammpsWrapper *_lammps, LammpsGui *
     layout->addLayout(pluginlayout, nrow++, 0, 1, 2);
 #endif
     layout->addWidget(new QHline, nrow++, 0, 1, 2);
+
+    // deliberately the last line of the tab: which command interpreter the
+    // command window starts, as a choice of what is installed, not free text
+    auto *shelllabel = new QLabel("Command window shell:");
+    auto *shellcombo = new QComboBox;
+    shellcombo->setObjectName("shell");
+    shellcombo->addItems(CommandWindow::availableShells());
+    const QString curshell = CommandWindow::preferredShell();
+    if (shellcombo->findText(curshell) < 0) shellcombo->insertItem(0, curshell);
+    shellcombo->setCurrentIndex(shellcombo->findText(curshell));
+    shellcombo->setToolTip("Command interpreter started by the Command window.\n"
+                           "Takes effect when the next shell starts: when the window\n"
+                           "is first opened, or on File > Restart Shell.");
+    layout->addWidget(shelllabel, nrow, 0);
+    layout->addWidget(shellcombo, nrow++, 1);
 
     layout->addItem(new QSpacerItem(10, 10, QSizePolicy::Minimum, QSizePolicy::Expanding), nrow, 0);
     layout->addItem(new QSpacerItem(10, 10, QSizePolicy::Minimum, QSizePolicy::Expanding), nrow++,
@@ -1024,25 +1094,74 @@ ChartsTab::ChartsTab(QSettings *_settings, QWidget *parent) : QWidget(parent), s
     smoothval->setObjectName("smoothchoice");
     smoothval->setCurrentIndex(settings->value(Keys::SMOOTHCHOICE, 0).toInt());
 
-    auto *rawbrlbl = new QLabel("Raw plot color:");
-    auto *rawbrush = new QComboBox;
-    rawbrush->addItem("Black");
-    rawbrush->addItem("Blue");
-    rawbrush->addItem("Red");
-    rawbrush->addItem("Green");
-    rawbrush->addItem("Gray");
-    rawbrush->setObjectName("rawbrush");
-    rawbrush->setCurrentIndex(settings->value(Keys::RAWBRUSH, 1).toInt());
+    // the series style defaults, laid out like the per-chart "Chart Style"
+    // dialog they preset.  Color lists and display-mode lists must be kept in
+    // sync with mybrushes and ChartDisplayMode in chartviewer.
+    auto colorBox = [this](const QString &name, const QString &key, int fallback) {
+        auto *combo = new QComboBox;
+        combo->addItem("Black");
+        combo->addItem("Blue");
+        combo->addItem("Red");
+        combo->addItem("Green");
+        combo->addItem("Gray");
+        combo->setObjectName(name);
+        combo->setCurrentIndex(settings->value(key, fallback).toInt());
+        return combo;
+    };
+    auto modeBox = [this](const QString &name, const QString &key) {
+        auto *combo = new QComboBox;
+        combo->addItem("Lines");
+        combo->addItem("Points");
+        combo->addItem("Lines + Points");
+        combo->setObjectName(name);
+        combo->setCurrentIndex(settings->value(key, 0).toInt());
+        return combo;
+    };
+    auto widthBox = [this](const QString &name, const QString &key, double fallback) {
+        auto *spin = new QDoubleSpinBox;
+        spin->setRange(Cfg::LINE_WIDTH_MIN, Cfg::LINE_WIDTH_MAX);
+        spin->setSingleStep(0.5);
+        spin->setObjectName(name);
+        spin->setValue(settings->value(key, fallback).toDouble());
+        return spin;
+    };
+    auto pointBox = [this](const QString &name, const QString &key) {
+        auto *spin = new QDoubleSpinBox;
+        spin->setRange(Cfg::POINT_SIZE_MIN, Cfg::POINT_SIZE_MAX);
+        spin->setSingleStep(1.0);
+        spin->setObjectName(name);
+        spin->setValue(settings->value(key, Cfg::POINT_SIZE_DEFAULT).toDouble());
+        return spin;
+    };
 
-    auto *smoothbrlbl = new QLabel("Smooth plot color:");
-    auto *smoothbrush = new QComboBox;
-    smoothbrush->addItem("Black");
-    smoothbrush->addItem("Blue");
-    smoothbrush->addItem("Red");
-    smoothbrush->addItem("Green");
-    smoothbrush->addItem("Gray");
-    smoothbrush->setObjectName("smoothbrush");
-    smoothbrush->setCurrentIndex(settings->value(Keys::SMOOTHBRUSH, 2).toInt());
+    auto *rawbox  = new QGroupBox("Raw data");
+    auto *rawform = new QFormLayout(rawbox);
+    rawform->addRow("Display:", modeBox("rawmode", Keys::RAWMODE));
+    rawform->addRow("Color:", colorBox("rawbrush", Keys::RAWBRUSH, Cfg::RAWBRUSH_DEFAULT));
+    rawform->addRow("Line width:", widthBox("rawwidth", Keys::RAWWIDTH, Cfg::LINE_WIDTH_DEFAULT));
+    rawform->addRow("Point size:", pointBox("rawpointsize", Keys::RAWPOINTSIZE));
+
+    auto *procbox  = new QGroupBox("Processed data");
+    auto *procform = new QFormLayout(procbox);
+    procform->addRow("Display:", modeBox("smoothmode", Keys::SMOOTHMODE));
+    procform->addRow("Color:",
+                     colorBox("smoothbrush", Keys::SMOOTHBRUSH, Cfg::SMOOTHBRUSH_DEFAULT));
+    procform->addRow("Line width:",
+                     widthBox("smoothwidth", Keys::SMOOTHWIDTH, Cfg::LINE_WIDTH_DEFAULT));
+    procform->addRow("Point size:", pointBox("smoothpointsize", Keys::SMOOTHPOINTSIZE));
+
+    auto *errbox = new QGroupBox("Error bars");
+    errbox->setToolTip("Error bars are drawn for imported data that carries an\n"
+                       "uncertainty, e.g. the average of a set of fix ave/* blocks.");
+    auto *errform = new QFormLayout(errbox);
+    errform->addRow("Color:", colorBox("errbrush", Keys::ERRBRUSH, Cfg::ERRBRUSH_DEFAULT));
+    errform->addRow("Line width:", widthBox("errwidth", Keys::ERRWIDTH, Cfg::ERR_WIDTH_DEFAULT));
+
+    auto *stylerow = new QHBoxLayout;
+    stylerow->addWidget(rawbox);
+    stylerow->addWidget(procbox);
+    stylerow->addWidget(errbox);
+    stylerow->addStretch(1);
 
     auto *smwindlbl = new QLabel("Default smoothing window:");
     auto *smwindval = new QSpinBox;
@@ -1084,10 +1203,7 @@ ChartsTab::ChartsTab(QSettings *_settings, QWidget *parent) : QWidget(parent), s
     grid->addWidget(titlehlp, i++, 2, Qt::AlignTop);
     grid->addWidget(smoothlbl, i, 0, Qt::AlignTop);
     grid->addWidget(smoothval, i++, 1, Qt::AlignTop);
-    grid->addWidget(rawbrlbl, i, 0, Qt::AlignTop);
-    grid->addWidget(rawbrush, i++, 1, Qt::AlignTop);
-    grid->addWidget(smoothbrlbl, i, 0, Qt::AlignTop);
-    grid->addWidget(smoothbrush, i++, 1, Qt::AlignTop);
+    grid->addLayout(stylerow, i++, 0, 1, 3);
     grid->addWidget(smwindlbl, i, 0, Qt::AlignTop);
     grid->addWidget(smwindval, i++, 1, Qt::AlignTop);
     grid->addWidget(smordrlbl, i, 0, Qt::AlignTop);

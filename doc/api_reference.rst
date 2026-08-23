@@ -365,6 +365,24 @@ SetVariables Class
 
 -----
 
+ShellAliases Class
+------------------
+
+.. doxygenclass:: ShellAliases
+   :members:
+   :protected-members:
+
+-----
+
+ShellPrompt Class
+-----------------
+
+.. doxygenclass:: ShellPrompt
+   :members:
+   :protected-members:
+
+-----
+
 Index Variable Helpers
 ----------------------
 
@@ -457,6 +475,28 @@ AboutDialog Class
 
 Utility Components
 ==================
+
+CommandWindow Class
+-------------------
+
+.. doxygenclass:: CommandWindow
+   :members:
+   :protected-members:
+
+-----
+
+WindowLayout Class
+------------------
+
+.. doxygenenum:: ViewSlot
+
+.. doxygenenum:: LayoutMode
+
+.. doxygenclass:: WindowLayout
+   :members:
+   :protected-members:
+
+-----
 
 URLDownloader Class
 -------------------
@@ -598,6 +638,25 @@ plot data from files.
 
 -----
 
+Block-Structured fix ave/\* Files
+---------------------------------
+
+Data model and parsers (``src/plotblockdata.h``) for the block-structured
+output files of ``fix ave/time`` in vector mode, ``fix ave/histo`` and
+``fix ave/correlate``, which are reduced to a flat :cpp:class:`PlotData`
+before they are plotted.
+
+.. doxygenstruct:: PlotDataBlock
+   :members:
+
+.. doxygenstruct:: PlotBlockData
+   :members:
+
+.. doxygenfile:: plotblockdata.h
+   :sections: func enum
+
+-----
+
 Least-Squares Toolkit
 ---------------------
 
@@ -634,11 +693,14 @@ Nonlinear Least Squares
 -----------------------
 
 Compact, self-contained (Qt-free) Levenberg-Marquardt solver
-(``src/levmar.h``) for nonlinear least-squares fits. The model is supplied as a
-residual/Jacobian callback, so the core is independent of how the model is
-expressed; it is driven by the custom-fit code with LeptonMini expressions and
-their symbolic derivatives, and solves the damped normal equations with the
-leastsquares LU solver.
+(``src/levmar.h``) for nonlinear least-squares fits. The model is
+supplied as a residual/Jacobian callback, so the core is independent of
+how the model is expressed; it is driven by the custom-fit code with
+LeptonMini expressions and their symbolic derivatives, and solves the
+damped normal equations with the leastsquares LU solver.  LeptonMini is
+based on the Lepton library by Peter Eastman and OpenMM contributors
+distributed under the `MIT License
+<https://choosealicense.com/licenses/mit/>`_.
 
 .. doxygenfile:: levmar.h
 
@@ -647,11 +709,14 @@ leastsquares LU solver.
 Custom-Function Evaluation and Fitting
 --------------------------------------
 
-Evaluation and nonlinear fitting of user-supplied mathematical expressions
-(``src/customfunc.h``) via the vendored LeptonMini parser, used for
-custom-function plotting and custom curve fits in the chart post-processing
-dialog. The fit builds its Jacobian from LeptonMini's analytic derivatives and
-minimizes with the Levenberg-Marquardt solver.
+Evaluation and nonlinear fitting of user-supplied mathematical
+expressions (``src/customfunc.h``) via the vendored LeptonMini parser,
+used for custom-function plotting and custom curve fits in the chart
+post-processing dialog. The fit builds its Jacobian from LeptonMini's
+analytic derivatives and minimizes with the Levenberg-Marquardt solver.
+LeptonMini is based on the Lepton library by Peter Eastman and OpenMM
+contributors distributed under the `MIT License
+<https://choosealicense.com/licenses/mit/>`_.
 
 .. doxygenfile:: customfunc.h
 

@@ -13,7 +13,9 @@
 #define CUSTOMFUNC_H
 
 // Evaluate user-supplied mathematical expressions (via the vendored LeptonMini
-// parser) for custom-function plotting in the chart post-processing dialog.
+// parser) for custom-function plotting in the chart post-processing dialog and
+// for the derived-column expressions of the data-import dialog, including the
+// {name} column-reference syntax those expressions use.
 // The interface is QString in / QString out so call sites stay free of
 // std::string conversions; the LeptonMini (std::string) boundary is confined
 // to the implementation, mirroring how LammpsWrapper confines the LAMMPS C API.
@@ -21,6 +23,7 @@
 #include <QList>
 #include <QPointF>
 #include <QString>
+#include <QStringList>
 
 #include <map>
 #include <memory>
@@ -66,6 +69,77 @@ private:
 };
 
 /**
+ * @brief One resolved <tt>{name}</tt> or <tt>{name:accessor}</tt> column reference
+ *
+ * Produced by substituteColumnRefs(). An empty @ref accessor means the
+ * reference stands for the column's value in the current row and must be
+ * rebound for every row; otherwise it is one of the per-column constants
+ * ("first", "last", "min", "max", "mean") and can be bound once.
+ */
+struct ColumnRef {
+    int column = -1;  ///< index of the referenced column in the name list
+    QString accessor; ///< empty = current-row value, else the accessor name
+    QString variable; ///< generated variable the braced span was replaced with
+};
+
+/**
+ * @brief Result of rewriting the <tt>{name}</tt> column references of an expression
+ */
+struct ColumnRefExpr {
+    bool ok = false;       ///< true if every braced span resolved to a column
+    QString error;         ///< human-readable error message when @ref ok is false
+    QString expr;          ///< rewritten expression ready for the Lepton parser
+    QList<ColumnRef> refs; ///< the distinct references, one per generated variable
+};
+
+/**
+ * @brief Replace <tt>{name}</tt> column references with generated Lepton variables
+ *
+ * Column values are referenced in braces, like Python format strings: @c {name}
+ * is the column's value in the current row, and @c {name:first}, @c {name:last},
+ * @c {name:min}, @c {name:max}, and @c {name:mean} are per-column constants.
+ * A colon inside braces is always the accessor separator, so a column whose
+ * name contains a colon (or a brace) cannot be referenced; the dialogs refuse
+ * such names for user-entered columns, and a file-supplied one has to be
+ * renamed before it can be used.  Text outside braces is passed through
+ * untouched and is never a column lookup.
+ *
+ * Each distinct (column, accessor) pair is replaced by one generated variable
+ * and reported in @ref ColumnRefExpr::refs so the caller can bind it.  An
+ * unknown name, an unknown accessor, an empty span, or an unmatched brace
+ * fails with a message naming the offender and the available columns.
+ *
+ * @param expr  Expression with braced column references
+ * @param names Column names, referenced by exact (case-sensitive) match
+ * @return Rewritten expression plus the references, or an error
+ */
+ColumnRefExpr substituteColumnRefs(const QString &expr, const QStringList &names);
+
+/**
+ * @brief Rewrite the <tt>{name}</tt> references of a renamed column
+ *
+ * Replaces @c {oldName} and @c {oldName:accessor} spans with the same
+ * reference to @p newName, leaving everything else (including references to
+ * other columns) untouched.  This is what keeps stored derived-column
+ * expressions valid when a column is renamed.
+ *
+ * @param expr    Expression with braced column references
+ * @param oldName Column name to rewrite
+ * @param newName Replacement column name
+ * @return The rewritten expression
+ */
+QString renameColumnRefs(const QString &expr, const QString &oldName, const QString &newName);
+
+/**
+ * @brief Evaluate a per-column accessor constant
+ *
+ * @param column   Column values
+ * @param accessor One of "first", "last", "min", "max", "mean"
+ * @return The accessor value, or NaN for an empty column or unknown accessor
+ */
+double columnAccessor(const std::vector<double> &column, const QString &accessor);
+
+/**
  * @brief Result of sampling a custom expression over an x range
  */
 struct CustomCurve {
@@ -77,7 +151,7 @@ struct CustomCurve {
 /**
  * @brief A named nonlinear-fit parameter
  *
- * Carries the initial guess on input to @ref fitCustomCurve and the fitted
+ * Carries the initial guess on input to fitCustomCurve() and the fitted
  * value on output.
  */
 struct FitParam {
@@ -133,13 +207,22 @@ CustomCurve evalCustomCurve(const QString &expression, double xmin, double xmax,
  * @param xmax          Upper bound for sampling the fitted curve
  * @param nsamples      Number of sub-intervals (clamped to >= 1); nsamples+1 points
  * @param variable      Name of the independent variable (default "x")
+ * @param weights       Optional per-point weights w_i for a weighted fit, which
+ *                      minimizes sum w_i (model_i - y_i)^2.  Empty (the default)
+ *                      or a wrongly sized vector means every point counts the
+ *                      same; negative entries are treated as zero.  Weighting
+ *                      decides which part of the data a model that cannot
+ *                      describe all of it will follow
  * @return Fit result; on a parse/dimension/evaluation error @ref CustomFit::ok
- *         is false and @ref CustomFit::error describes the problem
+ *         is false and @ref CustomFit::error describes the problem.
+ *         @ref CustomFit::rms is the plain, unweighted residual either way, so
+ *         that fits with different weightings stay comparable
  */
 CustomFit fitCustomCurve(const QString &expression, const QList<FitParam> &initialParams,
                          const std::vector<double> &xdata, const std::vector<double> &ydata,
                          double xmin, double xmax, int nsamples,
-                         const QString &variable = QStringLiteral("x"));
+                         const QString &variable            = QStringLiteral("x"),
+                         const std::vector<double> &weights = {});
 
 #endif
 

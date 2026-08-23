@@ -17,7 +17,8 @@
 // model and reproduces the subset of chart features that LAMMPS-GUI actually uses:
 // linear axes with nice-number major ticks, minor subticks, major / minor gridlines,
 // printf-style tick labels, axis and chart titles, and multiple line / scatter
-// series including dashed reference lines. Zoom is programmatic (setXRange / setYRange);
+// series including dashed reference lines and capped vertical error bars.
+// Zoom is programmatic (setXRange / setYRange);
 // there is no in-widget mouse interaction (the chart window drives ranges externally).
 
 #include "plotseries.h"

@@ -97,6 +97,48 @@ private:
 };
 
 /**
+ * @brief Per-column error bars, parallel to the columns of a PlotData
+ *
+ * Entry @c i of @ref upper holds the (upper) error of column @c i, or is empty
+ * when that column has no error bars.  Errors are kept beside the table rather
+ * than as extra columns so that they never appear as plottable columns of their
+ * own, and so that columns added later (e.g. a derived column) simply have none.
+ *
+ * @ref lower is only filled for bars that are not symmetric around the value --
+ * the min/max spread of a set of blocks is the case that needs it.  While it is
+ * empty the bars extend by @ref upper in both directions.
+ */
+struct PlotErrors {
+    std::vector<std::vector<double>> upper; ///< upper (or symmetric) error per column
+    std::vector<std::vector<double>> lower; ///< lower error per column (empty = symmetric)
+
+    /** @brief True if no column carries error bars */
+    bool isEmpty() const { return upper.empty(); }
+    /** @brief True if the bars extend by different amounts up and down */
+    bool isAsymmetric() const { return !lower.empty(); }
+    /** @brief Number of columns covered */
+    std::size_t columnCount() const { return upper.size(); }
+    /** @brief Drop all error bars */
+    void clear()
+    {
+        upper.clear();
+        lower.clear();
+    }
+    /** @brief Grow or shrink to @p ncol columns, keeping the existing ones */
+    void resize(std::size_t ncol)
+    {
+        upper.resize(ncol);
+        if (!lower.empty()) lower.resize(ncol);
+    }
+    /** @brief Append one column without error bars */
+    void appendEmpty()
+    {
+        upper.emplace_back();
+        if (!lower.empty()) lower.emplace_back();
+    }
+};
+
+/**
  * @brief Parse comma-separated values into a PlotData
  * @param text  File contents
  * @param error Optional out-parameter set to a message on failure

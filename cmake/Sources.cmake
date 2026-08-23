@@ -23,6 +23,8 @@ set(PROJECT_SOURCES
   ${CMAKE_SOURCE_DIR}/src/plotaxismath.h
   ${CMAKE_SOURCE_DIR}/src/codeeditor.cpp
   ${CMAKE_SOURCE_DIR}/src/codeeditor.h
+  ${CMAKE_SOURCE_DIR}/src/commandwindow.cpp
+  ${CMAKE_SOURCE_DIR}/src/commandwindow.h
   ${CMAKE_SOURCE_DIR}/src/colormaps.cpp
   ${CMAKE_SOURCE_DIR}/src/colormaps.h
   ${CMAKE_SOURCE_DIR}/src/constants.h
@@ -71,6 +73,8 @@ set(PROJECT_SOURCES
   ${CMAKE_SOURCE_DIR}/src/logwindow.h
   ${CMAKE_SOURCE_DIR}/src/movieimport.cpp
   ${CMAKE_SOURCE_DIR}/src/movieimport.h
+  ${CMAKE_SOURCE_DIR}/src/plotblockdata.cpp
+  ${CMAKE_SOURCE_DIR}/src/plotblockdata.h
   ${CMAKE_SOURCE_DIR}/src/plotdata.cpp
   ${CMAKE_SOURCE_DIR}/src/plotdata.h
   ${CMAKE_SOURCE_DIR}/src/plotdatadialog.cpp
@@ -85,6 +89,10 @@ set(PROJECT_SOURCES
   ${CMAKE_SOURCE_DIR}/thirdparty/rangeslider/rangeslider.h
   ${CMAKE_SOURCE_DIR}/src/setvariables.cpp
   ${CMAKE_SOURCE_DIR}/src/setvariables.h
+  ${CMAKE_SOURCE_DIR}/src/shellaliases.cpp
+  ${CMAKE_SOURCE_DIR}/src/shellaliases.h
+  ${CMAKE_SOURCE_DIR}/src/shellprompt.cpp
+  ${CMAKE_SOURCE_DIR}/src/shellprompt.h
   ${CMAKE_SOURCE_DIR}/src/slideshow.cpp
   ${CMAKE_SOURCE_DIR}/src/slideshow.h
   ${CMAKE_SOURCE_DIR}/src/stdcapture.cpp
@@ -93,6 +101,8 @@ set(PROJECT_SOURCES
   ${CMAKE_SOURCE_DIR}/src/tutorialwizard.h
   ${CMAKE_SOURCE_DIR}/src/urldownloader.cpp
   ${CMAKE_SOURCE_DIR}/src/urldownloader.h
+  ${CMAKE_SOURCE_DIR}/src/windowlayout.cpp
+  ${CMAKE_SOURCE_DIR}/src/windowlayout.h
   ${PLUGIN_LOADER_SRC}
   ${ICON_RC_FILE}
 )

@@ -642,6 +642,8 @@ ImageViewer::ImageViewer(const QString &fileName, LammpsWrapper *_lammps, Lammps
     connect(recenter, &QPushButton::released, this, &ImageViewer::doRecenter);
     connect(reset, &QPushButton::released, this, &ImageViewer::resetView);
     connect(fitwin, &QPushButton::released, this, &ImageViewer::resetWindowSize);
+    // a docked panel is sized by its dock area, not by the image
+    if (dockedLayout()) fitwin->hide();
     connect(setviz, &QPushButton::released, this, &ImageViewer::globalSettings);
     connect(atomviz, &QPushButton::released, this, &ImageViewer::atomSettings);
     connect(fixviz, &QPushButton::released, this, &ImageViewer::fixSettings);
@@ -757,6 +759,9 @@ void ImageViewer::readImageSettings()
     outlinewidth   = 2;
     outlinecolor   = "black";
     specular       = "auto";
+    usemetal       = false;
+    metalfactor    = 0.5;
+    metalfinish    = "satin";
     gammaval       = 1.0;
     atomcustom     = false;
     atomtrans      = 1.0;
@@ -1523,6 +1528,9 @@ DumpImageParams ImageViewer::gatherDumpImageParams(const QString &dumpfilename)
     p.outlinewidth   = outlinewidth;
     p.outlinecolor   = outlinecolor;
     p.specular       = specular;
+    p.usemetal       = usemetal;
+    p.metalfactor    = metalfactor;
+    p.metalfinish    = metalfinish;
 
     // box / axes
     p.showbox    = showbox;
@@ -1873,20 +1881,30 @@ void ImageViewer::getHelp()
 
 void ImageViewer::createActions()
 {
-    QMenu *fileMenu = menuBar->addMenu("&File");
+    QMenu *fileMenu = new QMenu("&File", this);
+    fileMenu->setObjectName(Cfg::VIEW_FILE_MENU);
+    if (dockedLayout()) {
+        // see ChartWindow: docked, the main window shows this menu for us
+        retireViewMenuBar(menuBar);
+    } else {
+        menuBar->addMenu(fileMenu);
+        if (lammpsgui)
+            for (auto *shared : lammpsgui->sharedMenus())
+                menuBar->addMenu(shared);
+    }
 
     saveAsAct = addMenuAction(fileMenu, "&Save As...", ":/icons/document-save-as.svg", this,
                               &ImageViewer::saveAs);
     saveAsAct->setEnabled(false);
-    saveAsAct->setShortcut(QKeySequence(Qt::CTRL | Qt::Key_S));
+    scopeShortcut(this, saveAsAct, QKeySequence(Qt::CTRL | Qt::Key_S));
     fileMenu->addSeparator();
     copyAct =
         addMenuAction(fileMenu, "Copy &Image", ":/icons/edit-copy.svg", this, &ImageViewer::copy);
-    copyAct->setShortcut(QKeySequence::Copy);
+    scopeShortcut(this, copyAct, QKeySequence(QKeySequence::Copy));
     copyAct->setEnabled(false);
     cmdAct = addMenuAction(fileMenu, "Copy &dump image command", ":/icons/file-clipboard.svg", this,
                            &ImageViewer::cmdToClipboard);
-    cmdAct->setShortcut(QKeySequence(Qt::CTRL | Qt::Key_D));
+    scopeShortcut(this, cmdAct, QKeySequence(Qt::CTRL | Qt::Key_D));
     fileMenu->addSeparator();
     addMenuAction(fileMenu, "&Load Colors from JSON...", ":/icons/document-open.svg", this,
                   &ImageViewer::loadColors);
@@ -1897,10 +1915,13 @@ void ImageViewer::createActions()
         createImage();
     });
     fileMenu->addSeparator();
-    addMenuAction(fileMenu, "&Close", ":/icons/window-close.svg", this, &QWidget::close)
-        ->setShortcut(QKeySequence(Qt::CTRL | Qt::Key_W));
-    addMenuAction(fileMenu, "&Quit", ":/icons/application-exit.svg", this, &ImageViewer::quit)
-        ->setShortcut(QKeySequence(Qt::CTRL | Qt::Key_Q));
+    scopeShortcut(
+        this, addMenuAction(fileMenu, "&Close", ":/icons/window-close.svg", this, &QWidget::close),
+        QKeySequence(Qt::CTRL | Qt::Key_W));
+    scopeShortcut(
+        this,
+        addMenuAction(fileMenu, "&Quit", ":/icons/application-exit.svg", this, &ImageViewer::quit),
+        QKeySequence(Qt::CTRL | Qt::Key_Q));
 }
 
 void ImageViewer::updateActions()
@@ -1911,6 +1932,11 @@ void ImageViewer::updateActions()
 
 void ImageViewer::adjustWindowSize()
 {
+    // A docked panel is sized by its dock area.  Fitting the window around the
+    // image resizes this widget, and that request travels up through the dock to
+    // the main window -- which then jumps about as images are loaded.
+    if (dockedLayout()) return;
+
     // the render size is set in the settings panel, so the size to fit is
     // known even before the first image has been rendered
     if ((xsize < 1) || (ysize < 1)) return;

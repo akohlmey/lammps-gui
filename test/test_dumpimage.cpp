@@ -91,6 +91,9 @@ DumpImageParams makeParams()
     p.outlinewidth   = 2;
     p.outlinecolor   = "black";
     p.specular       = "auto";
+    p.usemetal       = false;
+    p.metalfactor    = 0.5;
+    p.metalfinish    = "satin";
 
     p.showbox    = true;
     p.boxdiam    = 0.05;
@@ -420,6 +423,38 @@ TEST(DumpImageCommand, DepthCueOutlineSpecular)
     p.specular = "tight";
     cmd        = buildCmd(p);
     EXPECT_TRUE(cmd.contains(" specular tight")) << cmd.toStdString();
+}
+
+TEST(DumpImageCommand, MetalEffect)
+{
+    // metallic shading defaults to off and emits nothing
+    auto p      = makeParams();
+    QString cmd = buildCmd(p);
+    EXPECT_FALSE(cmd.contains(" metal ")) << cmd.toStdString();
+    EXPECT_FALSE(cmd.contains(" metalfinish "));
+
+    // enabling the effect emits the intensity; the default "satin" finish is pruned
+    p.usemetal = true;
+    cmd        = buildCmd(p);
+    EXPECT_TRUE(cmd.contains(" metal 0.5")) << cmd.toStdString();
+    EXPECT_FALSE(cmd.contains(" metalfinish "));
+
+    p.metalfactor = 0.8;
+    p.metalfinish = "mirror";
+    cmd           = buildCmd(p);
+    EXPECT_TRUE(cmd.contains(" metal 0.8 metalfinish mirror")) << cmd.toStdString();
+
+    // an intensity of 0.0 is the LAMMPS default and disables the effect,
+    // so the finish must be pruned along with it
+    p.metalfactor = 0.0;
+    cmd           = buildCmd(p);
+    EXPECT_FALSE(cmd.contains(" metal ")) << cmd.toStdString();
+    EXPECT_FALSE(cmd.contains(" metalfinish "));
+
+    // out-of-range values (LAMMPS accepts 0.0 - 1.0 only) are clamped
+    p.metalfactor = 1.5;
+    cmd           = buildCmd(p);
+    EXPECT_TRUE(cmd.contains(" metal 1 metalfinish mirror")) << cmd.toStdString();
 }
 
 TEST(DumpImageCommand, GammaAdjustment)

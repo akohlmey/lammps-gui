@@ -29,7 +29,7 @@
       <caption>LAMMPS-GUI slideshow window</caption>
     </screenshot>
     <screenshot>
-      <image>https://lammps-gui.lammps.org/_images/lammps-gui-image.png</image>
+      <image>https://lammps-gui.lammps.org/_images/lammps-gui-image-water.png</image>
       <caption>LAMMPS-GUI snapshot image window</caption>
     </screenshot>
   </screenshots>
@@ -58,20 +58,42 @@
   <content_rating type="oars-1.1" />
 
   <releases>
+    <!-- provisional timestamp; update when 3.1.0 is actually released -->
+    <release version="3.1.0" timestamp="1785583467">
+      <description>
+        <p>Feature release adding an alternative single-window layout and a command window.</p>
+        <ul>
+          <li>Add a preference to combine the editor and all output views into a single main window with dockable panels: charts, image, slide show, and plots of imported data in a tabbed group on the right, output, variables, and command window tabbed across the bottom; panel proportions are kept across resizes, across closing a panel, and across sessions</li>
+          <li>Add the -j/--joined and -w/--windows command-line flags to select the window layout for a single session without changing the preference, and F6/Shift-F6 to cycle the focus between the sections of the combined window</li>
+          <li>Add a Command window: a shell prompt with scrollback next to the simulation, with persistent history, completion of commands, file names, and earlier command lines, configurable aliases, and kill/interrupt/restart controls</li>
+          <li>Add a preference selecting which of the installed shells the Command window starts</li>
+          <li>Add open, edit, and plot commands to the Command window, also under the names gui-open, gui-edit, and gui-plot, which are defined even where the short name is already taken, to send files from the prompt to a slide show, the editor, or a plot</li>
+          <li>Plot the block-structured output files of the fix ave/time (in vector mode), fix ave/histo, fix ave/correlate, and fix ave/correlate/long styles: the format is recognized from the block structure itself, and the column picker grows a group that reduces the blocks either to a single one or to the average of a selected range, with the spread shown as error bars (standard deviation, standard error of the mean, or the min/max range the blocks covered)</li>
+          <li>Reference columns by name in braces in the derived-column expressions of the column picker, in the manner of Python format strings: {name} works for any column name, including names like c_rdf[2] or g(r) that used to break the expression, {name:first}, {name:last}, {name:min}, {name:max}, and {name:mean} are per-column constants, and renaming a column takes effect immediately everywhere, rewriting the references in already added derived columns</li>
+          <li>Add Fourier transform post-processing: the one-sided cosine transform (the spectral density of a correlation function), the sine transform, or the power spectrum, computed by direct integration so unevenly spaced data works and the output grid is freely adjustable, with an optional Hann window against the ringing of truncated data</li>
+          <li>Add structure factor post-processing, computing S(q) from a plotted radial distribution function and the number density, with the -1 shift applied internally so it works on the plain g(r) chart</li>
+          <li>Add an Overlay other data column post-processing entry, which copies another column of the same chart window onto the current chart for a direct comparison</li>
+          <li>Add a Smoothed data (restore) post-processing entry, offered while a fitted or overlaid curve is in place, which removes that curve and returns the plot to the Savitzky-Golay smoothing of the raw data</li>
+          <li>Post-processing results with a new x axis (autocorrelation, Fourier transform, structure factor) join the Charts tab group of the combined layout as tabs instead of opening free windows</li>
+          <li>Add settings for the display style, color, line width, and point size of the raw and the processed data series, and for the color and line width of error bars, to the Chart Style dialog of the chart window and to the charts preferences tab that presets it</li>
+          <li>Show the application-wide Run, View, Tutorials, and About menus in all output windows, so a run can be started or stopped from any of them; Output, Slide Show, and file viewer windows gain a File menu</li>
+          <li>Reuse the Output and Charts windows across runs instead of recreating them; the options to keep old Output, Charts, and Image windows have been removed</li>
+          <li>Move the Preferences entries from the Edit menu to the View menu and add an option to open the combined main window maximized</li>
+          <li>Ask before opening a file that does not look like what it is being opened as, such as a binary file in the editor or an image in the plotter, instead of filling a window with unreadable content</li>
+          <li>Highlight the LAMMPS commands embedded in write_dump and rerun lines</li>
+          <li>Step the view angles in the Image Viewer by 5 degrees instead of 10</li>
+          <li>Fix LAMMPS screen output capture on Windows, which only worked when launched from a console; the capture now verifies itself and reports into the Output window when the library's output cannot reach it</li>
+          <li>Remember the LAMMPS shared library path per compiler toolchain, so differently built versions of LAMMPS-GUI on one machine no longer silently use each other's library</li>
+          <li>Remember separate main window sizes for the two layout styles, and report the selected layout in the About dialog</li>
+        </ul>
+      </description>
+    </release>
     <release version="3.0.7" timestamp="1785424779">
       <description>
         <p>Maintenance release with small feature additions and bug fixes.
         The bulk of the changes are actually implemented in LAMMPS:</p>
         <ul>
-          <li>add GUI support for dump image enhancements in LAMMPS:</li>
-          <ul>
-            <li>depth cueing</li>
-            <li>depth of focus</li>
-            <li>specular settings (change appearance of material)</li>
-            <li>outline drawing style</li>
-            <li>set SSAO samples to adjust rendering speed</li>
-            <li>adjust image gamma value</li>
-          </ul>
+          <li>add GUI support for dump image enhancements in LAMMPS: depth cueing, depth of focus, specular settings (change appearance of material), outline drawing style, set SSAO samples to adjust rendering speed, adjust image gamma value</li>
           <li>fix warnings indicated by coverity scan</li>
         </ul>
       </description>

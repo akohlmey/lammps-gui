@@ -28,6 +28,7 @@
 #include <QIcon>
 #include <QImage>
 #include <QImageReader>
+#include <QMenuBar>
 #include <QMessageBox>
 #include <QPalette>
 #include <QPixmap>
@@ -40,6 +41,7 @@
 #include <QStyle>
 #include <QStyleHints>
 #include <QTemporaryFile>
+#include <QTextDocument>
 #include <QWidget>
 
 #include <algorithm>
@@ -73,7 +75,8 @@ const QStringList months({"Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug"
                           "Nov", "Dec"});
 
 #if defined(Q_OS_WIN32)
-constexpr char NULL_DEVICE[] = "NUL:";
+// "NUL" without a colon: the spelling verified to work with the MinGW runtime
+constexpr char NULL_DEVICE[] = "NUL";
 #else
 constexpr char NULL_DEVICE[] = "/dev/null";
 #endif
@@ -99,6 +102,14 @@ QFont monoFontFromSettings()
     mono_font.setStyleHint(GUI_MONOFONT->styleHint());
     mono_font.setFixedPitch(true);
     return mono_font;
+}
+
+// re-assert the configured fixed-width font on a text view's document (see helpers.h)
+void reassertMonoFont(QTextDocument *document)
+{
+    if (!document) return;
+    const QFont mono = monoFontFromSettings();
+    if (document->defaultFont() != mono) document->setDefaultFont(mono);
 }
 
 // re-exec the current process in place; returns only if the re-exec failed
@@ -519,6 +530,34 @@ bool isLightTheme()
     return (fg > bg);
 }
 
+// standardized "this is not what you asked for" confirmation dialog
+bool confirmUnexpectedFile(QWidget *parent, const QString &filename, const QString &kind)
+{
+    QMessageBox mb(parent);
+    mb.setWindowTitle("Unexpected File Type");
+    mb.setWindowIcon(parent ? parent->windowIcon() : QIcon());
+    mb.setText(
+        QString("\"%1\" does not look like a %2 file.").arg(QFileInfo(filename).fileName(), kind));
+    mb.setInformativeText("Do you want to open it anyway?");
+    const int extent = mb.style()->pixelMetric(QStyle::PM_MessageBoxIconSize, nullptr, &mb);
+    mb.setIconPixmap(
+        QIcon(":/icons/system-help.svg").pixmap(QSize(extent, extent), mb.devicePixelRatioF()));
+    mb.setStandardButtons(QMessageBox::Yes | QMessageBox::No);
+
+    auto *button = mb.button(QMessageBox::Yes);
+    button->setIcon(QIcon(":/icons/dialog-ok.svg"));
+    button = mb.button(QMessageBox::No);
+    button->setIcon(QIcon(":/icons/dialog-no.svg"));
+
+    // the usual reason to be asked this is a name that was mistyped or a file
+    // that was mis-picked, so the safe answer is the one Return and Escape give
+    mb.setDefaultButton(QMessageBox::No);
+    mb.setEscapeButton(QMessageBox::No);
+
+    if (parent) mb.setFont(parent->font());
+    return mb.exec() == QMessageBox::Yes;
+}
+
 // standardized "Unsaved Changes" confirmation dialog
 int showUnsavedChangesDialog(QWidget *parent, const QString &filename, const QString &question)
 {
@@ -744,6 +783,45 @@ QSize fitViewerWindow(QWidget *window, QScrollArea *area, const QSize &content, 
 
 // shared window-manager hint policy for output windows (see helpers.h)
 
+namespace {
+/// What the command line asked for, if it asked for anything: -1 leaves the
+/// choice to the preferences, which is the case in all but a forced session.
+int forcedlayout = -1;
+} // namespace
+
+void forceLayout(bool docked)
+{
+    forcedlayout = docked ? 1 : 0;
+}
+
+bool dockedLayout()
+{
+    if (forcedlayout >= 0) return forcedlayout > 0;
+    return QSettings().value(Keys::DOCKED, false).toBool();
+}
+
+namespace {
+QList<QKeySequence> mainwindow_shortcuts;
+} // namespace
+
+void setMainWindowShortcuts(const QList<QKeySequence> &keys)
+{
+    mainwindow_shortcuts = keys;
+}
+
+bool isMainWindowShortcut(const QKeySequence &keys)
+{
+    return !keys.isEmpty() && mainwindow_shortcuts.contains(keys);
+}
+
+void scopeShortcut(QWidget *widget, QAction *action, const QKeySequence &keys)
+{
+    if (!widget || !action) return;
+    action->setShortcut(keys);
+    action->setShortcutContext(Qt::WidgetWithChildrenShortcut);
+    widget->addAction(action);
+}
+
 void applyWindowFlags(QWidget *window)
 {
     if (!window) return;
@@ -758,6 +836,15 @@ void applyWindowFlags(QWidget *window)
     flags &= ~Qt::WindowMaximizeButtonHint;
 #endif
     window->setWindowFlags(flags);
+}
+
+void retireViewMenuBar(QMenuBar *menubar)
+{
+    if (!menubar) return;
+    // on macOS this hands the system-wide menu bar back to the main window's;
+    // everywhere else a QMenuBar is not native and this is already false
+    menubar->setNativeMenuBar(false);
+    menubar->hide();
 }
 
 // Local Variables:

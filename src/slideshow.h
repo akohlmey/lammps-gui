@@ -28,6 +28,7 @@ class QShowEvent;
 class QSpinBox;
 class QTimer;
 class LammpsGui;
+class QMenuBar;
 class RangeBandSlider;
 
 /**
@@ -92,6 +93,12 @@ public:
      * @brief Clear all images from slideshow
      */
     void clear();
+
+private:
+    /// Build the window's File menu and append the main window's shared menus.
+    void createMenuBar();
+
+    QMenuBar *menubar = nullptr; ///< Own menu bar; hidden in the combined layout
 
 private slots:
     void quit();             ///< Quit the entire application (via LammpsGui::quit)

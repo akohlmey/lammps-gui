@@ -12,6 +12,8 @@
 #ifndef CHARTVIEWER_H
 #define CHARTVIEWER_H
 
+#include "constants.h"  // Cfg defaults for the ChartColumn series styles below
+#include "plotdata.h"   // PlotData table + PlotErrors used by loadData() below
 #include "plotseries.h" // PlotSeries model + RefAnchor used by RefLine below
 
 #include <QColor>
@@ -37,7 +39,6 @@ class RangeSlider;
 class ChartViewer;
 struct ChartColumn;
 class LammpsGui;
-class PlotData;
 enum class LegendPos; // defined in plotwidget.h
 
 /** @brief Orientation of a reference line: a vertical line at x, or a horizontal line at y */
@@ -109,6 +110,16 @@ public:
     void resetCharts();
 
     /**
+     * @brief Clear the window for a new run
+     * @param filename Name of the log/input file the new run belongs to
+     *
+     * Drops all charts and reference lines and re-reads the chart preferences,
+     * so the window can be reused instead of destroyed and recreated for every
+     * run.  Keeps the position and size the window currently has on screen.
+     */
+    void reset(const QString &filename);
+
+    /**
      * @brief Manually update chart display zoom status
      *
      * This is needed at an end of a run when the run finishes too quickly
@@ -154,12 +165,31 @@ public:
      * @param data  Parsed column data
      * @param xcol  Index of the column to use as the shared x axis
      * @param ycols Indices of the columns to plot, one chart each
+     * @param yerrs Optional error bars, indexed like the columns of @p data;
+     *              an empty or wrongly sized entry means that column has none.
+     *              Their lower half is used where it is filled in
      *
      * Replaces any existing charts; each selected y column becomes a chart
      * titled by its column name, with the x axis labeled by the x column.
      * Unlike the live thermo feed this loads all rows in one shot.
      */
-    void loadData(const PlotData &data, int xcol, const QList<int> &ycols);
+    void loadData(const PlotData &data, int xcol, const QList<int> &ycols,
+                  const PlotErrors &yerrs = {});
+
+signals:
+    /**
+     * @brief A post-processing analysis opened a new chart window
+     * @param window The new window (self-deleting on close), not yet shown
+     * @param title  Short label for a tab in a combined layout
+     *
+     * Emitted for the analyses whose result has a new x axis (autocorrelation,
+     * Fourier transform, structure factor) and therefore opens a chart window
+     * of its own.  The receiver decides how to present it -- LammpsGui hands it
+     * to its WindowLayout, so in the docked layout it becomes a tab beside the
+     * charts instead of a free window.  Without a receiver the window shows
+     * itself.
+     */
+    void resultWindowCreated(ChartWindow *window, const QString &title);
 
 private slots:
     void quit();                          ///< Close window and quit
@@ -191,14 +221,6 @@ protected:
      */
     void closeEvent(QCloseEvent *event) override;
 
-    /**
-     * @brief Event filter for keyboard shortcuts
-     * @param watched Object being watched
-     * @param event Event to filter
-     * @return true if event handled, false otherwise
-     */
-    bool eventFilter(QObject *watched, QEvent *event) override;
-
 private:
     /// Collect the displayed charts into a PlotData (column 0 "Step", then one
     /// column per chart) for the data exporters.
@@ -214,6 +236,16 @@ private:
     /// Set the processed-series Plot-combo slot label and remember it on the
     /// active column (so it is restored when switching columns).
     void setProcessedLabel(const QString &label);
+
+    /// Present a post-processing result window: through resultWindowCreated()
+    /// when connected (the docked layout captures it as a tab), on its own
+    /// otherwise.  Applies the shared window attributes either way.
+    void presentResultWindow(ChartWindow *win, const QString &title);
+
+    /// Apply the chart preferences (title template, smoothing, legend position,
+    /// reference-label style) to the already created widgets.  Shared by the
+    /// constructor and reset(); must not run before `viewer` exists.
+    void applyChartSettings();
 
     /// Move both range-slider handles back to the full extent (no plot update).
     void resetRangeSliders();
@@ -288,15 +320,20 @@ struct ChartColumn {
     QTime lastUpdate;                          ///< Time of last chart update
     bool doRaw    = true;                      ///< Show raw data series
     bool doSmooth = false;                     ///< Show smoothed data series
-    bool eosMode  = false; ///< True when fit is a BM EOS overlay (visibility follows doSmooth)
+    bool custom   = false; ///< True when a custom curve (fit/function/overlay) takes the
+                           ///< processed-series slot (visibility follows doSmooth)
+    // the styles below are seeded from the chart preferences when the column is
+    // created, and then belong to the column (the Chart Style dialog edits them)
     ChartDisplayMode dispmode = ChartDisplayMode::Lines; ///< How the raw series is drawn
-    QColor rawColor;                   ///< Raw series color override (invalid = theme default)
-    qreal rawWidth              = 3.0; ///< Raw series line width
-    qreal rawPointSize          = 8.0; ///< Raw series marker diameter
+    QColor rawColor; ///< Raw series color override (invalid = configured default)
+    qreal rawWidth              = Cfg::LINE_WIDTH_DEFAULT; ///< Raw series line width
+    qreal rawPointSize          = Cfg::POINT_SIZE_DEFAULT; ///< Raw series marker diameter
     ChartDisplayMode smoothmode = ChartDisplayMode::Lines; ///< How the processed series is drawn
-    QColor smoothcolor;          ///< Processed series color (invalid = theme default)
-    qreal smoothwidth     = 3.0; ///< Processed series line width
-    qreal smoothpointsize = 8.0; ///< Processed series marker diameter
+    QColor smoothcolor; ///< Processed series color (invalid = configured default)
+    qreal smoothwidth     = Cfg::LINE_WIDTH_DEFAULT; ///< Processed series line width
+    qreal smoothpointsize = Cfg::POINT_SIZE_DEFAULT; ///< Processed series marker diameter
+    QColor errColor; ///< Error bar color of every series of this column (invalid = configured)
+    qreal errWidth = Cfg::ERR_WIDTH_DEFAULT;                ///< Error bar line width
     std::vector<std::unique_ptr<PlotSeries>> overlaySeries; ///< Extra series from secondary files
     std::vector<std::unique_ptr<PlotSeries>> vlines;        ///< Reference line series (decorative)
     QList<RefLine> reflineDefs; ///< Reference line definitions (parallel to vlines)
@@ -405,6 +442,20 @@ public:
     double getData(int index) const { return (index < 0) ? 0.0 : col->series->at(index).y(); }
 
     /**
+     * @brief Get the error bar half-height at a given index
+     * @param index Data point index
+     * @return Half the extent of the error bar, or 0 if the series has none
+     *
+     * Asymmetric bars are reported by their mean half-height, which is what a
+     * fit weighted by the uncertainty can use as a standard deviation.
+     */
+    double getError(int index) const
+    {
+        if ((index < 0) || !col->series->hasErrors()) return 0.0;
+        return 0.5 * (col->series->errLow(index) + col->series->errHigh(index));
+    }
+
+    /**
      * @brief Set chart title
      * @param tlabel New title
      */
@@ -438,11 +489,14 @@ public:
      * @param pts   (x, y) data points
      * @param name  Series name (shown as a tooltip / legend entry)
      * @param color Line color
+     * @param yerr  Optional error bars, one per point (ignored if the size differs)
+     * @param yerrLo Optional lower half of asymmetric error bars (empty = symmetric)
      *
      * Overlay series are always shown in full (no smoothing); they are
      * included in the axis range calculation.
      */
-    void addOverlaySeries(const QList<QPointF> &pts, const QString &name, const QColor &color);
+    void addOverlaySeries(const QList<QPointF> &pts, const QString &name, const QColor &color,
+                          const QList<double> &yerr = {}, const QList<double> &yerrLo = {});
 
     /** @brief Number of overlay series currently displayed */
     int overlaySeriesCount() const { return static_cast<int>(col->overlaySeries.size()); }
@@ -500,22 +554,47 @@ public:
     qreal smoothPointSize() const { return col->smoothpointsize; }
 
     /**
-     * @brief Overlay a fit curve on the chart
+     * @brief Set how the error bars of this chart are drawn
+     * @param color Bar color (invalid color falls back to the color of the series)
+     * @param width Bar line width; the end caps grow with it
+     *
+     * The style applies to every series of the chart that carries error bars,
+     * so that the bars read as one annotation layer rather than as part of the
+     * curve they belong to.
+     */
+    void setErrorStyle(const QColor &color, qreal width);
+
+    /** @brief Current error bar color (may be invalid, meaning the series color) */
+    QColor errorColor() const { return col->errColor; }
+    /** @brief Current error bar line width */
+    qreal errorWidth() const { return col->errWidth; }
+
+    /**
+     * @brief Put a custom curve into the processed-series slot of the chart
      * @param points  Curve points (x, y) drawn as an overlay line; created on
      *                the first call and replaced on subsequent calls
      * @param name    Optional series name for the overlay (e.g. the fitted
      *                expression or a user label); shown wherever series names
      *                are surfaced
-     * @param eosFit  When true the curve is treated as an EOS fit: its
-     *                visibility follows the doSmooth flag (hidden in Raw mode,
-     *                visible in Smoothed/Both mode) and it replaces the
-     *                Savitzky-Golay series while active.
+     *
+     * The curve -- a fitted curve, an evaluated custom function, or a column
+     * overlay -- takes the place of the Savitzky-Golay smooth while it is set:
+     * its visibility follows the Raw/Smoothed/Both choice (hidden in Raw
+     * mode), and clearFitCurve() returns the slot to the smooth.
      */
-    void setFitCurve(const QList<QPointF> &points, const QString &name = QString(),
-                     bool eosFit = false);
+    void setFitCurve(const QList<QPointF> &points, const QString &name = QString());
 
-    /** @brief True when the current fit overlay is a Birch-Murnaghan EOS fit */
-    bool isEosFit() const { return col->eosMode && col->fit && !col->fit->points.isEmpty(); }
+    /** @brief True when a custom curve occupies the processed-series slot */
+    bool hasCustom() const { return col->custom && col->fit && !col->fit->points.isEmpty(); }
+
+    /**
+     * @brief Remove the fit-curve overlay set with setFitCurve()
+     *
+     * The overlay curve is emptied and hidden and the processed-series slot
+     * falls back to the Savitzky-Golay smooth of the raw data, which is
+     * recomputed on the redraw this triggers.
+     */
+    void clearFitCurve();
 
     /**
      * @brief Get X-axis label

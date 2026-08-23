@@ -14,7 +14,10 @@
 
 #include <QAction>
 #include <QIcon>
+#include <QKeySequence>
+#include <QList>
 #include <QMenu>
+#include <QShortcut>
 #include <QSize>
 #include <QString>
 #include <QStringList>
@@ -22,6 +25,7 @@
 #include <initializer_list>
 #include <memory>
 
+class QMenuBar;
 class QWidget;
 class QImage;
 class QPixmap;
@@ -30,6 +34,7 @@ class QAbstractButton;
 class QDialogButtonBox;
 class QMessageBox;
 class QScrollArea;
+class QTextDocument;
 
 // OS specific default fonts (managed via unique_ptr for automatic cleanup)
 extern std::unique_ptr<QFont> GUI_MONOFONT;
@@ -41,6 +46,20 @@ extern std::unique_ptr<QFont> GUI_ALLFONT;
  *         settings, falling back to the platform default GUI_MONOFONT
  */
 QFont monoFontFromSettings();
+
+/**
+ * @brief Re-assert the configured fixed-width font on a text view's document
+ *
+ * Docked, a text view is a child of the main window and inherits its
+ * proportional font; QPlainTextEdit reacts to the resulting FontChange event
+ * by adopting the widget font as the document font, and the view loses its
+ * fixed pitch.  A view that must keep it calls this from its changeEvent()
+ * override on QEvent::FontChange.  Setting only the document font does not
+ * feed back into the widget font, so this cannot recurse.
+ *
+ * @param document The view's text document (no-op if null)
+ */
+extern void reassertMonoFont(QTextDocument *document);
 
 /**
  * @brief Compare two date strings in LAMMPS "DD MMM YYYY" format (e.g. "22 Jul 2025")
@@ -255,6 +274,24 @@ extern int showUnsavedChangesDialog(QWidget *parent, const QString &filename,
                                     const QString &question);
 
 /**
+ * @brief Ask before opening a file that is not what it is being opened as
+ * @param parent   Pointer to the parent widget
+ * @param filename File about to be opened; only its name is shown
+ * @param kind     What it was expected to be, worded to follow "a": "text",
+ *                 "data", "image or movie"
+ * @return true if the user wants to go ahead
+ *
+ * For the cases where opening the wrong file is a mistake rather than an error:
+ * a binary in the editor, a picture handed to the plotter.  Answering No is
+ * what Return and Escape do, because the usual reason to see this is a name
+ * that was mistyped or a file that was mis-picked.  Ask only when the file
+ * fails the test for its kind -- a file that looks right must never produce a
+ * dialog.
+ */
+[[nodiscard]] extern bool confirmUnexpectedFile(QWidget *parent, const QString &filename,
+                                                const QString &kind);
+
+/**
  * @brief Apply the bundled SVG icons to a dialog button box's standard buttons
  * @param box The button box whose standard buttons should be re-iconed
  *
@@ -436,6 +473,30 @@ extern void styleToolButtons(const QSize &size, std::initializer_list<QAbstractB
 extern void applyWindowFlags(QWidget *window);
 
 /**
+ * @brief Retire an output view's own menu bar in the combined layout
+ *
+ * Docked, a view does not show a menu bar of its own: the main window puts the
+ * view's *File* menu into its menu bar while the view has the focus. The menu
+ * bar object still exists, because it is where the menu was built, so it is
+ * simply hidden -- which is enough on every platform but one.
+ *
+ * On macOS a QMenuBar is not a widget in the window but a handle on the
+ * system-wide menu bar, and the last one to claim a window replaces the one
+ * before it. Docked, both the main window's menu bar and the view's live in the
+ * same window, so opening the first panel handed the system menu bar to a menu
+ * bar that is hidden and empty: everything but the application menu that macOS
+ * assembles itself disappeared. Detaching the view's menu bar from the platform
+ * gives the window back to the main window's, and costs nothing elsewhere,
+ * where a QMenuBar is an ordinary widget already.
+ *
+ * In the individual-window layout each view is a window of its own and claims
+ * its own menu bar legitimately, so this is only for the docked case.
+ *
+ * @param menubar Menu bar of a docked output view (no-op if null)
+ */
+extern void retireViewMenuBar(QMenuBar *menubar);
+
+/**
  * @brief Compute the scroll area size that shows the given content, within a budget
  *
  * Pure size computation behind fitViewerWindow(). The natural size is the
@@ -502,6 +563,86 @@ QAction *addMenuAction(QMenu *menu, const QString &text, const QString &icon, Re
     if (!icon.isEmpty()) action->setIcon(QIcon(icon));
     QObject::connect(action, &QAction::triggered, receiver, slot);
     return action;
+}
+
+/**
+ * @brief Whether the output views are docked into the main window
+ * @return true when the docked layout is in effect for this session
+ *
+ * The layout is chosen once at startup (WindowLayout applies it), so this only
+ * reads the stored preference, or what forceLayout() was given instead.
+ * Widgets consult it for the things that make no sense in a dock, such as
+ * remembering their own window size.
+ */
+extern bool dockedLayout();
+
+/**
+ * @brief Override the stored layout preference for this session
+ * @param docked true for the combined main window, false for individual windows
+ *
+ * What the -j/--joined and -w/--windows command-line flags do.  The preference
+ * itself is left alone: the choice applies to the process it was given to and
+ * nothing else, which is also why a relaunch (which passes no arguments on)
+ * goes back to what the preferences say.  Call before the first window is
+ * built, since that is when the layout is decided.
+ */
+extern void forceLayout(bool docked);
+
+/**
+ * @brief Record the key sequences the main window's menus already use
+ * @param keys Every shortcut reachable from the main window's menu bar
+ *
+ * Called once by the main window after its menus are built.  A view that ends
+ * up as a dock panel lives inside that same window, so a sequence it binds
+ * would match at the same time as the menu does and Qt would fire neither.
+ * WindowLayout consults this when a widget actually becomes a panel; a view
+ * that stays a window of its own keeps all of its shortcuts.
+ */
+extern void setMainWindowShortcuts(const QList<QKeySequence> &keys);
+
+/**
+ * @brief Whether a key sequence belongs to the main window's menus
+ * @param keys Sequence to check
+ * @return true if the main window already binds it
+ */
+extern bool isMainWindowShortcut(const QKeySequence &keys);
+
+/**
+ * @brief Give a menu action a keyboard shortcut that is scoped to one widget
+ * @param widget Widget the shortcut belongs to
+ * @param action Action to bind the shortcut to
+ * @param keys   Key sequence to bind
+ *
+ * A menu action is only associated with the menu it was added to, and a menu
+ * is a popup that never holds the keyboard focus.  Associating the action with
+ * @p widget as well is therefore what makes Qt::WidgetWithChildrenShortcut
+ * usable here at all: without it the shortcut would never match.  See
+ * addShortcut() for why the output windows want focus scope in the first place.
+ */
+extern void scopeShortcut(QWidget *widget, QAction *action, const QKeySequence &keys);
+
+/**
+ * @brief Add a keyboard shortcut that is scoped to one widget
+ * @param widget   Widget the shortcut belongs to and that owns the QShortcut
+ * @param keys     Key sequence to bind
+ * @param receiver Object that owns the slot/callable
+ * @param slot     Member function pointer or callable invoked on activation
+ * @return The created shortcut, for any further configuration by the caller
+ *
+ * The shortcut uses Qt::WidgetWithChildrenShortcut, so it fires only while the
+ * keyboard focus is inside @p widget rather than anywhere in its window.  That
+ * is what keeps the per-window shortcuts of the output windows (several of
+ * which repeat main window accelerators such as Ctrl+S, Ctrl+Q or Ctrl+/) from
+ * becoming ambiguous overloads once those windows are docked into the main
+ * window instead of being windows in their own right.
+ */
+template <typename Recv, typename Func>
+QShortcut *addShortcut(QWidget *widget, const QKeySequence &keys, Recv *receiver, Func slot)
+{
+    auto *shortcut = new QShortcut(keys, widget);
+    shortcut->setContext(Qt::WidgetWithChildrenShortcut);
+    QObject::connect(shortcut, &QShortcut::activated, receiver, slot);
+    return shortcut;
 }
 
 #endif

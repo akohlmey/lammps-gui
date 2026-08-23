@@ -14,8 +14,10 @@
 #include "lepton_mini.h"
 #include "levmar.h"
 
+#include <algorithm>
 #include <cmath>
 #include <exception>
+#include <limits>
 #include <map>
 #include <string>
 #include <vector>
@@ -40,6 +42,132 @@ CompiledExpression::~CompiledExpression() = default;
 double CompiledExpression::evaluate(const std::map<std::string, double> &variables) const
 {
     return program->evaluate(variables);
+}
+
+// The accessors a colon inside a braced column reference may select.
+static const QStringList known_accessors = {QStringLiteral("first"), QStringLiteral("last"),
+                                            QStringLiteral("min"), QStringLiteral("max"),
+                                            QStringLiteral("mean")};
+
+// The available-columns list appended to a failed lookup.  Names that cannot
+// be referenced anyway (colon or brace in the name) are left out.
+static QString availableColumns(const QStringList &names)
+{
+    QStringList usable;
+    for (const auto &n : names)
+        if (!n.contains(':') && !n.contains('{') && !n.contains('}')) usable << ('{' + n + '}');
+    if (usable.isEmpty()) return QStringLiteral("No column can currently be referenced.");
+    return QStringLiteral("Available: %1").arg(usable.join(QStringLiteral(", ")));
+}
+
+ColumnRefExpr substituteColumnRefs(const QString &expr, const QStringList &names)
+{
+    ColumnRefExpr result;
+    result.expr.reserve(expr.size());
+
+    int pos = 0;
+    while (pos < expr.size()) {
+        const QChar c = expr.at(pos);
+        if (c == '}') {
+            result.error = QStringLiteral("Unmatched '}' in the expression.");
+            return result;
+        }
+        if (c != '{') {
+            result.expr += c;
+            ++pos;
+            continue;
+        }
+
+        const int close = expr.indexOf('}', pos + 1);
+        if (close < 0) {
+            result.error = QStringLiteral("Unmatched '{' in the expression.");
+            return result;
+        }
+        const QString span = expr.mid(pos + 1, close - pos - 1);
+        if (span.trimmed().isEmpty()) {
+            result.error = QStringLiteral("Empty column reference {}.");
+            return result;
+        }
+
+        // a colon is always the accessor separator; the name part is the span
+        // up to the last colon so the error for a colon-in-name column is exact
+        const int colon        = span.lastIndexOf(':');
+        const QString name     = (colon < 0) ? span : span.left(colon);
+        const QString accessor = (colon < 0) ? QString() : span.mid(colon + 1);
+
+        const int column = names.indexOf(name);
+        if (column < 0) {
+            if (names.contains(span))
+                result.error = QStringLiteral("Column '%1' cannot be referenced because its "
+                                              "name contains ':'; rename the column first.")
+                                   .arg(span);
+            else
+                result.error =
+                    QStringLiteral("No column named '%1'.\n%2").arg(name, availableColumns(names));
+            return result;
+        }
+        if ((colon >= 0) && !known_accessors.contains(accessor)) {
+            result.error = QStringLiteral("Unknown accessor ':%1' in '{%2}'; one of "
+                                          ":first, :last, :min, :max, :mean.")
+                               .arg(accessor, span);
+            return result;
+        }
+
+        // one generated variable per distinct (column, accessor) pair
+        int ref = 0;
+        for (; ref < result.refs.size(); ++ref)
+            if ((result.refs[ref].column == column) && (result.refs[ref].accessor == accessor))
+                break;
+        if (ref == result.refs.size()) {
+            const QString variable = QStringLiteral("_col%1_").arg(ref);
+            result.refs.append(ColumnRef{column, accessor, variable});
+        }
+        result.expr += result.refs[ref].variable;
+        pos = close + 1;
+    }
+
+    result.ok = true;
+    return result;
+}
+
+QString renameColumnRefs(const QString &expr, const QString &oldName, const QString &newName)
+{
+    QString result;
+    result.reserve(expr.size());
+
+    int pos = 0;
+    while (pos < expr.size()) {
+        const QChar c   = expr.at(pos);
+        const int close = (c == '{') ? expr.indexOf('}', pos + 1) : -1;
+        if (close < 0) { // not a complete braced span; leave for substitution to flag
+            result += c;
+            ++pos;
+            continue;
+        }
+        QString span      = expr.mid(pos + 1, close - pos - 1);
+        const int colon   = span.lastIndexOf(':');
+        const QString ref = (colon < 0) ? span : span.left(colon);
+        if (ref == oldName) span.replace(0, ref.size(), newName);
+        result += '{' + span + '}';
+        pos = close + 1;
+    }
+    return result;
+}
+
+double columnAccessor(const std::vector<double> &column, const QString &accessor)
+{
+    if (column.empty()) return std::numeric_limits<double>::quiet_NaN();
+    if (accessor == QStringLiteral("first")) return column.front();
+    if (accessor == QStringLiteral("last")) return column.back();
+    if (accessor == QStringLiteral("min")) return *std::min_element(column.begin(), column.end());
+    if (accessor == QStringLiteral("max")) return *std::max_element(column.begin(), column.end());
+    if (accessor == QStringLiteral("mean")) {
+        double sum = 0.0;
+        for (double v : column)
+            sum += v;
+        return sum / static_cast<double>(column.size());
+    }
+    return std::numeric_limits<double>::quiet_NaN();
 }
 
 CustomCurve evalCustomCurve(const QString &expression, double xmin, double xmax, int nsamples,
@@ -82,7 +210,8 @@ CustomCurve evalCustomCurve(const QString &expression, double xmin, double xmax,
 
 CustomFit fitCustomCurve(const QString &expression, const QList<FitParam> &initialParams,
                          const std::vector<double> &xdata, const std::vector<double> &ydata,
-                         double xmin, double xmax, int nsamples, const QString &variable)
+                         double xmin, double xmax, int nsamples, const QString &variable,
+                         const std::vector<double> &weights)
 {
     CustomFit result;
 
@@ -153,6 +282,17 @@ CustomFit fitCustomCurve(const QString &expression, const QList<FitParam> &initi
             probe[pnames[j]] = initialParams[j].value;
         (void)model.evaluate(probe);
 
+        // A weighted least-squares problem is the unweighted one on residuals
+        // and Jacobian rows scaled by sqrt(w), so the solver itself needs to
+        // know nothing about weights.
+        const bool weighted = (weights.size() == static_cast<std::size_t>(m));
+        std::vector<double> sqrtw;
+        if (weighted) {
+            sqrtw.reserve(weights.size());
+            for (double w : weights)
+                sqrtw.push_back(std::sqrt(qMax(0.0, w)));
+        }
+
         // residual/Jacobian callback for the Levenberg-Marquardt solver
         const LevmarModel fn = [&](const std::vector<double> &p, std::vector<double> &res,
                                    std::vector<std::vector<double>> &jac) -> bool {
@@ -164,11 +304,12 @@ CustomFit fitCustomCurve(const QString &expression, const QList<FitParam> &initi
                     vars[var]            = xdata[i];
                     const double modeled = model.evaluate(vars);
                     if (!std::isfinite(modeled)) return false;
-                    res[i] = modeled - ydata[i];
+                    const double sw = weighted ? sqrtw[i] : 1.0;
+                    res[i]          = (modeled - ydata[i]) * sw;
                     for (int j = 0; j < n; ++j) {
                         const double d = derivs[j].evaluate(vars);
                         if (!std::isfinite(d)) return false;
-                        jac[i][j] = d;
+                        jac[i][j] = d * sw;
                     }
                 }
             } catch (const std::exception &) {
@@ -202,7 +343,19 @@ CustomFit fitCustomCurve(const QString &expression, const QList<FitParam> &initi
             if (std::isfinite(y)) result.curve.append(QPointF(x, y));
         }
 
-        result.rms        = lm.rms;
+        // the solver's residual is the weighted one, whose scale depends on the
+        // weights; report the plain one so fits stay comparable across them
+        if (weighted) {
+            double sum = 0.0;
+            for (int i = 0; i < m; ++i) {
+                fitted[var]    = xdata[i];
+                const double d = model.evaluate(fitted) - ydata[i];
+                sum += d * d;
+            }
+            result.rms = std::sqrt(sum / static_cast<double>(m));
+        } else {
+            result.rms = lm.rms;
+        }
         result.iterations = lm.iterations;
         result.ok         = true;
     } catch (const std::exception &e) {

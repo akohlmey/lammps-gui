@@ -14,6 +14,16 @@ corresponding underlined letter, that is `Alt-F` activates the
 corresponding to the underlined letters can be used to select entries
 instead of using the mouse.
 
+.. admonition:: LAMMPS-GUI Combined Window Mode
+   :class: note
+
+   In joined window mode there can be only one menu bar, so the
+   displayed menu bar is that of the section / tab that has currently
+   the focus.  If access to the menu bar of a specific window is needed,
+   e.g. to open a new LAMMPS input file, it may be needed to either
+   first click into the corresponding area or use the `F6` or `Shift-F6`
+   keyboard shortcuts to switch focus.
+
 .. _files:
 
 File
@@ -67,6 +77,20 @@ In addition, up to 5 recent file names will be listed after the *Open Input File
 entry that allows re-opening recently opened files.  This list is stored
 when quitting and recovered when starting again.
 
+**Files that are not what they are opened as.** Each of these entries
+expects a certain kind of file, and the file dialogs offer *All files*
+as well, so a file can be picked that does not fit: a binary file for the
+editor or the text viewer, something that is not a picture for the slide
+show, an image for the plotter.  Rather than refuse it or fill a window
+with unreadable content, LAMMPS-GUI asks -- *"... does not look like a
+text file.  Do you want to open it anyway?"* -- and the answer defaults
+to *No*, since the usual reason to see the question is a name that was
+mistyped or a file that was picked by mistake.  Answering *Yes* opens it
+regardless, which is occasionally what is wanted: an input file with a
+stray null byte in it can still be edited.  A file that looks right is
+never asked about.  The same check applies to the ``edit``, ``open`` and
+``plot`` commands of the :ref:`command window <commandwindow>`.
+
 **Plotting external data files.** The *Plot Data File...* entry
 (`Ctrl-Shift-P`) opens a dialog to select a file with column-oriented
 numeric data and plots it in a standalone :ref:`Charts window <charts>`
@@ -77,7 +101,10 @@ itself writes), and `JSON <https://www.json.org/>`_; the format is
 recognized from the file name extension or, failing that, from the
 content.  After the file is read, a dialog lets you pick which column
 provides the x axis and which columns to plot; column names can also be
-edited at this point.  Because there is no associated simulation, the
+edited at this point.  The block-structured output of the ``fix ave/*``
+styles is recognized as such, and that dialog then also offers to average
+the blocks with error bars or to show a single one (see :ref:`importing
+fix ave/\* output <aveimport>`).  Because there is no associated simulation, the
 *Units* and *Norm* controls are hidden in such a standalone chart window.
 All the post-processing and export features described for the
 :ref:`Charts window <charts>` are available here as well.
@@ -91,13 +118,13 @@ Edit
 
 The *Edit* menu offers the usual editor functions like *Undo*, *Redo*,
 *Cut*, *Copy*, *Paste*, and a *Find and Replace* dialog (keyboard
-shortcut `Ctrl-F`).  It can also open a *Preferences* dialog (keyboard
-shortcut `Ctrl-P`) and allows deleting all stored preferences and
-settings, so they are reset to their default values.  Resetting the
-preferences also deletes a LAMMPS shared library that was previously
-downloaded into the configuration folder; the library files for all
-supported platforms are removed in case the configuration folder is
-shared between multiple computers.
+shortcut `Ctrl-F`).
+
+.. versionchanged:: 3.1
+
+   The *Preferences* dialog and the option to reset all settings to
+   their defaults have moved to the *View* menu, which is where the
+   window layout they configure is controlled.
 
 .. _run_menu:
 
@@ -162,7 +189,7 @@ in case it missed something and LAMMPS behaves in unexpected ways.
 .. index:: Check Input
 
 .. image:: JPG/lammps-gui-lint-error.png
-   :align: center
+   :align: right
    :width: 50%
 
 The *Check Input via Heuristics* entry (keyboard shortcut `Ctrl-K`)
@@ -209,7 +236,7 @@ variables are passed to the LAMMPS instance when it is created and are
 thus set *before* a run is started.
 
 .. image:: JPG/lammps-gui-variables.png
-   :align: center
+   :align: right
    :scale: 50%
 
 The *Set Variables* dialog will be pre-populated with entries that
@@ -236,6 +263,12 @@ The *Create Image* entry will send a `dump image
 instance, read the resulting file, and show it in an *Image Viewer*
 window.
 
+The *Open Command Window* entry opens the :ref:`Command window
+<commandwindow>`, a shell prompt for the ordinary work that surrounds a
+run: post-processing a dump file with a script, looking at what a run
+just wrote, calling a plotting tool.  It is *not* a terminal emulator
+and cannot run full-screen programs such as ``vim`` or ``top``.
+
 The *View in OVITO* entry will launch `OVITO <https://ovito.org>`_ with
 a `data file <https://docs.lammps.org/write_data.html>`_ containing the
 current state of the system.  This option is only available if
@@ -254,9 +287,27 @@ View
 .. index:: window visibility
 
 The *View* menu offers to show or hide additional windows with log
-output, charts, slide show, variables, or snapshot images.  The
-default settings for their visibility can be changed in the
-*Preferences* dialog.
+output, charts, slide show, variables, snapshot images, or the
+:ref:`Command window <commandwindow>`.  With the
+*Combined Main Window* layout these are panels docked into the main
+window instead of windows of their own, and the same entries show and
+hide the panels.  The default settings for their visibility can be
+changed in the *Preferences* dialog.
+
+With that layout the menu also has the *Next Panel* (`F6`) and
+*Previous Panel* (`Shift-F6`) entries, which move the keyboard focus
+between the editor and the panels around it; see :ref:`the keyboard
+shortcuts <shortcuts>` for what they walk through.  They are not shown
+with individual windows, where switching windows is the window
+manager's job.
+
+The *View* menu is also where the *Preferences* dialog is opened
+(keyboard shortcut `Ctrl-P`), and where all stored preferences and
+settings can be deleted, so they are reset to their default values.
+Resetting the preferences also deletes a LAMMPS shared library that was
+previously downloaded into the configuration folder; the library files
+for all supported platforms are removed in case the configuration
+folder is shared between multiple computers.
 
 .. _tutorials:
 
@@ -267,6 +318,10 @@ Tutorials
 .. index:: menus; Tutorials
 .. index:: LAMMPS tutorials
 .. index:: tutorial wizard
+
+.. image:: JPG/lammps-gui-tutorials.png
+   :align: right
+   :scale: 50%
 
 The *Tutorials* menu supports several collections of LAMMPS tutorials for
 beginners and intermediate LAMMPS users.  The menu has one submenu per
@@ -298,10 +353,6 @@ issue tracker of the tutorial's file repository in a web browser, so
 the missing files can be reported; alternatively they can be reported
 by email to akohlmey@gmail.com.
 
-.. image:: JPG/lammps-gui-tutorials.png
-   :align: center
-   :scale: 50%
-
 About
 ^^^^^
 
@@ -332,6 +383,17 @@ relaunched to activate it.  The checksum of the downloaded file is
 verified before it replaces the current library, which is renamed to a
 backup name first; leftover backup files and partial downloads in the
 configuration folder are cleaned up on the next launch of LAMMPS-GUI.
+
+.. |updatelib1| image:: JPG/update-dialog.png
+   :width: 27%
+
+.. |updatelib2| image:: JPG/update-progress.png
+   :width: 45%
+
+.. |updatelib3| image:: JPG/update-relaunch.png
+   :width: 27%
+
+|updatelib1|  |updatelib2|  |updatelib3|
 
 -------------
 

@@ -22,9 +22,11 @@
 #include <QFontInfo>
 #include <QIcon>
 #include <QKeySequence>
+#include <QMenu>
+#include <QMenuBar>
 #include <QProcess>
+#include <QResizeEvent>
 #include <QSettings>
-#include <QShortcut>
 #include <QString>
 #include <QStringList>
 #include <QTextCursor>
@@ -34,12 +36,9 @@ FileViewer::FileViewer(const QString &_filename, LammpsGui *_lammpsgui, const QS
                        QWidget *parent) :
     QPlainTextEdit(parent), fileName(_filename), lammpsgui(_lammpsgui)
 {
-    auto *action = new QShortcut(QKeySequence(Qt::CTRL | Qt::Key_Q), this);
-    connect(action, &QShortcut::activated, this, &FileViewer::quit);
-    action = new QShortcut(QKeySequence(Qt::CTRL | Qt::Key_Slash), this);
-    connect(action, &QShortcut::activated, this, &FileViewer::stopRun);
-
-    installEventFilter(this);
+    createMenuBar();
+    // no menu entry of its own
+    addShortcut(this, QKeySequence(Qt::CTRL | Qt::Key_Slash), this, &FileViewer::stopRun);
 
     // open and read file. Set editor to read-only.
     QFile file(fileName);
@@ -98,7 +97,8 @@ FileViewer::FileViewer(const QString &_filename, LammpsGui *_lammpsgui, const QS
     moveCursor(QTextCursor::Start, QTextCursor::MoveAnchor);
     setReadOnly(true);
     setLineWrapMode(NoWrap);
-    setMinimumSize(800, 500);
+    // a docked panel is sized by its dock area; this would be a floor under it
+    if (!dockedLayout()) setMinimumSize(800, 500);
     setWindowIcon(QIcon(Cfg::MAIN_ICON));
     if (title.isEmpty())
         setWindowTitle("LAMMPS-GUI - Viewer - " + fileName);
@@ -106,6 +106,52 @@ FileViewer::FileViewer(const QString &_filename, LammpsGui *_lammpsgui, const QS
         setWindowTitle(title);
 
     applyWindowFlags(this);
+}
+
+// A QPlainTextEdit is its own window here, so the menu bar is a child widget
+// sitting in reserved viewport margin rather than a window menu bar -- the same
+// arrangement CodeEditor uses for its line number area.
+void FileViewer::createMenuBar()
+{
+    menubar    = new QMenuBar(this);
+    auto *file = new QMenu("&File", menubar);
+    file->setObjectName(Cfg::VIEW_FILE_MENU);
+
+    scopeShortcut(this,
+                  addMenuAction(file, "&Close", ":/icons/window-close.svg", this, &QWidget::close),
+                  QKeySequence(Qt::CTRL | Qt::Key_W));
+    auto *quitAct =
+        addMenuAction(file, "&Quit", ":/icons/application-exit.svg", this, &FileViewer::quit);
+    scopeShortcut(this, quitAct, QKeySequence(Qt::CTRL | Qt::Key_Q));
+    // without a main window there is nothing to quit; closing is all there is
+    if (!lammpsgui) quitAct->setVisible(false);
+
+    if (dockedLayout()) {
+        // the main window shows this menu for us while the panel has the focus
+        retireViewMenuBar(menubar);
+        return;
+    }
+    menubar->addMenu(file);
+    if (lammpsgui)
+        for (auto *shared : lammpsgui->sharedMenus())
+            menubar->addMenu(shared);
+    setViewportMargins(0, menubar->sizeHint().height(), 0, 0);
+}
+
+void FileViewer::resizeEvent(QResizeEvent *event)
+{
+    QPlainTextEdit::resizeEvent(event);
+    if (!menubar || menubar->isHidden()) return;
+    const QRect cr = contentsRect();
+    menubar->setGeometry(cr.left(), cr.top(), cr.width(), menubar->sizeHint().height());
+}
+
+// Docked, this widget inherits the main window's proportional font and
+// QPlainTextEdit adopts it as the document font; see reassertMonoFont().
+void FileViewer::changeEvent(QEvent *event)
+{
+    QPlainTextEdit::changeEvent(event);
+    if (event->type() == QEvent::FontChange) reassertMonoFont(document());
 }
 
 void FileViewer::quit()
@@ -116,26 +162,6 @@ void FileViewer::quit()
 void FileViewer::stopRun()
 {
     if (lammpsgui) lammpsgui->stopRun();
-}
-
-// event filter to handle "Ambiguous shortcut override" issues
-bool FileViewer::eventFilter(QObject *watched, QEvent *event)
-{
-    if (event->type() == QEvent::ShortcutOverride) {
-        auto *keyEvent = dynamic_cast<QKeyEvent *>(event);
-        if (!keyEvent) return QAbstractScrollArea::eventFilter(watched, event);
-        if (keyEvent->modifiers().testFlag(Qt::ControlModifier) && keyEvent->key() == '/') {
-            stopRun();
-            event->accept();
-            return true;
-        }
-        if (keyEvent->modifiers().testFlag(Qt::ControlModifier) && keyEvent->key() == 'W') {
-            close();
-            event->accept();
-            return true;
-        }
-    }
-    return QWidget::eventFilter(watched, event);
 }
 
 // Local Variables:

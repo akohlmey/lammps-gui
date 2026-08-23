@@ -30,6 +30,18 @@ FlagWarnings::FlagWarnings(QLabel *label, QTextDocument *parent) :
     formatURL.setFontWeight(QFont::Bold);
 }
 
+QString FlagWarnings::summaryText(int nwarnings, int nlines)
+{
+    return QString("%1 Warnings / Errors - %2 Lines").arg(nwarnings).arg(nlines);
+}
+
+void FlagWarnings::reset()
+{
+    nwarnings = nlines = 0;
+    oldwarnings = oldlines = -1;
+    if (summary) summary->setText(summaryText(0, 0));
+}
+
 void FlagWarnings::highlightBlock(const QString &text)
 {
     // nothing to do for empty lines
@@ -54,7 +66,7 @@ void FlagWarnings::highlightBlock(const QString &text)
         if ((nwarnings > oldwarnings) || (nlines > oldlines)) {
             oldwarnings = nwarnings;
             oldlines    = nlines;
-            summary->setText(QString("%1 Warnings / Errors - %2 Lines").arg(nwarnings).arg(nlines));
+            summary->setText(summaryText(nwarnings, nlines));
             // setText() already schedules a paint; let Qt coalesce it via update()
             // rather than forcing a synchronous repaint() from inside highlighting,
             // which fires on essentially every log line appended during a run

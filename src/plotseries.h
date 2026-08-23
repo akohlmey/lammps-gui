@@ -40,6 +40,10 @@ enum class RefAnchor { Start, Center, End };
 struct PlotSeries {
     PlotSeriesType type = PlotSeriesType::Line; ///< line vs. scatter rendering
     QList<QPointF> points;                      ///< data points in axis coordinates
+    QList<double> yerr;                         ///< upper y error per point (empty = none)
+    QList<double> yerrLo;                       ///< lower y error per point (empty = symmetric)
+    QColor errColor;                            ///< error bar color (invalid = series color)
+    qreal errWidth     = 1.5;                   ///< error bar line width
     QColor color       = Qt::black;             ///< line / marker color
     qreal width        = 1.0;                   ///< line width (Line series)
     Qt::PenStyle style = Qt::SolidLine;         ///< line style, e.g. dashed reference lines
@@ -54,8 +58,25 @@ struct PlotSeries {
     // points list directly
     /** @brief Append one (x, y) point */
     void append(double x, double y) { points.append(QPointF(x, y)); }
-    /** @brief Replace all points */
-    void replace(const QList<QPointF> &p) { points = p; }
+    /** @brief Replace all points (and drop any error bars, which no longer fit) */
+    void replace(const QList<QPointF> &p)
+    {
+        points = p;
+        yerr.clear();
+        yerrLo.clear();
+    }
+    /** @brief Whether the series carries usable error bars */
+    bool hasErrors() const { return yerr.size() == points.size(); }
+    /** @brief Whether the bars extend by different amounts up and down */
+    bool hasAsymErrors() const { return hasErrors() && (yerrLo.size() == points.size()); }
+    /** @brief How far the bar of point @p i reaches above the value */
+    double errHigh(int i) const { return hasErrors() ? qAbs(yerr[i]) : 0.0; }
+    /** @brief How far the bar of point @p i reaches below the value */
+    double errLow(int i) const
+    {
+        if (hasAsymErrors()) return qAbs(yerrLo[i]);
+        return errHigh(i);
+    }
     /** @brief Number of points */
     int count() const { return static_cast<int>(points.size()); }
     /** @brief Point at index i */

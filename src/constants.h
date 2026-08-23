@@ -87,8 +87,27 @@ constexpr int CHART_DEFAULT_WIDTH    = 640;   ///< Default chart width
 constexpr int CHART_DEFAULT_HEIGHT   = 480;   ///< Default chart height
 constexpr double CHART_YPAD_FRACTION = 0.05;  ///< Relative y-axis margin around the data range
 
+// ---- Chart series style defaults -----------------------------------------
+// The color defaults are indices into the fixed palette of the color combo
+// boxes in the charts preferences tab (black, blue, red, green, gray).
+constexpr int RAWBRUSH_DEFAULT      = 1;    ///< Default raw series color (blue)
+constexpr int SMOOTHBRUSH_DEFAULT   = 2;    ///< Default processed series color (red)
+constexpr int ERRBRUSH_DEFAULT      = 0;    ///< Default error bar color (black)
+constexpr double LINE_WIDTH_MIN     = 0.5;  ///< Min configurable line width
+constexpr double LINE_WIDTH_MAX     = 20.0; ///< Max configurable line width
+constexpr double LINE_WIDTH_DEFAULT = 3.0;  ///< Default data series line width
+constexpr double ERR_WIDTH_DEFAULT  = 1.5;  ///< Default error bar line width
+constexpr double POINT_SIZE_MIN     = 1.0;  ///< Min configurable marker diameter
+constexpr double POINT_SIZE_MAX     = 40.0; ///< Max configurable marker diameter
+constexpr double POINT_SIZE_DEFAULT = 8.0;  ///< Default marker diameter
+
 // ---- Chart post-processing dialog ----------------------------------------
-constexpr int POSTPROCESS_EXPR_WIDTH = 260; ///< Min width of the custom-function expression field
+constexpr int POSTPROCESS_EXPR_WIDTH  = 260; ///< Min width of the custom-function expression field
+constexpr int POSTPROCESS_GRID_POINTS = 200; ///< Default number of Fourier output grid points
+
+// ---- Plot data import dialog ---------------------------------------------
+constexpr int PLOTDIALOG_COLUMN_LIST_HEIGHT = 180; ///< Min height of the column-role list
+constexpr int PLOTDIALOG_PREVIEW_ROWS       = 8;   ///< Data rows shown in the preview table
 
 // ---- Chart smoothing (Savitzky-Golay) ------------------------------------
 constexpr int SMOOTH_WINDOW_MIN     = 5;   ///< Min smoothing window size
@@ -125,6 +144,46 @@ constexpr int MOVIE_WARN_FRAMES   = 1000;  ///< Warn when extracting more frames
 constexpr qint64 MOVIE_WARN_BYTES = 1024LL * 1024LL * 1024LL;
 /** Warn when the estimated size exceeds this fraction of the free space on the temporary volume */
 constexpr double MOVIE_WARN_DISKFRAC = 0.9;
+
+// ---- Docked window layout ------------------------------------------------
+/// Version tag written into the saved dock arrangement.  Bump it whenever the
+/// set of docks or their default arrangement changes, so QMainWindow discards a
+/// saved state that no longer matches instead of restoring something stale.
+/// Bumped when ViewSlot::Command was added: a saved arrangement from before
+/// does not know that panel and must not be restored over the new default.
+constexpr int DOCK_STATE_VERSION  = 2;
+constexpr int MAIN_DEFAULT_WIDTH  = 1024; ///< Default main window width, individual windows
+constexpr int MAIN_DEFAULT_HEIGHT = 512;  ///< Default main window height, individual windows
+// The combined main window defaults to twice the individual-window size,
+// since it holds the editor plus two dock groups.  Clamped to the available
+// screen area where it is applied.
+constexpr int DOCK_MAIN_DEFAULT_WIDTH  = 2 * MAIN_DEFAULT_WIDTH;  ///< Docked main window width
+constexpr int DOCK_MAIN_DEFAULT_HEIGHT = 2 * MAIN_DEFAULT_HEIGHT; ///< Docked main window height
+/** Fraction of the combined window width given to the right hand dock group */
+constexpr double DOCK_SPLIT_HORIZONTAL = 0.5;
+/** Fraction of the combined window height given to the bottom dock group */
+constexpr double DOCK_SPLIT_VERTICAL = 0.25;
+
+/// Object name a view gives its own File menu, so the combined layout can put
+/// it at the front of the shared menu bar without knowing the view's class
+inline const QString VIEW_FILE_MENU = QStringLiteral("viewFileMenu");
+
+// ---- Command window ------------------------------------------------------
+constexpr int COMMAND_SCROLLBACK_LINES = 5000; ///< Lines of transcript kept
+constexpr int COMMAND_HISTORY_MAX      = 200;  ///< Command lines remembered between sessions
+constexpr int COMMAND_START_TIMEOUT    = 5000; ///< Milliseconds to wait for the shell to start
+constexpr int COMMAND_EXIT_TIMEOUT     = 2000; ///< Milliseconds to wait for it to end
+constexpr int COMMAND_KILL_GRACE       = 500;  ///< Milliseconds between SIGTERM and SIGKILL
+constexpr int COMMAND_PGREP_TIMEOUT    = 1000; ///< Milliseconds to wait for pgrep
+constexpr int COMMAND_DEFAULT_WIDTH    = 800;  ///< Default window width
+constexpr int COMMAND_DEFAULT_HEIGHT   = 400;  ///< Default window height
+constexpr int COMMAND_RESYNC_DELAY     = 300;  ///< Milliseconds after an interrupt before resyncing
+constexpr int COMMAND_MIN_COLUMNS      = 20;   ///< Narrowest width worth reporting as COLUMNS
+constexpr int COMMAND_MIN_CWD_WIDTH    = 120; ///< Pixels the directory in front of the prompt keeps
+constexpr int COMMAND_MIN_PROMPT_WIDTH =
+    240;                                    ///< Pixels the input line keeps whatever the directory
+constexpr int ALIASES_DEFAULT_WIDTH  = 520; ///< Default width of the alias dialog
+constexpr int ALIASES_DEFAULT_HEIGHT = 420; ///< Default height of the alias dialog
 
 // ---- Resource paths ------------------------------------------------------
 /** path to LAMMPS-GUI Window Icon resource */
@@ -217,83 +276,133 @@ inline const QString GROUP_SNAPSHOT = QStringLiteral("snapshot");
 inline const QString GROUP_TUTORIAL = QStringLiteral("tutorial");
 
 // ---- keys ----------------------------------------------------------------
-inline const QString ACCELERATOR      = QStringLiteral("accelerator");
-inline const QString ALLFAMILY        = QStringLiteral("allfamily");
-inline const QString ALLSIZE          = QStringLiteral("allsize");
-inline const QString ANTIALIAS        = QStringLiteral("antialias");
-inline const QString AUTOBOND         = QStringLiteral("autobond");
-inline const QString AUTOMATIC        = QStringLiteral("automatic");
-inline const QString AUTOSAVE         = QStringLiteral("autosave");
-inline const QString AXES             = QStringLiteral("axes");
-inline const QString AXESDIAM         = QStringLiteral("axesdiam");
-inline const QString AXESLEN          = QStringLiteral("axeslen");
-inline const QString BACKCOLOR        = QStringLiteral("backcolor");
-inline const QString BACKCOLOR2       = QStringLiteral("backcolor2");
-inline const QString USEGRADIENT      = QStringLiteral("usegradient");
-inline const QString BONDCOLOR        = QStringLiteral("bondcolor");
-inline const QString BONDCUT          = QStringLiteral("bondcut");
-inline const QString BONDDIAM         = QStringLiteral("bonddiam");
-inline const QString BOX              = QStringLiteral("box");
-inline const QString BOXCOLOR         = QStringLiteral("boxcolor");
-inline const QString BOXDIAM          = QStringLiteral("boxdiam");
-inline const QString CHARTREPLACE     = QStringLiteral("chartreplace");
-inline const QString CHARTX           = QStringLiteral("chartx");
-inline const QString CHARTY           = QStringLiteral("charty");
-inline const QString CITE             = QStringLiteral("cite");
-inline const QString COLOR            = QStringLiteral("color");
-inline const QString COLORMAP         = QStringLiteral("colormap");
-inline const QString BONDCOLORMAP     = QStringLiteral("bondcolormap");
-inline const QString COMMAND          = QStringLiteral("command");
-inline const QString DIAMETER         = QStringLiteral("diameter");
+inline const QString ACCELERATOR  = QStringLiteral("accelerator");
+inline const QString ALIASES      = QStringLiteral("aliases");
+inline const QString ALLFAMILY    = QStringLiteral("allfamily");
+inline const QString ALLSIZE      = QStringLiteral("allsize");
+inline const QString ANTIALIAS    = QStringLiteral("antialias");
+inline const QString AUTOBOND     = QStringLiteral("autobond");
+inline const QString AUTOMATIC    = QStringLiteral("automatic");
+inline const QString AUTOSAVE     = QStringLiteral("autosave");
+inline const QString AXES         = QStringLiteral("axes");
+inline const QString AXESDIAM     = QStringLiteral("axesdiam");
+inline const QString AXESLEN      = QStringLiteral("axeslen");
+inline const QString BACKCOLOR    = QStringLiteral("backcolor");
+inline const QString BACKCOLOR2   = QStringLiteral("backcolor2");
+inline const QString BONDCOLOR    = QStringLiteral("bondcolor");
+inline const QString BONDCOLORMAP = QStringLiteral("bondcolormap");
+inline const QString BONDCUT      = QStringLiteral("bondcut");
+inline const QString BONDDIAM     = QStringLiteral("bonddiam");
+inline const QString BOX          = QStringLiteral("box");
+inline const QString BOXCOLOR     = QStringLiteral("boxcolor");
+inline const QString BOXDIAM      = QStringLiteral("boxdiam");
+inline const QString CHARTX       = QStringLiteral("chartx");
+inline const QString CHARTY       = QStringLiteral("charty");
+inline const QString CITE         = QStringLiteral("cite");
+inline const QString CMDHISTORY   = QStringLiteral("cmdhistory");
+inline const QString COLOR        = QStringLiteral("color");
+inline const QString COLORMAP     = QStringLiteral("colormap");
+inline const QString COMMAND      = QStringLiteral("command");
+inline const QString DIAMETER     = QStringLiteral("diameter");
+inline const QString DOCKED       = QStringLiteral("docked");
+inline const QString DOCKMAINX    = QStringLiteral("dockmainx");
+inline const QString DOCKMAINY    = QStringLiteral("dockmainy");
+inline const QString DOCKSPLITH   = QStringLiteral("docksplith");
+inline const QString DOCKSPLITV   = QStringLiteral("docksplitv");
+// The dock arrangement is a QMainWindow::saveState() byte array, and that format
+// belongs to the Qt version that wrote it: restoreState() does not reliably
+// reject a blob from a different feature release, it can crash on one.  So the
+// key is qualified by the Qt feature version and every installed Qt keeps its
+// own arrangement.  The patch level is deliberately left out, so an update
+// within a feature release (6.9.0 -> 6.9.1) keeps the layout the user set up.
+//
+// This is the *runtime* version, not QT_VERSION_MAJOR/MINOR: the format is the
+// business of the Qt that reads the blob back, and Qt stays binary compatible
+// across feature releases, so a shared-library update from 6.9 to 6.10 puts a
+// different Qt under an unchanged executable.  Keying on the compile-time
+// version would hand that new Qt the old one's arrangement -- the very case
+// this guards against.
+inline const QString DOCKSTATE =
+    QStringLiteral("dockstate_%1").arg(QString::fromLatin1(qVersion()).section('.', 0, 1));
+// the unqualified key from before that; unlike PLUGIN_PATH_LEGACY it is dropped
+// rather than kept, because there is no way to tell which Qt version wrote it
+inline const QString DOCKSTATE_LEGACY = QStringLiteral("dockstate");
 inline const QString DOWNLOAD_TIMEOUT = QStringLiteral("download_timeout");
 inline const QString ECHO             = QStringLiteral("echo");
+inline const QString ERRBRUSH         = QStringLiteral("errbrush");
+inline const QString ERRWIDTH         = QStringLiteral("errwidth");
 inline const QString GPUNEIGH         = QStringLiteral("gpuneigh");
 inline const QString GPUPAIRONLY      = QStringLiteral("gpupaironly");
 inline const QString GRID             = QStringLiteral("grid");
 inline const QString HROT             = QStringLiteral("hrot");
 inline const QString HTTPS_PROXY      = QStringLiteral("https_proxy");
 inline const QString ID               = QStringLiteral("id");
-inline const QString IMAGEREPLACE     = QStringLiteral("imagereplace");
 inline const QString INTELPREC        = QStringLiteral("intelprec");
+inline const QString LEGEND           = QStringLiteral("legend");
 inline const QString LINTCHECK        = QStringLiteral("lintcheck");
-inline const QString LOGREPLACE       = QStringLiteral("logreplace");
 inline const QString LOGX             = QStringLiteral("logx");
 inline const QString LOGY             = QStringLiteral("logy");
 inline const QString MAINX            = QStringLiteral("mainx");
 inline const QString MAINY            = QStringLiteral("mainy");
-inline const QString LEGEND           = QStringLiteral("legend");
+inline const QString MAXIMIZED        = QStringLiteral("maximized");
 inline const QString MINORGRID        = QStringLiteral("minorgrid");
-inline const QString REFLABELBOX      = QStringLiteral("reflabelbox");
-inline const QString REFLABELDIST     = QStringLiteral("reflabeldist");
-inline const QString REFLABELSIZE     = QStringLiteral("reflabelsize");
 inline const QString MONOFAMILY       = QStringLiteral("monofamily");
 inline const QString MONOSIZE         = QStringLiteral("monosize");
 inline const QString NAME             = QStringLiteral("name");
 inline const QString NTHREADS         = QStringLiteral("nthreads");
-inline const QString PLUGIN_PATH      = QStringLiteral("plugin_path");
-inline const QString RAWBRUSH         = QStringLiteral("rawbrush");
-inline const QString RECENT           = QStringLiteral("recent");
-inline const QString RETURN           = QStringLiteral("return");
-inline const QString SHINYSTYLE       = QStringLiteral("shinystyle");
-inline const QString SMOOTHBRUSH      = QStringLiteral("smoothbrush");
-inline const QString SMOOTHCHOICE     = QStringLiteral("smoothchoice");
-inline const QString SMOOTHORDER      = QStringLiteral("smoothorder");
-inline const QString SMOOTHWINDOW     = QStringLiteral("smoothwindow");
-inline const QString SOLUTION         = QStringLiteral("solution");
-inline const QString SSAO             = QStringLiteral("ssao");
-inline const QString TITLE            = QStringLiteral("title");
-inline const QString TYPE             = QStringLiteral("type");
-inline const QString UPDCHART         = QStringLiteral("updchart");
-inline const QString UPDFREQ          = QStringLiteral("updfreq");
-inline const QString VDWSTYLE         = QStringLiteral("vdwstyle");
-inline const QString VIEWCHART        = QStringLiteral("viewchart");
-inline const QString VIEWLOG          = QStringLiteral("viewlog");
-inline const QString VIEWSLIDE        = QStringLiteral("viewslide");
-inline const QString VROT             = QStringLiteral("vrot");
-inline const QString WEBPAGE          = QStringLiteral("webpage");
-inline const QString XSIZE            = QStringLiteral("xsize");
-inline const QString YSIZE            = QStringLiteral("ysize");
-inline const QString ZOOM             = QStringLiteral("zoom");
+// The library path is the one setting that must not be shared between builds
+// from different compilers: a library built against a different C runtime
+// loads and runs fine -- the plugin uses only the C API -- but its output
+// silently bypasses the stdout capture, whose redirect only covers the
+// runtime of this executable.  Qualifying the key by the toolchain that built
+// the executable keeps an MSVC build and a MinGW build on the same machine
+// from silently using each other's library.  (_MSC_VER first: clang-cl
+// defines both and uses the MSVC runtime.)
+#if defined(_MSC_VER)
+inline const QString PLUGIN_PATH = QStringLiteral("plugin_path_msvc");
+#elif defined(__clang__)
+inline const QString PLUGIN_PATH = QStringLiteral("plugin_path_clang");
+#else
+inline const QString PLUGIN_PATH = QStringLiteral("plugin_path_gcc");
+#endif
+// the unqualified pre-3.1 key; read once at start-up to seed the qualified
+// one, and left in place for older versions that still read it
+inline const QString PLUGIN_PATH_LEGACY = QStringLiteral("plugin_path");
+inline const QString RAWBRUSH           = QStringLiteral("rawbrush");
+inline const QString RAWMODE            = QStringLiteral("rawmode");
+inline const QString RAWPOINTSIZE       = QStringLiteral("rawpointsize");
+inline const QString RAWWIDTH           = QStringLiteral("rawwidth");
+inline const QString RECENT             = QStringLiteral("recent");
+inline const QString REFLABELBOX        = QStringLiteral("reflabelbox");
+inline const QString REFLABELDIST       = QStringLiteral("reflabeldist");
+inline const QString REFLABELSIZE       = QStringLiteral("reflabelsize");
+inline const QString RETURN             = QStringLiteral("return");
+inline const QString SHELL              = QStringLiteral("shell");
+inline const QString SHINYSTYLE         = QStringLiteral("shinystyle");
+inline const QString SMOOTHBRUSH        = QStringLiteral("smoothbrush");
+inline const QString SMOOTHCHOICE       = QStringLiteral("smoothchoice");
+inline const QString SMOOTHMODE         = QStringLiteral("smoothmode");
+inline const QString SMOOTHORDER        = QStringLiteral("smoothorder");
+inline const QString SMOOTHPOINTSIZE    = QStringLiteral("smoothpointsize");
+inline const QString SMOOTHWIDTH        = QStringLiteral("smoothwidth");
+inline const QString SMOOTHWINDOW       = QStringLiteral("smoothwindow");
+inline const QString SOLUTION           = QStringLiteral("solution");
+inline const QString SSAO               = QStringLiteral("ssao");
+inline const QString TITLE              = QStringLiteral("title");
+inline const QString TYPE               = QStringLiteral("type");
+inline const QString UPDCHART           = QStringLiteral("updchart");
+inline const QString UPDFREQ            = QStringLiteral("updfreq");
+inline const QString USEGRADIENT        = QStringLiteral("usegradient");
+inline const QString VALUE              = QStringLiteral("value");
+inline const QString VDWSTYLE           = QStringLiteral("vdwstyle");
+inline const QString VIEWCHART          = QStringLiteral("viewchart");
+inline const QString VIEWLOG            = QStringLiteral("viewlog");
+inline const QString VIEWSLIDE          = QStringLiteral("viewslide");
+inline const QString VROT               = QStringLiteral("vrot");
+inline const QString WEBPAGE            = QStringLiteral("webpage");
+inline const QString XSIZE              = QStringLiteral("xsize");
+inline const QString YSIZE              = QStringLiteral("ysize");
+inline const QString ZOOM               = QStringLiteral("zoom");
 /// @endcond
 
 } // namespace Keys

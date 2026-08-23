@@ -55,6 +55,27 @@ public:
      */
     int getNWarnings() const { return nwarnings; }
 
+    /**
+     * @brief Clear the warning and line counters
+     *
+     * The counters are accumulated across calls to highlightBlock() and are
+     * never decremented, so they must be cleared explicitly when the attached
+     * document is reused for new content.  Also resets the summary label to
+     * its empty-document text.
+     */
+    void reset();
+
+    /**
+     * @brief The text of the summary label for the given counters
+     * @param nwarnings Number of warnings/errors counted
+     * @param nlines Number of lines counted
+     * @return Formatted summary text
+     *
+     * The one place the format lives; also used to seed the label before any
+     * highlighting has run.
+     */
+    static QString summaryText(int nwarnings, int nlines);
+
 protected:
     /**
      * @brief Highlight a single block (line) of text

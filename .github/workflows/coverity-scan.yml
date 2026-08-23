@@ -1,6 +1,6 @@
 # GitHub action to submit a build to Coverity Scan for static C++ analysis.
-# Runs once per day and only uploads when the develop branch saw a new commit
-# in the past day, so idle days do not consume a Coverity build credit.
+# Runs once per week and only uploads when the develop branch saw a new commit
+# in the past week, so idle weeks do not consume a Coverity build credit.
 name: "Coverity Scan static analysis"
 
 on:
@@ -31,15 +31,15 @@ jobs:
       uses: actions/checkout@v7
       with:
         ref: develop
-        fetch-depth: 1
+        fetch-depth: 0
 
     - name: Decide whether there is anything new to scan
       id: changes
       shell: bash
       run: |
         # A manual run always proceeds; a scheduled run only proceeds when the
-        # newest commit on develop is younger than 25 hours (the extra hour over
-        # the 24 h cron period absorbs GitHub scheduler drift).
+        # newest commit on develop is younger than 8 days (the extra day over
+        # the 7 day cron period absorbs GitHub scheduler drift).
         if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
           echo "Manual dispatch -- forcing a scan."
           echo "run=true" >> "$GITHUB_OUTPUT"
@@ -49,11 +49,11 @@ jobs:
         now=$(date +%s)
         age=$(( now - last ))
         echo "Newest develop commit is ${age}s old."
-        if [ "$age" -lt 90000 ]; then
+        if [ "$age" -lt 691200 ]; then
           echo "run=true" >> "$GITHUB_OUTPUT"
         else
           echo "run=false" >> "$GITHUB_OUTPUT"
-          echo "No new commits to develop in the last 25 hours -- skipping Coverity submission."
+          echo "No new commits to develop in the last 8 days -- skipping Coverity submission."
         fi
 
     - name: Install extra packages
@@ -114,7 +114,9 @@ jobs:
         COVERITY_EMAIL: ${{ secrets.COVERITY_SCAN_EMAIL }}
       run: |
         tar -czf cov-int.tgz cov-int
-        version="$(git rev-parse --short HEAD)"
+        # --tags also accepts lightweight tags, --always falls back to a bare
+        # commit hash: never fail the upload over the version string alone
+        version="$(git describe --tags --always HEAD)"
         project_enc="$(jq -rn --arg v "$COVERITY_PROJECT" '$v|@uri')"
         curl -sS --fail-with-body \
              --form token="${COVERITY_TOKEN}" \

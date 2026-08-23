@@ -362,6 +362,13 @@ DumpImageCommand buildDumpImageCommand(const DumpImageParams &p)
     // the specular highlight width and the SSAO sample count default to being
     // derived from the shiny factor and the SSAO strength; emit only overrides
     if (p.specular != QStringLiteral("auto")) m += " specular " + p.specular;
+
+    // metallic shading defaults to off (metal 0.0) and the finish to "satin";
+    // the finish has no effect without the effect enabled, so both are pruned
+    if (p.usemetal && (p.metalfactor > 0.0)) {
+        m += QString(" metal %1").arg(qBound(0.0, p.metalfactor, 1.0));
+        if (p.metalfinish != QStringLiteral("satin")) m += " metalfinish " + p.metalfinish;
+    }
     if (p.usessao && (p.ssaosamples > 0))
         m += QString(" ssaosamples %1").arg(qBound(4, p.ssaosamples, 64));
 

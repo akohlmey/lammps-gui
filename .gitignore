@@ -112,6 +112,9 @@ Thumbs.db
 # CodeQL build artifacts
 /_codeql_*
 
+# Claude's custom folders
+/.claude
+
 # tutorial folders
 /tutorial*
 
@@ -124,3 +127,9 @@ build-qt*
 /*.pdf
 /*.json
 /*.py
+
+/count-commits.sh
+/quarters.txt
+/year-vs-lines-of-code.sh
+
+
