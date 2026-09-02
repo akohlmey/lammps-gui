@@ -58,9 +58,9 @@ inline const QString BACKUP_SUFFIX =
 
 // ---- LAMMPS version requirement ------------------------------------------
 constexpr int MIN_LAMMPS_VERSION =
-    20260704; ///< Minimum LAMMPS version (4 July 2026) as YYYYMMDD format number
+    20260902; ///< Minimum LAMMPS version (2 September 2026) as YYYYMMDD format number
 inline const QString MIN_LAMMPS_VERSION_STR =
-    QStringLiteral("4 Jul 2026"); ///< Minimum LAMMPS version (4 July 2026) as string
+    QStringLiteral("2 September 2026"); ///< Minimum LAMMPS version (2 September 2026) as string
 
 // ---- Buffer thresholds ---------------------------------------------------
 constexpr double BUFFER_WARNING_THRESHOLD = 0.333; ///< Warn when capture buffer exceeds this
