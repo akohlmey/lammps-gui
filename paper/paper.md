@@ -82,20 +82,29 @@ visualization programs such as OVITO [@ovito2010] and VMD [@vmd1996]
 render trajectories with a breadth and quality that LAMMPS-GUI does not
 attempt to match.  None of these, however, integrates input editing,
 live simulation, output monitoring, plotting, and visualization into one
-application that follows the same edit-run-observe loop as the standalone
-executable. LAMMPS-GUI fills that gap. It also imports tutorial
-materials, for example from the official LAMMPS tutorials
+application that follows the same edit-run-observe loop as the
+standalone executable.  LAMMPS-GUI fills that gap.  It also imports
+tutorial materials, for example from the official LAMMPS tutorials
 [@gravelle2025lammps], and has been used in that role at workshops.
-Although aimed primarily at beginners, features such as rapid prototyping
-of input decks, debugging failing inputs by visualizing selected
-components, and interactive construction of reproducible `dump image`
-commands also make it useful to experienced researchers.
+Additional tutorial packages to complement the current set aimed at soft
+matter simulations covering materials science or discrete element
+modeling topics are in beta status or in preparation.  Although aimed
+primarily at beginners, features such as rapid prototyping of input
+decks, debugging failing inputs by visualizing selected components, and
+interactive construction of reproducible `dump image` commands also make
+it useful to experienced researchers.
 
 # Software design and functionality
 
 LAMMPS-GUI follows an object-oriented design in which a central window
-coordinates largely self-contained components, all access to LAMMPS being
-funneled through a single adapter class. Key capabilities include:
+coordinates largely self-contained components, all access to LAMMPS
+being funneled through a single adapter class.  The original design
+shows all components in separate windows or dialogs.  A recent addition
+is an alternate joined window mode, where there is only a single window
+split into three areas: the editor is always on the top left; other
+elements are either on the top right or at the bottom and there are tabs
+to switch between them. The dividing lines between those areas can be
+moved with the mouse. Key capabilities of LAMMPS-GUI include:
 
 - **Editing.** A LAMMPS-aware editor with syntax highlighting,
   per-command-category auto-completion, in-place documentation lookup,
@@ -121,30 +130,34 @@ funneled through a single adapter class. Key capabilities include:
   hand-off to OVITO and VMD, and command-line flags exposing the charting
   and image viewers as standalone utilities.
 
+What LAMMPS-GUI deliberately does not provide is an interactive or
+scripted molecular editor or builder.  It defers to the corresponding
+features built into LAMMPS or various LAMMPS-compatible pre-processing
+tools [@lammps_home_prepost].
+
 A recurring theme is the co-evolution of LAMMPS-GUI and LAMMPS:
 front-end needs drove improvements to the engine and its library
 interface -- catchable exceptions, a locked cache of live thermodynamic
-data, and greatly expanded snapshot rendering, collected into a dedicated
-GRAPHICS package [@kohlmeyer2025lammps]. This rendering capability
-deliberately draws on the kind of functionality long provided by
-dedicated molecular visualization tools, but makes it available directly
-on a running simulation rather than only as post-processing on saved
-trajectory files. In its default *plugin mode*,
-LAMMPS-GUI loads the shared library at run time with no link-time
-dependency, so one binary can pair with -- or download -- different
-LAMMPS builds. The project is documented online [@lammpsgui_home] and
-maintained with an automated test suite and continuous-integration builds
-on all platforms.
+data, and greatly expanded snapshot rendering, collected into a
+dedicated GRAPHICS package [@kohlmeyer2025lammps]. This rendering
+capability deliberately draws on the kind of functionality long provided
+by dedicated molecular visualization tools, but makes it available
+directly on a running simulation rather than only as post-processing on
+saved trajectory files. In its default *plugin mode*, LAMMPS-GUI loads
+the shared library at run time with no link-time dependency, so one
+binary can pair with -- or download -- different LAMMPS builds. The
+project is documented online [@lammpsgui_home] and maintained with an
+automated test suite and continuous-integration builds on all platforms.
 
 # AI usage disclosure
 
-The design and architecture of LAMMPS-GUI were developed without the use of
-generative AI.  AI-based coding assistants (GitHub Copilot and Claude Code)
-were used more recently to support the refactoring and modularization of the
-existing code base, and to assist with editing this manuscript.  All
-AI-generated suggestions were reviewed, tested, and revised by the author,
-who takes full responsibility for the software and for the content of this
-paper.
+The design and architecture of LAMMPS-GUI were developed without the use
+of generative AI.  However, AI-based coding assistants like GitHub
+Copilot and Claude Code, were used more recently to support the
+refactoring and modularization of the existing code base, and to assist
+with editing this manuscript.  All AI-generated suggestions were
+reviewed, tested, and revised by the author, who takes full
+responsibility for the software and for the content of this paper.
 
 # Acknowledgements
 
