@@ -60,12 +60,16 @@ mirrors the console workflow, LAMMPS-GUI removes this barrier, letting
 instructors teach one interface on all platforms and focus on LAMMPS and
 molecular dynamics itself.
 
-![A LAMMPS-GUI session with a simulation in flight. The editor shows
-syntax highlighting, line numbers, and a marker on the current input
-line; the status bar shows CPU utilization and run progress; the Image
-Viewer shows the starting geometry; the Output window the screen output;
-and the Charts window a live plot of a thermodynamic
-column.\label{fig:editor}](images/lammps-gui-screen.png){ width=70% }
+![A LAMMPS-GUI session with a simulation in flight. The left image shows
+the traditional multi-window display; the right image the recently added
+single joined window display with tabs. The editor shows syntax
+highlighting, line numbers, and a marker on the current input line; the
+status bar shows CPU utilization and run progress; the Image Viewer
+shows the starting geometry; the Output window the screen output; and
+the Charts window a live plot of a thermodynamic column. In the joined
+window mode, the Image viewer shares the right part of the window with
+the Charts and Slide Show windows; tabs enable selecting between
+them.\label{fig:editor}](images/lammps-gui-screen.png){ width=99% }
 
 # State of the field
 
