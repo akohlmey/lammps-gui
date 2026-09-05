@@ -37,7 +37,7 @@ using version 6 of the Qt framework [@qt_home], that combines these
 tasks in one program: a syntax-highlighting input editor with
 auto-completion and documentation lookup, live execution with real-time
 output monitoring, interactive thermodynamic charts, a snapshot image
-creator, and a slide-show viewer. Rather than launching LAMMPS as an
+viewer, and a slide-show viewer. Rather than launching LAMMPS as an
 external process, it embeds the engine through the C-language library
 interface [@frantzdale2010library], running the simulation in a
 concurrent worker thread so the interface stays responsive and the run
@@ -60,16 +60,14 @@ mirrors the console workflow, LAMMPS-GUI removes this barrier, letting
 instructors teach one interface on all platforms and focus on LAMMPS and
 molecular dynamics itself.
 
-![A LAMMPS-GUI session with a simulation in flight. The left image shows
-the traditional multi-window display; the right image the recently added
-single joined window display with tabs. The editor shows syntax
-highlighting, line numbers, and a marker on the current input line; the
-status bar shows CPU utilization and run progress; the Image Viewer
-shows the starting geometry; the Output window the screen output; and
-the Charts window a live plot of a thermodynamic column. In the joined
-window mode, the Image viewer shares the right part of the window with
-the Charts and Slide Show windows; tabs enable selecting between
-them.\label{fig:editor}](images/lammps-gui-screen.png){ width=99% }
+![A LAMMPS-GUI session with a simulation in flight, in the individual
+window mode (left) and the combined window mode (right). The editor
+shows syntax highlighting, line numbers, and a marker on the current
+input line; the status bar shows CPU utilization and run progress; the
+Image Viewer shows the starting geometry, the Output window the screen
+output, and the Charts window a live plot of a thermodynamic column. In
+the combined window mode these views are tabs beside and below the
+editor.\label{fig:editor}](images/lammps-gui-screen.png){ width=99% }
 
 # State of the field
 
@@ -84,11 +82,10 @@ attempt to match.  None of these, however, integrates input editing,
 live simulation, output monitoring, plotting, and visualization into one
 application that follows the same edit-run-observe loop as the
 standalone executable.  LAMMPS-GUI fills that gap.  It also imports
-tutorial materials, for example from the official LAMMPS tutorials
-[@gravelle2025lammps], and has been used in that role at workshops.
-Additional tutorial packages to complement the current set aimed at soft
-matter simulations covering materials science or discrete element
-modeling topics are in beta status or in preparation.  Although aimed
+tutorial materials, such as the official LAMMPS tutorials
+[@gravelle2025lammps] on molecular soft matter, with collections on
+materials science and discrete element modeling in preparation.
+Although aimed
 primarily at beginners, features such as rapid prototyping of input
 decks, debugging failing inputs by visualizing selected components, and
 interactive construction of reproducible `dump image` commands also make
@@ -98,13 +95,12 @@ it useful to experienced researchers.
 
 LAMMPS-GUI follows an object-oriented design in which a central window
 coordinates largely self-contained components, all access to LAMMPS
-being funneled through a single adapter class.  The original design
-shows all components in separate windows or dialogs.  A recent addition
-is an alternate joined window mode, where there is only a single window
-split into three areas: the editor is always on the top left; other
-elements are either on the top right or at the bottom and there are tabs
-to switch between them. The dividing lines between those areas can be
-moved with the mouse. Key capabilities of LAMMPS-GUI include:
+being funneled through a single adapter class.  Two viewing modes are
+offered: the original individual window mode, where every component is
+a window of its own, and a recently added combined window mode, where
+the views are docked as tabbed panels beside and below the editor in
+one main window, separated by movable splitters.  Key capabilities of
+LAMMPS-GUI include:
 
 - **Editing.** A LAMMPS-aware editor with syntax highlighting,
   per-command-category auto-completion, in-place documentation lookup,
@@ -118,42 +114,66 @@ moved with the mouse. Key capabilities of LAMMPS-GUI include:
   errors and makes documentation URLs clickable, and a charts window that
   plots thermodynamic data read directly from the running simulation (not
   scraped from text) or from external files, with Savitzky-Golay smoothing
-  [@savitzkygolay1964] and post-processing such as autocorrelation,
-  polynomial, Birch-Murnaghan equation-of-state, and nonlinear fits.
+  [@savitzkygolay1964] and post-processing such as autocorrelation
+  functions, Fourier transforms, static structure factors, and
+  polynomial, Birch-Murnaghan equation-of-state, and custom nonlinear
+  fits.
 - **Visualization.** A snapshot image viewer that builds high-quality
   renderings via the LAMMPS `dump image` command, with interactive
   controls and the ability to copy the generated command back into the
-  script for reproducible figures, plus a slide-show viewer for image
-  sequences exportable as movies.
+  script for reproducible figures, plus a slide-show viewer that plays
+  image sequences, imports frames from movie files, and exports movies.
 - **Tutorials and convenience.** A guided wizard that downloads lesson
   inputs from several tutorial collections, a tabbed preferences dialog,
-  hand-off to OVITO and VMD, and command-line flags exposing the charting
-  and image viewers as standalone utilities.
+  hand-off of the current system to OVITO and VMD, and command-line flags
+  exposing the charting, slide-show, and text viewers as standalone
+  utilities.
 
-What LAMMPS-GUI deliberately does not provide is an interactive or
-scripted molecular editor or builder.  It defers to the corresponding
-features built into LAMMPS or various LAMMPS-compatible pre-processing
-tools [@lammps_home_prepost].
+What LAMMPS-GUI deliberately does not provide is a molecular editor or
+builder.  Creating complex, physically sound initial configurations
+with their topology has never been within the scope of LAMMPS, and the
+GUI does not address it either.  The built-in lattice, region, and
+molecule template commands cover many cases; beyond those, and
+especially for the atom typing and partial charge assignment that
+molecular force fields require, force-field specific external tools are
+needed, for which the LAMMPS website maintains a curated list
+[@lammps_home_prepost].
 
 A recurring theme is the co-evolution of LAMMPS-GUI and LAMMPS:
 front-end needs drove improvements to the engine and its library
 interface -- catchable exceptions, a locked cache of live thermodynamic
 data, and greatly expanded snapshot rendering, collected into a
-dedicated GRAPHICS package [@kohlmeyer2025lammps]. This rendering
-capability deliberately draws on the kind of functionality long provided
-by dedicated molecular visualization tools, but makes it available
-directly on a running simulation rather than only as post-processing on
-saved trajectory files. In its default *plugin mode*, LAMMPS-GUI loads
-the shared library at run time with no link-time dependency, so one
-binary can pair with -- or download -- different LAMMPS builds. The
-project is documented online [@lammpsgui_home] and maintained with an
-automated test suite and continuous-integration builds on all platforms.
+dedicated GRAPHICS package [@kohlmeyer2025lammps], which brings
+functionality long provided by dedicated visualization tools directly
+to a running simulation rather than only to saved trajectory files.  In
+its default *plugin mode*, LAMMPS-GUI loads the shared library at run
+time with no link-time dependency, so one binary can pair with -- or
+download -- different LAMMPS builds.
+
+# Research impact statement
+
+LAMMPS-GUI has shipped with LAMMPS since the August 2023 stable release,
+first from within the LAMMPS source tree and since August 2025 as an
+independently versioned package that the LAMMPS build system fetches on
+request; the pre-compiled LAMMPS packages for Windows, macOS, and Linux
+posted with each LAMMPS release bundle it [@lammps_releases].  It is the
+primary tool of the peer-reviewed LAMMPS tutorials
+[@gravelle2025lammps], which are written around it, and it has anchored
+public hands-on training since the 2024 LAMMPS master class, including
+the tutorial session of the 2025 LAMMPS Workshop and Symposium
+[@lammps_workshop2025]; recordings of both live streams are online
+[@templelammps_streams].  Its development has also fed improvements back
+into the LAMMPS engine itself, as described above.  The project is
+maintained as research software: a documentation site [@lammpsgui_home],
+releases archived on Zenodo, continuous-integration builds and automated
+tests on all three platforms, and user support through a dedicated tag
+on the LAMMPS forum.
 
 # AI usage disclosure
 
 The design and architecture of LAMMPS-GUI were developed without the use
-of generative AI.  However, AI-based coding assistants like GitHub
-Copilot and Claude Code, were used more recently to support the
+of generative AI.  However, AI-based coding assistants such as GitHub
+Copilot and Claude Code were used more recently to support the
 refactoring and modularization of the existing code base, and to assist
 with editing this manuscript.  All AI-generated suggestions were
 reviewed, tested, and revised by the author, who takes full
