@@ -56,8 +56,6 @@ cd LAMMPS-GUI.app/Contents
 
 echo "Attach icons to LAMMPS console and GUI executables and lib"
 echo "read 'icns' (-16455) \"Resources/lammps-gui.icns\";" > icon.rsrc
-Rez -a icon.rsrc -o bin/lmp
-SetFile -a C bin/lmp
 Rez -a icon.rsrc -o MacOS/lammps-gui
 SetFile -a C MacOS/lammps-gui
 if [ -f Frameworks/liblammps.0.dylib ]; then
