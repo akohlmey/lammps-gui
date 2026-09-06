@@ -53,6 +53,8 @@ mkdir  .background
 mv ${APP_NAME}.app/Contents/Resources/LAMMPS_DMG_Background.png .background/background.png
 mv ${APP_NAME}.app LAMMPS-GUI.app
 cd LAMMPS-GUI.app/Contents
+echo "Codesign bundled plugins"
+codesign --force -s - PlugIns/*/*.dylib
 
 echo "Attach icons to LAMMPS console and GUI executables and lib"
 echo "read 'icns' (-16455) \"Resources/lammps-gui.icns\";" > icon.rsrc
