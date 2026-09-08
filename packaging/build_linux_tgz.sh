@@ -32,6 +32,7 @@ rm -f ${DESTDIR}/lib/lib{c,dl,rt,m,pthread}-[0-9].[0-9]*.so
 rm -f ${DESTDIR}/lib/libX* ${DESTDIR}/lib/libxcb* ${DESTDIR}/lib/libxkb*
 rm -f ${DESTDIR}/lib/libgcc_s*
 rm -f ${DESTDIR}/lib/libstdc++*
+chmod +x ${DESTDIR}/lib/lib*.so.*
 
 # get Qt dir
 QTDIR=$(ldd ${DESTDIR}/bin/lammps-gui | grep libQt.Core | sed -e 's/^.*=> *//' -e 's/libQt\(.\)Core.so.*$/qt\1/')
