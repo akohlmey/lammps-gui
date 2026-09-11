@@ -7,7 +7,7 @@ Installation
 .. index:: pre-compiled packages
 
 LAMMPS-GUI is distributed as `source code on GitHub
-<https://github.com/akohlmey/lammps-gui>`_ and can be compiled as part
+<https://github.com/lammps/lammps-gui>`_ and can be compiled as part
 of compiling LAMMPS, where it will be linked to the corresponding
 version of LAMMPS directly.  Pre-compiled packages of LAMMPS with
 LAMMPS-GUI included are available for download (see below).
@@ -88,7 +88,7 @@ Standalone packages with a basic LAMMPS library
 
 LAMMPS-GUI packages containing *only* LAMMPS-GUI compiled in plugin mode
 are available from the `LAMMPS-GUI releases page on GitHub
-<https://github.com/akohlmey/lammps-gui/releases>`_.  Most of these
+<https://github.com/lammps/lammps-gui/releases>`_.  Most of these
 packages include a LAMMPS shared library with some subset of LAMMPS'
 features that do not depend on additional libraries for improved
 portability.
@@ -332,7 +332,7 @@ Compilation from source
    ``tools/lammps-gui``.  Starting with LAMMPS-GUI version 1.8.0 and
    LAMMPS version 10 September 2025 the LAMMPS-GUI sources are
    distributed separately through its own git repository at
-   https://github.com/akohlmey/lammps-gui.
+   https://github.com/lammps/lammps-gui.
 
 LAMMPS-GUI can be built as part of a regular LAMMPS compilation.  It
 will be automatically downloaded from its git repository and configured.
@@ -375,7 +375,7 @@ LAMMPS-GUI plugin version
 It is possible to compile a standalone LAMMPS-GUI executable (e.g. when
 LAMMPS has been compiled with traditional make).  Rather than linking to
 the LAMMPS library during compilation, it includes a `plugin loader
-<https://github.com/akohlmey/lammps-gui/tree/main/plugin>`_ that will
+<https://github.com/lammps/lammps-gui/tree/main/plugin>`_ that will
 load a LAMMPS shared library file dynamically at runtime during the
 start of the GUI; e.g. ``liblammps.so.0`` or ``liblammps.0.dylib`` or
 ``liblammps.dll`` (depending on the operating system).  This has the
