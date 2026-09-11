@@ -17,9 +17,9 @@ authors:
     orcid: "https://orcid.org/0000-0001-6204-6475"
     affiliation: "Institute for Computational Molecular Science, Temple University, Philadelphia, PA, USA"
 version: "3.1.0"
-date-released: "2026-09-14"
+date-released: "2026-09-16"
 license: GPL-2.0-or-later
-repository-code: "https://github.com/akohlmey/lammps-gui"
+repository-code: "https://github.com/lammps/lammps-gui"
 url: "https://lammps-gui.lammps.org/"
 keywords:
   - molecular dynamics
